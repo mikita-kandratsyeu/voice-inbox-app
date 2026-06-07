@@ -183,6 +183,7 @@ type AskAnswerResult = {
   items?: string[];
   evidence?: AskEvidence[];
   suggestedFollowUps?: string[];
+  tokenUsage?: { prompt: number; completion: number };
 };
 
 const ASK_ANSWER_KINDS = new Set<AskAnswerKind>(['plain', 'list', 'tasks', 'decisions']);
@@ -391,7 +392,7 @@ export async function processAskQuestion(
   );
 
   const callAsk = async (m: string): Promise<AskAnswerResult> => {
-    const { content } = await sendAiChatCompletion({
+    const { content, raw } = await sendAiChatCompletion({
       model: m,
       messages: [
         { role: 'system', content: ASK_QUESTION_SYSTEM_PROMPT },
@@ -403,7 +404,11 @@ export async function processAskQuestion(
       userId: deviceId,
     });
 
-    return extractAnswerFromResponse(content);
+    const tokenUsage = extractOpenRouterTokenUsage(raw);
+    return {
+      ...extractAnswerFromResponse(content),
+      ...(tokenUsage ? { tokenUsage } : {}),
+    };
   };
 
   const models = filterModelsForAiChat([model, ...USER_AI_MODEL_FALLBACK_CHAIN]);
@@ -480,9 +485,10 @@ export async function processDigest(
   highlights: string[];
   risks: string[];
   nextActions: string[];
+  tokenUsage?: { prompt: number; completion: number };
 }> {
   const callDigest = async (m: string) => {
-    const { content } = await sendAiChatCompletion({
+    const { content, raw } = await sendAiChatCompletion({
       model: m,
       messages: [
         { role: 'system', content: DIGEST_SYSTEM_PROMPT },
@@ -493,7 +499,11 @@ export async function processDigest(
       clientUserAgent,
     });
 
-    return parseDigestResult(content);
+    const tokenUsage = extractOpenRouterTokenUsage(raw);
+    return {
+      ...parseDigestResult(content),
+      ...(tokenUsage ? { tokenUsage } : {}),
+    };
   };
 
   const models = filterModelsForAiChat([model, ...USER_AI_MODEL_FALLBACK_CHAIN]);

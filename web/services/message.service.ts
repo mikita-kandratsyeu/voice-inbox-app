@@ -47,7 +47,11 @@ export const createMessage = async (
     return { created: false };
   }
 
-  const limitResult = await checkAndIncrement(deviceId, aiLimitContext, chargedUsageUnits);
+  const limitResult = await checkAndIncrement(deviceId, aiLimitContext, chargedUsageUnits, {
+    operation: 'transcript_summarize',
+    jobId: id,
+    metadata: { ...aiModelResponseFields(model), chargedUsageUnits },
+  });
   if (!limitResult.allowed) {
     await saveMessage(
       id,
@@ -144,7 +148,11 @@ export const retryMeetingDialogue = async (params: {
     return { ok: false, error: 'Meeting dialogue already processing' };
   }
 
-  const limitResult = await checkAndIncrement(params.deviceId);
+  const limitResult = await checkAndIncrement(params.deviceId, undefined, 1, {
+    operation: 'meeting_dialogue',
+    jobId: params.jobId,
+    metadata: aiModelResponseFields(params.model),
+  });
   if (!limitResult.allowed) {
     await sendLimitExceededPush(params.deviceId);
     return { ok: false, limitExceeded: true, usage: limitResult.usage };

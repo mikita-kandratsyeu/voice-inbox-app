@@ -3,9 +3,17 @@ import { decrementAutoOrganizeWeekly } from '@/lib/ai-job-runners/run-auto-organ
 import { deleteJobPayload, getJobPayload } from '@/lib/ai-job-payload';
 import { deleteMeetingJobPayload } from '@/lib/meeting-job-payload';
 import { aiModelResponseFields } from '@/lib/ai-model-display';
+import type { AiUsageOperation } from '@/lib/ai-usage-ledger';
 import { getMessage, saveMessage } from '@/lib/redis';
 import type { AiJobEnvelope } from '@/types/ai-job';
 import type { Message } from '@/types';
+
+const toLedgerOperation = (operation: AiJobEnvelope['operation']): AiUsageOperation =>
+  operation === 'folder_auto_organize'
+    ? 'auto_organize'
+    : operation === 'meeting_dialogue_retry'
+      ? 'meeting_dialogue'
+      : operation;
 
 /**
  * Terminal failure after QStash retries are exhausted (or non-retryable infra error on last attempt).
@@ -38,7 +46,11 @@ export async function markAiJobFailed(envelope: AiJobEnvelope, error: string): P
     const payload = await getJobPayload(jobId);
     const refundUnits =
       payload?.operation === 'transcript_summarize' ? (payload.chargedUsageUnits ?? 1) : 1;
-    await decrementBy(deviceId, refundUnits);
+    await decrementBy(deviceId, refundUnits, {
+      operation: toLedgerOperation(operation),
+      jobId,
+      metadata: { chargedUsageUnits: refundUnits },
+    });
     await saveMessage(
       jobId,
       {
@@ -50,7 +62,10 @@ export async function markAiJobFailed(envelope: AiJobEnvelope, error: string): P
       ttl,
     );
   } else {
-    await decrement(deviceId);
+    await decrement(deviceId, {
+      operation: toLedgerOperation(operation),
+      jobId,
+    });
     await decrementAutoOrganizeWeekly(deviceId);
     await saveMessage(
       jobId,

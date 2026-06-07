@@ -718,7 +718,7 @@
       "proBenefitSubtitle": "Your Pro plan includes a higher weekly AI credit balance for summaries, answers, translations, and organization.",
       "freePlanTitle": "Free AI credits",
       "freePlanSubtitle": "Upgrade to Pro for more weekly AI credits and smoother automatic processing.",
-      "currentWeekOnly": "This dashboard uses the current weekly credit counter. Feature-level history will require a backend usage history model.",
+      "currentWeekOnly": "History starts from the moment credit tracking is enabled.",
       "featureBreakdownTitle": "What uses credits",
       "savingTitle": "How to save credits",
       "metrics": {
@@ -731,6 +731,26 @@
         "remainingHelper": "Available before reset",
         "proLimitHelper": "Pro weekly credits",
         "freeLimitHelper": "Free weekly credits"
+      },
+      "history": {
+        "title": "Credit activity",
+        "loading": "Loading activity...",
+        "emptyTitle": "No credit activity yet",
+        "emptySubtitle": "Your AI credit spend, refunds, and bonuses will appear here.",
+        "loadFailed": "Activity is unavailable",
+        "loadFailedHint": "Check your connection and pull down to refresh.",
+        "loadMore": "Show earlier activity",
+        "loadMoreFailed": "Earlier activity is unavailable",
+        "operations": {
+          "transcript_summarize": "Smart summary",
+          "transcript_ask": "Ask about a note",
+          "translate": "Translate",
+          "digest": "Digest",
+          "auto_organize": "Folder suggestions",
+          "meeting_dialogue": "Meeting notes",
+          "bonus": "Bonus added",
+          "unknown": "AI action"
+        }
       },
       "features": {
         "transcription": {

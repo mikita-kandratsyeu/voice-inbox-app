@@ -1,4 +1,5 @@
 import { checkAndIncrement, decrement, getResetAt } from '@/lib/ai-rate-limit';
+import { aiModelResponseFields } from '@/lib/ai-model-display';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
 import { isProDevice } from '@/lib/pro-entitlement';
@@ -6,7 +7,7 @@ import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@
 import { redis } from '@/lib/redis';
 import type { AutoOrganizeJobPayload } from '@/types/ai-job';
 import type { AutoOrganizeMessage, AutoOrganizeResult, Message } from '@/types';
-import { MESSAGE_TTL_SECONDS, WEEK_TTL_SECONDS } from '@/config/constants';
+import { MESSAGE_TTL_SECONDS, SYSTEM_MICRO_TASK_MODEL, WEEK_TTL_SECONDS } from '@/config/constants';
 
 const AUTO_ORGANIZE_FREE_WEEKLY_LIMIT = 2;
 const AUTO_ORGANIZE_WEEKLY_KEY_PREFIX = 'ai_auto_organize_weekly:';
@@ -84,7 +85,11 @@ export const createAutoOrganizeRequest = async (
   );
   if (!created) return { created: false };
 
-  const generationLimitResult = await checkAndIncrement(deviceId);
+  const generationLimitResult = await checkAndIncrement(deviceId, undefined, 1, {
+    operation: 'auto_organize',
+    jobId: id,
+    metadata: aiModelResponseFields(SYSTEM_MICRO_TASK_MODEL),
+  });
   if (!generationLimitResult.allowed) {
     await saveAutoOrganizeMessage(id, {
       id,
@@ -101,7 +106,11 @@ export const createAutoOrganizeRequest = async (
 
   const limitResult = await checkAndIncrementAutoOrganize(deviceId);
   if (!limitResult.allowed) {
-    await decrement(deviceId);
+    await decrement(deviceId, {
+      operation: 'auto_organize',
+      jobId: id,
+      description: 'Auto-organize free weekly limit reached',
+    });
     await saveAutoOrganizeMessage(id, {
       id,
       status: 'error',

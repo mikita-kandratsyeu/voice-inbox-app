@@ -1,4 +1,5 @@
 import { AI_WEEKLY_KEY_PREFIX, WEEK_TTL_SECONDS } from '@/config/constants';
+import { recordAiUsageLedgerEntry, type AiUsageLedgerContext } from '@/lib/ai-usage-ledger';
 import { getAiWeeklyLimits, type AiWeeklyLimits } from '@/lib/app-config';
 import { isProDevice } from '@/lib/pro-entitlement';
 import { redis } from '@/lib/redis';
@@ -11,7 +12,9 @@ export type AiUsage = {
   resetAtUtc: string;
 };
 
-export type CheckResult = { allowed: true; usage: AiUsage } | { allowed: false; usage: AiUsage };
+export type CheckResult =
+  | { allowed: true; usage: AiUsage; ledgerEntryId: string | null }
+  | { allowed: false; usage: AiUsage };
 export type AiLimitContext = {
   isPro: boolean;
   weeklyLimits: AiWeeklyLimits;
@@ -91,6 +94,7 @@ export const checkAndIncrement = async (
   deviceId: string,
   context?: AiLimitContext,
   units: number = 1,
+  ledger?: AiUsageLedgerContext,
 ): Promise<CheckResult> => {
   const amount = Math.max(1, Math.floor(units));
   const limit = await getWeeklyLimitForDevice(deviceId, context);
@@ -112,14 +116,28 @@ export const checkAndIncrement = async (
     return { allowed: false, usage: buildUsage(count - amount, resetAt, limit) };
   }
 
-  return { allowed: true, usage: buildUsage(count, resetAt, limit) };
+  const ledgerEntryId = await recordAiUsageLedgerEntry({
+    deviceId,
+    kind: 'debit',
+    operation: ledger?.operation,
+    amount: -amount,
+    jobId: ledger?.jobId,
+    description: ledger?.description,
+    metadata: ledger?.metadata,
+  });
+
+  return { allowed: true, usage: buildUsage(count, resetAt, limit), ledgerEntryId };
 };
 
-export const decrement = async (deviceId: string): Promise<void> => {
-  await decrementBy(deviceId, 1);
+export const decrement = async (deviceId: string, ledger?: AiUsageLedgerContext): Promise<void> => {
+  await decrementBy(deviceId, 1, ledger);
 };
 
-export const decrementBy = async (deviceId: string, units: number): Promise<void> => {
+export const decrementBy = async (
+  deviceId: string,
+  units: number,
+  ledger?: AiUsageLedgerContext,
+): Promise<void> => {
   const amount = Math.max(1, Math.floor(units));
   const key = getWeekKey(deviceId);
   if (amount === 1) {
@@ -127,12 +145,39 @@ export const decrementBy = async (deviceId: string, units: number): Promise<void
   } else {
     await redis.decrBy(key, amount);
   }
+
+  await recordAiUsageLedgerEntry({
+    deviceId,
+    kind: 'refund',
+    operation: ledger?.operation,
+    amount,
+    jobId: ledger?.jobId,
+    description: ledger?.description,
+    metadata: ledger?.metadata,
+  });
 };
 
-export const addBonus = async (deviceId: string, amount: number): Promise<void> => {
+export const addBonus = async (
+  deviceId: string,
+  amount: number,
+  ledger?: AiUsageLedgerContext,
+): Promise<number> => {
   const key = getWeekKey(deviceId);
   const raw = await redis.get(key);
   const used = raw ? parseInt(raw, 10) : 0;
   const newUsed = Math.max(0, used - amount);
   await redis.set(key, String(newUsed), { ex: WEEK_TTL_SECONDS });
+  const credited = used - newUsed;
+
+  await recordAiUsageLedgerEntry({
+    deviceId,
+    kind: 'credit',
+    operation: ledger?.operation ?? 'bonus',
+    amount: credited,
+    jobId: ledger?.jobId,
+    description: ledger?.description,
+    metadata: ledger?.metadata,
+  });
+
+  return credited;
 };

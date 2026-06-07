@@ -7,6 +7,8 @@ import {
   type MeetingDialogueUserPromptInput,
 } from '@/lib/meeting-dialogue-user-prompt';
 import { mergeOpenRouterTokenUsage } from '@/lib/openrouter-token-usage';
+import { aiModelResponseFields } from '@/lib/ai-model-display';
+import { updateAiUsageLedgerMetadata } from '@/lib/ai-usage-ledger';
 import { getMessage, saveMessage } from '@/lib/redis';
 import { processMeetingDialogueMarkdown } from '@/services/ai.service';
 import type { MeetingDialogueJobPayload } from '@/types/ai-job';
@@ -96,6 +98,16 @@ export async function runMeetingDialogueJob(payload: MeetingDialogueJobPayload):
       deviceId,
       recordId: id,
       logLabel: 'Meeting dialogue complete',
+    });
+
+    await updateAiUsageLedgerMetadata({
+      deviceId,
+      operation: 'meeting_dialogue',
+      jobId: id,
+      metadata: {
+        ...aiModelResponseFields(payload.model),
+        ...(mdPart.tokenUsage ? { tokenUsage: mdPart.tokenUsage } : {}),
+      },
     });
   } catch (err) {
     const done = existing as Extract<Message, { status: 'done' }>;

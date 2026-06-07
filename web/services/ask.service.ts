@@ -51,7 +51,11 @@ export const createAsk = async (
     return { created: false };
   }
 
-  const limitResult = await checkAndIncrement(deviceId, aiLimitContext);
+  const limitResult = await checkAndIncrement(deviceId, aiLimitContext, 1, {
+    operation: 'transcript_ask',
+    jobId: id,
+    metadata: aiModelResponseFields(model),
+  });
 
   if (!limitResult.allowed) {
     await saveAskMessage(id, {

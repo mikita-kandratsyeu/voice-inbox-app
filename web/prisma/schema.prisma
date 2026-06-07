@@ -123,6 +123,21 @@ model DeviceProEntitlement {
   updatedAt DateTime @updatedAt
 }
 
+model AiUsageLedgerEntry {
+  id          String   @id @default(cuid())
+  deviceId    String
+  createdAt   DateTime @default(now())
+  kind        String
+  operation   String
+  amount      Int
+  jobId       String?
+  description String?
+  metadata    Json?
+
+  @@index([deviceId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([jobId])
+}
+
 model AdminBudgetExpense {
   id          String   @id @default(cuid())
   spentAt     DateTime @default(now())

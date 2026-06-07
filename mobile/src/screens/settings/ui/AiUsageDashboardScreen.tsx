@@ -11,6 +11,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  ActivityIndicator,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -27,8 +28,13 @@ import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
-import type { AiUsage } from '@/shared/lib/ai-api';
-import { getAiUsage } from '@/shared/lib/ai-api';
+import {
+  type AiUsage,
+  type AiUsageHistoryEntry,
+  getAiUsage,
+  getAiUsageHistory,
+} from '@/shared/lib/ai-api';
+import { formatTokenCount } from '@/shared/lib/formatTokenCount';
 import { formatLocalizedLongDateWithTime } from '@/shared/lib/taskDeadlineTimeDisplay';
 import {
   SCREEN_PADDING,
@@ -45,6 +51,8 @@ type UsageMetricCardProps = {
   color: Colors;
   tone: string;
 };
+
+const HISTORY_PAGE_LIMIT = 25;
 
 function UsageMetricCard({ label, value, helper, color, tone }: UsageMetricCardProps) {
   return (
@@ -71,6 +79,24 @@ function UsageMetricCard({ label, value, helper, color, tone }: UsageMetricCardP
       </Text>
       <Text className="mt-1 text-[13px] leading-[18px]" style={{ color: color.text.secondary }}>
         {helper}
+      </Text>
+    </View>
+  );
+}
+
+function HistoryAmount({ amount, color }: { amount: number; color: Colors }) {
+  const isPositive = amount > 0;
+  const tone = isPositive
+    ? { bg: color.status.success, text: '#ffffff' }
+    : { bg: color.status.error.bg, text: color.status.error.text };
+
+  return (
+    <View className="rounded-full px-2.5 py-1" style={{ backgroundColor: tone.bg }}>
+      <Text
+        className="text-right text-[15px] font-bold"
+        style={[styles.tabular, { color: tone.text }]}
+      >
+        {isPositive ? `+${amount}` : String(amount)}
       </Text>
     </View>
   );
@@ -122,7 +148,12 @@ export const AiUsageDashboardScreen = () => {
   const { isProActive } = useProEntitlement();
 
   const [usage, setUsage] = useState<AiUsage | null>(null);
+  const [historyItems, setHistoryItems] = useState<AiUsageHistoryEntry[]>([]);
+  const [historyCursor, setHistoryCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyLoadingMore, setHistoryLoadingMore] = useState(false);
+  const [historyLoadFailed, setHistoryLoadFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadUsage = useCallback(async (isPull = false) => {
@@ -130,13 +161,27 @@ export const AiUsageDashboardScreen = () => {
       setRefreshing(true);
     } else {
       setLoading(true);
+      setHistoryLoading(true);
     }
 
     try {
-      const nextUsage = await getAiUsage();
+      const [nextUsage, nextHistory] = await Promise.all([
+        getAiUsage(),
+        getAiUsageHistory({ limit: HISTORY_PAGE_LIMIT }),
+      ]);
       setUsage(nextUsage);
+      if (nextHistory) {
+        setHistoryItems(nextHistory.items);
+        setHistoryCursor(nextHistory.nextCursor);
+        setHistoryLoadFailed(false);
+      } else {
+        setHistoryItems([]);
+        setHistoryCursor(null);
+        setHistoryLoadFailed(true);
+      }
     } finally {
       setLoading(false);
+      setHistoryLoading(false);
       setRefreshing(false);
     }
   }, []);
@@ -145,12 +190,61 @@ export const AiUsageDashboardScreen = () => {
     void loadUsage();
   }, [loadUsage]);
 
+  const loadMoreHistory = useCallback(async () => {
+    if (!historyCursor || historyLoadingMore) return;
+
+    setHistoryLoadingMore(true);
+    try {
+      const nextHistory = await getAiUsageHistory({
+        cursor: historyCursor,
+        limit: HISTORY_PAGE_LIMIT,
+      });
+      if (nextHistory) {
+        setHistoryItems((current) => [...current, ...nextHistory.items]);
+        setHistoryCursor(nextHistory.nextCursor);
+        setHistoryLoadFailed(false);
+      } else {
+        setHistoryLoadFailed(true);
+      }
+    } finally {
+      setHistoryLoadingMore(false);
+    }
+  }, [historyCursor, historyLoadingMore]);
+
   const progressPercent =
     usage && usage.limit > 0 ? Math.min(100, Math.round((usage.used / usage.limit) * 100)) : 0;
   const resetDateText = usage ? formatLocalizedLongDateWithTime(usage.resetAt, i18n.language) : '—';
   const remainingText = usage ? String(usage.remaining) : '—';
   const usedText = usage ? String(usage.used) : '—';
   const limitText = usage ? String(usage.limit) : '—';
+  const historyHasFooter = historyLoadFailed || historyCursor != null;
+  const getHistoryOperationLabel = useCallback(
+    (entry: AiUsageHistoryEntry) =>
+      t(`settings.aiUsageDashboard.history.operations.${entry.operation}`),
+    [t],
+  );
+  const getHistorySubtitle = useCallback(
+    (entry: AiUsageHistoryEntry) => {
+      const date = formatLocalizedLongDateWithTime(entry.createdAt, i18n.language);
+      const details: string[] = [];
+      const model = entry.modelLabel?.trim() || entry.model?.trim();
+
+      if (model) {
+        details.push(model);
+      }
+      if (entry.tokenUsage) {
+        details.push(
+          t('recordingDetail.summaryMetaTokens', {
+            input: formatTokenCount(entry.tokenUsage.prompt),
+            output: formatTokenCount(entry.tokenUsage.completion),
+          }),
+        );
+      }
+
+      return details.length > 0 ? `${date}\n${details.join(' • ')}` : date;
+    },
+    [i18n.language, t],
+  );
 
   const featureRows = useMemo(
     () => [
@@ -296,6 +390,72 @@ export const AiUsageDashboardScreen = () => {
                 isLast={index === featureRows.length - 1}
               />
             ))}
+          </SettingsSection>
+
+          <SettingsSection title={t('settings.aiUsageDashboard.history.title')}>
+            {historyLoading ? (
+              <SettingsRow
+                label={t('settings.aiUsageDashboard.history.loading')}
+                leftIcon={<ActivityIndicator size="small" color={color.accent.primary} />}
+                showChevron={false}
+                isFirst
+                isLast
+              />
+            ) : historyLoadFailed && historyItems.length === 0 ? (
+              <SettingsRow
+                label={t('settings.aiUsageDashboard.history.loadFailed')}
+                subtitle={t('settings.aiUsageDashboard.history.loadFailedHint')}
+                leftIcon={<WifiOff size={20} color={color.text.secondary} strokeWidth={1.8} />}
+                showChevron={false}
+                isFirst
+                isLast
+              />
+            ) : historyItems.length === 0 ? (
+              <SettingsRow
+                label={t('settings.aiUsageDashboard.history.emptyTitle')}
+                subtitle={t('settings.aiUsageDashboard.history.emptySubtitle')}
+                leftIcon={<Cloud size={20} color={color.text.secondary} strokeWidth={1.8} />}
+                showChevron={false}
+                isFirst
+                isLast
+              />
+            ) : (
+              <>
+                {historyItems.map((entry, index) => (
+                  <SettingsRow
+                    key={entry.id}
+                    label={getHistoryOperationLabel(entry)}
+                    subtitle={getHistorySubtitle(entry)}
+                    rightSlot={<HistoryAmount amount={entry.amount} color={color} />}
+                    showChevron={false}
+                    isFirst={index === 0}
+                    isLast={index === historyItems.length - 1 && !historyHasFooter}
+                  />
+                ))}
+                {historyLoadFailed ? (
+                  <SettingsRow
+                    label={t('settings.aiUsageDashboard.history.loadMoreFailed')}
+                    subtitle={t('settings.aiUsageDashboard.history.loadFailedHint')}
+                    leftIcon={<WifiOff size={20} color={color.text.secondary} strokeWidth={1.8} />}
+                    showChevron={false}
+                    isLast={historyCursor == null}
+                  />
+                ) : null}
+                {historyCursor ? (
+                  <SettingsRow
+                    label={t('settings.aiUsageDashboard.history.loadMore')}
+                    onPress={historyLoadingMore ? undefined : loadMoreHistory}
+                    rightSlot={
+                      historyLoadingMore ? (
+                        <ActivityIndicator size="small" color={color.accent.primary} />
+                      ) : undefined
+                    }
+                    showChevron={false}
+                    isLast
+                  />
+                ) : null}
+              </>
+            )}
           </SettingsSection>
 
           <View

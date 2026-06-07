@@ -239,6 +239,36 @@ export type AiUsage = {
   bonusAmount?: number;
 };
 
+export type AiUsageHistoryKind = 'debit' | 'credit' | 'refund';
+
+export type AiUsageHistoryOperation =
+  | 'transcript_summarize'
+  | 'transcript_ask'
+  | 'translate'
+  | 'digest'
+  | 'auto_organize'
+  | 'meeting_dialogue'
+  | 'bonus'
+  | 'unknown';
+
+export type AiUsageHistoryEntry = {
+  id: string;
+  createdAt: string;
+  kind: AiUsageHistoryKind;
+  operation: AiUsageHistoryOperation;
+  amount: number;
+  jobId?: string;
+  description?: string;
+  model?: string;
+  modelLabel?: string;
+  tokenUsage?: { prompt: number; completion: number };
+};
+
+export type AiUsageHistoryPage = {
+  items: AiUsageHistoryEntry[];
+  nextCursor: string | null;
+};
+
 function parseAiUsagePayload(raw: Record<string, unknown>): AiUsage {
   const bonusAmountRaw = raw.bonusAmount;
   const bonusAmount =
@@ -258,6 +288,49 @@ function parseAiUsagePayload(raw: Record<string, unknown>): AiUsage {
   };
 }
 
+function parseAiUsageHistoryEntry(raw: Record<string, unknown>): AiUsageHistoryEntry {
+  const tokenUsage = parseHistoryTokenUsage(raw.tokenUsage);
+
+  return {
+    id: String(raw.id ?? ''),
+    createdAt: String(raw.createdAt ?? ''),
+    kind: String(raw.kind ?? 'debit') as AiUsageHistoryKind,
+    operation: String(raw.operation ?? 'unknown') as AiUsageHistoryOperation,
+    amount: Number(raw.amount) || 0,
+    ...(isString(raw.jobId) ? { jobId: raw.jobId } : {}),
+    ...(isString(raw.description) ? { description: raw.description } : {}),
+    ...(isString(raw.model) ? { model: raw.model } : {}),
+    ...(isString(raw.modelLabel) ? { modelLabel: raw.modelLabel } : {}),
+    ...(tokenUsage ? { tokenUsage } : {}),
+  };
+}
+
+function parseHistoryTokenUsage(raw: unknown): { prompt: number; completion: number } | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const row = raw as Record<string, unknown>;
+  const prompt =
+    typeof row.prompt === 'number' && row.prompt >= 0 ? Math.floor(row.prompt) : undefined;
+  const completion =
+    typeof row.completion === 'number' && row.completion >= 0
+      ? Math.floor(row.completion)
+      : undefined;
+  return prompt != null && completion != null ? { prompt, completion } : undefined;
+}
+
+function parseAiUsageHistoryPayload(raw: Record<string, unknown>): AiUsageHistoryPage {
+  const items = Array.isArray(raw.items)
+    ? raw.items
+        .filter((item): item is Record<string, unknown> => item != null && typeof item === 'object')
+        .map(parseAiUsageHistoryEntry)
+        .filter((item) => item.id && item.createdAt)
+    : [];
+
+  return {
+    items,
+    nextCursor: isString(raw.nextCursor) && raw.nextCursor.length > 0 ? raw.nextCursor : null,
+  };
+}
+
 export async function getAiUsage(): Promise<AiUsage | null> {
   try {
     const response = await fetchWithAuth(`${getWebApiUrl()}/api/ai-usage`, { method: 'GET' });
@@ -269,6 +342,32 @@ export async function getAiUsage(): Promise<AiUsage | null> {
     const data = (await response.json()) as Record<string, unknown>;
 
     return parseAiUsagePayload(data);
+  } catch {
+    return null;
+  }
+}
+
+export async function getAiUsageHistory(params?: {
+  cursor?: string | null;
+  limit?: number;
+}): Promise<AiUsageHistoryPage | null> {
+  try {
+    const queryParts: string[] = [];
+    if (params?.cursor) queryParts.push(`cursor=${encodeURIComponent(params.cursor)}`);
+    if (params?.limit != null) queryParts.push(`limit=${encodeURIComponent(String(params.limit))}`);
+    const query = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
+
+    const response = await fetchWithAuth(`${getWebApiUrl()}/api/ai-usage/history${query}`, {
+      method: 'GET',
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = (await response.json()) as Record<string, unknown>;
+
+    return parseAiUsageHistoryPayload(data);
   } catch {
     return null;
   }

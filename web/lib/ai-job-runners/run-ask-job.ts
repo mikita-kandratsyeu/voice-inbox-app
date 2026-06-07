@@ -2,6 +2,7 @@ import { decrement } from '@/lib/ai-rate-limit';
 import { isRetryableAiJobError } from '@/lib/ai-job-retry';
 import { notifyAiJobComplete } from '@/lib/ai-job-push';
 import { aiModelResponseFields } from '@/lib/ai-model-display';
+import { updateAiUsageLedgerMetadata } from '@/lib/ai-usage-ledger';
 import { saveMessage } from '@/lib/redis';
 import { processAskQuestion } from '@/services/ai.service';
 import type { AskJobPayload } from '@/types/ai-job';
@@ -55,9 +56,23 @@ export async function runAskJob(payload: AskJobPayload): Promise<void> {
       recordId: id,
       logLabel: 'Ask complete',
     });
+
+    await updateAiUsageLedgerMetadata({
+      deviceId,
+      operation: 'transcript_ask',
+      jobId: id,
+      metadata: {
+        ...aiModelResponseFields(model),
+        ...(result.tokenUsage ? { tokenUsage: result.tokenUsage } : {}),
+      },
+    });
   } catch (err) {
     if (!isRetryableAiJobError(err)) {
-      await decrement(deviceId);
+      await decrement(deviceId, {
+        operation: 'transcript_ask',
+        jobId: id,
+        metadata: { model },
+      });
       await saveAskMessage(id, {
         id,
         status: 'error',

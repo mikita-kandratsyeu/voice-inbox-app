@@ -46,7 +46,10 @@ export async function runAutoOrganizeJob(payload: AutoOrganizeJobPayload): Promi
     });
   } catch (err) {
     if (!isRetryableAiJobError(err)) {
-      await decrement(deviceId);
+      await decrement(deviceId, {
+        operation: 'auto_organize',
+        jobId: id,
+      });
       await decrementAutoOrganizeWeekly(deviceId);
       await saveAutoOrganizeMessage(id, {
         id,

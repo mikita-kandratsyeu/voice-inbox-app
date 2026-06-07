@@ -12,6 +12,7 @@ import {
 } from '@/lib/meeting-dialogue-user-prompt';
 import { mergeOpenRouterTokenUsage } from '@/lib/openrouter-token-usage';
 import { aiModelResponseFields } from '@/lib/ai-model-display';
+import { updateAiUsageLedgerMetadata } from '@/lib/ai-usage-ledger';
 import { saveMessage } from '@/lib/redis';
 import { processMeetingDialogueMarkdown, processTranscript } from '@/services/ai.service';
 import type { MeetingDialogueJobPayload, SummarizeJobPayload } from '@/types/ai-job';
@@ -146,6 +147,17 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
       logLabel: 'AI complete',
     });
 
+    await updateAiUsageLedgerMetadata({
+      deviceId,
+      operation: 'transcript_summarize',
+      jobId: id,
+      metadata: {
+        ...aiModelResponseFields(model),
+        chargedUsageUnits: payload.chargedUsageUnits ?? 1,
+        ...(result.tokenUsage ? { tokenUsage: result.tokenUsage } : {}),
+      },
+    });
+
     if (useAsyncMeetingDialogue) {
       const meetingPayload: MeetingDialogueJobPayload = {
         operation: 'meeting_dialogue',
@@ -167,7 +179,11 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
     }
   } catch (err) {
     if (!isRetryableAiJobError(err)) {
-      await decrementBy(deviceId, payload.chargedUsageUnits ?? 1);
+      await decrementBy(deviceId, payload.chargedUsageUnits ?? 1, {
+        operation: 'transcript_summarize',
+        jobId: id,
+        metadata: { model, chargedUsageUnits: payload.chargedUsageUnits ?? 1 },
+      });
       await saveMessage(
         id,
         {
