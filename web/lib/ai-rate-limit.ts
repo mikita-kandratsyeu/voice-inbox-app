@@ -20,6 +20,15 @@ export type AiLimitContext = {
   weeklyLimits: AiWeeklyLimits;
 };
 
+const AI_DEBIT_KEY_PREFIX = 'ai_debit:';
+
+const getDebitIdempotencyKey = (deviceId: string, ledger?: AiUsageLedgerContext): string | null => {
+  const jobId = ledger?.jobId?.trim();
+  if (!jobId) return null;
+
+  return `${AI_DEBIT_KEY_PREFIX}${deviceId}:${ledger.operation}:${jobId}`;
+};
+
 const getIsoWeek = (date: Date): { year: number; week: number } => {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
@@ -99,11 +108,37 @@ export const checkAndIncrement = async (
   const amount = Math.max(1, Math.floor(units));
   const limit = await getWeeklyLimitForDevice(deviceId, context);
   const key = getWeekKey(deviceId);
-  const reservation = await redis.incrementWithinLimit(key, amount, limit, WEEK_TTL_SECONDS);
+  const debitKey = getDebitIdempotencyKey(deviceId, ledger);
+  const reservedDebitKey = debitKey
+    ? await redis.setIfNotExists(debitKey, String(amount), { ex: WEEK_TTL_SECONDS })
+    : true;
 
   const resetAt = getResetAt();
 
+  if (!reservedDebitKey) {
+    const raw = await redis.get(key);
+    const used = raw ? parseInt(raw, 10) : 0;
+    return {
+      allowed: true,
+      usage: buildUsage(Number.isFinite(used) ? used : 0, resetAt, limit),
+      ledgerEntryId: null,
+    };
+  }
+
+  let reservation: { allowed: boolean; value: number };
+  try {
+    reservation = await redis.incrementWithinLimit(key, amount, limit, WEEK_TTL_SECONDS);
+  } catch (err) {
+    if (debitKey) {
+      await redis.del(debitKey);
+    }
+    throw err;
+  }
+
   if (!reservation.allowed) {
+    if (debitKey) {
+      await redis.del(debitKey);
+    }
     return { allowed: false, usage: buildUsage(reservation.value, resetAt, limit) };
   }
 
@@ -132,6 +167,10 @@ export const decrementBy = async (
   const amount = Math.max(1, Math.floor(units));
   const key = getWeekKey(deviceId);
   const refunded = (await redis.decrByWithFloor(key, amount)).delta;
+  const debitKey = getDebitIdempotencyKey(deviceId, ledger);
+  if (debitKey) {
+    await redis.del(debitKey);
+  }
 
   await recordAiUsageLedgerEntry({
     deviceId,
