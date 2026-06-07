@@ -35,6 +35,13 @@ import { PrivateModeTranscriptLimitNotice } from './PrivateModeTranscriptLimitNo
 import { TaskEditSheet } from './TaskEditSheet';
 import { TaskReextractHintSheet } from './TaskReextractHintSheet';
 
+type TaskEditValue = {
+  text: string;
+  deadline?: string | null;
+  deadlineTime?: string | null;
+  priority?: TaskItem['priority'];
+};
+
 type TasksTabProps = {
   tasks: TaskItem[];
   nextSteps?: string[];
@@ -48,7 +55,7 @@ type TasksTabProps = {
   onAddManualTask: (text: string) => void;
   onPromoteNextStepToTask: (step: string, stepIndex: number) => void;
   onDeleteTask: (taskId: string) => void;
-  onEditTask: (taskId: string, text: string) => boolean;
+  onEditTask: (taskId: string, value: TaskEditValue) => boolean;
   onDismissError?: () => void;
   showPrivateModeCta?: boolean;
   onSwitchToSmartMode?: () => void;
@@ -169,7 +176,9 @@ export const TasksTab = ({
   const { addTaskToReminder } = useAddToReminder();
 
   const [reextractSheetOpen, setReextractSheetOpen] = useState(false);
-  const [editTaskTarget, setEditTaskTarget] = useState<{ id: string; text: string } | null>(null);
+  const [editTaskTarget, setEditTaskTarget] = useState<
+    Pick<TaskItem, 'id' | 'text' | 'deadline' | 'deadlineTime' | 'priority'> | null
+  >(null);
 
   const reextractSheet = useMemo(
     () => (
@@ -189,10 +198,14 @@ export const TasksTab = ({
       <TaskEditSheet
         visible={editTaskTarget !== null}
         initialText={editTaskTarget?.text ?? ''}
+        initialDeadline={editTaskTarget?.deadline}
+        initialDeadlineTime={editTaskTarget?.deadlineTime}
+        initialPriority={editTaskTarget?.priority}
+        showMetadataFields
         onClose={() => setEditTaskTarget(null)}
-        onSave={({ text }) => {
+        onSave={(value) => {
           if (!editTaskTarget) return false;
-          return onEditTask(editTaskTarget.id, text);
+          return onEditTask(editTaskTarget.id, value);
         }}
       />
     ),
@@ -388,7 +401,13 @@ export const TasksTab = ({
                   shouldOpenOnLongPress={false}
                   onPressAction={async ({ nativeEvent }) => {
                     if (nativeEvent.event === 'editTask') {
-                      setEditTaskTarget({ id: task.id, text: task.text });
+                      setEditTaskTarget({
+                        id: task.id,
+                        text: task.text,
+                        deadline: task.deadline,
+                        deadlineTime: task.deadlineTime,
+                        priority: task.priority,
+                      });
                     }
                     if (nativeEvent.event === 'addToCalendar') {
                       await addTaskToCalendar(

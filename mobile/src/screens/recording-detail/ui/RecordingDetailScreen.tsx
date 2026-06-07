@@ -1,6 +1,7 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, LayoutAnimation, useWindowDimensions, View } from 'react-native';
@@ -14,6 +15,7 @@ import {
   type MeetingSummaryTemplate,
   type RecordingMark,
   type RecordingStatus,
+  type TaskItem,
   useRecordStore,
 } from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
@@ -61,6 +63,39 @@ import { SummaryTab } from './SummaryTab';
 import { TaskEditSheet } from './TaskEditSheet';
 import { TasksTab } from './TasksTab';
 import { TranscriptContent } from './TranscriptContent';
+
+type TaskEditValue = {
+  text: string;
+  deadline?: string | null;
+  deadlineTime?: string | null;
+  priority?: TaskItem['priority'];
+};
+
+const isValidDeadlineInput = (value: string): boolean => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  return dayjs(value).isValid() && dayjs(value).format('YYYY-MM-DD') === value;
+};
+
+const isPastDeadlineInput = (value: string): boolean => dayjs(value).isBefore(dayjs(), 'day');
+
+const isValidDeadlineTimeInput = (value: string): boolean =>
+  /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+
+const isPastDeadlineDateTimeInput = (deadline: string, deadlineTime: string): boolean => {
+  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(deadline);
+  const timeMatch = /^(\d{2}):(\d{2})$/.exec(deadlineTime);
+  if (!dateMatch || !timeMatch) return false;
+
+  const value = new Date(
+    Number(dateMatch[1]),
+    Number(dateMatch[2]) - 1,
+    Number(dateMatch[3]),
+    Number(timeMatch[1]),
+    Number(timeMatch[2]),
+  );
+
+  return value.getTime() <= Date.now();
+};
 
 export const RecordingDetailScreen = () => {
   const { t } = useTranslation();
@@ -233,8 +268,8 @@ export const RecordingDetailScreen = () => {
   );
 
   const handleEditTask = useCallback(
-    (taskId: string, newText: string): boolean => {
-      const trimmed = newText.trim();
+    (taskId: string, nextValue: TaskEditValue): boolean => {
+      const trimmed = nextValue.text.trim();
 
       if (!trimmed) return false;
 
@@ -248,7 +283,41 @@ export const RecordingDetailScreen = () => {
         return false;
       }
 
-      const next = prev.map((x) => (x.id === taskId ? { ...x, text: trimmed } : x));
+      const nextDeadline = nextValue.deadline?.trim() ?? '';
+      const nextDeadlineTime = nextValue.deadlineTime?.trim() ?? '';
+      if (nextDeadline.length > 0 && !isValidDeadlineInput(nextDeadline)) {
+        Alert.alert(t('common.error'), t('tasks.deadlineInvalid'));
+        return false;
+      }
+      if (nextDeadlineTime.length > 0 && !isValidDeadlineTimeInput(nextDeadlineTime)) {
+        Alert.alert(t('common.error'), t('tasks.deadlineInvalid'));
+        return false;
+      }
+      if (nextDeadline.length > 0 && isPastDeadlineInput(nextDeadline)) {
+        Alert.alert(t('common.error'), t('tasks.deadlinePastInvalid'));
+        return false;
+      }
+      if (
+        nextDeadline.length > 0 &&
+        nextDeadlineTime.length > 0 &&
+        isPastDeadlineDateTimeInput(nextDeadline, nextDeadlineTime)
+      ) {
+        Alert.alert(t('common.error'), t('tasks.deadlineTimePastInvalid'));
+        return false;
+      }
+
+      const next = prev.map((x) =>
+        x.id === taskId
+          ? {
+              ...x,
+              text: trimmed,
+              deadline: nextDeadline.length > 0 ? nextDeadline : null,
+              deadlineTime:
+                nextDeadline.length > 0 && nextDeadlineTime.length > 0 ? nextDeadlineTime : null,
+              priority: nextValue.priority ?? x.priority ?? 'medium',
+            }
+          : x,
+      );
       updateTasks(liveRecord.id, next).catch(() => {});
 
       return true;
