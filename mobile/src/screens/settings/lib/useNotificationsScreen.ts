@@ -3,7 +3,13 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AppState } from 'react-native';
 
+import type { BackupReminderPeriodDays } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
+import {
+  disableBackupReminderNotifications,
+  enableBackupReminderNotifications,
+  syncAllBackupReminderNotifications,
+} from '@/features/backup-reminder-notifications';
 import {
   checkTaskNotificationPermission,
   disableTaskDeadlineNotifications,
@@ -37,6 +43,9 @@ async function syncFeaturesWithNotificationPermission(status: PushPermissionStat
     if (useSettingsStore.getState().taskDeadlineNotificationsEnabled) {
       await syncAllTaskDeadlineNotifications();
     }
+    if (useSettingsStore.getState().backupReminderNotificationsEnabled) {
+      await syncAllBackupReminderNotifications();
+    }
     return;
   }
 
@@ -44,6 +53,7 @@ async function syncFeaturesWithNotificationPermission(status: PushPermissionStat
     await disableAiProcessingAlerts();
   }
   await disableTaskDeadlineNotifications();
+  await disableBackupReminderNotifications();
 }
 
 export function useNotificationsScreen() {
@@ -52,9 +62,15 @@ export function useNotificationsScreen() {
   const taskDeadlineNotificationsEnabled = useSettingsStore(
     (s) => s.taskDeadlineNotificationsEnabled,
   );
+  const backupReminderNotificationsEnabled = useSettingsStore(
+    (s) => s.backupReminderNotificationsEnabled,
+  );
+  const backupReminderPeriodDays = useSettingsStore((s) => s.backupReminderPeriodDays);
+  const setBackupReminderPeriodDays = useSettingsStore((s) => s.setBackupReminderPeriodDays);
   const [notificationPermission, setNotificationPermission] = useState<PushPermissionStatus | null>(
     null,
   );
+  const [backupReminderPeriodSheetVisible, setBackupReminderPeriodSheetVisible] = useState(false);
 
   const refreshNotificationPermission = useCallback(async () => {
     const status = await readNotificationPermission();
@@ -110,12 +126,63 @@ export function useNotificationsScreen() {
     [t],
   );
 
+  const handleBackupReminderNotificationsChange = useCallback(
+    async (value: boolean) => {
+      if (value) {
+        const permission = await readNotificationPermission();
+        if (permission !== 'granted') {
+          Alert.alert(
+            t('settings.notificationsScreen.backupRemindersDeniedTitle'),
+            t('settings.notificationsScreen.backupRemindersDeniedMessage'),
+            [
+              { text: t('common.cancel'), style: 'cancel' },
+              { text: t('settings.permissionOpenSettings'), onPress: () => openAppSettings() },
+            ],
+          );
+          return;
+        }
+
+        await enableBackupReminderNotifications();
+        return;
+      }
+
+      await disableBackupReminderNotifications();
+    },
+    [t],
+  );
+
+  const handleBackupReminderPeriodPress = useCallback(() => {
+    setBackupReminderPeriodSheetVisible(true);
+  }, []);
+
+  const handleBackupReminderPeriodSheetClose = useCallback(() => {
+    setBackupReminderPeriodSheetVisible(false);
+  }, []);
+
+  const handleBackupReminderPeriodSelect = useCallback(
+    (days: BackupReminderPeriodDays) => {
+      setBackupReminderPeriodDays(days);
+      setBackupReminderPeriodSheetVisible(false);
+      if (useSettingsStore.getState().backupReminderNotificationsEnabled) {
+        void syncAllBackupReminderNotifications();
+      }
+    },
+    [setBackupReminderPeriodDays],
+  );
+
   return {
     t,
     color,
     notificationPermission,
     taskDeadlineNotificationsEnabled,
+    backupReminderNotificationsEnabled,
+    backupReminderPeriodDays,
+    backupReminderPeriodSheetVisible,
     handleNotificationPermission,
     handleTaskDeadlineNotificationsChange,
+    handleBackupReminderNotificationsChange,
+    handleBackupReminderPeriodPress,
+    handleBackupReminderPeriodSheetClose,
+    handleBackupReminderPeriodSelect,
   };
 }

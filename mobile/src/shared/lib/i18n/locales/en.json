@@ -967,6 +967,8 @@
       "aiAlertsDeniedMessage": "Allow notifications for Voice Inbox AI in your device settings to get transcript and AI processing updates.",
       "taskRemindersDeniedTitle": "Turn on notifications",
       "taskRemindersDeniedMessage": "Allow notifications for Voice Inbox in your device settings to receive task due-date reminders.",
+      "backupRemindersDeniedTitle": "Turn on notifications",
+      "backupRemindersDeniedMessage": "Allow notifications in system settings to receive backup reminders.",
       "systemDeniedHint": "Notifications are off in your device settings. Turn them on there, then come back to the app."
     },
     "transcriptionRecoveryNotifications": "Transcription recovery",
@@ -974,6 +976,14 @@
     "taskDeadlineNotifications": "Task reminders",
     "taskDeadlineNotificationsHint": "Task due dates on this device. They work offline and are not sent to the cloud.",
     "taskDeadlineNotificationsChannel": "Voice Inbox reminders",
+    "backupReminderNotifications": "Backup reminders",
+    "backupReminderNotificationsHint": "Local reminders to export backups of your notes. They work offline and are not sent to the cloud.",
+    "backupReminderNotificationsChannel": "Backup reminders",
+    "backupReminderPeriod": "Reminder period",
+    "backupReminderPeriodValue_one": "Every {{count}} day",
+    "backupReminderPeriodValue_other": "Every {{count}} days",
+    "backupReminderPeriodPickerTitle": "Backup reminder period",
+    "backupReminderPeriodPickerMessage": "Choose how often to remind you to export a local backup.",
     "planStatus": {
       "freeTitle": "Free plan",
       "freeSidebarTitle": "Upgrade to Pro",
@@ -1809,6 +1819,10 @@
     "fallbackTitle": "Task due",
     "body": "From {{recordTitle}}",
     "bodyWithTime": "Due at {{time}} · {{recordTitle}}"
+  },
+  "backupReminderNotifications": {
+    "title": "Create a backup",
+    "body": "Export a local backup so your notes stay safe."
   },
   "classification": {
     "personal": "Personal",

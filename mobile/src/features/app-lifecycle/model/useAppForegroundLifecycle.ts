@@ -4,6 +4,7 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { useRecordStore } from '@/entities/record';
 import { syncPrivateCapabilityTier } from '@/entities/settings';
 import { scheduleResumeAllPendingCloudSummarize } from '@/features/ai-processing';
+import { syncAllBackupReminderNotifications } from '@/features/backup-reminder-notifications';
 import { localLlmModelDownloader } from '@/features/model-manager/lib/local-llm-download';
 import { whisperModelDownloader } from '@/features/model-manager/lib/whisper-download';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
@@ -90,6 +91,7 @@ export function useAppForegroundLifecycle(): void {
           sendForegroundHeartbeat();
           lastForegroundAt = now;
           scheduleResumeAllPendingCloudSummarize();
+          void syncAllBackupReminderNotifications();
         }
         foregroundInterval = setInterval(maybeNotifyForeground, HEARTBEAT_INTERVAL_MS);
       } else {

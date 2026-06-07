@@ -48,6 +48,7 @@ export type WhisperModelVariantId = `${WhisperModelId}:${WhisperModelWeightsForm
 export type WhisperModelStatus = 'not_downloaded' | 'downloading' | 'downloaded' | 'error';
 
 export type AutoArchiveAfterDays = 1 | 7 | 14 | 30;
+export type BackupReminderPeriodDays = 7 | 14 | 30;
 
 export type AIModel = {
   id: AIModelId;
@@ -132,6 +133,8 @@ export type SettingsState = {
   autoArchiveEnabled: boolean;
   autoArchiveAfterDays: AutoArchiveAfterDays;
   taskDeadlineNotificationsEnabled: boolean;
+  backupReminderNotificationsEnabled: boolean;
+  backupReminderPeriodDays: BackupReminderPeriodDays;
   aiProcessingAlertsEnabled: boolean;
   cloudAiThirdPartyConsentAccepted: boolean;
   cloudAiKvTtlSeconds: number;
@@ -177,6 +180,8 @@ export type SettingsState = {
   setAutoArchiveEnabled: (value: boolean) => void;
   setAutoArchiveAfterDays: (value: AutoArchiveAfterDays) => void;
   setTaskDeadlineNotificationsEnabled: (value: boolean) => void;
+  setBackupReminderNotificationsEnabled: (value: boolean) => void;
+  setBackupReminderPeriodDays: (value: BackupReminderPeriodDays) => void;
   setAiProcessingAlertsEnabled: (value: boolean) => void;
   setCloudAiThirdPartyConsentAccepted: (value: boolean) => void;
   setCloudAiKvTtlSeconds: (value: number) => void;

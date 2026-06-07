@@ -57,6 +57,12 @@ function scheduleTaskDeadlineNotificationLocaleSync(): void {
     .catch(() => {});
 }
 
+function scheduleBackupReminderNotificationLocaleSync(): void {
+  void import('@/features/backup-reminder-notifications')
+    .then((mod) => mod.syncAllBackupReminderNotifications())
+    .catch(() => {});
+}
+
 export function applyAppLanguage(): void {
   const locale = getEffectiveLocale();
   dayjs.locale(resolveDayjsLocale(locale));
@@ -65,6 +71,7 @@ export function applyAppLanguage(): void {
     i18n.changeLanguage(locale);
     schedulePushLocaleSync();
     scheduleTaskDeadlineNotificationLocaleSync();
+    scheduleBackupReminderNotificationLocaleSync();
   }
 }
 

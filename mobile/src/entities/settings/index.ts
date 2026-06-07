@@ -67,6 +67,7 @@ export type {
   AppLanguage,
   AppTheme,
   AutoArchiveAfterDays,
+  BackupReminderPeriodDays,
   DownloadBytes,
   LocalAiModelId,
   PrivateAiProvider,

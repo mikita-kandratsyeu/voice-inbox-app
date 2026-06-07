@@ -986,6 +986,8 @@
       "aiAlertsDeniedMessage": "Разрешите уведомления для Voice Inbox в настройках устройства, чтобы получать статус расшифровки и ИИ-обработки.",
       "taskRemindersDeniedTitle": "Включите уведомления",
       "taskRemindersDeniedMessage": "Разрешите уведомления для Voice Inbox в настройках устройства, чтобы получать напоминания о сроках задач.",
+      "backupRemindersDeniedTitle": "Включите уведомления",
+      "backupRemindersDeniedMessage": "Разрешите уведомления в настройках системы, чтобы получать напоминания о резервных копиях.",
       "systemDeniedHint": "Уведомления выключены в настройках системы. Включите их там и вернитесь в приложение."
     },
     "transcriptionRecoveryNotifications": "Восстановление транскрипции",
@@ -993,6 +995,16 @@
     "taskDeadlineNotifications": "Напоминания о задачах",
     "taskDeadlineNotificationsHint": "Сроки задач на этом устройстве. Работают без интернета и не отправляются в облако.",
     "taskDeadlineNotificationsChannel": "Напоминания Voice Inbox",
+    "backupReminderNotifications": "Напоминания о резервных копиях",
+    "backupReminderNotificationsHint": "Локальные напоминания экспортировать резервные копии заметок. Работают без интернета и не отправляются в облако.",
+    "backupReminderNotificationsChannel": "Резервные копии",
+    "backupReminderPeriod": "Период напоминаний",
+    "backupReminderPeriodValue_one": "Каждый {{count}} день",
+    "backupReminderPeriodValue_few": "Каждые {{count}} дня",
+    "backupReminderPeriodValue_many": "Каждые {{count}} дней",
+    "backupReminderPeriodValue_other": "Каждые {{count}} дней",
+    "backupReminderPeriodPickerTitle": "Период напоминаний",
+    "backupReminderPeriodPickerMessage": "Выберите, как часто напоминать об экспорте локальной резервной копии.",
     "planStatus": {
       "freeTitle": "Бесплатный план",
       "freeSidebarTitle": "Перейти на Pro",
@@ -1836,6 +1848,10 @@
     "fallbackTitle": "Срок задачи",
     "body": "Задача из «{{recordTitle}}»",
     "bodyWithTime": "Срок в {{time}} · «{{recordTitle}}»"
+  },
+  "backupReminderNotifications": {
+    "title": "Пора сделать резервную копию",
+    "body": "Экспортируйте локальную резервную копию, чтобы заметки были в безопасности."
   },
   "classification": {
     "personal": "Личное",

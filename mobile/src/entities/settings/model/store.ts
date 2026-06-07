@@ -31,6 +31,7 @@ import type {
   AppLanguage,
   AppTheme,
   AutoArchiveAfterDays,
+  BackupReminderPeriodDays,
   LocalAiModelId,
   PrivateCapabilityTier,
   PrivateLocalLlmBudget,
@@ -84,6 +85,8 @@ const KEYS = {
   AUTO_ARCHIVE_ENABLED: 'settings.autoArchiveEnabled',
   AUTO_ARCHIVE_AFTER_DAYS: 'settings.autoArchiveAfterDays',
   TASK_DEADLINE_NOTIFICATIONS_ENABLED: 'settings.taskDeadlineNotificationsEnabled',
+  BACKUP_REMINDER_NOTIFICATIONS_ENABLED: 'settings.backupReminderNotificationsEnabled',
+  BACKUP_REMINDER_PERIOD_DAYS: 'settings.backupReminderPeriodDays',
   AI_PROCESSING_ALERTS_ENABLED: 'settings.aiProcessingAlertsEnabled',
   CLOUD_AI_THIRD_PARTY_CONSENT: 'settings.cloudAiThirdPartyConsentAccepted',
   CLOUD_AI_KV_TTL_SECONDS: 'settings.cloudAiKvTtlSeconds',
@@ -259,6 +262,12 @@ const parseAutoArchiveAfterDays = (raw: string | undefined): AutoArchiveAfterDay
   return 14;
 };
 
+const parseBackupReminderPeriodDays = (raw: string | undefined): BackupReminderPeriodDays => {
+  const n = raw ? Number(raw) : NaN;
+  if (n === 7 || n === 14 || n === 30) return n;
+  return 14;
+};
+
 const getStoredAutoArchiveEnabled = (): boolean => {
   return storage.getString(KEYS.AUTO_ARCHIVE_ENABLED) === 'true';
 };
@@ -269,6 +278,14 @@ const getStoredAutoArchiveAfterDays = (): AutoArchiveAfterDays => {
 
 const getStoredTaskDeadlineNotificationsEnabled = (): boolean => {
   return storage.getString(KEYS.TASK_DEADLINE_NOTIFICATIONS_ENABLED) === 'true';
+};
+
+const getStoredBackupReminderNotificationsEnabled = (): boolean => {
+  return storage.getString(KEYS.BACKUP_REMINDER_NOTIFICATIONS_ENABLED) === 'true';
+};
+
+const getStoredBackupReminderPeriodDays = (): BackupReminderPeriodDays => {
+  return parseBackupReminderPeriodDays(storage.getString(KEYS.BACKUP_REMINDER_PERIOD_DAYS));
 };
 
 const getStoredAiProcessingAlertsEnabled = (): boolean => {
@@ -493,6 +510,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   autoArchiveEnabled: getStoredAutoArchiveEnabled(),
   autoArchiveAfterDays: getStoredAutoArchiveAfterDays(),
   taskDeadlineNotificationsEnabled: getStoredTaskDeadlineNotificationsEnabled(),
+  backupReminderNotificationsEnabled: getStoredBackupReminderNotificationsEnabled(),
+  backupReminderPeriodDays: getStoredBackupReminderPeriodDays(),
   aiProcessingAlertsEnabled: getStoredAiProcessingAlertsEnabled(),
   cloudAiThirdPartyConsentAccepted: getStoredCloudAiThirdPartyConsentAccepted(),
   cloudAiKvTtlSeconds: getStoredCloudAiKvTtlSeconds(),
@@ -839,6 +858,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setTaskDeadlineNotificationsEnabled: (value: boolean) => {
     storage.set(KEYS.TASK_DEADLINE_NOTIFICATIONS_ENABLED, String(value));
     set({ taskDeadlineNotificationsEnabled: value });
+  },
+
+  setBackupReminderNotificationsEnabled: (value: boolean) => {
+    storage.set(KEYS.BACKUP_REMINDER_NOTIFICATIONS_ENABLED, String(value));
+    set({ backupReminderNotificationsEnabled: value });
+  },
+
+  setBackupReminderPeriodDays: (value: BackupReminderPeriodDays) => {
+    storage.set(KEYS.BACKUP_REMINDER_PERIOD_DAYS, String(value));
+    set({ backupReminderPeriodDays: value });
   },
 
   setAiProcessingAlertsEnabled: (value: boolean) => {

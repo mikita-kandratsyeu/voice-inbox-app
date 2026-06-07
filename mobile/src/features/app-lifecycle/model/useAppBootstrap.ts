@@ -11,6 +11,7 @@ import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import { syncPrivateCapabilityTier } from '@/entities/settings';
 import { runAutoArchiveReadNotesIfEligible } from '@/features/auto-archive/model/runAutoArchiveReadNotesIfEligible';
+import { syncAllBackupReminderNotifications } from '@/features/backup-reminder-notifications';
 import { initRevenueCatWhenReady } from '@/features/entitlements';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { syncAllTaskDeadlineNotifications } from '@/features/task-deadline-notifications';
@@ -113,6 +114,12 @@ export function useAppBootstrap(
           await syncAllTaskDeadlineNotifications();
         } catch {
           if (__DEV__) console.warn('[bootstrap] task deadline notification sync failed');
+        }
+
+        try {
+          await syncAllBackupReminderNotifications();
+        } catch {
+          if (__DEV__) console.warn('[bootstrap] backup reminder notification sync failed');
         }
 
         void cleanupOrphanTranscriptionTempWavs(useRecordStore.getState().records);
