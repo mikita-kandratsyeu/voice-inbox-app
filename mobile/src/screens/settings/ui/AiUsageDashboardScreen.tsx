@@ -1,12 +1,15 @@
 import {
+  AlertCircle,
+  ArrowLeftRight,
   Cloud,
   FolderTree,
+  Gauge,
+  History,
   Languages,
   MessageCircleQuestion,
   Mic,
   Newspaper,
   Sparkles,
-  WifiOff,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -473,7 +476,7 @@ export const AiUsageDashboardScreen = () => {
                   <SettingsRow
                     label={t('settings.aiUsage.loadFailed')}
                     subtitle={t('settings.aiUsage.loadFailedHint')}
-                    leftIcon={<WifiOff size={20} color={color.text.secondary} strokeWidth={1.8} />}
+                    leftIcon={<Gauge size={20} color={color.text.secondary} strokeWidth={1.8} />}
                     showChevron={false}
                     isFirst
                     isLast
@@ -523,7 +526,9 @@ export const AiUsageDashboardScreen = () => {
                   <SettingsRow
                     label={t('settings.aiUsageDashboard.history.loadFailed')}
                     subtitle={t('settings.aiUsageDashboard.history.loadFailedHint')}
-                    leftIcon={<WifiOff size={20} color={color.text.secondary} strokeWidth={1.8} />}
+                    leftIcon={
+                      <History size={20} color={color.status.error.text} strokeWidth={1.8} />
+                    }
                     showChevron={false}
                     isFirst
                     isLast
@@ -532,7 +537,9 @@ export const AiUsageDashboardScreen = () => {
                   <SettingsRow
                     label={t('settings.aiUsageDashboard.history.emptyTitle')}
                     subtitle={t('settings.aiUsageDashboard.history.emptySubtitle')}
-                    leftIcon={<Cloud size={20} color={color.text.secondary} strokeWidth={1.8} />}
+                    leftIcon={
+                      <ArrowLeftRight size={20} color={color.text.muted} strokeWidth={1.8} />
+                    }
                     showChevron={false}
                     isFirst
                     isLast
@@ -555,7 +562,11 @@ export const AiUsageDashboardScreen = () => {
                         label={t('settings.aiUsageDashboard.history.loadMoreFailed')}
                         subtitle={t('settings.aiUsageDashboard.history.loadFailedHint')}
                         leftIcon={
-                          <WifiOff size={20} color={color.text.secondary} strokeWidth={1.8} />
+                          <AlertCircle
+                            size={20}
+                            color={color.status.error.text}
+                            strokeWidth={1.8}
+                          />
                         }
                         showChevron={false}
                         isLast={historyCursor == null}
