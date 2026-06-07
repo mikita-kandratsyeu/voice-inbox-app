@@ -1,7 +1,7 @@
 import { Inbox } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import type { Folder } from '@/entities/folder';
 import { FolderLucideIcon } from '@/entities/folder/lib/folderLucideIcons';
@@ -22,6 +22,7 @@ type RecordingDetailCardProps = {
   folderPlacement: RecordingDetailFolderPlacement;
   hideFolderPlacement?: boolean;
   surfaceBackgroundColor?: string;
+  children?: React.ReactNode;
 };
 
 export const RecordingDetailCard = ({
@@ -30,6 +31,7 @@ export const RecordingDetailCard = ({
   folderPlacement,
   hideFolderPlacement = false,
   surfaceBackgroundColor,
+  children,
 }: RecordingDetailCardProps) => {
   const { t, i18n } = useTranslation();
   const normalizeLabel = (s: string): string =>
@@ -220,6 +222,14 @@ export const RecordingDetailCard = ({
           {formatRelativeTime(record.createdAt, i18n.language)}
         </Text>
       )}
+      {children ? (
+        <View
+          className="mt-2 pt-4"
+          style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.border.default }}
+        >
+          {children}
+        </View>
+      ) : null}
     </View>
   );
 };

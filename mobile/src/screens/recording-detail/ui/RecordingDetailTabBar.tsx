@@ -31,6 +31,9 @@ export const RecordingDetailTabBar = ({
     <View
       className="flex-row"
       style={{
+        overflow: 'hidden',
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: color.border.default,
       }}
@@ -74,7 +77,7 @@ export const RecordingDetailTabBar = ({
               <View
                 pointerEvents="none"
                 className="absolute left-0 right-0 items-center"
-                style={{ bottom: 2 }}
+                style={{ bottom: 6 }}
               >
                 <View
                   className="h-[3px] w-9 rounded-full"

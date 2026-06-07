@@ -28,6 +28,7 @@ type AudioPlayerProps = {
   audioPath?: string;
   onPositionChange?: (positionMs: number) => void;
   surfaceBackgroundColor?: string;
+  embedded?: boolean;
 };
 
 export type AudioPlayerRef = {
@@ -47,7 +48,7 @@ const parseDuration = (d: string) => {
 const player = AudioRecorderPlayer;
 
 export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function AudioPlayer(
-  { duration, color, audioPath, onPositionChange, surfaceBackgroundColor },
+  { duration, color, audioPath, onPositionChange, surfaceBackgroundColor, embedded = false },
   ref,
 ) {
   const { t } = useTranslation();
@@ -325,10 +326,12 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
 
   return (
     <View
-      className="gap-3 rounded-2xl"
+      className={embedded ? 'gap-3' : 'gap-3 rounded-2xl'}
       style={{
-        backgroundColor: surfaceBackgroundColor ?? color.background.card,
-        padding: 16,
+        backgroundColor: embedded
+          ? 'transparent'
+          : (surfaceBackgroundColor ?? color.background.card),
+        padding: embedded ? 0 : 16,
       }}
     >
       <View className="gap-1.5">

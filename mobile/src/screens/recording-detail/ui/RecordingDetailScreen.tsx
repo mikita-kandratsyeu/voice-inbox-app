@@ -646,6 +646,11 @@ export const RecordingDetailScreen = () => {
   const tabPanelBackgroundColor = isPrivateMode
     ? color.background.secondary
     : color.background.card;
+  const stickyTabIndex =
+    1 +
+    (hasAudio && hasRecordingMarks ? 1 : 0) +
+    (hasAudio ? 1 : 0) +
+    (showMeetingModeToggle ? 1 : 0);
 
   return (
     <View className="flex-1" style={{ backgroundColor: shellBackgroundColor }}>
@@ -709,30 +714,31 @@ export const RecordingDetailScreen = () => {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         bottomOffset={16}
+        stickyHeaderIndices={[stickyTabIndex]}
       >
-        <View style={{ width: '100%', maxWidth: contentMaxWidth, gap: 12 }}>
+        <View style={{ width: '100%', maxWidth: contentMaxWidth }}>
           <RecordingDetailCard
             record={liveRecord}
             color={color}
             folderPlacement={folderPlacement}
             hideFolderPlacement={!foldersEnabled}
             surfaceBackgroundColor={tabPanelBackgroundColor}
-          />
-
-          {hasAudio && (
-            <View className="overflow-hidden rounded-2xl">
+          >
+            {hasAudio ? (
               <AudioPlayer
                 ref={audioPlayerRef}
                 duration={liveRecord.duration}
                 color={color}
                 audioPath={liveRecord.audioPath}
                 onPositionChange={onPositionUpdate}
-                surfaceBackgroundColor={tabPanelBackgroundColor}
+                embedded
               />
-            </View>
-          )}
+            ) : null}
+          </RecordingDetailCard>
+        </View>
 
-          {hasAudio && hasRecordingMarks && (
+        {hasAudio && hasRecordingMarks && (
+          <View style={{ width: '100%', maxWidth: contentMaxWidth }}>
             <RecordingMarksSection
               marks={liveRecord.recordingMarks ?? []}
               color={color}
@@ -741,20 +747,25 @@ export const RecordingDetailScreen = () => {
               onUpdateMarks={handleUpdateRecordingMarks}
               canEditMarks={isProActive}
             />
-          )}
+          </View>
+        )}
 
-          {hasAudio && (
-            <View className="overflow-hidden rounded-2xl">
-              <AudioLanguageSelector
-                value={recordLanguage}
-                color={color}
-                onSelect={setRecordLanguage}
-                surfaceBackgroundColor={tabPanelBackgroundColor}
-              />
-            </View>
-          )}
+        {hasAudio && (
+          <View
+            className="overflow-hidden rounded-2xl"
+            style={{ width: '100%', maxWidth: contentMaxWidth }}
+          >
+            <AudioLanguageSelector
+              value={recordLanguage}
+              color={color}
+              onSelect={setRecordLanguage}
+              surfaceBackgroundColor={tabPanelBackgroundColor}
+            />
+          </View>
+        )}
 
-          {showMeetingModeToggle ? (
+        {showMeetingModeToggle ? (
+          <View style={{ width: '100%', maxWidth: contentMaxWidth }}>
             <RecordingMeetingModeSection
               isMeetingMode={isMeetingMode}
               selectedTemplate={liveRecord.meetingSummaryTemplate ?? 'general'}
@@ -764,144 +775,165 @@ export const RecordingDetailScreen = () => {
               onToggleMeetingMode={handleToggleMeetingMode}
               onSelectTemplate={handleSelectMeetingSummaryTemplate}
             />
-          ) : null}
-
-          <View
-            className="overflow-hidden rounded-2xl"
-            style={{ backgroundColor: tabPanelBackgroundColor }}
-          >
-            <RecordingDetailTabBar
-              active={activeTab}
-              onSelect={onSelectTab}
-              color={color}
-              hasAudio={hasAudio}
-              tabs={detailTabs}
-            />
-            {mountedTabs.has('transcript') && (
-              <View style={activeTab !== 'transcript' ? { display: 'none' } : undefined}>
-                <TranscriptContent
-                  record={liveRecord}
-                  color={color}
-                  currentPositionMs={currentPositionMs}
-                  onTranscribe={handleRetranscribe}
-                  onDiscardResume={handleDiscardPausedTranscription}
-                  onCancelTranscription={handleCancelTranscription}
-                  isPrivateMode={isPrivateMode}
-                />
-              </View>
-            )}
-            {mountedTabs.has('summary') && (
-              <View style={activeTab !== 'summary' ? { display: 'none' } : undefined}>
-                <SummaryTab
-                  summary={liveRecord.summary ?? ''}
-                  keyPhrases={liveRecord.keyPhrases}
-                  status={liveRecord.summaryStatus ?? 'idle'}
-                  errorMessage={liveRecord.summaryError}
-                  hasTranscript={Boolean(liveRecord.transcript)}
-                  color={color}
-                  onGenerate={handleGenerateSummary}
-                  isMeeting={meetingPresetUiActive}
-                  onShareMeetingBrief={onOpenShareMenu}
-                  onDismissError={handleDismissSummaryError}
-                  showPrivateModeCta={aiExecutionMode === 'private_experimental'}
-                  onSwitchToSmartMode={handleSwitchToSmartMode}
-                  onCancelProcessing={handleCancelAiGeneration}
-                  speakerBreakdownProcessing={
-                    meetingPresetUiActive && liveRecord.meetingDialogueStatus === 'processing'
-                  }
-                  isPrivateMode={isPrivateMode}
-                  isPrivateCustomServer={isPrivateCustomServer}
-                  privateAiBatchProgress={liveRecord.privateAiBatchProgress}
-                  privateAiBatchPhase={liveRecord.privateAiBatchPhase}
-                  privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
-                  privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
-                  transcriptCharCount={liveRecord.transcript?.length ?? 0}
-                  cloudMeetingDialogueExtra={meetingPresetUiActive}
-                  summaryReasoning={liveRecord.summaryReasoning}
-                  summaryAiModel={liveRecord.summaryAiModel}
-                  summaryAiModelLabel={liveRecord.summaryAiModelLabel}
-                  summaryTokenUsage={
-                    liveRecord.summaryTokensPrompt != null &&
-                    liveRecord.summaryTokensCompletion != null
-                      ? {
-                          prompt: liveRecord.summaryTokensPrompt,
-                          completion: liveRecord.summaryTokensCompletion,
-                        }
-                      : undefined
-                  }
-                  summaryGenerationMs={liveRecord.summaryGenerationMs}
-                />
-              </View>
-            )}
-            {mountedTabs.has('dialogue') && meetingPresetUiActive && (
-              <View style={activeTab !== 'dialogue' ? { display: 'none' } : undefined}>
-                <MeetingDialogueTab
-                  meetingDialogue={liveRecord.meetingDialogue}
-                  speakerLabels={liveRecord.meetingSpeakerLabels}
-                  onRenameSpeaker={handleRenameSpeaker}
-                  hasTranscript={Boolean(liveRecord.transcript)}
-                  hasSummary={Boolean(liveRecord.summary?.trim())}
-                  summaryProcessing={
-                    liveRecord.summaryStatus === 'processing' ||
-                    liveRecord.tasksStatus === 'processing'
-                  }
-                  color={color}
-                  onGenerate={handleGenerateSummary}
-                  onRegenerateDialogueOnly={handleRegenerateMeetingDialogueOnly}
-                  canRegenerateDialogueOnly={canRegenerateMeetingDialogueOnly}
-                  status={meetingDialogueTabStatus}
-                  errorMessage={liveRecord.meetingDialogueError ?? liveRecord.summaryError}
-                  onDismissError={handleDismissMeetingDialogueError}
-                  showPrivateModeCta={aiExecutionMode === 'private_experimental'}
-                  onCancelProcessing={handleCancelAiGeneration}
-                  isPrivateMode={isPrivateMode}
-                  isPrivateCustomServer={isPrivateCustomServer}
-                  privateAiBatchProgress={liveRecord.privateAiBatchProgress}
-                  privateAiBatchPhase={liveRecord.privateAiBatchPhase}
-                  privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
-                  privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
-                  transcriptCharCount={liveRecord.transcript?.length ?? 0}
-                  cloudMeetingDialogueExtra={meetingPresetUiActive}
-                />
-              </View>
-            )}
-            {mountedTabs.has('tasks') && (
-              <View style={activeTab !== 'tasks' ? { display: 'none' } : undefined}>
-                <TasksTab
-                  tasks={liveRecord.tasks ?? []}
-                  nextSteps={liveRecord.nextSteps}
-                  status={liveRecord.tasksStatus ?? 'idle'}
-                  errorMessage={liveRecord.tasksError}
-                  hasTranscript={Boolean(liveRecord.transcript)}
-                  recordTitle={liveRecord.title}
-                  color={color}
-                  onToggle={handleToggleTask}
-                  onExtract={handleExtractTasks}
-                  onAddManualTask={handleAddManualTask}
-                  onPromoteNextStepToTask={handlePromoteNextStepToTask}
-                  onDeleteTask={handleDeleteTask}
-                  onEditTask={handleEditTask}
-                  onDismissError={handleDismissSummaryError}
-                  showPrivateModeCta={aiExecutionMode === 'private_experimental'}
-                  onSwitchToSmartMode={handleSwitchToSmartMode}
-                  onCancelProcessing={handleCancelAiGeneration}
-                  isPrivateMode={isPrivateMode}
-                  isPrivateCustomServer={isPrivateCustomServer}
-                  privateAiBatchProgress={liveRecord.privateAiBatchProgress}
-                  privateAiBatchPhase={liveRecord.privateAiBatchPhase}
-                  privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
-                  privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
-                  transcriptCharCount={liveRecord.transcript?.length ?? 0}
-                  cloudMeetingDialogueExtra={meetingPresetUiActive}
-                />
-              </View>
-            )}
           </View>
+        ) : null}
 
-          <RelatedNotesSection recordId={liveRecord.id} color={color} />
-
-          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
+        <View
+          style={{
+            width: '100%',
+            maxWidth: contentMaxWidth,
+            overflow: 'hidden',
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+            backgroundColor: tabPanelBackgroundColor,
+          }}
+        >
+          <RecordingDetailTabBar
+            active={activeTab}
+            onSelect={onSelectTab}
+            color={color}
+            hasAudio={hasAudio}
+            tabs={detailTabs}
+          />
         </View>
+
+        <View
+          className="overflow-hidden"
+          style={{
+            width: '100%',
+            maxWidth: contentMaxWidth,
+            marginTop: -12,
+            backgroundColor: tabPanelBackgroundColor,
+            borderBottomLeftRadius: 16,
+            borderBottomRightRadius: 16,
+          }}
+        >
+          {mountedTabs.has('transcript') && (
+            <View style={activeTab !== 'transcript' ? { display: 'none' } : undefined}>
+              <TranscriptContent
+                record={liveRecord}
+                color={color}
+                currentPositionMs={currentPositionMs}
+                onTranscribe={handleRetranscribe}
+                onDiscardResume={handleDiscardPausedTranscription}
+                onCancelTranscription={handleCancelTranscription}
+                isPrivateMode={isPrivateMode}
+              />
+            </View>
+          )}
+          {mountedTabs.has('summary') && (
+            <View style={activeTab !== 'summary' ? { display: 'none' } : undefined}>
+              <SummaryTab
+                summary={liveRecord.summary ?? ''}
+                keyPhrases={liveRecord.keyPhrases}
+                status={liveRecord.summaryStatus ?? 'idle'}
+                errorMessage={liveRecord.summaryError}
+                hasTranscript={Boolean(liveRecord.transcript)}
+                color={color}
+                onGenerate={handleGenerateSummary}
+                isMeeting={meetingPresetUiActive}
+                onShareMeetingBrief={onOpenShareMenu}
+                onDismissError={handleDismissSummaryError}
+                showPrivateModeCta={aiExecutionMode === 'private_experimental'}
+                onSwitchToSmartMode={handleSwitchToSmartMode}
+                onCancelProcessing={handleCancelAiGeneration}
+                speakerBreakdownProcessing={
+                  meetingPresetUiActive && liveRecord.meetingDialogueStatus === 'processing'
+                }
+                isPrivateMode={isPrivateMode}
+                isPrivateCustomServer={isPrivateCustomServer}
+                privateAiBatchProgress={liveRecord.privateAiBatchProgress}
+                privateAiBatchPhase={liveRecord.privateAiBatchPhase}
+                privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
+                privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
+                transcriptCharCount={liveRecord.transcript?.length ?? 0}
+                cloudMeetingDialogueExtra={meetingPresetUiActive}
+                summaryReasoning={liveRecord.summaryReasoning}
+                summaryAiModel={liveRecord.summaryAiModel}
+                summaryAiModelLabel={liveRecord.summaryAiModelLabel}
+                summaryTokenUsage={
+                  liveRecord.summaryTokensPrompt != null &&
+                  liveRecord.summaryTokensCompletion != null
+                    ? {
+                        prompt: liveRecord.summaryTokensPrompt,
+                        completion: liveRecord.summaryTokensCompletion,
+                      }
+                    : undefined
+                }
+                summaryGenerationMs={liveRecord.summaryGenerationMs}
+              />
+            </View>
+          )}
+          {mountedTabs.has('dialogue') && meetingPresetUiActive && (
+            <View style={activeTab !== 'dialogue' ? { display: 'none' } : undefined}>
+              <MeetingDialogueTab
+                meetingDialogue={liveRecord.meetingDialogue}
+                speakerLabels={liveRecord.meetingSpeakerLabels}
+                onRenameSpeaker={handleRenameSpeaker}
+                hasTranscript={Boolean(liveRecord.transcript)}
+                hasSummary={Boolean(liveRecord.summary?.trim())}
+                summaryProcessing={
+                  liveRecord.summaryStatus === 'processing' ||
+                  liveRecord.tasksStatus === 'processing'
+                }
+                color={color}
+                onGenerate={handleGenerateSummary}
+                onRegenerateDialogueOnly={handleRegenerateMeetingDialogueOnly}
+                canRegenerateDialogueOnly={canRegenerateMeetingDialogueOnly}
+                status={meetingDialogueTabStatus}
+                errorMessage={liveRecord.meetingDialogueError ?? liveRecord.summaryError}
+                onDismissError={handleDismissMeetingDialogueError}
+                showPrivateModeCta={aiExecutionMode === 'private_experimental'}
+                onCancelProcessing={handleCancelAiGeneration}
+                isPrivateMode={isPrivateMode}
+                isPrivateCustomServer={isPrivateCustomServer}
+                privateAiBatchProgress={liveRecord.privateAiBatchProgress}
+                privateAiBatchPhase={liveRecord.privateAiBatchPhase}
+                privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
+                privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
+                transcriptCharCount={liveRecord.transcript?.length ?? 0}
+                cloudMeetingDialogueExtra={meetingPresetUiActive}
+              />
+            </View>
+          )}
+          {mountedTabs.has('tasks') && (
+            <View style={activeTab !== 'tasks' ? { display: 'none' } : undefined}>
+              <TasksTab
+                tasks={liveRecord.tasks ?? []}
+                nextSteps={liveRecord.nextSteps}
+                status={liveRecord.tasksStatus ?? 'idle'}
+                errorMessage={liveRecord.tasksError}
+                hasTranscript={Boolean(liveRecord.transcript)}
+                recordTitle={liveRecord.title}
+                color={color}
+                onToggle={handleToggleTask}
+                onExtract={handleExtractTasks}
+                onAddManualTask={handleAddManualTask}
+                onPromoteNextStepToTask={handlePromoteNextStepToTask}
+                onDeleteTask={handleDeleteTask}
+                onEditTask={handleEditTask}
+                onDismissError={handleDismissSummaryError}
+                showPrivateModeCta={aiExecutionMode === 'private_experimental'}
+                onSwitchToSmartMode={handleSwitchToSmartMode}
+                onCancelProcessing={handleCancelAiGeneration}
+                isPrivateMode={isPrivateMode}
+                isPrivateCustomServer={isPrivateCustomServer}
+                privateAiBatchProgress={liveRecord.privateAiBatchProgress}
+                privateAiBatchPhase={liveRecord.privateAiBatchPhase}
+                privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
+                privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
+                transcriptCharCount={liveRecord.transcript?.length ?? 0}
+                cloudMeetingDialogueExtra={meetingPresetUiActive}
+              />
+            </View>
+          )}
+        </View>
+
+        <View style={{ width: '100%', maxWidth: contentMaxWidth }}>
+          <RelatedNotesSection recordId={liveRecord.id} color={color} />
+        </View>
+
+        <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
       </KeyboardAwareScrollView>
     </View>
   );
