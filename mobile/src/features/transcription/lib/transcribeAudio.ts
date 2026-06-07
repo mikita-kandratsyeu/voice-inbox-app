@@ -112,6 +112,38 @@ const mapSegments = (
     tokens: mapTokens(seg?.tokens, chunkOffsetMs),
   }));
 
+const getLatestSegmentEndMs = (segments: TranscriptSegment[]): number | null => {
+  let latest: number | null = null;
+  for (const segment of segments) {
+    if (typeof segment.endMs !== 'number') continue;
+    latest = latest == null ? segment.endMs : Math.max(latest, segment.endMs);
+  }
+  return latest;
+};
+
+const appendText = (existing: string, next: string): string => {
+  const trimmed = next.trim();
+  if (trimmed.length === 0) return existing;
+  return existing.length > 0 ? `${existing} ${trimmed}` : trimmed;
+};
+
+const removeFullyOverlappedSegments = (
+  segments: TranscriptSegment[],
+  previousEndMs: number | null,
+): TranscriptSegment[] => {
+  if (previousEndMs == null) return segments;
+
+  return segments
+    .filter((segment) => segment.endMs == null || segment.endMs > previousEndMs)
+    .map((segment) => {
+      const tokens = segment.tokens?.filter((token) => token.endMs > previousEndMs);
+      return {
+        ...segment,
+        ...(tokens ? { tokens } : {}),
+      };
+    });
+};
+
 export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudioHandle => {
   const {
     context,
@@ -359,12 +391,23 @@ const transcribeLong = async ({
 
     const result = normalizeResult(raw);
     const timestampOffsetMs = chunk.offsetMs;
-    const chunkSegments = mapSegments(result, segmentOffset, timestampOffsetMs);
+    const previousEndMs = getLatestSegmentEndMs(allSegments);
+    const chunkSegments = removeFullyOverlappedSegments(
+      mapSegments(result, 0, timestampOffsetMs),
+      previousEndMs,
+    ).map((segment, idx) => ({
+      ...segment,
+      id: String(segmentOffset + idx),
+    }));
     allSegments.push(...chunkSegments);
     segmentOffset += chunkSegments.length;
 
-    const chunkText = (result.result ?? '').trim();
-    fullText = fullText.length > 0 ? `${fullText} ${chunkText}` : chunkText;
+    const acceptedSegmentText = chunkSegments
+      .map((segment) => segment.text)
+      .filter((text) => text.length > 0)
+      .join(' ');
+    const fallbackText = result.segments.length === 0 ? result.result : '';
+    fullText = appendText(fullText, acceptedSegmentText || fallbackText);
 
     onChunkCompleted?.({
       chunkIndex: i,

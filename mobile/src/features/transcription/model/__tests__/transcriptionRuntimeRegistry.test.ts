@@ -84,7 +84,9 @@ describe('transcriptionRuntimeRegistry', () => {
       recordId: 'rec_runtime',
       audioPath: '/docs/audio.wav',
       modelId: 'whisper-base',
+      modelFormat: 'q5_1',
       language: 'ru',
+      chunkProfile: { chunkDurationSec: 24, chunkOverlapSec: 3 },
       totalChunks: 2,
       lastCompletedChunkIndex: 1,
       fullText: 'hello',
@@ -93,11 +95,13 @@ describe('transcriptionRuntimeRegistry', () => {
 
     const checkpoint = getTranscriptionCheckpointSnapshot('rec_runtime');
     expect(checkpoint).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       recordId: 'rec_runtime',
       audioPath: '/docs/audio.wav',
       modelId: 'whisper-base',
+      modelFormat: 'q5_1',
       language: 'ru',
+      chunkProfile: { chunkDurationSec: 24, chunkOverlapSec: 3 },
       totalChunks: 2,
       lastCompletedChunkIndex: 1,
       fullText: 'hello',

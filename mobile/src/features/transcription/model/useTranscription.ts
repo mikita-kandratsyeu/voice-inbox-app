@@ -296,7 +296,10 @@ export const useTranscription = () => {
           checkpoint &&
           checkpoint.audioPath === normalizedAudioPath &&
           checkpoint.modelId === selectedWhisperModel &&
-          checkpoint.language === language;
+          checkpoint.modelFormat === selectedWhisperModelFormat &&
+          checkpoint.language === language &&
+          checkpoint.chunkProfile.chunkDurationSec === chunkProfile.chunkDurationSec &&
+          checkpoint.chunkProfile.chunkOverlapSec === chunkProfile.chunkOverlapSec;
         const resume =
           canResumeFromCheckpoint && checkpoint
             ? {
@@ -336,7 +339,9 @@ export const useTranscription = () => {
                 recordId: record.id,
                 audioPath: normalizedAudioPath,
                 modelId: selectedWhisperModel,
+                modelFormat: selectedWhisperModelFormat,
                 language,
+                chunkProfile,
                 totalChunks,
                 lastCompletedChunkIndex: chunkIndex,
                 fullText,

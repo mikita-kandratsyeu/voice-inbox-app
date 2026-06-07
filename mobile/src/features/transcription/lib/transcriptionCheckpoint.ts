@@ -1,10 +1,12 @@
 import type { TranscriptSegment } from '@/entities/record';
-import type { WhisperModelId } from '@/entities/settings';
+import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
 import { getDocumentDirectoryPath, NitroFS } from '@/shared/lib/fs';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
+import type { TranscriptionChunkProfile } from './transcribeAudio';
+
 const CHECKPOINTS_DIR = `${getDocumentDirectoryPath()}/transcription-checkpoints`;
-const CHECKPOINT_SCHEMA_VERSION = 1;
+const CHECKPOINT_SCHEMA_VERSION = 2;
 const CHECKPOINT_TTL_MS = 12 * 60 * 60 * 1000;
 
 export type TranscriptionCheckpoint = {
@@ -12,7 +14,9 @@ export type TranscriptionCheckpoint = {
   recordId: string;
   audioPath: string;
   modelId: WhisperModelId;
+  modelFormat: WhisperModelWeightsFormat;
   language: string;
+  chunkProfile: TranscriptionChunkProfile;
   totalChunks: number;
   lastCompletedChunkIndex: number;
   fullText: string;
@@ -24,6 +28,14 @@ const getCheckpointPath = (recordId: string): string => `${CHECKPOINTS_DIR}/${re
 
 const normalizeAudioPath = (path: string): string =>
   path.startsWith('file://') ? path.slice(7) : path;
+
+const isValidChunkProfile = (value: unknown): value is TranscriptionChunkProfile =>
+  typeof value === 'object' &&
+  value != null &&
+  'chunkDurationSec' in value &&
+  'chunkOverlapSec' in value &&
+  isNumber((value as TranscriptionChunkProfile).chunkDurationSec) &&
+  isNumber((value as TranscriptionChunkProfile).chunkOverlapSec);
 
 const checkpointWriteInFlightByRecordId = new Map<string, Promise<void>>();
 
@@ -91,7 +103,9 @@ export const getTranscriptionCheckpoint = async (
       !isString(parsed.recordId) ||
       !isString(parsed.audioPath) ||
       !isString(parsed.modelId) ||
+      !isString(parsed.modelFormat) ||
       !isString(parsed.language) ||
+      !isValidChunkProfile(parsed.chunkProfile) ||
       !isNumber(parsed.totalChunks) ||
       !isNumber(parsed.lastCompletedChunkIndex) ||
       !isString(parsed.fullText) ||
@@ -106,7 +120,9 @@ export const getTranscriptionCheckpoint = async (
       recordId: parsed.recordId,
       audioPath: normalizeAudioPath(parsed.audioPath),
       modelId: parsed.modelId as WhisperModelId,
+      modelFormat: parsed.modelFormat as WhisperModelWeightsFormat,
       language: parsed.language,
+      chunkProfile: parsed.chunkProfile,
       totalChunks: parsed.totalChunks,
       lastCompletedChunkIndex: parsed.lastCompletedChunkIndex,
       fullText: parsed.fullText,
@@ -169,7 +185,9 @@ export const listTranscriptionCheckpoints = async (): Promise<TranscriptionCheck
           isString(x.recordId) &&
           isString(x.audioPath) &&
           isString(x.modelId) &&
+          isString(x.modelFormat) &&
           isString(x.language) &&
+          isValidChunkProfile(x.chunkProfile) &&
           isNumber(x.totalChunks) &&
           isNumber(x.lastCompletedChunkIndex) &&
           isString(x.fullText) &&
@@ -181,7 +199,9 @@ export const listTranscriptionCheckpoints = async (): Promise<TranscriptionCheck
         recordId: x.recordId as string,
         audioPath: normalizeAudioPath(x.audioPath as string),
         modelId: x.modelId as WhisperModelId,
+        modelFormat: x.modelFormat as WhisperModelWeightsFormat,
         language: x.language as string,
+        chunkProfile: x.chunkProfile as TranscriptionChunkProfile,
         totalChunks: x.totalChunks as number,
         lastCompletedChunkIndex: x.lastCompletedChunkIndex as number,
         fullText: x.fullText as string,

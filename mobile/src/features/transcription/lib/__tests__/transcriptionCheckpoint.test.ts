@@ -88,7 +88,9 @@ describe('transcriptionCheckpoint', () => {
       recordId: 'rec_1',
       audioPath: 'file:///docs/recordings/rec_1.wav',
       modelId: 'whisper-small',
+      modelFormat: 'q5_1',
       language: 'ru',
+      chunkProfile: { chunkDurationSec: 24, chunkOverlapSec: 3 },
       totalChunks: 4,
       lastCompletedChunkIndex: 2,
       fullText: 'hello',
@@ -99,11 +101,13 @@ describe('transcriptionCheckpoint', () => {
     const raw = files.get(`${checkpointsDir}/rec_1.json`);
     expect(raw).toBeTruthy();
     expect(JSON.parse(raw as string)).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       recordId: 'rec_1',
       audioPath: '/docs/recordings/rec_1.wav',
       modelId: 'whisper-small',
+      modelFormat: 'q5_1',
       language: 'ru',
+      chunkProfile: { chunkDurationSec: 24, chunkOverlapSec: 3 },
       totalChunks: 4,
       lastCompletedChunkIndex: 2,
       fullText: 'hello',
@@ -113,11 +117,13 @@ describe('transcriptionCheckpoint', () => {
 
   it('returns null for invalid checkpoint payloads', async () => {
     seedCheckpoint('rec_bad', {
-      schemaVersion: 1,
+      schemaVersion: 2,
       recordId: 'rec_bad',
       audioPath: '/docs/audio.wav',
       modelId: 'whisper-base',
+      modelFormat: 'q5_1',
       language: 'ru',
+      chunkProfile: { chunkDurationSec: 24, chunkOverlapSec: 3 },
       totalChunks: '4',
       lastCompletedChunkIndex: 1,
       fullText: 'hello',
@@ -131,11 +137,13 @@ describe('transcriptionCheckpoint', () => {
   it('lists fresh checkpoints newest first and removes expired ones', async () => {
     dirs.add(checkpointsDir);
     seedCheckpoint('rec_old', {
-      schemaVersion: 1,
+      schemaVersion: 2,
       recordId: 'rec_old',
       audioPath: '/docs/old.wav',
       modelId: 'whisper-base',
+      modelFormat: 'q5_1',
       language: 'ru',
+      chunkProfile: { chunkDurationSec: 24, chunkOverlapSec: 3 },
       totalChunks: 4,
       lastCompletedChunkIndex: 1,
       fullText: 'old',
@@ -143,11 +151,13 @@ describe('transcriptionCheckpoint', () => {
       updatedAt: 1_000_000 - 13 * 60 * 60 * 1000,
     });
     seedCheckpoint('rec_new', {
-      schemaVersion: 1,
+      schemaVersion: 2,
       recordId: 'rec_new',
       audioPath: '/docs/new.wav',
       modelId: 'whisper-small',
+      modelFormat: 'full',
       language: 'en',
+      chunkProfile: { chunkDurationSec: 18, chunkOverlapSec: 3 },
       totalChunks: 2,
       lastCompletedChunkIndex: 1,
       fullText: 'new',
@@ -163,11 +173,13 @@ describe('transcriptionCheckpoint', () => {
 
   it('removes checkpoint files when present', async () => {
     seedCheckpoint('rec_1', {
-      schemaVersion: 1,
+      schemaVersion: 2,
       recordId: 'rec_1',
       audioPath: '/docs/audio.wav',
       modelId: 'whisper-base',
+      modelFormat: 'q5_1',
       language: 'ru',
+      chunkProfile: { chunkDurationSec: 24, chunkOverlapSec: 3 },
       totalChunks: 1,
       lastCompletedChunkIndex: 0,
       fullText: '',

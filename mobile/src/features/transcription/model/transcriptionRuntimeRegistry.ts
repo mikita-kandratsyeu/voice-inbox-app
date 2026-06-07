@@ -80,7 +80,7 @@ export function getTranscriptionCheckpointSnapshot(
 
   return {
     ...snapshot,
-    schemaVersion: 1,
+    schemaVersion: 2,
     updatedAt: Date.now(),
   };
 }

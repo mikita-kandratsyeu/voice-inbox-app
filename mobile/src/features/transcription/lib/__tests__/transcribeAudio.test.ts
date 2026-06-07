@@ -190,6 +190,43 @@ describe('transcribeAudio', () => {
     expect(onChunkCompleted).toHaveBeenCalledTimes(4);
   });
 
+  it('drops fully overlapped segments when merging long transcription chunks', async () => {
+    const transcribe = jest.fn((path: string) => {
+      const isSecondChunk = path.includes('.chunk-1.wav');
+      return {
+        stop: jest.fn().mockResolvedValue(undefined),
+        promise: Promise.resolve(
+          isSecondChunk
+            ? {
+                result: 'duplicate second',
+                segments: [
+                  { text: 'duplicate', t0: 0, t1: 500 },
+                  { text: 'second', t0: 600, t1: 1000 },
+                ],
+              }
+            : {
+                result: 'first',
+                segments: [{ text: 'first', t0: 0, t1: 2000 }],
+              },
+        ),
+      };
+    });
+    const context = { transcribe } as unknown as WhisperContext;
+
+    const result = await runTimersUntilSettled(
+      transcribeAudio({
+        context,
+        audioPath: '/tmp/audio.wav',
+        durationMs: 30_000,
+        chunkProfile: { chunkDurationSec: 20, chunkOverlapSec: 5 },
+      }).promise,
+    );
+
+    expect(result.fullText).toBe('first second');
+    expect(result.segments.map((segment) => segment.text)).toEqual(['first', 'second']);
+    expect(result.segments.map((segment) => segment.id)).toEqual(['0', '1']);
+  });
+
   it('resumes long transcription from checkpoint state', async () => {
     const transcribe = jest.fn((path: string) => ({
       stop: jest.fn().mockResolvedValue(undefined),
