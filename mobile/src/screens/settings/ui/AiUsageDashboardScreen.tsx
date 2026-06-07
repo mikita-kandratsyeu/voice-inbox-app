@@ -52,7 +52,7 @@ type UsageMetricCardProps = {
   tone: string;
 };
 
-const HISTORY_PAGE_LIMIT = 25;
+const HISTORY_PAGE_LIMIT = 5;
 
 function UsageMetricCard({ label, value, helper, color, tone }: UsageMetricCardProps) {
   return (
@@ -102,7 +102,78 @@ function HistoryAmount({ amount, color }: { amount: number; color: Colors }) {
   );
 }
 
-function UsageMetricsSkeleton({ color }: { color: Colors }) {
+function SkeletonBar({
+  color,
+  width,
+  height = 12,
+  className,
+}: {
+  color: Colors;
+  width: number | `${number}%`;
+  height?: number;
+  className?: string;
+}) {
+  return (
+    <View
+      className={`rounded ${className ?? ''}`}
+      style={{ width, height, backgroundColor: color.background.tertiary }}
+    />
+  );
+}
+
+function SettingsListRowSkeleton({
+  color,
+  tall = false,
+  isFirst = false,
+  isLast = false,
+}: {
+  color: Colors;
+  tall?: boolean;
+  isFirst?: boolean;
+  isLast?: boolean;
+}) {
+  const borderStyle = !isLast
+    ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
+    : {};
+
+  return (
+    <View
+      className={`flex-row items-center px-4 py-3.5 ${isFirst ? 'rounded-t-2xl' : ''} ${isLast ? 'rounded-b-2xl' : ''}`}
+      style={[
+        {
+          backgroundColor: color.background.card,
+          minHeight: tall ? 68 : 52,
+        },
+        borderStyle,
+      ]}
+    >
+      <View className="min-w-0 flex-1">
+        <SkeletonBar color={color} width="52%" height={16} />
+        {tall ? (
+          <>
+            <SkeletonBar color={color} width="72%" height={13} className="mt-2" />
+            <SkeletonBar color={color} width="48%" height={13} className="mt-1.5" />
+          </>
+        ) : (
+          <SkeletonBar color={color} width="68%" height={13} className="mt-2" />
+        )}
+      </View>
+      <SkeletonBar color={color} width={36} height={28} className="ml-2 rounded-full" />
+    </View>
+  );
+}
+
+function AiUsageDashboardSkeleton({
+  color,
+  historyRowCount,
+  historyTitle,
+  featuresTitle,
+}: {
+  color: Colors;
+  historyRowCount: number;
+  historyTitle: string;
+  featuresTitle: string;
+}) {
   return (
     <SkeletonPulse>
       <View className="mb-7 flex-row flex-wrap gap-3">
@@ -117,19 +188,100 @@ function UsageMetricsSkeleton({ color }: { color: Colors }) {
               backgroundColor: color.background.card,
             }}
           >
-            <View
-              className="h-3 w-20 rounded"
-              style={{ backgroundColor: color.background.tertiary }}
-            />
-            <View
-              className="mt-3 h-6 w-14 rounded"
-              style={{ backgroundColor: color.background.tertiary }}
-            />
-            <View
-              className="mt-2 h-3 w-24 rounded"
-              style={{ backgroundColor: color.background.tertiary }}
-            />
+            <SkeletonBar color={color} width={80} height={12} />
+            <SkeletonBar color={color} width={56} height={24} className="mt-3" />
+            <SkeletonBar color={color} width={96} height={12} className="mt-2" />
           </View>
+        ))}
+      </View>
+
+      <View className="mb-7">
+        <Text
+          className="mb-2.5 px-1 text-xs font-semibold uppercase tracking-widest"
+          style={{ color: color.text.secondary }}
+        >
+          {historyTitle}
+        </Text>
+        <View
+          className="overflow-hidden rounded-2xl"
+          style={{ borderWidth: 1, borderColor: color.border.default }}
+        >
+          {Array.from({ length: historyRowCount }, (_, index) => (
+            <SettingsListRowSkeleton
+              key={`history-skeleton-${index}`}
+              color={color}
+              tall
+              isFirst={index === 0}
+              isLast={index === historyRowCount - 1}
+            />
+          ))}
+        </View>
+      </View>
+
+      <View className="mb-7">
+        <Text
+          className="mb-2.5 px-1 text-xs font-semibold uppercase tracking-widest"
+          style={{ color: color.text.secondary }}
+        >
+          {featuresTitle}
+        </Text>
+        <View
+          className="overflow-hidden rounded-2xl"
+          style={{ borderWidth: 1, borderColor: color.border.default }}
+        >
+          {Array.from({ length: 6 }, (_, index) => (
+            <View
+              key={`feature-skeleton-${index}`}
+              className={`flex-row items-center px-4 py-3.5 ${index === 0 ? 'rounded-t-2xl' : ''} ${index === 5 ? 'rounded-b-2xl' : ''}`}
+              style={[
+                {
+                  backgroundColor: color.background.card,
+                  minHeight: 68,
+                },
+                index < 5 ? { borderBottomWidth: 1, borderBottomColor: color.border.default } : {},
+              ]}
+            >
+              <View
+                className="mr-3 rounded-full"
+                style={{
+                  width: 24,
+                  height: 24,
+                  backgroundColor: color.background.tertiary,
+                }}
+              />
+              <View className="min-w-0 flex-1">
+                <SkeletonBar color={color} width="42%" height={16} />
+                <SkeletonBar color={color} width="88%" height={13} className="mt-2" />
+              </View>
+              <SkeletonBar color={color} width={52} height={16} className="ml-2" />
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View
+        className="mb-7 rounded-2xl p-4"
+        style={{
+          borderWidth: 1,
+          borderColor: color.border.default,
+          backgroundColor: color.background.card,
+        }}
+      >
+        <View className="mb-3 flex-row items-center gap-2">
+          <View
+            className="rounded-full"
+            style={{ width: 18, height: 18, backgroundColor: color.background.tertiary }}
+          />
+          <SkeletonBar color={color} width={160} height={18} />
+        </View>
+        {[1, 2, 3].map((item) => (
+          <SkeletonBar
+            key={item}
+            color={color}
+            width={`${92 - item * 8}%`}
+            height={14}
+            className="mb-2"
+          />
         ))}
       </View>
     </SkeletonPulse>
@@ -151,7 +303,6 @@ export const AiUsageDashboardScreen = () => {
   const [historyItems, setHistoryItems] = useState<AiUsageHistoryEntry[]>([]);
   const [historyCursor, setHistoryCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [historyLoading, setHistoryLoading] = useState(true);
   const [historyLoadingMore, setHistoryLoadingMore] = useState(false);
   const [historyLoadFailed, setHistoryLoadFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -161,7 +312,6 @@ export const AiUsageDashboardScreen = () => {
       setRefreshing(true);
     } else {
       setLoading(true);
-      setHistoryLoading(true);
     }
 
     try {
@@ -181,7 +331,6 @@ export const AiUsageDashboardScreen = () => {
       }
     } finally {
       setLoading(false);
-      setHistoryLoading(false);
       setRefreshing(false);
     }
   }, []);
@@ -323,178 +472,181 @@ export const AiUsageDashboardScreen = () => {
           }
         >
           {loading ? (
-            <UsageMetricsSkeleton color={color} />
-          ) : usage == null ? (
-            <View
-              className="mb-7 overflow-hidden rounded-2xl"
-              style={{ borderWidth: 1, borderColor: color.border.default }}
-            >
-              <SettingsRow
-                label={t('settings.aiUsage.loadFailed')}
-                subtitle={t('settings.aiUsage.loadFailedHint')}
-                leftIcon={<WifiOff size={20} color={color.text.secondary} strokeWidth={1.8} />}
-                showChevron={false}
-                isFirst
-                isLast
-              />
-            </View>
+            <AiUsageDashboardSkeleton
+              color={color}
+              historyRowCount={HISTORY_PAGE_LIMIT}
+              historyTitle={t('settings.aiUsageDashboard.history.title')}
+              featuresTitle={t('settings.aiUsageDashboard.featureBreakdownTitle')}
+            />
           ) : (
-            <View className="mb-7 flex-row flex-wrap gap-3">
-              <UsageMetricCard
-                label={t('settings.aiUsageDashboard.metrics.used')}
-                value={usedText}
-                helper={t('settings.aiUsageDashboard.metrics.usedHelper', {
-                  percent: progressPercent,
-                })}
-                color={color}
-                tone={color.text.primary}
-              />
-              <UsageMetricCard
-                label={t('settings.aiUsageDashboard.metrics.remaining')}
-                value={remainingText}
-                helper={t('settings.aiUsageDashboard.metrics.remainingHelper')}
-                color={color}
-                tone={usage?.remaining === 0 ? color.accent.delete : color.accent.primary}
-              />
-              <UsageMetricCard
-                label={t('settings.aiUsageDashboard.metrics.limit')}
-                value={limitText}
-                helper={
-                  isProActive
-                    ? t('settings.aiUsageDashboard.metrics.proLimitHelper')
-                    : t('settings.aiUsageDashboard.metrics.freeLimitHelper')
-                }
-                color={color}
-                tone={color.accent.transcript}
-              />
-              <UsageMetricCard
-                label={t('settings.aiUsageDashboard.metrics.reset')}
-                value={t('settings.aiUsageDashboard.metrics.weekly')}
-                helper={resetDateText}
-                color={color}
-                tone={color.accent.cache}
-              />
-            </View>
-          )}
-
-          <SettingsSection title={t('settings.aiUsageDashboard.featureBreakdownTitle')}>
-            {featureRows.map((row, index) => (
-              <SettingsRow
-                key={row.key}
-                label={row.label}
-                subtitle={row.subtitle}
-                value={row.value}
-                leftIcon={row.icon}
-                showChevron={false}
-                isFirst={index === 0}
-                isLast={index === featureRows.length - 1}
-              />
-            ))}
-          </SettingsSection>
-
-          <SettingsSection title={t('settings.aiUsageDashboard.history.title')}>
-            {historyLoading ? (
-              <SettingsRow
-                label={t('settings.aiUsageDashboard.history.loading')}
-                leftIcon={<ActivityIndicator size="small" color={color.accent.primary} />}
-                showChevron={false}
-                isFirst
-                isLast
-              />
-            ) : historyLoadFailed && historyItems.length === 0 ? (
-              <SettingsRow
-                label={t('settings.aiUsageDashboard.history.loadFailed')}
-                subtitle={t('settings.aiUsageDashboard.history.loadFailedHint')}
-                leftIcon={<WifiOff size={20} color={color.text.secondary} strokeWidth={1.8} />}
-                showChevron={false}
-                isFirst
-                isLast
-              />
-            ) : historyItems.length === 0 ? (
-              <SettingsRow
-                label={t('settings.aiUsageDashboard.history.emptyTitle')}
-                subtitle={t('settings.aiUsageDashboard.history.emptySubtitle')}
-                leftIcon={<Cloud size={20} color={color.text.secondary} strokeWidth={1.8} />}
-                showChevron={false}
-                isFirst
-                isLast
-              />
-            ) : (
-              <>
-                {historyItems.map((entry, index) => (
+            <>
+              {usage == null ? (
+                <View
+                  className="mb-7 overflow-hidden rounded-2xl"
+                  style={{ borderWidth: 1, borderColor: color.border.default }}
+                >
                   <SettingsRow
-                    key={entry.id}
-                    label={getHistoryOperationLabel(entry)}
-                    subtitle={getHistorySubtitle(entry)}
-                    rightSlot={<HistoryAmount amount={entry.amount} color={color} />}
+                    label={t('settings.aiUsage.loadFailed')}
+                    subtitle={t('settings.aiUsage.loadFailedHint')}
+                    leftIcon={<WifiOff size={20} color={color.text.secondary} strokeWidth={1.8} />}
                     showChevron={false}
-                    isFirst={index === 0}
-                    isLast={index === historyItems.length - 1 && !historyHasFooter}
+                    isFirst
+                    isLast
                   />
-                ))}
-                {historyLoadFailed ? (
+                </View>
+              ) : (
+                <View className="mb-7 flex-row flex-wrap gap-3">
+                  <UsageMetricCard
+                    label={t('settings.aiUsageDashboard.metrics.used')}
+                    value={usedText}
+                    helper={t('settings.aiUsageDashboard.metrics.usedHelper', {
+                      percent: progressPercent,
+                    })}
+                    color={color}
+                    tone={color.text.primary}
+                  />
+                  <UsageMetricCard
+                    label={t('settings.aiUsageDashboard.metrics.remaining')}
+                    value={remainingText}
+                    helper={t('settings.aiUsageDashboard.metrics.remainingHelper')}
+                    color={color}
+                    tone={usage?.remaining === 0 ? color.accent.delete : color.accent.primary}
+                  />
+                  <UsageMetricCard
+                    label={t('settings.aiUsageDashboard.metrics.limit')}
+                    value={limitText}
+                    helper={
+                      isProActive
+                        ? t('settings.aiUsageDashboard.metrics.proLimitHelper')
+                        : t('settings.aiUsageDashboard.metrics.freeLimitHelper')
+                    }
+                    color={color}
+                    tone={color.accent.transcript}
+                  />
+                  <UsageMetricCard
+                    label={t('settings.aiUsageDashboard.metrics.reset')}
+                    value={t('settings.aiUsageDashboard.metrics.weekly')}
+                    helper={resetDateText}
+                    color={color}
+                    tone={color.accent.cache}
+                  />
+                </View>
+              )}
+
+              <SettingsSection title={t('settings.aiUsageDashboard.history.title')}>
+                {historyLoadFailed && historyItems.length === 0 ? (
                   <SettingsRow
-                    label={t('settings.aiUsageDashboard.history.loadMoreFailed')}
+                    label={t('settings.aiUsageDashboard.history.loadFailed')}
                     subtitle={t('settings.aiUsageDashboard.history.loadFailedHint')}
                     leftIcon={<WifiOff size={20} color={color.text.secondary} strokeWidth={1.8} />}
                     showChevron={false}
-                    isLast={historyCursor == null}
-                  />
-                ) : null}
-                {historyCursor ? (
-                  <SettingsRow
-                    label={t('settings.aiUsageDashboard.history.loadMore')}
-                    onPress={historyLoadingMore ? undefined : loadMoreHistory}
-                    rightSlot={
-                      historyLoadingMore ? (
-                        <ActivityIndicator size="small" color={color.accent.primary} />
-                      ) : undefined
-                    }
-                    showChevron={false}
+                    isFirst
                     isLast
                   />
-                ) : null}
-              </>
-            )}
-          </SettingsSection>
+                ) : historyItems.length === 0 ? (
+                  <SettingsRow
+                    label={t('settings.aiUsageDashboard.history.emptyTitle')}
+                    subtitle={t('settings.aiUsageDashboard.history.emptySubtitle')}
+                    leftIcon={<Cloud size={20} color={color.text.secondary} strokeWidth={1.8} />}
+                    showChevron={false}
+                    isFirst
+                    isLast
+                  />
+                ) : (
+                  <>
+                    {historyItems.map((entry, index) => (
+                      <SettingsRow
+                        key={entry.id}
+                        label={getHistoryOperationLabel(entry)}
+                        subtitle={getHistorySubtitle(entry)}
+                        rightSlot={<HistoryAmount amount={entry.amount} color={color} />}
+                        showChevron={false}
+                        isFirst={index === 0}
+                        isLast={index === historyItems.length - 1 && !historyHasFooter}
+                      />
+                    ))}
+                    {historyLoadFailed ? (
+                      <SettingsRow
+                        label={t('settings.aiUsageDashboard.history.loadMoreFailed')}
+                        subtitle={t('settings.aiUsageDashboard.history.loadFailedHint')}
+                        leftIcon={
+                          <WifiOff size={20} color={color.text.secondary} strokeWidth={1.8} />
+                        }
+                        showChevron={false}
+                        isLast={historyCursor == null}
+                      />
+                    ) : null}
+                    {historyCursor ? (
+                      <SettingsRow
+                        label={t('settings.aiUsageDashboard.history.loadMore')}
+                        onPress={historyLoadingMore ? undefined : loadMoreHistory}
+                        rightSlot={
+                          historyLoadingMore ? (
+                            <ActivityIndicator size="small" color={color.accent.primary} />
+                          ) : undefined
+                        }
+                        showChevron={false}
+                        isLast
+                      />
+                    ) : null}
+                  </>
+                )}
+              </SettingsSection>
 
-          <View
-            className="mb-7 rounded-2xl p-4"
-            style={{
-              borderWidth: 1,
-              borderColor: color.border.default,
-              backgroundColor: color.background.card,
-            }}
-          >
-            <View className="mb-3 flex-row items-center gap-2">
-              <Cloud size={18} color={color.accent.primary} strokeWidth={1.8} />
-              <Text
-                className="text-[16px] font-semibold leading-[21px]"
-                style={{ color: color.text.primary }}
+              <SettingsSection title={t('settings.aiUsageDashboard.featureBreakdownTitle')}>
+                {featureRows.map((row, index) => (
+                  <SettingsRow
+                    key={row.key}
+                    label={row.label}
+                    subtitle={row.subtitle}
+                    value={row.value}
+                    leftIcon={row.icon}
+                    showChevron={false}
+                    isFirst={index === 0}
+                    isLast={index === featureRows.length - 1}
+                  />
+                ))}
+              </SettingsSection>
+
+              <View
+                className="mb-7 rounded-2xl p-4"
+                style={{
+                  borderWidth: 1,
+                  borderColor: color.border.default,
+                  backgroundColor: color.background.card,
+                }}
               >
-                {t('settings.aiUsageDashboard.savingTitle')}
-              </Text>
-            </View>
-            {[
-              t('settings.aiUsageDashboard.savingTips.localTranscription'),
-              t('settings.aiUsageDashboard.savingTips.batchAsk'),
-              t('settings.aiUsageDashboard.savingTips.privateMode'),
-            ].map((tip) => (
-              <View key={tip} className="mb-2 flex-row gap-2">
-                <Text className="text-[14px] leading-5" style={{ color: color.accent.primary }}>
-                  •
-                </Text>
-                <Text
-                  className="flex-1 text-[14px] leading-5"
-                  style={{ color: color.text.secondary }}
-                >
-                  {tip}
-                </Text>
+                <View className="mb-3 flex-row items-center gap-2">
+                  <Cloud size={18} color={color.accent.primary} strokeWidth={1.8} />
+                  <Text
+                    className="text-[16px] font-semibold leading-[21px]"
+                    style={{ color: color.text.primary }}
+                  >
+                    {t('settings.aiUsageDashboard.savingTitle')}
+                  </Text>
+                </View>
+                {[
+                  t('settings.aiUsageDashboard.savingTips.localTranscription'),
+                  t('settings.aiUsageDashboard.savingTips.batchAsk'),
+                  t('settings.aiUsageDashboard.savingTips.privateMode'),
+                ].map((tip) => (
+                  <View key={tip} className="mb-2 flex-row gap-2">
+                    <Text className="text-[14px] leading-5" style={{ color: color.accent.primary }}>
+                      •
+                    </Text>
+                    <Text
+                      className="flex-1 text-[14px] leading-5"
+                      style={{ color: color.text.secondary }}
+                    >
+                      {tip}
+                    </Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
 
-          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
+              <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
+            </>
+          )}
         </ScrollView>
       </View>
     </View>
