@@ -1,5 +1,6 @@
 import { NativeModules } from 'react-native';
 
+import { diagWarn } from '@/shared/lib/appLogger';
 import { IS_IOS } from '@/shared/lib/platform';
 
 export const WAV_TARGET_SAMPLE_RATE = 16000;
@@ -15,9 +16,7 @@ function toFileUri(path: string): string {
 
 export async function convertToWav(inputPath: string, outputPath: string): Promise<string | null> {
   if (!AudioConverter || typeof AudioConverter.convertToWav !== 'function') {
-    if (__DEV__) {
-      console.warn('[convertToWav] AudioConverter native module not available');
-    }
+    diagWarn('[convertToWav] AudioConverter native module not available');
     return null;
   }
   try {
@@ -26,17 +25,8 @@ export async function convertToWav(inputPath: string, outputPath: string): Promi
     const result = await AudioConverter.convertToWav(inArg, outArg);
     return result ?? null;
   } catch (e: unknown) {
-    if (__DEV__) {
-      const err = e as { code?: string; message?: string };
-      console.warn(
-        '[convertToWav] Error:',
-        err?.message ?? String(e),
-        '| code:',
-        err?.code,
-        '| full:',
-        e,
-      );
-    }
+    const err = e as { code?: string; message?: string };
+    diagWarn('[convertToWav] Error:', err?.message ?? String(e), '| code:', err?.code);
     return null;
   }
 }
@@ -48,9 +38,7 @@ export async function createWavChunk(
   durationMs: number,
 ): Promise<string | null> {
   if (!AudioConverter || typeof AudioConverter.createWavChunk !== 'function') {
-    if (__DEV__) {
-      console.warn('[createWavChunk] AudioConverter native module not available');
-    }
+    diagWarn('[createWavChunk] AudioConverter native module not available');
     return null;
   }
   try {
@@ -59,17 +47,8 @@ export async function createWavChunk(
     const result = await AudioConverter.createWavChunk(inArg, outArg, startMs, durationMs);
     return result ?? null;
   } catch (e: unknown) {
-    if (__DEV__) {
-      const err = e as { code?: string; message?: string };
-      console.warn(
-        '[createWavChunk] Error:',
-        err?.message ?? String(e),
-        '| code:',
-        err?.code,
-        '| full:',
-        e,
-      );
-    }
+    const err = e as { code?: string; message?: string };
+    diagWarn('[createWavChunk] Error:', err?.message ?? String(e), '| code:', err?.code);
     return null;
   }
 }

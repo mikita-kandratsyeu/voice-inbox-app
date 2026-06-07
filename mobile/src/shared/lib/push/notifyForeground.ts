@@ -1,5 +1,6 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { IS_IOS } from '@/shared/lib/platform';
 
 function getForegroundUrl(): string {
@@ -15,13 +16,11 @@ async function callPushStateApi(url: string): Promise<void> {
 
   try {
     const response = await fetchWithAuth(url, { method: 'POST' });
-    if (!response.ok && __DEV__) {
-      console.warn('[Push] state API failed', url, response.status);
+    if (!response.ok) {
+      diagWarn('[Push] state API failed', { url, status: response.status });
     }
   } catch (err) {
-    if (__DEV__) {
-      console.warn('[Push] state API error', url, err);
-    }
+    diagWarn('[Push] state API error', { url }, err);
   }
 }
 

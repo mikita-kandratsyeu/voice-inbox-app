@@ -2,6 +2,7 @@ import { IOS_DOCUMENT_PATH, IOS_LIBRARY_PATH, open } from '@op-engineering/op-sq
 import { drizzle } from 'drizzle-orm/op-sqlite';
 import { migrate } from 'drizzle-orm/op-sqlite/migrator';
 
+import { diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 
 import { IS_IOS } from '../platform';
@@ -27,7 +28,7 @@ async function migrateIosSqliteFromLibraryToDocumentsIfNeeded(): Promise<void> {
   try {
     await NitroFS.copyFile(oldPath, newPath);
   } catch (err) {
-    if (__DEV__) console.warn('[db] Failed to copy voice-inbox.db Library → Documents', err);
+    diagWarn('[db] Failed to copy voice-inbox.db Library → Documents', err);
   }
 }
 

@@ -3,6 +3,7 @@ import { Share } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import { i18n } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 
 import {
@@ -56,7 +57,7 @@ async function removeDirRecursiveIfExists(path: string): Promise<void> {
       await removeDirRecursive(path);
     }
   } catch {
-    if (__DEV__) console.warn('[share] cleanup failed', path);
+    diagWarn('[share] cleanup failed', path);
   }
 }
 
@@ -66,7 +67,7 @@ async function unlinkIfExists(path: string): Promise<void> {
       await NitroFS.unlink(path);
     }
   } catch {
-    if (__DEV__) console.warn('[share] unlink failed', path);
+    diagWarn('[share] unlink failed', path);
   }
 }
 

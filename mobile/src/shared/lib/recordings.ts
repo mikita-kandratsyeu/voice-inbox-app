@@ -1,3 +1,4 @@
+import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { getDocumentDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
 export const RECORDINGS_DIR = `${getDocumentDirectoryPath()}/recordings`;
@@ -62,7 +63,7 @@ export async function persistRecordingToDocuments(
       try {
         await NitroFS.rename(normalized, destPath);
       } catch (err) {
-        if (__DEV__) console.warn('[recordings] rename failed, using original path:', err);
+        diagWarn('[recordings] rename failed, using original path:', err);
         return normalized;
       }
       return destPath;
@@ -78,15 +79,11 @@ export async function persistRecordingToDocuments(
     try {
       await NitroFS.unlink(normalized);
     } catch {
-      if (__DEV__) {
-        console.warn('[recordings] Could not delete temp file after copy:', normalized);
-      }
+      devWarn('[recordings] Could not delete temp file after copy:', normalized);
     }
     return destPath;
   } catch (err) {
-    if (__DEV__) {
-      console.warn('[recordings] persistRecordingToDocuments failed, using original path:', err);
-    }
+    devWarn('[recordings] persistRecordingToDocuments failed, using original path:', err);
     return normalized;
   }
 }

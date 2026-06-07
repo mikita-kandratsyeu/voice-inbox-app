@@ -1,4 +1,5 @@
 import { i18n } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { getIosVersion, IS_IOS } from '@/shared/lib/platform';
 
 const MAX_TEXT_LENGTH = 2000;
@@ -41,7 +42,7 @@ export async function prepareEmbeddingModel(language: string): Promise<void> {
     await AppleEmbeddings.prepare(language);
     preparedLanguage = language;
   } catch (err) {
-    if (__DEV__) console.warn('[embeddings] prepare failed:', err);
+    diagWarn('[embeddings] prepare failed:', err);
   }
 }
 
@@ -56,7 +57,7 @@ export async function generateEmbedding(text: string, language: string): Promise
     const [embedding] = await AppleEmbeddings.generateEmbeddings([trimmed], language);
     return embedding ?? null;
   } catch (err) {
-    if (__DEV__) console.warn('[embeddings] generate failed:', err);
+    diagWarn('[embeddings] generate failed:', err);
     return null;
   }
 }
@@ -87,7 +88,7 @@ export async function generateEmbeddings(
 
     return result;
   } catch (err) {
-    if (__DEV__) console.warn('[embeddings] generateMany failed:', err);
+    diagWarn('[embeddings] generateMany failed:', err);
     return texts.map(() => null);
   }
 }

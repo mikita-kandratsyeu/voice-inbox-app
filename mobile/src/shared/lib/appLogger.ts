@@ -6,41 +6,170 @@ const MAX_LOG_FILE_BYTES = 2_500_000;
 const FLUSH_DELAY_MS = 200;
 const SUPPORT_LOG_MAX_CHARS = 32_000;
 const SUPPORT_LOG_TAIL_BYTES = SUPPORT_LOG_MAX_CHARS;
+const MAX_LOG_FIELD_CHARS = 500;
 
 const sensitiveValueRegex =
-  /\b(api_key|apiKey|access_token|refresh_token|id_token|secret|password|pass|token|key)\b\s*[:=]\s*(['"]?)([^'"\s,;]+)/gi;
+  /\b(api_key|apiKey|access_token|refresh_token|id_token|secret|password|pass|token)\b\s*[:=]\s*(['"]?)([^'"\s,;]+)/gi;
 const bearerTokenRegex = /\b(Bearer)\s+([A-Za-z0-9\-._~+/]+=*)/gi;
 const emailRegex = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
+
+const SENSITIVE_OBJECT_KEYS = new Set([
+  'transcript',
+  'transcriptsegments',
+  'answer',
+  'body',
+  'text',
+  'content',
+  'message',
+  'evidence',
+  'items',
+  'summary',
+  'suggestedtitle',
+  'keyphrases',
+  'password',
+  'secret',
+  'authorization',
+  'rawurl',
+]);
+
+const PATH_LIKE_OBJECT_KEYS = new Set([
+  'uri',
+  'fileuri',
+  'filecopyuri',
+  'path',
+  'audiopath',
+  'pdfpath',
+]);
 
 let logQueue: string[] = [];
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
 let initialized = false;
+let originalConsoleWarn: (...items: unknown[]) => void = console.warn.bind(console);
+let originalConsoleError: (...items: unknown[]) => void = console.error.bind(console);
+let originalConsoleLog: (...items: unknown[]) => void = console.log.bind(console);
 
-function serializeArg(value: unknown): string {
-  if (typeof value === 'string') {
+function truncateString(value: string): string {
+  if (value.length <= MAX_LOG_FIELD_CHARS) {
     return value;
   }
 
-  if (value instanceof Error) {
-    return `${value.name}: ${value.message}${value.stack ? `\n${value.stack}` : ''}`;
-  }
+  return `${value.slice(0, MAX_LOG_FIELD_CHARS)}…[truncated]`;
+}
 
+function redactUrl(url: string): string {
   try {
-    return JSON.stringify(value);
+    const parsed = new URL(url);
+    if (parsed.search) {
+      parsed.search = '?[REDACTED]';
+    }
+    return parsed.toString();
   } catch {
-    return String(value);
+    const [base, query] = url.split('?');
+    return query != null ? `${base}?[REDACTED]` : url;
   }
+}
+
+function redactPath(path: string): string {
+  const parts = path.split(/[/\\]/).filter(Boolean);
+  const tail = parts[parts.length - 1];
+  return tail ? `…/${tail}` : '[REDACTED_PATH]';
 }
 
 function sanitizeLogText(value: string): string {
-  return value
-    .replace(bearerTokenRegex, '$1 [REDACTED]')
-    .replace(sensitiveValueRegex, '$1: [REDACTED]')
-    .replace(emailRegex, '[REDACTED_EMAIL]');
+  return truncateString(
+    value
+      .replace(bearerTokenRegex, '$1 [REDACTED]')
+      .replace(sensitiveValueRegex, '$1: [REDACTED]')
+      .replace(emailRegex, '[REDACTED_EMAIL]'),
+  );
+}
+
+function sanitizeForLog(value: unknown, depth = 0): unknown {
+  if (depth > 5) {
+    return '[MAX_DEPTH]';
+  }
+
+  if (value == null || typeof value === 'number' || typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    return sanitizeLogText(value);
+  }
+
+  if (value instanceof Error) {
+    return sanitizeLogText(`${value.name}: ${value.message}`);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeForLog(item, depth + 1));
+  }
+
+  if (typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+
+    for (const [key, nestedValue] of Object.entries(value as Record<string, unknown>)) {
+      const normalizedKey = key.toLowerCase();
+
+      if (SENSITIVE_OBJECT_KEYS.has(normalizedKey)) {
+        out[key] = '[REDACTED]';
+        continue;
+      }
+
+      if (normalizedKey === 'url' && typeof nestedValue === 'string') {
+        out[key] = redactUrl(nestedValue);
+        continue;
+      }
+
+      if (PATH_LIKE_OBJECT_KEYS.has(normalizedKey) && typeof nestedValue === 'string') {
+        out[key] = redactPath(nestedValue);
+        continue;
+      }
+
+      out[key] = sanitizeForLog(nestedValue, depth + 1);
+    }
+
+    return out;
+  }
+
+  return String(value);
+}
+
+function serializeArg(value: unknown): string {
+  const sanitized = sanitizeForLog(value);
+
+  if (typeof sanitized === 'string') {
+    return sanitized;
+  }
+
+  if (sanitized instanceof Error) {
+    return `${sanitized.name}: ${sanitized.message}${sanitized.stack ? `\n${sanitized.stack}` : ''}`;
+  }
+
+  try {
+    return JSON.stringify(sanitized);
+  } catch {
+    return String(sanitized);
+  }
 }
 
 function formatLogEntry(level: string, message: string): string {
-  return `[${new Date().toISOString()}] [${level}] ${sanitizeLogText(message)}`;
+  return `[${new Date().toISOString()}] [${level}] ${message}`;
+}
+
+function writeToDevConsole(level: 'log' | 'warn' | 'error', items: unknown[]) {
+  if (!__DEV__) {
+    return;
+  }
+
+  const writer =
+    level === 'log'
+      ? originalConsoleLog
+      : level === 'warn'
+        ? originalConsoleWarn
+        : originalConsoleError;
+
+  writer(...items);
 }
 
 async function ensureLogDirectory() {
@@ -132,20 +261,49 @@ export function setupAppLogger() {
 
   initialized = true;
 
-  const originalWarn = console.warn.bind(console);
-  const originalError = console.error.bind(console);
+  originalConsoleWarn = console.warn.bind(console);
+  originalConsoleError = console.error.bind(console);
+  originalConsoleLog = console.log.bind(console);
 
   console.warn = (...args: Array<unknown>) => {
     enqueueLog('WARN', args);
-    originalWarn(...args);
+    originalConsoleWarn(...args);
   };
 
   console.error = (...args: Array<unknown>) => {
     enqueueLog('ERROR', args);
-    originalError(...args);
+    originalConsoleError(...args);
   };
 
   enqueueLog('INFO', ['App logger initialized.']);
+}
+
+/** Metro only — verbose diagnostics that should not land in on-device logs. */
+export function devLog(...items: unknown[]) {
+  writeToDevConsole('log', items);
+}
+
+/** Metro only — verbose warnings that should not land in on-device logs. */
+export function devWarn(...items: unknown[]) {
+  writeToDevConsole('warn', items);
+}
+
+/** Always persisted to the on-device log; mirrored to Metro in dev builds. */
+export function diagInfo(...items: unknown[]) {
+  enqueueLog('INFO', items);
+  writeToDevConsole('log', items);
+}
+
+/** Always persisted to the on-device log; mirrored to Metro in dev builds. */
+export function diagWarn(...items: unknown[]) {
+  enqueueLog('WARN', items);
+  writeToDevConsole('warn', items);
+}
+
+/** Always persisted to the on-device log; mirrored to Metro in dev builds. */
+export function diagError(...items: unknown[]) {
+  enqueueLog('ERROR', items);
+  writeToDevConsole('error', items);
 }
 
 export function logDebug(...items: unknown[]) {

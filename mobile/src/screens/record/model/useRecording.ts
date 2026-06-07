@@ -9,6 +9,7 @@ import AudioRecorderPlayer, {
 } from 'react-native-nitro-sound';
 
 import { useAppLockStore } from '@/entities/app-lock';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 
 type AudioRecorderPlayerInstance = {
@@ -240,7 +241,7 @@ export const useRecording = ({
 
       startRecordingLiveActivity().catch(() => {});
     } catch (err) {
-      if (__DEV__) console.warn('[useRecording] startRecorder failed:', err);
+      diagWarn('[useRecording] startRecorder failed:', err);
     }
   }, [addRecordBackListener, t]);
 
@@ -254,7 +255,7 @@ export const useRecording = ({
 
       updateRecordingLiveActivity(secs, undefined, false).catch(() => {});
     } catch (err) {
-      if (__DEV__) console.warn('[useRecording] pauseRecorder failed:', err);
+      diagWarn('[useRecording] pauseRecorder failed:', err);
     }
   }, []);
 
@@ -269,7 +270,7 @@ export const useRecording = ({
 
       updateRecordingLiveActivity(elapsedRef.current, undefined, true).catch(() => {});
     } catch (err) {
-      if (__DEV__) console.warn('[useRecording] resumeRecorder failed:', err);
+      diagWarn('[useRecording] resumeRecorder failed:', err);
     }
   }, [addRecordBackListener]);
 
@@ -286,7 +287,7 @@ export const useRecording = ({
       }
       return audioPathRef.current;
     } catch (err) {
-      if (__DEV__) console.warn('[useRecording] stopRecorder failed:', err);
+      diagWarn('[useRecording] stopRecorder failed:', err);
       return null;
     }
   }, []);
@@ -311,7 +312,7 @@ export const useRecording = ({
           await NitroFS.unlink(clean);
         }
       } catch {
-        if (__DEV__) console.warn('[useRecording] unlink failed:', clean);
+        diagWarn('[useRecording] unlink failed:', clean);
       }
     }
 

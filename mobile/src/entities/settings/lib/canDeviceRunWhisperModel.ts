@@ -1,6 +1,7 @@
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
 import { i18n, IS_ANDROID } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 
 import type { WhisperModelId, WhisperModelWeightsFormat } from '../model/types';
 
@@ -100,7 +101,7 @@ export const canDeviceRunWhisperModel = async (
 
     return { isCompatible: true };
   } catch (error) {
-    if (__DEV__) console.warn('[canDeviceRunWhisperModel] Failed to check compatibility:', error);
+    diagWarn('[canDeviceRunWhisperModel] Failed to check compatibility:', error);
 
     return {
       isCompatible: true,

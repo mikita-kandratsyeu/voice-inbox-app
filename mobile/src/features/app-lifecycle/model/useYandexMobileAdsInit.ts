@@ -6,6 +6,7 @@ import { MobileAds } from 'yandex-mobile-ads';
 import { useOnboardingStore } from '@/features/onboarding/model/store';
 import { useProEntitlement } from '@/features/pro-license';
 import { IS_IOS } from '@/shared/lib';
+import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import {
   getInternalDebugDisableAdsSnapshot,
   subscribeInternalDebugDisableAds,
@@ -22,9 +23,7 @@ async function requestIosAppTrackingIfNeeded(): Promise<void> {
   try {
     await request(PERMISSIONS.IOS.APP_TRACKING_TRANSPARENCY);
   } catch {
-    if (__DEV__) {
-      console.warn('[ads:init] request(PERMISSIONS.IOS.APP_TRACKING_TRANSPARENCY) failed');
-    }
+    devWarn('[ads:init] request(PERMISSIONS.IOS.APP_TRACKING_TRANSPARENCY) failed');
   }
 }
 
@@ -71,9 +70,7 @@ export function useYandexMobileAdsInit(): void {
     const initAds = () => {
       if (cancelled || initialized) return;
       void ensureMobileAdsInitialized().catch((err) => {
-        if (__DEV__) {
-          console.warn('[ads:init] MobileAds.initialize failed', err);
-        }
+        diagWarn('[ads:init] MobileAds.initialize failed', err);
       });
     };
 

@@ -40,6 +40,7 @@ import {
 } from '@/features/sync-data';
 import { useAppTheme, useColors } from '@/shared/config';
 import { getAiUsage } from '@/shared/lib/ai-api';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { fetchProAccountPortalUrl } from '@/shared/lib/ai-api/proLicenseApi';
 import { subscribeAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
@@ -288,9 +289,7 @@ export function useSettingsScreen() {
         await NitroFS.unlink(zipPath);
       }
     } catch {
-      if (__DEV__) {
-        console.warn('[releasePendingImportZip] failed', zipPath);
-      }
+      diagWarn('[releasePendingImportZip] failed', { path: zipPath });
     }
   }, []);
 

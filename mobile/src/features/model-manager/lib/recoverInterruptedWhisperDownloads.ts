@@ -3,6 +3,7 @@ import type {
   WhisperModelVariantId,
   WhisperModelWeightsFormat,
 } from '@/entities/settings/model/types';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { storage } from '@/shared/lib/async-storage';
 
 import { deleteWhisperModel } from './deleteWhisperModel';
@@ -47,9 +48,7 @@ const recoverInterruptedWhisperDownloads = (): void => {
       ).catch(() => {});
     });
   } catch {
-    if (__DEV__) {
-      console.warn('[whisper] Failed to recover interrupted downloads');
-    }
+    diagWarn('[whisper] Failed to recover interrupted downloads');
   }
 };
 

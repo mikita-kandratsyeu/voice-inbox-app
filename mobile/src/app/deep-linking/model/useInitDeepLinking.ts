@@ -9,6 +9,7 @@ import { tryParseInAppEventDeepLink } from '@/features/in-app-event';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useRecordingDeeplink } from '@/features/recording-deeplink/model/useRecordingDeeplink';
 import { IS_ANDROID } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 
 const START_RECORDING_URL = 'voiceinbox://record/start';
 const TEXT_NOTE_URL = 'voiceinbox://note/text';
@@ -139,7 +140,7 @@ export const useInitDeepLinking = () => {
         handleRecordingDeeplink(url);
         handleDownloadingDeeplink(url);
       } catch (e) {
-        if (__DEV__) console.warn('[deeplink] invalid url', rawUrl, e);
+        diagWarn('[deeplink] invalid url', { url: rawUrl }, e);
       }
     },
     [

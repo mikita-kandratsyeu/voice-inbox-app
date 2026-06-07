@@ -2,6 +2,7 @@ import dayjs from 'dayjs';
 
 import { recordRepository } from '@/entities/record/model/repository';
 import { useSettingsStore } from '@/entities/settings';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { isAutomationUiLockedForPublicStore } from '@/features/app-storefront';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 
@@ -45,9 +46,7 @@ export async function runAutoArchiveReadNotesIfEligible(
   try {
     return await recordRepository.archiveReadRecordsOlderThan(threshold);
   } catch (err) {
-    if (__DEV__) {
-      console.warn('[runAutoArchiveReadNotesIfEligible]', err);
-    }
+    diagWarn('[runAutoArchiveReadNotesIfEligible]', err);
     return 0;
   }
 }

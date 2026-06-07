@@ -5,6 +5,7 @@ import { RewardedAdLoader } from 'yandex-mobile-ads';
 import { useProEntitlement } from '@/features/pro-license';
 import { useBootSplashVisible } from '@/shared/config';
 import { getYandexRewardedAdUnitId } from '@/shared/config/runtimeConfig';
+import { devWarn } from '@/shared/lib/appLogger';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { claimAiBonus } from '@/shared/lib/ai-api';
 import { storage } from '@/shared/lib/async-storage';
@@ -92,8 +93,8 @@ function normalizeAdError(err: unknown): string {
   }
 
   if (raw.trim().startsWith('{')) {
-    if (fromJson == null && __DEV__) {
-      console.error('normalizeAdError: invalid JSON', raw);
+    if (fromJson == null) {
+      devWarn('normalizeAdError: invalid JSON', raw);
     }
     return 'claimAdFailed';
   }
@@ -120,8 +121,7 @@ function serializeAdErrorForLog(err: unknown): unknown {
 }
 
 function logRewardedAdDebug(phase: 'loadAd' | 'showAd', err: unknown): void {
-  if (!__DEV__) return;
-  console.warn('[rewardedAd]', phase, {
+  devWarn('[rewardedAd]', phase, {
     adUnitId: getAdUnitId(),
     description: getErrorText(err),
     raw: serializeAdErrorForLog(err),
@@ -187,8 +187,8 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
       ad.onAdFailedToShow = (adError?: { description?: string }) => {
         if (adError != null) {
           logRewardedAdDebug('showAd', adError);
-        } else if (__DEV__) {
-          console.warn('[rewardedAd]', 'showAd', {
+        } else {
+          devWarn('[rewardedAd]', 'showAd', {
             adUnitId: getAdUnitId(),
             note: 'onAdFailedToShow without error payload',
           });
@@ -222,9 +222,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
         preloadedAdRef.current = ad;
         return ad;
       } catch (err) {
-        if (__DEV__) {
-          logRewardedAdDebug('loadAd', err);
-        }
+        logRewardedAdDebug('loadAd', err);
         return null;
       } finally {
         preloadPromiseRef.current = null;

@@ -1,6 +1,7 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 
 import { isString } from '../type-guards';
 import { type AiFetchOptions, aiRequestCancelledFailure, isAbortLikeError } from './abort';
@@ -132,7 +133,7 @@ export async function postAskQuestion(
       return aiRequestCancelledFailure();
     }
     const errorMsg = err instanceof Error ? err.message : 'Network error';
-    if (__DEV__) console.warn('[AI] postAskQuestion: fetch failed', { error: errorMsg, url });
+    diagWarn('[AI] postAskQuestion: fetch failed', { error: errorMsg, url });
     return { ok: false, error: errorMsg };
   }
 
@@ -142,14 +143,13 @@ export async function postAskQuestion(
       return { ok: false, error: limitBody.error };
     }
     const json = limitBody.data as AskApiLimitResponse;
-    if (__DEV__) console.warn('[AI] postAskQuestion: limit exceeded', json.usage);
+    diagWarn('[AI] postAskQuestion: limit exceeded', json.usage);
     return { ok: false, limitExceeded: true, usage: json.usage };
   }
 
   if (!response.ok) {
     const text = await response.text();
-    if (__DEV__)
-      console.warn('[AI] postAskQuestion: HTTP error', { status: response.status, body: text });
+    devWarn('[AI] postAskQuestion: HTTP error', { status: response.status, body: text });
     return { ok: false, error: text || `HTTP ${response.status}` };
   }
 
@@ -203,7 +203,7 @@ export async function pollAskResult(
       }
 
       if (msg.status === 'error') {
-        if (__DEV__) console.warn('[AI] pollAskResult: server error', { id, error: msg.error });
+        diagWarn('[AI] pollAskResult: server error', { id, error: msg.error });
         return { ok: false, error: msg.error };
       }
 
@@ -212,8 +212,8 @@ export async function pollAskResult(
     { ...options, headers },
   );
 
-  if (!result.ok && result.error === 'Timeout waiting for AI result' && __DEV__) {
-    console.warn('[AI] pollAskResult: timeout', { id });
+  if (!result.ok && result.error === 'Timeout waiting for AI result') {
+    diagWarn('[AI] pollAskResult: timeout', { id });
   }
 
   return result;

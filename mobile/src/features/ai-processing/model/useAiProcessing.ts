@@ -49,6 +49,7 @@ import {
   unregisterAiGeneration,
 } from '@/shared/lib/aiGenerationAbortRegistry';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
+import { diagWarn } from '@/shared/lib/appLogger';
 import {
   toUserFacingFetchErrorFromUnknown,
   toUserFacingFetchErrorMessage,
@@ -606,15 +607,14 @@ export const useAiProcessing = () => {
           const errorMsg = runResult.limitExceeded
             ? getAiWeeklyLimitExceededMessage()
             : toUserFacingFetchErrorMessage(runResult.error ?? '');
-          if (__DEV__)
-            console.warn('[AI] processRecord: runSummaryTasks failed', {
-              recordId: record.id,
-              error: errorMsg,
-              limitExceeded: runResult.limitExceeded,
-              provider: runResult.provider,
-              mode: runResult.mode,
-              tier: privateCapabilityTier,
-            });
+          diagWarn('[AI] processRecord: runSummaryTasks failed', {
+            recordId: record.id,
+            error: errorMsg,
+            limitExceeded: runResult.limitExceeded,
+            provider: runResult.provider,
+            mode: runResult.mode,
+            tier: privateCapabilityTier,
+          });
           if (runResult.limitExceeded) {
             alertAiLimitExceeded(errorMsg);
           }
@@ -734,11 +734,10 @@ export const useAiProcessing = () => {
           });
           return;
         }
-        if (__DEV__)
-          console.warn('[AI] processRecord: unexpected error', {
-            recordId: record.id,
-            error: err instanceof Error ? err.message : String(err),
-          });
+        diagWarn('[AI] processRecord: unexpected error', {
+          recordId: record.id,
+          error: err instanceof Error ? err.message : String(err),
+        });
         const errorMsg = toUserFacingFetchErrorFromUnknown(err);
         if (includeMeetingSpeakerBreakdown && isSummaryAlreadyApplied(record.id)) {
           applyMeetingDialogueFailure(

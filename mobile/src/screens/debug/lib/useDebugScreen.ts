@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { devWarn } from '@/shared/lib/appLogger';
 import { Alert } from 'react-native';
 
 import { isCrashlyticsDebugEnabled } from '@/shared/config/buildEnv';
@@ -25,9 +27,7 @@ export function useDebugScreen() {
               await performHardReset();
               Alert.alert(t('common.done'), 'Hard reset complete. Please fully restart the app.');
             } catch (err) {
-              if (__DEV__) {
-                console.warn('[debug] hard reset failed', err);
-              }
+              devWarn('[debug] hard reset failed', err);
 
               Alert.alert(t('common.error'), 'Hard reset failed');
             } finally {

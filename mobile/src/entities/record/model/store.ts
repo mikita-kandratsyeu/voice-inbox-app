@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { folderRepository } from '@/entities/folder/model/repository';
 import { loadAskAiInboxStatusesByRecordId } from '@/features/ask-ai/model/askAiSessionDb';
 import { waitForDb } from '@/shared/lib';
+import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 
 import { isRecordAiOperating } from '../lib/isRecordAiOperating';
@@ -26,7 +27,7 @@ const flushPersistAiState = (id: string, aiStatus: RecordingStatus, transcriptPr
   void waitForDb()
     .then(() => recordRepository.persistAiState(id, aiStatus, transcriptProgress))
     .catch((err) => {
-      if (__DEV__) console.warn('[recordStore] persistAiState failed', id, err);
+      diagWarn('[recordStore] persistAiState failed', id, err);
     });
 };
 
@@ -182,7 +183,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     }
     recordListLoadInFlight = (async () => {
       try {
-        if (__DEV__) console.warn('[recordStore] load: refetching records from DB');
+        devWarn('[recordStore] load: refetching records from DB');
 
         const all = await recordRepository.getAllList();
         const transcriptById = new Map(all.map((r) => [r.id, r.transcript]));
@@ -275,7 +276,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
           await NitroFS.unlink(audioPath);
         }
       } catch (err) {
-        if (__DEV__) console.warn('[store] Failed to delete audio file:', err);
+        diagWarn('[store] Failed to delete audio file:', err);
       }
     }
     await recordRepository.remove(id);
@@ -387,7 +388,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
 
     const updated = get().records.find((r) => r.id === id);
     if (!updated) {
-      if (__DEV__) console.warn('[recordStore] updateAiStatus: record not in store', id);
+      devWarn('[recordStore] updateAiStatus: record not in store', id);
       return;
     }
 

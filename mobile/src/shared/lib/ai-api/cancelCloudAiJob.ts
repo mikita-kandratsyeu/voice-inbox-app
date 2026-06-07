@@ -1,4 +1,5 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
+import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 
 /**
@@ -9,20 +10,18 @@ export async function cancelCloudAiJob(jobId: string): Promise<void> {
 
   try {
     const response = await fetchWithAuth(url, { method: 'POST' });
-    if (__DEV__ && !response.ok) {
+    if (!response.ok) {
       const text = await response.text();
-      console.warn('[AI] cancelCloudAiJob: HTTP error', {
+      devWarn('[AI] cancelCloudAiJob: HTTP error', {
         jobId,
         status: response.status,
         body: text,
       });
     }
   } catch (err) {
-    if (__DEV__) {
-      console.warn('[AI] cancelCloudAiJob: failed', {
-        jobId,
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
+    diagWarn('[AI] cancelCloudAiJob: failed', {
+      jobId,
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 }

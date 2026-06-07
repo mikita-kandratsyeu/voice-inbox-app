@@ -1,5 +1,7 @@
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
+import { devWarn } from '@/shared/lib/appLogger';
+
 type HapticType =
   | 'selection'
   | 'impactLight'
@@ -11,7 +13,7 @@ const trigger = (type: HapticType) => {
   try {
     ReactNativeHapticFeedback.trigger(type, { enableVibrateFallback: true });
   } catch {
-    if (__DEV__) console.warn('Haptic feedback failed');
+    devWarn('Haptic feedback failed');
   }
 };
 

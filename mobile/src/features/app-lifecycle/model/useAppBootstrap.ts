@@ -19,6 +19,7 @@ import { cleanupOrphanTranscriptionTempWavs } from '@/features/transcription/lib
 import { initRuntimeConfig } from '@/shared/config/runtimeConfig';
 import { initDB, isString } from '@/shared/lib';
 import { syncAnalyticsUserId } from '@/shared/lib/analytics';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { syncCrashlyticsUserId } from '@/shared/lib/crashlytics';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { prefetchModelManifest } from '@/shared/lib/model-manifest';
@@ -70,16 +71,14 @@ export function useAppBootstrap(
       provider: rnfbProvider,
       isTokenAutoRefreshEnabled: true,
     }).catch((err) => {
-      if (__DEV__) {
-        console.warn('[bootstrap] App Check init failed', err);
-      }
+      diagWarn('[bootstrap] App Check init failed', err);
     });
 
     const dbInit = initDB();
 
     initRuntimeConfig()
       .catch(() => {
-        if (__DEV__) console.warn('[bootstrap] failed to initialize remote config');
+        diagWarn('[bootstrap] failed to initialize remote config');
       })
       .then(() => {
         prefetchModelManifest();
@@ -95,7 +94,7 @@ export function useAppBootstrap(
             await useRecordStore.getState().load();
           }
         } catch {
-          if (__DEV__) console.warn('[bootstrap] trash purge failed');
+          diagWarn('[bootstrap] trash purge failed');
         }
 
         try {
@@ -107,19 +106,19 @@ export function useAppBootstrap(
             await useRecordStore.getState().load();
           }
         } catch {
-          if (__DEV__) console.warn('[bootstrap] auto-archive failed');
+          diagWarn('[bootstrap] auto-archive failed');
         }
 
         try {
           await syncAllTaskDeadlineNotifications();
         } catch {
-          if (__DEV__) console.warn('[bootstrap] task deadline notification sync failed');
+          diagWarn('[bootstrap] task deadline notification sync failed');
         }
 
         try {
           await syncAllBackupReminderNotifications();
         } catch {
-          if (__DEV__) console.warn('[bootstrap] backup reminder notification sync failed');
+          diagWarn('[bootstrap] backup reminder notification sync failed');
         }
 
         void cleanupOrphanTranscriptionTempWavs(useRecordStore.getState().records);
@@ -132,7 +131,7 @@ export function useAppBootstrap(
             await Promise.all([syncCrashlyticsUserId(deviceId), syncAnalyticsUserId(deviceId)]);
             void initRevenueCatWhenReady(deviceId);
           } catch {
-            if (__DEV__) console.warn('[bootstrap] failed to sync analytics/crashlytics user id');
+            diagWarn('[bootstrap] failed to sync analytics/crashlytics user id');
           }
         })();
 
@@ -146,7 +145,7 @@ export function useAppBootstrap(
                 onInitialPushData(initial.data as unknown as PushNotificationData);
               }
             } catch {
-              if (__DEV__) console.warn('[bootstrap] failed to read initial push notification');
+              diagWarn('[bootstrap] failed to read initial push notification');
             }
 
             if (getHasSeenOnboarding()) {
@@ -156,9 +155,7 @@ export function useAppBootstrap(
         }, 0);
       })
       .catch((err) => {
-        if (__DEV__) {
-          console.warn('[bootstrap] critical failure', err);
-        }
+        diagWarn('[bootstrap] critical failure', err);
 
         notifyReady();
 

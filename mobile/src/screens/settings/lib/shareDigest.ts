@@ -1,5 +1,7 @@
 import { Share } from 'react-native';
 
+import { diagWarn } from '@/shared/lib/appLogger';
+
 import {
   sendRecordEmail,
   sendShareEmailPdfAttachment,
@@ -121,7 +123,7 @@ export async function emailDigestExport(
             await NitroFS.unlink(pdfPath);
           }
         } catch {
-          if (__DEV__) console.warn('[share] unlink failed', pdfPath);
+          diagWarn('[share] unlink failed', pdfPath);
         }
       }
     }

@@ -14,6 +14,7 @@ import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanima
 
 import type { Colors } from '@/shared/config';
 import { formatTime, hapticSelection } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
 
 const SKIP_SECONDS = 5;
@@ -72,7 +73,7 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
       player.removePlaybackEndListener();
       await player.stopPlayer();
     } catch (err) {
-      if (__DEV__) console.warn('[AudioPlayer] stopPlayer failed:', err);
+      diagWarn('[AudioPlayer] stopPlayer failed:', err);
     }
     isPlayerLoadedRef.current = false;
     setIsPlaying(false);
@@ -92,7 +93,7 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
         setElapsed(secs);
         progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
       } catch (err) {
-        if (__DEV__) console.warn('[AudioPlayer] seekToPlayer failed:', err);
+        diagWarn('[AudioPlayer] seekToPlayer failed:', err);
       }
     },
     [totalSeconds, progressValue],
@@ -139,7 +140,7 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
         isPlayerLoadedRef.current = true;
         setIsPlaying(true);
       } catch (err) {
-        if (__DEV__) console.warn('[AudioPlayer] startPlayer failed:', err);
+        diagWarn('[AudioPlayer] startPlayer failed:', err);
       }
     },
     [audioPath, totalSeconds, playbackSpeed, seekTo, progressValue],
@@ -186,7 +187,7 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
         player.removePlayBackListener();
         setIsPlaying(false);
       } catch (err) {
-        if (__DEV__) console.warn('[AudioPlayer] pausePlayer failed:', err);
+        diagWarn('[AudioPlayer] pausePlayer failed:', err);
       }
     } else {
       try {
@@ -222,7 +223,7 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
         }
         setIsPlaying(true);
       } catch (err) {
-        if (__DEV__) console.warn('[AudioPlayer] resumePlayer failed:', err);
+        diagWarn('[AudioPlayer] resumePlayer failed:', err);
       }
     }
   };

@@ -57,6 +57,7 @@ import {
   useIsTablet,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
@@ -222,7 +223,7 @@ export const StorageDetailsScreen = () => {
           recordsWithAudio: trashedPayloads.filter((t) => Boolean(t.audioPath)).length,
         });
       } catch (err) {
-        if (__DEV__) console.warn('[StorageDetails] Failed to load stats:', err);
+        diagWarn('[StorageDetails] Failed to load stats:', err);
         setTrashStorage(EMPTY_TRASH_STORAGE);
       } finally {
         setIsLoading(false);
@@ -407,7 +408,7 @@ export const StorageDetailsScreen = () => {
                 : t('storage.cacheCleared', { freed: freedKb });
             Alert.alert(t('common.done'), msg);
           } catch (err) {
-            if (__DEV__) console.warn('[StorageDetails] Failed to clear cache:', err);
+            diagWarn('[StorageDetails] Failed to clear cache:', err);
             Alert.alert(t('common.error'), t('storage.cacheClearError'));
           } finally {
             setIsClearing(false);
@@ -504,7 +505,7 @@ export const StorageDetailsScreen = () => {
           navigation.goBack();
         }
       } catch (err) {
-        if (__DEV__) console.warn('[StorageDetails] Selective delete failed:', err);
+        diagWarn('[StorageDetails] Selective delete failed:', err);
         Alert.alert(t('common.error'), t('storage.deleteAllError'));
       } finally {
         setIsDeletingAll(false);

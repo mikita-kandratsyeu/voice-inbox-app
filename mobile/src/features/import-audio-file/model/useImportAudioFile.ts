@@ -22,6 +22,7 @@ import { isTranscriptionBlockedForRecord, useTranscription } from '@/features/tr
 import { generateRecordId } from '@/screens/record/lib/generateRecordId';
 import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
 import { hapticError, hapticMedium, IS_IOS, useNetworkStatus } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { convertToWav, getAudioDurationMs } from '@/shared/lib/audio';
 import { formatTime } from '@/shared/lib/date';
 import {
@@ -225,9 +226,7 @@ export function useImportAudioFile() {
 
     if (pending?.kind === 'audio' && pending.record.audioPath) {
       NitroFS.unlink(pending.record.audioPath).catch(() => {
-        if (__DEV__) {
-          console.warn('[importAudioFile] Could not delete canceled import file');
-        }
+        diagWarn('[importAudioFile] Could not delete canceled import file');
       });
     }
   }, [pendingFileImport]);
@@ -245,13 +244,11 @@ export function useImportAudioFile() {
         };
         const sourcePath = await getReadableDocumentPickerFsPath(fileRef);
         if (!sourcePath) {
-          if (__DEV__) {
-            console.warn('[importAudioFile] path is not readable', {
-              uri: fileRef.uri,
-              fileUri: fileRef.fileUri,
-              fileCopyUri: fileRef.fileCopyUri,
-            });
-          }
+          diagWarn('[importAudioFile] path is not readable', {
+            uri: fileRef.uri,
+            fileUri: fileRef.fileUri,
+            fileCopyUri: fileRef.fileCopyUri,
+          });
           return;
         }
 
@@ -321,18 +318,14 @@ export function useImportAudioFile() {
             try {
               if (destPath !== normalizedSource) await NitroFS.unlink(destPath);
             } catch {
-              if (__DEV__) {
-                console.warn('[importAudioFile] Could not delete original file');
-              }
+              diagWarn('[importAudioFile] Could not delete original file');
             }
             return;
           }
           try {
             if (destPath !== normalizedSource) await NitroFS.unlink(destPath);
           } catch {
-            if (__DEV__) {
-              console.warn('[importAudioFile] Could not delete original file');
-            }
+            diagWarn('[importAudioFile] Could not delete original file');
           }
           destPath = converted;
         }
@@ -342,9 +335,7 @@ export function useImportAudioFile() {
         try {
           durationMs = await getAudioDurationMs(destPath);
         } catch {
-          if (__DEV__) {
-            console.warn('[importAudioFile] getAudioDurationMs failed');
-          }
+          diagWarn('[importAudioFile] getAudioDurationMs failed');
         }
         if (durationMs == null || durationMs <= 0) {
           hapticError();
@@ -357,9 +348,7 @@ export function useImportAudioFile() {
           try {
             await NitroFS.unlink(destPath);
           } catch {
-            if (__DEV__) {
-              console.warn('[importAudioFile] Could not delete file after unknown duration');
-            }
+            diagWarn('[importAudioFile] Could not delete file after unknown duration');
           }
           return;
         }
@@ -376,9 +365,7 @@ export function useImportAudioFile() {
           try {
             await NitroFS.unlink(destPath);
           } catch {
-            if (__DEV__) {
-              console.warn('[importAudioFile] Could not delete original file');
-            }
+            diagWarn('[importAudioFile] Could not delete original file');
           }
           return;
         }
@@ -406,9 +393,7 @@ export function useImportAudioFile() {
       } catch (err: unknown) {
         const code = (err as { code?: string })?.code;
         if (code !== 'OPERATION_CANCELED') {
-          if (__DEV__) {
-            console.warn('[importAudioFile] pipeline', err);
-          }
+          diagWarn('[importAudioFile] pipeline', err);
           hapticError();
           Alert.alert(t('common.error'), t('importAudio.importError'));
         }
@@ -437,9 +422,7 @@ export function useImportAudioFile() {
           fileNameForCopy(fallbackName),
         );
         if (copyResult.kind === 'failed') {
-          if (__DEV__) {
-            console.warn('[importAudioFile] keepLocalCopy failed', copyResult.message);
-          }
+          diagWarn('[importAudioFile] keepLocalCopy failed', copyResult.message);
           hapticError();
           Alert.alert(t('common.error'), t('importAudio.importError'));
           return;
@@ -457,9 +440,7 @@ export function useImportAudioFile() {
         if (code === 'OPERATION_CANCELED') {
           return;
         }
-        if (__DEV__) {
-          console.warn('[importAudioFile] external uri', err);
-        }
+        diagWarn('[importAudioFile] external uri', err);
         hapticError();
         Alert.alert(t('common.error'), t('importAudio.importError'));
       } finally {
@@ -486,9 +467,7 @@ export function useImportAudioFile() {
         return;
       }
       if (picked.kind === 'failed') {
-        if (__DEV__) {
-          console.warn('[importAudioFile] pick/copy failed', picked.message);
-        }
+        diagWarn('[importAudioFile] pick/copy failed', picked.message);
         hapticError();
         Alert.alert(t('common.error'), picked.message || t('importAudio.importError'));
         return;
@@ -503,9 +482,7 @@ export function useImportAudioFile() {
       if (code === 'OPERATION_CANCELED') {
         return;
       }
-      if (__DEV__) {
-        console.warn('[importAudioFile]', err);
-      }
+      diagWarn('[importAudioFile]', err);
       hapticError();
       Alert.alert(t('common.error'), t('importAudio.importError'));
     }

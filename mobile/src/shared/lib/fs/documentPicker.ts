@@ -1,6 +1,7 @@
 import type { DocumentPickerOptions, DocumentPickerResponse } from '@react-native-documents/picker';
 import { errorCodes, isErrorWithCode, keepLocalCopy, pick } from '@react-native-documents/picker';
 
+import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { isString } from '@/shared/lib/type-guards';
 
 import { getCachesDirectoryPath, NitroFS } from './appFs';
@@ -64,9 +65,7 @@ async function findReadableFsPath(candidates: string[]): Promise<string | null> 
       const exists = await NitroFS.exists(candidate);
       if (exists) return candidate;
     } catch {
-      if (__DEV__) {
-        console.warn('[getReadableDocumentPickerFsPath] candidate is not readable', candidate);
-      }
+      devWarn('[getReadableDocumentPickerFsPath] candidate is not readable', { path: candidate });
     }
   }
   return null;
@@ -118,13 +117,11 @@ async function copyPickerUriToCachesWithNitro(
         return { kind: 'picked', localUri, name: fileName };
       }
     } catch (err) {
-      if (__DEV__) {
-        console.warn('[pickSingleFileToCachesDirectory] NitroFS.copyFile failed', {
-          source,
-          destPath,
-          err,
-        });
-      }
+      diagWarn('[pickSingleFileToCachesDirectory] NitroFS.copyFile failed', {
+        source,
+        destPath,
+        err,
+      });
     }
   }
 
@@ -163,9 +160,7 @@ async function copyPickerUriToCachesWithFetch(
       return { kind: 'picked', localUri, name: fileName };
     }
   } catch (err) {
-    if (__DEV__) {
-      console.warn('[pickSingleFileToCachesDirectory] fetch copy failed', { uri, err });
-    }
+    diagWarn('[pickSingleFileToCachesDirectory] fetch copy failed', { uri, err });
   }
 
   return null;
@@ -228,12 +223,10 @@ export async function pickSingleFileToCachesDirectory(
 
     // iOS can return `error` when metadata (name/size) is unreadable, while the picked URI is still valid.
     if (file.error) {
-      if (__DEV__) {
-        console.warn(
-          '[pickSingleFileToCachesDirectory] metadata warning, attempting local copy anyway',
-          file.error,
-        );
-      }
+      devWarn(
+        '[pickSingleFileToCachesDirectory] metadata warning, attempting local copy anyway',
+        file.error,
+      );
     }
 
     return copyPickedFileToCachesDirectory(file, resolvePickerImportFileName(file));

@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
+import { diagWarn } from '@/shared/lib/appLogger';
 import { storage } from '@/shared/lib/async-storage';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 
@@ -32,9 +33,7 @@ function getDeviceLocale(): string {
       return LOCALE_MAP[primary] ?? LOCALE_MAP[tag] ?? DEFAULT_LOCALE;
     }
   } catch {
-    if (__DEV__) {
-      console.warn('react-native-localize not available or bridge not ready');
-    }
+    diagWarn('react-native-localize not available or bridge not ready');
   }
   return DEFAULT_LOCALE;
 }
@@ -91,9 +90,7 @@ export function initI18n(): void {
     try {
       applyAppLanguage();
     } catch {
-      if (__DEV__) {
-        console.warn('Failed to apply app language');
-      }
+      diagWarn('Failed to apply app language');
     }
   });
 }

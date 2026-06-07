@@ -1,6 +1,7 @@
 import notifee, { TriggerType } from '@notifee/react-native';
 
 import type { TaskItem } from '@/entities/record';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { useSettingsStore } from '@/entities/settings';
 
 import { buildTaskDeadlineNotificationCopy } from './buildTaskDeadlineNotificationCopy';
@@ -105,9 +106,7 @@ export function scheduleTaskDeadlineNotificationSync(): void {
   syncTimer = setTimeout(() => {
     syncTimer = null;
     void syncAllTaskDeadlineNotifications().catch((err) => {
-      if (__DEV__) {
-        console.warn('[task-deadline-notifications] sync failed', err);
-      }
+      diagWarn('[task-deadline-notifications] sync failed', err);
     });
   }, SYNC_DEBOUNCE_MS);
 }

@@ -30,6 +30,7 @@ import {
   unregisterAiGeneration,
 } from '@/shared/lib/aiGenerationAbortRegistry';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
+import { diagWarn } from '@/shared/lib/appLogger';
 
 import {
   askAiTranscriptFingerprint,
@@ -509,15 +510,14 @@ export const useAskAI = (
           const errorMsg = runResult.limitExceeded
             ? getAiWeeklyLimitExceededMessage()
             : runResult.error;
-          if (__DEV__)
-            console.warn('[AI] askQuestion: runAsk failed', {
-              recordId: record.id,
-              error: errorMsg,
-              limitExceeded: runResult.limitExceeded,
-              provider: runResult.provider,
-              mode: runResult.mode,
-              tier: privateCapabilityTier,
-            });
+          diagWarn('[AI] askQuestion: runAsk failed', {
+            recordId: record.id,
+            error: errorMsg,
+            limitExceeded: runResult.limitExceeded,
+            provider: runResult.provider,
+            mode: runResult.mode,
+            tier: privateCapabilityTier,
+          });
           if (runResult.limitExceeded) {
             alertAiLimitExceeded(errorMsg);
           }
@@ -557,11 +557,10 @@ export const useAskAI = (
           });
           return;
         }
-        if (__DEV__)
-          console.warn('[AI] askQuestion: unexpected error', {
-            recordId: record.id,
-            error: err instanceof Error ? err.message : String(err),
-          });
+        diagWarn('[AI] askQuestion: unexpected error', {
+          recordId: record.id,
+          error: err instanceof Error ? err.message : String(err),
+        });
         persistOutcome({
           isLoading: false,
           error: err instanceof Error ? err.message : 'Unknown error',

@@ -1,6 +1,8 @@
 import * as Keychain from 'react-native-keychain';
 import QuickCrypto from 'react-native-quick-crypto';
 
+import { diagWarn } from '@/shared/lib/appLogger';
+
 const SERVICE_DEVICE_ID = 'voice-inbox-device-id';
 
 let cachedDeviceId: string | null = null;
@@ -19,7 +21,7 @@ export async function getOrCreateDeviceId(): Promise<string> {
       return storedId;
     }
   } catch {
-    if (__DEV__) console.warn('[Device ID] getOrCreateDeviceId: Keychain error');
+    diagWarn('[Device ID] getOrCreateDeviceId: Keychain error');
   }
 
   const newId = QuickCrypto.randomUUID();

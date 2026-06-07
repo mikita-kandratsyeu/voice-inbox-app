@@ -1,3 +1,4 @@
+import { diagWarn } from '@/shared/lib/appLogger';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
 const SHARE_EXPORT_DIR_NAME = 'voice-inbox-share';
@@ -35,7 +36,7 @@ export async function pruneShareExportCache(maxAgeMs = SHARE_EXPORT_MAX_AGE_MS):
         await NitroFS.unlink(item.path);
       }
     } catch {
-      if (__DEV__) console.warn('[pruneShareExportCache] failed to unlink', item.path);
+      diagWarn('[pruneShareExportCache] failed to unlink', item.path);
     }
   }
 }

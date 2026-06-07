@@ -54,6 +54,7 @@ import type { Colors } from '@/shared/config';
 import { getWebsiteUrl, useAppTheme, useColors } from '@/shared/config';
 import { hapticSelection, IS_ANDROID, IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 import {
   checkMicPermission,
@@ -967,9 +968,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         await NitroFS.unlink(zipPath);
       }
     } catch {
-      if (__DEV__) {
-        console.warn('[onboarding] releasePendingRestoreZip failed', zipPath);
-      }
+      diagWarn('[onboarding] releasePendingRestoreZip failed', { path: zipPath });
     }
   }, []);
 
@@ -1048,9 +1047,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         },
       ]);
     } catch (err) {
-      if (__DEV__) {
-        console.warn('[onboarding] restore failed', err);
-      }
+      diagWarn('[onboarding] restore failed', err);
 
       Alert.alert(t('common.error'), t('importExport.importError'));
     } finally {
@@ -1098,9 +1095,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           },
         ]);
       } catch (err) {
-        if (__DEV__) {
-          console.warn('[onboarding] restore with password failed', err);
-        }
+        diagWarn('[onboarding] restore with password failed', err);
         Alert.alert(t('common.error'), t('importExport.importError'));
       } finally {
         if (!showedConfirm) setIsRestoring(false);

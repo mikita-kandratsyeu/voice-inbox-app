@@ -1,3 +1,5 @@
+import { devWarn } from '@/shared/lib/appLogger';
+
 /** Read response body as JSON; avoids raw SyntaxError when the server returns plain text/HTML. */
 export async function readResponseJson(
   response: Response,
@@ -11,9 +13,7 @@ export async function readResponseJson(
   try {
     return { ok: true, data: JSON.parse(trimmed) as unknown };
   } catch {
-    if (__DEV__) {
-      console.warn('[AI] response is not JSON', trimmed.slice(0, 160));
-    }
+    devWarn('[AI] response is not JSON', trimmed.slice(0, 160));
     const snippet = trimmed.length > 200 ? `${trimmed.slice(0, 200)}…` : trimmed;
     return { ok: false, error: snippet };
   }

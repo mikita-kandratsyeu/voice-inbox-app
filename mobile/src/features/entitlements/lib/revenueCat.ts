@@ -21,6 +21,7 @@ import {
   getSubscriptionsPubliclyAvailable,
 } from '@/shared/config/runtimeConfig';
 import { isRecord, isString } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 import {
   invalidateProLicenseStatusCache,
   syncProLicenseRevenueCatOnServer,
@@ -58,12 +59,12 @@ function isPurchasesError(e: unknown): e is { code: PURCHASES_ERROR_CODE; messag
 
 function logPurchasesFailure(context: string, e: unknown): void {
   if (isPurchasesError(e)) {
-    console.warn(`[RevenueCat] ${context}`, e.code, e.message);
+    diagWarn(`[RevenueCat] ${context}`, e.code, e.message);
     return;
   }
 
   const msg = e instanceof Error ? e.message : String(e);
-  console.warn(`[RevenueCat] ${context}`, msg);
+  diagWarn(`[RevenueCat] ${context}`, msg);
 }
 
 let sessionConfigured = false;

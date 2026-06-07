@@ -16,6 +16,7 @@ import {
   cancelLocalLlmModelDownload,
   localLlmModelDownloader,
 } from '@/features/model-manager/lib/local-llm-download';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
@@ -102,9 +103,7 @@ export const useModelManager = () => {
 
       // Do native/network cancellation in background so UI remains responsive.
       void cancelWhisperModelDownload(modelId).catch((err) => {
-        if (__DEV__) {
-          console.warn('[whisper-download] background cancel failed', err);
-        }
+        diagWarn('[whisper-download] background cancel failed', err);
       });
     },
     [setWhisperModelStatus, setDownloadProgress],

@@ -6,6 +6,7 @@ import {
 } from '@react-native-firebase/crashlytics';
 
 import { isCrashlyticsDebugEnabled } from '@/shared/config/buildEnv';
+import { diagWarn } from '@/shared/lib/appLogger';
 
 function isCrashlyticsCollectionWanted(): boolean {
   if (!__DEV__) {
@@ -20,7 +21,7 @@ export async function initCrashlytics(): Promise<void> {
     const crashlytics = getCrashlytics();
     await setCrashlyticsCollectionEnabled(crashlytics, isCrashlyticsCollectionWanted());
   } catch {
-    if (__DEV__) console.warn('Crashlytics is not initialized');
+    diagWarn('Crashlytics is not initialized');
   }
 }
 
@@ -30,7 +31,7 @@ export async function syncCrashlyticsUserId(deviceId: string): Promise<void> {
   try {
     await setUserId(getCrashlytics(), deviceId);
   } catch {
-    if (__DEV__) console.warn('Crashlytics user ID is not synced');
+    diagWarn('Crashlytics user ID is not synced');
   }
 }
 

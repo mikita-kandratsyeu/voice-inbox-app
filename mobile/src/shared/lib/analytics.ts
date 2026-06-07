@@ -6,6 +6,7 @@ import {
 } from '@react-native-firebase/analytics';
 
 import { isAnalyticsDebugEnabled } from '@/shared/config/buildEnv';
+import { diagWarn } from '@/shared/lib/appLogger';
 
 export function isAnalyticsCollectionWanted(): boolean {
   if (!__DEV__) {
@@ -20,7 +21,7 @@ export async function initAnalytics(): Promise<void> {
     const analytics = getAnalytics();
     await setAnalyticsCollectionEnabled(analytics, isAnalyticsCollectionWanted());
   } catch {
-    if (__DEV__) console.warn('Analytics is not initialized');
+    diagWarn('Analytics is not initialized');
   }
 }
 
@@ -30,7 +31,7 @@ export async function syncAnalyticsUserId(deviceId: string): Promise<void> {
   try {
     await setUserId(getAnalytics(), deviceId);
   } catch {
-    if (__DEV__) console.warn('Analytics user ID is not synced');
+    diagWarn('Analytics user ID is not synced');
   }
 }
 
@@ -43,7 +44,7 @@ export async function logAnalyticsScreenView(screenName: string): Promise<void> 
       screen_class: screenName,
     });
   } catch {
-    if (__DEV__) console.warn('Analytics screen view failed');
+    diagWarn('Analytics screen view failed');
   }
 }
 
@@ -56,6 +57,6 @@ export async function logAnalyticsEvent(
   try {
     await logEvent(getAnalytics(), name, params);
   } catch {
-    if (__DEV__) console.warn('Analytics event failed', name);
+    diagWarn('Analytics event failed', name);
   }
 }

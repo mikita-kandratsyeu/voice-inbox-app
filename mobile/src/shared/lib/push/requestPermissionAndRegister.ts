@@ -8,6 +8,7 @@ import {
 
 import { useSettingsStore } from '@/entities/settings';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { i18n } from '@/shared/lib/i18n';
 import { IS_IOS, PLATFORM_OS } from '@/shared/lib/platform';
@@ -126,18 +127,14 @@ export async function sendTokenToBackend(token: string): Promise<boolean> {
     });
 
     if (!response.ok) {
-      if (__DEV__) {
-        console.warn('[Push] register token failed', response.status);
-      }
+      diagWarn('[Push] register token failed', response.status);
       return false;
     }
 
     markPushRegistered(token);
     return true;
   } catch (err) {
-    if (__DEV__) {
-      console.warn('[Push] register token error', err);
-    }
+    diagWarn('[Push] register token error', err);
     return false;
   }
 }

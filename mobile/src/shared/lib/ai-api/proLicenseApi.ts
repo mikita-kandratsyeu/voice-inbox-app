@@ -4,6 +4,7 @@ import {
   PRO_WEEKLY_LIMIT,
 } from '@/shared/config/productLimits';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
@@ -73,16 +74,14 @@ export async function syncProLicenseRevenueCatOnServer(
     const response = await fetchWithAuth(`${getWebApiUrl()}/api/pro-license/sync-revenuecat`, {
       method: 'POST',
     });
-    if (!response.ok && __DEV__) {
+    if (!response.ok) {
       const raw = (await response.json().catch(() => ({}))) as { code?: unknown };
       if (raw?.code !== 'revenuecat_secret_not_configured') {
-        console.warn('[proLicense] sync-revenuecat failed', response.status, raw?.code);
+        diagWarn('[proLicense] sync-revenuecat failed', response.status, raw?.code);
       }
     }
   } catch (e) {
-    if (__DEV__) {
-      console.warn('[proLicense] sync-revenuecat network', e);
-    }
+    diagWarn('[proLicense] sync-revenuecat network', e);
   }
 }
 

@@ -23,6 +23,7 @@ import {
   resolveWebApiSecretForRequest,
   subscribeTestflightWebApiUrlOverride,
 } from '@/shared/config/testflightWebApiOverride';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { clearApiToken } from '@/shared/lib/api-auth';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { isNumber, isString } from '@/shared/lib/type-guards';
@@ -50,7 +51,7 @@ function readAppUsedMemoryBytes(): number | null {
       const used = d.getUsedMemory();
       if (isNumber(used) && Number.isFinite(used) && used > 0) return used;
     } catch {
-      if (__DEV__) console.warn('[readAppUsedMemoryBytes] Failed to read used memory');
+      diagWarn('[readAppUsedMemoryBytes] Failed to read used memory');
     }
   }
 

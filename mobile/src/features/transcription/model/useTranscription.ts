@@ -9,6 +9,7 @@ import { shouldApplyAutoAiAfterTranscription } from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
 import { ensureRecordingsDir, i18n, RECORDINGS_DIR, useNetworkStatus } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { convertToWav } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
 
@@ -182,7 +183,7 @@ export const useTranscription = () => {
           }
           pendingWhisperResetRecordIds.delete(record.id);
         } catch (err) {
-          if (__DEV__) console.warn('[transcription] restart reset failed', err);
+          diagWarn('[transcription] restart reset failed', err);
           rememberWhisperResetResult(false);
           pendingWhisperResetRecordIds.add(record.id);
           updateAiStatus(record.id, 'error', record.transcriptProgress ?? 0);
@@ -268,7 +269,7 @@ export const useTranscription = () => {
 
           const converted = await convertToWav(normalizedAudioPath, wavOut);
           if (!converted) {
-            if (__DEV__) console.warn('[transcription] convert to wav failed', record.id);
+            diagWarn('[transcription] convert to wav failed', record.id);
             currentRecordIdRef.current = null;
             updateAiStatus(record.id, 'error');
             return;
@@ -353,7 +354,7 @@ export const useTranscription = () => {
 
               lastCheckpointPersistAt = now;
               saveTranscriptionCheckpoint(snapshot).catch((err) => {
-                if (__DEV__) console.warn('[transcription] checkpoint save failed', err);
+                diagWarn('[transcription] checkpoint save failed', err);
               });
             },
           });
@@ -461,7 +462,7 @@ export const useTranscription = () => {
           if (shouldQueueWhisperResetForError(err)) {
             pendingWhisperResetRecordIds.add(record.id);
           }
-          if (__DEV__) console.warn('[transcription] Failed:', err);
+          diagWarn('[transcription] Failed:', err);
           updateAiStatus(record.id, 'error');
         }
       } finally {
@@ -589,11 +590,11 @@ export const useTranscription = () => {
         if (!finished) {
           pendingWhisperResetRecordIds.add(recordId);
           void resetTask.catch((err) => {
-            if (__DEV__) console.warn('[transcription] discard reset failed', err);
+            diagWarn('[transcription] discard reset failed', err);
           });
         }
       } catch (err) {
-        if (__DEV__) console.warn('[transcription] discard reset failed', err);
+        diagWarn('[transcription] discard reset failed', err);
         rememberWhisperResetResult(false);
         pendingWhisperResetRecordIds.add(recordId);
       } finally {

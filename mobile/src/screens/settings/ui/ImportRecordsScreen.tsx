@@ -27,6 +27,7 @@ import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { tryShowYandexInterstitial } from '@/features/yandex-interstitial';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
+import { diagWarn } from '@/shared/lib/appLogger';
 import {
   formatRelativeTime,
   resolveAudioPath,
@@ -375,9 +376,10 @@ export const ImportRecordsScreen = () => {
         try {
           await restoreFolder(folder);
         } catch {
-          if (__DEV__) {
-            console.warn('[ImportRecordsScreen] failed to restore folder', folder);
-          }
+          diagWarn('[ImportRecordsScreen] failed to restore folder', {
+            folderId: folder.id,
+            folderName: folder.name,
+          });
         }
       }
       if (legacyFolders.length > 0 || foldersToRestore.length > 0) {

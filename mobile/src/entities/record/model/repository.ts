@@ -11,6 +11,7 @@ import {
   recordAskAiTable,
   recordsTable,
 } from '@/shared/lib';
+import { devWarn } from '@/shared/lib/appLogger';
 import type { RecordForStats } from '@/shared/lib/async-storage/storage';
 import { isString } from '@/shared/lib/type-guards';
 
@@ -70,9 +71,7 @@ function sanitizeMeetingSummaryTemplate(
 }
 
 const logDb = (op: string, details?: Record<string, unknown>) => {
-  if (__DEV__) {
-    console.warn(`[db] ${op}`, details ?? '');
-  }
+  devWarn(`[db] ${op}`, details ?? '');
 };
 
 function tasksJsonAllComplete(tasksJson: string | null | undefined): boolean {

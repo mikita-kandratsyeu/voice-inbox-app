@@ -18,6 +18,7 @@ import { resolveShareExportContext } from '@/features/share-record/lib/shareExpo
 import { shareMarkdownAsPdf } from '@/features/share-record/lib/shareMarkdownAsPdf';
 import { writeShareMarkdownPdf } from '@/features/share-record/lib/writeShareMarkdownPdf';
 import { hapticError, hapticSuccess } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
 import type { BatchExportPackaging } from './batchExportPackaging';
@@ -47,9 +48,7 @@ async function unlinkIfExists(path: string): Promise<void> {
       await NitroFS.unlink(path);
     }
   } catch {
-    if (__DEV__) {
-      console.warn('[batchExport] unlinkIfExists failed', path);
-    }
+    diagWarn('[batchExport] unlinkIfExists failed', path);
   }
 }
 
@@ -60,9 +59,7 @@ async function removeDirRecursiveIfExists(path: string): Promise<void> {
       await removeDirRecursive(path);
     }
   } catch {
-    if (__DEV__) {
-      console.warn('[batchExport] removeDirRecursiveIfExists failed', path);
-    }
+    diagWarn('[batchExport] removeDirRecursiveIfExists failed', path);
   }
 }
 
@@ -229,7 +226,7 @@ export const useBatchRecordActions = ({
             return;
           }
           hapticError();
-          if (__DEV__) console.warn('[batchExport] failed:', err);
+          diagWarn('[batchExport] failed:', err);
           Alert.alert(t('common.error'), t('batch.exportFailed'));
         }
         return;
@@ -252,7 +249,7 @@ export const useBatchRecordActions = ({
             return;
           }
           hapticError();
-          if (__DEV__) console.warn('[batchExport] pdf failed:', err);
+          diagWarn('[batchExport] pdf failed:', err);
           Alert.alert(t('common.error'), t('batch.exportFailed'));
         } finally {
           setIsGeneratingSharePdf(false);
@@ -275,7 +272,7 @@ export const useBatchRecordActions = ({
           return;
         }
         hapticError();
-        if (__DEV__) console.warn('[batchExport] zip failed:', err);
+        diagWarn('[batchExport] zip failed:', err);
         Alert.alert(t('common.error'), t('batch.exportFailed'));
       } finally {
         if (built) {

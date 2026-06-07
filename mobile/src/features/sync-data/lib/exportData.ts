@@ -5,6 +5,7 @@ import { type EncryptionMethods, zip, zipWithPassword } from 'react-native-zip-a
 import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
 import { i18n } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
 import { BACKUP_ZIP_ENCRYPTION } from './backupZip';
@@ -39,9 +40,7 @@ async function unlinkIfExists(path: string): Promise<void> {
       await NitroFS.unlink(path);
     }
   } catch {
-    if (__DEV__) {
-      console.warn('[unlinkIfExists] failed to unlink', path);
-    }
+    diagWarn('[unlinkIfExists] failed to unlink', { path });
   }
 }
 
@@ -52,9 +51,7 @@ async function removeDirRecursiveIfExists(path: string): Promise<void> {
       await removeDirRecursive(path);
     }
   } catch {
-    if (__DEV__) {
-      console.warn('[removeDirRecursiveIfExists] failed to remove directory', path);
-    }
+    diagWarn('[removeDirRecursiveIfExists] failed to remove directory', { path });
   }
 }
 

@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 
+import { diagWarn } from '@/shared/lib/appLogger';
+
 import { navigationRef } from '@/app/navigation/navigationRef';
 
 const DOWNLOAD_SETTINGS_DEEPLINKS: Record<string, 'WhisperModelPicker' | 'AIModelPicker'> = {
@@ -29,9 +31,7 @@ export const useDownloadingDeeplink = () => {
         },
       });
     } catch (e) {
-      if (__DEV__) {
-        console.warn('[useDownloadingDeeplink] failed to handle deeplink', e);
-      }
+      diagWarn('[useDownloadingDeeplink] failed to handle deeplink', e);
     }
   }, []);
 

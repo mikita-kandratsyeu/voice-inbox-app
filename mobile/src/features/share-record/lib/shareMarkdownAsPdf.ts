@@ -1,5 +1,6 @@
 import { Share } from 'react-native';
 
+import { diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 
 import { writeShareMarkdownPdf } from './writeShareMarkdownPdf';
@@ -17,7 +18,7 @@ async function unlinkIfExists(path: string): Promise<void> {
       await NitroFS.unlink(path);
     }
   } catch {
-    if (__DEV__) console.warn('[share] unlink failed', path);
+    diagWarn('[share] unlink failed', path);
   }
 }
 

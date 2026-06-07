@@ -1,5 +1,6 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
 import { type AiFetchOptions, aiRequestCancelledFailure, isAbortLikeError } from './abort';
@@ -132,7 +133,7 @@ export async function postAiMessage(
       return aiRequestCancelledFailure();
     }
     const errorMsg = err instanceof Error ? err.message : 'Network error';
-    if (__DEV__) console.warn('[AI] postAiMessage: fetch failed', { error: errorMsg, url });
+    diagWarn('[AI] postAiMessage: fetch failed', { error: errorMsg, url });
     return { ok: false, error: errorMsg };
   }
 
@@ -142,14 +143,13 @@ export async function postAiMessage(
       return { ok: false, error: limitBody.error };
     }
     const json = limitBody.data as AiApiLimitResponse;
-    if (__DEV__) console.warn('[AI] postAiMessage: limit exceeded', json.usage);
+    diagWarn('[AI] postAiMessage: limit exceeded', json.usage);
     return { ok: false, limitExceeded: true, usage: json.usage };
   }
 
   if (!response.ok) {
     const text = await response.text();
-    if (__DEV__)
-      console.warn('[AI] postAiMessage: HTTP error', { status: response.status, body: text });
+    devWarn('[AI] postAiMessage: HTTP error', { status: response.status, body: text });
     return { ok: false, error: text || `HTTP ${response.status}` };
   }
 
@@ -204,7 +204,7 @@ export async function postMeetingDialogueRetry(
       return aiRequestCancelledFailure();
     }
     const errorMsg = err instanceof Error ? err.message : 'Network error';
-    if (__DEV__) console.warn('[AI] postMeetingDialogueRetry: fetch failed', { error: errorMsg });
+    diagWarn('[AI] postMeetingDialogueRetry: fetch failed', { error: errorMsg });
     return { ok: false, error: errorMsg };
   }
 
@@ -304,7 +304,7 @@ export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
           return { ok: false, error: parsed.error };
         }
       } catch {
-        if (__DEV__) console.warn('[AI] claimAiBonus: JSON parse error', { text });
+        devWarn('[AI] claimAiBonus: JSON parse error', { text });
       }
       return { ok: false, error: text || `HTTP ${response.status}` };
     }
@@ -420,7 +420,7 @@ export async function pollAiMessage(
         return 'processing';
       }
       if (state.kind === 'error') {
-        if (__DEV__) console.warn('[AI] pollAiMessage: server error', { id, error: state.error });
+        diagWarn('[AI] pollAiMessage: server error', { id, error: state.error });
         return { ok: false, error: state.error };
       }
 
@@ -449,8 +449,8 @@ export async function pollAiMessage(
     },
   );
 
-  if (!result.ok && result.error === 'Timeout waiting for AI result' && __DEV__) {
-    console.warn('[AI] pollAiMessage: timeout', { id, expectAsyncMeetingDialogue });
+  if (!result.ok && result.error === 'Timeout waiting for AI result') {
+    diagWarn('[AI] pollAiMessage: timeout', { id, expectAsyncMeetingDialogue });
   }
 
   if (!result.ok) {

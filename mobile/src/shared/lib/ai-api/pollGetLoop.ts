@@ -12,6 +12,8 @@ export type PollGetParseOutcome<T> =
   | PollGetLoopResult<T>
   | 'processing'
   | Promise<PollGetLoopResult<T> | 'processing'>;
+import { devWarn } from '@/shared/lib/appLogger';
+
 import { readResponseJson } from './responseJson';
 const POLL_BACKOFF_INITIAL_MS = 2_000;
 const POLL_BACKOFF_CAP_MS = 8_000;
@@ -74,9 +76,7 @@ export async function pollGetLoop<T>(
 
     const body = await readResponseJson(response);
     if (!body.ok) {
-      if (__DEV__) {
-        console.warn('[AI] poll: non-JSON body', body.error);
-      }
+      devWarn('[AI] poll: non-JSON body', body.error);
       continue;
     }
 

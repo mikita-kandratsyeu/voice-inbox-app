@@ -18,6 +18,7 @@ import {
   isStringArrayItem,
   RECORDINGS_DIR,
 } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 import {
   getCachesDirectoryPath,
   getReadableDocumentPickerFsPath,
@@ -293,9 +294,7 @@ async function unlinkIfExists(path: string): Promise<void> {
       await NitroFS.unlink(path);
     }
   } catch {
-    if (__DEV__) {
-      console.warn('[unlinkIfExists] failed to unlink', path);
-    }
+    diagWarn('[unlinkIfExists] failed to unlink', { path });
   }
 }
 
@@ -536,9 +535,7 @@ export const importData = async (options?: ImportDataOptions): Promise<ImportRes
         return { success: false, error: 'cancelled' };
       }
       if (picked.kind === 'failed') {
-        if (__DEV__) {
-          console.warn('[importData] pick/copy failed', picked.message);
-        }
+        diagWarn('[importData] pick/copy failed', picked.message);
         return { success: false, error: i18n.t('importExport.fileNotSelected') };
       }
 
@@ -554,13 +551,11 @@ export const importData = async (options?: ImportDataOptions): Promise<ImportRes
       fileName = fileLike.name ?? '';
 
       if (!uri || !fsPath) {
-        if (__DEV__) {
-          console.warn('[importData] picker path is not readable', {
-            uri: fileLike.uri,
-            fileUri: fileLike.fileUri,
-            fileCopyUri: fileLike.fileCopyUri,
-          });
-        }
+        diagWarn('[importData] picker path is not readable', {
+          uri: fileLike.uri,
+          fileUri: fileLike.fileUri,
+          fileCopyUri: fileLike.fileCopyUri,
+        });
         return { success: false, error: i18n.t('importExport.fileNotSelected') };
       }
     }
