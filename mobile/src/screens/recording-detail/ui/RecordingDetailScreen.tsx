@@ -647,10 +647,7 @@ export const RecordingDetailScreen = () => {
     ? color.background.secondary
     : color.background.card;
   const stickyTabIndex =
-    1 +
-    (hasAudio && hasRecordingMarks ? 1 : 0) +
-    (hasAudio ? 1 : 0) +
-    (showMeetingModeToggle ? 1 : 0);
+    1 + (hasAudio && hasRecordingMarks ? 1 : 0) + (showMeetingModeToggle ? 1 : 0);
 
   return (
     <View className="flex-1" style={{ backgroundColor: shellBackgroundColor }}>
@@ -725,14 +722,24 @@ export const RecordingDetailScreen = () => {
             surfaceBackgroundColor={tabPanelBackgroundColor}
           >
             {hasAudio ? (
-              <AudioPlayer
-                ref={audioPlayerRef}
-                duration={liveRecord.duration}
-                color={color}
-                audioPath={liveRecord.audioPath}
-                onPositionChange={onPositionUpdate}
-                embedded
-              />
+              <View className="gap-4">
+                <AudioPlayer
+                  ref={audioPlayerRef}
+                  duration={liveRecord.duration}
+                  color={color}
+                  audioPath={liveRecord.audioPath}
+                  onPositionChange={onPositionUpdate}
+                  embedded
+                />
+                <View className="flex-row">
+                  <AudioLanguageSelector
+                    value={recordLanguage}
+                    color={color}
+                    onSelect={setRecordLanguage}
+                    surfaceBackgroundColor={color.background.tertiary}
+                  />
+                </View>
+              </View>
             ) : null}
           </RecordingDetailCard>
         </View>
@@ -746,20 +753,6 @@ export const RecordingDetailScreen = () => {
               onSeekMs={handleSeekToMarkMs}
               onUpdateMarks={handleUpdateRecordingMarks}
               canEditMarks={isProActive}
-            />
-          </View>
-        )}
-
-        {hasAudio && (
-          <View
-            className="overflow-hidden rounded-2xl"
-            style={{ width: '100%', maxWidth: contentMaxWidth }}
-          >
-            <AudioLanguageSelector
-              value={recordLanguage}
-              color={color}
-              onSelect={setRecordLanguage}
-              surfaceBackgroundColor={tabPanelBackgroundColor}
             />
           </View>
         )}

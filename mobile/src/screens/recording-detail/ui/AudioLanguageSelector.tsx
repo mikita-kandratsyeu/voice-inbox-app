@@ -2,7 +2,7 @@ import { MenuView } from '@react-native-menu/menu';
 import { ChevronDown, Languages } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity } from 'react-native';
 
 import type { TranscriptionLanguage } from '@/entities/settings';
 import { TRANSCRIPTION_LANGUAGES } from '@/entities/settings';
@@ -27,52 +27,44 @@ export const AudioLanguageSelector = ({
   const theme = useAppTheme();
   const isDark = theme === 'dark';
   const label = t(`recordingDetail.language.${value}`);
+  const controlLabel = `${t('recordingDetail.audioLanguage')}: ${label}`;
 
   return (
-    <View
-      className="gap-2 rounded-2xl p-4"
-      style={{ backgroundColor: surfaceBackgroundColor ?? color.background.card }}
+    <MenuView
+      key={theme}
+      themeVariant={isDark ? 'dark' : 'light'}
+      onPressAction={({ nativeEvent }) => {
+        hapticSelection();
+        const lang = nativeEvent.event as TranscriptionLanguage;
+        if (TRANSCRIPTION_LANGUAGES.includes(lang)) {
+          onSelect(lang);
+        }
+      }}
+      actions={TRANSCRIPTION_LANGUAGES.map((lang) => ({
+        id: lang,
+        title: t(`recordingDetail.language.${lang}`),
+        titleColor: color.text.primary,
+        state: lang === value ? 'on' : 'off',
+      }))}
     >
-      <View className="flex-row items-center gap-2">
-        <Languages size={18} color={color.icon.muted} strokeWidth={2} />
-        <Text className="text-sm font-medium" style={{ color: color.text.primary }}>
-          {t('recordingDetail.audioLanguage')}
-        </Text>
-      </View>
-      <MenuView
-        key={theme}
-        themeVariant={isDark ? 'dark' : 'light'}
-        onPressAction={({ nativeEvent }) => {
-          hapticSelection();
-          const lang = nativeEvent.event as TranscriptionLanguage;
-          if (TRANSCRIPTION_LANGUAGES.includes(lang)) {
-            onSelect(lang);
-          }
-        }}
-        actions={TRANSCRIPTION_LANGUAGES.map((lang) => ({
-          id: lang,
-          title: t(`recordingDetail.language.${lang}`),
-          titleColor: color.text.primary,
-          state: lang === value ? 'on' : 'off',
-        }))}
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel={controlLabel}
+        accessibilityHint={t('recordingDetail.languageHint')}
+        className="max-w-full flex-row items-center gap-2 rounded-full px-3 py-1.5"
+        style={{ backgroundColor: surfaceBackgroundColor ?? color.background.card }}
+        activeOpacity={0.7}
       >
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel={`${t('recordingDetail.audioLanguage')}, ${label}`}
-          accessibilityHint={t('recordingDetail.languageHint')}
-          className="flex-row items-center justify-between rounded-xl px-4 py-3"
-          style={{ backgroundColor: color.background.tertiary }}
-          activeOpacity={0.7}
+        <Languages size={14} color={color.icon.muted} strokeWidth={2} />
+        <Text
+          className="shrink text-[13px] font-medium"
+          numberOfLines={1}
+          style={{ color: color.text.primary }}
         >
-          <Text className="text-[16px]" style={{ color: color.text.primary }}>
-            {label}
-          </Text>
-          <ChevronDown size={18} color={color.text.secondary} strokeWidth={2} />
-        </TouchableOpacity>
-      </MenuView>
-      <Text className="text-xs" style={{ color: color.text.muted }}>
-        {t('recordingDetail.languageHint')}
-      </Text>
-    </View>
+          {controlLabel}
+        </Text>
+        <ChevronDown size={14} color={color.text.secondary} strokeWidth={2} />
+      </TouchableOpacity>
+    </MenuView>
   );
 };
