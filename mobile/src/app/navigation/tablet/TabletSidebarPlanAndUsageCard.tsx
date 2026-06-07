@@ -195,16 +195,16 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   planTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.1,
   },
   planSubtitle: {
-    fontSize: 11,
+    fontSize: 12,
     lineHeight: 15,
   },
   planCta: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     marginTop: 2,
   },

@@ -3,7 +3,6 @@ import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  InteractionManager,
   Keyboard,
   LayoutAnimation,
   Platform,
@@ -32,6 +31,7 @@ import {
   IS_IOS,
   isDarkSurfaceColor,
 } from '@/shared/lib';
+import runAfterInteractions from '@/shared/lib/runAfterInteractions';
 import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
 const MARK_LABEL_MAX_CHARS = 280;
@@ -85,7 +85,7 @@ export const AddRecordingMarkSheet = ({
 
   useEffect(() => {
     if (!visible || step !== 'label') return;
-    const task = InteractionManager.runAfterInteractions(() => {
+    const task = runAfterInteractions(() => {
       requestAnimationFrame(() => {
         labelInputRef.current?.focus();
       });

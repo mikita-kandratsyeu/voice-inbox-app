@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
-  InteractionManager,
   Modal,
   Pressable,
   RefreshControl,
@@ -62,6 +61,7 @@ import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 import { IS_ANDROID } from '@/shared/lib/platform';
+import runAfterInteractions from '@/shared/lib/runAfterInteractions';
 import { formatFileSize, getWhisperModelPath } from '@/shared/lib/whisper';
 import {
   SCREEN_PADDING,
@@ -522,7 +522,7 @@ export const StorageDetailsScreen = () => {
   const handleDeleteStorageConfirm = useCallback(
     (selection: DeleteStorageSelection) => {
       setDeleteStorageSheetVisible(false);
-      InteractionManager.runAfterInteractions(() => {
+      runAfterInteractions(() => {
         Alert.alert(
           t('storage.deleteExecuteConfirmTitle'),
           t('storage.deleteExecuteConfirmMessage'),

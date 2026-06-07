@@ -178,7 +178,7 @@ export const RecordCard = memo(function RecordCard({
               {hasAudio && (
                 <>
                   <Text style={[textSecondaryStyle, { fontSize: 12 }]}>{item.duration}</Text>
-                  {'  '}
+                  &nbsp;&nbsp;
                 </>
               )}
               {formatRelativeTime(item.createdAt, i18n.language)}
@@ -213,12 +213,12 @@ export const RecordCard = memo(function RecordCard({
             </View>
           )}
         </View>
-        {Boolean(item.transcript) && (
+        {Boolean(item?.transcript || item?.summary) && (
           <Text
             style={[textSecondaryStyle, { fontSize: 14, lineHeight: 20, marginBottom: 12 }]}
             numberOfLines={2}
           >
-            {item.transcript}
+            {item.summary || item.transcript}
           </Text>
         )}
         {hasTags && (

@@ -694,7 +694,7 @@
       "resetAt": "Resets: {{date}}",
       "loading": "Loading...",
       "unavailable": "—",
-      "loadFailed": "No connection",
+      "loadFailed": "Could not connect to the server",
       "loadFailedHint": "Pull down to refresh when you’re back online.",
       "claimBonus": "Watch ad for {{count}} bonus credits",
       "claimBonusTitle": "Bonus for watching",

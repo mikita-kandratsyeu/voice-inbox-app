@@ -104,9 +104,10 @@ const ManualTaskAddRow = ({
             accessibilityState={{ disabled: draft.trim().length === 0 }}
           >
             <Plus
-              size={22}
-              color={draft.trim().length > 0 ? color.accent.primary : color.icon.muted}
-              strokeWidth={2}
+              size={16}
+              color={color.accent.primary}
+              strokeWidth={2.25}
+              style={{ flexShrink: 0 }}
             />
           </Pressable>
         }
@@ -448,7 +449,7 @@ export const TasksTab = ({
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={t('recordingDetail.nextStepAddA11y', { text: step })}
-                className="flex-row items-center gap-2.5"
+                className="flex-row items-center gap-2.5 py-4"
                 style={{
                   paddingHorizontal: 12,
                   paddingVertical: 8,
@@ -463,10 +464,10 @@ export const TasksTab = ({
                   {step}
                 </Text>
                 <Plus
-                  size={17}
+                  size={16}
                   color={color.accent.primary}
-                  strokeWidth={2}
-                  style={{ flexShrink: 0, opacity: 0.9 }}
+                  strokeWidth={2.25}
+                  style={{ flexShrink: 0 }}
                 />
               </Pressable>
             ))}

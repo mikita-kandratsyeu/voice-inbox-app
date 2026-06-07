@@ -2,12 +2,13 @@ import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-shee
 import { Box } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, InteractionManager, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import type { TextInput } from 'react-native-gesture-handler';
 
 import type { Colors } from '@/shared/config';
 import { hapticSelection, hapticSuccess } from '@/shared/lib';
 import { listPrivateRemoteModels } from '@/shared/lib/ai-core/privateRemoteProvider';
+import runAfterInteractions from '@/shared/lib/runAfterInteractions';
 import {
   AppBottomSheetModal,
   RetryErrorState,
@@ -88,7 +89,7 @@ export function PrivateRemoteModelsPicker({
 
   useEffect(() => {
     if (!sheetVisible) return;
-    const task = InteractionManager.runAfterInteractions(() => {
+    const task = runAfterInteractions(() => {
       requestAnimationFrame(() => {
         modelInputRef.current?.focus();
       });

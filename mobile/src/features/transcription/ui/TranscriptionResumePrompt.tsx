@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, AppState, InteractionManager } from 'react-native';
+import { Alert, AppState } from 'react-native';
 
 import { useRecordStore } from '@/entities/record';
+import runAfterInteractions from '@/shared/lib/runAfterInteractions';
 
 import {
   getTranscriptionCheckpoint,
@@ -157,7 +158,7 @@ export const TranscriptionResumePrompt = () => {
         pendingAbortRetriesRef.current = 0;
       }
       if (next === 'active') {
-        InteractionManager.runAfterInteractions(() => {
+        runAfterInteractions(() => {
           scheduleResumeCheck('foreground');
         });
       }
