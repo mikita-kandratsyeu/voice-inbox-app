@@ -34,7 +34,6 @@ import {
   getAiUsage,
   getAiUsageHistory,
 } from '@/shared/lib/ai-api';
-import { formatTokenCount } from '@/shared/lib/formatTokenCount';
 import { formatLocalizedLongDateWithTime } from '@/shared/lib/taskDeadlineTimeDisplay';
 import {
   SCREEN_PADDING,
@@ -375,24 +374,10 @@ export const AiUsageDashboardScreen = () => {
   const getHistorySubtitle = useCallback(
     (entry: AiUsageHistoryEntry) => {
       const date = formatLocalizedLongDateWithTime(entry.createdAt, i18n.language);
-      const details: string[] = [];
       const model = entry.modelLabel?.trim() || entry.model?.trim();
-
-      if (model) {
-        details.push(model);
-      }
-      if (entry.tokenUsage) {
-        details.push(
-          t('recordingDetail.summaryMetaTokens', {
-            input: formatTokenCount(entry.tokenUsage.prompt),
-            output: formatTokenCount(entry.tokenUsage.completion),
-          }),
-        );
-      }
-
-      return details.length > 0 ? `${date}\n${details.join(' • ')}` : date;
+      return model ? `${date}\n${model}` : date;
     },
-    [i18n.language, t],
+    [i18n.language],
   );
 
   const featureRows = useMemo(

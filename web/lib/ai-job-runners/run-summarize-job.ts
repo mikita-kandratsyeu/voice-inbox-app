@@ -154,7 +154,6 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
       metadata: {
         ...aiModelResponseFields(model),
         chargedUsageUnits: payload.chargedUsageUnits ?? 1,
-        ...(result.tokenUsage ? { tokenUsage: result.tokenUsage } : {}),
       },
     });
 

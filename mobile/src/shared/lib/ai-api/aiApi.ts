@@ -261,7 +261,6 @@ export type AiUsageHistoryEntry = {
   description?: string;
   model?: string;
   modelLabel?: string;
-  tokenUsage?: { prompt: number; completion: number };
 };
 
 export type AiUsageHistoryPage = {
@@ -289,8 +288,6 @@ function parseAiUsagePayload(raw: Record<string, unknown>): AiUsage {
 }
 
 function parseAiUsageHistoryEntry(raw: Record<string, unknown>): AiUsageHistoryEntry {
-  const tokenUsage = parseHistoryTokenUsage(raw.tokenUsage);
-
   return {
     id: String(raw.id ?? ''),
     createdAt: String(raw.createdAt ?? ''),
@@ -301,20 +298,7 @@ function parseAiUsageHistoryEntry(raw: Record<string, unknown>): AiUsageHistoryE
     ...(isString(raw.description) ? { description: raw.description } : {}),
     ...(isString(raw.model) ? { model: raw.model } : {}),
     ...(isString(raw.modelLabel) ? { modelLabel: raw.modelLabel } : {}),
-    ...(tokenUsage ? { tokenUsage } : {}),
   };
-}
-
-function parseHistoryTokenUsage(raw: unknown): { prompt: number; completion: number } | undefined {
-  if (!raw || typeof raw !== 'object') return undefined;
-  const row = raw as Record<string, unknown>;
-  const prompt =
-    typeof row.prompt === 'number' && row.prompt >= 0 ? Math.floor(row.prompt) : undefined;
-  const completion =
-    typeof row.completion === 'number' && row.completion >= 0
-      ? Math.floor(row.completion)
-      : undefined;
-  return prompt != null && completion != null ? { prompt, completion } : undefined;
 }
 
 function parseAiUsageHistoryPayload(raw: Record<string, unknown>): AiUsageHistoryPage {

@@ -104,10 +104,7 @@ export async function runMeetingDialogueJob(payload: MeetingDialogueJobPayload):
       deviceId,
       operation: 'meeting_dialogue',
       jobId: id,
-      metadata: {
-        ...aiModelResponseFields(payload.model),
-        ...(mdPart.tokenUsage ? { tokenUsage: mdPart.tokenUsage } : {}),
-      },
+      metadata: aiModelResponseFields(payload.model),
     });
   } catch (err) {
     const done = existing as Extract<Message, { status: 'done' }>;

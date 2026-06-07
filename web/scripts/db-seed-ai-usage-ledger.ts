@@ -58,12 +58,6 @@ function pick<T>(items: readonly T[], index: number): T {
   return items[index % items.length]!;
 }
 
-function randomTokenUsage(seed: number): { prompt: number; completion: number } {
-  const prompt = 800 + ((seed * 137) % 4200);
-  const completion = 120 + ((seed * 89) % 900);
-  return { prompt, completion };
-}
-
 function buildMetadata(params: {
   operation: SeedOperation;
   seed: number;
@@ -74,7 +68,6 @@ function buildMetadata(params: {
     model: params.model.model,
     modelLabel: params.model.modelLabel,
     noteTitle: params.noteTitle,
-    tokenUsage: randomTokenUsage(params.seed),
   };
 
   switch (params.operation) {

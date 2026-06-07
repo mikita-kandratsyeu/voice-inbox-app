@@ -61,10 +61,7 @@ export async function runAskJob(payload: AskJobPayload): Promise<void> {
       deviceId,
       operation: 'transcript_ask',
       jobId: id,
-      metadata: {
-        ...aiModelResponseFields(model),
-        ...(result.tokenUsage ? { tokenUsage: result.tokenUsage } : {}),
-      },
+      metadata: aiModelResponseFields(model),
     });
   } catch (err) {
     if (!isRetryableAiJobError(err)) {

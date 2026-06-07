@@ -31,7 +31,6 @@ export type AiUsageHistoryEntry = {
   description?: string;
   model?: string;
   modelLabel?: string;
-  tokenUsage?: { prompt: number; completion: number };
 };
 
 export type AiUsageHistoryPage = {
@@ -49,16 +48,6 @@ const normalizeLimit = (limit: number | null): number => {
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value && typeof value === 'object' && !Array.isArray(value));
-
-const readNonNegativeInt = (value: unknown): number | undefined =>
-  typeof value === 'number' && Number.isFinite(value) && value >= 0 ? Math.floor(value) : undefined;
-
-const readTokenUsage = (metadata: unknown): { prompt: number; completion: number } | undefined => {
-  if (!isRecord(metadata) || !isRecord(metadata.tokenUsage)) return undefined;
-  const prompt = readNonNegativeInt(metadata.tokenUsage.prompt);
-  const completion = readNonNegativeInt(metadata.tokenUsage.completion);
-  return prompt != null && completion != null ? { prompt, completion } : undefined;
-};
 
 const readTrimmedString = (metadata: unknown, key: string): string | undefined => {
   if (!isRecord(metadata)) return undefined;
@@ -177,7 +166,6 @@ export async function getAiUsageHistory(params: {
       ...(readTrimmedString(row.metadata, 'modelLabel')
         ? { modelLabel: readTrimmedString(row.metadata, 'modelLabel') }
         : {}),
-      ...(readTokenUsage(row.metadata) ? { tokenUsage: readTokenUsage(row.metadata) } : {}),
     })),
     nextCursor,
   };

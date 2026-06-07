@@ -99,10 +99,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       deviceId: deviceIdTrimmed,
       operation: 'digest',
       entryId: limitResult.ledgerEntryId,
-      metadata: {
-        ...aiModelResponseFields(resolvedModel),
-        ...(result.tokenUsage ? { tokenUsage: result.tokenUsage } : {}),
-      },
+      metadata: aiModelResponseFields(resolvedModel),
     });
     return NextResponse.json({ ...result, ...aiModelResponseFields(resolvedModel) });
   } catch (err) {

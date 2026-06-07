@@ -8,11 +8,6 @@ import { withSequentialModelFallback } from '@/lib/ai-model-fallback';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
 import { aiModelResponseFields } from '@/lib/ai-model-display';
 import { updateAiUsageLedgerMetadata } from '@/lib/ai-usage-ledger';
-import {
-  extractOpenRouterTokenUsage,
-  mergeOpenRouterTokenUsage,
-  type OpenRouterTokenUsage,
-} from '@/lib/openrouter-token-usage';
 import { buildTranslatePrompt, buildTranslateUserMessage, type ValidLanguage } from '@/lib/prompts';
 import { sendLimitExceededPush } from '@/lib/push-tokens';
 import {
@@ -26,7 +21,7 @@ import {
 import { TRANSLATE_MODEL_CHAIN } from '@/config/constants';
 
 type TranslateResult =
-  | { ok: true; translatedText: string; tokenUsage?: OpenRouterTokenUsage }
+  | { ok: true; translatedText: string }
   | { ok: false; limitExceeded: true; usage: import('@/lib/ai-rate-limit').AiUsage }
   | { ok: false; error: string };
 
@@ -47,7 +42,7 @@ async function callTranslate(
     priorSourceTail?: string;
     priorTranslationTail?: string;
   },
-): Promise<{ translated: string; tokenUsage?: OpenRouterTokenUsage }> {
+): Promise<{ translated: string }> {
   const systemPrompt = buildTranslatePrompt({
     targetLangCode: targetLanguage,
     sourceLangCode: options.sourceLanguage,
@@ -64,7 +59,7 @@ async function callTranslate(
       : undefined,
   );
 
-  const { content, raw } = await sendAiChatCompletion({
+  const { content } = await sendAiChatCompletion({
     model,
     messages: [
       { role: 'system', content: systemPrompt },
@@ -79,10 +74,7 @@ async function callTranslate(
     throw new Error('Invalid translation response');
   }
 
-  return {
-    translated: content.trim(),
-    ...(extractOpenRouterTokenUsage(raw) ? { tokenUsage: extractOpenRouterTokenUsage(raw) } : {}),
-  };
+  return { translated: content.trim() };
 }
 
 function shouldRetryTranslation(err: unknown): boolean {
@@ -106,7 +98,7 @@ async function translateChunkWithFallback(
     priorSourceTail?: string;
     priorTranslationTail?: string;
   },
-): Promise<{ translated: string; tokenUsage?: OpenRouterTokenUsage }> {
+): Promise<{ translated: string }> {
   return withSequentialModelFallback(
     models,
     async (m) => {
@@ -153,7 +145,6 @@ export async function translateTranscript(
     const { chunks, separators } = splitTranscriptForChunkedTranslation(fullText);
 
     const translatedParts: string[] = [];
-    let tokenUsage: OpenRouterTokenUsage | undefined;
     let priorSource = '';
     let priorTranslation = '';
 
@@ -172,7 +163,6 @@ export async function translateTranscript(
         priorTranslationTail: ctx?.priorTranslationTail,
       });
 
-      tokenUsage = mergeOpenRouterTokenUsage(tokenUsage, piece.tokenUsage);
       translatedParts.push(piece.translated);
       priorSource = `${priorSource}${i > 0 ? (separators[i - 1] ?? '') : ''}${chunks[i]}`;
       priorTranslation = `${priorTranslation}${i > 0 ? (separators[i - 1] ?? '') : ''}${piece.translated}`;
@@ -190,11 +180,10 @@ export async function translateTranscript(
         ...aiModelResponseFields(modelForHistory),
         targetLanguage,
         sourceLanguage: translateOptions?.sourceLanguage,
-        ...(tokenUsage ? { tokenUsage } : {}),
       },
     });
 
-    return { ok: true, translatedText, ...(tokenUsage ? { tokenUsage } : {}) };
+    return { ok: true, translatedText };
   } catch (err) {
     await decrement(deviceId, {
       operation: 'translate',
