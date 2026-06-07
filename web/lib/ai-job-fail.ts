@@ -1,6 +1,6 @@
-import { decrement } from '@/lib/ai-rate-limit';
+import { decrement, decrementBy } from '@/lib/ai-rate-limit';
 import { decrementAutoOrganizeWeekly } from '@/lib/ai-job-runners/run-auto-organize-job';
-import { deleteJobPayload } from '@/lib/ai-job-payload';
+import { deleteJobPayload, getJobPayload } from '@/lib/ai-job-payload';
 import { deleteMeetingJobPayload } from '@/lib/meeting-job-payload';
 import { aiModelResponseFields } from '@/lib/ai-model-display';
 import { getMessage, saveMessage } from '@/lib/redis';
@@ -35,7 +35,10 @@ export async function markAiJobFailed(envelope: AiJobEnvelope, error: string): P
   }
 
   if (operation === 'transcript_summarize' || operation === 'transcript_ask') {
-    await decrement(deviceId);
+    const payload = await getJobPayload(jobId);
+    const refundUnits =
+      payload?.operation === 'transcript_summarize' ? (payload.chargedUsageUnits ?? 1) : 1;
+    await decrementBy(deviceId, refundUnits);
     await saveMessage(
       jobId,
       {

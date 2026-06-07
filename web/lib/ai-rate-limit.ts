@@ -90,25 +90,43 @@ export const getUsage = async (deviceId: string, context?: AiLimitContext): Prom
 export const checkAndIncrement = async (
   deviceId: string,
   context?: AiLimitContext,
+  units: number = 1,
 ): Promise<CheckResult> => {
+  const amount = Math.max(1, Math.floor(units));
   const limit = await getWeeklyLimitForDevice(deviceId, context);
   const key = getWeekKey(deviceId);
-  const count = await redis.incrWithExpireOnFirst(key, WEEK_TTL_SECONDS);
+  const count =
+    amount === 1
+      ? await redis.incrWithExpireOnFirst(key, WEEK_TTL_SECONDS)
+      : await redis.incrByWithExpireOnFirst(key, amount, WEEK_TTL_SECONDS);
 
   const resetAt = getResetAt();
   const allowed = count <= limit;
 
   if (!allowed) {
-    await redis.decr(key);
-    return { allowed: false, usage: buildUsage(count - 1, resetAt, limit) };
+    if (amount === 1) {
+      await redis.decr(key);
+    } else {
+      await redis.decrBy(key, amount);
+    }
+    return { allowed: false, usage: buildUsage(count - amount, resetAt, limit) };
   }
 
   return { allowed: true, usage: buildUsage(count, resetAt, limit) };
 };
 
 export const decrement = async (deviceId: string): Promise<void> => {
+  await decrementBy(deviceId, 1);
+};
+
+export const decrementBy = async (deviceId: string, units: number): Promise<void> => {
+  const amount = Math.max(1, Math.floor(units));
   const key = getWeekKey(deviceId);
-  await redis.decr(key);
+  if (amount === 1) {
+    await redis.decr(key);
+  } else {
+    await redis.decrBy(key, amount);
+  }
 };
 
 export const addBonus = async (deviceId: string, amount: number): Promise<void> => {

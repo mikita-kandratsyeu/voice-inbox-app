@@ -27,6 +27,8 @@ export type SummarizeJobPayload = {
   pseudoDiarizationEligible: boolean;
   meetingDialogueSystemPrompt?: string;
   meetingDialogueAux?: MeetingDialogueAuxPayload;
+  /** Weekly AI generations reserved for this summarize chain. */
+  chargedUsageUnits?: number;
 };
 
 export type AskJobPayload = {

@@ -62,6 +62,22 @@ export const memoryStore = {
     return entry.count;
   },
 
+  incrByWithExpireOnFirst: async (
+    key: string,
+    amount: number,
+    seconds: number,
+  ): Promise<number> => {
+    cleanupExpired();
+    const entry = counterStore.get(key);
+    const now = Date.now();
+    if (!entry || entry.expiresAt <= now) {
+      counterStore.set(key, { count: amount, expiresAt: now + seconds * 1000 });
+      return amount;
+    }
+    entry.count += amount;
+    return entry.count;
+  },
+
   decr: async (key: string): Promise<number> => {
     cleanupExpired();
     const entry = counterStore.get(key);
@@ -69,6 +85,17 @@ export const memoryStore = {
 
     if (!entry || entry.expiresAt <= now) return 0;
     entry.count = Math.max(0, entry.count - 1);
+
+    return entry.count;
+  },
+
+  decrBy: async (key: string, amount: number): Promise<number> => {
+    cleanupExpired();
+    const entry = counterStore.get(key);
+    const now = Date.now();
+
+    if (!entry || entry.expiresAt <= now) return 0;
+    entry.count = Math.max(0, entry.count - amount);
 
     return entry.count;
   },

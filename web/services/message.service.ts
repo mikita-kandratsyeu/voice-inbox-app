@@ -36,6 +36,8 @@ export const createMessage = async (
   aiLimitContext?: AiLimitContext,
 ): Promise<CreateMessageResult> => {
   const ttl = messageTtlSeconds;
+  const chargedUsageUnits =
+    pseudoDiarizationEligible && meetingDialogueSystemPrompt?.trim() ? 2 : 1;
   const created = await saveMessageIfNotExists(
     id,
     { id, status: 'processing', ...aiModelResponseFields(model) },
@@ -45,7 +47,7 @@ export const createMessage = async (
     return { created: false };
   }
 
-  const limitResult = await checkAndIncrement(deviceId, aiLimitContext);
+  const limitResult = await checkAndIncrement(deviceId, aiLimitContext, chargedUsageUnits);
   if (!limitResult.allowed) {
     await saveMessage(
       id,
@@ -76,6 +78,7 @@ export const createMessage = async (
     pseudoDiarizationEligible,
     meetingDialogueSystemPrompt,
     meetingDialogueAux,
+    chargedUsageUnits,
   };
 
   await saveJobPayload(jobPayload);

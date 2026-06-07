@@ -2,7 +2,7 @@ import {
   MEETING_DIALOGUE_OMIT_FULL_TRANSCRIPT_CHARS,
   SUMMARIZE_MEETING_DIALOGUE_INLINE_MAX_TRANSCRIPT_CHARS,
 } from '@/config/constants';
-import { decrement } from '@/lib/ai-rate-limit';
+import { decrementBy } from '@/lib/ai-rate-limit';
 import { isRetryableAiJobError } from '@/lib/ai-job-retry';
 import { notifyAiJobComplete } from '@/lib/ai-job-push';
 import { dispatchMeetingDialogueJob } from '@/lib/meeting-dialogue-dispatch';
@@ -167,7 +167,7 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
     }
   } catch (err) {
     if (!isRetryableAiJobError(err)) {
-      await decrement(deviceId);
+      await decrementBy(deviceId, payload.chargedUsageUnits ?? 1);
       await saveMessage(
         id,
         {

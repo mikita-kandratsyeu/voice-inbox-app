@@ -14,7 +14,9 @@ type KvClient = {
   get(key: string): Promise<string | null>;
   incr(key: string): Promise<number>;
   incrWithExpireOnFirst(key: string, seconds: number): Promise<number>;
+  incrByWithExpireOnFirst(key: string, amount: number, seconds: number): Promise<number>;
   decr(key: string): Promise<number>;
+  decrBy(key: string, amount: number): Promise<number>;
   expire(key: string, seconds: number): Promise<void>;
   del(key: string): Promise<void>;
 };
@@ -61,8 +63,46 @@ return count
           [String(seconds)],
         );
       },
+      async incrByWithExpireOnFirst(key, amount, seconds) {
+        return redisClient!.eval<[string], number>(
+          `
+local separator = string.find(ARGV[1], ":")
+local amount = tonumber(string.sub(ARGV[1], 1, separator - 1))
+local seconds = tonumber(string.sub(ARGV[1], separator + 1))
+local previous = tonumber(redis.call("GET", KEYS[1]) or "0")
+local count = redis.call("INCRBY", KEYS[1], amount)
+if previous == 0 then
+  redis.call("EXPIRE", KEYS[1], seconds)
+end
+return count
+`,
+          [key],
+          [`${amount}:${seconds}`],
+        );
+      },
       async decr(key) {
         return redisClient!.decr(key);
+      },
+      async decrBy(key, amount) {
+        return redisClient!.eval<[string], number>(
+          `
+if redis.call("EXISTS", KEYS[1]) == 0 then
+  return 0
+end
+local ttl = redis.call("TTL", KEYS[1])
+local count = redis.call("DECRBY", KEYS[1], ARGV[1])
+if count < 0 then
+  redis.call("SET", KEYS[1], "0")
+  if ttl > 0 then
+    redis.call("EXPIRE", KEYS[1], ttl)
+  end
+  return 0
+end
+return count
+`,
+          [key],
+          [String(amount)],
+        );
       },
       async expire(key, seconds) {
         await redisClient!.expire(key, seconds);
