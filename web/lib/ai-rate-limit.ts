@@ -24,9 +24,10 @@ const AI_DEBIT_KEY_PREFIX = 'ai_debit:';
 
 const getDebitIdempotencyKey = (deviceId: string, ledger?: AiUsageLedgerContext): string | null => {
   const jobId = ledger?.jobId?.trim();
-  if (!jobId) return null;
+  const operation = ledger?.operation;
+  if (!jobId || !operation) return null;
 
-  return `${AI_DEBIT_KEY_PREFIX}${deviceId}:${ledger.operation}:${jobId}`;
+  return `${AI_DEBIT_KEY_PREFIX}${deviceId}:${operation}:${jobId}`;
 };
 
 const getIsoWeek = (date: Date): { year: number; week: number } => {
