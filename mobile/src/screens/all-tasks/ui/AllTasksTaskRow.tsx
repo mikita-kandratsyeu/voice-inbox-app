@@ -15,7 +15,6 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -61,7 +60,7 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
   const { t, i18n } = useTranslation();
 
   const { task, recordId, recordTitle } = item;
-  const pressScale = useSharedValue(1);
+  const checkboxScale = useSharedValue(1);
   const parsedDeadline = parseTaskDeadline(task.deadline);
   const deadlineText =
     parsedDeadline !== null
@@ -79,8 +78,8 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
         : color.text.secondary;
   const showScheduleActions = parsedDeadline === null && !task.isDone;
 
-  const pressAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pressScale.value }],
+  const checkboxAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: checkboxScale.value }],
   }));
 
   const handleToggle = () => {
@@ -89,9 +88,9 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
     } else {
       hapticSuccess();
     }
-    pressScale.value = withSequence(
-      withTiming(0.97, { duration: 55 }),
-      withSpring(1, { damping: 16, stiffness: 280 }),
+    checkboxScale.value = withSequence(
+      withTiming(0.9, { duration: 40 }),
+      withTiming(1, { duration: 90 }),
     );
     onToggle(recordId, task.id, task.isDone);
   };
@@ -164,11 +163,8 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
       ]}
     >
       <View style={{ overflow: 'hidden', borderRadius: CARD_RADIUS }}>
-        <Animated.View
-          style={[
-            pressAnimStyle,
-            { backgroundColor: color.background.card, borderRadius: CARD_RADIUS },
-          ]}
+        <View
+          style={{ backgroundColor: color.background.card, borderRadius: CARD_RADIUS }}
           className="flex-row items-stretch py-1"
         >
           <Pressable
@@ -176,16 +172,16 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
             onPress={handleToggle}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: task.isDone }}
-            accessibilityLabel={
-              task.isDone ? t('tasks.markUndoneA11y') : t('tasks.markDoneA11y')
-            }
+            accessibilityLabel={task.isDone ? t('tasks.markUndoneA11y') : t('tasks.markDoneA11y')}
             hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
           >
-            {task.isDone ? (
-              <CheckCircle2 size={24} color={color.accent.success} strokeWidth={2} />
-            ) : (
-              <Circle size={24} color={color.icon.muted} strokeWidth={2} />
-            )}
+            <Animated.View style={checkboxAnimStyle}>
+              {task.isDone ? (
+                <CheckCircle2 size={24} color={color.accent.success} strokeWidth={2} />
+              ) : (
+                <Circle size={24} color={color.icon.muted} strokeWidth={2} />
+              )}
+            </Animated.View>
           </Pressable>
 
           <View className="min-w-0 flex-1 flex-col py-3 pr-1">
@@ -339,7 +335,7 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
               </Pressable>
             </MenuView>
           </View>
-        </Animated.View>
+        </View>
       </View>
     </View>
   );
