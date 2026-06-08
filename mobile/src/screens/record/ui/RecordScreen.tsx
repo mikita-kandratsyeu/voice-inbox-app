@@ -351,10 +351,18 @@ export const RecordScreen = () => {
             color="rgba(255,255,255,0.58)"
           />
         </View>
-        <View className="w-full items-center px-2">
+        <View
+          className="w-full items-center px-2"
+          style={isProActive ? { paddingBottom: 32 } : undefined}
+        >
           <RecordOfflineStatusCard
             title={t('record.offlineHint')}
             subtitle={isAppLockEnabled ? t('record.appLockHint') : t('record.noAppLockHint')}
+            marksHint={
+              isProActive && recordingMarks.length > 0
+                ? t('record.saveModalMarksHint', { count: recordingMarks.length })
+                : null
+            }
             hidden={state === 'paused'}
           />
         </View>
