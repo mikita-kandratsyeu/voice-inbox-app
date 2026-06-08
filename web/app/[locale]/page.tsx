@@ -75,7 +75,7 @@ export default async function LandingPage({ params }: Props) {
         <CTASection />
       </main>
       <Footer />
-      <MobileStickyCTA />
+      <MobileStickyCTA socialProof={socialProof} />
     </MarketingPageShell>
   );
 }

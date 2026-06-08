@@ -144,7 +144,8 @@
     "preferencesAria": "Language and theme",
     "installApp": "Download App",
     "installAppShort": "Download",
-    "tryFree": "Try for free - no account needed"
+    "tryFree": "Try for free - no account needed",
+    "stickySubtitle": "{rating} · {count, plural, one {# rating} other {# ratings}} · free"
   },
   "releases": {
     "pageTitle": "Blog",

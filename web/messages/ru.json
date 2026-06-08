@@ -144,7 +144,8 @@
     "preferencesAria": "Язык и тема",
     "installApp": "Скачать приложение",
     "installAppShort": "Скачать",
-    "tryFree": "Попробуйте бесплатно - без аккаунта"
+    "tryFree": "Попробуйте бесплатно - без аккаунта",
+    "stickySubtitle": "{rating} · {count, plural, one {# оценка} few {# оценки} many {# оценок} other {# оценок}} · бесплатно"
   },
   "releases": {
     "pageTitle": "Блог",

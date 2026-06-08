@@ -1,16 +1,28 @@
 'use client';
 
 import Image from 'next/image';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { marketingGutterClass } from '@/components/landing/marketing-layout';
 import { GO_STORE_REDIRECT_PATH } from '@/config/constants';
+import type { LandingSocialProofConfig } from '@/lib/landing-social-proof-defaults';
 
-export function MobileStickyCTA(): React.ReactElement {
+type MobileStickyCTAProps = {
+  socialProof: LandingSocialProofConfig;
+};
+
+export function MobileStickyCTA({ socialProof }: MobileStickyCTAProps): React.ReactElement {
   const t = useTranslations('header');
   const [isVisible, setIsVisible] = useState(false);
+  const showRating = socialProof.enabled && socialProof.ratingsCount > 0;
+  const subtitle = showRating
+    ? t('stickySubtitle', {
+        rating: socialProof.rating.toFixed(1),
+        count: socialProof.ratingsCount,
+      })
+    : t('tryFree');
 
   useEffect(() => {
     const handleScroll = (): void => {
@@ -53,8 +65,19 @@ export function MobileStickyCTA(): React.ReactElement {
               <span className="block truncate text-[0.9375rem] leading-tight font-semibold tracking-tight">
                 {t('installApp')}
               </span>
-              <span className="mt-0.5 block truncate text-[0.6875rem] font-medium text-white/72 dark:text-black/55">
-                {t('tryFree')}
+              <span className="mt-0.5 flex min-w-0 items-center gap-0.5 text-[0.6875rem] font-medium text-white/72 dark:text-black/55">
+                {showRating ? (
+                  <>
+                    <Star
+                      className="h-2.5 w-2.5 shrink-0 fill-amber-400 text-amber-400"
+                      strokeWidth={1.75}
+                      aria-hidden
+                    />
+                    <span className="truncate">{subtitle}</span>
+                  </>
+                ) : (
+                  <span className="truncate">{subtitle}</span>
+                )}
               </span>
             </span>
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/12 transition-colors group-hover:bg-white/18 dark:bg-black/8 dark:group-hover:bg-black/12">
