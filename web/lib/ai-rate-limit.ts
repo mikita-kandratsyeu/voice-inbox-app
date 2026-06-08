@@ -1,4 +1,8 @@
-import { AI_WEEKLY_KEY_PREFIX, WEEK_TTL_SECONDS } from '@/config/constants';
+import {
+  AI_DEBIT_IDEMPOTENCY_TTL_SECONDS,
+  AI_WEEKLY_KEY_PREFIX,
+  WEEK_TTL_SECONDS,
+} from '@/config/constants';
 import { recordAiUsageLedgerEntry, type AiUsageLedgerContext } from '@/lib/ai-usage-ledger';
 import { getAiWeeklyLimits, type AiWeeklyLimits } from '@/lib/app-config';
 import { isProDevice } from '@/lib/pro-entitlement';
@@ -111,7 +115,9 @@ export const checkAndIncrement = async (
   const key = getWeekKey(deviceId);
   const debitKey = getDebitIdempotencyKey(deviceId, ledger);
   const reservedDebitKey = debitKey
-    ? await redis.setIfNotExists(debitKey, String(amount), { ex: WEEK_TTL_SECONDS })
+    ? await redis.setIfNotExists(debitKey, String(amount), {
+        ex: AI_DEBIT_IDEMPOTENCY_TTL_SECONDS,
+      })
     : true;
 
   const resetAt = getResetAt();

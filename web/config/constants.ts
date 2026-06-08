@@ -59,6 +59,8 @@ export const FREE_WEEKLY_LIMIT = 10;
 export const PRO_WEEKLY_LIMIT = 75;
 export const AI_WEEKLY_KEY_PREFIX = 'ai_weekly:';
 export const WEEK_TTL_SECONDS = 8 * 24 * 3600;
+/** Idempotency keys for AI credit debits (`ai_debit:*`). */
+export const AI_DEBIT_IDEMPOTENCY_TTL_SECONDS = 24 * 3600;
 export const AI_BONUS_AMOUNT = 5;
 export const AI_BONUS_COOLDOWN_KEY_PREFIX = 'ai_bonus_cooldown:';
 export const AI_BONUS_COOLDOWN_SECONDS = 900; // 15 min
