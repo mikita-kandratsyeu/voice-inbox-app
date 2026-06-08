@@ -63,7 +63,7 @@ export default async function LandingPage({ params }: Props) {
   return (
     <MarketingPageShell>
       <Header />
-      <main className="flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pb-0">
+      <main className="flex-1 pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:pb-0">
         <Hero socialProof={socialProof} />
         <DifferentiationSection />
         <PrivateModeSection />
