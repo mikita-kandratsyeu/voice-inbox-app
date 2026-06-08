@@ -12,6 +12,11 @@ import {
   hapticSelection,
   resolveDisplayFolderColor,
 } from '@/shared/lib';
+import {
+  FILTER_CHIP_ICON_SIZE,
+  FILTER_CHIP_LABEL_STYLE,
+  filterChipRowStyle,
+} from '@/shared/ui/filterChipMetrics';
 
 import type { AllTasksQuickFilter } from '../types';
 import { AllTasksMoreFiltersSheet } from './AllTasksMoreFiltersSheet';
@@ -55,6 +60,9 @@ function FilterChip({
   const foregroundColor = isActive
     ? (activeForegroundColor ?? color.icon.onAccent)
     : (inactiveForegroundColor ?? color.text.primary);
+  const backgroundColor = isActive
+    ? (activeBackgroundColor ?? color.accent.primary)
+    : (inactiveBackgroundColor ?? color.background.tertiary);
 
   return (
     <TouchableOpacity
@@ -63,25 +71,12 @@ function FilterChip({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected: isActive }}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        alignSelf: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
-        backgroundColor: isActive
-          ? (activeBackgroundColor ?? color.accent.primary)
-          : (inactiveBackgroundColor ?? color.background.tertiary),
-        marginRight: 8,
-        gap: 4,
-      }}
+      style={filterChipRowStyle(backgroundColor)}
     >
       {icon}
       <Text
         style={{
-          fontSize: 13,
-          fontWeight: '500',
+          ...FILTER_CHIP_LABEL_STYLE,
           color: foregroundColor,
         }}
         numberOfLines={1}
@@ -156,12 +151,16 @@ export function AllTasksFiltersPanel({
                 activeFolder ? (
                   <FolderLucideIcon
                     iconId={activeFolder.icon}
-                    size={14}
+                    size={FILTER_CHIP_ICON_SIZE}
                     color={activeFolderForeground}
                     strokeWidth={2.2}
                   />
                 ) : (
-                  <FolderIcon size={14} color={color.text.primary} strokeWidth={2.2} />
+                  <FolderIcon
+                    size={FILTER_CHIP_ICON_SIZE}
+                    color={color.text.primary}
+                    strokeWidth={2.2}
+                  />
                 )
               }
               onPress={() => {
@@ -189,7 +188,7 @@ export function AllTasksFiltersPanel({
             icon={
               !isSecondaryFilterActive ? (
                 <SlidersHorizontal
-                  size={14}
+                  size={FILTER_CHIP_ICON_SIZE}
                   color={isSecondaryFilterActive ? color.icon.onAccent : color.text.primary}
                   strokeWidth={2.2}
                 />
@@ -205,7 +204,9 @@ export function AllTasksFiltersPanel({
               label={t('allTasks.resetFilters')}
               isActive={false}
               color={color}
-              icon={<X size={14} color={color.text.secondary} strokeWidth={2.4} />}
+              icon={
+                <X size={FILTER_CHIP_ICON_SIZE} color={color.text.secondary} strokeWidth={2.4} />
+              }
               inactiveForegroundColor={color.text.secondary}
               onPress={() => {
                 hapticSelection();

@@ -13,6 +13,11 @@ import {
   resolveDisplayFolderColor,
   withAlphaHex,
 } from '@/shared/lib';
+import {
+  FILTER_CHIP_ICON_SIZE,
+  FILTER_CHIP_LABEL_STYLE,
+  filterChipRowStyle,
+} from '@/shared/ui/filterChipMetrics';
 
 import { FolderLucideIcon } from '../lib/folderLucideIcons';
 import type { Folder } from '../model/types';
@@ -40,37 +45,30 @@ type AllChipProps = {
   onPress: () => void;
 };
 
-const AllChip = ({ label, isActive, color, onPress }: AllChipProps) => (
-  <TouchableOpacity
-    onPress={onPress}
-    activeOpacity={0.7}
-    accessibilityRole="button"
-    accessibilityLabel={label}
-    accessibilityState={{ selected: isActive }}
-    style={{
-      flexDirection: 'row',
-      alignItems: 'center',
-      alignSelf: 'center',
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 20,
-      backgroundColor: isActive ? color.accent.primary : color.background.tertiary,
-      marginRight: 8,
-      gap: 4,
-    }}
-  >
-    <Text
-      style={{
-        fontSize: 13,
-        fontWeight: '500',
-        color: isActive ? color.icon.onAccent : color.text.primary,
-      }}
-      numberOfLines={1}
+const AllChip = ({ label, isActive, color, onPress }: AllChipProps) => {
+  const backgroundColor = isActive ? color.accent.primary : color.background.tertiary;
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: isActive }}
+      style={filterChipRowStyle(backgroundColor)}
     >
-      {label}
-    </Text>
-  </TouchableOpacity>
-);
+      <Text
+        style={{
+          ...FILTER_CHIP_LABEL_STYLE,
+          color: isActive ? color.icon.onAccent : color.text.primary,
+        }}
+        numberOfLines={1}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+};
 
 type FolderChipProps = {
   folder: Folder;
@@ -96,6 +94,8 @@ const FolderChip = ({
   const inactiveBorder = surfaceDark ? 0.5 : 0.42;
   const activeFg = folderChipActiveForeground(color, folderHex);
 
+  const backgroundColor = isActive ? folderHex : withAlphaHex(folderHex, inactiveTint);
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -105,32 +105,22 @@ const FolderChip = ({
       accessibilityRole="button"
       accessibilityLabel={folder.name}
       accessibilityState={{ selected: isActive }}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        alignSelf: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
-        marginRight: 8,
-        gap: 4,
-        backgroundColor: isActive ? folderHex : withAlphaHex(folderHex, inactiveTint),
-        borderWidth: isActive ? 0 : 1,
-        borderColor: withAlphaHex(folderHex, inactiveBorder),
-      }}
+      style={filterChipRowStyle(
+        backgroundColor,
+        isActive ? folderHex : withAlphaHex(folderHex, inactiveBorder),
+      )}
     >
       {folder.icon ? (
         <FolderLucideIcon
           iconId={folder.icon}
-          size={14}
+          size={FILTER_CHIP_ICON_SIZE}
           color={isActive ? activeFg : folderHex}
           strokeWidth={2}
         />
       ) : null}
       <Text
         style={{
-          fontSize: 13,
-          fontWeight: '600',
+          ...FILTER_CHIP_LABEL_STYLE,
           color: isActive ? activeFg : color.text.primary,
         }}
         numberOfLines={1}
