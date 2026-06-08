@@ -13,9 +13,7 @@
     "downloadApp": "Download App",
     "socialProof": {
       "appStoreAria": "{rating} stars on the App Store, {count} ratings",
-      "ratingsCount": "{count, plural, one {# rating} other {# ratings}}",
-      "quote": "Sleek design and great functionality",
-      "quoteSource": "App Store review"
+      "ratingsCount": "{count, plural, one {# rating} other {# ratings}}"
     }
   },
   "features": {
@@ -65,6 +63,10 @@
     "step1": { "title": "Record or import", "description": "Voice from the recorder or meeting audio from a file — the note lands in your inbox." },
     "step2": { "title": "Transcribe and generate", "description": "Whisper on-device turns speech into text. Then — summary, tasks, and meeting breakdown when needed." },
     "step3": { "title": "Act and come back", "description": "Check off tasks, search by meaning, build a digest — without replaying long audio." }
+  },
+  "testimonials": {
+    "title": "What users are saying",
+    "subtitle": "From App Store reviews"
   },
   "useCases": {
     "title": "Built for different workflows",

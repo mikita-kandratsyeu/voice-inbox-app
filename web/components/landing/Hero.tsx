@@ -1,15 +1,17 @@
-import { ChevronRight, Sparkles, Star } from 'lucide-react';
+import { ChevronRight, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+import { HeroSocialProof } from '@/components/landing/HeroSocialProof';
 import { marketingContentClass, marketingGutterClass } from '@/components/landing/marketing-layout';
 import { CopyProtected } from '@/components/ui/CopyProtected';
-import {
-  APP_STORE_LISTING_RATING,
-  APP_STORE_LISTING_RATINGS_COUNT,
-  APP_STORE_URL,
-} from '@/config/constants';
+import { APP_STORE_URL } from '@/config/constants';
+import type { LandingSocialProofConfig } from '@/lib/landing-social-proof-defaults';
 
-export function Hero(): React.ReactElement {
+type HeroProps = {
+  socialProof: LandingSocialProofConfig;
+};
+
+export function Hero({ socialProof }: HeroProps): React.ReactElement {
   const t = useTranslations('hero');
 
   return (
@@ -30,11 +32,13 @@ export function Hero(): React.ReactElement {
           {t('headline')}
         </h1>
 
-        <p className="animate-fade-in-delay-1 mx-auto mb-8 max-w-xl text-pretty text-base leading-relaxed text-black/65 sm:mb-9 sm:text-lg dark:text-white/65">
+        <p className="animate-fade-in-delay-1 mx-auto mb-5 max-w-xl text-pretty text-base leading-relaxed text-black/65 sm:mb-6 sm:text-lg dark:text-white/65">
           {t('subtitle')}
         </p>
 
-        <div className="animate-fade-in-delay-2 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <HeroSocialProof config={socialProof} />
+
+        <div className="animate-fade-in-delay-3 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <a
             href={APP_STORE_URL}
             target="_blank"
@@ -52,47 +56,7 @@ export function Hero(): React.ReactElement {
           </a>
         </div>
 
-        <div className="animate-fade-in-delay-3 mx-auto mt-5 flex max-w-md flex-col items-center gap-2 sm:mt-6">
-          <a
-            href={APP_STORE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={t('socialProof.appStoreAria', {
-              rating: APP_STORE_LISTING_RATING,
-              count: APP_STORE_LISTING_RATINGS_COUNT,
-            })}
-            className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full border border-black/8 bg-white/70 px-3.5 py-1.5 text-sm shadow-[0_4px_14px_rgba(15,23,42,0.05)] transition-all duration-200 hover:-translate-y-px hover:bg-white hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)] dark:border-white/12 dark:bg-white/6 dark:hover:bg-white/9 dark:hover:shadow-[0_8px_22px_rgba(0,0,0,0.28)]"
-          >
-            <span className="flex items-center gap-0.5" aria-hidden>
-              {Array.from({ length: APP_STORE_LISTING_RATING }, (_, index) => (
-                <Star
-                  key={index}
-                  className="h-3.5 w-3.5 fill-amber-400 text-amber-400"
-                  strokeWidth={1.5}
-                />
-              ))}
-            </span>
-            <span className="font-semibold text-black dark:text-white">
-              {APP_STORE_LISTING_RATING.toFixed(1)}
-            </span>
-            <span className="text-black/45 dark:text-white/45" aria-hidden>
-              ·
-            </span>
-            <span className="text-black/55 dark:text-white/55">
-              {t('socialProof.ratingsCount', { count: APP_STORE_LISTING_RATINGS_COUNT })}
-            </span>
-          </a>
-          <p className="text-center text-sm leading-relaxed text-black/55 dark:text-white/55">
-            <span aria-hidden>&ldquo;</span>
-            {t('socialProof.quote')}
-            <span aria-hidden>&rdquo;</span>
-            <span className="mt-0.5 block text-xs text-black/40 dark:text-white/40">
-              {t('socialProof.quoteSource')}
-            </span>
-          </p>
-        </div>
-
-        <CopyProtected className="animate-fade-in-delay-4 mx-auto mt-4 max-w-xl select-none text-center text-xs leading-relaxed sm:mt-5">
+        <CopyProtected className="animate-fade-in-delay-4 mx-auto mt-5 max-w-xl select-none text-center text-xs leading-relaxed sm:mt-6">
           <span className="whitespace-nowrap font-semibold text-emerald-700 dark:text-emerald-300">
             {t('footnoteBadge')}
             <span className="font-normal text-black/40 dark:text-white/40" aria-hidden>

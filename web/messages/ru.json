@@ -13,9 +13,7 @@
     "downloadApp": "Скачать приложение",
     "socialProof": {
       "appStoreAria": "{rating} из 5 в App Store, {count, plural, one {# оценка} few {# оценки} many {# оценок} other {# оценки}}",
-      "ratingsCount": "{count, plural, one {# оценка} few {# оценки} many {# оценок} other {# оценки}}",
-      "quote": "Стильный дизайн и отличный функционал",
-      "quoteSource": "Отзыв в App Store"
+      "ratingsCount": "{count, plural, one {# оценка} few {# оценки} many {# оценок} other {# оценки}}"
     }
   },
   "features": {
@@ -65,6 +63,10 @@
     "step1": { "title": "Запишите или импортируйте", "description": "Голос с экрана записи или аудио встречи из файла — заметка попадает во входящие." },
     "step2": { "title": "Транскрипция и ИИ", "description": "Whisper на устройстве делает текст. Затем — сводка, задачи и при необходимости разбор встречи." },
     "step3": { "title": "Действуйте и возвращайтесь", "description": "Отмечайте задачи, ищите по смыслу, собирайте дайджест — без переслушивания длинного аудио." }
+  },
+  "testimonials": {
+    "title": "Что говорят пользователи",
+    "subtitle": "Отзывы в App Store"
   },
   "useCases": {
     "title": "Для разных сценариев",

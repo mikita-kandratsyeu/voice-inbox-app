@@ -13,7 +13,9 @@ import { MarketingPageShell } from '@/components/landing/MarketingPageShell';
 import { MobileStickyCTA } from '@/components/landing/MobileStickyCTA';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { PrivateModeSection } from '@/components/landing/PrivateModeSection';
+import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
 import { UseCasesSection } from '@/components/landing/UseCasesSection';
+import { getLandingSocialProof } from '@/lib/landing-social-proof';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -51,17 +53,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function LandingPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const socialProof = await getLandingSocialProof();
 
   return (
     <MarketingPageShell>
       <Header />
       <main className="flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pb-0">
-        <Hero />
+        <Hero socialProof={socialProof} />
         <DifferentiationSection />
         <PrivateModeSection />
         <HowItWorks />
         <Features />
         <UseCasesSection />
+        <TestimonialsSection config={socialProof} />
         <FAQSection />
         <CTASection />
       </main>
