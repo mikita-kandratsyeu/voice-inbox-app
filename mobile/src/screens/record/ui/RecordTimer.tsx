@@ -12,12 +12,12 @@ export const RecordTimer = memo(({ elapsedMs }: RecordTimerProps) => {
 
   return (
     <View className="flex-row items-baseline">
-      <Text className="text-[72px] font-light tracking-tight text-white" style={styles.tabular}>
+      <Text className="text-[84px] font-normal tracking-[-2px] text-white" style={styles.tabular}>
         {formatted.main}
       </Text>
       <Text
-        className="ml-0.5 text-[36px] font-light tracking-tight text-white/85"
-        style={styles.tabular}
+        className="ml-1 text-[38px] font-light tracking-[-1px]"
+        style={[styles.tabular, { color: 'rgba(255,255,255,0.62)' }]}
       >
         {formatted.ms}
       </Text>
