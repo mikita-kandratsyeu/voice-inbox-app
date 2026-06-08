@@ -11,7 +11,7 @@ export function DifferentiationSection(): React.ReactElement {
   const t = useTranslations('differentiation');
 
   return (
-    <section className={`py-15 sm:py-20 ${marketingGutterClass}`}>
+    <section className={`pt-10 pb-15 sm:pt-12 sm:pb-20 ${marketingGutterClass}`}>
       <div className={marketingContentClass}>
         <AnimateOnScroll>
           <div className="mb-8 text-center sm:mb-11">
