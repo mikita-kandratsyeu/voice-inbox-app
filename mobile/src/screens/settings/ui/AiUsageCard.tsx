@@ -72,9 +72,11 @@ function ClaimBonusPressableBody({
 }: ClaimBonusPressableBodyProps) {
   if (claimLoading) {
     return (
-      <View className="min-h-[52px] items-center justify-center py-3">
-        <ActivityIndicator size="small" color={color.accent.primary} />
-        <Text className="mt-2 text-center text-xs" style={{ color: color.text.secondary }}>
+      <View className="min-h-[72px] items-center justify-center gap-2 px-3.5 py-3.5">
+        <View className="h-5 items-center justify-center">
+          <ActivityIndicator size="small" color={color.accent.primary} />
+        </View>
+        <Text className="text-center text-xs leading-4" style={{ color: color.text.secondary }}>
           {t('settings.aiUsage.claimBonusLoading')}
         </Text>
       </View>
@@ -83,7 +85,7 @@ function ClaimBonusPressableBody({
 
   if (claimDisabled) {
     return (
-      <View className="min-h-[52px] items-center justify-center px-4 py-3.5">
+      <View className="min-h-[72px] items-center justify-center px-3.5 py-3.5">
         <Text
           className="text-center text-sm font-medium leading-5"
           style={{ color: color.text.muted }}
@@ -95,14 +97,46 @@ function ClaimBonusPressableBody({
   }
 
   return (
-    <View className="min-h-[52px] flex-row items-center gap-3 px-4 py-3.5">
-      <PlayCircle size={26} color={color.accent.primary} strokeWidth={1.75} />
-      <View className="min-w-0 flex-1">
-        <Text className="text-sm font-semibold leading-5" style={{ color: color.accent.primary }}>
+    <View className="min-h-[72px] flex-row items-center gap-3 px-3.5 py-3.5">
+      <View
+        className="h-10 w-10 shrink-0 items-center justify-center rounded-full"
+        style={{
+          backgroundColor: color.background.primary,
+          borderWidth: 1,
+          borderColor: color.border.default,
+        }}
+      >
+        <PlayCircle size={20} color={color.accent.primary} strokeWidth={1.85} />
+      </View>
+      <View className="min-w-0 flex-1 pr-1">
+        <Text
+          className="text-[15px] font-semibold leading-5"
+          numberOfLines={2}
+          style={{ color: color.accent.primary }}
+        >
           {t('settings.aiUsage.claimBonusTitle')}
         </Text>
-        <Text className="mt-0.5 text-xs leading-4" style={{ color: color.text.secondary }}>
-          {t('settings.aiUsage.claimBonusSubtitle', { count: bonusAmount })}
+        <Text
+          className="mt-1 text-[13px] leading-[18px]"
+          numberOfLines={2}
+          style={{ color: color.text.secondary }}
+        >
+          {t('settings.aiUsage.claimBonusSubtitleGeneric')}
+        </Text>
+      </View>
+      <View
+        className="max-w-[42%] shrink-0 items-center justify-center rounded-xl px-3 py-2.5"
+        style={{
+          minWidth: 76,
+          backgroundColor: color.accent.primary,
+        }}
+      >
+        <Text
+          className="text-center text-[13px] font-bold leading-[17px]"
+          numberOfLines={2}
+          style={[styles.tabular, { color: color.icon.onAccent }]}
+        >
+          {t('settings.aiUsage.claimBonusAmountPill', { count: bonusAmount })}
         </Text>
       </View>
     </View>
@@ -420,14 +454,13 @@ export const AiUsageCard = ({
                 accessibilityLabel={t('settings.aiUsage.claimBonus', { count: bonusAmount })}
                 className="overflow-hidden rounded-2xl"
                 style={{
-                  borderWidth: 1.5,
-                  borderColor:
-                    claimLoading || claimDisabled ? color.border.default : color.accent.primary,
+                  borderWidth: 1,
+                  borderColor: color.border.default,
                   backgroundColor:
                     claimLoading || claimDisabled
                       ? color.background.tertiary
-                      : color.background.primary,
-                  minHeight: 52,
+                      : color.background.secondary,
+                  minHeight: 72,
                 }}
               >
                 <ClaimBonusPressableBody
