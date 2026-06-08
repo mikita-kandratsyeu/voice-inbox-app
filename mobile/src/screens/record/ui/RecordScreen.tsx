@@ -3,7 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, AppState, StatusBar, Text, View } from 'react-native';
+import { Alert, AppState, StatusBar, View } from 'react-native';
 import KeepAwake from 'react-native-keep-awake';
 
 import type { RootStackParamList } from '@/app/navigation/types';
@@ -36,6 +36,7 @@ import { useRecording } from '../model/useRecording';
 import { AddRecordingMarkSheet } from './AddRecordingMarkSheet';
 import { RecordDurationLimit } from './RecordDurationLimit';
 import { RecordLimitBar } from './RecordLimitBar';
+import { RecordOfflineStatusCard } from './RecordOfflineStatusCard';
 import { RecordScreenControls } from './RecordScreenControls';
 import { RecordScreenHeader } from './RecordScreenHeader';
 import { RecordTimer } from './RecordTimer';
@@ -350,11 +351,12 @@ export const RecordScreen = () => {
             color="rgba(255,255,255,0.58)"
           />
         </View>
-        <View className="items-center gap-1" style={{ opacity: state === 'paused' ? 0 : 1 }}>
-          <Text className="text-[16px] font-medium text-white/90">{t('record.offlineHint')}</Text>
-          <Text className="text-[13px] text-center" style={{ color: 'rgba(255,255,255,0.7)' }}>
-            {isAppLockEnabled ? t('record.appLockHint') : t('record.noAppLockHint')}
-          </Text>
+        <View className="w-full items-center px-2">
+          <RecordOfflineStatusCard
+            title={t('record.offlineHint')}
+            subtitle={isAppLockEnabled ? t('record.appLockHint') : t('record.noAppLockHint')}
+            hidden={state === 'paused'}
+          />
         </View>
       </View>
       <RecordScreenControls
