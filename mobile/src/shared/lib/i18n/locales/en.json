@@ -727,7 +727,7 @@
     "title": "Settings",
     "aiUsage": {
       "title": "AI credits",
-      "subtitle": "Weekly balance for summaries, tasks, answers, and folder auto-organization",
+      "subtitle": "Weekly balance for summaries, tasks, answers, and folder auto-organization.",
       "a11yProgress": "{{used}} of {{limit}} AI credits used this week",
       "used": "{{used}} / {{limit}}",
       "remaining": "Remaining: {{count}}",
