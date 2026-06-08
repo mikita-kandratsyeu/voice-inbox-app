@@ -10,6 +10,7 @@ export type {
   AiUsageHistoryPage,
   ClaimAiBonusResult,
   PollAiMessageOptions,
+  ResetProAiUsageLimitResult,
   ServerMeetingDialogueStatus,
 } from './aiApi';
 export type { MeetingDialogueRetryRequestBody } from './aiApi';
@@ -21,6 +22,7 @@ export {
   pollAiMessage,
   postAiMessage,
   postMeetingDialogueRetry,
+  resetProAiUsageLimit,
   resumePollAiMessage,
 } from './aiApi';
 export type { AskApiResult, AskMessageResult } from './askApi';

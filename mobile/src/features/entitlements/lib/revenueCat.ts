@@ -5,7 +5,7 @@ import type {
   PurchasesPackage,
   PurchasesStoreProduct,
 } from 'react-native-purchases';
-import Purchases, { PURCHASES_ERROR_CODE } from 'react-native-purchases';
+import Purchases, { PRODUCT_CATEGORY, PURCHASES_ERROR_CODE } from 'react-native-purchases';
 
 import {
   clearProRcEntitlementSync,
@@ -14,6 +14,7 @@ import {
 } from '@/features/pro-license/lib/proEntitlementStorage';
 import { syncProLicenseFromServer } from '@/features/pro-license/lib/syncProLicenseFromServer';
 import {
+  getRevenueCatAiResetProductId,
   getRevenueCatApiKeyAndroid,
   getRevenueCatApiKeyIos,
   getRevenueCatEntitlementId,
@@ -452,5 +453,111 @@ export async function restoreProPurchases(): Promise<RestoreProPurchasesResult> 
     logPurchasesFailure('restoreProPurchases', e);
 
     return { ok: false, message: msg };
+  }
+}
+
+export type AiLimitResetProduct = {
+  productIdentifier: string;
+  priceString: string;
+  title: string | null;
+};
+
+export type PurchaseAiLimitResetResult =
+  | {
+      ok: true;
+      productIdentifier: string;
+      transactionId: string;
+    }
+  | { ok: false; cancelled: boolean; message: string };
+
+function getAiResetProductId(): string | null {
+  const id = trimEnv(getRevenueCatAiResetProductId());
+  return id.length > 0 ? id : null;
+}
+
+function readPurchaseTransactionId(result: {
+  productIdentifier?: string;
+  transaction?: unknown;
+}): string | null {
+  if (isRecord(result.transaction)) {
+    const txId = result.transaction.transactionIdentifier;
+    if (isString(txId) && txId.trim()) {
+      return txId.trim();
+    }
+  }
+  return null;
+}
+
+export async function getAiLimitResetProduct(): Promise<AiLimitResetProduct | null> {
+  if (!getRevenueCatIntegrationEnabled()) {
+    return null;
+  }
+
+  const productId = getAiResetProductId();
+  if (!productId) {
+    return null;
+  }
+
+  try {
+    const products = await Purchases.getProducts([productId], PRODUCT_CATEGORY.NON_SUBSCRIPTION);
+    const product = products[0];
+    if (!product) {
+      return null;
+    }
+
+    const formatted = formatIapCurrencyAmount(product.price, product.currencyCode);
+    const priceString = formatted ?? product.priceString?.trim();
+    if (!priceString) {
+      return null;
+    }
+
+    return {
+      productIdentifier: product.identifier,
+      priceString,
+      title: product.title,
+    };
+  } catch (e) {
+    logPurchasesFailure('getAiLimitResetProduct', e);
+    return null;
+  }
+}
+
+export async function purchaseAiLimitReset(): Promise<PurchaseAiLimitResetResult> {
+  if (!getRevenueCatIntegrationEnabled()) {
+    return { ok: false, cancelled: false, message: 'iap_unavailable' };
+  }
+
+  const productId = getAiResetProductId();
+  if (!productId) {
+    return { ok: false, cancelled: false, message: 'reset_product_not_configured' };
+  }
+
+  try {
+    const products = await Purchases.getProducts([productId], PRODUCT_CATEGORY.NON_SUBSCRIPTION);
+    const product = products[0];
+    if (!product) {
+      return { ok: false, cancelled: false, message: 'no_product' };
+    }
+
+    const result = await Purchases.purchaseStoreProduct(product);
+    const transactionId = readPurchaseTransactionId(result);
+    if (!transactionId) {
+      return { ok: false, cancelled: false, message: 'missing_transaction_id' };
+    }
+
+    return {
+      ok: true,
+      productIdentifier: result.productIdentifier ?? product.identifier,
+      transactionId,
+    };
+  } catch (e) {
+    if (isPurchasesError(e) && e.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
+      return { ok: false, cancelled: true, message: 'cancelled' };
+    }
+
+    const msg = isPurchasesError(e) ? e.message : 'unknown';
+    logPurchasesFailure('purchaseAiLimitReset', e);
+
+    return { ok: false, cancelled: false, message: msg };
   }
 }

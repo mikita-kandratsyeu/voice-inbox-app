@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 
 import { prisma } from '@/lib/prisma';
+import { isAiResetProductId } from '@/lib/revenuecat-reset-purchase';
 
 const LIFETIME_FAR = new Date('2100-01-01T00:00:00.000Z');
 
@@ -12,6 +13,7 @@ export type RevenueCatWebhookEvent = {
   cancel_reason?: string | null;
   entitlement_ids?: string[];
   entitlement_id?: string | null;
+  product_id?: string | null;
 };
 
 export type RevenueCatWebhookBody = {
@@ -32,14 +34,7 @@ function eventGrantsConfiguredEntitlement(event: RevenueCatWebhookEvent): boolea
   if (event.entitlement_id === id) {
     return true;
   }
-  const purchaseLike = new Set([
-    'INITIAL_PURCHASE',
-    'RENEWAL',
-    'UNCANCELLATION',
-    'NON_RENEWING_PURCHASE',
-    'PRODUCT_CHANGE',
-  ]);
-  return purchaseLike.has(String(event.type ?? ''));
+  return false;
 }
 
 function finiteMs(n: unknown): number | null {
@@ -113,6 +108,10 @@ export async function applyRevenueCatWebhookPayload(payload: unknown): Promise<v
   }
 
   const type = String(event.type ?? '');
+
+  if (isAiResetProductId(event.product_id)) {
+    return;
+  }
 
   if (type === 'EXPIRATION') {
     try {

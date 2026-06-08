@@ -205,3 +205,33 @@ export const addBonus = async (
 
   return credited;
 };
+
+export const resetCurrentWeekUsage = async (
+  deviceId: string,
+  ledger?: AiUsageLedgerContext,
+): Promise<{ credited: number; usage: AiUsage }> => {
+  const key = getWeekKey(deviceId);
+  const raw = await redis.get(key);
+  const usedBefore = raw ? parseInt(raw, 10) : 0;
+  const used = Number.isFinite(usedBefore) && usedBefore > 0 ? usedBefore : 0;
+
+  let credited = 0;
+  if (used > 0) {
+    credited = (await redis.decrByWithFloor(key, used)).delta;
+  }
+
+  if (credited > 0) {
+    await recordAiUsageLedgerEntry({
+      deviceId,
+      kind: 'credit',
+      operation: ledger?.operation ?? 'pro_limit_reset',
+      amount: credited,
+      jobId: ledger?.jobId,
+      description: ledger?.description,
+      metadata: ledger?.metadata,
+    });
+  }
+
+  const usage = await getUsage(deviceId);
+  return { credited, usage };
+};

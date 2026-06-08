@@ -63,6 +63,10 @@ export const AI_BONUS_AMOUNT = 5;
 export const AI_BONUS_COOLDOWN_KEY_PREFIX = 'ai_bonus_cooldown:';
 export const AI_BONUS_COOLDOWN_SECONDS = 900; // 15 min
 
+/** RevenueCat / App Store consumable product id for Pro weekly AI limit reset. */
+export const REVENUECAT_AI_RESET_PRODUCT_ID =
+  process.env.REVENUECAT_AI_RESET_PRODUCT_ID?.trim() ?? '';
+
 // Redis / KV — AI job payload keys (`msg:*`). Clients may request a shorter TTL (see MESSAGE_TTL_MIN_SECONDS).
 export const MESSAGE_TTL_MIN_SECONDS = 300; // 5 minutes
 export const MESSAGE_TTL_SECONDS = 3600; // default / max selectable (1 hour)

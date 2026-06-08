@@ -1,4 +1,4 @@
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
 import { Search, X } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -18,6 +18,7 @@ import type { Folder } from '../model/types';
 import { FolderPickerRow } from './FolderPickerRow';
 
 const FOLDER_PICKER_LIST_MAX_HEIGHT = 420;
+const FOLDER_PICKER_ROW_HEIGHT = 72;
 
 type FolderPickerListItem = { kind: 'inbox' } | { kind: 'folder'; folder: Folder };
 
@@ -58,7 +59,7 @@ export const FolderPickerSheet = ({
   const color = useColors();
   const scheme = useAppTheme();
   const { isProActive } = useProEntitlement();
-  const contentPadding = useBottomSheetContentPadding(20);
+  const contentPadding = useBottomSheetContentPadding(12);
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
 
@@ -167,15 +168,20 @@ export const FolderPickerSheet = ({
     [],
   );
 
+  const listHeight = useMemo(
+    () => Math.min(listItems.length * FOLDER_PICKER_ROW_HEIGHT, FOLDER_PICKER_LIST_MAX_HEIGHT),
+    [listItems.length],
+  );
+
   return (
-    <AppBottomSheetModal visible={visible} onClose={handleClose} snapPoints={['75%']}>
-      <View style={{ flex: 1, paddingHorizontal: 20, ...contentPadding }}>
+    <AppBottomSheetModal visible={visible} onClose={handleClose}>
+      <BottomSheetView style={{ paddingHorizontal: 20, ...contentPadding }}>
         <Text
           style={{
             color: color.text.primary,
             fontSize: 17,
             fontWeight: '600',
-            marginBottom: subtitle ? 4 : 16,
+            marginBottom: subtitle ? 4 : 10,
             marginTop: 4,
             textAlign: 'center',
           }}
@@ -188,7 +194,7 @@ export const FolderPickerSheet = ({
               color: color.text.secondary,
               fontSize: 14,
               lineHeight: 20,
-              marginBottom: 16,
+              marginBottom: 10,
               textAlign: 'center',
             }}
           >
@@ -207,7 +213,7 @@ export const FolderPickerSheet = ({
             paddingVertical: IS_IOS ? 10 : 8,
             borderWidth: 1,
             borderColor: focused ? color.accent.primary : color.border.default,
-            marginBottom: 16,
+            marginBottom: 10,
           }}
         >
           <Search
@@ -259,8 +265,7 @@ export const FolderPickerSheet = ({
               borderRadius: 12,
               borderWidth: 1,
               overflow: 'hidden',
-              flex: 1,
-              maxHeight: FOLDER_PICKER_LIST_MAX_HEIGHT,
+              height: listHeight,
             }}
           >
             <FlashList
@@ -272,7 +277,7 @@ export const FolderPickerSheet = ({
             />
           </View>
         )}
-      </View>
+      </BottomSheetView>
     </AppBottomSheetModal>
   );
 };

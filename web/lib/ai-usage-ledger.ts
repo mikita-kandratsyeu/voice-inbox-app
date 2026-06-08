@@ -12,6 +12,7 @@ export type AiUsageOperation =
   | 'auto_organize'
   | 'meeting_dialogue'
   | 'bonus'
+  | 'pro_limit_reset'
   | 'unknown';
 
 export type AiUsageLedgerContext = {

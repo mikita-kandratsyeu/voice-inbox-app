@@ -746,7 +746,20 @@
       "claimBonusSuccess": "+{{count}} бонусных кредитов",
       "claimBonusUnavailableHint": "Бонус за рекламу доступен после того, как вы начнёте тратить недельный баланс ИИ-кредитов.",
       "claimBonusNoUsage": "Сначала используйте часть кредитов — бонус возвращает часть уже потраченного баланса.",
-      "openDashboard": "Открыть использование ИИ-кредитов"
+      "openDashboard": "Открыть использование ИИ-кредитов",
+      "resetProLimitTitle": "Сбросить недельный баланс",
+      "resetProLimitSubtitle": "Восстановить полный Pro-баланс за {{price}}",
+      "resetProLimitSubtitleGeneric": "Восстановить полный недельный Pro-баланс ИИ-кредитов",
+      "resetProLimitLoading": "Обрабатываем покупку...",
+      "resetProLimitA11y": "Сбросить недельный баланс ИИ-кредитов",
+      "resetProLimitError": "Что-то пошло не так. Попробуйте снова.",
+      "resetProLimitUnavailable": "Покупка сброса сейчас недоступна.",
+      "resetProLimitPurchaseNotVerified": "Не удалось подтвердить покупку. Попробуйте через минуту.",
+      "resetProLimitNotExhausted": "В недельном балансе ещё остались кредиты.",
+      "resetProLimitProRequired": "Для сброса баланса нужен Pro.",
+      "resetProLimitTransactionUsed": "Эта покупка уже была применена.",
+      "resetProLimitSuccess": "Недельный баланс восстановлен (+{{count}} кредитов)",
+      "resetProLimitSuccessAlreadyApplied": "Недельный баланс восстановлен"
     },
     "aiUsageDashboard": {
       "title": "ИИ-кредиты",
@@ -788,6 +801,7 @@
           "auto_organize": "Подбор папок",
           "meeting_dialogue": "Заметки встречи",
           "bonus": "Начислен бонус",
+          "pro_limit_reset": "Сброс Pro-баланса",
           "unknown": "Действие ИИ"
         }
       },

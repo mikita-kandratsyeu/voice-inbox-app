@@ -2,6 +2,7 @@ import {
   APP_STORE_URL,
   GOOGLE_PLAY_URL,
   PRO_LICENSE_KEY_ACTIVATION_ENABLED,
+  REVENUECAT_AI_RESET_PRODUCT_ID,
   REVENUECAT_API_KEY_ANDROID,
   REVENUECAT_API_KEY_IOS,
   REVENUECAT_ENTITLEMENT_ID,
@@ -36,6 +37,7 @@ type RemoteKey =
   | 'REVENUECAT_API_KEY_ANDROID'
   | 'REVENUECAT_ENTITLEMENT_ID'
   | 'REVENUECAT_PACKAGE_TYPE_PREFERRED'
+  | 'REVENUECAT_AI_RESET_PRODUCT_ID'
   | 'SUBSCRIPTIONS_PUBLICLY_AVAILABLE'
   | 'PRO_LICENSE_KEY_ACTIVATION_ENABLED';
 
@@ -53,6 +55,7 @@ export type RuntimeConfigSnapshot = {
   revenueCatApiKeyAndroid: string;
   revenueCatEntitlementId: string;
   revenueCatPackageTypePreferred: string;
+  revenueCatAiResetProductId: string;
   subscriptionsPubliclyAvailable: boolean;
   proLicenseKeyActivationEnabled: boolean;
 };
@@ -76,6 +79,7 @@ function buildEmbedded(): RuntimeConfigSnapshot {
     revenueCatApiKeyAndroid: REVENUECAT_API_KEY_ANDROID?.trim() ?? '',
     revenueCatEntitlementId: REVENUECAT_ENTITLEMENT_ID?.trim() ?? '',
     revenueCatPackageTypePreferred: REVENUECAT_PACKAGE_TYPE_PREFERRED?.trim() ?? '',
+    revenueCatAiResetProductId: REVENUECAT_AI_RESET_PRODUCT_ID?.trim() ?? '',
     subscriptionsPubliclyAvailable: isTruthyEnvFlag(SUBSCRIPTIONS_PUBLICLY_AVAILABLE),
     proLicenseKeyActivationEnabled: isTruthyEnvFlag(PRO_LICENSE_KEY_ACTIVATION_ENABLED),
   };
@@ -94,6 +98,7 @@ function toFirebaseDefaults(s: RuntimeConfigSnapshot): Record<string, string> {
     REVENUECAT_API_KEY_ANDROID: s.revenueCatApiKeyAndroid,
     REVENUECAT_ENTITLEMENT_ID: s.revenueCatEntitlementId,
     REVENUECAT_PACKAGE_TYPE_PREFERRED: s.revenueCatPackageTypePreferred,
+    REVENUECAT_AI_RESET_PRODUCT_ID: s.revenueCatAiResetProductId,
     SUBSCRIPTIONS_PUBLICLY_AVAILABLE: s.subscriptionsPubliclyAvailable ? '1' : '0',
     PRO_LICENSE_KEY_ACTIVATION_ENABLED: s.proLicenseKeyActivationEnabled ? '1' : '0',
   };
@@ -205,6 +210,11 @@ function mergeRemote(
       'REVENUECAT_PACKAGE_TYPE_PREFERRED',
       embedded.revenueCatPackageTypePreferred,
     ),
+    revenueCatAiResetProductId: readRemoteString(
+      rc,
+      'REVENUECAT_AI_RESET_PRODUCT_ID',
+      embedded.revenueCatAiResetProductId,
+    ),
     subscriptionsPubliclyAvailable: readRemoteBool(
       rc,
       'SUBSCRIPTIONS_PUBLICLY_AVAILABLE',
@@ -295,6 +305,10 @@ export function getRevenueCatEntitlementId(): string {
 
 export function getRevenueCatPackageTypePreferred(): string {
   return snapshot.revenueCatPackageTypePreferred;
+}
+
+export function getRevenueCatAiResetProductId(): string {
+  return snapshot.revenueCatAiResetProductId;
 }
 
 export function getSubscriptionsPubliclyAvailable(): boolean {

@@ -21,4 +21,5 @@ declare module '@env' {
   export const REVENUECAT_API_KEY_ANDROID: string | undefined;
   export const REVENUECAT_ENTITLEMENT_ID: string | undefined;
   export const REVENUECAT_PACKAGE_TYPE_PREFERRED: string | undefined;
+  export const REVENUECAT_AI_RESET_PRODUCT_ID: string | undefined;
 }

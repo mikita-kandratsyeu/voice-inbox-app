@@ -129,9 +129,13 @@ export const SettingsScreen = () => {
               usage={settings.aiUsage}
               loading={settings.aiUsageLoading}
               onClaimBonus={settings.adsAllowed ? settings.claim : undefined}
+              onResetProLimit={settings.canResetProLimit ? settings.resetProLimit : undefined}
               onOpenDetails={() => settings.navigation.navigate('AiUsageDashboard')}
               claimLoading={settings.claimLoading}
               claimError={settings.claimError}
+              resetLoading={settings.resetProLimitLoading}
+              resetError={settings.resetProLimitError}
+              resetPriceLabel={settings.resetProLimitPriceLabel}
             />
           )}
           {settings.digestAiEnabled ? (

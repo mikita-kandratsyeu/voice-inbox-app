@@ -20,6 +20,7 @@ import {
   syncPrivateCapabilityTier,
   useSettingsStore,
 } from '@/entities/settings';
+import { useResetProAiLimit } from '@/features/ai-limit-reset';
 import { openAppReviewFromSettings } from '@/features/app-review';
 import {
   getMonetizationMode,
@@ -28,7 +29,10 @@ import {
 } from '@/features/app-storefront';
 import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
-import { openStoreSubscriptionManagement } from '@/features/entitlements';
+import {
+  getRevenueCatIntegrationEnabled,
+  openStoreSubscriptionManagement,
+} from '@/features/entitlements';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { openPlanPaywall } from '@/features/plan-paywall';
 import { isStoreProEntitlementActiveNow, useProEntitlement } from '@/features/pro-license';
@@ -164,12 +168,40 @@ export function useSettingsScreen() {
     [fetchAiUsage, t],
   );
 
+  const onResetProLimitSuccess = useCallback(
+    (
+      _usageAfterReset: NonNullable<Awaited<ReturnType<typeof getAiUsage>>>,
+      creditedAmount: number,
+    ) => {
+      void fetchAiUsage();
+      Alert.alert(
+        t('common.done'),
+        creditedAmount > 0
+          ? t('settings.aiUsage.resetProLimitSuccess', { count: creditedAmount })
+          : t('settings.aiUsage.resetProLimitSuccessAlreadyApplied'),
+      );
+    },
+    [fetchAiUsage, t],
+  );
+
   const handleRateApp = useCallback(() => {
     void openAppReviewFromSettings();
   }, []);
 
   const { adsAllowed } = useAdsAllowed();
   const { claim, loading: claimLoading, error: claimError } = useClaimAiBonus(onBonusSuccess);
+  const {
+    resetLimit,
+    loading: resetProLimitLoading,
+    error: resetProLimitError,
+    product: resetProLimitProduct,
+  } = useResetProAiLimit(onResetProLimitSuccess);
+
+  const canResetProLimit =
+    proEntitlementActive &&
+    getRevenueCatIntegrationEnabled() &&
+    aiUsage != null &&
+    aiUsage.remaining === 0;
 
   useEffect(() => {
     let cancelled = false;
@@ -577,6 +609,11 @@ export function useSettingsScreen() {
     claim,
     claimLoading,
     claimError,
+    canResetProLimit,
+    resetProLimit: resetLimit,
+    resetProLimitLoading,
+    resetProLimitError,
+    resetProLimitPriceLabel: resetProLimitProduct?.priceString ?? null,
     isPrivateMode,
     digestAiEnabled,
     automationLocked,

@@ -138,6 +138,18 @@ model AiUsageLedgerEntry {
   @@index([jobId])
 }
 
+model AiUsageResetPurchase {
+  id                String   @id @default(cuid())
+  deviceId          String
+  transactionId     String   @unique
+  productIdentifier String
+  creditedAmount    Int
+  createdAt         DateTime @default(now())
+  metadata          Json?
+
+  @@index([deviceId, createdAt(sort: Desc)])
+}
+
 model AdminBudgetExpense {
   id          String   @id @default(cuid())
   spentAt     DateTime @default(now())

@@ -1,7 +1,7 @@
 import { Inbox } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import type { Folder } from '@/entities/folder';
 import { FolderLucideIcon } from '@/entities/folder/lib/folderLucideIcons';
@@ -230,14 +230,7 @@ export const RecordingDetailCard = ({
           {formatRelativeTime(record.createdAt, i18n.language)}
         </Text>
       )}
-      {children ? (
-        <View
-          className="mt-2 pt-4"
-          style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.border.default }}
-        >
-          {children}
-        </View>
-      ) : null}
+      {children ? <View className="mt-4">{children}</View> : null}
     </View>
   );
 };

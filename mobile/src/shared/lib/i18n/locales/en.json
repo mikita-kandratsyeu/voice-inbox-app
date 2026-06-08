@@ -735,7 +735,20 @@
       "claimBonusSuccess": "+{{count}} bonus credits",
       "claimBonusUnavailableHint": "The ad bonus unlocks after you start spending your weekly AI credit balance.",
       "claimBonusNoUsage": "Use some credits first — the bonus refunds part of what you’ve already spent.",
-      "openDashboard": "Open AI credit usage"
+      "openDashboard": "Open AI credit usage",
+      "resetProLimitTitle": "Reset weekly balance",
+      "resetProLimitSubtitle": "Restore full Pro balance for {{price}}",
+      "resetProLimitSubtitleGeneric": "Restore your full weekly Pro AI balance",
+      "resetProLimitLoading": "Processing purchase...",
+      "resetProLimitA11y": "Reset weekly AI credit balance",
+      "resetProLimitError": "Something went wrong. Try again.",
+      "resetProLimitUnavailable": "Reset purchase is unavailable right now.",
+      "resetProLimitPurchaseNotVerified": "We couldn’t verify the purchase yet. Try again in a moment.",
+      "resetProLimitNotExhausted": "Your weekly balance still has credits left.",
+      "resetProLimitProRequired": "Pro is required to reset the weekly balance.",
+      "resetProLimitTransactionUsed": "This purchase was already applied.",
+      "resetProLimitSuccess": "Weekly balance restored (+{{count}} credits)",
+      "resetProLimitSuccessAlreadyApplied": "Weekly balance restored"
     },
     "aiUsageDashboard": {
       "title": "AI usage",
@@ -777,6 +790,7 @@
           "auto_organize": "Folder suggestions",
           "meeting_dialogue": "Meeting notes",
           "bonus": "Bonus added",
+          "pro_limit_reset": "Pro balance reset",
           "unknown": "AI action"
         }
       },

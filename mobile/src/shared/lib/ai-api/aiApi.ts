@@ -253,6 +253,7 @@ export type AiUsageHistoryOperation =
   | 'auto_organize'
   | 'meeting_dialogue'
   | 'bonus'
+  | 'pro_limit_reset'
   | 'unknown';
 
 export type AiUsageHistoryEntry = {
@@ -403,6 +404,45 @@ export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
         ? raw.bonusCooldownSeconds
         : 900;
     return { ok: true, usage, cooldownSeconds };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Network error';
+    return { ok: false, error: message };
+  }
+}
+
+export type ResetProAiUsageLimitResult =
+  | { ok: true; usage: AiUsage; creditedAmount: number; alreadyApplied: boolean }
+  | { ok: false; error: string };
+
+export async function resetProAiUsageLimit(params: {
+  productIdentifier: string;
+  transactionId: string;
+}): Promise<ResetProAiUsageLimitResult> {
+  try {
+    const response = await fetchWithAuth(`${getWebApiUrl()}/api/ai-usage/pro-reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      try {
+        const parsed = JSON.parse(text) as { error?: string };
+        if (isString(parsed.error) && parsed.error) {
+          return { ok: false, error: parsed.error };
+        }
+      } catch {
+        devWarn('[AI] resetProAiUsageLimit: JSON parse error', { text });
+      }
+      return { ok: false, error: text || `HTTP ${response.status}` };
+    }
+
+    const raw = (await response.json()) as Record<string, unknown>;
+    const usage = parseAiUsagePayload(raw);
+    const creditedAmount = isNumber(raw.creditedAmount) ? raw.creditedAmount : 0;
+    const alreadyApplied = raw.alreadyApplied === true;
+    return { ok: true, usage, creditedAmount, alreadyApplied };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Network error';
     return { ok: false, error: message };

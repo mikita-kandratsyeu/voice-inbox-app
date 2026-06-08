@@ -1,4 +1,4 @@
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
 import { Search, X } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -18,6 +18,7 @@ import {
 import { AllTasksNotePickerRow } from './AllTasksNotePickerRow';
 
 const NOTE_PICKER_LIST_MAX_HEIGHT = 420;
+const NOTE_PICKER_ROW_HEIGHT = 72;
 
 type AllTasksNotePickerSheetProps = {
   visible: boolean;
@@ -48,7 +49,7 @@ export function AllTasksNotePickerSheet({
 }: AllTasksNotePickerSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(20);
+  const contentPadding = useBottomSheetContentPadding(12);
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
 
@@ -90,9 +91,14 @@ export function AllTasksNotePickerSheet({
 
   const keyExtractor = useCallback((item: RecordListItem) => item.id, []);
 
+  const listHeight = useMemo(
+    () => Math.min(filteredRecords.length * NOTE_PICKER_ROW_HEIGHT, NOTE_PICKER_LIST_MAX_HEIGHT),
+    [filteredRecords.length],
+  );
+
   return (
-    <AppBottomSheetModal visible={visible} onClose={handleClose} snapPoints={['75%']}>
-      <View style={{ flex: 1, paddingHorizontal: 20, ...contentPadding }}>
+    <AppBottomSheetModal visible={visible} onClose={handleClose}>
+      <BottomSheetView style={{ paddingHorizontal: 20, ...contentPadding }}>
         <Text
           style={{
             color: color.text.primary,
@@ -110,7 +116,7 @@ export function AllTasksNotePickerSheet({
             color: color.text.secondary,
             fontSize: 14,
             lineHeight: 20,
-            marginBottom: 16,
+            marginBottom: 10,
             textAlign: 'center',
           }}
         >
@@ -128,7 +134,7 @@ export function AllTasksNotePickerSheet({
             paddingVertical: IS_IOS ? 10 : 8,
             borderWidth: 1,
             borderColor: focused ? color.accent.primary : color.border.default,
-            marginBottom: 16,
+            marginBottom: 10,
           }}
         >
           <Search
@@ -192,8 +198,7 @@ export function AllTasksNotePickerSheet({
               borderRadius: 12,
               borderWidth: 1,
               overflow: 'hidden',
-              flex: 1,
-              maxHeight: NOTE_PICKER_LIST_MAX_HEIGHT,
+              height: listHeight,
             }}
           >
             <FlashList
@@ -205,7 +210,7 @@ export function AllTasksNotePickerSheet({
             />
           </View>
         )}
-      </View>
+      </BottomSheetView>
     </AppBottomSheetModal>
   );
 }

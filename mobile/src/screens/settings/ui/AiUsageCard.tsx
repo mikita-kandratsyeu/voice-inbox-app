@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { ChevronRight, Gauge, PlayCircle, WifiOff } from 'lucide-react-native';
+import { ChevronRight, Gauge, PlayCircle, RefreshCw, WifiOff } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -32,6 +32,25 @@ function resolveClaimBonusErrorMessage(claimError: string, t: TFunction): string
       return t('settings.aiUsage.claimBonusNoUsage');
     default:
       return claimError;
+  }
+}
+
+function resolveResetProLimitErrorMessage(resetError: string, t: TFunction): string {
+  switch (resetError) {
+    case 'resetProLimitError':
+      return t('settings.aiUsage.resetProLimitError');
+    case 'resetProLimitUnavailable':
+      return t('settings.aiUsage.resetProLimitUnavailable');
+    case 'resetProLimitPurchaseNotVerified':
+      return t('settings.aiUsage.resetProLimitPurchaseNotVerified');
+    case 'resetProLimitNotExhausted':
+      return t('settings.aiUsage.resetProLimitNotExhausted');
+    case 'resetProLimitProRequired':
+      return t('settings.aiUsage.resetProLimitProRequired');
+    case 'resetProLimitTransactionUsed':
+      return t('settings.aiUsage.resetProLimitTransactionUsed');
+    default:
+      return resetError;
   }
 }
 
@@ -89,13 +108,58 @@ function ClaimBonusPressableBody({
   );
 }
 
+type ResetProLimitPressableBodyProps = {
+  color: Colors;
+  resetLoading: boolean;
+  resetPriceLabel: string | null;
+  t: TFunction;
+};
+
+function ResetProLimitPressableBody({
+  color,
+  resetLoading,
+  resetPriceLabel,
+  t,
+}: ResetProLimitPressableBodyProps) {
+  if (resetLoading) {
+    return (
+      <View className="min-h-[52px] items-center justify-center py-3">
+        <ActivityIndicator size="small" color={color.accent.primary} />
+        <Text className="mt-2 text-center text-xs" style={{ color: color.text.secondary }}>
+          {t('settings.aiUsage.resetProLimitLoading')}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View className="min-h-[52px] flex-row items-center gap-3 px-4 py-3.5">
+      <RefreshCw size={24} color={color.accent.primary} strokeWidth={1.75} />
+      <View className="min-w-0 flex-1">
+        <Text className="text-sm font-semibold leading-5" style={{ color: color.accent.primary }}>
+          {t('settings.aiUsage.resetProLimitTitle')}
+        </Text>
+        <Text className="mt-0.5 text-xs leading-4" style={{ color: color.text.secondary }}>
+          {resetPriceLabel
+            ? t('settings.aiUsage.resetProLimitSubtitle', { price: resetPriceLabel })
+            : t('settings.aiUsage.resetProLimitSubtitleGeneric')}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 type AiUsageCardProps = {
   usage: AiUsage | null;
   loading: boolean;
   onClaimBonus?: () => void;
+  onResetProLimit?: () => void;
   onOpenDetails?: () => void;
   claimLoading?: boolean;
   claimError?: string | null;
+  resetLoading?: boolean;
+  resetError?: string | null;
+  resetPriceLabel?: string | null;
 };
 
 function AiUsageSkeleton({ color }: { color: Colors }) {
@@ -126,9 +190,13 @@ export const AiUsageCard = ({
   usage,
   loading,
   onClaimBonus,
+  onResetProLimit,
   onOpenDetails,
   claimLoading = false,
   claimError = null,
+  resetLoading = false,
+  resetError = null,
+  resetPriceLabel = null,
 }: AiUsageCardProps) => {
   const { t, i18n } = useTranslation();
   const color = useColors();
@@ -137,6 +205,10 @@ export const AiUsageCard = ({
   const bonusAmount = usage?.bonusAmount ?? 5;
   const canShowBonusButton = Boolean(usage && usage.used > 0);
   const showBonusNoUsageHint = Boolean(usage && usage.used === 0 && onClaimBonus);
+  const canShowResetButton = Boolean(usage && usage.remaining === 0 && onResetProLimit);
+  const showActionArea = Boolean(
+    (onClaimBonus && (canShowBonusButton || showBonusNoUsageHint)) || canShowResetButton,
+  );
 
   const isExhausted = usage ? usage.remaining === 0 : false;
   const progressPercent =
@@ -291,7 +363,7 @@ export const AiUsageCard = ({
             className="text-xs leading-4"
             style={{
               color: color.text.secondary,
-              marginBottom: onClaimBonus && (canShowBonusButton || showBonusNoUsageHint) ? 12 : 6,
+              marginBottom: showActionArea ? 12 : 6,
             }}
           >
             {t('settings.aiUsage.resetAt', { date: resetDateText })}
@@ -335,6 +407,40 @@ export const AiUsageCard = ({
                   style={{ color: color.accent.delete }}
                 >
                   {resolveClaimBonusErrorMessage(claimError, t)}
+                </Text>
+              )}
+            </View>
+          )}
+          {canShowResetButton && (
+            <View className="mt-2">
+              <Pressable
+                onPress={onResetProLimit}
+                disabled={resetLoading}
+                accessibilityRole="button"
+                accessibilityLabel={t('settings.aiUsage.resetProLimitA11y')}
+                className="overflow-hidden rounded-2xl"
+                style={{
+                  borderWidth: 1.5,
+                  borderColor: resetLoading ? color.border.default : color.accent.primary,
+                  backgroundColor: resetLoading
+                    ? color.background.tertiary
+                    : color.background.primary,
+                  minHeight: 52,
+                }}
+              >
+                <ResetProLimitPressableBody
+                  color={color}
+                  resetLoading={resetLoading}
+                  resetPriceLabel={resetPriceLabel}
+                  t={t}
+                />
+              </Pressable>
+              {resetError && resetError !== 'resetProLimitCancelled' && (
+                <Text
+                  className="mt-2 px-1 text-center text-xs leading-4"
+                  style={{ color: color.accent.delete }}
+                >
+                  {resolveResetProLimitErrorMessage(resetError, t)}
                 </Text>
               )}
             </View>
