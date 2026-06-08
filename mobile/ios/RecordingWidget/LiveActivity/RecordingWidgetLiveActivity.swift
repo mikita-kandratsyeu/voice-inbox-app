@@ -287,37 +287,37 @@ private extension RecordingAttributes.ContentState {
     }
 }
 
-@available(iOS 17.2, *)
-#Preview("Live Activity – Recording", as: .content, using: RecordingAttributes(sessionId: "preview-recording")) {
-    RecordingWidgetLiveActivity()
-} contentStates: {
-    RecordingAttributes.ContentState.recordingPreview
-}
-
-@available(iOS 17.2, *)
-#Preview("Live Activity – Paused", as: .content, using: RecordingAttributes(sessionId: "preview-paused")) {
-    RecordingWidgetLiveActivity()
-} contentStates: {
-    RecordingAttributes.ContentState.pausedPreview
-}
-
-@available(iOS 17.2, *)
-#Preview("Dynamic Island – Expanded", as: .dynamicIsland(.expanded), using: RecordingAttributes(sessionId: "preview-island-expanded")) {
-    RecordingWidgetLiveActivity()
-} contentStates: {
-    RecordingAttributes.ContentState.recordingPreview
-}
-
-@available(iOS 17.2, *)
-#Preview("Dynamic Island – Compact", as: .dynamicIsland(.compact), using: RecordingAttributes(sessionId: "preview-island-compact")) {
-    RecordingWidgetLiveActivity()
-} contentStates: {
-    RecordingAttributes.ContentState.recordingPreview
-}
-
-@available(iOS 17.2, *)
-#Preview("Dynamic Island – Minimal", as: .dynamicIsland(.minimal), using: RecordingAttributes(sessionId: "preview-island-minimal")) {
-    RecordingWidgetLiveActivity()
-} contentStates: {
-    RecordingAttributes.ContentState.recordingPreview
-}
+//@available(iOS 17.2, *)
+//#Preview("Live Activity – Recording", as: .content, using: RecordingAttributes(sessionId: "preview-recording")) {
+//    RecordingWidgetLiveActivity()
+//} contentStates: {
+//    RecordingAttributes.ContentState.recordingPreview
+//}
+//
+//@available(iOS 17.2, *)
+//#Preview("Live Activity – Paused", as: .content, using: RecordingAttributes(sessionId: "preview-paused")) {
+//    RecordingWidgetLiveActivity()
+//} contentStates: {
+//    RecordingAttributes.ContentState.pausedPreview
+//}
+//
+//@available(iOS 17.2, *)
+//#Preview("Dynamic Island – Expanded", as: .dynamicIsland(.expanded), using: RecordingAttributes(sessionId: "preview-island-expanded")) {
+//    RecordingWidgetLiveActivity()
+//} contentStates: {
+//    RecordingAttributes.ContentState.recordingPreview
+//}
+//
+//@available(iOS 17.2, *)
+//#Preview("Dynamic Island – Compact", as: .dynamicIsland(.compact), using: RecordingAttributes(sessionId: "preview-island-compact")) {
+//    RecordingWidgetLiveActivity()
+//} contentStates: {
+//    RecordingAttributes.ContentState.recordingPreview
+//}
+//
+//@available(iOS 17.2, *)
+//#Preview("Dynamic Island – Minimal", as: .dynamicIsland(.minimal), using: RecordingAttributes(sessionId: "preview-island-minimal")) {
+//    RecordingWidgetLiveActivity()
+//} contentStates: {
+//    RecordingAttributes.ContentState.recordingPreview
+//}

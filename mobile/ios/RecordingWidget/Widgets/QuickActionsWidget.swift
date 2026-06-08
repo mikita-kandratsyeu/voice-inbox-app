@@ -10,15 +10,36 @@ private enum WidgetL10n {
   static var description: String { String(localized: "widget.quick_actions.description") }
 }
 
+/// Material Design 3–inspired tonal palette (surface / container / outline).
+private struct MaterialPalette {
+  let colorScheme: ColorScheme
+
+  var isLight: Bool { colorScheme == .light }
+
+  var surface: Color {
+    isLight ? Color(red: 0.98, green: 0.97, blue: 0.99) : Color(red: 0.08, green: 0.07, blue: 0.10)
+  }
+
+  var surfaceContainerLow: Color {
+    isLight ? Color(red: 0.96, green: 0.94, blue: 0.98) : Color(red: 0.11, green: 0.10, blue: 0.13)
+  }
+
+  var primaryContainer: Color {
+    isLight ? Color.accentColor.opacity(0.14) : Color.accentColor.opacity(0.30)
+  }
+
+  var outline: Color {
+    isLight ? Color.black.opacity(0.08) : Color.white.opacity(0.12)
+  }
+}
+
 private struct QuickActionsTheme {
   let colorScheme: ColorScheme
 
-  var containerBackground: Color {
-    colorScheme == .light ? Color.white.opacity(0.96) : Color.black.opacity(0.82)
-  }
+  var isLight: Bool { colorScheme == .light }
 
   var accentIconBackground: Color {
-    colorScheme == .light ? Color.accentColor.opacity(0.12) : Color.accentColor.opacity(0.18)
+    colorScheme == .light ? Color.accentColor.opacity(0.16) : Color.accentColor.opacity(0.24)
   }
 
   var accentIconForeground: Color {
@@ -26,7 +47,11 @@ private struct QuickActionsTheme {
   }
 
   var secondaryButtonFill: Color {
-    colorScheme == .light ? Color.black.opacity(0.06) : Color.white.opacity(0.18)
+    colorScheme == .light ? Color.white.opacity(0.55) : Color.white.opacity(0.12)
+  }
+
+  var secondaryButtonBorder: Color {
+    isLight ? Color.accentColor.opacity(0.14) : Color.clear
   }
 
   var secondaryIconForeground: Color {
@@ -42,7 +67,58 @@ private struct QuickActionsTheme {
   }
 
   var divider: Color {
-    colorScheme == .light ? Color.black.opacity(0.08) : Color.white.opacity(0.12)
+    colorScheme == .light ? Color.accentColor.opacity(0.10) : Color.white.opacity(0.14)
+  }
+}
+
+@ViewBuilder
+private func quickActionIconCircle(
+  theme: QuickActionsTheme,
+  diameter: CGFloat
+) -> some View {
+  Circle()
+    .fill(
+      LinearGradient(
+        colors: [
+          theme.accentIconBackground,
+          theme.accentIconBackground.opacity(0.55),
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+      )
+    )
+    .overlay {
+      Circle()
+        .strokeBorder(Color.white.opacity(theme.isLight ? 0.55 : 0.18), lineWidth: 0.8)
+    }
+    .frame(width: diameter, height: diameter)
+}
+
+private struct QuickActionsMaterialBackground: View {
+  let palette: MaterialPalette
+
+  var body: some View {
+    ZStack(alignment: .top) {
+      ContainerRelativeShape()
+        .fill(palette.surface)
+
+      ContainerRelativeShape()
+        .fill(
+          LinearGradient(
+            colors: [
+              palette.primaryContainer.opacity(palette.isLight ? 0.55 : 0.75),
+              palette.surfaceContainerLow.opacity(0.35),
+              Color.clear,
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+          )
+        )
+        .frame(maxHeight: 56)
+
+      ContainerRelativeShape()
+        .strokeBorder(palette.outline, lineWidth: 0.5)
+    }
   }
 }
 
@@ -56,9 +132,7 @@ private struct QuickActionAccentTile: View {
   var body: some View {
     VStack(spacing: 6) {
       ZStack {
-        Circle()
-          .fill(theme.accentIconBackground)
-          .frame(width: diameter, height: diameter)
+        quickActionIconCircle(theme: theme, diameter: diameter)
 
         Image(systemName: symbol)
           .font(.system(size: iconSize, weight: .semibold))
@@ -86,6 +160,10 @@ private struct QuickActionSecondaryTile: View {
       RoundedRectangle(cornerRadius: 12, style: .continuous)
         .fill(theme.secondaryButtonFill)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay {
+          RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .strokeBorder(theme.secondaryButtonBorder, lineWidth: 0.8)
+        }
 
       Image(systemName: symbol)
         .font(.system(size: iconSize, weight: .semibold))
@@ -101,6 +179,10 @@ private struct QuickActionsWidgetView: View {
 
   let family: WidgetFamily
 
+  private var palette: MaterialPalette {
+    MaterialPalette(colorScheme: colorScheme)
+  }
+
   private var theme: QuickActionsTheme {
     QuickActionsTheme(colorScheme: colorScheme)
   }
@@ -115,8 +197,7 @@ private struct QuickActionsWidgetView: View {
       }
     }
     .containerBackground(for: .widget) {
-      ContainerRelativeShape()
-        .fill(theme.containerBackground)
+      QuickActionsMaterialBackground(palette: palette)
     }
   }
 
@@ -127,9 +208,7 @@ private struct QuickActionsWidgetView: View {
           Spacer(minLength: 0)
 
           ZStack {
-            Circle()
-              .fill(theme.accentIconBackground)
-              .frame(width: 50, height: 50)
+            quickActionIconCircle(theme: theme, diameter: 50)
 
             Image(systemName: "mic.fill")
               .font(.system(size: 20, weight: .semibold))
@@ -174,7 +253,9 @@ private struct QuickActionsWidgetView: View {
     VStack(alignment: .leading, spacing: 0) {
       Text(WidgetL10n.title)
         .font(.caption.weight(.semibold))
-        .foregroundStyle(theme.titleForeground)
+        .foregroundStyle(.secondary)
+        .textCase(.uppercase)
+        .tracking(0.4)
         .lineLimit(1)
         .padding(.horizontal, 14)
         .padding(.top, 12)
@@ -253,14 +334,14 @@ private struct QuickActionsProvider: TimelineProvider {
   }
 }
 
-//#Preview("Quick Actions – Small", as: .systemSmall) {
-//  QuickActionsWidget()
-//} timeline: {
-//  QuickActionsEntry(date: .now, family: .systemSmall)
-//}
-//
-//#Preview("Quick Actions – Medium", as: .systemMedium) {
-//  QuickActionsWidget()
-//} timeline: {
-//  QuickActionsEntry(date: .now, family: .systemMedium)
-//}
+#Preview("Quick Actions – Small", as: .systemSmall) {
+  QuickActionsWidget()
+} timeline: {
+  QuickActionsEntry(date: .now, family: .systemSmall)
+}
+
+#Preview("Quick Actions – Medium", as: .systemMedium) {
+  QuickActionsWidget()
+} timeline: {
+  QuickActionsEntry(date: .now, family: .systemMedium)
+}
