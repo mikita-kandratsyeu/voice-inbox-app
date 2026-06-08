@@ -1951,7 +1951,7 @@
     "progressInbox": "{{ current }} of {{ total }} segments...",
     "secondsLeft": "~{{ count }} sec left",
     "minutesLeft": "~{{ count }} min left",
-    "loadingModel": "Loading model into memory…",
+    "loadingModel": "Preparing model…",
     "batteryHint": "Transcription works only while the app is open. Battery usage may increase.",
     "resumeTitle": "Continue transcription?",
     "resumeBody": "{{title}} was paused when you left the app. You can pick up where you left off.",
