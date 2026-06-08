@@ -136,18 +136,7 @@ function ResetProLimitPressableBody({
     );
   }
 
-  const resetSubtitle =
-    resetPriceLabel != null
-      ? t('settings.aiUsage.resetProLimitSubtitle', { price: resetPriceLabel })
-      : t('settings.aiUsage.resetProLimitSubtitleGeneric');
-  const priceStart = resetPriceLabel != null ? resetSubtitle.indexOf(resetPriceLabel) : -1;
-  const resetSubtitleWithoutPrice =
-    resetPriceLabel != null && priceStart >= 0
-      ? resetSubtitle
-          .slice(0, priceStart)
-          .trim()
-          .replace(/\s+(за|for)$/i, '')
-      : resetSubtitle;
+  const resetSubtitle = t('settings.aiUsage.resetProLimitSubtitleGeneric');
 
   return (
     <View className="min-h-[76px] flex-row items-center gap-3 px-4 py-4">
@@ -170,7 +159,7 @@ function ResetProLimitPressableBody({
           numberOfLines={2}
           style={{ color: color.text.secondary }}
         >
-          {resetSubtitleWithoutPrice}
+          {resetSubtitle}
         </Text>
       </View>
       {resetPriceLabel ? (

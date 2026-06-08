@@ -1,13 +1,15 @@
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { CheckCircle2 } from 'lucide-react-native';
+import { BadgeCent, Gauge } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
+  withRepeat,
   withSequence,
   withSpring,
   withTiming,
@@ -15,8 +17,16 @@ import Animated, {
 
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { hapticSuccess } from '@/shared/lib';
+import { hapticSuccess, withAlphaHex } from '@/shared/lib';
 import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+
+const ICON_SIZE = 76;
+
+const SPARKLES = [
+  { x: -40, y: 2, delay: 320, drift: -12 },
+  { x: 38, y: -8, delay: 440, drift: -16 },
+  { x: 4, y: 38, delay: 560, drift: -10 },
+] as const;
 
 type ProLimitResetSuccessSheetProps = {
   visible: boolean;
@@ -34,6 +44,128 @@ type SuccessPanelProps = {
   onDismiss: () => void;
 };
 
+type CreditSparkleProps = {
+  x: number;
+  y: number;
+  delay: number;
+  drift: number;
+  accent: string;
+};
+
+function CreditSparkle({ x, y, delay, drift, accent }: CreditSparkleProps) {
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    progress.value = 0;
+    progress.value = withDelay(
+      delay,
+      withSequence(
+        withTiming(1, { duration: 520, easing: Easing.out(Easing.cubic) }),
+        withTiming(0.55, { duration: 900, easing: Easing.inOut(Easing.quad) }),
+      ),
+    );
+  }, [delay, progress]);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0, 0.35, 1], [0, 1, 0.45]),
+    transform: [
+      { translateX: x },
+      { translateY: y + interpolate(progress.value, [0, 1], [10, drift]) },
+      { scale: interpolate(progress.value, [0, 0.5, 1], [0.55, 1.08, 0.92]) },
+      { rotate: `${interpolate(progress.value, [0, 1], [-8, 6])}deg` },
+    ],
+  }));
+
+  return (
+    <Animated.View pointerEvents="none" className="absolute" style={style}>
+      <View
+        className="h-7 w-7 items-center justify-center rounded-full"
+        style={{
+          backgroundColor: withAlphaHex(accent, 0.14),
+          borderWidth: 1,
+          borderColor: withAlphaHex(accent, 0.28),
+        }}
+      >
+        <BadgeCent size={14} color={accent} strokeWidth={2.2} />
+      </View>
+    </Animated.View>
+  );
+}
+
+function LimitRefillHero({ color, showSparkles }: { color: Colors; showSparkles: boolean }) {
+  const accent = color.accent.primary;
+  const iconLift = useSharedValue(0);
+  const glow = useSharedValue(0);
+
+  useEffect(() => {
+    iconLift.value = 0;
+    glow.value = 0;
+
+    iconLift.value = withDelay(80, withSpring(1, { damping: 11, stiffness: 210, mass: 0.82 }));
+    glow.value = withDelay(
+      420,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.quad) }),
+          withTiming(0.35, { duration: 1200, easing: Easing.inOut(Easing.quad) }),
+        ),
+        -1,
+        true,
+      ),
+    );
+  }, [glow, iconLift]);
+
+  const iconStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(iconLift.value, [0, 1], [0, 1]),
+    transform: [
+      { translateY: interpolate(iconLift.value, [0, 1], [12, 0]) },
+      { scale: interpolate(iconLift.value, [0, 1], [0.7, 1]) },
+    ],
+  }));
+
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: 0.1 + glow.value * 0.16,
+    transform: [{ scale: 0.92 + glow.value * 0.1 }],
+  }));
+
+  return (
+    <View
+      className="relative mb-4 items-center justify-center"
+      style={{ width: ICON_SIZE + 56, height: ICON_SIZE + 28 }}
+    >
+      <Animated.View
+        pointerEvents="none"
+        className="absolute rounded-full"
+        style={[
+          glowStyle,
+          {
+            width: ICON_SIZE + 18,
+            height: ICON_SIZE + 18,
+            backgroundColor: accent,
+          },
+        ]}
+      />
+      {showSparkles
+        ? SPARKLES.map((sparkle, index) => (
+            <CreditSparkle key={index} {...sparkle} accent={accent} />
+          ))
+        : null}
+      <Animated.View style={iconStyle} className="items-center justify-center">
+        <View
+          className="items-center justify-center rounded-full"
+          style={{
+            width: ICON_SIZE,
+            height: ICON_SIZE,
+            backgroundColor: withAlphaHex(accent, 0.12),
+          }}
+        >
+          <Gauge size={36} color={accent} strokeWidth={2} />
+        </View>
+      </Animated.View>
+    </View>
+  );
+}
+
 function ProLimitResetSuccessPanel({
   color,
   restoredAmount,
@@ -42,79 +174,44 @@ function ProLimitResetSuccessPanel({
   onDismiss,
 }: SuccessPanelProps) {
   const { t } = useTranslation();
-  const cardScale = useSharedValue(0.88);
   const cardOpacity = useSharedValue(0);
-  const iconScale = useSharedValue(0);
-  const shine = useSharedValue(0);
-  const amountScale = useSharedValue(0);
+  const cardLift = useSharedValue(18);
+  const amountProgress = useSharedValue(0);
 
   useEffect(() => {
-    cardScale.value = 0.88;
     cardOpacity.value = 0;
-    iconScale.value = 0;
-    shine.value = 0;
-    amountScale.value = 0;
+    cardLift.value = 18;
+    amountProgress.value = 0;
 
-    cardOpacity.value = withTiming(1, { duration: 220, easing: Easing.out(Easing.cubic) });
-    cardScale.value = withSpring(1, { damping: 16, stiffness: 220, mass: 0.85 });
-    iconScale.value = withDelay(120, withSpring(1, { damping: 12, stiffness: 260 }));
-    shine.value = withDelay(
-      280,
-      withSequence(
-        withTiming(1, { duration: 420, easing: Easing.out(Easing.cubic) }),
-        withTiming(0, { duration: 280 }),
-      ),
-    );
+    cardOpacity.value = withTiming(1, { duration: 260, easing: Easing.out(Easing.cubic) });
+    cardLift.value = withSpring(0, { damping: 17, stiffness: 190, mass: 0.9 });
     if (!alreadyApplied && restoredAmount > 0) {
-      amountScale.value = withDelay(200, withSpring(1, { damping: 13, stiffness: 240 }));
+      amountProgress.value = withDelay(380, withSpring(1, { damping: 12, stiffness: 220 }));
     }
-  }, [alreadyApplied, amountScale, cardOpacity, cardScale, iconScale, restoredAmount, shine]);
+  }, [alreadyApplied, amountProgress, cardLift, cardOpacity, restoredAmount]);
 
   const cardStyle = useAnimatedStyle(() => ({
     opacity: cardOpacity.value,
-    transform: [{ scale: cardScale.value }],
-  }));
-
-  const iconStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: iconScale.value }],
-  }));
-
-  const shineStyle = useAnimatedStyle(() => ({
-    opacity: shine.value * 0.35,
+    transform: [{ translateY: cardLift.value }],
   }));
 
   const amountStyle = useAnimatedStyle(() => ({
-    opacity: amountScale.value,
-    transform: [{ scale: 0.84 + amountScale.value * 0.16 }],
+    opacity: amountProgress.value,
+    transform: [
+      { translateY: interpolate(amountProgress.value, [0, 1], [16, 0]) },
+      { scale: interpolate(amountProgress.value, [0, 1], [0.86, 1]) },
+    ],
   }));
 
-  const subtitle =
-    alreadyApplied
-      ? t('settings.aiUsage.resetProLimitSuccessAlreadyApplied')
-      : restoredAmount > 0
-        ? t('settings.aiUsage.resetProLimitSuccess', {
-            count: restoredAmount,
-            limit,
-          })
-        : t('settings.aiUsage.resetProLimitSuccessNoChange', { limit });
+  const subtitle = alreadyApplied
+    ? t('settings.aiUsage.resetProLimitSuccessAlreadyApplied')
+    : restoredAmount > 0
+      ? t('settings.aiUsage.resetProLimitSuccess', { count: restoredAmount, limit })
+      : t('settings.aiUsage.resetProLimitSuccessNoChange', { limit });
 
   return (
     <Animated.View style={cardStyle} className="items-center py-1">
-      <View className="relative mb-4 items-center justify-center">
-        <Animated.View
-          pointerEvents="none"
-          className="absolute h-28 w-28 rounded-full"
-          style={[shineStyle, { backgroundColor: color.accent.success }]}
-        />
-        <Animated.View style={iconStyle}>
-          <View
-            className="h-20 w-20 items-center justify-center rounded-full"
-            style={{ backgroundColor: `${color.accent.success}22` }}
-          >
-            <CheckCircle2 size={44} color={color.accent.success} strokeWidth={2.2} />
-          </View>
-        </Animated.View>
-      </View>
+      <LimitRefillHero color={color} showSparkles={!alreadyApplied && restoredAmount > 0} />
       <Text
         className="text-center text-xl font-bold tracking-tight"
         style={{ color: color.text.primary }}
@@ -123,15 +220,15 @@ function ProLimitResetSuccessPanel({
       </Text>
       {!alreadyApplied && restoredAmount > 0 ? (
         <Animated.View
-          style={amountStyle}
-          className="mt-4 rounded-full px-4 py-2"
+          style={[amountStyle, styles.amountWrap]}
+          className="mt-3 px-5"
           accessibilityLabel={t('settings.aiUsage.resetProLimitSuccessAmountA11y', {
             count: restoredAmount,
           })}
         >
           <Text
-            className="text-center text-2xl font-bold"
-            style={[styles.tabular, { color: color.accent.success }]}
+            className="text-center font-bold"
+            style={[styles.amountText, styles.tabular, { color: color.accent.primary }]}
           >
             +{restoredAmount}
           </Text>
@@ -185,6 +282,17 @@ export function ProLimitResetSuccessSheet({
 }
 
 const styles = StyleSheet.create({
+  amountWrap: {
+    minHeight: 52,
+    overflow: 'visible',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  amountText: {
+    fontSize: 34,
+    lineHeight: 46,
+    paddingVertical: 2,
+  },
   tabular: {
     fontVariant: ['tabular-nums'],
   },
