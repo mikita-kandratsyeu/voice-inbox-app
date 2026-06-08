@@ -21,6 +21,7 @@ const SKIP_SECONDS = 5;
 const SKIP_HOLD_START_MS = 400;
 const SKIP_REPEAT_MS = 220;
 const PLAYBACK_SPEEDS = [1, 1.25, 1.5, 2] as const;
+const THUMB_SIZE = 12;
 
 type AudioPlayerProps = {
   duration: string;
@@ -68,6 +69,19 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
   const totalMs = totalSeconds * 1000;
   const playbackSpeed = PLAYBACK_SPEEDS[speedIndex];
 
+  const clampElapsedSecs = useCallback(
+    (secs: number) => (totalSeconds > 0 ? Math.min(totalSeconds, Math.max(0, secs)) : 0),
+    [totalSeconds],
+  );
+
+  const progressFromSecs = useCallback(
+    (secs: number) => {
+      if (totalSeconds <= 0) return 0;
+      return Math.min(1, Math.max(0, secs / totalSeconds));
+    },
+    [totalSeconds],
+  );
+
   const stopAndReset = useCallback(async () => {
     try {
       player.removePlayBackListener();
@@ -88,16 +102,16 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
     async (seekMs: number) => {
       try {
         await player.seekToPlayer(seekMs);
-        const secs = Math.floor(seekMs / 1000);
+        const secs = clampElapsedSecs(Math.floor(seekMs / 1000));
         elapsedRef.current = secs;
         lastDisplayedSecsRef.current = secs;
         setElapsed(secs);
-        progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
+        progressValue.value = progressFromSecs(secs);
       } catch (err) {
         diagWarn('[AudioPlayer] seekToPlayer failed:', err);
       }
     },
-    [totalSeconds, progressValue],
+    [clampElapsedSecs, progressFromSecs, progressValue],
   );
 
   const startPlayback = useCallback(
@@ -110,9 +124,9 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
         player.setSubscriptionDuration(0.25);
 
         player.addPlayBackListener((e: PlayBackType) => {
-          const secs = Math.floor(e.currentPosition / 1000);
+          const secs = clampElapsedSecs(Math.floor(e.currentPosition / 1000));
           elapsedRef.current = secs;
-          progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
+          progressValue.value = progressFromSecs(secs);
           setElapsed(secs);
           onPositionChangeRef.current?.(e.currentPosition);
         });
@@ -123,6 +137,7 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
           setIsPlaying(false);
           setElapsed(totalSeconds);
           elapsedRef.current = totalSeconds;
+          progressValue.value = 1;
           onPositionChangeRef.current?.(totalSeconds * 1000);
         });
 
@@ -144,7 +159,15 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
         diagWarn('[AudioPlayer] startPlayer failed:', err);
       }
     },
-    [audioPath, totalSeconds, playbackSpeed, seekTo, progressValue],
+    [
+      audioPath,
+      totalSeconds,
+      playbackSpeed,
+      seekTo,
+      progressValue,
+      clampElapsedSecs,
+      progressFromSecs,
+    ],
   );
 
   useImperativeHandle(
@@ -153,11 +176,11 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
       seekToMs: async (rawMs: number) => {
         if (!audioPath || totalSeconds <= 0) return;
         const ms = Math.max(0, Math.min(totalMs, rawMs));
-        const secs = Math.floor(ms / 1000);
+        const secs = clampElapsedSecs(Math.floor(ms / 1000));
         elapsedRef.current = secs;
         lastDisplayedSecsRef.current = secs;
         setElapsed(secs);
-        progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
+        progressValue.value = progressFromSecs(secs);
         onPositionChangeRef.current?.(ms);
         if (!isPlayerLoadedRef.current) {
           await startPlayback(secs);
@@ -166,7 +189,16 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
         }
       },
     }),
-    [audioPath, totalMs, totalSeconds, seekTo, startPlayback, progressValue],
+    [
+      audioPath,
+      totalMs,
+      totalSeconds,
+      seekTo,
+      startPlayback,
+      progressValue,
+      clampElapsedSecs,
+      progressFromSecs,
+    ],
   );
 
   const handlePlayPause = async () => {
@@ -195,9 +227,9 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
         player.setSubscriptionDuration(0.25);
 
         player.addPlayBackListener((e: PlayBackType) => {
-          const secs = Math.floor(e.currentPosition / 1000);
+          const secs = clampElapsedSecs(Math.floor(e.currentPosition / 1000));
           elapsedRef.current = secs;
-          progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
+          progressValue.value = progressFromSecs(secs);
           onPositionChangeRef.current?.(e.currentPosition);
           if (secs !== lastDisplayedSecsRef.current) {
             lastDisplayedSecsRef.current = secs;
@@ -212,7 +244,7 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
           setElapsed(totalSeconds);
           elapsedRef.current = totalSeconds;
           lastDisplayedSecsRef.current = totalSeconds;
-          progressValue.value = totalSeconds > 0 ? 1 : 0;
+          progressValue.value = 1;
           onPositionChangeRef.current?.(totalSeconds * 1000);
         });
 
@@ -246,16 +278,16 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
       if (!audioPath) return;
       if (withHaptic) hapticSelection();
       const seekMs = Math.max(0, elapsedRef.current * 1000 - SKIP_SECONDS * 1000);
-      const secs = Math.floor(seekMs / 1000);
+      const secs = clampElapsedSecs(Math.floor(seekMs / 1000));
       elapsedRef.current = secs;
       lastDisplayedSecsRef.current = secs;
       setElapsed(secs);
-      progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
+      progressValue.value = progressFromSecs(secs);
       if (isPlayerLoadedRef.current) {
         await seekTo(seekMs);
       }
     },
-    [audioPath, seekTo, totalSeconds, progressValue],
+    [audioPath, seekTo, progressValue, clampElapsedSecs, progressFromSecs],
   );
 
   const performSkipForward = useCallback(
@@ -263,16 +295,16 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
       if (!audioPath) return;
       if (withHaptic) hapticSelection();
       const seekMs = Math.min(totalMs, elapsedRef.current * 1000 + SKIP_SECONDS * 1000);
-      const secs = Math.floor(seekMs / 1000);
+      const secs = clampElapsedSecs(Math.floor(seekMs / 1000));
       elapsedRef.current = secs;
       lastDisplayedSecsRef.current = secs;
       setElapsed(secs);
-      progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
+      progressValue.value = progressFromSecs(secs);
       if (isPlayerLoadedRef.current) {
         await seekTo(seekMs);
       }
     },
-    [audioPath, seekTo, totalMs, totalSeconds, progressValue],
+    [audioPath, seekTo, totalMs, progressValue, clampElapsedSecs, progressFromSecs],
   );
 
   const beginSkipBackHold = useCallback(() => {
@@ -297,13 +329,16 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
     setSpeedIndex((i) => (i + 1) % PLAYBACK_SPEEDS.length);
   };
 
-  const fillStyle = useAnimatedStyle(() => ({
-    width: `${progressValue.value * 100}%`,
-  }));
+  const fillStyle = useAnimatedStyle(() => {
+    const progress = Math.min(1, Math.max(0, progressValue.value));
+    return { width: `${progress * 100}%` };
+  });
 
-  const thumbStyle = useAnimatedStyle(() => ({
-    left: progressValue.value * Math.max(0, trackWidthValue.value - 12),
-  }));
+  const thumbStyle = useAnimatedStyle(() => {
+    const progress = Math.min(1, Math.max(0, progressValue.value));
+    const maxLeft = Math.max(0, trackWidthValue.value - THUMB_SIZE);
+    return { left: progress * maxLeft };
+  });
 
   useEffect(() => {
     if (isPlaying && isPlayerLoadedRef.current) {
@@ -351,10 +386,15 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
             ]}
           />
           <Animated.View
-            className="absolute -top-1 h-3 w-3 rounded-full shadow-sm"
+            className="absolute rounded-full shadow-sm"
             style={[
               thumbStyle,
-              { backgroundColor: hasAudio ? color.accent.primary : 'transparent' },
+              {
+                top: -(THUMB_SIZE - 4) / 2,
+                width: THUMB_SIZE,
+                height: THUMB_SIZE,
+                backgroundColor: hasAudio ? color.accent.primary : 'transparent',
+              },
             ]}
           />
         </View>
