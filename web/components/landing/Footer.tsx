@@ -8,7 +8,7 @@ export function Footer(): React.ReactElement {
   const t = useTranslations('footer');
 
   return (
-    <footer className="mt-16 border-t border-black/8 bg-white/35 backdrop-blur-sm dark:border-white/8 dark:bg-white/2">
+    <footer className="mt-16 border-t border-black/8 bg-white/60 dark:border-white/8 dark:bg-white/3">
       <div className={`${marketingGutterClass} py-12 sm:py-14`}>
         <div className={marketingContentClass}>
           <div className="mb-6 flex flex-col items-center justify-between gap-6 md:flex-row">

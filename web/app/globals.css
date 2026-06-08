@@ -2,8 +2,10 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-html {
-  scroll-behavior: smooth;
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
@@ -92,13 +94,20 @@ body {
 
 .animate-on-scroll {
   opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+  transform: translate3d(0, 1.125rem, 0) scale(0.985);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
 }
 
 .animate-on-scroll.animate-on-scroll-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.animate-on-scroll.animate-on-scroll-done {
+  will-change: auto;
 }
 
 @keyframes rec-pulse {
@@ -212,8 +221,7 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  animation: hero-headline-gradient 3.5s linear infinite;
-  will-change: background-position;
+  animation: hero-headline-gradient 8s ease-in-out infinite;
 }
 
 .dark .hero-headline-gradient {
@@ -237,8 +245,37 @@ body {
   .animate-card-float,
   .animate-ambient-drift-slow,
   .animate-ambient-drift-x,
+  .animate-bg-drift,
+  .animate-gradient-pulse,
+  .animate-fade-in,
+  .animate-fade-in-delay-1,
+  .animate-fade-in-delay-2,
+  .animate-fade-in-delay-3,
+  .animate-fade-in-delay-4,
+  .animate-fade-in-delay-5,
+  .animate-fade-in-delay-6,
+  .animate-fade-in-delay-7,
   .hero-headline-gradient {
     animation: none !important;
+  }
+
+  .animate-fade-in,
+  .animate-fade-in-delay-1,
+  .animate-fade-in-delay-2,
+  .animate-fade-in-delay-3,
+  .animate-fade-in-delay-4,
+  .animate-fade-in-delay-5,
+  .animate-fade-in-delay-6,
+  .animate-fade-in-delay-7 {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .animate-on-scroll {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    will-change: auto !important;
   }
 
   .hero-headline-gradient {
