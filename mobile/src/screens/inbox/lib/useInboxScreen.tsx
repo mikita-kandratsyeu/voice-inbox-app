@@ -36,6 +36,7 @@ import {
   useBatchRecordActions,
   useBatchSelect,
 } from '@/features/batch-select';
+import { useInboxCardLayoutStore } from '@/features/inbox-card-layout';
 import { useInboxFiltersReset } from '@/features/inbox-filters';
 import { useAutoOrganizeFolders, useManageFolders } from '@/features/manage-folders';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
@@ -140,6 +141,17 @@ export function useInboxScreen() {
     }
     return m;
   }, [folders]);
+
+  const folderNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const f of folders) {
+      m.set(f.id, f.name);
+    }
+    return m;
+  }, [folders]);
+
+  const inboxCardLayout = useInboxCardLayoutStore((s) => s.layout);
+  const setInboxCardLayout = useInboxCardLayoutStore((s) => s.setLayout);
 
   const {
     query,
@@ -631,9 +643,11 @@ export function useInboxScreen() {
         color={color}
         bannerMaxWidth={bannerMaxWidth}
         batchSelect={batchSelect}
+        cardLayout={inboxCardLayout}
         effectiveActiveFolderId={effectiveActiveFolderId}
         foldersEnabled={foldersEnabled}
         folderColorById={folderColorById}
+        folderNameById={folderNameById}
         isProActive={isProActive}
         isArchivedView={isArchivedView}
         dismissSwipeHint={dismissSwipeHint}
@@ -649,8 +663,10 @@ export function useInboxScreen() {
     [
       color,
       bannerMaxWidth,
+      inboxCardLayout,
       effectiveActiveFolderId,
       folderColorById,
+      folderNameById,
       foldersEnabled,
       isProActive,
       isArchivedView,
@@ -665,7 +681,10 @@ export function useInboxScreen() {
     ],
   );
 
-  const getItemType = useCallback((item: FlattenedItem) => item.type, []);
+  const getItemType = useCallback(
+    (item: FlattenedItem) => (item.type === 'record' ? `record-${inboxCardLayout}` : item.type),
+    [inboxCardLayout],
+  );
 
   const keyExtractor = useCallback((item: FlattenedItem) => {
     if (item.type === 'header') {
@@ -876,5 +895,7 @@ export function useInboxScreen() {
     batchProgressModal,
     isGeneratingSharePdf,
     isProActive,
+    inboxCardLayout,
+    setInboxCardLayout,
   };
 }

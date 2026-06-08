@@ -4,24 +4,29 @@ import { useTranslation } from 'react-i18next';
 import { LayoutAnimation, Pressable, View } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
-import { RecordCard } from '@/entities/record';
+import { RecordCard, RecordCardExpanded } from '@/entities/record';
 import type { BatchSelectState } from '@/features/batch-select';
 import { BatchCheckbox } from '@/features/batch-select';
 import { InboxBannerAd } from '@/features/inbox-banner';
+import type { InboxCardLayout } from '@/features/inbox-card-layout';
 import type { Colors } from '@/shared/config';
 import { resolveDisplayFolderColor } from '@/shared/lib';
 import { SectionHeader, SwipeableCard } from '@/shared/ui';
 
 import type { FlattenedItem } from '../lib/inboxScreenTypes';
 
+const EXPANDED_CARD_MAX_HEIGHT = 480;
+
 export type InboxScreenListItemProps = {
   item: FlattenedItem;
   color: Colors;
   bannerMaxWidth: number;
   batchSelect: BatchSelectState;
+  cardLayout: InboxCardLayout;
   effectiveActiveFolderId: string | null;
   foldersEnabled: boolean;
   folderColorById: Map<string, string>;
+  folderNameById: Map<string, string>;
   isProActive: boolean;
   isArchivedView: boolean;
   dismissSwipeHint: () => void;
@@ -39,9 +44,11 @@ function InboxScreenListItemInner({
   color,
   bannerMaxWidth,
   batchSelect,
+  cardLayout,
   effectiveActiveFolderId,
   foldersEnabled,
   folderColorById,
+  folderNameById,
   isProActive,
   isArchivedView,
   dismissSwipeHint,
@@ -63,6 +70,7 @@ function InboxScreenListItemInner({
     return <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} variant="card" />;
   }
 
+  const isExpandedLayout = cardLayout === 'expanded';
   const isSelected = batchSelect.selectedIds.has(item.item.id);
   const recordA11yLabel =
     item.item.status === 'unread'
@@ -72,6 +80,57 @@ function InboxScreenListItemInner({
     !effectiveActiveFolderId && foldersEnabled && item.item.folderId
       ? resolveDisplayFolderColor(folderColorById.get(item.item.folderId), isProActive)
       : undefined;
+  const folderName =
+    foldersEnabled && item.item.folderId ? folderNameById.get(item.item.folderId) : undefined;
+
+  const renderRecordCard = ({
+    onPress,
+    onStatusPress,
+    onLongPress,
+    hideAccessibilitySubtree,
+    a11yHint,
+  }: {
+    onPress: () => void;
+    onStatusPress: () => void;
+    onLongPress?: () => void;
+    hideAccessibilitySubtree?: boolean;
+    a11yHint?: string | null;
+  }) => {
+    if (isExpandedLayout) {
+      return (
+        <RecordCardExpanded
+          item={item.item}
+          color={color}
+          folderAccentColor={folderStripeColor}
+          folderName={folderName}
+          hideCategoryLabel={Boolean(effectiveActiveFolderId)}
+          isArchivedView={isArchivedView}
+          onPress={onPress}
+          onStatusPress={onStatusPress}
+          onLongPress={onLongPress}
+          onPin={() => togglePin(item.item.id)}
+          onArchive={isArchivedView ? undefined : () => archiveRecord(item.item.id)}
+          onUnarchive={isArchivedView ? () => unarchiveRecord(item.item.id) : undefined}
+          onSelect={() => onRecordLongPress(item.item)}
+          a11yHint={a11yHint}
+          hideAccessibilitySubtree={hideAccessibilitySubtree}
+        />
+      );
+    }
+
+    return (
+      <RecordCard
+        item={item.item}
+        color={color}
+        folderAccentColor={folderStripeColor}
+        onPress={onPress}
+        onStatusPress={onStatusPress}
+        onLongPress={onLongPress}
+        a11yHint={a11yHint}
+        hideAccessibilitySubtree={hideAccessibilitySubtree}
+      />
+    );
+  };
 
   if (batchSelect.isSelectMode) {
     const toggle = () => batchSelect.toggleItem(item.item.id);
@@ -95,16 +154,13 @@ function InboxScreenListItemInner({
           <BatchCheckbox isSelected={isSelected} color={color} size={22} />
         </View>
         <View style={{ flex: 1 }} pointerEvents="box-none">
-          <RecordCard
-            item={item.item}
-            color={color}
-            folderAccentColor={folderStripeColor}
-            onPress={toggle}
-            onStatusPress={toggle}
-            onLongPress={toggle}
-            a11yHint={null}
-            hideAccessibilitySubtree
-          />
+          {renderRecordCard({
+            onPress: toggle,
+            onStatusPress: toggle,
+            onLongPress: toggle,
+            a11yHint: null,
+            hideAccessibilitySubtree: true,
+          })}
         </View>
       </Pressable>
     );
@@ -114,6 +170,7 @@ function InboxScreenListItemInner({
     <SwipeableCard
       isPinned={item.item.isPinned}
       leftAction={isArchivedView ? 'unarchive' : 'archive'}
+      maxHeight={isExpandedLayout ? EXPANDED_CARD_MAX_HEIGHT : undefined}
       onLeftAction={() => {
         dismissSwipeHint();
         listRef.current?.prepareForLayoutAnimationRender();
@@ -125,14 +182,11 @@ function InboxScreenListItemInner({
         togglePin(item.item.id);
       }}
     >
-      <RecordCard
-        item={item.item}
-        color={color}
-        folderAccentColor={folderStripeColor}
-        onPress={() => onRecordPress(item.item)}
-        onStatusPress={() => onStatusPress(item.item)}
-        onLongPress={() => onRecordLongPress(item.item)}
-      />
+      {renderRecordCard({
+        onPress: () => onRecordPress(item.item),
+        onStatusPress: () => onStatusPress(item.item),
+        onLongPress: () => onRecordLongPress(item.item),
+      })}
     </SwipeableCard>
   );
 }

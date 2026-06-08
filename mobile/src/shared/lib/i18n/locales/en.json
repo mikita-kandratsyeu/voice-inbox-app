@@ -180,6 +180,15 @@
       "durationDesc": "Longest first",
       "durationAsc": "Shortest first",
       "titleAsc": "Title A–Z"
+    },
+    "cardLayout": {
+      "compactA11y": "Compact note cards",
+      "expandedA11y": "Expanded note cards",
+      "sourceText": "Transcript",
+      "hasSummary": "Summary",
+      "tasksProgress": "{{done}}/{{total}} tasks",
+      "noteMenu": "Note actions",
+      "moreTags": "+{{count}}"
     }
   },
   "allTasks": {

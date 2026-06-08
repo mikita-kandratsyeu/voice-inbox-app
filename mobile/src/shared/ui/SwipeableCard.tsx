@@ -19,7 +19,7 @@ export const SwipeableCardContext = React.createContext({ isSwiping: false });
 const SWIPE_THRESHOLD = 80;
 const CARD_FLY_DISTANCE = 400;
 const COLLAPSE_DURATION = 280;
-const MAX_HEIGHT = 300;
+const DEFAULT_MAX_HEIGHT = 300;
 const MARGIN_BOTTOM = 16;
 
 type LeftSwipeAction = 'archive' | 'unarchive';
@@ -31,6 +31,7 @@ type SwipeableCardProps = {
   leftAction: LeftSwipeAction;
   onLeftAction: () => void;
   onPin: () => void;
+  maxHeight?: number;
 };
 
 export const SwipeableCard = memo(function SwipeableCard({
@@ -39,6 +40,7 @@ export const SwipeableCard = memo(function SwipeableCard({
   leftAction,
   onLeftAction,
   onPin,
+  maxHeight = DEFAULT_MAX_HEIGHT,
 }: SwipeableCardProps) {
   const color = useColors();
   const translateX = useSharedValue(0);
@@ -122,7 +124,7 @@ export const SwipeableCard = memo(function SwipeableCard({
   const LeftIcon = leftAction === 'archive' ? Archive : ArchiveRestore;
 
   const containerStyle = useAnimatedStyle(() => ({
-    maxHeight: MAX_HEIGHT,
+    maxHeight,
     marginHorizontal: 16,
     marginBottom: MARGIN_BOTTOM,
     opacity: collapseOpacity.value,

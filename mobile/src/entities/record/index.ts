@@ -30,4 +30,4 @@ export type {
   WordToken,
 } from './model/types';
 export { isRecordingMarkKind, RECORDING_MARK_KINDS } from './model/types';
-export { AiStatusPill, RecordCard, RecordingMarkKindCard } from './ui';
+export { AiStatusPill, RecordCard, RecordCardExpanded, RecordingMarkKindCard } from './ui';

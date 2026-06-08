@@ -5,11 +5,13 @@ import { Text, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 
 import type { VoiceRecord } from '@/entities/record';
+import { getRecordCardChromeStyle } from '@/entities/record/lib/recordCardChrome';
 import type { Colors } from '@/shared/config';
 import { formatRelativeTime } from '@/shared/lib';
-import { SwipeableCardContext, Tag } from '@/shared/ui';
+import { SwipeableCardContext } from '@/shared/ui';
 
 import { AiStatusPill } from './AiStatusPill';
+import { RecordCardTagsRow } from './RecordCardTagsRow';
 
 type RecordCardProps = {
   item: VoiceRecord;
@@ -34,14 +36,7 @@ export const RecordCard = memo(function RecordCard({
 }: RecordCardProps) {
   const { i18n, t } = useTranslation();
   const { isSwiping } = useContext(SwipeableCardContext);
-  const cardStyle = {
-    shadowColor: color.shadow.color,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: color.shadow.opacity,
-    shadowRadius: 4,
-    elevation: 2,
-    backgroundColor: color.background.card,
-  };
+  const cardStyle = getRecordCardChromeStyle(color);
   const pinIconStyle = { marginRight: 6 };
   const textPrimaryStyle = { color: color.text.primary };
   const textSecondaryStyle = { color: color.text.secondary };
@@ -221,13 +216,7 @@ export const RecordCard = memo(function RecordCard({
             {item.summary || item.transcript}
           </Text>
         )}
-        {hasTags && (
-          <View className="flex-row flex-wrap gap-2">
-            {item.tags!.map((tag) => (
-              <Tag key={tag} label={tag} />
-            ))}
-          </View>
-        )}
+        {hasTags ? <RecordCardTagsRow tags={item.tags!} color={color} variant="compact" /> : null}
       </View>
     </>
   );

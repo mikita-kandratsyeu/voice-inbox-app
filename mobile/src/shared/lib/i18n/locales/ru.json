@@ -180,6 +180,15 @@
       "durationDesc": "Сначала длинные",
       "durationAsc": "Сначала короткие",
       "titleAsc": "По названию А–Я"
+    },
+    "cardLayout": {
+      "compactA11y": "Компактные карточки заметок",
+      "expandedA11y": "Расширенные карточки заметок",
+      "sourceText": "Транскрипт",
+      "hasSummary": "Кратко",
+      "tasksProgress": "{{done}}/{{total}} задач",
+      "noteMenu": "Действия с заметкой",
+      "moreTags": "+{{count}}"
     }
   },
   "allTasks": {

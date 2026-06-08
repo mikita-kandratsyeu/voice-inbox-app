@@ -1,5 +1,13 @@
 import { MenuView } from '@react-native-menu/menu';
-import { Archive, ArrowDownUp, Filter, LayoutList, Pin } from 'lucide-react-native';
+import {
+  Archive,
+  ArrowDownUp,
+  Filter,
+  Inbox,
+  LayoutTemplate,
+  List,
+  Pin,
+} from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { type LayoutChangeEvent, TouchableOpacity, View, type ViewStyle } from 'react-native';
@@ -9,6 +17,7 @@ import {
   FLOAT_TAB_IOS_SHADOW_RADIUS,
   floatingTabBarShadowOpacity,
 } from '@/app/navigation/config';
+import type { InboxCardLayout } from '@/features/inbox-card-layout';
 import type {
   InboxFilterStatus,
   InboxMenuFilterStatus,
@@ -92,8 +101,8 @@ const SORT_OPTIONS: InboxSortOption[] = [
   'titleAsc',
 ];
 
-const FILTER_ICONS: Record<PrimaryFilterStatus, typeof LayoutList> = {
-  all: LayoutList,
+const FILTER_ICONS: Record<PrimaryFilterStatus, typeof Inbox> = {
+  all: Inbox,
   pinned: Pin,
   archived: Archive,
 };
@@ -105,6 +114,8 @@ type InboxFilterBarProps = {
   onFilterChange: (status: InboxFilterStatus) => void;
   onMenuFilterChange: (status: InboxMenuFilterStatus | null) => void;
   onSortChange: (option: InboxSortOption) => void;
+  cardLayout: InboxCardLayout;
+  onCardLayoutChange: (layout: InboxCardLayout) => void;
   color: Colors;
   onLayout?: (event: LayoutChangeEvent) => void;
   /** Tablet sidebar already exposes All / Pinned / Archive. */
@@ -118,6 +129,8 @@ export const InboxFilterBar = ({
   onFilterChange,
   onMenuFilterChange,
   onSortChange,
+  cardLayout,
+  onCardLayoutChange,
   color,
   onLayout,
   hidePrimaryFilters = false,
@@ -181,7 +194,7 @@ export const InboxFilterBar = ({
         </FrostedFilterSurface>
       ) : null}
       <FrostedFilterSurface color={color}>
-        <View style={{ padding: 4 }}>
+        <View className="flex-row" style={{ padding: 4, gap: 4 }}>
           <MenuView
             key={`filter-menu-${theme}`}
             themeVariant={isDark ? 'dark' : 'light'}
@@ -218,10 +231,6 @@ export const InboxFilterBar = ({
               />
             </TouchableOpacity>
           </MenuView>
-        </View>
-      </FrostedFilterSurface>
-      <FrostedFilterSurface color={color}>
-        <View style={{ padding: 4 }}>
           <MenuView
             key={`sort-menu-${theme}`}
             themeVariant={isDark ? 'dark' : 'light'}
@@ -258,6 +267,41 @@ export const InboxFilterBar = ({
               />
             </TouchableOpacity>
           </MenuView>
+        </View>
+      </FrostedFilterSurface>
+      <FrostedFilterSurface color={color}>
+        <View style={{ padding: 4 }}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityState={{ selected: cardLayout === 'expanded' }}
+            activeOpacity={0.7}
+            onPress={() => {
+              hapticSelection();
+              onCardLayoutChange(cardLayout === 'compact' ? 'expanded' : 'compact');
+            }}
+            style={[
+              buttonStyle,
+              {
+                paddingHorizontal: 8,
+                backgroundColor: cardLayout === 'expanded' ? color.accent.primary : 'transparent',
+              },
+            ]}
+            accessibilityLabel={
+              cardLayout === 'expanded'
+                ? t('inbox.cardLayout.expandedA11y')
+                : t('inbox.cardLayout.compactA11y')
+            }
+          >
+            {cardLayout === 'expanded' ? (
+              <LayoutTemplate
+                size={18}
+                color={cardLayout === 'expanded' ? color.icon.onAccent : color.text.secondary}
+                strokeWidth={2}
+              />
+            ) : (
+              <List size={18} color={color.text.secondary} strokeWidth={2} />
+            )}
+          </TouchableOpacity>
         </View>
       </FrostedFilterSurface>
     </View>

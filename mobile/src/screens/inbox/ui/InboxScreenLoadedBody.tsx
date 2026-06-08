@@ -12,6 +12,7 @@ import {
   getInboxBatchModeScrollPaddingBottom,
 } from '@/app/navigation/config';
 import type { BatchSelectState } from '@/features/batch-select';
+import type { InboxCardLayout } from '@/features/inbox-card-layout';
 import type {
   InboxFilterStatus,
   InboxMenuFilterStatus,
@@ -172,6 +173,8 @@ type InboxScreenLoadedBodyProps = {
   onFilterChange: (s: InboxFilterStatus) => void;
   onMenuFilterChange: (s: InboxMenuFilterStatus | null) => void;
   onSortChange: (o: InboxSortOption) => void;
+  cardLayout: InboxCardLayout;
+  onCardLayoutChange: (layout: InboxCardLayout) => void;
   showSwipeHint: boolean;
   onDismissSwipeHint: () => void;
   isSearching: boolean;
@@ -188,7 +191,7 @@ type InboxScreenLoadedBodyProps = {
   onEndReached: () => void;
   renderListItem: (props: { item: FlattenedItem }) => React.ReactElement;
   keyExtractor: (item: FlattenedItem) => string;
-  getItemType: (item: FlattenedItem) => FlattenedItem['type'];
+  getItemType: (item: FlattenedItem) => string;
   onInboxListScroll?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
   showInboxScrollResetSkeleton: boolean;
 };
@@ -212,6 +215,8 @@ function InboxScreenLoadedBodyInner({
   onFilterChange,
   onMenuFilterChange,
   onSortChange,
+  cardLayout,
+  onCardLayoutChange,
   showSwipeHint,
   onDismissSwipeHint,
   isSearching,
@@ -303,6 +308,8 @@ function InboxScreenLoadedBodyInner({
                 onFilterChange={onFilterChange}
                 onMenuFilterChange={onMenuFilterChange}
                 onSortChange={onSortChange}
+                cardLayout={cardLayout}
+                onCardLayoutChange={onCardLayoutChange}
                 color={color}
                 hidePrimaryFilters={hidePrimaryFilters}
                 onLayout={handleFilterBarLayout}
@@ -358,7 +365,7 @@ function InboxScreenLoadedBodyInner({
                 style={[listStyle, { flex: 1 }]}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
-                extraData={batchSelect.selectedIds}
+                extraData={{ selectedIds: batchSelect.selectedIds, cardLayout }}
                 ListHeaderComponent={swipeListHeader}
                 maintainVisibleContentPosition={{ disabled: true }}
               />

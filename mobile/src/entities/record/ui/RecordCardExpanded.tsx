@@ -1,0 +1,385 @@
+import { MenuView } from '@react-native-menu/menu';
+import { MoreHorizontal, Pin } from 'lucide-react-native';
+import React, { memo, useContext, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable as RNPressable, Text, View } from 'react-native';
+import { Pressable } from 'react-native-gesture-handler';
+
+import type { VoiceRecord } from '@/entities/record';
+import { getRecordCardChromeStyle } from '@/entities/record/lib/recordCardChrome';
+import type { Colors } from '@/shared/config';
+import { useAppTheme } from '@/shared/config';
+import { formatRelativeTime, withAlphaHex } from '@/shared/lib';
+import { SwipeableCardContext } from '@/shared/ui';
+
+import { AiStatusPill } from './AiStatusPill';
+import { RecordCardMetaStrip } from './RecordCardMetaStrip';
+import { RecordCardTagsRow } from './RecordCardTagsRow';
+
+type RecordCardExpandedProps = {
+  item: VoiceRecord;
+  color: Colors;
+  folderAccentColor?: string;
+  folderName?: string;
+  hideCategoryLabel?: boolean;
+  isArchivedView?: boolean;
+  onPress: () => void;
+  onStatusPress: () => void;
+  onLongPress?: () => void;
+  onPin?: () => void;
+  onArchive?: () => void;
+  onUnarchive?: () => void;
+  onSelect?: () => void;
+  a11yHint?: string | null;
+  hideAccessibilitySubtree?: boolean;
+};
+
+export const RecordCardExpanded = memo(function RecordCardExpanded({
+  item,
+  color,
+  folderAccentColor,
+  folderName,
+  hideCategoryLabel = false,
+  isArchivedView = false,
+  onPress,
+  onStatusPress,
+  onLongPress,
+  onPin,
+  onArchive,
+  onUnarchive,
+  onSelect,
+  a11yHint,
+  hideAccessibilitySubtree = false,
+}: RecordCardExpandedProps) {
+  const { i18n, t } = useTranslation();
+  const theme = useAppTheme();
+  const isDark = theme === 'dark';
+  const { isSwiping } = useContext(SwipeableCardContext);
+
+  const textPrimaryStyle = { color: color.text.primary };
+  const textSecondaryStyle = { color: color.text.secondary };
+
+  const hasAudio = Boolean(item.audioPath?.trim());
+  const hasTranscriptPreview = Boolean(item.transcript?.trim());
+  const previewText = item.summary || item.transcript;
+  const hasPreview = Boolean(previewText?.trim());
+  const tags = item.tags ?? [];
+  const hasTags = tags.length > 0;
+  const isUnread = item.status === 'unread';
+
+  const aiProcessing =
+    item.summaryStatus === 'processing' ||
+    item.tasksStatus === 'processing' ||
+    item.askAiStatus === 'processing' ||
+    item.meetingDialogueStatus === 'processing';
+  const translationProcessing = item.translationStatus === 'processing';
+  const translationError = item.translationStatus === 'error';
+  const meetingDialogueError = item.meetingDialogueStatus === 'failed';
+  const aiError =
+    item.summaryStatus === 'error' ||
+    item.tasksStatus === 'error' ||
+    item.askAiStatus === 'error' ||
+    meetingDialogueError;
+  const showStatusPill =
+    item.aiStatus === 'loading_model' ||
+    item.aiStatus === 'processing' ||
+    item.aiStatus === 'paused' ||
+    item.aiStatus === 'resumable' ||
+    item.aiStatus === 'cancelling' ||
+    item.aiStatus === 'error' ||
+    (item.aiStatus === 'idle' && !hasTranscriptPreview) ||
+    aiProcessing ||
+    aiError ||
+    translationProcessing ||
+    translationError;
+
+  const categoryLabel = hideCategoryLabel
+    ? null
+    : folderName
+      ? folderName
+      : item.classification && !item.folderId
+        ? i18n.t(`classification.${item.classification}`)
+        : null;
+  const categoryDotColor = folderAccentColor ?? color.accent.primary;
+  const showFolderStripe = Boolean(folderAccentColor);
+
+  const menuActions = useMemo(() => {
+    const actions: Array<{
+      id: string;
+      title: string;
+      titleColor: string;
+      image?: string;
+      imageColor?: string;
+    }> = [];
+
+    if (onSelect) {
+      actions.push({
+        id: 'select',
+        title: t('inbox.menuSelectNotes'),
+        titleColor: color.text.primary,
+        image: 'checkmark.circle',
+        imageColor: color.text.primary,
+      });
+    }
+    if (onPin) {
+      actions.push({
+        id: 'togglePin',
+        title: item.isPinned ? t('recordActions.unpin') : t('recordActions.pin'),
+        titleColor: color.text.primary,
+        image: 'pin',
+        imageColor: item.isPinned ? color.accent.pin : color.text.primary,
+      });
+    }
+    if (isArchivedView && onUnarchive) {
+      actions.push({
+        id: 'unarchive',
+        title: t('recordActions.unarchive'),
+        titleColor: color.text.primary,
+        image: 'arrow.uturn.backward',
+        imageColor: color.text.primary,
+      });
+    } else if (!isArchivedView && onArchive) {
+      actions.push({
+        id: 'archive',
+        title: t('recordActions.archive'),
+        titleColor: color.text.primary,
+        image: 'archivebox',
+        imageColor: color.text.primary,
+      });
+    }
+    return actions;
+  }, [
+    color.accent.pin,
+    color.text.primary,
+    isArchivedView,
+    item.isPinned,
+    onArchive,
+    onPin,
+    onSelect,
+    onUnarchive,
+    t,
+  ]);
+
+  const resolvedA11yHint =
+    a11yHint === null
+      ? undefined
+      : (a11yHint ?? (onLongPress ? t('inbox.recordCardLongPressHint') : undefined));
+
+  const baseContainerStyle = [
+    getRecordCardChromeStyle(color),
+    {
+      borderRadius: 16,
+      padding: 0,
+      overflow: 'hidden' as const,
+      flexDirection: 'row' as const,
+    },
+  ];
+
+  const cardBody = (
+    <>
+      {showFolderStripe ? (
+        <View
+          style={{
+            width: 4,
+            alignSelf: 'stretch',
+            backgroundColor: folderAccentColor,
+          }}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        />
+      ) : null}
+      <View style={{ flex: 1, padding: 16 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 10,
+            gap: 8,
+          }}
+        >
+          <Text style={[textSecondaryStyle, { fontSize: 12 }]} numberOfLines={1}>
+            {formatRelativeTime(item.createdAt, i18n.language)}
+          </Text>
+          {categoryLabel ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
+              <View
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: categoryDotColor,
+                }}
+              />
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: '600',
+                  color: categoryDotColor,
+                  flexShrink: 1,
+                }}
+                numberOfLines={1}
+              >
+                {categoryLabel}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 8,
+            marginBottom: hasPreview || hasAudio ? 10 : 0,
+          }}
+        >
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-start', minWidth: 0 }}>
+            {item.isPinned ? (
+              <Pin
+                size={14}
+                color={color.accent.pin}
+                strokeWidth={2}
+                style={{ marginRight: 6, marginTop: 4 }}
+              />
+            ) : null}
+            {isUnread ? (
+              <View
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  marginRight: 8,
+                  marginTop: 6,
+                  backgroundColor: color.accent.delete,
+                  borderWidth: 2,
+                  borderColor: color.background.card,
+                }}
+              />
+            ) : null}
+            <Text
+              style={[
+                textPrimaryStyle,
+                {
+                  flex: 1,
+                  fontSize: 17,
+                  lineHeight: 24,
+                  fontWeight: isUnread ? '700' : '600',
+                },
+              ]}
+              numberOfLines={3}
+            >
+              {item.title}
+            </Text>
+          </View>
+          {showStatusPill ? (
+            <AiStatusPill
+              aiStatus={item.aiStatus ?? 'done'}
+              transcriptProgress={item.transcriptProgress}
+              transcriptProgressLabel={item.transcriptProgressLabel}
+              transcriptProgressSegments={item.transcriptProgressSegments}
+              summaryStatus={item.summaryStatus}
+              tasksStatus={item.tasksStatus}
+              translationStatus={item.translationStatus}
+              askAiStatus={item.askAiStatus}
+              meetingDialogueStatus={item.meetingDialogueStatus}
+              onPress={onStatusPress}
+            />
+          ) : null}
+        </View>
+
+        {hasPreview ? (
+          <Text style={[textSecondaryStyle, { fontSize: 14, lineHeight: 20 }]} numberOfLines={3}>
+            {previewText}
+          </Text>
+        ) : null}
+
+        {hasAudio ? (
+          <RecordCardMetaStrip
+            duration={item.duration}
+            color={color}
+            hasTranscript={hasTranscriptPreview}
+            hasSummary={Boolean(item.summary?.trim())}
+            tasks={item.tasks}
+          />
+        ) : null}
+
+        {(hasTags || menuActions.length > 0) && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginTop: 12,
+              gap: 8,
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <RecordCardTagsRow tags={tags} color={color} variant="full" />
+            </View>
+            {menuActions.length > 0 && !hideAccessibilitySubtree ? (
+              <MenuView
+                key={`record-expanded-menu-${item.id}-${theme}`}
+                title=""
+                themeVariant={isDark ? 'dark' : 'light'}
+                shouldOpenOnLongPress={false}
+                actions={menuActions}
+                onPressAction={({ nativeEvent }) => {
+                  const id = nativeEvent.event;
+                  if (id === 'select') onSelect?.();
+                  if (id === 'togglePin') onPin?.();
+                  if (id === 'archive') onArchive?.();
+                  if (id === 'unarchive') onUnarchive?.();
+                }}
+              >
+                <RNPressable
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{
+                    padding: 6,
+                    borderRadius: 8,
+                    backgroundColor: withAlphaHex(color.background.tertiary, 0.9),
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('inbox.cardLayout.noteMenu')}
+                  onPress={() => {}}
+                >
+                  <MoreHorizontal size={18} color={color.icon.muted} strokeWidth={2} />
+                </RNPressable>
+              </MenuView>
+            ) : null}
+          </View>
+        )}
+      </View>
+    </>
+  );
+
+  if (hideAccessibilitySubtree) {
+    return (
+      <View
+        style={baseContainerStyle}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        {cardBody}
+      </View>
+    );
+  }
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={isUnread ? `${item.title}, ${t('inbox.recordUnreadA11y')}` : item.title}
+      accessibilityHint={resolvedA11yHint}
+      style={({ pressed }) => [
+        ...baseContainerStyle,
+        { opacity: pressed && !isSwiping ? 0.75 : 1 },
+      ]}
+      onPress={isSwiping ? undefined : onPress}
+      onLongPress={isSwiping ? undefined : onLongPress}
+      delayLongPress={350}
+    >
+      {cardBody}
+    </Pressable>
+  );
+});

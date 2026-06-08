@@ -114,6 +114,8 @@ export const InboxScreen = () => {
     onInboxListScroll,
     batchProgressModal,
     isGeneratingSharePdf,
+    inboxCardLayout,
+    setInboxCardLayout,
   } = inbox;
 
   return (
@@ -201,6 +203,8 @@ export const InboxScreen = () => {
           onFilterChange={setFilterStatus}
           onMenuFilterChange={setMenuFilterStatus}
           onSortChange={setSortOption}
+          cardLayout={inboxCardLayout}
+          onCardLayoutChange={setInboxCardLayout}
           showSwipeHint={showSwipeHint}
           onDismissSwipeHint={dismissSwipeHint}
           isSearching={isSearching}
