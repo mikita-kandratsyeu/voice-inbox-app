@@ -4,21 +4,26 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import type { TaskItem } from '@/entities/record';
+import type { RecordCardNoteKind } from '@/entities/record/lib/recordCardExpandedPreview';
 import type { Colors } from '@/shared/config';
 
 type RecordCardMetaStripProps = {
+  noteKind: RecordCardNoteKind;
   duration: string;
   color: Colors;
   hasTranscript: boolean;
   hasSummary: boolean;
+  textFragmentCount?: number;
   tasks?: TaskItem[];
 };
 
 export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
+  noteKind,
   duration,
   color,
   hasTranscript,
   hasSummary,
+  textFragmentCount = 0,
   tasks = [],
 }: RecordCardMetaStripProps) {
   const { t } = useTranslation();
@@ -26,12 +31,16 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
   const hasTasks = tasks.length > 0;
   const doneCount = tasks.filter((task) => task.isDone).length;
   const allTasksDone = hasTasks && doneCount === tasks.length;
+  const showDuration = noteKind !== 'text';
+  const showTextFragments = noteKind === 'text' && textFragmentCount > 0;
 
   const detailChips: string[] = [];
-  if (hasTranscript) {
-    detailChips.push(t('inbox.cardLayout.sourceText'));
-  } else if (hasSummary) {
-    detailChips.push(t('inbox.cardLayout.hasSummary'));
+  if (noteKind !== 'text') {
+    if (hasTranscript) {
+      detailChips.push(t('inbox.cardLayout.sourceText'));
+    } else if (hasSummary) {
+      detailChips.push(t('inbox.cardLayout.hasSummary'));
+    }
   }
 
   return (
@@ -59,12 +68,23 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
           flexShrink: 1,
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Clock size={14} color={color.icon.muted} strokeWidth={2} />
-          <Text style={{ fontSize: 13, fontWeight: '600', color: color.text.secondary }}>
-            {duration}
-          </Text>
-        </View>
+        {showDuration ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Clock size={14} color={color.icon.muted} strokeWidth={2} />
+            <Text style={{ fontSize: 13, fontWeight: '600', color: color.text.secondary }}>
+              {duration}
+            </Text>
+          </View>
+        ) : null}
+
+        {showTextFragments ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <FileText size={14} color={color.icon.muted} strokeWidth={2} />
+            <Text style={{ fontSize: 13, fontWeight: '600', color: color.text.secondary }}>
+              {t('inbox.cardLayout.textFragments', { count: textFragmentCount })}
+            </Text>
+          </View>
+        ) : null}
 
         {hasTasks ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>

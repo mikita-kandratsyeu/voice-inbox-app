@@ -186,6 +186,12 @@
       "expandedA11y": "Expanded note cards",
       "sourceText": "Transcript",
       "hasSummary": "Summary",
+      "noteTypeVoice": "Voice",
+      "noteTypeText": "Text",
+      "noteTypeMeeting": "Meeting",
+      "recordingMarks": "{{count}} marks",
+      "textFragments_one": "{{count}} fragment",
+      "textFragments_other": "{{count}} fragments",
       "tasksProgress": "{{done}}/{{total}} tasks",
       "noteMenu": "Note actions",
       "moreTags": "+{{count}}"

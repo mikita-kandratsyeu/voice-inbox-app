@@ -62,18 +62,20 @@ export const RecordingDetailHeader = ({
       className="flex-row items-center px-4 pb-3"
       style={{ backgroundColor: headerBackgroundColor, paddingTop: insets.top + 12 }}
     >
-      <HeaderIconButton
-        iconOnly
-        variant="icon"
-        size="md"
-        icon={<ChevronLeft size={22} color={color.text.primary} strokeWidth={2.2} />}
-        color={color}
-        onPress={onBack}
-        activeOpacity={0.7}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        accessibilityLabel={t('common.goBack')}
-      />
-      {isPrivateMode ? <PrivateExecutionBadge color={color} compact /> : null}
+      <View className="shrink-0 flex-row items-center gap-3">
+        <HeaderIconButton
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={<ChevronLeft size={22} color={color.text.primary} strokeWidth={2.2} />}
+          color={color}
+          onPress={onBack}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel={t('common.goBack')}
+        />
+        {isPrivateMode ? <PrivateExecutionBadge color={color} compact /> : null}
+      </View>
       <View className="min-w-0 flex-1 pl-3 pr-2" pointerEvents="none">
         <Animated.Text
           className="text-left text-[15px] font-semibold"

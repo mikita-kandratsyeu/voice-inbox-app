@@ -2,25 +2,34 @@ import { MenuView } from '@react-native-menu/menu';
 import { MoreHorizontal, Pin } from 'lucide-react-native';
 import React, { memo, useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable as RNPressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 
 import type { VoiceRecord } from '@/entities/record';
 import { getRecordCardChromeStyle } from '@/entities/record/lib/recordCardChrome';
+import {
+  countRecordCardTextFragments,
+  formatExpandedCardDate,
+  pickOpenTasksForCardPreview,
+  resolveRecordCardNoteKind,
+} from '@/entities/record/lib/recordCardExpandedPreview';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { formatRelativeTime, withAlphaHex } from '@/shared/lib';
-import { SwipeableCardContext } from '@/shared/ui';
+import { HeaderIconButton, SwipeableCardContext } from '@/shared/ui';
 
 import { AiStatusPill } from './AiStatusPill';
+import { RecordCardLocationChip } from './RecordCardLocationChip';
 import { RecordCardMetaStrip } from './RecordCardMetaStrip';
+import { RecordCardOpenTasksPreview } from './RecordCardOpenTasksPreview';
 import { RecordCardTagsRow } from './RecordCardTagsRow';
+import { RecordCardTypeBadges } from './RecordCardTypeBadges';
 
 type RecordCardExpandedProps = {
   item: VoiceRecord;
   color: Colors;
   folderAccentColor?: string;
   folderName?: string;
+  folderIconId?: string;
   hideCategoryLabel?: boolean;
   isArchivedView?: boolean;
   onPress: () => void;
@@ -39,6 +48,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
   color,
   folderAccentColor,
   folderName,
+  folderIconId,
   hideCategoryLabel = false,
   isArchivedView = false,
   onPress,
@@ -58,6 +68,19 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
 
   const textPrimaryStyle = { color: color.text.primary };
   const textSecondaryStyle = { color: color.text.secondary };
+
+  const noteKind = useMemo(() => resolveRecordCardNoteKind(item), [item]);
+  const marksCount = item.recordingMarks?.length ?? 0;
+  const openTaskPreview = useMemo(
+    () => pickOpenTasksForCardPreview(item.tasks ?? []),
+    [item.tasks],
+  );
+  const textFragmentCount = useMemo(() => {
+    if (noteKind !== 'text') {
+      return 0;
+    }
+    return countRecordCardTextFragments(item.transcript || item.summary, item.transcriptSegments);
+  }, [item.summary, item.transcript, item.transcriptSegments, noteKind]);
 
   const hasAudio = Boolean(item.audioPath?.trim());
   const hasTranscriptPreview = Boolean(item.transcript?.trim());
@@ -100,8 +123,18 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
       : item.classification && !item.folderId
         ? i18n.t(`classification.${item.classification}`)
         : null;
-  const categoryDotColor = folderAccentColor ?? color.accent.primary;
+  const isFolderLabel = Boolean(folderName && item.folderId);
+  const locationAccentColor = isFolderLabel
+    ? folderAccentColor
+    : (folderAccentColor ?? color.accent.primary);
   const showFolderStripe = Boolean(folderAccentColor);
+  const showTypeBadges = noteKind !== 'voice' || marksCount > 0;
+  const showMetaStrip =
+    hasAudio ||
+    noteKind === 'text' ||
+    (item.tasks?.length ?? 0) > 0 ||
+    hasTranscriptPreview ||
+    Boolean(item.summary?.trim());
 
   const menuActions = useMemo(() => {
     const actions: Array<{
@@ -112,15 +145,6 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
       imageColor?: string;
     }> = [];
 
-    if (onSelect) {
-      actions.push({
-        id: 'select',
-        title: t('inbox.menuSelectNotes'),
-        titleColor: color.text.primary,
-        image: 'checkmark.circle',
-        imageColor: color.text.primary,
-      });
-    }
     if (onPin) {
       actions.push({
         id: 'togglePin',
@@ -144,6 +168,15 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
         title: t('recordActions.archive'),
         titleColor: color.text.primary,
         image: 'archivebox',
+        imageColor: color.text.primary,
+      });
+    }
+    if (onSelect) {
+      actions.push({
+        id: 'select',
+        title: t('inbox.menuSelectNotes'),
+        titleColor: color.text.primary,
+        image: 'checkmark.circle',
         imageColor: color.text.primary,
       });
     }
@@ -199,32 +232,21 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
           }}
         >
           <Text style={[textSecondaryStyle, { fontSize: 12 }]} numberOfLines={1}>
-            {formatRelativeTime(item.createdAt, i18n.language)}
+            {formatExpandedCardDate(item.createdAt, i18n.language, t)}
           </Text>
           {categoryLabel ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
-              <View
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: 3,
-                  backgroundColor: categoryDotColor,
-                }}
-              />
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: '600',
-                  color: categoryDotColor,
-                  flexShrink: 1,
-                }}
-                numberOfLines={1}
-              >
-                {categoryLabel}
-              </Text>
-            </View>
+            <RecordCardLocationChip
+              label={categoryLabel}
+              color={color}
+              accentColor={locationAccentColor}
+              folderIconId={isFolderLabel ? folderIconId : undefined}
+            />
           ) : null}
         </View>
+
+        {showTypeBadges ? (
+          <RecordCardTypeBadges noteKind={noteKind} marksCount={marksCount} color={color} />
+        ) : null}
 
         <View
           style={{
@@ -232,7 +254,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
             alignItems: 'flex-start',
             justifyContent: 'space-between',
             gap: 8,
-            marginBottom: hasPreview || hasAudio ? 10 : 0,
+            marginBottom: hasPreview || showMetaStrip || openTaskPreview.length > 0 ? 10 : 0,
           }}
         >
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-start', minWidth: 0 }}>
@@ -295,15 +317,19 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
           </Text>
         ) : null}
 
-        {hasAudio ? (
+        {showMetaStrip ? (
           <RecordCardMetaStrip
+            noteKind={noteKind}
             duration={item.duration}
             color={color}
             hasTranscript={hasTranscriptPreview}
             hasSummary={Boolean(item.summary?.trim())}
+            textFragmentCount={textFragmentCount}
             tasks={item.tasks}
           />
         ) : null}
+
+        <RecordCardOpenTasksPreview tasks={openTaskPreview} color={color} />
 
         {(hasTags || menuActions.length > 0) && (
           <View
@@ -333,19 +359,16 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
                   if (id === 'unarchive') onUnarchive?.();
                 }}
               >
-                <RNPressable
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  style={{
-                    padding: 6,
-                    borderRadius: 8,
-                    backgroundColor: withAlphaHex(color.background.tertiary, 0.9),
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('inbox.cardLayout.noteMenu')}
+                <HeaderIconButton
+                  iconOnly
+                  variant="icon"
+                  size="md"
+                  color={color}
+                  icon={<MoreHorizontal size={18} color={color.icon.muted} strokeWidth={2.2} />}
                   onPress={() => {}}
-                >
-                  <MoreHorizontal size={18} color={color.icon.muted} strokeWidth={2} />
-                </RNPressable>
+                  accessibilityLabel={t('inbox.cardLayout.noteMenu')}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                />
               </MenuView>
             ) : null}
           </View>

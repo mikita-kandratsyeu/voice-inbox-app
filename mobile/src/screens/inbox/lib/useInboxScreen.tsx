@@ -150,6 +150,14 @@ export function useInboxScreen() {
     return m;
   }, [folders]);
 
+  const folderIconById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const f of folders) {
+      m.set(f.id, f.icon);
+    }
+    return m;
+  }, [folders]);
+
   const inboxCardLayout = useInboxCardLayoutStore((s) => s.layout);
   const setInboxCardLayout = useInboxCardLayoutStore((s) => s.setLayout);
 
@@ -647,6 +655,7 @@ export function useInboxScreen() {
         effectiveActiveFolderId={effectiveActiveFolderId}
         foldersEnabled={foldersEnabled}
         folderColorById={folderColorById}
+        folderIconById={folderIconById}
         folderNameById={folderNameById}
         isProActive={isProActive}
         isArchivedView={isArchivedView}
@@ -666,6 +675,7 @@ export function useInboxScreen() {
       inboxCardLayout,
       effectiveActiveFolderId,
       folderColorById,
+      folderIconById,
       folderNameById,
       foldersEnabled,
       isProActive,

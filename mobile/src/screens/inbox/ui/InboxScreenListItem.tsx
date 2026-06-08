@@ -15,7 +15,7 @@ import { SectionHeader, SwipeableCard } from '@/shared/ui';
 
 import type { FlattenedItem } from '../lib/inboxScreenTypes';
 
-const EXPANDED_CARD_MAX_HEIGHT = 480;
+const EXPANDED_CARD_MAX_HEIGHT = 560;
 
 export type InboxScreenListItemProps = {
   item: FlattenedItem;
@@ -26,6 +26,7 @@ export type InboxScreenListItemProps = {
   effectiveActiveFolderId: string | null;
   foldersEnabled: boolean;
   folderColorById: Map<string, string>;
+  folderIconById: Map<string, string>;
   folderNameById: Map<string, string>;
   isProActive: boolean;
   isArchivedView: boolean;
@@ -48,6 +49,7 @@ function InboxScreenListItemInner({
   effectiveActiveFolderId,
   foldersEnabled,
   folderColorById,
+  folderIconById,
   folderNameById,
   isProActive,
   isArchivedView,
@@ -82,6 +84,8 @@ function InboxScreenListItemInner({
       : undefined;
   const folderName =
     foldersEnabled && item.item.folderId ? folderNameById.get(item.item.folderId) : undefined;
+  const folderIconId =
+    foldersEnabled && item.item.folderId ? folderIconById.get(item.item.folderId) : undefined;
 
   const renderRecordCard = ({
     onPress,
@@ -103,6 +107,7 @@ function InboxScreenListItemInner({
           color={color}
           folderAccentColor={folderStripeColor}
           folderName={folderName}
+          folderIconId={folderIconId}
           hideCategoryLabel={Boolean(effectiveActiveFolderId)}
           isArchivedView={isArchivedView}
           onPress={onPress}
