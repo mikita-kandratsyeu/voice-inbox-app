@@ -1,5 +1,4 @@
 import {
-  createEmptyLandingTestimonial,
   getDefaultLandingSocialProof,
   LANDING_SOCIAL_PROOF_CACHE_TAG,
   LANDING_SOCIAL_PROOF_CONFIG_KEY,

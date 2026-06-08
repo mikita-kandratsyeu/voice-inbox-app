@@ -25,8 +25,7 @@ function getFooterNav(): FooterNavItem[] {
   ];
 }
 
-const footerLinkClass =
-  'font-medium text-white/78 transition-colors hover:text-white';
+const footerLinkClass = 'font-medium text-white/78 transition-colors hover:text-white';
 
 export function Footer(): React.ReactElement {
   const t = useTranslations('footer');

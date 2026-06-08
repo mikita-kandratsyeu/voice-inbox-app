@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 type Props = {
   children: React.ReactNode;
@@ -8,31 +8,50 @@ type Props = {
   delay?: number;
 };
 
+function subscribeReducedMotion(onStoreChange: () => void): () => void {
+  const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+  media.addEventListener('change', onStoreChange);
+  return () => media.removeEventListener('change', onStoreChange);
+}
+
+function getReducedMotionSnapshot(): boolean {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function getReducedMotionServerSnapshot(): boolean {
+  return false;
+}
+
 export function AnimateOnScroll({
   children,
   className = '',
   delay = 0,
 }: Props): React.ReactElement {
-  const [isVisible, setIsVisible] = useState(false);
+  const prefersReducedMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot,
+  );
+  const [hasRevealed, setHasRevealed] = useState(false);
   const [isDone, setIsDone] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    const el = ref.current;
+  const isVisible = prefersReducedMotion || hasRevealed;
+  const animationDone = prefersReducedMotion || isDone;
 
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      return;
+    }
+
+    const el = ref.current;
     if (!el) {
       return;
     }
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setIsVisible(true);
-      setIsDone(true);
-      return;
-    }
-
     const reveal = (): void => {
-      setIsVisible(true);
+      setHasRevealed(true);
       observer.unobserve(el);
     };
 
@@ -59,7 +78,7 @@ export function AnimateOnScroll({
         clearTimeout(timerRef.current);
       }
     };
-  }, [delay]);
+  }, [delay, prefersReducedMotion]);
 
   const handleTransitionEnd = (event: React.TransitionEvent<HTMLDivElement>): void => {
     if (event.propertyName === 'transform') {
@@ -70,8 +89,8 @@ export function AnimateOnScroll({
   return (
     <div
       ref={ref}
-      onTransitionEnd={handleTransitionEnd}
-      className={`animate-on-scroll ${isVisible ? 'animate-on-scroll-visible' : ''} ${isDone ? 'animate-on-scroll-done' : ''} ${className}`}
+      onTransitionEnd={prefersReducedMotion ? undefined : handleTransitionEnd}
+      className={`animate-on-scroll ${isVisible ? 'animate-on-scroll-visible' : ''} ${animationDone ? 'animate-on-scroll-done' : ''} ${className}`}
     >
       {children}
     </div>
