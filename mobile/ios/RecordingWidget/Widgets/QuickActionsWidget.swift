@@ -334,14 +334,14 @@ private struct QuickActionsProvider: TimelineProvider {
   }
 }
 
-#Preview("Quick Actions – Small", as: .systemSmall) {
-  QuickActionsWidget()
-} timeline: {
-  QuickActionsEntry(date: .now, family: .systemSmall)
-}
-
-#Preview("Quick Actions – Medium", as: .systemMedium) {
-  QuickActionsWidget()
-} timeline: {
-  QuickActionsEntry(date: .now, family: .systemMedium)
-}
+//#Preview("Quick Actions – Small", as: .systemSmall) {
+//  QuickActionsWidget()
+//} timeline: {
+//  QuickActionsEntry(date: .now, family: .systemSmall)
+//}
+//
+//#Preview("Quick Actions – Medium", as: .systemMedium) {
+//  QuickActionsWidget()
+//} timeline: {
+//  QuickActionsEntry(date: .now, family: .systemMedium)
+//}

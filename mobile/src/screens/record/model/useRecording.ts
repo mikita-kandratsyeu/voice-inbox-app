@@ -1,4 +1,4 @@
-import { type MutableRefObject, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AppState, type AppStateStatus } from 'react-native';
 import type { AudioSet, RecordBackType } from 'react-native-nitro-sound';
@@ -47,25 +47,40 @@ const audioRecorderPlayer = AudioRecorderPlayer as unknown as AudioRecorderPlaye
 const SUBSCRIPTION_DURATION_MS = 200;
 const MAX_JUMP_FORWARD_MS = 400;
 const MAX_JUMP_BACKWARD_MS = 500;
-const IOS_ROUTE_CHANGE_SUPPRESS_MS = 2800;
+const IOS_START_POSITION_SUPPRESS_MS = 2800;
 
-type SanitizeResult = { ms: number; routeChanged: boolean };
+/**
+ * iOS may report erratic recorder positions when the audio route changes.
+ * Clamp jumps so the on-screen timer stays stable; recording itself continues.
+ */
+function sanitizePosition(rawMs: number, lastValidMs: number, capMs: number): number {
+  if (rawMs < 0) {
+    return lastValidMs;
+  }
+
+  const capped = Math.min(rawMs, capMs);
+
+  if (capped < lastValidMs - MAX_JUMP_BACKWARD_MS) {
+    return lastValidMs;
+  }
+
+  if (capped > lastValidMs + MAX_JUMP_FORWARD_MS) {
+    return lastValidMs + SUBSCRIPTION_DURATION_MS;
+  }
+
+  return capped;
+}
 
 type UseRecordingOptions = {
   maxRecordingMs?: number;
   onLimitReached?: () => void;
   onRecordingStoppedByAppLock?: (path: string, elapsed: number, elapsedMs: number) => void;
-  onAudioRouteChange?: () => void;
-  /** When true, iOS position glitches (e.g. mark-sheet scroll) do not pause recording. */
-  routeChangeSuppressedRef?: MutableRefObject<boolean>;
 };
 
 export const useRecording = ({
   maxRecordingMs = FREE_MAX_RECORDING_MS,
   onLimitReached,
   onRecordingStoppedByAppLock,
-  onAudioRouteChange,
-  routeChangeSuppressedRef,
 }: UseRecordingOptions = {}) => {
   const { t } = useTranslation();
   const [state, setState] = useState<RecordingState>('idle');
@@ -80,10 +95,9 @@ export const useRecording = ({
   const softLimitWarningFiredRef = useRef(false);
   const finalLimitWarningFiredRef = useRef(false);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
-  /** Re-align Live Activity startDate if recorder drifts while backgrounded (rare). */
   const lastLiveActivityDriftSyncRef = useRef(0);
   const LIVE_ACTIVITY_DRIFT_SYNC_MS = 60_000;
-  const routeChangeSuppressedUntilRef = useRef(0);
+  const startPositionSuppressedUntilRef = useRef(0);
   const maxRecordingMsRef = useRef(maxRecordingMs);
   maxRecordingMsRef.current = maxRecordingMs;
 
@@ -91,63 +105,18 @@ export const useRecording = ({
   onLimitReachedRef.current = onLimitReached;
   const onRecordingStoppedByAppLockRef = useRef(onRecordingStoppedByAppLock);
   onRecordingStoppedByAppLockRef.current = onRecordingStoppedByAppLock;
-  const onAudioRouteChangeRef = useRef(onAudioRouteChange);
-  onAudioRouteChangeRef.current = onAudioRouteChange;
-  const routeChangeSuppressedRefRef = useRef(routeChangeSuppressedRef);
-  routeChangeSuppressedRefRef.current = routeChangeSuppressedRef;
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  const sanitizePosition = useCallback((rawMs: number, lastValidMs: number): SanitizeResult => {
-    const cap = maxRecordingMsRef.current;
-    if (rawMs < 0) {
-      return { ms: lastValidMs, routeChanged: false };
-    }
-
-    const capped = Math.min(rawMs, cap);
-
-    if (capped < lastValidMs - MAX_JUMP_BACKWARD_MS) {
-      return { ms: lastValidMs, routeChanged: true };
-    }
-
-    if (capped > lastValidMs + MAX_JUMP_FORWARD_MS) {
-      return { ms: lastValidMs + SUBSCRIPTION_DURATION_MS, routeChanged: true };
-    }
-
-    return { ms: capped, routeChanged: false };
-  }, []);
-
   const addRecordBackListener = useCallback(() => {
     audioRecorderPlayer.addRecordBackListener((e: RecordBackType) => {
-      const { ms, routeChanged } = sanitizePosition(e.currentPosition, lastValidMsRef.current);
+      const cap = maxRecordingMsRef.current;
+      const rawMs =
+        IS_IOS && Date.now() < startPositionSuppressedUntilRef.current
+          ? lastValidMsRef.current + SUBSCRIPTION_DURATION_MS
+          : e.currentPosition;
+      const ms = sanitizePosition(rawMs, lastValidMsRef.current, cap);
       lastValidMsRef.current = ms;
-
-      if (
-        routeChanged &&
-        IS_IOS &&
-        Date.now() >= routeChangeSuppressedUntilRef.current &&
-        !routeChangeSuppressedRefRef.current?.current
-      ) {
-        const secs = Math.floor(ms / 1000);
-        elapsedRef.current = secs;
-        elapsedMsRef.current = ms;
-        setElapsed(secs);
-        setElapsedMs(ms);
-
-        audioRecorderPlayer.removeRecordBackListener();
-        audioRecorderPlayer
-          .pauseRecorder()
-          .then((result: string) => {
-            if (audioPathRef.current === null) {
-              audioPathRef.current = result;
-            }
-
-            setState('paused');
-            onAudioRouteChangeRef.current?.();
-          })
-          .catch(() => {});
-        return;
-      }
 
       const secs = Math.floor(ms / 1000);
       elapsedRef.current = secs;
@@ -200,7 +169,7 @@ export const useRecording = ({
           .catch(() => {});
       }
     });
-  }, [sanitizePosition, t]);
+  }, [t]);
 
   const startRecording = useCallback(async () => {
     const status = await checkMicPermission();
@@ -236,7 +205,7 @@ export const useRecording = ({
       }
       audioPathRef.current = path;
 
-      routeChangeSuppressedUntilRef.current = Date.now() + IOS_ROUTE_CHANGE_SUPPRESS_MS;
+      startPositionSuppressedUntilRef.current = Date.now() + IOS_START_POSITION_SUPPRESS_MS;
       addRecordBackListener();
       setState('recording');
       hapticLight();
@@ -267,7 +236,7 @@ export const useRecording = ({
       audioRecorderPlayer.setSubscriptionDuration(SUBSCRIPTION_DURATION_MS / 1000);
       await audioRecorderPlayer.resumeRecorder();
 
-      routeChangeSuppressedUntilRef.current = Date.now() + IOS_ROUTE_CHANGE_SUPPRESS_MS;
+      startPositionSuppressedUntilRef.current = Date.now() + IOS_START_POSITION_SUPPRESS_MS;
       addRecordBackListener();
       setState('recording');
 

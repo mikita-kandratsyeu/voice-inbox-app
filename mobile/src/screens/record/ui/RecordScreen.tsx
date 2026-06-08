@@ -32,6 +32,7 @@ import { Waveform } from '@/shared/ui';
 import { generateRecordId } from '../lib/generateRecordId';
 import { generateRecordingMarkId } from '../lib/generateRecordingMarkId';
 import { getAutoTitle } from '../lib/getAutoTitle';
+import { useRecordingAudioRouteHint } from '../lib/useRecordingAudioRouteHint';
 import { useRecording } from '../model/useRecording';
 import { AddRecordingMarkSheet } from './AddRecordingMarkSheet';
 import { RecordDurationLimit } from './RecordDurationLimit';
@@ -67,9 +68,7 @@ export const RecordScreen = () => {
   const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(autoTranscribeOnSave, isProActive);
   const { startTranscription } = useTranscription();
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [saveModalReason, setSaveModalReason] = useState<
-    'user' | 'limit' | 'routeChange' | 'deeplink'
-  >('user');
+  const [saveModalReason, setSaveModalReason] = useState<'user' | 'limit' | 'deeplink'>('user');
   const requestShowSaveModal = useRecordingDeeplinkStore((s) => s.requestShowSaveModal);
   const setRequestShowSaveModal = useRecordingDeeplinkStore((s) => s.setRequestShowSaveModal);
   const pauseResumeRequestTick = useRecordingDeeplinkStore((s) => s.pauseResumeRequestTick);
@@ -77,14 +76,9 @@ export const RecordScreen = () => {
   const [title, setTitle] = useState('');
   const [recordingMarks, setRecordingMarks] = useState<RecordingMark[]>([]);
   const [markSheetVisible, setMarkSheetVisible] = useState(false);
-  const markSheetVisibleRef = useRef(false);
   const [markSheetOpenId, setMarkSheetOpenId] = useState(0);
   const [markSnapshotOffsetMs, setMarkSnapshotOffsetMs] = useState(0);
   const [appState, setAppState] = useState(AppState.currentState);
-
-  useEffect(() => {
-    markSheetVisibleRef.current = markSheetVisible;
-  }, [markSheetVisible]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', setAppState);
@@ -103,18 +97,11 @@ export const RecordScreen = () => {
     discardRecording,
   } = useRecording({
     maxRecordingMs,
-    routeChangeSuppressedRef: markSheetVisibleRef,
     onLimitReached: () => {
       void logAnalyticsEvent('recording_limit_hit');
       setMarkSheetVisible(false);
       setTitle('');
       setSaveModalReason('limit');
-      setShowSaveModal(true);
-    },
-    onAudioRouteChange: () => {
-      setMarkSheetVisible(false);
-      setTitle('');
-      setSaveModalReason('routeChange');
       setShowSaveModal(true);
     },
     onRecordingStoppedByAppLock: (path, elapsed, elapsedMs) => {
@@ -183,6 +170,7 @@ export const RecordScreen = () => {
   const elapsedMsRef = useRef(elapsedMs);
   elapsedMsRef.current = elapsedMs;
 
+  const routeChangeHintVisible = useRecordingAudioRouteHint(state === 'recording');
   const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
 
   useFocusEffect(
@@ -356,10 +344,18 @@ export const RecordScreen = () => {
           style={isProActive ? { paddingBottom: 32 } : undefined}
         >
           <RecordOfflineStatusCard
-            title={t('record.offlineHint')}
-            subtitle={isAppLockEnabled ? t('record.appLockHint') : t('record.noAppLockHint')}
+            title={
+              routeChangeHintVisible ? t('record.routeChangeHintTitle') : t('record.offlineHint')
+            }
+            subtitle={
+              routeChangeHintVisible
+                ? t('record.routeChangeHintSubtitle')
+                : isAppLockEnabled
+                  ? t('record.appLockHint')
+                  : t('record.noAppLockHint')
+            }
             marksHint={
-              isProActive && recordingMarks.length > 0
+              isProActive && recordingMarks.length > 0 && !routeChangeHintVisible
                 ? t('record.saveModalMarksHint', { count: recordingMarks.length })
                 : null
             }

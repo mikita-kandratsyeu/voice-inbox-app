@@ -19,6 +19,8 @@
 		2A15FB092F6AC17400177049 /* RecordingLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A15FB082F6AC17400177049 /* RecordingLiveActivityManager.swift */; };
 		2A15FB0B2F6AC1A800177049 /* RecordingActivityModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A15FB0A2F6AC1A800177049 /* RecordingActivityModule.m */; };
 		2A15FB0D2F6AC21900177049 /* RecordingActivityModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A15FB0C2F6AC21900177049 /* RecordingActivityModule.swift */; };
+		2A15FB132F6AD10000177049 /* AudioRouteModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A15FB112F6AD10000177049 /* AudioRouteModule.swift */; };
+		2A15FB142F6AD10000177049 /* AudioRouteModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A15FB122F6AD10000177049 /* AudioRouteModule.m */; };
 		2AADFDD52F6B33C90005C039 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A6F4CEC2F64113A00297CB8 /* WidgetKit.framework */; };
 		2AADFDD62F6B33C90005C039 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A6F4CEE2F64113B00297CB8 /* SwiftUI.framework */; };
 		2AADFDE32F6B33CA0005C039 /* DownloadWidgetExtensionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2AADFDD42F6B33C80005C039 /* DownloadWidgetExtensionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -89,6 +91,8 @@
 		2A15FB082F6AC17400177049 /* RecordingLiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingLiveActivityManager.swift; sourceTree = "<group>"; };
 		2A15FB0A2F6AC1A800177049 /* RecordingActivityModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RecordingActivityModule.m; sourceTree = "<group>"; };
 		2A15FB0C2F6AC21900177049 /* RecordingActivityModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingActivityModule.swift; sourceTree = "<group>"; };
+		2A15FB112F6AD10000177049 /* AudioRouteModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRouteModule.swift; sourceTree = "<group>"; };
+		2A15FB122F6AD10000177049 /* AudioRouteModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AudioRouteModule.m; sourceTree = "<group>"; };
 		2A6F4CEC2F64113A00297CB8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		2A6F4CEE2F64113B00297CB8 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		2AADFDD42F6B33C80005C039 /* DownloadWidgetExtensionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DownloadWidgetExtensionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -192,6 +196,8 @@
 				2A15FB082F6AC17400177049 /* RecordingLiveActivityManager.swift */,
 				2A15FB0C2F6AC21900177049 /* RecordingActivityModule.swift */,
 				2A15FB0A2F6AC1A800177049 /* RecordingActivityModule.m */,
+				2A15FB112F6AD10000177049 /* AudioRouteModule.swift */,
+				2A15FB122F6AD10000177049 /* AudioRouteModule.m */,
 			);
 			path = LiveActivity;
 			sourceTree = "<group>";
@@ -632,6 +638,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				2A15FB0D2F6AC21900177049 /* RecordingActivityModule.swift in Sources */,
+				2A15FB132F6AD10000177049 /* AudioRouteModule.swift in Sources */,
+				2A15FB142F6AD10000177049 /* AudioRouteModule.m in Sources */,
 				2AADFDF02F6BC3800005C039 /* DownloadActivityModule.swift in Sources */,
 				2AADFDF32F6BC3B50005C039 /* DownloadActivityModule.m in Sources */,
 				2A15FAEC2F69713C00177049 /* StorefrontModuleBridge.m in Sources */,

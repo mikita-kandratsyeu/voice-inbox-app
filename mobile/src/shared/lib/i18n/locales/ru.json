@@ -346,6 +346,8 @@
     "meetingMode": "Режим встречи",
     "meetingModeHint": "Сводка, задачи и итоги встречи — в одном формате.",
     "offlineHint": "Офлайн-транскрипция на устройстве",
+    "routeChangeHintTitle": "Сменился источник звука",
+    "routeChangeHintSubtitle": "Запись продолжается.",
     "blockedByTranscriptionTitle": "Дождитесь завершения транскрипции",
     "blockedByTranscriptionMessage": "Пока идёт транскрипция, новую запись начать нельзя.",
     "startFailedTitle": "Запись не запустилась",
