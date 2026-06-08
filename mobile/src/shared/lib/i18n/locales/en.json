@@ -748,10 +748,12 @@
       "resetProLimitNotExhausted": "Reset unlocks when you've used at least 90% of your weekly balance.",
       "resetProLimitProRequired": "Pro is required to reset the weekly balance.",
       "resetProLimitTransactionUsed": "This purchase was already applied.",
-      "resetProLimitSuccessTitle": "Limit topped up",
-      "resetProLimitSuccess": "+{{count}} back in your available balance — {{limit}} of {{limit}}.",
+      "resetProLimitSuccessTitle": "AI credit limit topped up",
+      "resetProLimitSuccess": "Back in your available balance — {{limit}} of {{limit}} again.",
+      "resetProLimitSuccessAmountA11y": "Topped up by {{count}}",
       "resetProLimitSuccessNoChange": "Your weekly limit is available again — {{limit}} of {{limit}}.",
-      "resetProLimitSuccessAlreadyApplied": "This purchase was already applied."
+      "resetProLimitSuccessAlreadyApplied": "This purchase was already applied.",
+      "resetProLimitSuccessButton": "Great"
     },
     "aiUsageDashboard": {
       "title": "AI usage",

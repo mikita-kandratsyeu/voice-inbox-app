@@ -20,7 +20,7 @@ import {
   syncPrivateCapabilityTier,
   useSettingsStore,
 } from '@/entities/settings';
-import { useResetProAiLimit } from '@/features/ai-limit-reset';
+import { type ProLimitResetSuccess, useResetProAiLimit } from '@/features/ai-limit-reset';
 import { openAppReviewFromSettings } from '@/features/app-review';
 import {
   getMonetizationMode,
@@ -172,36 +172,19 @@ export function useSettingsScreen() {
     [fetchAiUsage, t],
   );
 
+  const [resetProLimitSuccessSheet, setResetProLimitSuccessSheet] =
+    useState<ProLimitResetSuccess | null>(null);
+
+  const dismissResetProLimitSuccessSheet = useCallback(() => {
+    setResetProLimitSuccessSheet(null);
+  }, []);
+
   const onResetProLimitSuccess = useCallback(
-    (result: {
-      usage: NonNullable<Awaited<ReturnType<typeof getAiUsage>>>;
-      alreadyApplied: boolean;
-      reset: {
-        restoredAmount: number;
-        limit: number;
-      };
-    }) => {
+    (result: ProLimitResetSuccess) => {
       void fetchAiUsage();
-      if (result.alreadyApplied) {
-        Alert.alert(
-          t('settings.aiUsage.resetProLimitSuccessTitle'),
-          t('settings.aiUsage.resetProLimitSuccessAlreadyApplied'),
-        );
-        return;
-      }
-
-      const { reset } = result;
-      const message =
-        reset.restoredAmount > 0
-          ? t('settings.aiUsage.resetProLimitSuccess', {
-              count: reset.restoredAmount,
-              limit: reset.limit,
-            })
-          : t('settings.aiUsage.resetProLimitSuccessNoChange', { limit: reset.limit });
-
-      Alert.alert(t('settings.aiUsage.resetProLimitSuccessTitle'), message);
+      setResetProLimitSuccessSheet(result);
     },
-    [fetchAiUsage, t],
+    [fetchAiUsage],
   );
 
   const handleRateApp = useCallback(() => {
@@ -634,6 +617,8 @@ export function useSettingsScreen() {
     resetProLimitLoading,
     resetProLimitError,
     resetProLimitPriceLabel: resetProLimitProduct?.priceString ?? null,
+    resetProLimitSuccessSheet,
+    dismissResetProLimitSuccessSheet,
     isPrivateMode,
     digestAiEnabled,
     automationLocked,

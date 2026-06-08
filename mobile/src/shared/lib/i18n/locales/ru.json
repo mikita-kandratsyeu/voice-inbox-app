@@ -759,10 +759,12 @@
       "resetProLimitNotExhausted": "Доступно, когда использовано от 90% лимита.",
       "resetProLimitProRequired": "Только для подписчиков Pro.",
       "resetProLimitTransactionUsed": "Эта покупка уже использована.",
-      "resetProLimitSuccessTitle": "Лимит пополнен",
-      "resetProLimitSuccess": "+{{count}} к доступному остатку — снова {{limit}} из {{limit}}.",
+      "resetProLimitSuccessTitle": "Лимит ИИ-кредитов пополнен",
+      "resetProLimitSuccess": "К доступному остатку — снова {{limit}} из {{limit}}.",
+      "resetProLimitSuccessAmountA11y": "Пополнено на {{count}}",
       "resetProLimitSuccessNoChange": "Недельный лимит снова доступен — {{limit}} из {{limit}}.",
-      "resetProLimitSuccessAlreadyApplied": "Эта покупка уже применялась."
+      "resetProLimitSuccessAlreadyApplied": "Эта покупка уже применялась.",
+      "resetProLimitSuccessButton": "Отлично"
     },
     "aiUsageDashboard": {
       "title": "ИИ-кредиты",

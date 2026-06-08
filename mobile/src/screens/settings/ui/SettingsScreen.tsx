@@ -6,6 +6,7 @@ import { RefreshControl, ScrollView, Text, useWindowDimensions, View } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
+import { ProLimitResetSuccessSheet } from '@/features/ai-limit-reset';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { openPlanPaywall } from '@/features/plan-paywall';
 import { isInternalDebugBuild } from '@/shared/config/buildEnv';
@@ -236,6 +237,13 @@ export const SettingsScreen = () => {
           busy={settings.isExporting || settings.isImporting}
           onClose={settings.handleBackupPasswordSheetClose}
           onSubmit={(password) => void settings.handleBackupPasswordSubmit(password)}
+        />
+        <ProLimitResetSuccessSheet
+          visible={settings.resetProLimitSuccessSheet != null}
+          onClose={settings.dismissResetProLimitSuccessSheet}
+          restoredAmount={settings.resetProLimitSuccessSheet?.reset.restoredAmount ?? 0}
+          limit={settings.resetProLimitSuccessSheet?.reset.limit ?? 0}
+          alreadyApplied={settings.resetProLimitSuccessSheet?.alreadyApplied ?? false}
         />
         {!settings.isPrivateMode && (
           <>
