@@ -71,9 +71,7 @@ export const RecordCardTypeBadges = memo(function RecordCardTypeBadges({
 
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-      {showNoteKind ? (
-        <TypeBadge color={color} icon={noteKindIcon} label={noteKindLabel} />
-      ) : null}
+      {showNoteKind ? <TypeBadge color={color} icon={noteKindIcon} label={noteKindLabel} /> : null}
       {showMarks ? (
         <TypeBadge
           color={color}
