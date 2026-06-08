@@ -51,19 +51,19 @@ export const AudioLanguageSelector = ({
         accessibilityRole="button"
         accessibilityLabel={controlLabel}
         accessibilityHint={t('recordingDetail.languageHint')}
-        className="max-w-full flex-row items-center gap-2 rounded-full px-3 py-1.5"
+        className="max-w-full min-h-10 flex-row items-center gap-1.5 rounded-full px-3.5 py-2"
         style={{ backgroundColor: surfaceBackgroundColor ?? color.background.card }}
-        activeOpacity={0.7}
+        activeOpacity={0.75}
       >
-        <Languages size={14} color={color.icon.muted} strokeWidth={2} />
+        <Languages size={16} color={color.icon.muted} strokeWidth={2} />
         <Text
-          className="shrink text-[13px] font-medium"
+          className="shrink text-[14px] font-semibold leading-[18px]"
           numberOfLines={1}
           style={{ color: color.text.primary }}
         >
           {controlLabel}
         </Text>
-        <ChevronDown size={14} color={color.text.secondary} strokeWidth={2} />
+        <ChevronDown size={16} color={color.text.secondary} strokeWidth={2} />
       </TouchableOpacity>
     </MenuView>
   );

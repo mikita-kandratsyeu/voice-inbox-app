@@ -24,7 +24,11 @@ You must not misuse the support channel (for example, by sending unlawful, haras
 
 ## 3. Paid features and subscriptions
 
-The app may offer a **free tier** of AI usage with weekly limits. **Optional paid upgrades** (for example, higher limits or disabling advertising where the app shows ads) are offered only through **in-app purchases** in the **Apple App Store** or **Google Play**, where the platform is the **merchant of record** for the payment. Your purchase is governed by the platform’s terms and refund rules. We may use a **third-party subscription status service** to verify purchases and keep paid entitlements in sync. Nothing in these Terms overrides mandatory consumer rights in your country.
+The app may offer a **free tier** of AI usage with weekly limits. **Optional paid upgrades** (for example, a **Pro** subscription with higher weekly AI credit limits, disabling advertising where the app shows ads, or other entitlements described in the app) are offered only through **in-app purchases** in the **Apple App Store** or **Google Play**, where the platform is the **merchant of record** for the payment. Your purchase is governed by the platform’s terms and refund rules. We may use a **third-party subscription status service** to verify purchases and keep paid entitlements in sync.
+
+**Pro subscribers** may also be offered an optional **one-time in-app purchase** to **restore the current week’s AI credit limit** when you have used most of it (as shown in the app). That purchase **does not extend or renew** your subscription; it **resets the weekly usage counter** for the current period so you can use your plan’s AI credits again, subject to eligibility rules shown in the app (for example, a minimum share of the weekly limit already used). Each such purchase can be applied only as described in the app and may not be transferred or resold.
+
+Nothing in these Terms overrides mandatory consumer rights in your country.
 
 If you install or obtain the app through the **Apple App Store**, Apple’s standard end-user licence agreement for licensed applications (the **Apple Standard EULA**) may apply in addition to these Terms where Apple requires it: [Apple Standard EULA](https://www.apple.com/legal/internet-services/itunes/dev/stdeula/).
 
