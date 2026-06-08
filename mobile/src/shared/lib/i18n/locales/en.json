@@ -2027,6 +2027,8 @@
     "colorProTitle": "App personalization",
     "colorProBody": "Upgrade to Pro to personalize the app style: accents, folders, and color highlights across the interface.",
     "pickerInboxOnly": "Inbox only",
+    "pickerSearchPlaceholder": "Search folders",
+    "pickerSearchEmpty": "No folders match your search",
     "moveToFolderTitle": "Move to folder",
     "moveToFolderSubtitle": "The note will be moved to the folder you select",
     "moveToFolderMenu": "Move to folder",

@@ -2072,6 +2072,8 @@
     "colorProTitle": "Кастомизация приложения",
     "colorProBody": "С подпиской Pro можно настроить визуальный стиль приложения: акценты, папки и цветовые элементы интерфейса.",
     "pickerInboxOnly": "Только во входящих",
+    "pickerSearchPlaceholder": "Поиск папок",
+    "pickerSearchEmpty": "Папки не найдены",
     "moveToFolderTitle": "Переместить в папку",
     "moveToFolderSubtitle": "Заметка будет перемещена в выбранную папку",
     "moveToFolderMenu": "Переместить в папку",
