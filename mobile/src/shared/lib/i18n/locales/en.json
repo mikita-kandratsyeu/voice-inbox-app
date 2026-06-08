@@ -929,7 +929,9 @@
       "confirmLabel": "Confirm password",
       "confirmPlaceholder": "Repeat password",
       "passwordTooShort": "Use at least {{min}} characters.",
-      "passwordMismatch": "Passwords don’t match."
+      "passwordMismatch": "Passwords don’t match.",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
     },
     "export": "Export data",
     "exporting": "Exporting...",
