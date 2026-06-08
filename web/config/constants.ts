@@ -26,6 +26,10 @@ export const APP_STORE_APP_ID: string | undefined =
   process.env.NEXT_PUBLIC_APP_STORE_APP_ID?.trim() ||
   extractAppleAppStoreId(process.env.NEXT_PUBLIC_APP_STORE_URL ?? '') ||
   undefined;
+
+/** App Store Connect listing stats — update manually when ratings change. */
+export const APP_STORE_LISTING_RATING = 5;
+export const APP_STORE_LISTING_RATINGS_COUNT = 3;
 export const VERIFIED_METRICS_URL = process.env.NEXT_PUBLIC_VERIFIED_METRICS_URL?.trim() ?? '';
 
 // HTTP headers

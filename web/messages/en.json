@@ -10,7 +10,13 @@
     "appStore": "App Store",
     "googlePlayLabel": "Android",
     "googlePlay": "Google Play",
-    "downloadApp": "Download App"
+    "downloadApp": "Download App",
+    "socialProof": {
+      "appStoreAria": "{rating} stars on the App Store, {count} ratings",
+      "ratingsCount": "{count, plural, one {# rating} other {# ratings}}",
+      "quote": "Sleek design and great functionality",
+      "quoteSource": "App Store review"
+    }
   },
   "features": {
     "title": "What's in the app",
@@ -105,7 +111,7 @@
     },
     "pricing": {
       "question": "Do I need a subscription to start?",
-      "answer": "No. Recording and transcription are available immediately, no account required. Cloud AI in Smart uses weekly credits; Pro unlocks advanced models, meeting mode, and more."
+      "answer": "No. Recording and transcription are available immediately, no account required. Cloud AI in Smart uses weekly credits. Pro unlocks additional models, meeting mode, and more."
     },
     "backupViewer": {
       "question": "Can I open my backup on a computer?",

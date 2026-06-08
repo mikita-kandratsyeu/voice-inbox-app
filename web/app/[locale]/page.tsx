@@ -10,6 +10,7 @@ import { Footer } from '@/components/landing/Footer';
 import { Header } from '@/components/landing/Header';
 import { Hero } from '@/components/landing/Hero';
 import { MarketingPageShell } from '@/components/landing/MarketingPageShell';
+import { MobileStickyCTA } from '@/components/landing/MobileStickyCTA';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { PrivateModeSection } from '@/components/landing/PrivateModeSection';
 import { UseCasesSection } from '@/components/landing/UseCasesSection';
@@ -54,7 +55,7 @@ export default async function LandingPage({ params }: Props) {
   return (
     <MarketingPageShell>
       <Header />
-      <main className="flex-1">
+      <main className="flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pb-0">
         <Hero />
         <DifferentiationSection />
         <PrivateModeSection />
@@ -65,6 +66,7 @@ export default async function LandingPage({ params }: Props) {
         <CTASection />
       </main>
       <Footer />
+      <MobileStickyCTA />
     </MarketingPageShell>
   );
 }
