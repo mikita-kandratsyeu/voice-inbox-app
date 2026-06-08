@@ -6,6 +6,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
+import { withAlphaHex } from '@/shared/lib';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { isProResetEligible } from '@/shared/lib/aiUsageProReset';
 import { formatLocalizedLongDateWithTime } from '@/shared/lib/taskDeadlineTimeDisplay';
@@ -133,19 +134,62 @@ function ResetProLimitPressableBody({
     );
   }
 
+  const resetSubtitle =
+    resetPriceLabel != null
+      ? t('settings.aiUsage.resetProLimitSubtitle', { price: resetPriceLabel })
+      : t('settings.aiUsage.resetProLimitSubtitleGeneric');
+  const priceStart = resetPriceLabel != null ? resetSubtitle.indexOf(resetPriceLabel) : -1;
+  const resetSubtitleWithoutPrice =
+    resetPriceLabel != null && priceStart >= 0
+      ? resetSubtitle
+          .slice(0, priceStart)
+          .trim()
+          .replace(/\s+(за|for)$/i, '')
+      : resetSubtitle;
+
   return (
-    <View className="min-h-[52px] flex-row items-center gap-3 px-4 py-3.5">
-      <RefreshCw size={24} color={color.accent.primary} strokeWidth={1.75} />
-      <View className="min-w-0 flex-1">
-        <Text className="text-sm font-semibold leading-5" style={{ color: color.accent.primary }}>
+    <View className="min-h-[76px] flex-row items-center gap-3 px-4 py-4">
+      <View
+        className="h-9 w-9 items-center justify-center rounded-xl"
+        style={{ backgroundColor: withAlphaHex(color.accent.primary, 0.12) }}
+      >
+        <RefreshCw size={20} color={color.accent.primary} strokeWidth={1.85} />
+      </View>
+      <View className="min-w-0 flex-1 pr-1">
+        <Text
+          className="text-[15px] font-semibold leading-5"
+          numberOfLines={2}
+          style={{ color: color.accent.primary }}
+        >
           {t('settings.aiUsage.resetProLimitTitle')}
         </Text>
-        <Text className="mt-0.5 text-xs leading-4" style={{ color: color.text.secondary }}>
-          {resetPriceLabel
-            ? t('settings.aiUsage.resetProLimitSubtitle', { price: resetPriceLabel })
-            : t('settings.aiUsage.resetProLimitSubtitleGeneric')}
+        <Text
+          className="mt-1.5 text-[13px] leading-[18px]"
+          numberOfLines={2}
+          style={{ color: color.text.secondary }}
+        >
+          {resetSubtitleWithoutPrice}
         </Text>
       </View>
+      {resetPriceLabel ? (
+        <View
+          className="shrink-0 items-center justify-center rounded-2xl px-3 py-2"
+          style={{
+            minWidth: 76,
+            backgroundColor: withAlphaHex(color.accent.primary, 0.1),
+            borderWidth: 1,
+            borderColor: withAlphaHex(color.accent.primary, 0.24),
+          }}
+        >
+          <Text
+            className="text-[15px] font-bold leading-5"
+            numberOfLines={1}
+            style={[styles.tabular, { color: color.accent.primary }]}
+          >
+            {resetPriceLabel}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -426,7 +470,7 @@ export const AiUsageCard = ({
                   backgroundColor: resetLoading
                     ? color.background.tertiary
                     : color.background.primary,
-                  minHeight: 52,
+                  minHeight: 76,
                 }}
               >
                 <ResetProLimitPressableBody
