@@ -133,7 +133,7 @@ struct RecordingLiveActivityView: View {
                         .fill(leftIconBackground)
                         .frame(width: 64, height: 64)
 
-                    Image(systemName: state.isRecording ? "waveform" : "pause.fill")
+                    Image(systemName: state.isRecording ? "mic.fill" : "pause.fill")
                         .font(.system(size: 20, weight: .semibold))
                         .foregroundStyle(leftIconForeground)
                 }
@@ -181,7 +181,7 @@ struct RecordingWidgetLiveActivity: Widget {
                             .fill(Color.accentColor.opacity(0.16))
                             .frame(width: 50, height: 50)
 
-                        Image(systemName: context.state.isRecording ? "waveform" : "pause.fill")
+                        Image(systemName: context.state.isRecording ? "mic.fill" : "pause.fill")
                             .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(Color.accentColor)
                     }
@@ -234,11 +234,11 @@ struct RecordingWidgetLiveActivity: Widget {
                       .fill(Color.accentColor.opacity(0.18))
                       .frame(width: 20, height: 20)
 
-                  Image(systemName: context.state.isRecording ? "waveform" : "pause.fill")
+                  Image(systemName: context.state.isRecording ? "mic.fill" : "pause.fill")
                       .font(.system(size: 9.5, weight: .bold))
                       .foregroundStyle(Color.accentColor)
               }
-              .frame(width: 34, height: 28, alignment: .center)
+              .frame(width: 30, height: 28, alignment: .center)
             } compactTrailing: {
               recordingLiveActivityTimeLabel(state: context.state) { text in
                   text
@@ -247,7 +247,9 @@ struct RecordingWidgetLiveActivity: Widget {
                       .foregroundStyle(.primary)
                       .lineLimit(1)
                       .minimumScaleFactor(0.8)
-                      .frame(width: 40, height: 28, alignment: .center)
+                      .multilineTextAlignment(.trailing)
+                      .frame(width: 36, height: 28, alignment: .trailing)
+                      .offset(x: 2)
                       .transaction { $0.animation = nil }
               }
             } minimal: {
@@ -256,7 +258,7 @@ struct RecordingWidgetLiveActivity: Widget {
                         .fill(Color.accentColor.opacity(0.16))
                         .frame(width: 20, height: 20)
 
-                    Image(systemName: context.state.isRecording ? "waveform" : "pause.fill")
+                    Image(systemName: context.state.isRecording ? "mic.fill" : "pause.fill")
                         .font(.system(size: 9, weight: .semibold))
                         .foregroundStyle(Color.accentColor)
                 }
