@@ -46,6 +46,7 @@ let flushTimer: ReturnType<typeof setTimeout> | null = null;
 let initialized = false;
 let originalConsoleWarn: (...items: unknown[]) => void = console.warn.bind(console);
 let originalConsoleError: (...items: unknown[]) => void = console.error.bind(console);
+// eslint-disable-next-line no-console
 let originalConsoleLog: (...items: unknown[]) => void = console.log.bind(console);
 
 function truncateString(value: string): string {
@@ -263,6 +264,7 @@ export function setupAppLogger() {
 
   originalConsoleWarn = console.warn.bind(console);
   originalConsoleError = console.error.bind(console);
+  // eslint-disable-next-line no-console
   originalConsoleLog = console.log.bind(console);
 
   console.warn = (...args: Array<unknown>) => {
