@@ -131,7 +131,7 @@ private struct QuickActionsWidgetView: View {
               .fill(theme.accentIconBackground)
               .frame(width: 50, height: 50)
 
-            Image(systemName: "waveform")
+            Image(systemName: "mic.fill")
               .font(.system(size: 20, weight: .semibold))
               .foregroundStyle(theme.accentIconForeground)
           }
@@ -184,7 +184,7 @@ private struct QuickActionsWidgetView: View {
         Link(destination: URL(string: "voiceinbox://record/start")!) {
           QuickActionAccentTile(
             theme: theme,
-            symbol: "waveform",
+            symbol: "mic.fill",
             title: WidgetL10n.record,
             diameter: 46,
             iconSize: 18

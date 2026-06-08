@@ -106,7 +106,7 @@
 			<key>UIApplicationShortcutItemTitle</key>
 			<string>QUICK_ACTION_START_RECORDING_TITLE</string>
 			<key>UIApplicationShortcutItemIconSymbolName</key>
-			<string>waveform</string>
+			<string>mic.fill</string>
 		</dict>
 		<dict>
 			<key>UIApplicationShortcutItemType</key>

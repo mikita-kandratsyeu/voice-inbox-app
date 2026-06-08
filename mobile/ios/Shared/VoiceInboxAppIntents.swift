@@ -3,7 +3,7 @@ import UIKit
 
 @available(iOS 16.0, *)
 struct StartRecordingIntent: AppIntent, InstanceDisplayRepresentable {
-  static let shortcutSystemImageName = "waveform"
+  static let shortcutSystemImageName = "mic.fill"
 
   static var title: LocalizedStringResource = LocalizedStringResource(
     "Start Voice Recording",

@@ -249,7 +249,7 @@ struct RecordingWidgetLiveActivity: Widget {
                       .minimumScaleFactor(0.8)
                       .multilineTextAlignment(.trailing)
                       .frame(width: 36, height: 28, alignment: .trailing)
-                      .offset(x: 2)
+                      .offset(x: -4)
                       .transaction { $0.animation = nil }
               }
             } minimal: {

@@ -29,7 +29,7 @@ struct VoiceInboxAppShortcuts: AppShortcutsProvider {
         "Записать заметку в \(.applicationName)",
       ],
       shortTitle: LocalizedStringResource("Start Recording", table: "AppShortcuts"),
-      systemImageName: "waveform"
+      systemImageName: "mic.fill"
     )
 
     AppShortcut(
