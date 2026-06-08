@@ -240,6 +240,7 @@
   },
   "ai": {
     "limitWeeklyExceeded": "Недельные ИИ-кредиты закончились. Попробуйте на следующей неделе.",
+    "limitWeeklyExceededPro": "Недельные ИИ-кредиты закончились. Пополнить лимит можно в настройках или попробуйте на следующей неделе.",
     "privateModeUnavailable": "Private режим недоступен на этом устройстве.",
     "privateModeModelNotDownloaded": "Скачайте выбранную GGUF-модель в настройках, чтобы использовать Private режим.",
     "privateModeLimitedTooLong": "В режиме Private заметка слишком длинная. Переключитесь на Smart режим.",

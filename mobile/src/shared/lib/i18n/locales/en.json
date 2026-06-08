@@ -240,6 +240,7 @@
   },
   "ai": {
     "limitWeeklyExceeded": "You’ve used this week’s AI credits. Try again next week.",
+    "limitWeeklyExceededPro": "You’ve used this week’s AI credits. Reset your limit in Settings, or try again next week.",
     "privateModeUnavailable": "Private mode is not available on this device yet.",
     "privateModeModelNotDownloaded": "Download the selected GGUF model in Settings before using Private mode.",
     "privateModeLimitedTooLong": "This note is too long for Private mode. Switch to Smart mode.",

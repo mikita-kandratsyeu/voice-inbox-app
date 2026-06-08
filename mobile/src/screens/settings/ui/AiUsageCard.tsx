@@ -6,7 +6,6 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { withAlphaHex } from '@/shared/lib';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { isProResetEligible } from '@/shared/lib/aiUsageProReset';
 import { formatLocalizedLongDateWithTime } from '@/shared/lib/taskDeadlineTimeDisplay';
@@ -139,10 +138,14 @@ function ResetProLimitPressableBody({
   const resetSubtitle = t('settings.aiUsage.resetProLimitSubtitleGeneric');
 
   return (
-    <View className="min-h-[76px] flex-row items-center gap-3 px-4 py-4">
+    <View className="min-h-[72px] flex-row items-center gap-3 px-3.5 py-3.5">
       <View
-        className="h-9 w-9 items-center justify-center rounded-xl"
-        style={{ backgroundColor: withAlphaHex(color.accent.primary, 0.12) }}
+        className="h-10 w-10 shrink-0 items-center justify-center rounded-full"
+        style={{
+          backgroundColor: color.background.primary,
+          borderWidth: 1,
+          borderColor: color.border.default,
+        }}
       >
         <RefreshCw size={20} color={color.accent.primary} strokeWidth={1.85} />
       </View>
@@ -155,7 +158,7 @@ function ResetProLimitPressableBody({
           {t('settings.aiUsage.resetProLimitTitle')}
         </Text>
         <Text
-          className="mt-1.5 text-[13px] leading-[18px]"
+          className="mt-1 text-[13px] leading-[18px]"
           numberOfLines={2}
           style={{ color: color.text.secondary }}
         >
@@ -164,18 +167,16 @@ function ResetProLimitPressableBody({
       </View>
       {resetPriceLabel ? (
         <View
-          className="shrink-0 items-center justify-center rounded-2xl px-3 py-2"
+          className="shrink-0 items-center justify-center rounded-xl px-4 py-2.5"
           style={{
             minWidth: 76,
-            backgroundColor: withAlphaHex(color.accent.primary, 0.1),
-            borderWidth: 1,
-            borderColor: withAlphaHex(color.accent.primary, 0.24),
+            backgroundColor: color.accent.primary,
           }}
         >
           <Text
             className="text-[15px] font-bold leading-5"
             numberOfLines={1}
-            style={[styles.tabular, { color: color.accent.primary }]}
+            style={[styles.tabular, { color: color.icon.onAccent }]}
           >
             {resetPriceLabel}
           </Text>
@@ -456,12 +457,12 @@ export const AiUsageCard = ({
                 accessibilityLabel={t('settings.aiUsage.resetProLimitA11y')}
                 className="overflow-hidden rounded-2xl"
                 style={{
-                  borderWidth: 1.5,
-                  borderColor: resetLoading ? color.border.default : color.accent.primary,
+                  borderWidth: 1,
+                  borderColor: color.border.default,
                   backgroundColor: resetLoading
                     ? color.background.tertiary
-                    : color.background.primary,
-                  minHeight: 76,
+                    : color.background.secondary,
+                  minHeight: 72,
                 }}
               >
                 <ResetProLimitPressableBody
