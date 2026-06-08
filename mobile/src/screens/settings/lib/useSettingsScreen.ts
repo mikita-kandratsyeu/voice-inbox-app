@@ -45,6 +45,7 @@ import {
 import { useAppTheme, useColors } from '@/shared/config';
 import { getAiUsage } from '@/shared/lib/ai-api';
 import { fetchProAccountPortalUrl } from '@/shared/lib/ai-api/proLicenseApi';
+import { isProResetEligible } from '@/shared/lib/aiUsageProReset';
 import { subscribeAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import { diagWarn } from '@/shared/lib/appLogger';
@@ -201,7 +202,7 @@ export function useSettingsScreen() {
     proEntitlementActive &&
     getRevenueCatIntegrationEnabled() &&
     aiUsage != null &&
-    aiUsage.remaining === 0;
+    isProResetEligible(aiUsage);
 
   useEffect(() => {
     let cancelled = false;

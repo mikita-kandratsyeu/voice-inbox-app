@@ -744,7 +744,7 @@
       "resetProLimitError": "Something went wrong. Try again.",
       "resetProLimitUnavailable": "Reset purchase is unavailable right now.",
       "resetProLimitPurchaseNotVerified": "We couldn’t verify the purchase yet. Try again in a moment.",
-      "resetProLimitNotExhausted": "Your weekly balance still has credits left.",
+      "resetProLimitNotExhausted": "Reset unlocks when you've used at least 90% of your weekly balance.",
       "resetProLimitProRequired": "Pro is required to reset the weekly balance.",
       "resetProLimitTransactionUsed": "This purchase was already applied.",
       "resetProLimitSuccess": "Weekly balance restored (+{{count}} credits)",

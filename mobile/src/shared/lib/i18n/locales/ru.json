@@ -755,7 +755,7 @@
       "resetProLimitError": "Что-то пошло не так. Попробуйте снова.",
       "resetProLimitUnavailable": "Покупка сброса сейчас недоступна.",
       "resetProLimitPurchaseNotVerified": "Не удалось подтвердить покупку. Попробуйте через минуту.",
-      "resetProLimitNotExhausted": "В недельном балансе ещё остались кредиты.",
+      "resetProLimitNotExhausted": "Сброс доступен, когда использовано не менее 90% недельного баланса.",
       "resetProLimitProRequired": "Для сброса баланса нужен Pro.",
       "resetProLimitTransactionUsed": "Эта покупка уже была применена.",
       "resetProLimitSuccess": "Недельный баланс восстановлен (+{{count}} кредитов)",

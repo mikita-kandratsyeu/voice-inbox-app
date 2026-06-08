@@ -7,6 +7,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import type { AiUsage } from '@/shared/lib/ai-api';
+import { isProResetEligible } from '@/shared/lib/aiUsageProReset';
 import { formatLocalizedLongDateWithTime } from '@/shared/lib/taskDeadlineTimeDisplay';
 import { SettingsRow, SkeletonPulse } from '@/shared/ui';
 
@@ -205,7 +206,7 @@ export const AiUsageCard = ({
   const bonusAmount = usage?.bonusAmount ?? 5;
   const canShowBonusButton = Boolean(usage && usage.used > 0);
   const showBonusNoUsageHint = Boolean(usage && usage.used === 0 && onClaimBonus);
-  const canShowResetButton = Boolean(usage && usage.remaining === 0 && onResetProLimit);
+  const canShowResetButton = Boolean(usage && isProResetEligible(usage) && onResetProLimit);
   const showActionArea = Boolean(
     (onClaimBonus && (canShowBonusButton || showBonusNoUsageHint)) || canShowResetButton,
   );

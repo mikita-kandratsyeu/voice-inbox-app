@@ -63,6 +63,9 @@ export const AI_BONUS_AMOUNT = 5;
 export const AI_BONUS_COOLDOWN_KEY_PREFIX = 'ai_bonus_cooldown:';
 export const AI_BONUS_COOLDOWN_SECONDS = 900; // 15 min
 
+/** Pro may purchase a weekly limit reset once usage reaches this fraction of the limit. */
+export const PRO_RESET_USAGE_THRESHOLD = 0.9;
+
 /** RevenueCat / App Store consumable product id for Pro weekly AI limit reset. */
 export const REVENUECAT_AI_RESET_PRODUCT_ID =
   process.env.REVENUECAT_AI_RESET_PRODUCT_ID?.trim() ?? '';

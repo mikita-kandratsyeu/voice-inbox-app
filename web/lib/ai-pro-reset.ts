@@ -1,6 +1,7 @@
 import type { Prisma } from '@/generated/prisma/client';
 
 import { getUsage, resetCurrentWeekUsage, type AiUsage } from '@/lib/ai-rate-limit';
+import { isProResetEligible } from '@/lib/ai-pro-reset-eligibility';
 import { prisma } from '@/lib/prisma';
 import { verifyAiResetPurchaseWithRevenueCat } from '@/lib/revenuecat-reset-purchase';
 import { isProDevice } from '@/lib/pro-entitlement';
@@ -47,7 +48,7 @@ export async function applyProLimitResetPurchase(params: {
   }
 
   const usageBefore = await getUsage(deviceId);
-  if (usageBefore.remaining > 0) {
+  if (!isProResetEligible(usageBefore)) {
     return { ok: false, reason: 'limit_not_exhausted', status: 400 };
   }
 
