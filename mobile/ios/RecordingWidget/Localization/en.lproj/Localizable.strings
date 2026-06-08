@@ -1,6 +1,6 @@
 "widget.quick_actions.title" = "Quick Actions";
-"widget.quick_actions.record" = "Record";
-"widget.quick_actions.text" = "Text";
-"widget.quick_actions.tasks" = "Tasks";
+"widget.quick_actions.record" = "Start Recording";
+"widget.quick_actions.text" = "Text Note";
+"widget.quick_actions.tasks" = "All Tasks";
 "widget.quick_actions.display_name" = "Quick Actions";
 "widget.quick_actions.description" = "Start a recording, text note, or open tasks.";
