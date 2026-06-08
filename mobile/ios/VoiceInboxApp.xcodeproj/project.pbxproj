@@ -185,66 +185,6 @@
 			name = VoiceInboxApp;
 			sourceTree = "<group>";
 		};
-		A1B2C3D4E5F6A7B8C9D0E1F4 /* App */ = {
-			isa = PBXGroup;
-			children = (
-				761780EC2CA45674006654EE /* AppDelegate.swift */,
-			);
-			name = App;
-			sourceTree = "<group>";
-		};
-		A2B3C4D5E6F7A8B9C0D1E5F6 /* Shortcuts */ = {
-			isa = PBXGroup;
-			children = (
-				B0C1D2E3F4A5B6C7D8E9F0A0 /* AppShortcuts.swift */,
-				B1C2D3E4F5A6B7C8D9E0F1A0 /* AppShortcuts.strings */,
-			);
-			name = Shortcuts;
-			sourceTree = "<group>";
-		};
-		A3B4C5D6E7F8A9B0C1D2E6F7 /* Localization */ = {
-			isa = PBXGroup;
-			children = (
-				B2C3D4E5F6A7B8C9D0E1F2A0 /* Localizable.strings */,
-				C4D5E6F7A8B9C0D1E2F3A0 /* InfoPlist.strings */,
-			);
-			name = Localization;
-			sourceTree = "<group>";
-		};
-		A4B5C6D7E8F9A0B1C2D3E7F8 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				13B07FB51A68108700A75B9A /* Images.xcassets */,
-				A1B2C3D4E5F6A7B8C9D0E1F3 /* BootSplash.storyboard */,
-				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
-				13B07FB61A68108700A75B9A /* Info.plist */,
-				F1A2B3C4D5E6F7A8B9C0D1E3 /* GoogleService-Info.plist */,
-				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
-				E1F2A3B4C5D6E7F8A9B0C1D2 /* VoiceInboxApp-Bridging-Header.h */,
-				E2F3B4C5D6E7F8A9B0C1D2E3 /* VoiceInboxApp.entitlements */,
-			);
-			name = Resources;
-			sourceTree = "<group>";
-		};
-		A5B6C7D8E9F0A1B2C3D4E8F9 /* Audio */ = {
-			isa = PBXGroup;
-			children = (
-				A1C2E3F405060708090A0B01 /* VoiceInboxApp/AudioConverter.h */,
-				A1C2E3F405060708090A0B02 /* VoiceInboxApp/AudioConverter.mm */,
-			);
-			name = Audio;
-			sourceTree = "<group>";
-		};
-		A6B7C8D9E0F1A2B3C4D5E9FA /* NativeModules */ = {
-			isa = PBXGroup;
-			children = (
-				2A15FB0E2F6ACA8100177049 /* LiveActivity */,
-				2AADFDE82F6BC2880005C039 /* DownloadLiveActivity */,
-				2A15FB102F6ACC1400177049 /* StoreFront */,
-			);
-			name = NativeModules;
-			sourceTree = "<group>";
-		};
 		2A15FB0E2F6ACA8100177049 /* LiveActivity */ = {
 			isa = PBXGroup;
 			children = (
@@ -322,13 +262,64 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
+		A1B2C3D4E5F6A7B8C9D0E1F4 /* App */ = {
 			isa = PBXGroup;
 			children = (
-				1B90D0398024036DF91B5A44 /* Pods-VoiceInboxApp.debug.xcconfig */,
-				7139F58ACA70C5D9B80D95EB /* Pods-VoiceInboxApp.release.xcconfig */,
+				761780EC2CA45674006654EE /* AppDelegate.swift */,
 			);
-			path = Pods;
+			name = App;
+			sourceTree = "<group>";
+		};
+		A2B3C4D5E6F7A8B9C0D1E5F6 /* Shortcuts */ = {
+			isa = PBXGroup;
+			children = (
+				B0C1D2E3F4A5B6C7D8E9F0A0 /* AppShortcuts.swift */,
+				B1C2D3E4F5A6B7C8D9E0F1A0 /* AppShortcuts.strings */,
+			);
+			name = Shortcuts;
+			sourceTree = "<group>";
+		};
+		A3B4C5D6E7F8A9B0C1D2E6F7 /* Localization */ = {
+			isa = PBXGroup;
+			children = (
+				B2C3D4E5F6A7B8C9D0E1F2A0 /* Localizable.strings */,
+				C4D5E6F7A8B9C0D1E2F3A0 /* InfoPlist.strings */,
+			);
+			name = Localization;
+			sourceTree = "<group>";
+		};
+		A4B5C6D7E8F9A0B1C2D3E7F8 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				13B07FB51A68108700A75B9A /* Images.xcassets */,
+				A1B2C3D4E5F6A7B8C9D0E1F3 /* BootSplash.storyboard */,
+				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
+				13B07FB61A68108700A75B9A /* Info.plist */,
+				F1A2B3C4D5E6F7A8B9C0D1E3 /* GoogleService-Info.plist */,
+				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				E1F2A3B4C5D6E7F8A9B0C1D2 /* VoiceInboxApp-Bridging-Header.h */,
+				E2F3B4C5D6E7F8A9B0C1D2E3 /* VoiceInboxApp.entitlements */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		A5B6C7D8E9F0A1B2C3D4E8F9 /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+				A1C2E3F405060708090A0B01 /* VoiceInboxApp/AudioConverter.h */,
+				A1C2E3F405060708090A0B02 /* VoiceInboxApp/AudioConverter.mm */,
+			);
+			name = Audio;
+			sourceTree = "<group>";
+		};
+		A6B7C8D9E0F1A2B3C4D5E9FA /* NativeModules */ = {
+			isa = PBXGroup;
+			children = (
+				2A15FB0E2F6ACA8100177049 /* LiveActivity */,
+				2AADFDE82F6BC2880005C039 /* DownloadLiveActivity */,
+				2A15FB102F6ACC1400177049 /* StoreFront */,
+			);
+			name = NativeModules;
 			sourceTree = "<group>";
 		};
 		A7B8C9D0E1F2A3B4C5D6E0F1A2 /* Extensions */ = {
@@ -338,6 +329,15 @@
 				2AADFDD72F6B33C90005C039 /* DownloadWidgetExtension */,
 			);
 			name = Extensions;
+			sourceTree = "<group>";
+		};
+		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				1B90D0398024036DF91B5A44 /* Pods-VoiceInboxApp.debug.xcconfig */,
+				7139F58ACA70C5D9B80D95EB /* Pods-VoiceInboxApp.release.xcconfig */,
+			);
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		F8A9B0C1D2E3F4A5B6C7D8E9 /* Shared */ = {
@@ -802,6 +802,7 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = RecordingWidget/RecordingWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 300;
@@ -847,6 +848,7 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = RecordingWidget/RecordingWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;

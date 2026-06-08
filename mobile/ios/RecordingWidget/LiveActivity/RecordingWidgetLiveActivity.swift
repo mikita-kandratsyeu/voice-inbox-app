@@ -3,25 +3,44 @@ import WidgetKit
 import SwiftUI
 
 private func formatTime(_ seconds: Int) -> String {
-    let m = seconds / 60
-    let s = seconds % 60
-  
+    let clamped = max(0, seconds)
+    let h = clamped / 3600
+    let m = (clamped % 3600) / 60
+    let s = clamped % 60
+
+    if h > 0 {
+        return String(format: "%d:%02d:%02d", h, m, s)
+    }
+
     return String(format: "%02d:%02d", m, s)
 }
 
-private func formattedLiveActivityTime(from state: RecordingAttributes.ContentState) -> String {
-      let seconds: Int
+/// Live Activity timer driven by `startDate` so it keeps ticking without per-second RN updates.
+private struct RecordingLiveActivityTimerText: View {
+    let state: RecordingAttributes.ContentState
+    let font: Font
+    let foreground: Color
+    var minimumScaleFactor: CGFloat = 0.8
+    var offsetY: CGFloat = 0
 
-      if state.isRecording {
-          seconds = max(
-              state.elapsedSeconds,
-              Int(Date().timeIntervalSince(state.startDate))
-          )
-      } else {
-          seconds = state.elapsedSeconds
-      }
-
-      return formatTime(seconds)
+    var body: some View {
+        Group {
+            if state.isRecording {
+                Text(timerInterval: state.startDate...Date.distantFuture, countsDown: false)
+            } else {
+                Text(formatTime(state.elapsedSeconds))
+            }
+        }
+        .font(font)
+        .monospacedDigit()
+        .minimumScaleFactor(minimumScaleFactor)
+        .foregroundStyle(foreground)
+        .lineLimit(1)
+        .offset(y: offsetY)
+        .transaction { transaction in
+            transaction.animation = nil
+        }
+    }
 }
 
 private enum RecordingDeeplink {
@@ -105,17 +124,13 @@ struct RecordingLiveActivityView: View {
 
             Spacer()
 
-            Text(formattedLiveActivityTime(from: context.state))
-                .font(.system(size: 34, weight: .semibold, design: .rounded))
-                .dynamicTypeSize(.medium)
-                .monospacedDigit()
-                .minimumScaleFactor(0.8)
-                .foregroundStyle(timerForeground)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .transaction { transaction in
-                    transaction.animation = nil
-                }
+            RecordingLiveActivityTimerText(
+                state: context.state,
+                font: .system(size: 34, weight: .semibold, design: .rounded),
+                foreground: timerForeground
+            )
+            .dynamicTypeSize(.medium)
+            .frame(maxWidth: .infinity, alignment: .center)
 
             Spacer()
 
@@ -169,16 +184,13 @@ struct RecordingWidgetLiveActivity: Widget {
                     VStack {
                         Spacer(minLength: 0)
 
-                        Text(formattedLiveActivityTime(from: context.state))
-                            .font(.system(size: 32, weight: .medium, design: .rounded))
-                            .monospacedDigit()
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.85)
-                            .offset(y: -8)
-                            .transaction { transaction in
-                                transaction.animation = nil
-                            }
+                        RecordingLiveActivityTimerText(
+                            state: context.state,
+                            font: .system(size: 32, weight: .medium, design: .rounded),
+                            foreground: .primary,
+                            minimumScaleFactor: 0.85,
+                            offsetY: -8
+                        )
 
                         Spacer(minLength: 0)
                     }
@@ -212,13 +224,12 @@ struct RecordingWidgetLiveActivity: Widget {
                         .foregroundStyle(Color.accentColor)
                 }
             } compactTrailing: {
-                Text(formattedLiveActivityTime(from: context.state))
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(.primary)
-                    .transaction { transaction in
-                        transaction.animation = nil
-                    }
+                RecordingLiveActivityTimerText(
+                    state: context.state,
+                    font: .system(size: 12, weight: .semibold, design: .rounded),
+                    foreground: .primary,
+                    minimumScaleFactor: 0.75
+                )
             } minimal: {
                 ZStack {
                     Circle()

@@ -80,7 +80,9 @@ export const useRecording = ({
   const softLimitWarningFiredRef = useRef(false);
   const finalLimitWarningFiredRef = useRef(false);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
-  const lastLiveActivityUpdateRef = useRef(0);
+  /** Re-align Live Activity startDate if recorder drifts while backgrounded (rare). */
+  const lastLiveActivityDriftSyncRef = useRef(0);
+  const LIVE_ACTIVITY_DRIFT_SYNC_MS = 60_000;
   const routeChangeSuppressedUntilRef = useRef(0);
   const maxRecordingMsRef = useRef(maxRecordingMs);
   maxRecordingMsRef.current = maxRecordingMs;
@@ -155,8 +157,8 @@ export const useRecording = ({
       setElapsedMs(ms);
 
       const now = Date.now();
-      if (IS_IOS && now - lastLiveActivityUpdateRef.current >= 1000) {
-        lastLiveActivityUpdateRef.current = now;
+      if (IS_IOS && now - lastLiveActivityDriftSyncRef.current >= LIVE_ACTIVITY_DRIFT_SYNC_MS) {
+        lastLiveActivityDriftSyncRef.current = now;
         updateRecordingLiveActivity(secs).catch(() => {});
       }
 
@@ -239,6 +241,7 @@ export const useRecording = ({
       setState('recording');
       hapticLight();
 
+      lastLiveActivityDriftSyncRef.current = Date.now();
       startRecordingLiveActivity().catch(() => {});
     } catch (err) {
       diagWarn('[useRecording] startRecorder failed:', err);
@@ -268,6 +271,7 @@ export const useRecording = ({
       addRecordBackListener();
       setState('recording');
 
+      lastLiveActivityDriftSyncRef.current = Date.now();
       updateRecordingLiveActivity(elapsedRef.current, undefined, true).catch(() => {});
     } catch (err) {
       diagWarn('[useRecording] resumeRecorder failed:', err);
