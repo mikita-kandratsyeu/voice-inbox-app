@@ -125,9 +125,11 @@ function ResetProLimitPressableBody({
 }: ResetProLimitPressableBodyProps) {
   if (resetLoading) {
     return (
-      <View className="min-h-[52px] items-center justify-center py-3">
-        <ActivityIndicator size="small" color={color.accent.primary} />
-        <Text className="mt-2 text-center text-xs" style={{ color: color.text.secondary }}>
+      <View className="min-h-[76px] items-center justify-center gap-2 px-4 py-4">
+        <View className="h-5 items-center justify-center">
+          <ActivityIndicator size="small" color={color.accent.primary} />
+        </View>
+        <Text className="text-center text-xs leading-4" style={{ color: color.text.secondary }}>
           {t('settings.aiUsage.resetProLimitLoading')}
         </Text>
       </View>
