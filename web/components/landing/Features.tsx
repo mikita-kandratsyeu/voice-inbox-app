@@ -15,7 +15,10 @@ export function Features(): React.ReactElement {
   const t = useTranslations();
 
   return (
-    <section className={`py-15 sm:py-20 ${marketingGutterClass}`}>
+    <section
+      className={`scroll-mt-24 py-15 sm:scroll-mt-28 sm:py-20 ${marketingGutterClass}`}
+      id="features"
+    >
       <div className={marketingContentClass}>
         <AnimateOnScroll>
           <div className="mb-10 text-center sm:mb-12">

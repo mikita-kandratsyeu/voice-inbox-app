@@ -112,13 +112,20 @@
     }
   },
   "footer": {
+    "tagline": "AI voice notes on iPhone and iPad — on-device capture, Smart or Private when you choose.",
+    "features": "Features",
+    "howItWorks": "How it works",
+    "blog": "Blog",
+    "download": "Get the app",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
     "support": "Support",
     "backupViewer": "Backup viewer",
     "releases": "Blog",
     "verifiedMetrics": "Verified Metrics",
-    "copyright": "© {year} Voice Inbox AI. All rights reserved."
+    "navAria": "Footer navigation",
+    "copyright": "© {year} Voice Inbox AI. All rights reserved.",
+    "disclaimer": "Recordings and transcripts stay on your device. Cloud AI is optional in settings."
   },
   "header": {
     "appName": "Voice Inbox AI",
@@ -144,7 +151,7 @@
     "version": "Version"
   },
   "metadata": {
-    "title": "Voice Inbox AI | AI-Powered Voice Notes",
+    "title": "Voice Inbox AI – AI Voice Notes & Tasks",
     "description": "Voice inbox with on-device Whisper, summaries, tasks, meeting mode, and AI digest. Smart or Private — your choice. No account. iPhone and iPad.",
     "privacyTitle": "Privacy Policy — Voice Inbox AI",
     "privacyDescription": "How Voice Inbox AI handles your data: local storage, optional AI processing, and our commitment to privacy.",

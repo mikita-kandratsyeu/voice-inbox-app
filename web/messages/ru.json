@@ -112,13 +112,20 @@
     }
   },
   "footer": {
+    "tagline": "Голосовые заметки с ИИ на iPhone и iPad — запись на устройстве, Smart или Private по выбору.",
+    "features": "Возможности",
+    "howItWorks": "Как это работает",
+    "blog": "Блог",
+    "download": "Скачать приложение",
     "privacyPolicy": "Политика конфиденциальности",
     "termsOfService": "Условия использования",
     "support": "Поддержка",
     "backupViewer": "Просмотр резервной копии",
     "releases": "Блог",
     "verifiedMetrics": "Метрики",
-    "copyright": "© {year} Voice Inbox AI. Все права защищены."
+    "navAria": "Навигация в подвале",
+    "copyright": "© {year} Voice Inbox AI. Все права защищены.",
+    "disclaimer": "Записи и транскрипты хранятся на устройстве. Облачный ИИ — по вашему выбору в настройках."
   },
   "header": {
     "appName": "Voice Inbox AI",
@@ -144,7 +151,7 @@
     "version": "Версия"
   },
   "metadata": {
-    "title": "Voice Inbox AI | Голосовые заметки с ИИ",
+    "title": "Voice Inbox AI – Голосовые заметки с ИИ",
     "description": "Голосовой инбокс с Whisper на устройстве, сводками, задачами, режимом встречи и ИИ-дайджестом. Smart или Private — вы выбираете. Без аккаунта. iPhone и iPad.",
     "privacyTitle": "Политика конфиденциальности — Voice Inbox AI",
     "privacyDescription": "Как Voice Inbox AI обрабатывает ваши данные: локальное хранение, опциональная ИИ обработка и наша приверженность приватности.",
