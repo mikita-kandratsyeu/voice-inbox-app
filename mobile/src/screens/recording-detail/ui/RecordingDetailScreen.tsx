@@ -53,6 +53,10 @@ import {
 } from '@/shared/lib';
 import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
 import { NitroFS } from '@/shared/lib/fs';
+import {
+  taskDeadlineValidationErrorKey,
+  validateTaskDeadlineFields,
+} from '@/shared/lib/validateTaskDeadlineInput';
 import { BlockingProgressModal } from '@/shared/ui';
 import { AudioPlayer, type AudioPlayerRef, usePlaybackPosition } from '@/widgets/audio-player';
 
@@ -77,32 +81,6 @@ type TaskEditValue = {
   deadline?: string | null;
   deadlineTime?: string | null;
   priority?: TaskItem['priority'];
-};
-
-const isValidDeadlineInput = (value: string): boolean => {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  return dayjs(value).isValid() && dayjs(value).format('YYYY-MM-DD') === value;
-};
-
-const isPastDeadlineInput = (value: string): boolean => dayjs(value).isBefore(dayjs(), 'day');
-
-const isValidDeadlineTimeInput = (value: string): boolean =>
-  /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
-
-const isPastDeadlineDateTimeInput = (deadline: string, deadlineTime: string): boolean => {
-  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(deadline);
-  const timeMatch = /^(\d{2}):(\d{2})$/.exec(deadlineTime);
-  if (!dateMatch || !timeMatch) return false;
-
-  const value = new Date(
-    Number(dateMatch[1]),
-    Number(dateMatch[2]) - 1,
-    Number(dateMatch[3]),
-    Number(timeMatch[1]),
-    Number(timeMatch[2]),
-  );
-
-  return value.getTime() <= Date.now();
 };
 
 export const RecordingDetailScreen = () => {
@@ -297,24 +275,9 @@ export const RecordingDetailScreen = () => {
 
       const nextDeadline = nextValue.deadline?.trim() ?? '';
       const nextDeadlineTime = nextValue.deadlineTime?.trim() ?? '';
-      if (nextDeadline.length > 0 && !isValidDeadlineInput(nextDeadline)) {
-        Alert.alert(t('common.error'), t('tasks.deadlineInvalid'));
-        return false;
-      }
-      if (nextDeadlineTime.length > 0 && !isValidDeadlineTimeInput(nextDeadlineTime)) {
-        Alert.alert(t('common.error'), t('tasks.deadlineInvalid'));
-        return false;
-      }
-      if (nextDeadline.length > 0 && isPastDeadlineInput(nextDeadline)) {
-        Alert.alert(t('common.error'), t('tasks.deadlinePastInvalid'));
-        return false;
-      }
-      if (
-        nextDeadline.length > 0 &&
-        nextDeadlineTime.length > 0 &&
-        isPastDeadlineDateTimeInput(nextDeadline, nextDeadlineTime)
-      ) {
-        Alert.alert(t('common.error'), t('tasks.deadlineTimePastInvalid'));
+      const deadlineError = validateTaskDeadlineFields(nextDeadline, nextDeadlineTime);
+      if (deadlineError) {
+        Alert.alert(t('common.error'), t(taskDeadlineValidationErrorKey(deadlineError)));
         return false;
       }
 

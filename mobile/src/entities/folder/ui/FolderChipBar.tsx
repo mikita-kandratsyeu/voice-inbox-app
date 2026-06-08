@@ -27,6 +27,10 @@ type FolderChipBarProps = {
   /** Shown when there are at least 2 folders — opens reorder bottom sheet. */
   onReorderPress?: () => void;
   scrollRef?: React.RefObject<ScrollView | null>;
+  /** Nested inside another filter panel — no outer chrome. */
+  variant?: 'standalone' | 'embedded';
+  /** i18n key for the reset chip label. @default folders.all */
+  allChipLabelKey?: string;
 };
 
 type AllChipProps = {
@@ -46,6 +50,7 @@ const AllChip = ({ label, isActive, color, onPress }: AllChipProps) => (
     style={{
       flexDirection: 'row',
       alignItems: 'center',
+      alignSelf: 'center',
       paddingHorizontal: 12,
       paddingVertical: 6,
       borderRadius: 20,
@@ -103,6 +108,7 @@ const FolderChip = ({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
+        alignSelf: 'center',
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 20,
@@ -144,6 +150,8 @@ export const FolderChipBar = ({
   onEditPress,
   onReorderPress,
   scrollRef,
+  variant = 'standalone',
+  allChipLabelKey = 'folders.all',
 }: FolderChipBarProps) => {
   const { t } = useTranslation();
   const { isProActive } = useProEntitlement();
@@ -155,22 +163,33 @@ export const FolderChipBar = ({
     onSelect(null);
   }, [onSelect]);
 
+  const isEmbedded = variant === 'embedded';
+
   return (
     <View
-      style={{
-        backgroundColor: color.background.primary,
-        borderBottomWidth: 1,
-        borderBottomColor: color.border.default,
-      }}
+      style={
+        isEmbedded
+          ? undefined
+          : {
+              backgroundColor: color.background.primary,
+              borderBottomWidth: 1,
+              borderBottomColor: color.border.default,
+            }
+      }
     >
       <ScrollView
         ref={scrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10 }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: isEmbedded ? 0 : 8,
+          paddingBottom: isEmbedded ? 10 : 10,
+          alignItems: 'center',
+        }}
       >
         <AllChip
-          label={t('folders.all')}
+          label={t(allChipLabelKey)}
           isActive={activeFolderId === null}
           color={color}
           onPress={handleAllPress}

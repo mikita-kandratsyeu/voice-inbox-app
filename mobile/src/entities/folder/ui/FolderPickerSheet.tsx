@@ -17,6 +17,8 @@ type FolderPickerSheetProps = {
   subtitle?: string;
   folders: Folder[];
   currentFolderId?: string | null;
+  inboxLabel?: string;
+  inboxSubtitle?: string;
   onClose: () => void;
   onSelect: (folderId: string | null) => void;
 };
@@ -27,6 +29,8 @@ export const FolderPickerSheet = ({
   subtitle,
   folders,
   currentFolderId,
+  inboxLabel,
+  inboxSubtitle,
   onClose,
   onSelect,
 }: FolderPickerSheetProps) => {
@@ -103,8 +107,8 @@ export const FolderPickerSheet = ({
           }}
         >
           <FolderPickerRow
-            label={t('folders.pickerInboxOnly')}
-            subtitle={t('tabs.inbox')}
+            label={inboxLabel ?? t('folders.pickerInboxOnly')}
+            subtitle={inboxSubtitle ?? t('tabs.inbox')}
             color={color}
             inbox
             selected={showChecks && currentFolderId == null}
