@@ -15,9 +15,30 @@ const START_RECORDING_URL = 'voiceinbox://record/start';
 const TEXT_NOTE_URL = 'voiceinbox://note/text';
 const ALL_TASKS_URL = 'voiceinbox://tasks';
 
+/**
+ * Parses `voiceinbox://tasks` without `URL` host checks — Hermes can mis-parse
+ * custom schemes with a host-only authority (empty hostname, pathname `/`).
+ */
+const tryParseAllTasksDeepLink = (rawUrl: string): { recordId?: string } | null => {
+  const trimmed = rawUrl.trim();
+  const [pathPart, queryPart] = trimmed.split('?', 2);
+  const path = pathPart.replace(/\/+$/, '');
+
+  if (path !== ALL_TASKS_URL && path !== 'voiceinbox:/tasks') {
+    return null;
+  }
+
+  const recordId = queryPart
+    ? new URLSearchParams(queryPart.split('#')[0]).get('recordId')?.trim() || undefined
+    : undefined;
+
+  return { recordId };
+};
+
 const pendingRecordModalOpenRef = { current: false };
 const pendingTextNoteModalOpenRef = { current: false };
 const pendingAllTasksOpenRef = { current: false };
+const pendingAllTasksRecordIdRef = { current: null as string | null };
 const pendingInAppEventIdRef = { current: null as string | null };
 
 export const flushPendingRecordModalNavigation = () => {
@@ -37,7 +58,9 @@ export const flushPendingRecordModalNavigation = () => {
 
   if (pendingAllTasksOpenRef.current) {
     pendingAllTasksOpenRef.current = false;
-    navigationRef.navigate('AllTasks');
+    const recordId = pendingAllTasksRecordIdRef.current ?? undefined;
+    pendingAllTasksRecordIdRef.current = null;
+    navigationRef.navigate('AllTasks', recordId ? { recordId } : undefined);
   }
 
   if (pendingInAppEventIdRef.current) {
@@ -84,17 +107,21 @@ export const useInitDeepLinking = () => {
   }, []);
 
   const handleAllTasksDeepLink = useCallback((rawUrl: string) => {
-    const normalized = rawUrl.replace(/\/+$/, '');
-    if (normalized !== ALL_TASKS_URL) return false;
+    const parsed = tryParseAllTasksDeepLink(rawUrl);
+    if (!parsed) {
+      return false;
+    }
+    const { recordId } = parsed;
 
     if (!getHasSeenOnboarding()) {
       return true;
     }
 
     if (navigationRef.isReady()) {
-      navigationRef.navigate('AllTasks');
+      navigationRef.navigate('AllTasks', recordId ? { recordId } : undefined);
     } else {
       pendingAllTasksOpenRef.current = true;
+      pendingAllTasksRecordIdRef.current = recordId ?? null;
     }
     return true;
   }, []);

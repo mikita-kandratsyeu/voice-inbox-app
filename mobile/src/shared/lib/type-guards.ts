@@ -26,3 +26,7 @@ export function isStringArrayItem(x: unknown): x is string {
 export function isBoolean(value: unknown): value is boolean {
   return typeof value === 'boolean';
 }
+
+export function isFunction(value: unknown): value is (...args: never[]) => unknown {
+  return typeof value === 'function';
+}

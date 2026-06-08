@@ -5,5 +5,6 @@ import SwiftUI
 struct RecordingWidgetBundle: WidgetBundle {
     var body: some Widget {
         RecordingWidgetLiveActivity()
+        QuickActionsWidget()
     }
 }

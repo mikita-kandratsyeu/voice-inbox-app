@@ -96,7 +96,7 @@ struct RecordingLiveActivityView: View {
                     .fill(leftIconBackground)
                     .frame(width: 64, height: 64)
 
-              Image(systemName: context.state.isRecording ? "mic.fill" : "pause.fill")
+              Image(systemName: context.state.isRecording ? "waveform" : "pause.fill")
                   .font(.system(size: 20, weight: .semibold))
                   .foregroundStyle(leftIconForeground)
 
@@ -158,7 +158,7 @@ struct RecordingWidgetLiveActivity: Widget {
                             .fill(Color.accentColor.opacity(0.16))
                             .frame(width: 50, height: 50)
 
-                        Image(systemName: context.state.isRecording ? "mic.fill" : "pause.fill")
+                        Image(systemName: context.state.isRecording ? "waveform" : "pause.fill")
                             .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(Color.accentColor)
                     }
@@ -207,7 +207,7 @@ struct RecordingWidgetLiveActivity: Widget {
                         .fill(Color.accentColor.opacity(0.16))
                         .frame(width: 22, height: 22)
 
-                    Image(systemName: context.state.isRecording ? "mic.fill" : "pause.fill")
+                    Image(systemName: context.state.isRecording ? "waveform" : "pause.fill")
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(Color.accentColor)
                 }
@@ -225,7 +225,7 @@ struct RecordingWidgetLiveActivity: Widget {
                         .fill(Color.accentColor.opacity(0.16))
                         .frame(width: 20, height: 20)
 
-                    Image(systemName: context.state.isRecording ? "mic.fill" : "pause.fill")
+                    Image(systemName: context.state.isRecording ? "waveform" : "pause.fill")
                         .font(.system(size: 9, weight: .semibold))
                         .foregroundStyle(Color.accentColor)
                 }
