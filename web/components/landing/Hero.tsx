@@ -1,7 +1,8 @@
-import { ChevronRight, Lock, Sparkles } from 'lucide-react';
+import { ChevronRight, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { marketingContentClass, marketingGutterClass } from '@/components/landing/marketing-layout';
+import { CopyProtected } from '@/components/ui/CopyProtected';
 
 export function Hero(): React.ReactElement {
   const t = useTranslations('hero');
@@ -44,10 +45,16 @@ export function Hero(): React.ReactElement {
           </a>
         </div>
 
-        <p className="animate-fade-in-delay-3 mt-5 inline-flex max-w-md items-center justify-center gap-1.5 text-xs leading-relaxed text-black/45 sm:mt-6 dark:text-white/45">
-          <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          {t('footnote')}
-        </p>
+        <CopyProtected className="animate-fade-in-delay-3 mx-auto mt-5 max-w-xl select-none text-center text-xs leading-relaxed sm:mt-6">
+          <span className="whitespace-nowrap font-semibold text-emerald-700 dark:text-emerald-300">
+            {t('footnoteBadge')}
+            <span className="font-normal text-black/40 dark:text-white/40" aria-hidden>
+              {' '}
+              —
+            </span>
+          </span>{' '}
+          <span className="text-black/55 dark:text-white/55">{t('footnote')}</span>
+        </CopyProtected>
       </div>
     </section>
   );
