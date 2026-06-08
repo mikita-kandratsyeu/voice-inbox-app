@@ -1,3 +1,7 @@
+jest.mock('@/shared/lib/appLogger', () => ({
+  diagWarn: jest.fn(),
+}));
+
 jest.mock('react-native', () => ({
   NativeModules: {
     AudioConverter: {

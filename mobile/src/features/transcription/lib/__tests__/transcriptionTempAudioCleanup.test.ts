@@ -1,4 +1,5 @@
 jest.mock('@/shared/lib/fs', () => ({
+  getCachesDirectoryPath: () => '/cache',
   NitroFS: {
     exists: jest.fn(),
     readdir: jest.fn(),
