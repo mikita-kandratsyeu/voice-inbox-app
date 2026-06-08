@@ -219,6 +219,7 @@
     "allFoldersSubtitle": "Во Входящих и папках",
     "folderFilterTitle": "Выберите папку",
     "folderFilterSubtitle": "Показать задачи из одной папки заметок",
+    "resetFilters": "Сбросить",
     "quickFilters": {
       "all": "Открытые",
       "overdue": "Просрочено",

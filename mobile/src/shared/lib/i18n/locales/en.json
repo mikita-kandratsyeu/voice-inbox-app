@@ -219,6 +219,7 @@
     "allFoldersSubtitle": "Across Inbox and folders",
     "folderFilterTitle": "Choose folder",
     "folderFilterSubtitle": "Show tasks from one note folder",
+    "resetFilters": "Reset",
     "quickFilters": {
       "all": "Open",
       "overdue": "Overdue",

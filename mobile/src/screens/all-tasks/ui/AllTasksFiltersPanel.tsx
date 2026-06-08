@@ -1,11 +1,17 @@
-import { Folder, SlidersHorizontal } from 'lucide-react-native';
+import { Folder as FolderIcon, SlidersHorizontal, X } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView as HorizontalScroll, Text, TouchableOpacity, View } from 'react-native';
 
-import { FolderPickerSheet, type Folder as FolderModel } from '@/entities/folder';
+import { type Folder as FolderModel, FolderPickerSheet } from '@/entities/folder';
+import { FolderLucideIcon } from '@/entities/folder/lib/folderLucideIcons';
+import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
-import { hapticSelection } from '@/shared/lib';
+import {
+  folderChipActiveForeground,
+  hapticSelection,
+  resolveDisplayFolderColor,
+} from '@/shared/lib';
 
 import type { AllTasksQuickFilter } from '../types';
 import { AllTasksMoreFiltersSheet } from './AllTasksMoreFiltersSheet';
@@ -29,9 +35,27 @@ type FilterChipProps = {
   color: Colors;
   onPress: () => void;
   icon?: React.ReactNode;
+  activeBackgroundColor?: string;
+  activeForegroundColor?: string;
+  inactiveBackgroundColor?: string;
+  inactiveForegroundColor?: string;
 };
 
-function FilterChip({ label, isActive, color, onPress, icon }: FilterChipProps) {
+function FilterChip({
+  label,
+  isActive,
+  color,
+  onPress,
+  icon,
+  activeBackgroundColor,
+  activeForegroundColor,
+  inactiveBackgroundColor,
+  inactiveForegroundColor,
+}: FilterChipProps) {
+  const foregroundColor = isActive
+    ? (activeForegroundColor ?? color.icon.onAccent)
+    : (inactiveForegroundColor ?? color.text.primary);
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -46,7 +70,9 @@ function FilterChip({ label, isActive, color, onPress, icon }: FilterChipProps) 
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 20,
-        backgroundColor: isActive ? color.accent.primary : color.background.tertiary,
+        backgroundColor: isActive
+          ? (activeBackgroundColor ?? color.accent.primary)
+          : (inactiveBackgroundColor ?? color.background.tertiary),
         marginRight: 8,
         gap: 4,
       }}
@@ -56,7 +82,7 @@ function FilterChip({ label, isActive, color, onPress, icon }: FilterChipProps) 
         style={{
           fontSize: 13,
           fontWeight: '500',
-          color: isActive ? color.icon.onAccent : color.text.primary,
+          color: foregroundColor,
         }}
         numberOfLines={1}
       >
@@ -76,6 +102,7 @@ export function AllTasksFiltersPanel({
   onFolderSelect,
 }: AllTasksFiltersPanelProps) {
   const { t } = useTranslation();
+  const { isProActive } = useProEntitlement();
   const [moreFiltersVisible, setMoreFiltersVisible] = useState(false);
   const [folderPickerVisible, setFolderPickerVisible] = useState(false);
 
@@ -87,10 +114,17 @@ export function AllTasksFiltersPanel({
   const moreChipLabel = isSecondaryFilterActive
     ? t(`allTasks.quickFilters.${activeFilter}`)
     : t('allTasks.moreFilters');
-  const activeFolderName = useMemo(
-    () => folders.find((folder) => folder.id === activeFolderId)?.name,
+  const activeFolder = useMemo(
+    () => folders.find((folder) => folder.id === activeFolderId),
     [activeFolderId, folders],
   );
+  const activeFolderColor = activeFolder
+    ? resolveDisplayFolderColor(activeFolder.color, isProActive)
+    : undefined;
+  const activeFolderForeground = activeFolderColor
+    ? folderChipActiveForeground(color, activeFolderColor)
+    : color.icon.onAccent;
+  const hasActiveFilters = activeFilter !== 'all' || activeFolderId !== null;
 
   return (
     <>
@@ -113,15 +147,22 @@ export function AllTasksFiltersPanel({
         >
           {foldersEnabled ? (
             <FilterChip
-              label={activeFolderName ?? t('allTasks.allFolders')}
+              label={activeFolder?.name ?? t('allTasks.allFolders')}
               isActive={activeFolderId !== null}
               color={color}
+              activeBackgroundColor={activeFolderColor}
+              activeForegroundColor={activeFolderForeground}
               icon={
-                <Folder
-                  size={14}
-                  color={activeFolderId !== null ? color.icon.onAccent : color.text.primary}
-                  strokeWidth={2.2}
-                />
+                activeFolder ? (
+                  <FolderLucideIcon
+                    iconId={activeFolder.icon}
+                    size={14}
+                    color={activeFolderForeground}
+                    strokeWidth={2.2}
+                  />
+                ) : (
+                  <FolderIcon size={14} color={color.text.primary} strokeWidth={2.2} />
+                )
               }
               onPress={() => {
                 hapticSelection();
@@ -159,6 +200,20 @@ export function AllTasksFiltersPanel({
               setMoreFiltersVisible(true);
             }}
           />
+          {hasActiveFilters ? (
+            <FilterChip
+              label={t('allTasks.resetFilters')}
+              isActive={false}
+              color={color}
+              icon={<X size={14} color={color.text.secondary} strokeWidth={2.4} />}
+              inactiveForegroundColor={color.text.secondary}
+              onPress={() => {
+                hapticSelection();
+                onFilterSelect('all');
+                onFolderSelect(null);
+              }}
+            />
+          ) : null}
         </HorizontalScroll>
       </View>
 
