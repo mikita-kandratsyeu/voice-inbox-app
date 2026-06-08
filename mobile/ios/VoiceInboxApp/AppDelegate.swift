@@ -86,7 +86,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
       launchOptions: mergedLaunchOptions.isEmpty ? nil : mergedLaunchOptions
     )
 
+    if #available(iOS 16.2, *) {
+      RecordingLiveActivityManager.shared.endAllActivities()
+    }
+
     return true
+  }
+
+  func applicationWillTerminate(_ application: UIApplication) {
+    if #available(iOS 16.2, *) {
+      RecordingLiveActivityManager.shared.endAllActivities()
+    }
   }
 
   func application(
