@@ -784,6 +784,7 @@
         "loadMoreFailed": "Earlier activity is unavailable",
         "operations": {
           "transcript_summarize": "Smart summary",
+          "transcript_summarize_meeting": "Meeting mode summary",
           "transcript_ask": "Ask about a note",
           "translate": "Translate",
           "digest": "Digest",

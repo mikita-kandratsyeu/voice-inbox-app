@@ -20,6 +20,7 @@ type SeedKind = 'debit' | 'credit' | 'refund';
 
 type SeedOperation =
   | 'transcript_summarize'
+  | 'transcript_summarize_meeting'
   | 'transcript_ask'
   | 'translate'
   | 'digest'
@@ -100,6 +101,12 @@ function buildMetadata(params: {
         ...base,
         chargedUsageUnits: 1,
       };
+    case 'transcript_summarize_meeting':
+      return {
+        ...base,
+        recordId: `rec-${String(params.seed).padStart(4, '0')}`,
+        chargedUsageUnits: 2,
+      };
     case 'bonus':
       return {
         requestedAmount: 3,
@@ -109,7 +116,7 @@ function buildMetadata(params: {
       return {
         ...base,
         recordId: `rec-${String(params.seed).padStart(4, '0')}`,
-        chargedUsageUnits: params.seed % 11 === 0 ? 2 : 1,
+        chargedUsageUnits: 1,
       };
   }
 }
@@ -142,7 +149,7 @@ function buildEntry(deviceId: string, index: number) {
     amount = 1;
     description = 'Operation failed — credit returned';
   } else {
-    operation = pick(
+    const baseOperation = pick(
       [
         'transcript_summarize',
         'transcript_summarize',
@@ -154,8 +161,12 @@ function buildEntry(deviceId: string, index: number) {
       ] as const,
       index,
     );
+    operation =
+      baseOperation === 'transcript_summarize' && index % 11 === 0
+        ? 'transcript_summarize_meeting'
+        : baseOperation;
     kind = 'debit';
-    amount = operation === 'transcript_summarize' && index % 11 === 0 ? -2 : -1;
+    amount = operation === 'transcript_summarize_meeting' ? -2 : -1;
   }
 
   const model = pick(MODELS, index);

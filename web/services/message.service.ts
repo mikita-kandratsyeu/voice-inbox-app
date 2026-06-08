@@ -1,6 +1,7 @@
 import { sendLimitExceededPush } from '@/lib/push-tokens';
 import { MESSAGE_TTL_SECONDS } from '@/config/constants';
 import { checkAndIncrement, type AiLimitContext } from '@/lib/ai-rate-limit';
+import { resolveTranscriptSummarizeLedgerOperation } from '@/lib/ai-usage-ledger';
 import { clearAiJobCancelled } from '@/lib/ai-job-cancel';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
@@ -38,6 +39,7 @@ export const createMessage = async (
   const ttl = messageTtlSeconds;
   const chargedUsageUnits =
     pseudoDiarizationEligible && meetingDialogueSystemPrompt?.trim() ? 2 : 1;
+  const summarizeLedgerOperation = resolveTranscriptSummarizeLedgerOperation(chargedUsageUnits);
   const created = await saveMessageIfNotExists(
     id,
     { id, status: 'processing', ...aiModelResponseFields(model) },
@@ -48,7 +50,7 @@ export const createMessage = async (
   }
 
   const limitResult = await checkAndIncrement(deviceId, aiLimitContext, chargedUsageUnits, {
-    operation: 'transcript_summarize',
+    operation: summarizeLedgerOperation,
     jobId: id,
     metadata: { ...aiModelResponseFields(model), chargedUsageUnits },
   });

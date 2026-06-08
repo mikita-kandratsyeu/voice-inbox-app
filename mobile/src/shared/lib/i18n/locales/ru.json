@@ -795,6 +795,7 @@
         "loadMoreFailed": "Не удалось показать более ранние операции",
         "operations": {
           "transcript_summarize": "Умная сводка",
+          "transcript_summarize_meeting": "Сводка в режиме встреч",
           "transcript_ask": "Вопрос по заметке",
           "translate": "Перевод",
           "digest": "Дайджест",

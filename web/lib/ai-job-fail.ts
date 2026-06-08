@@ -3,7 +3,10 @@ import { decrementAutoOrganizeWeekly } from '@/lib/ai-job-runners/run-auto-organ
 import { deleteJobPayload, getJobPayload } from '@/lib/ai-job-payload';
 import { deleteMeetingJobPayload } from '@/lib/meeting-job-payload';
 import { aiModelResponseFields } from '@/lib/ai-model-display';
-import type { AiUsageOperation } from '@/lib/ai-usage-ledger';
+import {
+  resolveTranscriptSummarizeLedgerOperation,
+  type AiUsageOperation,
+} from '@/lib/ai-usage-ledger';
 import { getMessage, saveMessage } from '@/lib/redis';
 import type { AiJobEnvelope } from '@/types/ai-job';
 import type { Message } from '@/types';
@@ -51,8 +54,12 @@ export async function markAiJobFailed(envelope: AiJobEnvelope, error: string): P
     const payload = await getJobPayload(jobId);
     const refundUnits =
       payload?.operation === 'transcript_summarize' ? (payload.chargedUsageUnits ?? 1) : 1;
+    const ledgerOperation =
+      payload?.operation === 'transcript_summarize'
+        ? resolveTranscriptSummarizeLedgerOperation(payload.chargedUsageUnits)
+        : toLedgerOperation(operation);
     await decrementBy(deviceId, refundUnits, {
-      operation: toLedgerOperation(operation),
+      operation: ledgerOperation,
       jobId,
       metadata: { chargedUsageUnits: refundUnits },
     });

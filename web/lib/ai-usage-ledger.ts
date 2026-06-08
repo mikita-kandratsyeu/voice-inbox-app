@@ -6,6 +6,7 @@ export type AiUsageLedgerKind = 'debit' | 'credit' | 'refund';
 
 export type AiUsageOperation =
   | 'transcript_summarize'
+  | 'transcript_summarize_meeting'
   | 'transcript_ask'
   | 'translate'
   | 'digest'
@@ -55,6 +56,17 @@ const readTrimmedString = (metadata: unknown, key: string): string | undefined =
   const value = metadata[key];
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 };
+
+/** Ledger operation for summarize jobs that include meeting-mode speaker breakdown (2 credits). */
+export function resolveTranscriptSummarizeLedgerOperation(
+  chargedUsageUnits?: number | null,
+): Extract<AiUsageOperation, 'transcript_summarize' | 'transcript_summarize_meeting'> {
+  return typeof chargedUsageUnits === 'number' &&
+    Number.isFinite(chargedUsageUnits) &&
+    chargedUsageUnits >= 2
+    ? 'transcript_summarize_meeting'
+    : 'transcript_summarize';
+}
 
 export async function recordAiUsageLedgerEntry(params: {
   deviceId: string;

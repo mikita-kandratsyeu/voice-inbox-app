@@ -247,6 +247,7 @@ export type AiUsageHistoryKind = 'debit' | 'credit' | 'refund';
 
 export type AiUsageHistoryOperation =
   | 'transcript_summarize'
+  | 'transcript_summarize_meeting'
   | 'transcript_ask'
   | 'translate'
   | 'digest'
