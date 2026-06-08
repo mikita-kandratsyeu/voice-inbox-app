@@ -16,10 +16,4 @@ export type TaskDeadlineBucket =
   | 'noDate'
   | 'done';
 
-export type AllTasksQuickFilter =
-  | 'all'
-  | 'overdue'
-  | 'today'
-  | 'highPriority'
-  | 'noDate'
-  | 'done';
+export type AllTasksQuickFilter = 'all' | 'overdue' | 'today' | 'highPriority' | 'noDate' | 'done';

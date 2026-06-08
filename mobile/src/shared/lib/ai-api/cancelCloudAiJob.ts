@@ -1,6 +1,6 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
-import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 
 /**
  * Tells the server to stop a cloud AI job (no LLM, no push). Best-effort; safe if job already finished.

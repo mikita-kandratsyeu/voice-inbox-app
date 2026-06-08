@@ -176,9 +176,10 @@ export const TasksTab = ({
   const { addTaskToReminder } = useAddToReminder();
 
   const [reextractSheetOpen, setReextractSheetOpen] = useState(false);
-  const [editTaskTarget, setEditTaskTarget] = useState<
-    Pick<TaskItem, 'id' | 'text' | 'deadline' | 'deadlineTime' | 'priority'> | null
-  >(null);
+  const [editTaskTarget, setEditTaskTarget] = useState<Pick<
+    TaskItem,
+    'id' | 'text' | 'deadline' | 'deadlineTime' | 'priority'
+  > | null>(null);
 
   const reextractSheet = useMemo(
     () => (

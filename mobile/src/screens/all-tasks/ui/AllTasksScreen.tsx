@@ -7,13 +7,7 @@ import dayjs from 'dayjs';
 import { Plus, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Alert,
-  Pressable,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Alert, Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -42,10 +36,7 @@ import {
 } from '@/shared/lib/validateTaskDeadlineInput';
 import { EmptyState, HeaderIconButton, ScreenHeader, SectionHeader } from '@/shared/ui';
 
-import {
-  applyAllTasksQuickFilter,
-  sortTaskRows,
-} from '../lib/applyAllTasksQuickFilter';
+import { applyAllTasksQuickFilter, sortTaskRows } from '../lib/applyAllTasksQuickFilter';
 import {
   getTaskDeadlineBucket,
   TASK_DEADLINE_BUCKET_ORDER,
@@ -201,14 +192,7 @@ export const AllTasksScreen = () => {
     })).filter((section) => section.data.length > 0);
 
     return sections;
-  }, [
-    records,
-    quickFilter,
-    t,
-    recentlyCompleted,
-    effectiveActiveFolderId,
-    recordFilterId,
-  ]);
+  }, [records, quickFilter, t, recentlyCompleted, effectiveActiveFolderId, recordFilterId]);
 
   const flattenedList = useMemo((): AllTasksFlattenedItem[] => {
     const out: AllTasksFlattenedItem[] = [];
@@ -725,9 +709,7 @@ export const AllTasksScreen = () => {
           <View className="flex-1 justify-center px-6">
             <EmptyState
               title={
-                quickFilter !== 'all'
-                  ? t('allTasks.emptyQuickFilter')
-                  : t('allTasks.emptyFiltered')
+                quickFilter !== 'all' ? t('allTasks.emptyQuickFilter') : t('allTasks.emptyFiltered')
               }
               description={t('allTasks.emptyDescription')}
             />

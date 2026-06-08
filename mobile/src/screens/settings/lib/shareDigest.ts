@@ -1,7 +1,5 @@
 import { Share } from 'react-native';
 
-import { diagWarn } from '@/shared/lib/appLogger';
-
 import {
   sendRecordEmail,
   sendShareEmailPdfAttachment,
@@ -19,6 +17,7 @@ import { shareMarkdownAsPdf } from '@/features/share-record/lib/shareMarkdownAsP
 import { writeShareMarkdownPdf } from '@/features/share-record/lib/writeShareMarkdownPdf';
 import type { ShareRecordExportFormat } from '@/features/share-record/model/shareRecordExportFormat';
 import { i18n } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 
 export type DigestSharePayload = {

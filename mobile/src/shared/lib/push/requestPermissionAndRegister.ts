@@ -8,8 +8,8 @@ import {
 
 import { useSettingsStore } from '@/entities/settings';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
-import { diagWarn } from '@/shared/lib/appLogger';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { i18n } from '@/shared/lib/i18n';
 import { IS_IOS, PLATFORM_OS } from '@/shared/lib/platform';
 import { getPushRegistrationMetadata } from '@/shared/lib/push-register-metadata';

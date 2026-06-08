@@ -1,10 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
-import { devWarn } from '@/shared/lib/appLogger';
 import { Alert } from 'react-native';
 
 import { isCrashlyticsDebugEnabled } from '@/shared/config/buildEnv';
+import { devWarn } from '@/shared/lib/appLogger';
 
 import { performHardReset } from '../../settings/lib/hardReset';
 

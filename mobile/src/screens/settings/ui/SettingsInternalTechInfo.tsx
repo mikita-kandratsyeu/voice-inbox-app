@@ -23,8 +23,8 @@ import {
   resolveWebApiSecretForRequest,
   subscribeTestflightWebApiUrlOverride,
 } from '@/shared/config/testflightWebApiOverride';
-import { diagWarn } from '@/shared/lib/appLogger';
 import { clearApiToken } from '@/shared/lib/api-auth';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 

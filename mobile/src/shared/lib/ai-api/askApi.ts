@@ -1,7 +1,7 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
-import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { requestAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
+import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 
 import { isString } from '../type-guards';

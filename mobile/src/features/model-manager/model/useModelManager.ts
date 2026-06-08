@@ -16,8 +16,8 @@ import {
   cancelLocalLlmModelDownload,
   localLlmModelDownloader,
 } from '@/features/model-manager/lib/local-llm-download';
-import { diagWarn } from '@/shared/lib/appLogger';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 import { getWhisperEstimatedDownloadBytes, getWhisperModelPath } from '@/shared/lib/whisper';

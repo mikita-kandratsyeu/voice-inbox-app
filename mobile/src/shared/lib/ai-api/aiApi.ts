@@ -1,6 +1,6 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
-import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { requestAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
+import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 

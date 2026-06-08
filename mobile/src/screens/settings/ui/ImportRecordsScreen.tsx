@@ -27,13 +27,13 @@ import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { tryShowYandexInterstitial } from '@/features/yandex-interstitial';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { diagWarn } from '@/shared/lib/appLogger';
 import {
   formatRelativeTime,
   resolveAudioPath,
   useIsTablet,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { BlockingProgressModal, HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 type ImportRecordsRouteProp = RouteProp<SettingsStackParamList, 'ImportRecords'>;

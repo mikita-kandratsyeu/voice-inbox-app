@@ -4,8 +4,8 @@ import {
   PRO_WEEKLY_LIMIT,
 } from '@/shared/config/productLimits';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
-import { diagWarn } from '@/shared/lib/appLogger';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
 export type ProLicensePortalLocale = 'en' | 'ru';

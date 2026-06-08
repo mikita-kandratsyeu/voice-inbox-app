@@ -8,7 +8,11 @@ import { Pressable, Text, View } from 'react-native';
 import { useProEntitlement } from '@/features/pro-license';
 import { useAppTheme, useColors } from '@/shared/config';
 import { IS_IOS, resolveFolderListTintHex } from '@/shared/lib';
-import { AppBottomSheetModal, getInputFieldInputStyle, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  AppBottomSheetModal,
+  getInputFieldInputStyle,
+  useBottomSheetContentPadding,
+} from '@/shared/ui';
 
 import type { Folder } from '../model/types';
 import { FolderPickerRow } from './FolderPickerRow';
@@ -77,8 +81,7 @@ export const FolderPickerSheet = ({
   );
 
   const filteredFolders = useMemo(
-    () =>
-      sortedFolders.filter((folder) => matchesSearchQuery(folder.name, normalizedQuery)),
+    () => sortedFolders.filter((folder) => matchesSearchQuery(folder.name, normalizedQuery)),
     [normalizedQuery, sortedFolders],
   );
 

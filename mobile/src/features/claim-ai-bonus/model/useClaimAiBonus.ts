@@ -5,9 +5,9 @@ import { RewardedAdLoader } from 'yandex-mobile-ads';
 import { useProEntitlement } from '@/features/pro-license';
 import { useBootSplashVisible } from '@/shared/config';
 import { getYandexRewardedAdUnitId } from '@/shared/config/runtimeConfig';
-import { devWarn } from '@/shared/lib/appLogger';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { claimAiBonus } from '@/shared/lib/ai-api';
+import { devWarn } from '@/shared/lib/appLogger';
 import { storage } from '@/shared/lib/async-storage';
 import {
   getInternalDebugDisableAdsSnapshot,

@@ -57,8 +57,8 @@ import {
   useIsTablet,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
-import { diagWarn } from '@/shared/lib/appLogger';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 import { IS_ANDROID } from '@/shared/lib/platform';

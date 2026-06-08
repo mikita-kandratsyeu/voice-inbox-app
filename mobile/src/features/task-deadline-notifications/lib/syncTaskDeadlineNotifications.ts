@@ -1,8 +1,8 @@
 import notifee, { TriggerType } from '@notifee/react-native';
 
 import type { TaskItem } from '@/entities/record';
-import { diagWarn } from '@/shared/lib/appLogger';
 import { useSettingsStore } from '@/entities/settings';
+import { diagWarn } from '@/shared/lib/appLogger';
 
 import { buildTaskDeadlineNotificationCopy } from './buildTaskDeadlineNotificationCopy';
 import { collectSchedulableTaskDeadlines } from './collectSchedulableTaskDeadlines';

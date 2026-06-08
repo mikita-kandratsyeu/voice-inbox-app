@@ -2,9 +2,9 @@ import dayjs from 'dayjs';
 
 import { recordRepository } from '@/entities/record/model/repository';
 import { useSettingsStore } from '@/entities/settings';
-import { diagWarn } from '@/shared/lib/appLogger';
 import { isAutomationUiLockedForPublicStore } from '@/features/app-storefront';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
+import { diagWarn } from '@/shared/lib/appLogger';
 
 const COOLDOWN_MS = 90_000;
 

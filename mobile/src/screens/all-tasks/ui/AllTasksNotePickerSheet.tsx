@@ -9,7 +9,11 @@ import type { Folder } from '@/entities/folder/model/types';
 import type { RecordListItem } from '@/entities/record';
 import { useColors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib';
-import { AppBottomSheetModal, getInputFieldInputStyle, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  AppBottomSheetModal,
+  getInputFieldInputStyle,
+  useBottomSheetContentPadding,
+} from '@/shared/ui';
 
 import { AllTasksNotePickerRow } from './AllTasksNotePickerRow';
 

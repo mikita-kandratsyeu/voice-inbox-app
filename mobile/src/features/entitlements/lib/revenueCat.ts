@@ -21,11 +21,11 @@ import {
   getSubscriptionsPubliclyAvailable,
 } from '@/shared/config/runtimeConfig';
 import { isRecord, isString } from '@/shared/lib';
-import { diagWarn } from '@/shared/lib/appLogger';
 import {
   invalidateProLicenseStatusCache,
   syncProLicenseRevenueCatOnServer,
 } from '@/shared/lib/ai-api/proLicenseApi';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { i18n } from '@/shared/lib/i18n';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 

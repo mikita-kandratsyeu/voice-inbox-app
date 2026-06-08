@@ -440,9 +440,7 @@ class WhisperModelDownloader {
           await NitroFS.unlink(pathForNativeUnzip(zipPath)).catch(() => {});
           await RNBlobUtil.fs.unlink(pathForNativeUnzip(storedZipAbsPath)).catch(() => {});
           await RNBlobUtil.fs.unlink(pathForNativeUnzip(zipPath)).catch(() => {});
-          devWarn(
-            `[whisper-download] Core ML encoder failed (${zipRes.info().status}), using CPU`,
-          );
+          devWarn(`[whisper-download] Core ML encoder failed (${zipRes.info().status}), using CPU`);
         }
       } catch (e) {
         await NitroFS.unlink(pathForNativeUnzip(zipPath)).catch(() => {});

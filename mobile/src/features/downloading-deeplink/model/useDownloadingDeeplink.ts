@@ -1,8 +1,7 @@
 import { useCallback } from 'react';
 
-import { diagWarn } from '@/shared/lib/appLogger';
-
 import { navigationRef } from '@/app/navigation/navigationRef';
+import { diagWarn } from '@/shared/lib/appLogger';
 
 const DOWNLOAD_SETTINGS_DEEPLINKS: Record<string, 'WhisperModelPicker' | 'AIModelPicker'> = {
   'voiceinbox://settings/whisper': 'WhisperModelPicker',
