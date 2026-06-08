@@ -23,10 +23,10 @@ import type { Colors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib';
 import { iosHitSlopForVisualSize } from '@/shared/lib/iosTouchTarget';
 import {
-  Button,
   EmptyState,
   FrostedBottomChrome,
   getInputFieldInputStyle,
+  HeaderIconButton,
   SwipeHintBanner,
 } from '@/shared/ui';
 
@@ -138,7 +138,7 @@ function StickySearchBar({
           </TouchableOpacity>
         )}
       </View>
-      <Button
+      <HeaderIconButton
         iconOnly
         variant="icon"
         size="md"
