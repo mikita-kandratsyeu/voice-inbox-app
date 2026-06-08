@@ -19,6 +19,11 @@ export type LandingSocialProofConfig = {
 
 export const LANDING_SOCIAL_PROOF_CONFIG_KEY = 'LANDING_SOCIAL_PROOF';
 
+/** Public landing cache TTL (seconds). */
+export const LANDING_SOCIAL_PROOF_REVALIDATE_SECONDS = 300;
+
+export const LANDING_SOCIAL_PROOF_CACHE_TAG = 'landing-social-proof';
+
 export const MAX_LANDING_SOCIAL_PROOF_QUOTE_LENGTH = 280;
 export const MAX_LANDING_SOCIAL_PROOF_SOURCE_LENGTH = 80;
 export const MAX_LANDING_TESTIMONIALS = 6;

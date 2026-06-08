@@ -1,7 +1,9 @@
 import {
   createEmptyLandingTestimonial,
   getDefaultLandingSocialProof,
+  LANDING_SOCIAL_PROOF_CACHE_TAG,
   LANDING_SOCIAL_PROOF_CONFIG_KEY,
+  LANDING_SOCIAL_PROOF_REVALIDATE_SECONDS,
   MAX_LANDING_SOCIAL_PROOF_QUOTE_LENGTH,
   MAX_LANDING_SOCIAL_PROOF_SOURCE_LENGTH,
   MAX_LANDING_TESTIMONIALS,
@@ -9,11 +11,14 @@ import {
   type LandingTestimonial,
 } from '@/lib/landing-social-proof-defaults';
 import { prisma } from '@/lib/prisma';
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 
 export {
   createEmptyLandingTestimonial,
   getDefaultLandingSocialProof,
+  LANDING_SOCIAL_PROOF_CACHE_TAG,
   LANDING_SOCIAL_PROOF_CONFIG_KEY,
+  LANDING_SOCIAL_PROOF_REVALIDATE_SECONDS,
   type LandingSocialProofConfig,
   type LandingTestimonial,
 } from '@/lib/landing-social-proof-defaults';
@@ -174,9 +179,28 @@ async function readStoredConfig(): Promise<LandingSocialProofConfig | null> {
   }
 }
 
-export async function getLandingSocialProof(): Promise<LandingSocialProofConfig> {
+async function loadLandingSocialProofForPublic(): Promise<LandingSocialProofConfig> {
   const stored = await readStoredConfig();
   return stored ?? getDefaultLandingSocialProof();
+}
+
+const getCachedLandingSocialProof = unstable_cache(
+  loadLandingSocialProofForPublic,
+  [LANDING_SOCIAL_PROOF_CONFIG_KEY],
+  {
+    revalidate: LANDING_SOCIAL_PROOF_REVALIDATE_SECONDS,
+    tags: [LANDING_SOCIAL_PROOF_CACHE_TAG],
+  },
+);
+
+export async function getLandingSocialProof(): Promise<LandingSocialProofConfig> {
+  return getCachedLandingSocialProof();
+}
+
+export function revalidateLandingSocialProofCache(): void {
+  revalidateTag(LANDING_SOCIAL_PROOF_CACHE_TAG, { expire: 0 });
+  revalidatePath('/');
+  revalidatePath('/ru');
 }
 
 export async function getLandingSocialProofForAdmin(): Promise<{

@@ -4,6 +4,7 @@ import {
   getDefaultLandingSocialProof,
   getLandingSocialProofForAdmin,
   parseLandingSocialProofValue,
+  revalidateLandingSocialProofCache,
   upsertLandingSocialProof,
 } from '@/lib/landing-social-proof';
 import { NextResponse } from 'next/server';
@@ -66,6 +67,7 @@ export async function PUT(request: Request): Promise<NextResponse> {
 
   try {
     await upsertLandingSocialProof(parsed.config);
+    revalidateLandingSocialProofCache();
   } catch (e) {
     console.error('[admin/landing-social-proof PUT]', e);
     return NextResponse.json({ ok: false, error: 'Failed to save' }, { status: 503 });
