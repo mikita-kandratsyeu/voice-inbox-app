@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { marketingGutterClass } from '@/components/landing/marketing-layout';
-import { APP_STORE_URL } from '@/config/constants';
+import { GO_STORE_REDIRECT_PATH } from '@/config/constants';
 
 export function MobileStickyCTA(): React.ReactElement {
   const t = useTranslations('header');
@@ -32,7 +32,7 @@ export function MobileStickyCTA(): React.ReactElement {
       aria-hidden={!isVisible}
     >
       <a
-        href={APP_STORE_URL}
+        href={GO_STORE_REDIRECT_PATH}
         target="_blank"
         rel="noopener noreferrer"
         className="mx-auto flex min-h-[52px] w-full max-w-md flex-col items-center justify-center rounded-2xl bg-black px-4 py-2 text-white shadow-[0_16px_36px_rgba(10,10,10,0.35)] transition-[background-color,box-shadow,transform] active:scale-[0.99] hover:bg-black/90 hover:shadow-[0_18px_40px_rgba(10,10,10,0.4)] dark:bg-white dark:text-black dark:hover:bg-white/90 dark:hover:shadow-[0_18px_40px_rgba(255,255,255,0.2)]"

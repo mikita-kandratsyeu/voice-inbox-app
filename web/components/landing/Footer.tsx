@@ -25,13 +25,14 @@ function getFooterNav(): FooterNavItem[] {
   ];
 }
 
-const footerLinkClass = 'font-medium text-white/78 transition-colors hover:text-white';
+const footerLinkClass =
+  'font-medium text-black/65 transition-colors hover:text-black dark:text-white/75 dark:hover:text-white';
 
 export function Footer(): React.ReactElement {
   const t = useTranslations('footer');
 
   return (
-    <footer className="mt-16 border-t border-white/8 bg-slate-950 text-white">
+    <footer className="mt-16 border-t border-black/10 bg-slate-100/90 text-black dark:border-white/10 dark:bg-slate-950 dark:text-white">
       <div className={`${marketingGutterClass} py-12 sm:py-14`}>
         <div className={marketingContentClass}>
           <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
@@ -48,11 +49,13 @@ export function Footer(): React.ReactElement {
                   height={40}
                   className="h-10 w-10 rounded-xl shadow-[0_10px_24px_rgba(59,130,246,0.35)]"
                 />
-                <span className="text-lg font-semibold tracking-tight text-white">
+                <span className="text-lg font-semibold tracking-tight text-black dark:text-white">
                   Voice Inbox AI
                 </span>
               </Link>
-              <p className="mt-3 text-sm leading-relaxed text-white/55">{t('tagline')}</p>
+              <p className="mt-3 text-sm leading-relaxed text-black/55 dark:text-white/55">
+                {t('tagline')}
+              </p>
             </div>
 
             <nav
@@ -79,13 +82,13 @@ export function Footer(): React.ReactElement {
             </nav>
           </div>
 
-          <div className="my-8 border-t border-white/10" role="separator" />
+          <div className="my-8 border-t border-black/10 dark:border-white/10" role="separator" />
 
           <div className="space-y-2 text-center">
-            <p className="text-sm text-white/45">
+            <p className="text-sm text-black/45 dark:text-white/45">
               {t('copyright', { year: new Date().getFullYear() })}
             </p>
-            <p className="mx-auto max-w-2xl text-xs leading-relaxed text-white/35">
+            <p className="mx-auto max-w-2xl text-xs leading-relaxed text-black/40 dark:text-white/35">
               {t('disclaimer')}
             </p>
           </div>

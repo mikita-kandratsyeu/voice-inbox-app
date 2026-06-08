@@ -3,7 +3,7 @@ import { useLocale, useTranslations } from 'next-intl';
 
 import { marketingContentClass, marketingGutterClass } from '@/components/landing/marketing-layout';
 import { AnimateOnScroll } from '@/components/ui/AnimateOnScroll';
-import { APP_STORE_URL } from '@/config/constants';
+import { GO_STORE_REDIRECT_PATH } from '@/config/constants';
 import type { LandingSocialProofConfig } from '@/lib/landing-social-proof-defaults';
 
 type TestimonialsSectionProps = {
@@ -49,7 +49,7 @@ export function TestimonialsSection({
             return (
               <AnimateOnScroll key={`${quote}-${index}`} delay={index * 80}>
                 <a
-                  href={APP_STORE_URL}
+                  href={GO_STORE_REDIRECT_PATH}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex h-full flex-col rounded-3xl border border-black/10 bg-white/82 p-6 shadow-[0_10px_28px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:border-black/14 hover:shadow-[0_16px_38px_rgba(15,23,42,0.11)] dark:border-white/12 dark:bg-white/5 dark:shadow-[0_14px_40px_rgba(0,0,0,0.32)] dark:hover:border-white/16 dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.38)]"

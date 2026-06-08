@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { HeroSocialProof } from '@/components/landing/HeroSocialProof';
 import { marketingContentClass, marketingGutterClass } from '@/components/landing/marketing-layout';
 import { CopyProtected } from '@/components/ui/CopyProtected';
-import { APP_STORE_URL } from '@/config/constants';
+import { GO_STORE_REDIRECT_PATH } from '@/config/constants';
 import type { LandingSocialProofConfig } from '@/lib/landing-social-proof-defaults';
 
 type HeroProps = {
@@ -40,7 +40,7 @@ export function Hero({ socialProof }: HeroProps): React.ReactElement {
 
         <div className="animate-fade-in-delay-3 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <a
-            href={APP_STORE_URL}
+            href={GO_STORE_REDIRECT_PATH}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-black px-6 py-3 text-base font-semibold text-white shadow-[0_12px_30px_rgba(15,23,42,0.28)] ring-1 ring-black/8 transition-all duration-250 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(15,23,42,0.32)] sm:w-auto dark:bg-white dark:text-black dark:ring-white/15"

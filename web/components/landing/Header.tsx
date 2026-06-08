@@ -9,7 +9,7 @@ import {
   marketingInsetClass,
 } from '@/components/landing/marketing-layout';
 import { utilitiesShellClass, utilitiesShellDividerClass } from '@/components/ui/utilities-shell';
-import { APP_STORE_URL } from '@/config/constants';
+import { GO_STORE_REDIRECT_PATH } from '@/config/constants';
 
 export function Header(): React.ReactElement {
   const t = useTranslations('header');
@@ -39,7 +39,7 @@ export function Header(): React.ReactElement {
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
           <a
-            href={APP_STORE_URL}
+            href={GO_STORE_REDIRECT_PATH}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={t('installApp')}

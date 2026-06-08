@@ -12,6 +12,8 @@ export const BASE_URL_OR_FALLBACK = BASE_URL || 'http://localhost:3000';
 export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? '';
 export const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL ?? '#';
 export const GOOGLE_PLAY_URL = process.env.NEXT_PUBLIC_GOOGLE_PLAY_URL ?? '#';
+/** OS-aware store redirect (same handler as voucher QR: `/go`). */
+export const GO_STORE_REDIRECT_PATH = '/go';
 /** Shown on the landing page when `GOOGLE_PLAY_URL` is not a published store link. */
 export const ANDROID_WAITLIST_URL = process.env.NEXT_PUBLIC_ANDROID_WAITLIST_URL?.trim() ?? '';
 

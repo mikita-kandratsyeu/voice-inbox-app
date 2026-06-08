@@ -2,7 +2,7 @@ import { Star } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import type { LandingSocialProofConfig } from '@/lib/landing-social-proof-defaults';
-import { APP_STORE_URL } from '@/config/constants';
+import { GO_STORE_REDIRECT_PATH } from '@/config/constants';
 
 type HeroSocialProofProps = {
   config: LandingSocialProofConfig;
@@ -23,7 +23,7 @@ export function HeroSocialProof({ config }: HeroSocialProofProps): React.ReactEl
 
   return (
     <a
-      href={APP_STORE_URL}
+      href={GO_STORE_REDIRECT_PATH}
       target="_blank"
       rel="noopener noreferrer"
       aria-label={t('appStoreAria', {
