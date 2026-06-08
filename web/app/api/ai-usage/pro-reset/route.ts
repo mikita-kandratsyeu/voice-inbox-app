@@ -83,7 +83,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   return NextResponse.json({
     ...result.usage,
-    creditedAmount: result.creditedAmount,
     alreadyApplied: result.alreadyApplied,
+    reset: result.reset,
+    creditedAmount: result.reset.restoredAmount,
   });
 };

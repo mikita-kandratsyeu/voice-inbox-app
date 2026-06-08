@@ -273,7 +273,7 @@ export const AiUsageCard = ({
     ? t('settings.aiUsage.used', { used: usage.used, limit: usage.limit })
     : '—';
   const remainingText = usage
-    ? t('settings.aiUsage.remainingShort', { count: usage.remaining })
+    ? t('settings.aiUsage.remainingCredits', { count: usage.remaining })
     : null;
   const statusText = getAiUsageStatusText(usage, isExhausted, t);
   const resetDateText = usage ? formatLocalizedLongDateWithTime(usage.resetAt, i18n.language) : '—';

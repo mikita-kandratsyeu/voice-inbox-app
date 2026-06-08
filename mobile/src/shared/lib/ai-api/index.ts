@@ -10,6 +10,7 @@ export type {
   AiUsageHistoryPage,
   ClaimAiBonusResult,
   PollAiMessageOptions,
+  ProLimitResetSummary,
   ResetProAiUsageLimitResult,
   ServerMeetingDialogueStatus,
 } from './aiApi';

@@ -99,6 +99,33 @@ export async function recordAiUsageLedgerEntry(params: {
   }
 }
 
+export async function patchAiUsageLedgerEntryMetadata(params: {
+  entryId: string;
+  metadata: Prisma.InputJsonValue;
+}): Promise<void> {
+  if (!process.env.DATABASE_URL?.trim()) return;
+
+  try {
+    const existing = await prisma.aiUsageLedgerEntry.findUnique({
+      where: { id: params.entryId },
+      select: { metadata: true },
+    });
+    if (!existing) return;
+
+    await prisma.aiUsageLedgerEntry.update({
+      where: { id: params.entryId },
+      data: {
+        metadata: {
+          ...(isRecord(existing.metadata) ? existing.metadata : {}),
+          ...(isRecord(params.metadata) ? params.metadata : {}),
+        },
+      },
+    });
+  } catch (e) {
+    console.error('[ai-usage-ledger:patch]', params.entryId, e);
+  }
+}
+
 export async function updateAiUsageLedgerMetadata(params: {
   deviceId: string;
   operation: AiUsageOperation;

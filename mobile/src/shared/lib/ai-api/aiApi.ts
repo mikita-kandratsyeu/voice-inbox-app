@@ -243,6 +243,15 @@ export type AiUsage = {
   bonusAmount?: number;
 };
 
+export type ProLimitResetSummary = {
+  restoredAmount: number;
+  usedBefore: number;
+  limit: number;
+  remainingBefore: number;
+  remainingAfter: number;
+  ledgerEntryId: string | null;
+};
+
 export type AiUsageHistoryKind = 'debit' | 'credit' | 'refund';
 
 export type AiUsageHistoryOperation =
@@ -411,8 +420,47 @@ export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
   }
 }
 
+function readNonNegativeInt(value: unknown): number | null {
+  return isNumber(value) && value >= 0 ? Math.floor(value) : null;
+}
+
+function parseProLimitResetSummary(raw: Record<string, unknown>): ProLimitResetSummary | null {
+  const nested = raw.reset;
+  const source = nested && typeof nested === 'object' && !Array.isArray(nested) ? nested : raw;
+
+  const restoredAmount = readNonNegativeInt(
+    (source as Record<string, unknown>).restoredAmount ?? raw.creditedAmount,
+  );
+  const usedBefore = readNonNegativeInt((source as Record<string, unknown>).usedBefore);
+  const limit = readNonNegativeInt((source as Record<string, unknown>).limit);
+  const remainingBefore = readNonNegativeInt((source as Record<string, unknown>).remainingBefore);
+  const remainingAfter = readNonNegativeInt((source as Record<string, unknown>).remainingAfter);
+  const ledgerEntryIdRaw = (source as Record<string, unknown>).ledgerEntryId;
+  const ledgerEntryId =
+    isString(ledgerEntryIdRaw) && ledgerEntryIdRaw.trim() ? ledgerEntryIdRaw.trim() : null;
+
+  if (
+    restoredAmount == null ||
+    usedBefore == null ||
+    limit == null ||
+    remainingBefore == null ||
+    remainingAfter == null
+  ) {
+    return null;
+  }
+
+  return {
+    restoredAmount,
+    usedBefore,
+    limit,
+    remainingBefore,
+    remainingAfter,
+    ledgerEntryId,
+  };
+}
+
 export type ResetProAiUsageLimitResult =
-  | { ok: true; usage: AiUsage; creditedAmount: number; alreadyApplied: boolean }
+  | { ok: true; usage: AiUsage; alreadyApplied: boolean; reset: ProLimitResetSummary }
   | { ok: false; error: string };
 
 export async function resetProAiUsageLimit(params: {
@@ -441,9 +489,12 @@ export async function resetProAiUsageLimit(params: {
 
     const raw = (await response.json()) as Record<string, unknown>;
     const usage = parseAiUsagePayload(raw);
-    const creditedAmount = isNumber(raw.creditedAmount) ? raw.creditedAmount : 0;
+    const reset = parseProLimitResetSummary(raw);
+    if (!reset) {
+      return { ok: false, error: 'invalid_reset_response' };
+    }
     const alreadyApplied = raw.alreadyApplied === true;
-    return { ok: true, usage, creditedAmount, alreadyApplied };
+    return { ok: true, usage, alreadyApplied, reset };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Network error';
     return { ok: false, error: message };

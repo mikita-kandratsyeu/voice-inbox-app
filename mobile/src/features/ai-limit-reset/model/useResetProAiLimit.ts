@@ -7,7 +7,7 @@ import {
   purchaseAiLimitReset,
 } from '@/features/entitlements';
 import { useProEntitlement } from '@/features/pro-license';
-import type { AiUsage } from '@/shared/lib/ai-api';
+import type { AiUsage, ProLimitResetSummary } from '@/shared/lib/ai-api';
 import { resetProAiUsageLimit } from '@/shared/lib/ai-api';
 import { requestAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
 
@@ -34,7 +34,13 @@ function mapResetError(error: string): string {
   }
 }
 
-export function useResetProAiLimit(onSuccess?: (usage: AiUsage, creditedAmount: number) => void) {
+export type ProLimitResetSuccess = {
+  usage: AiUsage;
+  alreadyApplied: boolean;
+  reset: ProLimitResetSummary;
+};
+
+export function useResetProAiLimit(onSuccess?: (result: ProLimitResetSuccess) => void) {
   const { isProActive } = useProEntitlement();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +100,11 @@ export function useResetProAiLimit(onSuccess?: (usage: AiUsage, creditedAmount: 
       }
 
       requestAiUsageRefresh();
-      onSuccessRef.current?.(result.usage, result.creditedAmount);
+      onSuccessRef.current?.({
+        usage: result.usage,
+        alreadyApplied: result.alreadyApplied,
+        reset: result.reset,
+      });
     } finally {
       setLoading(false);
     }

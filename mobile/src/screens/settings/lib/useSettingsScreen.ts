@@ -164,23 +164,42 @@ export function useSettingsScreen() {
     (usageAfterClaim: NonNullable<Awaited<ReturnType<typeof getAiUsage>>>) => {
       void fetchAiUsage();
       const count = usageAfterClaim.bonusAmount ?? 5;
-      Alert.alert(t('common.done'), t('settings.aiUsage.claimBonusSuccess', { count }));
+      Alert.alert(
+        t('settings.aiUsage.claimBonusSuccessTitle'),
+        t('settings.aiUsage.claimBonusSuccess', { count }),
+      );
     },
     [fetchAiUsage, t],
   );
 
   const onResetProLimitSuccess = useCallback(
-    (
-      _usageAfterReset: NonNullable<Awaited<ReturnType<typeof getAiUsage>>>,
-      creditedAmount: number,
-    ) => {
+    (result: {
+      usage: NonNullable<Awaited<ReturnType<typeof getAiUsage>>>;
+      alreadyApplied: boolean;
+      reset: {
+        restoredAmount: number;
+        limit: number;
+      };
+    }) => {
       void fetchAiUsage();
-      Alert.alert(
-        t('common.done'),
-        creditedAmount > 0
-          ? t('settings.aiUsage.resetProLimitSuccess', { count: creditedAmount })
-          : t('settings.aiUsage.resetProLimitSuccessAlreadyApplied'),
-      );
+      if (result.alreadyApplied) {
+        Alert.alert(
+          t('settings.aiUsage.resetProLimitSuccessTitle'),
+          t('settings.aiUsage.resetProLimitSuccessAlreadyApplied'),
+        );
+        return;
+      }
+
+      const { reset } = result;
+      const message =
+        reset.restoredAmount > 0
+          ? t('settings.aiUsage.resetProLimitSuccess', {
+              count: reset.restoredAmount,
+              limit: reset.limit,
+            })
+          : t('settings.aiUsage.resetProLimitSuccessNoChange', { limit: reset.limit });
+
+      Alert.alert(t('settings.aiUsage.resetProLimitSuccessTitle'), message);
     },
     [fetchAiUsage, t],
   );
