@@ -22,6 +22,7 @@ type RecordingDetailCardProps = {
   folderPlacement: RecordingDetailFolderPlacement;
   hideFolderPlacement?: boolean;
   surfaceBackgroundColor?: string;
+  onTitleLayout?: (layout: { y: number; height: number }) => void;
   children?: React.ReactNode;
 };
 
@@ -31,6 +32,7 @@ export const RecordingDetailCard = ({
   folderPlacement,
   hideFolderPlacement = false,
   surfaceBackgroundColor,
+  onTitleLayout,
   children,
 }: RecordingDetailCardProps) => {
   const { t, i18n } = useTranslation();
@@ -87,7 +89,13 @@ export const RecordingDetailCard = ({
       accessibilityRole="summary"
       accessibilityLabel={accessibilityLabel}
     >
-      <View className="flex-row items-center gap-2 flex-wrap">
+      <View
+        className="flex-row items-center gap-2 flex-wrap"
+        onLayout={(event) => {
+          const { y, height } = event.nativeEvent.layout;
+          onTitleLayout?.({ y, height });
+        }}
+      >
         <Text
           className="flex-1 text-xl font-bold tracking-tight min-w-0"
           style={{ color: color.text.primary }}

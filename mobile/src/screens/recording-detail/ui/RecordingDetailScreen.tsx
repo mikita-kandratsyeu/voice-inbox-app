@@ -4,8 +4,16 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, LayoutAnimation, useWindowDimensions, View } from 'react-native';
+import {
+  Alert,
+  LayoutAnimation,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
+import { useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -198,6 +206,10 @@ export const RecordingDetailScreen = () => {
 
   const scrollRef = useRef<React.ElementRef<typeof KeyboardAwareScrollView>>(null);
   const audioPlayerRef = useRef<AudioPlayerRef>(null);
+  const cardOffsetYRef = useRef(0);
+  const titleInCardRef = useRef({ y: 0, height: 0 });
+  const headerTitleOpacity = useSharedValue(0);
+  const HEADER_TITLE_FADE_DISTANCE = 32;
 
   useFocusEffect(
     useCallback(() => {
@@ -709,6 +721,43 @@ export const RecordingDetailScreen = () => {
     [activeTab],
   );
 
+  const updateHeaderTitleOpacity = useCallback(
+    (scrollY: number) => {
+      const titleTop = cardOffsetYRef.current + titleInCardRef.current.y;
+      const titleBottom = titleTop + titleInCardRef.current.height;
+      if (titleBottom <= 0) {
+        headerTitleOpacity.value = 0;
+        return;
+      }
+
+      // Header sits above the scroll view; fade in only after the card title scrolls out.
+      const fadeStart = Math.max(0, titleBottom - HEADER_TITLE_FADE_DISTANCE);
+      const fadeEnd = titleBottom;
+      const progress = (scrollY - fadeStart) / Math.max(1, fadeEnd - fadeStart);
+      headerTitleOpacity.value = Math.min(1, Math.max(0, progress));
+    },
+    [headerTitleOpacity],
+  );
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      updateHeaderTitleOpacity(event.nativeEvent.contentOffset.y);
+    },
+    [updateHeaderTitleOpacity],
+  );
+
+  const handleCardLayout = useCallback((event: { nativeEvent: { layout: { y: number } } }) => {
+    cardOffsetYRef.current = event.nativeEvent.layout.y;
+  }, []);
+
+  const handleTitleLayout = useCallback((layout: { y: number; height: number }) => {
+    titleInCardRef.current = layout;
+  }, []);
+
+  useEffect(() => {
+    headerTitleOpacity.value = 0;
+  }, [headerTitleOpacity, liveRecord.id]);
+
   const shellBackgroundColor = isPrivateMode
     ? color.background.primary
     : color.background.secondary;
@@ -724,6 +773,7 @@ export const RecordingDetailScreen = () => {
         record={liveRecord}
         color={color}
         isPrivateMode={isPrivateMode}
+        headerTitleOpacity={headerTitleOpacity}
         onBack={onBack}
         onTogglePin={onTogglePin}
         onShare={onOpenShareMenu}
@@ -780,15 +830,18 @@ export const RecordingDetailScreen = () => {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         bottomOffset={16}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         stickyHeaderIndices={[stickyTabIndex]}
       >
-        <View style={{ width: '100%', maxWidth: contentMaxWidth }}>
+        <View style={{ width: '100%', maxWidth: contentMaxWidth }} onLayout={handleCardLayout}>
           <RecordingDetailCard
             record={liveRecord}
             color={color}
             folderPlacement={folderPlacement}
             hideFolderPlacement={!foldersEnabled}
             surfaceBackgroundColor={tabPanelBackgroundColor}
+            onTitleLayout={handleTitleLayout}
           >
             {hasAudio ? (
               <View className="gap-4">

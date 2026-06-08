@@ -3,6 +3,7 @@ import { ChevronLeft, MessageSquare, MoreVertical, Share } from 'lucide-react-na
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
+import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -14,6 +15,7 @@ type RecordingDetailHeaderProps = {
   record: VoiceRecord;
   color: Colors;
   isPrivateMode?: boolean;
+  headerTitleOpacity: SharedValue<number>;
   onBack: () => void;
   onTogglePin: () => void;
   onShare: () => void;
@@ -30,6 +32,7 @@ export const RecordingDetailHeader = ({
   record,
   color,
   isPrivateMode = false,
+  headerTitleOpacity,
   onBack,
   onTogglePin,
   onShare,
@@ -50,27 +53,38 @@ export const RecordingDetailHeader = ({
     ? color.background.primary
     : color.background.secondary;
   const isArchived = record.status === 'archived';
+  const headerTitleStyle = useAnimatedStyle(() => ({
+    opacity: headerTitleOpacity.value,
+  }));
 
   return (
     <View
-      className="flex-row items-center justify-between px-4 pb-3"
+      className="flex-row items-center px-4 pb-3"
       style={{ backgroundColor: headerBackgroundColor, paddingTop: insets.top + 12 }}
     >
-      <View className="flex-row items-center gap-2">
-        <HeaderIconButton
-          iconOnly
-          variant="icon"
-          size="md"
-          icon={<ChevronLeft size={22} color={color.text.primary} strokeWidth={2.2} />}
-          color={color}
-          onPress={onBack}
-          activeOpacity={0.7}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel={t('common.goBack')}
-        />
-        {isPrivateMode ? <PrivateExecutionBadge color={color} compact /> : null}
+      <HeaderIconButton
+        iconOnly
+        variant="icon"
+        size="md"
+        icon={<ChevronLeft size={22} color={color.text.primary} strokeWidth={2.2} />}
+        color={color}
+        onPress={onBack}
+        activeOpacity={0.7}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        accessibilityLabel={t('common.goBack')}
+      />
+      {isPrivateMode ? <PrivateExecutionBadge color={color} compact /> : null}
+      <View className="min-w-0 flex-1 pl-3 pr-2" pointerEvents="none">
+        <Animated.Text
+          className="text-left text-[15px] font-semibold"
+          style={[headerTitleStyle, { color: color.text.primary }]}
+          numberOfLines={1}
+          accessibilityRole="header"
+        >
+          {record.title}
+        </Animated.Text>
       </View>
-      <View className="flex-row items-center gap-2">
+      <View className="shrink-0 flex-row items-center gap-2">
         <HeaderIconButton
           iconOnly
           variant="icon"
