@@ -57,7 +57,9 @@ function serializePayload(positions: Record<string, NotesGraphNodePosition>): st
   return JSON.stringify(payload);
 }
 
-function positionsFromMap(positions: Map<string, NotesGraphNodePosition>): Record<string, NotesGraphNodePosition> {
+function positionsFromMap(
+  positions: Map<string, NotesGraphNodePosition>,
+): Record<string, NotesGraphNodePosition> {
   const out: Record<string, NotesGraphNodePosition> = {};
   for (const [nodeId, pos] of positions.entries()) {
     out[nodeId] = { x: pos.x, y: pos.y };
@@ -72,9 +74,24 @@ export function serializeNotesGraphPositions(
   return JSON.stringify(entries.map(([id, pos]) => [id, { x: pos.x, y: pos.y }]));
 }
 
+export function deserializeNotesGraphPositions(
+  serialized: string,
+): Record<string, NotesGraphNodePosition> {
+  if (!serialized) return {};
+
+  const entries = JSON.parse(serialized) as [string, NotesGraphNodePosition][];
+  const out: Record<string, NotesGraphNodePosition> = {};
+  for (const [id, pos] of entries) {
+    out[id] = { x: pos.x, y: pos.y };
+  }
+  return out;
+}
+
 export async function getLatestNotesGraphLayoutVersion(
   layoutKey: string,
-): Promise<(NotesGraphLayoutVersionEntry & { positions: Record<string, NotesGraphNodePosition> }) | null> {
+): Promise<
+  (NotesGraphLayoutVersionEntry & { positions: Record<string, NotesGraphNodePosition> }) | null
+> {
   const db = await waitForDb();
   const rows = await db
     .select()

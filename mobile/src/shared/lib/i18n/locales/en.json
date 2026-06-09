@@ -266,7 +266,8 @@
       "fit": "Fit map",
       "zoomIn": "Zoom in",
       "zoomOut": "Zoom out",
-      "reset": "Reset view"
+      "reset": "Reset view",
+      "resetLayoutLongPressHint": "Long press to discard all unsaved node moves"
     },
     "legend": {
       "toggle": "What the lines mean",

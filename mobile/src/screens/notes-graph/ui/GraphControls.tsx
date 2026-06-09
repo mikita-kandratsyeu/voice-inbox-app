@@ -18,6 +18,8 @@ type GraphControlsProps = {
   onZoomOut: () => void;
   onFit: () => void;
   onReset: () => void;
+  onResetLayoutLongPress?: () => void;
+  resetLayoutLongPressEnabled?: boolean;
   legendVisible: boolean;
   onToggleLegend: () => void;
   isReconciling?: boolean;
@@ -27,13 +29,19 @@ type GraphControlsProps = {
 function ControlButton({
   color,
   onPress,
+  onLongPress,
+  delayLongPress = 350,
   accessibilityLabel,
+  accessibilityHint,
   disabled = false,
   children,
 }: {
   color: Colors;
   onPress: () => void;
+  onLongPress?: () => void;
+  delayLongPress?: number;
   accessibilityLabel: string;
+  accessibilityHint?: string;
   disabled?: boolean;
   children: React.ReactNode;
 }) {
@@ -44,9 +52,20 @@ function ControlButton({
         hapticLight();
         onPress();
       }}
+      onLongPress={
+        onLongPress
+          ? () => {
+              if (disabled) return;
+              hapticLight();
+              onLongPress();
+            }
+          : undefined
+      }
+      delayLongPress={onLongPress ? delayLongPress : undefined}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled }}
       style={{
         width: 40,
@@ -73,6 +92,8 @@ export function GraphControls({
   onZoomOut,
   onFit,
   onReset,
+  onResetLayoutLongPress,
+  resetLayoutLongPressEnabled = false,
   legendVisible,
   onToggleLegend,
   isReconciling = false,
@@ -209,7 +230,13 @@ export function GraphControls({
             color={color}
             disabled={disabled}
             onPress={onReset}
+            onLongPress={resetLayoutLongPressEnabled ? onResetLayoutLongPress : undefined}
             accessibilityLabel={t('notesGraph.controls.reset')}
+            accessibilityHint={
+              resetLayoutLongPressEnabled
+                ? t('notesGraph.controls.resetLayoutLongPressHint')
+                : undefined
+            }
           >
             <RotateCcw size={18} color={color.text.primary} strokeWidth={2.2} />
           </ControlButton>

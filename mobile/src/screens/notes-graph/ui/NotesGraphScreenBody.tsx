@@ -36,6 +36,7 @@ import {
 } from '../lib/notesGraphLayoutCache';
 import {
   deleteNotesGraphLayoutVersion,
+  deserializeNotesGraphPositions,
   getLatestNotesGraphLayoutVersion,
   getNotesGraphLayoutVersionPositions,
   saveNotesGraphLayoutVersion,
@@ -469,6 +470,15 @@ export const NotesGraphScreenBody = () => {
     setNodePositionRevision((revision) => revision + 1);
   }, [syncUnsavedLayoutState]);
 
+  const handleDiscardUnsavedLayoutChanges = useCallback(() => {
+    if (!hasUnsavedLayoutChanges || isGraphReconciling || isSavingLayout) return;
+
+    const positions = deserializeNotesGraphPositions(savedLayoutSnapshotRef.current);
+    replaceSessionNodePositions(positions);
+    setLayoutRestoreToken((token) => token + 1);
+    syncUnsavedLayoutState();
+  }, [hasUnsavedLayoutChanges, isGraphReconciling, isSavingLayout, syncUnsavedLayoutState]);
+
   const handleSaveLayout = useCallback(async () => {
     if (isSavingLayout || isGraphReconciling || !hasUnsavedLayoutChanges) return;
 
@@ -678,6 +688,8 @@ export const NotesGraphScreenBody = () => {
           onTaskPress={handleTaskPress}
           onReconcilingChange={setIsGraphReconciling}
           onLayoutPositionsChange={handleLayoutPositionsChange}
+          onResetLayoutLongPress={handleDiscardUnsavedLayoutChanges}
+          resetLayoutLongPressEnabled={hasUnsavedLayoutChanges}
           layoutRestoreToken={layoutRestoreToken}
         />
       )}

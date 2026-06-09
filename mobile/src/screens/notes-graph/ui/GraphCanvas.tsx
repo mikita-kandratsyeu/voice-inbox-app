@@ -63,6 +63,8 @@ type GraphCanvasProps = {
   onTaskPress: (recordId: string, taskId: string) => void;
   onReconcilingChange?: (isReconciling: boolean) => void;
   onLayoutPositionsChange?: () => void;
+  onResetLayoutLongPress?: () => void;
+  resetLayoutLongPressEnabled?: boolean;
   layoutRestoreToken?: number;
 };
 
@@ -102,6 +104,8 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     onTaskPress,
     onReconcilingChange,
     onLayoutPositionsChange,
+    onResetLayoutLongPress,
+    resetLayoutLongPressEnabled = false,
     layoutRestoreToken = 0,
   },
   ref,
@@ -539,6 +543,8 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         onZoomOut={zoomOut}
         onFit={() => fitToScreen(true, displayNodes)}
         onReset={resetView}
+        onResetLayoutLongPress={onResetLayoutLongPress}
+        resetLayoutLongPressEnabled={resetLayoutLongPressEnabled}
         legendVisible={legendVisible}
         onToggleLegend={() => setLegendVisible((v) => !v)}
         isReconciling={isReconciling}
