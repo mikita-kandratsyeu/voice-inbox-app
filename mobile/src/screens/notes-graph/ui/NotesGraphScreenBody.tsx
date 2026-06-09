@@ -25,8 +25,8 @@ import { findGraphSearchMatchIds, type GraphSearchIndexEntry } from '../lib/grap
 import { getSessionNodePositions, replaceSessionNodePositions } from '../lib/graphSessionLayout';
 import { shouldAutoSimplifyGraph } from '../lib/graphSimplifyMode';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
-import { estimateGraphSearchFocusBottomInset } from '../lib/graphViewportInsets';
 import { DEFAULT_EDGE_VISIBILITY, type GraphFilters } from '../lib/graphTypes';
+import { estimateGraphSearchFocusBottomInset } from '../lib/graphViewportInsets';
 import {
   awaitPendingNotesGraphLayout,
   buildAndCacheNotesGraphLayout,
@@ -482,15 +482,18 @@ export const NotesGraphScreenBody = () => {
     }
   }, [hasUnsavedLayoutChanges, isGraphReconciling, isSavingLayout, persistKey]);
 
-  const handleRestoreLayoutVersion = useCallback(async (versionId: string) => {
-    const positions = await getNotesGraphLayoutVersionPositions(versionId);
-    if (!positions) return;
+  const handleRestoreLayoutVersion = useCallback(
+    async (versionId: string) => {
+      const positions = await getNotesGraphLayoutVersionPositions(versionId);
+      if (!positions) return;
 
-    replaceSessionNodePositions(positions);
-    setActiveSavedVersionId(versionId);
-    setLayoutRestoreToken((token) => token + 1);
-    syncUnsavedLayoutState();
-  }, [syncUnsavedLayoutState]);
+      replaceSessionNodePositions(positions);
+      setActiveSavedVersionId(versionId);
+      setLayoutRestoreToken((token) => token + 1);
+      syncUnsavedLayoutState();
+    },
+    [syncUnsavedLayoutState],
+  );
 
   const handleDeleteLayoutVersion = useCallback(
     async (versionId: string) => {

@@ -33,6 +33,7 @@ type GraphNodeLayerProps = {
   matchedNodeIds: ReadonlySet<string> | null;
   activeNodeId: string | null;
   canvasScale: SharedValue<number>;
+  layoutRestoreToken?: number;
   interactionsEnabled?: boolean;
   onRecordPress: (recordId: string) => void;
   onTaskPress: (recordId: string, taskId: string) => void;
@@ -54,6 +55,7 @@ function nodeIsDimmed(
 function DraggableNodeShell({
   node,
   canvasScale,
+  layoutRestoreToken,
   onDragStart,
   onDragEnd,
   onDragCancel,
@@ -62,6 +64,7 @@ function DraggableNodeShell({
 }: {
   node: GraphNode;
   canvasScale: SharedValue<number>;
+  layoutRestoreToken: number;
   onDragStart: () => void;
   onDragEnd: (nodeId: string, x: number, y: number) => void;
   onDragCancel: () => void;
@@ -82,11 +85,12 @@ function DraggableNodeShell({
 
   useLayoutEffect(() => {
     if (isDraggingRef.current) return;
-    nodeLeft.value = node.x;
-    nodeTop.value = node.y;
+    const current = nodeRef.current;
+    nodeLeft.value = current.x;
+    nodeTop.value = current.y;
     dragOffsetX.value = 0;
     dragOffsetY.value = 0;
-  }, [node.x, node.y, dragOffsetX, dragOffsetY, nodeLeft, nodeTop]);
+  }, [node.id, layoutRestoreToken, dragOffsetX, dragOffsetY, nodeLeft, nodeTop]);
 
   const handleDragEndComplete = useCallback(
     (nodeId: string, x: number, y: number) => {
@@ -108,14 +112,11 @@ function DraggableNodeShell({
   }, [dragOffsetX, dragOffsetY, nodeLeft, nodeTop, onDragCancel]);
 
   const handleCanvasDragStart = useCallback(() => {
-    const current = nodeRef.current;
     isDraggingRef.current = true;
-    nodeLeft.value = current.x;
-    nodeTop.value = current.y;
     dragOffsetX.value = 0;
     dragOffsetY.value = 0;
     onDragStart();
-  }, [dragOffsetX, dragOffsetY, nodeLeft, nodeTop, onDragStart]);
+  }, [dragOffsetX, dragOffsetY, onDragStart]);
 
   const handlePress = useCallback(() => {
     onPress();
@@ -158,8 +159,10 @@ function DraggableNodeShell({
       .onEnd((event) => {
         const current = nodeRef.current;
         const viewportScale = Math.max(canvasScale.value, 0.001);
-        const finalX = nodeLeft.value + event.translationX / viewportScale;
-        const finalY = nodeTop.value + event.translationY / viewportScale;
+        const baseLeft = nodeLeft.value;
+        const baseTop = nodeTop.value;
+        const finalX = baseLeft + event.translationX / viewportScale;
+        const finalY = baseTop + event.translationY / viewportScale;
 
         nodeLeft.value = finalX;
         nodeTop.value = finalY;
@@ -231,6 +234,7 @@ type GraphNodeItemProps = {
   onNodeDragEnd: (nodeId: string, x: number, y: number) => void;
   onNodeDragCancel: () => void;
   canvasScale: SharedValue<number>;
+  layoutRestoreToken?: number;
 };
 
 const GraphNodeItem = React.memo(function GraphNodeItem({
@@ -247,6 +251,7 @@ const GraphNodeItem = React.memo(function GraphNodeItem({
   onNodeDragEnd,
   onNodeDragCancel,
   canvasScale,
+  layoutRestoreToken = 0,
 }: GraphNodeItemProps) {
   const skipNextPressRef = useRef(false);
 
@@ -277,6 +282,7 @@ const GraphNodeItem = React.memo(function GraphNodeItem({
     <DraggableNodeShell
       node={node}
       canvasScale={canvasScale}
+      layoutRestoreToken={layoutRestoreToken}
       onDragStart={onNodeDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={onNodeDragCancel}
@@ -314,6 +320,7 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
   onNodeDragStart,
   onNodeDragEnd,
   onNodeDragCancel,
+  layoutRestoreToken = 0,
 }: GraphNodeLayerProps) {
   const sortedNodes = useMemo(() => {
     const tasks = nodes.filter((n) => n.kind === 'task');
@@ -349,6 +356,7 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
             onNodeDragEnd={onNodeDragEnd}
             onNodeDragCancel={onNodeDragCancel}
             canvasScale={canvasScale}
+            layoutRestoreToken={layoutRestoreToken}
           />
         );
       })}

@@ -3,7 +3,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { graphNodeSearchText } from '../graphNodeSearchText';
 import type { GraphEdge, GraphNode } from '../graphTypes';
 import { recordNodeId } from '../graphTypes';
-import { minNodeCenterDistance, runForceLayout, computeFocusTransform } from '../runForceLayout';
+import { computeFocusTransform, minNodeCenterDistance, runForceLayout } from '../runForceLayout';
 
 function makeRecord(id: string, title: string): VoiceRecord {
   return {
