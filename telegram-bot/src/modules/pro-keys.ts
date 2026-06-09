@@ -2,8 +2,8 @@ import { InlineKeyboard } from 'grammy';
 
 import type { HandlerCtx } from '../context.js';
 import { getListId, setListIds } from '../session/store.js';
-import { requirePerm, paginateRow } from '../ui/keyboards.js';
 import { escapeHtml, formatIsoShort } from '../ui/format.js';
+import { paginateRow, requirePerm } from '../ui/keyboards.js';
 import type { ScreenReply } from '../ui/reply.js';
 import { screenTitle } from '../ui/reply.js';
 
@@ -64,14 +64,21 @@ export async function proKeysListScreen(
   if (!res.ok) return { text: `${screenTitle('Pro Keys')}\n❌ ${escapeHtml(res.error)}` };
 
   const items = res.data.items ?? [];
-  setListIds(h.telegramUserId, items.map((i) => i.id));
+  setListIds(
+    h.telegramUserId,
+    items.map((i) => i.id),
+  );
   const kb = new InlineKeyboard();
   items.forEach((item, idx) => {
     const st = proKeyStatusLabel(item);
     kb.text(`${st} · ${item.id.slice(0, 8)}…`, `pk:v:${page}:${idx}:${filter[0]}`).row();
   });
   const totalPages = res.data.pagination?.totalPages ?? 1;
-  paginateRow(kb, page > 0 ? `pk:l:${page - 1}:${filter[0]}` : null, page + 1 < totalPages ? `pk:l:${page + 1}:${filter[0]}` : null);
+  paginateRow(
+    kb,
+    page > 0 ? `pk:l:${page - 1}:${filter[0]}` : null,
+    page + 1 < totalPages ? `pk:l:${page + 1}:${filter[0]}` : null,
+  );
   kb.text('◀️ Pro Keys', 'pk').row().text('◀️ Menu', 'm');
   return {
     text: `${screenTitle('Pro Keys', `Filter: ${status}`)}\nTap a key for actions.`,
@@ -141,8 +148,7 @@ export async function proKeyGenerateConfirm(
   value: number,
 ): Promise<ScreenReply> {
   if (!h.adminApi) return { text: `${screenTitle('Pro Keys')}\nAPI not configured.` };
-  const body =
-    kind === 'days' ? { durationDays: value } : { durationMonths: value };
+  const body = kind === 'days' ? { durationDays: value } : { durationMonths: value };
   const res = await h.adminApi.post<{ ok: boolean; plainKey?: string; hint?: string }>(
     '/api/admin/pro-licenses',
     body,

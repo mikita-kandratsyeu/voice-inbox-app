@@ -1,9 +1,9 @@
 import { InlineKeyboard } from 'grammy';
 
+import { hasPermission } from '../auth/permissions.js';
 import type { HandlerCtx } from '../context.js';
 import { apiConfigured } from '../context.js';
 import { clearFlow, clearSession, getFlow, setFlow } from '../session/store.js';
-import { hasPermission } from '../auth/permissions.js';
 import { escapeHtml } from '../ui/format.js';
 import type { ScreenReply } from '../ui/reply.js';
 import { screenTitle } from '../ui/reply.js';

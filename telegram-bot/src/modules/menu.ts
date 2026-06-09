@@ -2,8 +2,8 @@ import { InlineKeyboard } from 'grammy';
 
 import type { HandlerCtx } from '../context.js';
 import { apiConfigured } from '../context.js';
-import { homeKeyboard } from '../ui/keyboards.js';
 import { escapeHtml } from '../ui/format.js';
+import { homeKeyboard } from '../ui/keyboards.js';
 import type { ScreenReply } from '../ui/reply.js';
 import { screenTitle } from '../ui/reply.js';
 
@@ -37,7 +37,10 @@ export function menuScreen(h: HandlerCtx): ScreenReply {
     'Choose a section:',
   ];
   if (!apiConfigured()) {
-    lines.push('', '⚠️ API client not configured — actions need WEB_ADMIN_URL + TELEGRAM_BOT_API_SECRET.');
+    lines.push(
+      '',
+      '⚠️ API client not configured — actions need WEB_ADMIN_URL + TELEGRAM_BOT_API_SECRET.',
+    );
   }
   return { text: lines.join('\n'), keyboard: homeKeyboard(p) };
 }

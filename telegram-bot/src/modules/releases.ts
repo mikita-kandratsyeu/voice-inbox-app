@@ -2,8 +2,8 @@ import { InlineKeyboard } from 'grammy';
 
 import type { HandlerCtx } from '../context.js';
 import { getListId, setListIds } from '../session/store.js';
-import { requirePerm } from '../ui/keyboards.js';
 import { escapeHtml, formatIsoShort } from '../ui/format.js';
+import { requirePerm } from '../ui/keyboards.js';
 import type { ScreenReply } from '../ui/reply.js';
 import { screenTitle } from '../ui/reply.js';
 
@@ -35,7 +35,10 @@ export async function releasesListScreen(h: HandlerCtx, locale: string): Promise
   );
   if (!res.ok) return { text: `${screenTitle('Releases')}\n❌ ${escapeHtml(res.error)}` };
   const items = res.data.items ?? [];
-  setListIds(h.telegramUserId, items.map((i) => i.id));
+  setListIds(
+    h.telegramUserId,
+    items.map((i) => i.id),
+  );
   const kb = new InlineKeyboard();
   items.slice(0, 10).forEach((item, idx) => {
     const st = item.published ? '✅' : '📝';

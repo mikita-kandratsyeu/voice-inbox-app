@@ -1,10 +1,10 @@
+import type { TaskWithRecord } from '../../types';
 import {
   buildTaskDeadlineDayMarkers,
   CALENDAR_OVERDUE_MARKER_COLOR,
   CALENDAR_TASK_MARKER_COLOR,
   getTaskMarkerDotColor,
 } from '../buildTaskDeadlineDayMarkers';
-import type { TaskWithRecord } from '../../types';
 
 function row(id: string, deadline: string, isDone = false): TaskWithRecord {
   return {

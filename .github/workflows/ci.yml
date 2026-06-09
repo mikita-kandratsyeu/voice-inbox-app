@@ -118,6 +118,9 @@ jobs:
       - name: Lint
         run: yarn lint
 
+      - name: Format check
+        run: yarn format:check
+
       - name: Typecheck
         run: yarn type:check
 

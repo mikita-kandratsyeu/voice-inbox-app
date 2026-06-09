@@ -1,11 +1,11 @@
 import type { TaskItem } from '@/entities/record';
 
+import type { TaskWithRecord } from '../../types';
 import {
   applyAllTasksQuickFilter,
   getTaskDeadlineSortTime,
   sortTaskRows,
 } from '../applyAllTasksQuickFilter';
-import type { TaskWithRecord } from '../../types';
 
 function row(
   task: Partial<TaskItem>,

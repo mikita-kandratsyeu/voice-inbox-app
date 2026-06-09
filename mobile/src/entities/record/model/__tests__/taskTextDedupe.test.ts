@@ -1,12 +1,12 @@
-import type { TaskItem } from '../types';
 import {
   buildNormalizedTextSet,
   collectExistingTaskTextsForAiPrompt,
   filterAiTaskItemsByNormalizedSet,
   filterNextStepsByNormalizedTaskSet,
-  normalizeTaskTextForDedupe,
   normalizedManualTaskTextSet,
+  normalizeTaskTextForDedupe,
 } from '../taskTextDedupe';
+import type { TaskItem } from '../types';
 
 function task(overrides: Partial<TaskItem> = {}): TaskItem {
   return {

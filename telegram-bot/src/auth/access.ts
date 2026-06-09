@@ -1,14 +1,17 @@
 import type { Pool } from 'pg';
 
 import type { AdminProfile } from '../types.js';
-import { type AdminPermission, ADMIN_PERMISSIONS } from './permissions.js';
+import { ADMIN_PERMISSIONS, type AdminPermission } from './permissions.js';
 
 function normalizePermissions(raw: unknown): AdminPermission[] {
   if (!Array.isArray(raw)) return [];
   const out: AdminPermission[] = [];
   for (const item of raw) {
     if (typeof item !== 'string') continue;
-    if ((ADMIN_PERMISSIONS as readonly string[]).includes(item) && !out.includes(item as AdminPermission)) {
+    if (
+      (ADMIN_PERMISSIONS as readonly string[]).includes(item) &&
+      !out.includes(item as AdminPermission)
+    ) {
       out.push(item as AdminPermission);
     }
   }

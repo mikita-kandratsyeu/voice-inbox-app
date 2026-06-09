@@ -61,7 +61,10 @@ export class AdminApiClient {
       }
       if (!res.ok) {
         const err =
-          json && typeof json === 'object' && 'error' in json && typeof (json as { error: unknown }).error === 'string'
+          json &&
+          typeof json === 'object' &&
+          'error' in json &&
+          typeof (json as { error: unknown }).error === 'string'
             ? (json as { error: string }).error
             : `HTTP ${res.status}`;
         return { ok: false, error: err, status: res.status };

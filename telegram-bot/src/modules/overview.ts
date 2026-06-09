@@ -1,13 +1,17 @@
 import { InlineKeyboard } from 'grammy';
 
 import type { HandlerCtx } from '../context.js';
-import { requirePerm } from '../ui/keyboards.js';
 import { escapeHtml, formatIsoShort, statusEmoji } from '../ui/format.js';
+import { requirePerm } from '../ui/keyboards.js';
 import type { ScreenReply } from '../ui/reply.js';
 import { screenTitle } from '../ui/reply.js';
 
 type StatusResponse = {
-  vercel: { ok: boolean; deployments?: { state: string; branch?: string; created: number }[]; error?: string };
+  vercel: {
+    ok: boolean;
+    deployments?: { state: string; branch?: string; created: number }[];
+    error?: string;
+  };
   upstash: { ok: boolean; error?: string };
   qstash: { ok: boolean; error?: string };
   database: { ok: boolean; latencyMs?: number; error?: string };
@@ -71,7 +75,9 @@ export async function overviewScreen(h: HandlerCtx): Promise<ScreenReply> {
   if (ghRes.ok && ghRes.data.ok && ghRes.data.commits?.length) {
     lines.push('', '<b>Recent commits</b>');
     for (const c of ghRes.data.commits.slice(0, 3)) {
-      lines.push(`  · <code>${escapeHtml(c.shortSha)}</code> ${escapeHtml(c.message.slice(0, 60))}`);
+      lines.push(
+        `  · <code>${escapeHtml(c.shortSha)}</code> ${escapeHtml(c.message.slice(0, 60))}`,
+      );
     }
   }
 

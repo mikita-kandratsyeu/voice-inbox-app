@@ -2,8 +2,8 @@ import { InlineKeyboard } from 'grammy';
 
 import type { HandlerCtx } from '../context.js';
 import { getListId, setListIds } from '../session/store.js';
-import { paginateRow, requirePerm } from '../ui/keyboards.js';
 import { escapeHtml, formatIsoShort } from '../ui/format.js';
+import { paginateRow, requirePerm } from '../ui/keyboards.js';
 import type { ScreenReply } from '../ui/reply.js';
 import { screenTitle } from '../ui/reply.js';
 
@@ -46,7 +46,10 @@ export async function messagingHomeScreen(h: HandlerCtx): Promise<ScreenReply> {
     .text('📜 History', 'ms:hi:0')
     .row()
     .text('◀️ Menu', 'm');
-  return { text: screenTitle('Push & Broadcast', 'Notifications to registered devices'), keyboard: kb };
+  return {
+    text: screenTitle('Push & Broadcast', 'Notifications to registered devices'),
+    keyboard: kb,
+  };
 }
 
 export async function messagingHistoryScreen(h: HandlerCtx, page: number): Promise<ScreenReply> {
@@ -197,8 +200,14 @@ export async function messagingBroadcastConfirm(
     {
       type: notifyType,
       i18n: {
-        en: { title: 'Voice Inbox update', body: 'Please review the latest policy update in the app.' },
-        ru: { title: 'Обновление Voice Inbox', body: 'Ознакомьтесь с обновлением политики в приложении.' },
+        en: {
+          title: 'Voice Inbox update',
+          body: 'Please review the latest policy update in the app.',
+        },
+        ru: {
+          title: 'Обновление Voice Inbox',
+          body: 'Ознакомьтесь с обновлением политики в приложении.',
+        },
       },
     },
   );

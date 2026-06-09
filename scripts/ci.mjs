@@ -46,6 +46,7 @@ const PROJECTS = {
     dir: 'telegram-bot',
     steps: [
       { name: 'Lint', command: 'yarn lint' },
+      { name: 'Format check', command: 'yarn format:check' },
       { name: 'Typecheck', command: 'yarn type:check' },
       { name: 'Test', command: 'yarn test --ci --forceExit' },
     ],

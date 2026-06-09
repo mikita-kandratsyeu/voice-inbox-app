@@ -1,5 +1,5 @@
-import { filterTasksByCalendarDate } from '../filterTasksByCalendarDate';
 import type { TaskWithRecord } from '../../types';
+import { filterTasksByCalendarDate } from '../filterTasksByCalendarDate';
 
 function row(id: string, deadline: string): TaskWithRecord {
   return {

@@ -27,8 +27,12 @@ import {
   messagingSingleDeviceSend,
   messagingSingleDeviceTypeScreen,
 } from './modules/messaging.js';
+import {
+  operationsAuditScreen,
+  operationsHomeScreen,
+  operationsLinksScreen,
+} from './modules/operations.js';
 import { overviewScreen } from './modules/overview.js';
-import { operationsAuditScreen, operationsHomeScreen, operationsLinksScreen } from './modules/operations.js';
 import {
   proKeyDetailScreen,
   proKeyGenerateConfirm,
@@ -38,9 +42,9 @@ import {
 } from './modules/pro-keys.js';
 import {
   releaseDetailScreen,
-  releaseTogglePublish,
   releasesHomeScreen,
   releasesListScreen,
+  releaseTogglePublish,
 } from './modules/releases.js';
 import { securityHomeScreen, securityUsersScreen } from './modules/security.js';
 import {
@@ -51,7 +55,7 @@ import {
   supportListScreen,
 } from './modules/support.js';
 import { clearFlow } from './session/store.js';
-import { sendScreen, type ScreenReply } from './ui/reply.js';
+import { type ScreenReply, sendScreen } from './ui/reply.js';
 
 async function withHandler(
   ctx: Context,
@@ -164,7 +168,10 @@ export function registerRouter(bot: Bot<Context>, app: AppContext): void {
         return send(await proKeysListScreen(h, parseInt(pkl[1]!, 10), filter));
       }
       const pkv = data.match(/^pk:v:(\d+):(\d+):([uar])$/);
-      if (pkv) return send(await proKeyDetailScreen(h, parseInt(pkv[1]!, 10), parseInt(pkv[2]!, 10), pkv[3]!));
+      if (pkv)
+        return send(
+          await proKeyDetailScreen(h, parseInt(pkv[1]!, 10), parseInt(pkv[2]!, 10), pkv[3]!),
+        );
 
       if (data === 'su') return send(await supportHomeScreen(h));
       const sul = data.match(/^su:l:(\d+):([oca])$/);
@@ -173,11 +180,32 @@ export function registerRouter(bot: Bot<Context>, app: AppContext): void {
         return send(await supportListScreen(h, parseInt(sul[1]!, 10), st));
       }
       const suv = data.match(/^su:v:(\d+):(\d+):([oca])$/);
-      if (suv) return send(await supportDetailScreen(h, parseInt(suv[1]!, 10), parseInt(suv[2]!, 10), suv[3]!));
+      if (suv)
+        return send(
+          await supportDetailScreen(h, parseInt(suv[1]!, 10), parseInt(suv[2]!, 10), suv[3]!),
+        );
       const suxc = data.match(/^su:xc:(\d+):(\d+):([oca])$/);
-      if (suxc) return send(await supportConfirmStatus(h, true, parseInt(suxc[1]!, 10), parseInt(suxc[2]!, 10), suxc[3]!));
+      if (suxc)
+        return send(
+          await supportConfirmStatus(
+            h,
+            true,
+            parseInt(suxc[1]!, 10),
+            parseInt(suxc[2]!, 10),
+            suxc[3]!,
+          ),
+        );
       const suxo = data.match(/^su:xo:(\d+):(\d+):([oca])$/);
-      if (suxo) return send(await supportConfirmStatus(h, false, parseInt(suxo[1]!, 10), parseInt(suxo[2]!, 10), suxo[3]!));
+      if (suxo)
+        return send(
+          await supportConfirmStatus(
+            h,
+            false,
+            parseInt(suxo[1]!, 10),
+            parseInt(suxo[2]!, 10),
+            suxo[3]!,
+          ),
+        );
       const suxs = data.match(/^su:xs:([co]):(\d+):(\d+):([oca])$/);
       if (suxs) {
         return send(
@@ -200,11 +228,7 @@ export function registerRouter(bot: Bot<Context>, app: AppContext): void {
       const msdv = data.match(/^ms:dv:(\d+):(\d+)$/);
       if (msdv) {
         return send(
-          messagingSingleDeviceTypeScreen(
-            h,
-            parseInt(msdv[2]!, 10),
-            parseInt(msdv[1]!, 10),
-          ),
+          messagingSingleDeviceTypeScreen(h, parseInt(msdv[2]!, 10), parseInt(msdv[1]!, 10)),
         );
       }
       const msst = data.match(/^ms:st:(\d+):([a-z]{2})$/);
@@ -229,14 +253,13 @@ export function registerRouter(bot: Bot<Context>, app: AppContext): void {
       const bul = data.match(/^bu:l:(\d+)$/);
       if (bul) return send(await budgetListScreen(h, parseInt(bul[1]!, 10)));
       const buv = data.match(/^bu:v:(\d+):(\d+)$/);
-      if (buv) return send(await budgetDetailScreen(h, parseInt(buv[1]!, 10), parseInt(buv[2]!, 10)));
+      if (buv)
+        return send(await budgetDetailScreen(h, parseInt(buv[1]!, 10), parseInt(buv[2]!, 10)));
       const buxd = data.match(/^bu:xd:(\d+):(\d+)$/);
       if (buxd) return send(budgetDeleteConfirm(h, parseInt(buxd[1]!, 10), parseInt(buxd[2]!, 10)));
       const buxs = data.match(/^bu:xs:(\d+):(\d+)$/);
       if (buxs) {
-        return send(
-          await budgetDeleteExpense(h, parseInt(buxs[1]!, 10), parseInt(buxs[2]!, 10)),
-        );
+        return send(await budgetDeleteExpense(h, parseInt(buxs[1]!, 10), parseInt(buxs[2]!, 10)));
       }
 
       if (data === 'op' || data === 'op:r') return send(await operationsHomeScreen(h));

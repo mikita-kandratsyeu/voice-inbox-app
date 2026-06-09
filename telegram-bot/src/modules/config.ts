@@ -1,8 +1,8 @@
 import { InlineKeyboard } from 'grammy';
 
 import type { HandlerCtx } from '../context.js';
-import { requirePerm } from '../ui/keyboards.js';
 import { escapeHtml } from '../ui/format.js';
+import { requirePerm } from '../ui/keyboards.js';
 import type { ScreenReply } from '../ui/reply.js';
 import { screenTitle } from '../ui/reply.js';
 

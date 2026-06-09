@@ -2,8 +2,8 @@ import { InlineKeyboard } from 'grammy';
 
 import type { HandlerCtx } from '../context.js';
 import { getListId, setListIds } from '../session/store.js';
-import { requirePerm, paginateRow } from '../ui/keyboards.js';
 import { escapeHtml, formatIsoShort, truncate } from '../ui/format.js';
+import { paginateRow, requirePerm } from '../ui/keyboards.js';
 import type { ScreenReply } from '../ui/reply.js';
 import { screenTitle } from '../ui/reply.js';
 
@@ -45,13 +45,18 @@ export async function supportListScreen(
   if (!h.adminApi) return { text: `${screenTitle('Support')}\nAPI not configured.` };
   const params = new URLSearchParams({ limit: '8', status });
   if (q) params.set('q', q);
-  const res = await h.adminApi.get<{ ok: boolean; items: SupportItem[]; nextCursor: string | null }>(
-    `/api/admin/support?${params}`,
-  );
+  const res = await h.adminApi.get<{
+    ok: boolean;
+    items: SupportItem[];
+    nextCursor: string | null;
+  }>(`/api/admin/support?${params}`);
   if (!res.ok) return { text: `${screenTitle('Support')}\n❌ ${escapeHtml(res.error)}` };
 
   const items = res.data.items ?? [];
-  setListIds(h.telegramUserId, items.map((i) => i.id));
+  setListIds(
+    h.telegramUserId,
+    items.map((i) => i.id),
+  );
 
   const kb = new InlineKeyboard();
   items.forEach((item, idx) => {
@@ -59,10 +64,15 @@ export async function supportListScreen(
     kb.text(label, `su:v:${page}:${idx}:${status[0]}`).row();
   });
   const hasMore = Boolean(res.data.nextCursor);
-  paginateRow(kb, page > 0 ? `su:l:${page - 1}:${status[0]}` : null, hasMore ? `su:l:${page + 1}:${status[0]}` : null);
+  paginateRow(
+    kb,
+    page > 0 ? `su:l:${page - 1}:${status[0]}` : null,
+    hasMore ? `su:l:${page + 1}:${status[0]}` : null,
+  );
   kb.text('◀️ Support', 'su').row().text('◀️ Menu', 'm');
 
-  const title = status === 'open' ? 'Open tickets' : status === 'closed' ? 'Closed tickets' : 'All tickets';
+  const title =
+    status === 'open' ? 'Open tickets' : status === 'closed' ? 'Closed tickets' : 'All tickets';
   return {
     text: `${screenTitle('Support', title)}${q ? `\nSearch: ${escapeHtml(q)}` : ''}\n\nTap a ticket for details.`,
     keyboard: kb,

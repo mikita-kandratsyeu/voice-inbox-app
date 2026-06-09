@@ -15,7 +15,8 @@ export async function sendScreen(
   screen: ScreenReply,
   opts?: { edit?: boolean },
 ): Promise<void> {
-  const text = screen.text.length > TG_TEXT_MAX ? `${screen.text.slice(0, TG_TEXT_MAX - 1)}…` : screen.text;
+  const text =
+    screen.text.length > TG_TEXT_MAX ? `${screen.text.slice(0, TG_TEXT_MAX - 1)}…` : screen.text;
   const extra = {
     parse_mode: 'HTML' as const,
     reply_markup: screen.keyboard,

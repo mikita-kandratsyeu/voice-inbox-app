@@ -2,8 +2,8 @@ import { InlineKeyboard } from 'grammy';
 
 import type { HandlerCtx } from '../context.js';
 import { getListId, setListIds } from '../session/store.js';
-import { confirmKeyboard, requirePerm } from '../ui/keyboards.js';
 import { escapeHtml, formatCents, formatIsoShort } from '../ui/format.js';
+import { confirmKeyboard, requirePerm } from '../ui/keyboards.js';
 import type { ScreenReply } from '../ui/reply.js';
 import { screenTitle } from '../ui/reply.js';
 
@@ -36,7 +36,10 @@ export async function budgetHomeScreen(h: HandlerCtx): Promise<ScreenReply> {
   }
   lines.push('', '<b>Recent expenses</b>');
   const recent = (res.data.items ?? []).slice(0, 5);
-  setListIds(h.telegramUserId, (res.data.items ?? []).map((i) => i.id));
+  setListIds(
+    h.telegramUserId,
+    (res.data.items ?? []).map((i) => i.id),
+  );
   for (const e of recent) {
     lines.push(
       `· ${formatIsoShort(e.spentAt)} ${escapeHtml(e.category)} — ${formatCents(e.amountCents, e.currency)}`,
@@ -68,7 +71,10 @@ export async function budgetListScreen(h: HandlerCtx, page: number): Promise<Scr
 
   const kb = new InlineKeyboard();
   slice.forEach((e, idx) => {
-    kb.text(`${e.category} · ${formatCents(e.amountCents, e.currency)}`, `bu:v:${page}:${idx}`).row();
+    kb.text(
+      `${e.category} · ${formatCents(e.amountCents, e.currency)}`,
+      `bu:v:${page}:${idx}`,
+    ).row();
   });
   if (page > 0) kb.text('◀️ Prev', `bu:l:${page - 1}`);
   if ((page + 1) * BUDGET_PAGE_SIZE < all.length) kb.text('Next ▶️', `bu:l:${page + 1}`);
@@ -132,7 +138,11 @@ export async function budgetAddQuick(h: HandlerCtx): Promise<ScreenReply> {
   return budgetHomeScreen(h);
 }
 
-export async function budgetDeleteExpense(h: HandlerCtx, page: number, index: number): Promise<ScreenReply> {
+export async function budgetDeleteExpense(
+  h: HandlerCtx,
+  page: number,
+  index: number,
+): Promise<ScreenReply> {
   const id = getListId(h.telegramUserId, index);
   if (!id || !h.adminApi) return { text: `${screenTitle('Budget')}\nNot found.` };
   const res = await h.adminApi.delete<{ ok: boolean }>(`/api/admin/budget/${id}`);
