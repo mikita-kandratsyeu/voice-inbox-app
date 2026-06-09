@@ -1,4 +1,15 @@
 export const GRAPH_PAN_OVERSCROLL = 40;
+export const GRAPH_VIEWPORT_MIN_SCALE = 0.3;
+export const GRAPH_VIEWPORT_MAX_SCALE = 3;
+
+export function clampViewportScaleValue(
+  value: number,
+  minScale: number,
+  maxScale: number,
+): number {
+  'worklet';
+  return Math.min(maxScale, Math.max(minScale, value));
+}
 
 export function computeWorldDimensions(
   graphWidth: number,

@@ -23,14 +23,22 @@ import Animated, {
 import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
 
+import {
+  computeMapDoubleTapTransform,
+  computeMapPanTransform,
+  computeMapPinchTransform,
+} from '../lib/graphCanvasGestures';
 import { GRAPH_DRAG_RECONCILE_MIN_MS } from '../lib/graphDragReconcile';
 import { getSessionNodePositions, setSessionNodePosition } from '../lib/graphSessionLayout';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
 import {
+  clampViewportScaleValue,
   clampViewportTransform,
   clampViewportTranslation,
   computeWorldDimensions,
   GRAPH_PAN_OVERSCROLL,
+  GRAPH_VIEWPORT_MAX_SCALE,
+  GRAPH_VIEWPORT_MIN_SCALE,
 } from '../lib/graphViewportBounds';
 import type { GraphViewportInsets } from '../lib/graphViewportInsets';
 import { computeFitTransform, computeFocusTransform } from '../lib/runForceLayout';
@@ -41,9 +49,10 @@ import { GraphMinimap } from './GraphMinimap';
 import { GRAPH_VIEWPORT_SPRING, GRAPH_VIEWPORT_TIMING_MS } from './graphNodeInteraction';
 import { GraphNodeLayer } from './GraphNodeLayer';
 
-const MIN_SCALE = 0.3;
-const MAX_SCALE = 3;
-const PAN_ACTIVATION_DISTANCE = 12;
+const MIN_SCALE = GRAPH_VIEWPORT_MIN_SCALE;
+const MAX_SCALE = GRAPH_VIEWPORT_MAX_SCALE;
+const PAN_ACTIVATION_DISTANCE = 8;
+const DOUBLE_TAP_ZOOM_FACTOR = 1.35;
 
 export type GraphCanvasHandle = {
   fitToScreen: () => void;
@@ -146,6 +155,9 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   const savedScale = useSharedValue(1);
   const savedTranslateX = useSharedValue(0);
   const savedTranslateY = useSharedValue(0);
+  const savedFocalX = useSharedValue(0);
+  const savedFocalY = useSharedValue(0);
+  const isPinching = useSharedValue(false);
   const isNodeDragging = useSharedValue(false);
   const [isReconciling, setIsReconciling] = useState(false);
   const reconcilingTokenRef = useRef(0);
@@ -409,7 +421,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
   const clampViewportScale = (value: number) => {
     'worklet';
-    return Math.min(MAX_SCALE, Math.max(MIN_SCALE, value));
+    return clampViewportScaleValue(value, minScaleSV.value, maxScaleSV.value);
   };
 
   const syncGestureBaseline = () => {
@@ -420,6 +432,10 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   };
 
   const panOverscrollSV = useSharedValue(GRAPH_PAN_OVERSCROLL);
+  const minScaleSV = useSharedValue(MIN_SCALE);
+  const maxScaleSV = useSharedValue(MAX_SCALE);
+  const doubleTapZoomSV = useSharedValue(DOUBLE_TAP_ZOOM_FACTOR);
+  const viewportTimingMsSV = useSharedValue(GRAPH_VIEWPORT_TIMING_MS);
 
   const clampTranslationWorklet = (tx: number, ty: number, currentScale: number) => {
     'worklet';
@@ -435,101 +451,123 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     );
   };
 
-  const applyFocalZoom = (
-    nextScale: number,
-    focalX: number,
-    focalY: number,
-    baseScale: number,
-    baseTranslateX: number,
-    baseTranslateY: number,
-  ) => {
+  const commitViewportFromGesture = () => {
     'worklet';
-    const clampedScale = clampViewportScale(nextScale);
-    const scaleRatio = clampedScale / baseScale;
-    const nextX = focalX - (focalX - baseTranslateX) * scaleRatio;
-    const nextY = focalY - (focalY - baseTranslateY) * scaleRatio;
-    const clamped = clampTranslationWorklet(nextX, nextY, clampedScale);
+    savedScale.value = scale.value;
+    savedTranslateX.value = translateX.value;
+    savedTranslateY.value = translateY.value;
+    runOnJS(syncViewportState)(scale.value, translateX.value, translateY.value);
+  };
+
+  const applyMapPinch = (pinchScale: number, focalX: number, focalY: number) => {
+    'worklet';
+    const next = computeMapPinchTransform(
+      savedScale.value,
+      savedTranslateX.value,
+      savedTranslateY.value,
+      savedFocalX.value,
+      savedFocalY.value,
+      pinchScale,
+      focalX,
+      focalY,
+    );
+    const clampedScale = clampViewportScale(next.scale);
+    const clamped = clampTranslationWorklet(next.translateX, next.translateY, clampedScale);
+    scale.value = clampedScale;
     translateX.value = clamped.translateX;
     translateY.value = clamped.translateY;
-    scale.value = clampedScale;
   };
 
   const pinch = Gesture.Pinch()
-    .onBegin(() => {
+    .onStart((event) => {
+      'worklet';
       if (isNodeDragging.value) return;
+      isPinching.value = true;
       syncGestureBaseline();
+      savedFocalX.value = event.focalX;
+      savedFocalY.value = event.focalY;
     })
     .onUpdate((event) => {
+      'worklet';
       if (isNodeDragging.value) return;
-      const nextScale = savedScale.value * event.scale;
-      applyFocalZoom(
-        nextScale,
-        event.focalX,
-        event.focalY,
-        savedScale.value,
-        savedTranslateX.value,
-        savedTranslateY.value,
-      );
+      applyMapPinch(event.scale, event.focalX, event.focalY);
     })
-    .onEnd(() => {
-      savedScale.value = scale.value;
-      savedTranslateX.value = translateX.value;
-      savedTranslateY.value = translateY.value;
-      runOnJS(syncViewportState)(scale.value, translateX.value, translateY.value);
+    .onFinalize(() => {
+      'worklet';
+      if (!isPinching.value) return;
+      isPinching.value = false;
+      commitViewportFromGesture();
     });
 
   const pan = Gesture.Pan()
+    .minDistance(PAN_ACTIVATION_DISTANCE)
     .maxPointers(1)
-    .activeOffsetX([-PAN_ACTIVATION_DISTANCE, PAN_ACTIVATION_DISTANCE])
-    .activeOffsetY([-PAN_ACTIVATION_DISTANCE, PAN_ACTIVATION_DISTANCE])
-    .onBegin(() => {
-      if (isNodeDragging.value) return;
+    .onTouchesMove((event, state) => {
+      'worklet';
+      if (event.numberOfTouches > 1 || isPinching.value) {
+        state.fail();
+      }
+    })
+    .onStart(() => {
+      'worklet';
+      if (isNodeDragging.value || isPinching.value) return;
       syncGestureBaseline();
     })
     .onUpdate((event) => {
-      if (isNodeDragging.value) return;
-      const nextX = savedTranslateX.value + event.translationX;
-      const nextY = savedTranslateY.value + event.translationY;
-      const clamped = clampTranslationWorklet(nextX, nextY, scale.value);
+      'worklet';
+      if (isNodeDragging.value || isPinching.value) return;
+      const next = computeMapPanTransform(
+        savedTranslateX.value,
+        savedTranslateY.value,
+        event.translationX,
+        event.translationY,
+      );
+      const clamped = clampTranslationWorklet(next.translateX, next.translateY, scale.value);
       translateX.value = clamped.translateX;
       translateY.value = clamped.translateY;
     })
-    .onEnd(() => {
-      if (isNodeDragging.value) return;
-      savedTranslateX.value = translateX.value;
-      savedTranslateY.value = translateY.value;
-      runOnJS(syncViewportState)(scale.value, translateX.value, translateY.value);
+    .onFinalize(() => {
+      'worklet';
+      if (isNodeDragging.value || isPinching.value) return;
+      commitViewportFromGesture();
     });
 
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
+    .maxDuration(250)
     .onEnd((event) => {
-      const nextScale = clampViewportScale(savedScale.value * 1.35);
-      const nextTranslateX =
-        event.x - (event.x - savedTranslateX.value) * (nextScale / savedScale.value);
-      const nextTranslateY =
-        event.y - (event.y - savedTranslateY.value) * (nextScale / savedScale.value);
-      const clamped = clampTranslationWorklet(nextTranslateX, nextTranslateY, nextScale);
+      'worklet';
+      syncGestureBaseline();
+      const next = computeMapDoubleTapTransform(
+        savedScale.value,
+        savedTranslateX.value,
+        savedTranslateY.value,
+        event.x,
+        event.y,
+        doubleTapZoomSV.value,
+      );
+      const clampedScale = clampViewportScale(next.scale);
+      const clamped = clampTranslationWorklet(next.translateX, next.translateY, clampedScale);
 
-      savedScale.value = nextScale;
+      savedScale.value = clampedScale;
       savedTranslateX.value = clamped.translateX;
       savedTranslateY.value = clamped.translateY;
 
       const timing = {
-        duration: GRAPH_VIEWPORT_TIMING_MS,
+        duration: viewportTimingMsSV.value,
         easing: Easing.out(Easing.cubic),
       };
 
-      scale.value = withTiming(nextScale, timing, (finished) => {
+      scale.value = withTiming(clampedScale, timing, (finished) => {
         if (finished) {
-          runOnJS(syncViewportState)(nextScale, clamped.translateX, clamped.translateY);
+          runOnJS(syncViewportState)(clampedScale, clamped.translateX, clamped.translateY);
         }
       });
       translateX.value = withTiming(clamped.translateX, timing);
       translateY.value = withTiming(clamped.translateY, timing);
     });
 
-  const canvasGesture = Gesture.Simultaneous(pinch, pan, doubleTap);
+  const canvasGesture = Gesture.Simultaneous(Gesture.Simultaneous(pinch, pan), doubleTap);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [

@@ -168,16 +168,19 @@ export function GraphMinimap({
     () =>
       Gesture.Pan()
         .onBegin(() => {
+          'worklet';
           resizeStartWidthSV.value = minimapWidthSV.value;
           resizeStartHeightSV.value = minimapHeightSV.value;
         })
         .onUpdate((event) => {
+          'worklet';
           runOnJS(applyResize)(
             resizeStartWidthSV.value - event.translationX,
             resizeStartHeightSV.value + event.translationY,
           );
         })
         .onEnd(() => {
+          'worklet';
           runOnJS(persistResize)(minimapWidthSV.value, minimapHeightSV.value);
         }),
     [

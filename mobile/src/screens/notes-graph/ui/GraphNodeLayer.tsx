@@ -21,8 +21,6 @@ import {
   GRAPH_NODE_INTERACTION_IDLE,
   GRAPH_NODE_INTERACTION_PRESSING,
   GRAPH_NODE_LONG_PRESS_MS,
-  GRAPH_NODE_PRESS_IN_MS,
-  GRAPH_NODE_RELEASE_MS,
 } from './graphNodeInteraction';
 
 type GraphNodeLayerProps = {
@@ -71,9 +69,8 @@ function DraggableNodeShell({
   onPress: () => void;
   children: (interactionPhase: SharedValue<number>) => React.ReactNode;
 }) {
-  const nodeRef = React.useRef(node);
-  nodeRef.current = node;
   const isDraggingRef = useRef(false);
+  const nodeId = node.id;
   const interactionPhase = useSharedValue(GRAPH_NODE_INTERACTION_IDLE);
 
   const nodeLeft = useSharedValue(node.x);
@@ -85,12 +82,11 @@ function DraggableNodeShell({
 
   useLayoutEffect(() => {
     if (isDraggingRef.current) return;
-    const current = nodeRef.current;
-    nodeLeft.value = current.x;
-    nodeTop.value = current.y;
+    nodeLeft.value = node.x;
+    nodeTop.value = node.y;
     dragOffsetX.value = 0;
     dragOffsetY.value = 0;
-  }, [node.id, layoutRestoreToken, dragOffsetX, dragOffsetY, nodeLeft, nodeTop]);
+  }, [dragOffsetX, dragOffsetY, layoutRestoreToken, node.x, node.y, nodeLeft, nodeTop]);
 
   const handleDragEndComplete = useCallback(
     (nodeId: string, x: number, y: number) => {
@@ -103,13 +99,12 @@ function DraggableNodeShell({
   const handleDragCancel = useCallback(() => {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
-    const current = nodeRef.current;
-    nodeLeft.value = current.x;
-    nodeTop.value = current.y;
+    nodeLeft.value = node.x;
+    nodeTop.value = node.y;
     dragOffsetX.value = 0;
     dragOffsetY.value = 0;
     onDragCancel();
-  }, [dragOffsetX, dragOffsetY, nodeLeft, nodeTop, onDragCancel]);
+  }, [dragOffsetX, dragOffsetY, node.x, node.y, nodeLeft, nodeTop, onDragCancel]);
 
   const handleCanvasDragStart = useCallback(() => {
     isDraggingRef.current = true;
@@ -126,6 +121,7 @@ function DraggableNodeShell({
     const tap = Gesture.Tap()
       .maxDuration(GRAPH_NODE_LONG_PRESS_MS - 20)
       .onEnd((_event, success) => {
+        'worklet';
         if (!success) return;
         runOnJS(handlePress)();
       });
@@ -133,31 +129,35 @@ function DraggableNodeShell({
     const longPressHint = Gesture.LongPress()
       .minDuration(GRAPH_NODE_LONG_PRESS_MS)
       .onBegin(() => {
-        interactionPhase.value = withTiming(GRAPH_NODE_INTERACTION_PRESSING, {
-          duration: GRAPH_NODE_PRESS_IN_MS,
+        'worklet';
+        interactionPhase.value = withTiming(1, {
+          duration: 120,
         });
       })
       .onFinalize(() => {
-        if (interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING) return;
-        interactionPhase.value = withTiming(GRAPH_NODE_INTERACTION_IDLE, {
-          duration: GRAPH_NODE_RELEASE_MS,
+        'worklet';
+        if (interactionPhase.value >= 2) return;
+        interactionPhase.value = withTiming(0, {
+          duration: 160,
         });
       });
 
     const pan = Gesture.Pan()
       .activateAfterLongPress(GRAPH_NODE_LONG_PRESS_MS)
       .onStart(() => {
+        'worklet';
         runOnJS(handleCanvasDragStart)();
-        interactionPhase.value = GRAPH_NODE_INTERACTION_DRAGGING;
+        interactionPhase.value = 2;
         runOnJS(hapticLight)();
       })
       .onUpdate((event) => {
+        'worklet';
         const viewportScale = Math.max(canvasScale.value, 0.001);
         dragOffsetX.value = event.translationX / viewportScale;
         dragOffsetY.value = event.translationY / viewportScale;
       })
       .onEnd((event) => {
-        const current = nodeRef.current;
+        'worklet';
         const viewportScale = Math.max(canvasScale.value, 0.001);
         const baseLeft = nodeLeft.value;
         const baseTop = nodeTop.value;
@@ -169,18 +169,19 @@ function DraggableNodeShell({
         dragOffsetX.value = 0;
         dragOffsetY.value = 0;
 
-        interactionPhase.value = withTiming(GRAPH_NODE_INTERACTION_IDLE, {
-          duration: GRAPH_NODE_RELEASE_MS,
+        interactionPhase.value = withTiming(0, {
+          duration: 160,
         });
-        runOnJS(handleDragEndComplete)(current.id, finalX, finalY);
+        runOnJS(handleDragEndComplete)(nodeId, finalX, finalY);
       })
       .onFinalize((_event, success) => {
+        'worklet';
         if (success) return;
-        if (interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING) {
+        if (interactionPhase.value >= 2) {
           runOnJS(handleDragCancel)();
         }
-        interactionPhase.value = withTiming(GRAPH_NODE_INTERACTION_IDLE, {
-          duration: GRAPH_NODE_RELEASE_MS,
+        interactionPhase.value = withTiming(0, {
+          duration: 160,
         });
       });
 
@@ -194,6 +195,7 @@ function DraggableNodeShell({
     handleDragEndComplete,
     handlePress,
     interactionPhase,
+    nodeId,
     nodeLeft,
     nodeTop,
   ]);

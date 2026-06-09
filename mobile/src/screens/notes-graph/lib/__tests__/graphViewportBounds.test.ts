@@ -1,8 +1,22 @@
 import {
+  clampViewportScaleValue,
   clampViewportTranslation,
   computeWorldDimensions,
   GRAPH_PAN_OVERSCROLL,
+  GRAPH_VIEWPORT_MAX_SCALE,
+  GRAPH_VIEWPORT_MIN_SCALE,
 } from '../graphViewportBounds';
+
+describe('clampViewportScaleValue', () => {
+  it('clamps scale inside viewport limits', () => {
+    expect(clampViewportScaleValue(0.1, GRAPH_VIEWPORT_MIN_SCALE, GRAPH_VIEWPORT_MAX_SCALE)).toBe(
+      GRAPH_VIEWPORT_MIN_SCALE,
+    );
+    expect(clampViewportScaleValue(5, GRAPH_VIEWPORT_MIN_SCALE, GRAPH_VIEWPORT_MAX_SCALE)).toBe(
+      GRAPH_VIEWPORT_MAX_SCALE,
+    );
+  });
+});
 
 describe('computeWorldDimensions', () => {
   it('is at least viewport size and supports minimum zoom', () => {
