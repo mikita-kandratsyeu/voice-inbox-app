@@ -51,6 +51,6 @@ await setBotCommandMenu(bot).catch((e) => {
 
 await bot.start({
   onStart: (me) => {
-    console.log(`Bot @${me.username} running (long polling)`);
+    console.warn(`Bot @${me.username} running (long polling)`);
   },
 });
