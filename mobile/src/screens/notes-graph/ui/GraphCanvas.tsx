@@ -19,6 +19,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import type { ViewShotRef } from 'react-native-view-shot';
 
 import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
@@ -31,6 +32,7 @@ import {
 import { GRAPH_DRAG_RECONCILE_MIN_MS } from '../lib/graphDragReconcile';
 import { getSessionNodePositions, setSessionNodePosition } from '../lib/graphSessionLayout';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
+import { computeGraphExportLayout } from '../lib/computeGraphExportLayout';
 import {
   clampViewportScaleValue,
   clampViewportTransform,
@@ -45,6 +47,7 @@ import { computeFitTransform, computeFocusTransform } from '../lib/runForceLayou
 import { DottedBackground } from './DottedBackground';
 import { GraphControls } from './GraphControls';
 import { GraphEdgeLayer } from './GraphEdgeLayer';
+import { GraphFullExportCapture } from './GraphFullExportCapture';
 import { GraphMinimap } from './GraphMinimap';
 import { GRAPH_VIEWPORT_SPRING, GRAPH_VIEWPORT_TIMING_MS } from './graphNodeInteraction';
 import { GraphNodeLayer } from './GraphNodeLayer';
@@ -54,12 +57,19 @@ const MAX_SCALE = GRAPH_VIEWPORT_MAX_SCALE;
 const PAN_ACTIVATION_DISTANCE = 8;
 const DOUBLE_TAP_ZOOM_FACTOR = 1.35;
 
+export type GraphCaptureResult = {
+  uri: string;
+  width: number;
+  height: number;
+};
+
 export type GraphCanvasHandle = {
   fitToScreen: () => void;
   focusNode: (node: GraphNode) => void;
   zoomIn: () => void;
   zoomOut: () => void;
   resetView: () => void;
+  captureImage: () => Promise<GraphCaptureResult>;
 };
 
 type GraphCanvasProps = {
@@ -127,6 +137,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 ) {
   const { t } = useTranslation();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const fullExportRef = useRef<ViewShotRef>(null);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
 
   const viewportWidth = viewportSize.width > 0 ? viewportSize.width : windowWidth;
@@ -325,6 +336,21 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     applyTransform({ scale: 1, translateX: 0, translateY: 0 });
   }, [applyTransform]);
 
+  const captureImage = useCallback(async () => {
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => resolve());
+      });
+    });
+
+    const layout = computeGraphExportLayout(displayNodes, graphWidth, graphHeight);
+    const uri = await fullExportRef.current?.capture?.();
+    if (!uri || !layout) {
+      throw new Error('Graph capture failed');
+    }
+    return { uri, width: layout.exportWidth, height: layout.exportHeight };
+  }, [displayNodes, graphHeight, graphWidth]);
+
   useImperativeHandle(
     ref,
     () => ({
@@ -333,8 +359,9 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       zoomIn,
       zoomOut,
       resetView,
+      captureImage,
     }),
-    [displayNodes, fitToScreen, focusNode, resetView, zoomIn, zoomOut],
+    [captureImage, displayNodes, fitToScreen, focusNode, resetView, zoomIn, zoomOut],
   );
 
   const nodeIdsKey = useMemo(() => nodes.map((node) => node.id).join('|'), [nodes]);
@@ -637,6 +664,17 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
           </Animated.View>
         </View>
       </GestureDetector>
+
+      <GraphFullExportCapture
+        ref={fullExportRef}
+        nodes={displayNodes}
+        edges={edges}
+        graphWidth={graphWidth}
+        graphHeight={graphHeight}
+        color={color}
+        foldersById={foldersById}
+        isProActive={isProActive}
+      />
 
       <GraphMinimap
         color={color}

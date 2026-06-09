@@ -5,7 +5,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MoreVertical, Save, Search } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
@@ -39,9 +39,9 @@ import {
   deserializeNotesGraphPositions,
   getLatestNotesGraphLayoutVersion,
   getNotesGraphLayoutVersionPositions,
+  type NotesGraphLayoutVersionEntry,
   saveNotesGraphLayoutVersion,
   serializeNotesGraphPositions,
-  type NotesGraphLayoutVersionEntry,
 } from '../lib/notesGraphLayoutDb';
 import {
   parsedPersistKeyToGraphFilters,
@@ -50,6 +50,7 @@ import {
 import { GraphBuildingState } from './GraphBuildingState';
 import type { GraphCanvasHandle } from './GraphCanvas';
 import { GraphCanvas } from './GraphCanvas';
+import { GraphExportPreviewSheet } from './GraphExportPreviewSheet';
 import { GraphFilterBar } from './GraphFilterBar';
 import { GraphLayoutHistorySheet } from './GraphLayoutHistorySheet';
 import { GraphStickySearchBar } from './GraphStickySearchBar';
@@ -96,6 +97,14 @@ export const NotesGraphScreenBody = () => {
   const [hasUnsavedLayoutChanges, setHasUnsavedLayoutChanges] = useState(false);
   const [isSavingLayout, setIsSavingLayout] = useState(false);
   const [historySheetVisible, setHistorySheetVisible] = useState(false);
+  const [exportSheetVisible, setExportSheetVisible] = useState(false);
+  const [exportPreviewUri, setExportPreviewUri] = useState<string | null>(null);
+  const [exportPreviewSize, setExportPreviewSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const [isCapturingExport, setIsCapturingExport] = useState(false);
+  const exportCaptureTokenRef = useRef(0);
   const [activeSavedVersionId, setActiveSavedVersionId] = useState<string | null>(null);
   const [layoutRestoreToken, setLayoutRestoreToken] = useState(0);
   const [nodePositionRevision, setNodePositionRevision] = useState(0);
@@ -517,18 +526,15 @@ export const NotesGraphScreenBody = () => {
     }
   }, [hasUnsavedLayoutChanges, isGraphReconciling, isSavingLayout, persistKey]);
 
-  const handleApplyLayoutVersion = useCallback(
-    async (entry: NotesGraphLayoutVersionEntry) => {
-      const parsed = parseNotesGraphPersistKey(entry.layoutKey);
-      if (!parsed) return;
+  const handleApplyLayoutVersion = useCallback(async (entry: NotesGraphLayoutVersionEntry) => {
+    const parsed = parseNotesGraphPersistKey(entry.layoutKey);
+    if (!parsed) return;
 
-      shouldFitAfterLayoutApplyRef.current = true;
-      pendingLayoutApplyVersionIdRef.current = entry.id;
-      setFilters(parsedPersistKeyToGraphFilters(parsed));
-      setSimplifyOverride(parsed.simplifyOverride);
-    },
-    [],
-  );
+    shouldFitAfterLayoutApplyRef.current = true;
+    pendingLayoutApplyVersionIdRef.current = entry.id;
+    setFilters(parsedPersistKeyToGraphFilters(parsed));
+    setSimplifyOverride(parsed.simplifyOverride);
+  }, []);
 
   useEffect(() => {
     if (!shouldFitAfterLayoutApplyRef.current) return;
@@ -582,7 +588,36 @@ export const NotesGraphScreenBody = () => {
     [activeSavedVersionId, persistKey, syncUnsavedLayoutState],
   );
 
-  const headerControlsDisabled = isGraphReconciling || isSavingLayout;
+  const headerControlsDisabled = isGraphReconciling || isSavingLayout || isCapturingExport;
+
+  const handleOpenExportPreview = useCallback(async () => {
+    if (isCapturingExport) return;
+
+    const captureToken = exportCaptureTokenRef.current + 1;
+    exportCaptureTokenRef.current = captureToken;
+
+    setExportPreviewUri(null);
+    setExportSheetVisible(true);
+    setIsCapturingExport(true);
+
+    try {
+      const captured = await canvasRef.current?.captureImage();
+      if (captureToken !== exportCaptureTokenRef.current) return;
+      if (!captured?.uri) {
+        throw new Error('capture returned empty uri');
+      }
+      setExportPreviewUri(captured.uri);
+      setExportPreviewSize({ width: captured.width, height: captured.height });
+    } catch {
+      if (captureToken !== exportCaptureTokenRef.current) return;
+      setExportSheetVisible(false);
+      Alert.alert(t('common.error'), t('notesGraph.export.failed'));
+    } finally {
+      if (captureToken === exportCaptureTokenRef.current) {
+        setIsCapturingExport(false);
+      }
+    }
+  }, [isCapturingExport, t]);
 
   const notesGraphMenuActions = useMemo(
     () => [
@@ -590,6 +625,13 @@ export const NotesGraphScreenBody = () => {
         id: 'layoutHistory' as const,
         title: t('notesGraph.history.title'),
         image: 'clock.arrow.circlepath' as const,
+        imageColor: color.text.primary,
+        titleColor: color.text.primary,
+      },
+      {
+        id: 'exportImage' as const,
+        title: t('notesGraph.export.title'),
+        image: 'square.and.arrow.up' as const,
         imageColor: color.text.primary,
         titleColor: color.text.primary,
       },
@@ -657,6 +699,10 @@ export const NotesGraphScreenBody = () => {
           onPressAction={({ nativeEvent }) => {
             if (nativeEvent.event === 'layoutHistory') {
               setHistorySheetVisible(true);
+              return;
+            }
+            if (nativeEvent.event === 'exportImage') {
+              void handleOpenExportPreview();
             }
           }}
         >
@@ -767,6 +813,20 @@ export const NotesGraphScreenBody = () => {
         }}
         onDelete={(versionId) => {
           void handleDeleteLayoutVersion(versionId);
+        }}
+      />
+
+      <GraphExportPreviewSheet
+        visible={exportSheetVisible}
+        imageUri={exportPreviewUri}
+        imagePixelSize={exportPreviewSize}
+        isLoadingPreview={isCapturingExport}
+        onClose={() => {
+          exportCaptureTokenRef.current += 1;
+          setExportSheetVisible(false);
+          setExportPreviewUri(null);
+          setExportPreviewSize(null);
+          setIsCapturingExport(false);
         }}
       />
 
