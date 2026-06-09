@@ -7,7 +7,7 @@ import type { GraphEdge, GraphNode } from './graphTypes';
 import type { GraphViewportInsets } from './graphViewportInsets';
 import { layoutIsolatedRecordNodes } from './layoutIsolatedNodes';
 
-const NODE_LAYOUT_PADDING = 16;
+const NODE_LAYOUT_PADDING = 24;
 const GRAPH_BOUNDS_PADDING = 80;
 
 function nodeSize(kind: GraphNode['kind']): number {
@@ -35,11 +35,11 @@ function computeLayoutMetrics(
   viewportWidth: number,
   viewportHeight: number,
 ): { width: number; height: number; spread: number } {
-  const avgNodeSpan = 196;
+  const avgNodeSpan = 188;
   const gridSide = Math.ceil(Math.sqrt(Math.max(nodeCount, 1))) * avgNodeSpan;
   const width = Math.max(viewportWidth, gridSide);
   const height = Math.max(viewportHeight, gridSide);
-  const spread = Math.max(width, height) * 0.42;
+  const spread = Math.max(width, height) * 0.48;
 
   return { width, height, spread };
 }
@@ -52,10 +52,10 @@ function buildForceAtlasSettings(nodeCount: number) {
     ...inferred,
     adjustSizes: true,
     barnesHutOptimize: nodeCount > 48,
-    edgeWeightInfluence: 0.85,
-    gravity: nodeCount > 64 ? 0.04 : nodeCount > 24 ? 0.08 : nodeCount > 10 ? 0.15 : 0.3,
+    edgeWeightInfluence: 0.72,
+    gravity: nodeCount > 64 ? 0.03 : nodeCount > 24 ? 0.06 : nodeCount > 10 ? 0.12 : 0.24,
     linLogMode: false,
-    scalingRatio: Math.max(inferred.scalingRatio ?? 8, 6 + spreadFactor * 7),
+    scalingRatio: Math.max(inferred.scalingRatio ?? 8, 8 + spreadFactor * 8.5),
     slowDown: nodeCount > 96 ? 4 : nodeCount > 48 ? 6 : 8,
     weighted: true,
   };
@@ -77,7 +77,7 @@ function addInitialJitter(graph: Graph, spread: number): void {
   });
 }
 
-function resolveNodeOverlaps(nodes: GraphNode[], gap = 14, maxPasses?: number): GraphNode[] {
+function resolveNodeOverlaps(nodes: GraphNode[], gap = 22, maxPasses?: number): GraphNode[] {
   if (nodes.length < 2) return nodes;
 
   const passes = maxPasses ?? (nodes.length > 80 ? 20 : nodes.length > 40 ? 36 : 64);

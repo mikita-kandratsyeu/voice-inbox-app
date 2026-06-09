@@ -1,7 +1,7 @@
 import type { GraphEdge, GraphNode } from './graphTypes';
 import { nodeDimensions } from './graphNodeMetrics';
 
-const ISOLATED_SHELF_GAP = 88;
+const ISOLATED_SHELF_GAP = 98;
 const ISOLATED_SHELF_MARGIN = 80;
 
 function isRecordWithoutNoteLinks(nodeId: string, edges: GraphEdge[]): boolean {

@@ -18,6 +18,27 @@ export function nodeCenter(node: GraphNode): { x: number; y: number } {
   return { x: node.x + width / 2, y: node.y + height / 2 };
 }
 
+/** Point where an edge should meet the node card border, facing `toward`. */
+export function nodeBorderAnchor(
+  node: GraphNode,
+  toward: { x: number; y: number },
+): { x: number; y: number } {
+  const { width, height } = nodeDimensions(node.kind);
+  const cx = node.x + width / 2;
+  const cy = node.y + height / 2;
+  const dx = toward.x - cx;
+  const dy = toward.y - cy;
+
+  if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) {
+    return { x: cx, y: cy };
+  }
+
+  const halfW = width / 2;
+  const halfH = height / 2;
+  const scale = Math.min(halfW / Math.abs(dx), halfH / Math.abs(dy));
+  return { x: cx + dx * scale, y: cy + dy * scale };
+}
+
 export function nodeBounds(node: GraphNode): {
   left: number;
   top: number;

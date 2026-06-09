@@ -3,10 +3,21 @@ import Svg, { Path } from 'react-native-svg';
 
 import type { Colors } from '@/shared/config';
 
+import {
+  buildParallelEdgeBendLayout,
+  computeEdgeCurvature,
+  computeQuadraticEdgePath,
+} from '../lib/graphEdgePath';
 import { getGraphEdgeStrokeStyle } from '../lib/graphEdgeStyles';
-import { computeQuadraticEdgePath, edgeBendSign } from '../lib/graphEdgePath';
-import type { GraphEdge, GraphNode } from '../lib/graphTypes';
-import { nodeCenter } from '../lib/graphNodeMetrics';
+import { nodeBorderAnchor, nodeCenter } from '../lib/graphNodeMetrics';
+import type { GraphEdge, GraphEdgeKind, GraphNode } from '../lib/graphTypes';
+
+const EDGE_DRAW_ORDER: Record<GraphEdgeKind, number> = {
+  sameFolder: 0,
+  sharedTag: 1,
+  contains: 2,
+  similar: 3,
+};
 
 type GraphEdgeLayerProps = {
   nodes: GraphNode[];
@@ -40,6 +51,15 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
   activeNodeId,
 }: GraphEdgeLayerProps) {
   const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
+  const bendLayout = useMemo(() => buildParallelEdgeBendLayout(edges), [edges]);
+  const sortedEdges = useMemo(
+    () =>
+      [...edges].sort((a, b) => {
+        const orderDelta = EDGE_DRAW_ORDER[a.kind] - EDGE_DRAW_ORDER[b.kind];
+        return orderDelta !== 0 ? orderDelta : a.id.localeCompare(b.id);
+      }),
+    [edges],
+  );
 
   return (
     <Svg
@@ -48,16 +68,21 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
       style={{ position: 'absolute', left: 0, top: 0 }}
       pointerEvents="none"
     >
-      {edges.map((edge) => {
+      {sortedEdges.map((edge) => {
         const source = nodeById.get(edge.sourceId);
         const target = nodeById.get(edge.targetId);
         if (!source || !target) return null;
 
-        const from = nodeCenter(source);
-        const to = nodeCenter(target);
+        const targetCenter = nodeCenter(target);
+        const sourceCenter = nodeCenter(source);
+        const from = nodeBorderAnchor(source, targetCenter);
+        const to = nodeBorderAnchor(target, sourceCenter);
         const style = getGraphEdgeStrokeStyle(edge.kind, color);
         const dimmed = edgeIsDimmed(edge, matchedNodeIds, activeNodeId);
-        const path = computeQuadraticEdgePath(from, to, edgeBendSign(edge.id));
+        const bend = bendLayout.get(edge.id) ?? { index: 0, total: 1 };
+        const distance = Math.hypot(to.x - from.x, to.y - from.y);
+        const curvature = computeEdgeCurvature(distance, edge.id, bend);
+        const path = computeQuadraticEdgePath(from, to, curvature);
 
         return (
           <Path

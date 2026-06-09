@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { CalendarDays, Circle, Flag, Inbox, ListChecks, Tag as TagIcon } from 'lucide-react-native';
+import { CalendarDays, Flag, Inbox, ListChecks, Tag as TagIcon } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
@@ -428,28 +428,23 @@ export function GraphTaskNodeCardContent({
 
   return (
     <View style={{ flex: 1, minWidth: 0 }}>
-      <View style={{ alignItems: 'flex-start', flexDirection: 'row', gap: 6 }}>
-        <Circle color={color.icon.muted} size={13} strokeWidth={2} style={{ marginTop: 1 }} />
-        <Text
-          numberOfLines={2}
-          style={{
-            color: color.text.primary,
-            flex: 1,
-            fontSize: 11,
-            fontWeight: '500',
-            lineHeight: 14,
-          }}
-        >
-          {text}
-        </Text>
-      </View>
+      <Text
+        numberOfLines={2}
+        style={{
+          color: color.text.primary,
+          fontSize: 11,
+          fontWeight: '500',
+          lineHeight: 14,
+        }}
+      >
+        {text}
+      </Text>
       {hasMeta ? (
         <View
           style={{
             flexDirection: 'row',
             flexWrap: 'wrap',
             gap: 4,
-            marginLeft: 19,
             marginTop: 3,
           }}
         >

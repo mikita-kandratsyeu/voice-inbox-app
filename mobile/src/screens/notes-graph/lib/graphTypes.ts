@@ -54,7 +54,7 @@ export const DEFAULT_EDGE_VISIBILITY: GraphEdgeVisibility = {
 export const RECORD_NODE_WIDTH = 158;
 export const RECORD_NODE_HEIGHT = 82;
 export const TASK_NODE_WIDTH = 136;
-export const TASK_NODE_HEIGHT = 46;
+export const TASK_NODE_HEIGHT = 42;
 
 export function recordNodeId(recordId: string): string {
   return `record:${recordId}`;

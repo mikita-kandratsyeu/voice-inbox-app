@@ -57,33 +57,33 @@ export function getGraphEdgeStrokeStyle(
     case 'similar':
       return {
         stroke: color.accent.primary,
-        strokeWidth: 2,
+        strokeWidth: 1.75,
         strokeLinecap: 'round',
-        opacity: 0.55,
+        opacity: 0.62,
       };
     case 'sharedTag':
       return {
         stroke: color.text.secondary,
-        strokeWidth: 1.5,
-        strokeDasharray: '6 4',
+        strokeWidth: 1.25,
+        strokeDasharray: '5 4',
         strokeLinecap: 'round',
-        opacity: 0.45,
+        opacity: 0.38,
       };
     case 'sameFolder':
       return {
         stroke: color.border.default,
         strokeWidth: 1,
-        strokeDasharray: '2 6',
+        strokeDasharray: '2 7',
         strokeLinecap: 'round',
-        opacity: 0.35,
+        opacity: 0.28,
       };
     case 'contains':
     default:
       return {
         stroke: color.text.muted,
-        strokeWidth: 1.25,
+        strokeWidth: 1.1,
         strokeLinecap: 'round',
-        opacity: 0.5,
+        opacity: 0.42,
       };
   }
 }

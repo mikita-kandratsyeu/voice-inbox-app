@@ -1,11 +1,12 @@
 import type { TFunction } from 'i18next';
-import { Archive, Inbox, ListChecks, Pin, Waypoints } from 'lucide-react-native';
+import { Archive, Inbox, ListChecks, Pin } from 'lucide-react-native';
 import React from 'react';
 import { View } from 'react-native';
 import type { EdgeInsets } from 'react-native-safe-area-context';
 
 import type { Folder } from '@/entities/folder';
 import type { MonetizationMode } from '@/features/app-storefront';
+import { NotesGraphIcon } from '@/screens/notes-graph/ui/NotesGraphIcon';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import { PlanPaywallProChip } from '@/shared/ui';
@@ -215,7 +216,7 @@ export function TabletSidebarBody({
             activeColor={notesGraphIconColor}
             inactiveColor={mutedIcon}
           >
-            <Waypoints />
+            <NotesGraphIcon />
           </TabletSidebarNavIcon>
         }
       />

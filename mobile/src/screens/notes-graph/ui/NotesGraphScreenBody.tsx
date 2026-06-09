@@ -702,7 +702,6 @@ export const NotesGraphScreenBody = () => {
         showMetadataFields
         onClose={() => setEditTaskTarget(null)}
         onSave={handleSaveTask}
-        sheetTitleKey="recordingDetail.editTask"
       />
 
       <GraphLayoutHistorySheet
