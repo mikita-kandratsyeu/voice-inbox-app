@@ -1,13 +1,21 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { runOnJS } from 'react-native-reanimated';
+import { runOnJS, useSharedValue } from 'react-native-reanimated';
 import Svg, { Rect } from 'react-native-svg';
 
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 
+import {
+  computeMinimapViewportRect,
+  computeStaticMinimapFrame,
+  getMinimapCanvasSize,
+  GRAPH_MINIMAP_VIEWPORT_STROKE,
+  minimapToWorldPoint,
+  worldToMinimapPoint,
+} from '../lib/graphMinimapFrame';
 import {
   clampGraphMinimapSize,
   getGraphMinimapSize,
@@ -22,8 +30,8 @@ const RESIZE_HANDLE_SIZE = 28;
 type GraphMinimapProps = {
   color: Colors;
   nodes: GraphNode[];
-  graphWidth: number;
-  graphHeight: number;
+  worldWidth: number;
+  worldHeight: number;
   viewportWidth: number;
   viewportHeight: number;
   translateX: number;
@@ -32,27 +40,6 @@ type GraphMinimapProps = {
   disabled?: boolean;
   onNavigate: (translateX: number, translateY: number) => void;
 };
-
-function computeContentBounds(nodes: GraphNode[]) {
-  if (nodes.length === 0) {
-    return { minX: 0, minY: 0, maxX: 1, maxY: 1 };
-  }
-
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-
-  for (const node of nodes) {
-    const bounds = nodeBounds(node);
-    minX = Math.min(minX, bounds.left);
-    minY = Math.min(minY, bounds.top);
-    maxX = Math.max(maxX, bounds.right);
-    maxY = Math.max(maxY, bounds.bottom);
-  }
-
-  return { minX, minY, maxX, maxY };
-}
 
 function MinimapResizeHandle({ color, label }: { color: Colors; label: string }) {
   return (
@@ -88,8 +75,8 @@ function MinimapResizeHandle({ color, label }: { color: Colors; label: string })
 export function GraphMinimap({
   color,
   nodes,
-  graphWidth,
-  graphHeight,
+  worldWidth,
+  worldHeight,
   viewportWidth,
   viewportHeight,
   translateX,
@@ -100,45 +87,80 @@ export function GraphMinimap({
 }: GraphMinimapProps) {
   const { t } = useTranslation();
   const [minimapSize, setMinimapSize] = useState<GraphMinimapSize>(() => getGraphMinimapSize());
-  const minimapSizeRef = useRef(minimapSize);
-  const resizeStartRef = useRef(minimapSize);
+  const minimapWidthSV = useSharedValue(minimapSize.width);
+  const minimapHeightSV = useSharedValue(minimapSize.height);
+  const resizeStartWidthSV = useSharedValue(minimapSize.width);
+  const resizeStartHeightSV = useSharedValue(minimapSize.height);
 
-  minimapSizeRef.current = minimapSize;
+  useEffect(() => {
+    minimapWidthSV.value = minimapSize.width;
+    minimapHeightSV.value = minimapSize.height;
+  }, [minimapHeightSV, minimapSize.height, minimapSize.width, minimapWidthSV]);
 
   const { width: minimapWidth, height: minimapHeight } = minimapSize;
+  const { width: canvasWidth, height: canvasHeight } = useMemo(
+    () => getMinimapCanvasSize(minimapWidth, minimapHeight),
+    [minimapHeight, minimapWidth],
+  );
 
-  const contentBounds = useMemo(() => computeContentBounds(nodes), [nodes]);
-  const worldWidth = Math.max(graphWidth, contentBounds.maxX);
-  const worldHeight = Math.max(graphHeight, contentBounds.maxY);
+  const minimapFrame = useMemo(
+    () => computeStaticMinimapFrame(nodes, worldWidth, worldHeight, canvasWidth, canvasHeight),
+    [canvasHeight, canvasWidth, nodes, worldHeight, worldWidth],
+  );
 
-  const miniScale = useMemo(() => {
-    const scaleX = minimapWidth / worldWidth;
-    const scaleY = minimapHeight / worldHeight;
-    return Math.min(scaleX, scaleY);
-  }, [minimapHeight, minimapWidth, worldHeight, worldWidth]);
-
-  const viewportWorldLeft = -translateX / Math.max(scale, 0.001);
-  const viewportWorldTop = -translateY / Math.max(scale, 0.001);
-  const viewportWorldWidth = viewportWidth / Math.max(scale, 0.001);
-  const viewportWorldHeight = viewportHeight / Math.max(scale, 0.001);
+  const viewportMinimap = useMemo(
+    () =>
+      computeMinimapViewportRect(
+        minimapFrame,
+        nodes,
+        canvasWidth,
+        canvasHeight,
+        viewportWidth,
+        viewportHeight,
+        translateX,
+        translateY,
+        scale,
+      ),
+    [
+      canvasHeight,
+      canvasWidth,
+      minimapFrame,
+      nodes,
+      scale,
+      translateX,
+      translateY,
+      viewportHeight,
+      viewportWidth,
+    ],
+  );
 
   const handlePress = (event: { nativeEvent: { locationX: number; locationY: number } }) => {
     if (disabled) return;
-    const worldX = event.nativeEvent.locationX / miniScale;
-    const worldY = event.nativeEvent.locationY / miniScale;
-    const nextTranslateX = viewportWidth / 2 - worldX * scale;
-    const nextTranslateY = viewportHeight / 2 - worldY * scale;
+    const worldPoint = minimapToWorldPoint(
+      event.nativeEvent.locationX,
+      event.nativeEvent.locationY,
+      minimapFrame,
+      canvasWidth,
+      canvasHeight,
+    );
+    if (!worldPoint) return;
+    const nextTranslateX = viewportWidth / 2 - worldPoint.x * scale;
+    const nextTranslateY = viewportHeight / 2 - worldPoint.y * scale;
     onNavigate(nextTranslateX, nextTranslateY);
   };
 
-  const applyResize = useCallback((nextWidth: number, nextHeight: number) => {
-    const clamped = clampGraphMinimapSize(nextWidth, nextHeight);
-    minimapSizeRef.current = clamped;
-    setMinimapSize(clamped);
-  }, []);
+  const applyResize = useCallback(
+    (nextWidth: number, nextHeight: number) => {
+      const clamped = clampGraphMinimapSize(nextWidth, nextHeight);
+      minimapWidthSV.value = clamped.width;
+      minimapHeightSV.value = clamped.height;
+      setMinimapSize(clamped);
+    },
+    [minimapHeightSV, minimapWidthSV],
+  );
 
-  const persistResize = useCallback((size: GraphMinimapSize) => {
-    setGraphMinimapSize(size);
+  const persistResize = useCallback((width: number, height: number) => {
+    setGraphMinimapSize({ width, height });
     hapticSelection();
   }, []);
 
@@ -146,18 +168,26 @@ export function GraphMinimap({
     () =>
       Gesture.Pan()
         .onBegin(() => {
-          resizeStartRef.current = minimapSizeRef.current;
+          resizeStartWidthSV.value = minimapWidthSV.value;
+          resizeStartHeightSV.value = minimapHeightSV.value;
         })
         .onUpdate((event) => {
           runOnJS(applyResize)(
-            resizeStartRef.current.width - event.translationX,
-            resizeStartRef.current.height + event.translationY,
+            resizeStartWidthSV.value - event.translationX,
+            resizeStartHeightSV.value + event.translationY,
           );
         })
         .onEnd(() => {
-          runOnJS(persistResize)(minimapSizeRef.current);
+          runOnJS(persistResize)(minimapWidthSV.value, minimapHeightSV.value);
         }),
-    [applyResize, persistResize],
+    [
+      applyResize,
+      minimapHeightSV,
+      minimapWidthSV,
+      persistResize,
+      resizeStartHeightSV,
+      resizeStartWidthSV,
+    ],
   );
 
   if (nodes.length < 12) return null;
@@ -187,31 +217,42 @@ export function GraphMinimap({
           borderColor: color.border.default,
         }}
       >
-        <Svg width={minimapWidth} height={minimapHeight}>
+        <Svg width={canvasWidth} height={canvasHeight}>
+          <Rect
+            x={0}
+            y={0}
+            width={canvasWidth}
+            height={canvasHeight}
+            fill={color.background.secondary}
+            opacity={0.55}
+          />
           {nodes.map((node) => {
             const bounds = nodeBounds(node);
+            const topLeft = worldToMinimapPoint(bounds.left, bounds.top, minimapFrame);
             return (
               <Rect
                 key={node.id}
-                x={bounds.left * miniScale}
-                y={bounds.top * miniScale}
-                width={Math.max(2, (bounds.right - bounds.left) * miniScale)}
-                height={Math.max(2, (bounds.bottom - bounds.top) * miniScale)}
+                x={topLeft.x}
+                y={topLeft.y}
+                width={Math.max(2, (bounds.right - bounds.left) * minimapFrame.scale)}
+                height={Math.max(2, (bounds.bottom - bounds.top) * minimapFrame.scale)}
                 fill={color.accent.primary}
                 opacity={0.55}
                 rx={1}
               />
             );
           })}
-          <Rect
-            x={viewportWorldLeft * miniScale}
-            y={viewportWorldTop * miniScale}
-            width={Math.max(6, viewportWorldWidth * miniScale)}
-            height={Math.max(6, viewportWorldHeight * miniScale)}
-            stroke={color.accent.primary}
-            strokeWidth={1.5}
-            fill="transparent"
-          />
+          {viewportMinimap.width > 0 && viewportMinimap.height > 0 ? (
+            <Rect
+              x={viewportMinimap.x}
+              y={viewportMinimap.y}
+              width={viewportMinimap.width}
+              height={viewportMinimap.height}
+              stroke={color.accent.primary}
+              strokeWidth={GRAPH_MINIMAP_VIEWPORT_STROKE}
+              fill="transparent"
+            />
+          ) : null}
         </Svg>
       </Pressable>
 

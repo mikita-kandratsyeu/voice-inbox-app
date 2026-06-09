@@ -26,6 +26,12 @@ import type { Colors } from '@/shared/config';
 import { GRAPH_DRAG_RECONCILE_MIN_MS } from '../lib/graphDragReconcile';
 import { getSessionNodePositions, setSessionNodePosition } from '../lib/graphSessionLayout';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
+import {
+  clampViewportTransform,
+  clampViewportTranslation,
+  computeWorldDimensions,
+  GRAPH_PAN_OVERSCROLL,
+} from '../lib/graphViewportBounds';
 import type { GraphViewportInsets } from '../lib/graphViewportInsets';
 import { computeFitTransform, computeFocusTransform } from '../lib/runForceLayout';
 import { DottedBackground } from './DottedBackground';
@@ -162,34 +168,75 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     setViewportTransform({ scale: nextScale, translateX: nextX, translateY: nextY });
   }, []);
 
+  const { width: worldWidth, height: worldHeight } = useMemo(
+    () => computeWorldDimensions(graphWidth, graphHeight, viewportWidth, viewportHeight, MIN_SCALE),
+    [graphHeight, graphWidth, viewportHeight, viewportWidth],
+  );
+
+  const worldWidthSV = useSharedValue(worldWidth);
+  const worldHeightSV = useSharedValue(worldHeight);
+  const viewportWidthSV = useSharedValue(viewportWidth);
+  const viewportHeightSV = useSharedValue(viewportHeight);
+
+  useEffect(() => {
+    worldWidthSV.value = worldWidth;
+    worldHeightSV.value = worldHeight;
+    viewportWidthSV.value = viewportWidth;
+    viewportHeightSV.value = viewportHeight;
+  }, [
+    worldHeight,
+    worldWidth,
+    viewportHeight,
+    viewportWidth,
+    worldHeightSV,
+    worldWidthSV,
+    viewportHeightSV,
+    viewportWidthSV,
+  ]);
+
+  const clampTransform = useCallback(
+    (next: { scale: number; translateX: number; translateY: number }) =>
+      clampViewportTransform(
+        next,
+        worldWidth,
+        worldHeight,
+        viewportWidth,
+        viewportHeight,
+        MIN_SCALE,
+        MAX_SCALE,
+      ),
+    [viewportHeight, viewportWidth, worldHeight, worldWidth],
+  );
+
   const applyTransform = useCallback(
     (next: { scale: number; translateX: number; translateY: number }, animated = true) => {
-      const clampedScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, next.scale));
+      const clamped = clampTransform(next);
 
       const commitViewportSync = () => {
-        syncViewportState(clampedScale, next.translateX, next.translateY);
+        syncViewportState(clamped.scale, clamped.translateX, clamped.translateY);
       };
 
-      savedScale.value = clampedScale;
-      savedTranslateX.value = next.translateX;
-      savedTranslateY.value = next.translateY;
+      savedScale.value = clamped.scale;
+      savedTranslateX.value = clamped.translateX;
+      savedTranslateY.value = clamped.translateY;
 
       if (animated) {
-        scale.value = withSpring(clampedScale, GRAPH_VIEWPORT_SPRING, (finished) => {
+        scale.value = withSpring(clamped.scale, GRAPH_VIEWPORT_SPRING, (finished) => {
           if (finished) {
             runOnJS(commitViewportSync)();
           }
         });
-        translateX.value = withSpring(next.translateX, GRAPH_VIEWPORT_SPRING);
-        translateY.value = withSpring(next.translateY, GRAPH_VIEWPORT_SPRING);
+        translateX.value = withSpring(clamped.translateX, GRAPH_VIEWPORT_SPRING);
+        translateY.value = withSpring(clamped.translateY, GRAPH_VIEWPORT_SPRING);
       } else {
-        scale.value = clampedScale;
-        translateX.value = next.translateX;
-        translateY.value = next.translateY;
+        scale.value = clamped.scale;
+        translateX.value = clamped.translateX;
+        translateY.value = clamped.translateY;
         commitViewportSync();
       }
     },
     [
+      clampTransform,
       savedScale,
       savedTranslateX,
       savedTranslateY,
@@ -272,6 +319,19 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       fitToScreen(false);
     }
   }, [layoutSignature, fitToScreen, nodes.length, viewportSize.height, viewportSize.width]);
+
+  useEffect(() => {
+    applyTransform(
+      {
+        scale: viewportTransform.scale,
+        translateX: viewportTransform.translateX,
+        translateY: viewportTransform.translateY,
+      },
+      false,
+    );
+    // Re-clamp when canvas or viewport size changes; transform values come from latest state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional dimension-only trigger
+  }, [worldWidth, worldHeight, viewportWidth, viewportHeight]);
 
   const handleNodeDragStart = useCallback(() => {
     isNodeDragging.value = true;
@@ -359,6 +419,22 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     savedTranslateY.value = translateY.value;
   };
 
+  const panOverscrollSV = useSharedValue(GRAPH_PAN_OVERSCROLL);
+
+  const clampTranslationWorklet = (tx: number, ty: number, currentScale: number) => {
+    'worklet';
+    return clampViewportTranslation(
+      tx,
+      ty,
+      currentScale,
+      worldWidthSV.value,
+      worldHeightSV.value,
+      viewportWidthSV.value,
+      viewportHeightSV.value,
+      panOverscrollSV.value,
+    );
+  };
+
   const applyFocalZoom = (
     nextScale: number,
     focalX: number,
@@ -370,8 +446,11 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     'worklet';
     const clampedScale = clampViewportScale(nextScale);
     const scaleRatio = clampedScale / baseScale;
-    translateX.value = focalX - (focalX - baseTranslateX) * scaleRatio;
-    translateY.value = focalY - (focalY - baseTranslateY) * scaleRatio;
+    const nextX = focalX - (focalX - baseTranslateX) * scaleRatio;
+    const nextY = focalY - (focalY - baseTranslateY) * scaleRatio;
+    const clamped = clampTranslationWorklet(nextX, nextY, clampedScale);
+    translateX.value = clamped.translateX;
+    translateY.value = clamped.translateY;
     scale.value = clampedScale;
   };
 
@@ -409,8 +488,11 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     })
     .onUpdate((event) => {
       if (isNodeDragging.value) return;
-      translateX.value = savedTranslateX.value + event.translationX;
-      translateY.value = savedTranslateY.value + event.translationY;
+      const nextX = savedTranslateX.value + event.translationX;
+      const nextY = savedTranslateY.value + event.translationY;
+      const clamped = clampTranslationWorklet(nextX, nextY, scale.value);
+      translateX.value = clamped.translateX;
+      translateY.value = clamped.translateY;
     })
     .onEnd(() => {
       if (isNodeDragging.value) return;
@@ -427,10 +509,11 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         event.x - (event.x - savedTranslateX.value) * (nextScale / savedScale.value);
       const nextTranslateY =
         event.y - (event.y - savedTranslateY.value) * (nextScale / savedScale.value);
+      const clamped = clampTranslationWorklet(nextTranslateX, nextTranslateY, nextScale);
 
       savedScale.value = nextScale;
-      savedTranslateX.value = nextTranslateX;
-      savedTranslateY.value = nextTranslateY;
+      savedTranslateX.value = clamped.translateX;
+      savedTranslateY.value = clamped.translateY;
 
       const timing = {
         duration: GRAPH_VIEWPORT_TIMING_MS,
@@ -439,11 +522,11 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
       scale.value = withTiming(nextScale, timing, (finished) => {
         if (finished) {
-          runOnJS(syncViewportState)(nextScale, nextTranslateX, nextTranslateY);
+          runOnJS(syncViewportState)(nextScale, clamped.translateX, clamped.translateY);
         }
       });
-      translateX.value = withTiming(nextTranslateX, timing);
-      translateY.value = withTiming(nextTranslateY, timing);
+      translateX.value = withTiming(clamped.translateX, timing);
+      translateY.value = withTiming(clamped.translateY, timing);
     });
 
   const canvasGesture = Gesture.Simultaneous(pinch, pan, doubleTap);
@@ -458,20 +541,12 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
   const [legendVisible, setLegendVisible] = React.useState(false);
 
-  const worldWidth = useMemo(
-    () => Math.max(graphWidth, viewportWidth),
-    [graphWidth, viewportWidth],
-  );
-  const worldHeight = useMemo(
-    () => Math.max(graphHeight, viewportHeight),
-    [graphHeight, viewportHeight],
-  );
-
   return (
     <View
       style={{ flex: 1, overflow: 'hidden', backgroundColor: color.background.secondary }}
       onLayout={handleCanvasLayout}
     >
+      <DottedBackground width={viewportWidth} height={viewportHeight} dotColor={color.text.muted} />
       <GestureDetector gesture={canvasGesture}>
         <View collapsable={false} style={{ flex: 1, overflow: 'hidden' }}>
           <Animated.View
@@ -484,7 +559,6 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               animatedStyle,
             ]}
           >
-            <DottedBackground width={worldWidth} height={worldHeight} dotColor={color.text.muted} />
             <GraphEdgeLayer
               nodes={displayNodes}
               edges={edges}
@@ -517,8 +591,8 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       <GraphMinimap
         color={color}
         nodes={displayNodes}
-        graphWidth={graphWidth}
-        graphHeight={graphHeight}
+        worldWidth={worldWidth}
+        worldHeight={worldHeight}
         viewportWidth={viewportWidth}
         viewportHeight={viewportHeight}
         translateX={viewportTransform.translateX}

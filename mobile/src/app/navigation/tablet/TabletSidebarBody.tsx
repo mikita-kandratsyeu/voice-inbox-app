@@ -20,11 +20,7 @@ import {
   TabletSidebarFoldersSection,
 } from './TabletSidebarFoldersSection';
 import { TabletSidebarFooter } from './TabletSidebarFooter';
-import {
-  TabletSidebarNavIcon,
-  TabletSidebarNavItem,
-  TabletSidebarSectionDivider,
-} from './TabletSidebarNavItem';
+import { TabletSidebarNavIcon, TabletSidebarNavItem } from './TabletSidebarNavItem';
 import { TabletSidebarPlanAndUsageCard } from './TabletSidebarPlanAndUsageCard';
 import type { TabletSidebarTheme } from './tabletSidebarTheme';
 import { navigateMainTab } from './tabletTabNavigation';
@@ -138,7 +134,7 @@ export function TabletSidebarBody({
     />
   );
 
-  const secondaryNav = (
+  const inboxFiltersNav = (
     <>
       <TabletSidebarNavItem
         label={t('inbox.filters.pinned')}
@@ -182,7 +178,11 @@ export function TabletSidebarBody({
           </TabletSidebarNavIcon>
         }
       />
-      <TabletSidebarSectionDivider color={color} />
+    </>
+  );
+
+  const overviewNav = (
+    <>
       <TabletSidebarNavItem
         label={t('allTasks.title')}
         isActive={false}
@@ -278,7 +278,7 @@ export function TabletSidebarBody({
           }}
         >
           {inboxNav}
-          {secondaryNav}
+          {inboxFiltersNav}
         </View>
 
         {!foldersEnabled ? (
@@ -312,6 +312,8 @@ export function TabletSidebarBody({
           backgroundColor: theme.panel,
         }}
       >
+        <View style={{ gap: 8, opacity: navDimmed ? 0.62 : 1 }}>{overviewNav}</View>
+
         {!isProActive ? (
           <TabletSidebarPlanAndUsageCard
             color={color}

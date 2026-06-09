@@ -108,7 +108,7 @@ function InboxScreenHeaderRightInner({
         id: 'notesGraph',
         title: t('notesGraph.title'),
         titleColor: color.text.primary,
-        image: 'network',
+        image: 'point.3.connected.trianglepath.dotted',
         imageColor: color.text.primary,
       });
     }
