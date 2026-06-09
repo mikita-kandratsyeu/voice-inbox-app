@@ -43,6 +43,7 @@ export { ScreenHeader } from './ScreenHeader';
 export { SectionHeader } from './SectionHeader';
 export { SettingsRow } from './SettingsRow';
 export { SettingsSection } from './SettingsSection';
+export { IOS_INLINE_DATE_PICKER_HEIGHT, SystemInlineDatePicker } from './SystemInlineDatePicker';
 export { SkeletonPulse } from './SkeletonPulse';
 export { SwipeableCard, SwipeableCardContext } from './SwipeableCard';
 export { SwipeHintBanner } from './SwipeHintBanner';

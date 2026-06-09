@@ -4,7 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import dayjs from 'dayjs';
-import { Plus, X } from 'lucide-react-native';
+import { CalendarDays, Plus, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, Text, useWindowDimensions, View } from 'react-native';
@@ -36,7 +36,9 @@ import {
 } from '@/shared/lib/validateTaskDeadlineInput';
 import { EmptyState, HeaderIconButton, ScreenHeader, SectionHeader } from '@/shared/ui';
 
-import { applyAllTasksQuickFilter, sortTaskRows } from '../lib/applyAllTasksQuickFilter';
+import { sortTaskRows } from '../lib/applyAllTasksQuickFilter';
+import { buildAllTasksRows } from '../lib/buildAllTasksRows';
+import { filterTasksByCalendarDate } from '../lib/filterTasksByCalendarDate';
 import {
   getTaskDeadlineBucket,
   TASK_DEADLINE_BUCKET_ORDER,
@@ -47,11 +49,13 @@ import {
   injectAllTasksListBannerCard,
 } from '../lib/injectAllTasksListBannerCard';
 import type { AllTasksQuickFilter, TaskDeadlineBucket, TaskWithRecord } from '../types';
+import { AllTasksCalendarPanel } from './AllTasksCalendarPanel';
 import { AllTasksFiltersPanel } from './AllTasksFiltersPanel';
 import { AllTasksNotePickerSheet } from './AllTasksNotePickerSheet';
 import { AllTasksTaskRow } from './AllTasksTaskRow';
 
 type Section = { id: TaskDeadlineBucket; title: string; data: TaskWithRecord[] };
+type AllTasksViewMode = 'list' | 'calendar';
 
 export const AllTasksScreen = () => {
   const { t } = useTranslation();
@@ -75,6 +79,8 @@ export const AllTasksScreen = () => {
   const [notePickerVisible, setNotePickerVisible] = useState(false);
   const [createTaskRecordId, setCreateTaskRecordId] = useState<string | null>(null);
   const [createTaskFromPicker, setCreateTaskFromPicker] = useState(false);
+  const [viewMode, setViewMode] = useState<AllTasksViewMode>('list');
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => new Date());
 
   const listRef = useRef<FlashListRef<AllTasksListItem>>(null);
 
@@ -149,36 +155,20 @@ export const AllTasksScreen = () => {
     };
   }, []);
 
+  const taskRows = useMemo(
+    () =>
+      buildAllTasksRows(records, {
+        effectiveActiveFolderId,
+        recordFilterId,
+        quickFilter,
+        recentlyCompleted,
+      }),
+    [records, quickFilter, recentlyCompleted, effectiveActiveFolderId, recordFilterId],
+  );
+
   const sectionList = useMemo(() => {
-    let pool = [...records]
-      .filter((r) => r.status !== 'archived')
-      .filter((r) => (r.tasks?.length ?? 0) > 0);
-
-    if (effectiveActiveFolderId) {
-      pool = pool.filter((r) => r.folderId === effectiveActiveFolderId);
-    }
-    if (recordFilterId) {
-      pool = pool.filter((r) => r.id === recordFilterId);
-    }
-
-    const sorted = pool.sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf());
-
-    const rows: TaskWithRecord[] = [];
-    for (const r of sorted) {
-      for (const task of r.tasks ?? []) {
-        rows.push({
-          recordId: r.id,
-          recordTitle: r.title,
-          recordCreatedAt: r.createdAt,
-          task,
-        });
-      }
-    }
-
-    const filtered = applyAllTasksQuickFilter(rows, quickFilter, recentlyCompleted);
-
     const byBucket = new Map<TaskDeadlineBucket, TaskWithRecord[]>();
-    for (const row of filtered) {
+    for (const row of taskRows) {
       const key = getTaskDeadlineBucket(row.task);
       const list = byBucket.get(key) ?? [];
       list.push(row);
@@ -192,7 +182,26 @@ export const AllTasksScreen = () => {
     })).filter((section) => section.data.length > 0);
 
     return sections;
-  }, [records, quickFilter, t, recentlyCompleted, effectiveActiveFolderId, recordFilterId]);
+  }, [taskRows, t]);
+
+  const calendarDayRows = useMemo(() => {
+    const filtered = filterTasksByCalendarDate(taskRows, selectedCalendarDate);
+    return [...filtered].sort(sortTaskRows);
+  }, [taskRows, selectedCalendarDate]);
+
+  const calendarListData = useMemo((): AllTasksListItem[] => {
+    return calendarDayRows.map((row) => ({ type: 'task', row }));
+  }, [calendarDayRows]);
+
+  useEffect(() => {
+    if (viewMode === 'calendar' && quickFilter === 'today') {
+      setSelectedCalendarDate(new Date());
+    }
+  }, [quickFilter, viewMode]);
+
+  useEffect(() => {
+    flashListJumpToTop(listRef.current ?? undefined);
+  }, [viewMode, selectedCalendarDate]);
 
   const flattenedList = useMemo((): AllTasksFlattenedItem[] => {
     const out: AllTasksFlattenedItem[] = [];
@@ -535,20 +544,51 @@ export const AllTasksScreen = () => {
     ],
   );
 
+  const toggleViewMode = useCallback(() => {
+    hapticSelection();
+    setViewMode((prev) => {
+      if (prev === 'list') {
+        setSelectedCalendarDate(new Date());
+        return 'calendar';
+      }
+      return 'list';
+    });
+  }, []);
+
   const headerRightSlot = useMemo(
     () => (
-      <HeaderIconButton
-        iconOnly
-        variant="icon"
-        size="md"
-        icon={<Plus size={22} color={color.text.primary} strokeWidth={2.2} />}
-        color={color}
-        onPress={openCreateTask}
-        accessibilityLabel={t('allTasks.createTaskA11y')}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <HeaderIconButton
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={
+            <CalendarDays
+              size={20}
+              color={viewMode === 'calendar' ? color.accent.primary : color.text.primary}
+              strokeWidth={2.2}
+            />
+          }
+          color={color}
+          onPress={toggleViewMode}
+          accessibilityLabel={
+            viewMode === 'calendar' ? t('allTasks.listViewA11y') : t('allTasks.calendarViewA11y')
+          }
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        />
+        <HeaderIconButton
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={<Plus size={22} color={color.text.primary} strokeWidth={2.2} />}
+          color={color}
+          onPress={openCreateTask}
+          accessibilityLabel={t('allTasks.createTaskA11y')}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        />
+      </View>
     ),
-    [color, openCreateTask, t],
+    [color, openCreateTask, t, toggleViewMode, viewMode],
   );
 
   const renderListItem = useCallback(
@@ -619,7 +659,11 @@ export const AllTasksScreen = () => {
 
   const getItemType = useCallback((item: AllTasksListItem) => item.type, []);
 
-  const empty = sectionList.length === 0 || sectionList.every((s) => s.data.length === 0);
+  const listEmpty =
+    sectionList.length === 0 || sectionList.every((section) => section.data.length === 0);
+  const calendarEmpty = calendarDayRows.length === 0;
+  const empty = viewMode === 'calendar' ? calendarEmpty : listEmpty;
+  const activeListData = viewMode === 'calendar' ? calendarListData : listData;
 
   return (
     <View className="flex-1" style={{ backgroundColor: color.background.secondary }}>
@@ -696,6 +740,16 @@ export const AllTasksScreen = () => {
         </View>
       ) : null}
 
+      {viewMode === 'calendar' ? (
+        <AllTasksCalendarPanel
+          color={color}
+          selectedDate={selectedCalendarDate}
+          onDateChange={setSelectedCalendarDate}
+          horizontalPadding={filterPadH}
+          maxWidth={contentMaxWidth}
+        />
+      ) : null}
+
       {empty ? (
         <View
           className="flex-1"
@@ -709,7 +763,11 @@ export const AllTasksScreen = () => {
           <View className="flex-1 justify-center px-6">
             <EmptyState
               title={
-                quickFilter !== 'all' ? t('allTasks.emptyQuickFilter') : t('allTasks.emptyFiltered')
+                viewMode === 'calendar'
+                  ? t('allTasks.emptyCalendarDate')
+                  : quickFilter !== 'all'
+                    ? t('allTasks.emptyQuickFilter')
+                    : t('allTasks.emptyFiltered')
               }
               description={t('allTasks.emptyDescription')}
             />
@@ -719,7 +777,7 @@ export const AllTasksScreen = () => {
       ) : (
         <FlashList<AllTasksListItem>
           ref={listRef}
-          data={listData}
+          data={activeListData}
           renderItem={renderListItem}
           keyExtractor={keyExtractor}
           getItemType={getItemType}

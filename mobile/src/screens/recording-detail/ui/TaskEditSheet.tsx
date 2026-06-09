@@ -20,6 +20,7 @@ import {
   type LinkedNoteContext,
   LinkedNoteContextBanner,
   SheetFooterButtons,
+  SystemInlineDatePicker,
   useBottomSheetContentPadding,
 } from '@/shared/ui';
 
@@ -58,7 +59,6 @@ type TaskEditSheetProps = {
 };
 
 const PRIORITIES: NonNullable<TaskItem['priority']>[] = ['low', 'medium', 'high'];
-const IOS_INLINE_DATE_PICKER_HEIGHT = 370;
 
 const formatTaskDeadline = (date: Date): string => {
   const year = date.getFullYear();
@@ -598,39 +598,16 @@ export function TaskEditSheet({
                 )}
               </View>
               {datePickerOpen && (
-                <View
-                  className="mt-3 items-center overflow-hidden rounded-2xl"
-                  style={{
-                    alignSelf: 'center',
-                    backgroundColor: color.background.tertiary,
-                    width: '100%',
-                  }}
-                >
-                  <DateTimePicker
+                <View className="mt-3">
+                  <SystemInlineDatePicker
                     value={datePickerValue}
-                    mode="date"
-                    display={IS_IOS ? 'inline' : 'default'}
-                    accentColor={color.accent.primary}
-                    themeVariant={theme}
                     minimumDate={new Date()}
-                    style={
-                      IS_IOS
-                        ? {
-                            alignSelf: 'center',
-                            height: IOS_INLINE_DATE_PICKER_HEIGHT,
-                            width: '100%',
-                          }
-                        : undefined
-                    }
-                    onValueChange={(_, selectedDate) => {
-                      if (selectedDate) {
-                        setDeadlineDraft(formatTaskDeadline(selectedDate));
-                      }
+                    onChange={(selectedDate) => {
+                      setDeadlineDraft(formatTaskDeadline(selectedDate));
                       if (!IS_IOS) {
                         setDatePickerOpen(false);
                       }
                     }}
-                    onDismiss={() => setDatePickerOpen(false)}
                   />
                 </View>
               )}
