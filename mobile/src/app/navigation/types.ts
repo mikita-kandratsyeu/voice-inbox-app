@@ -50,6 +50,11 @@ export type SettingsStackParamList = {
   Support: undefined;
   AppLockSetup: undefined;
   Notifications: undefined;
-  ImportRecords: { records: VoiceRecord[]; folders?: Folder[]; legacyFolders?: Folder[] };
+  ImportRecords: {
+    records: VoiceRecord[];
+    folders?: Folder[];
+    legacyFolders?: Folder[];
+    graphLayouts?: import('@/features/sync-data').BackupGraphLayoutVersion[];
+  };
   DiagnosticLogs: undefined;
 };

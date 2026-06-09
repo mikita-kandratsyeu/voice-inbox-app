@@ -8,16 +8,19 @@ import { i18n } from '@/shared/lib';
 import { diagWarn } from '@/shared/lib/appLogger';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
+import type { BackupGraphLayoutVersion } from './backupMetadata';
 import { BACKUP_ZIP_ENCRYPTION } from './backupZip';
+import { listNotesGraphLayoutsForBackup } from './notesGraphLayoutBackup';
 
 const METADATA_FILENAME = 'metadata.json';
 const AUDIO_DIR_NAME = 'audio';
 
 type ExportPayload = {
-  version: 3;
+  version: 4;
   exportedAt: string;
   folders: Folder[];
   records: (Omit<VoiceRecord, 'audioPath'> & { audioPath?: string })[];
+  graphLayouts: BackupGraphLayoutVersion[];
 };
 
 async function removeDirRecursive(path: string): Promise<void> {
@@ -111,11 +114,14 @@ export const exportData = async (
       }
     }
 
+    const graphLayouts = await listNotesGraphLayoutsForBackup();
+
     const payload: ExportPayload = {
-      version: 3,
+      version: 4,
       exportedAt: dayjs().toISOString(),
       folders,
       records: recordsForPayload,
+      graphLayouts,
     };
 
     const json = JSON.stringify(payload, null, 2);

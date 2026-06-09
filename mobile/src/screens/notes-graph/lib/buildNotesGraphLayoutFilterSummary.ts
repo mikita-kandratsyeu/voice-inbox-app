@@ -1,6 +1,9 @@
 import type { TFunction } from 'i18next';
 
 import type { GraphEdgeVisibility, GraphFilters } from './graphTypes';
+import type { ParsedNotesGraphPersistKey } from './parseNotesGraphPersistKey';
+import { parsedPersistKeyToGraphFilters } from './parseNotesGraphPersistKey';
+import { shouldAutoSimplifyGraph } from './graphSimplifyMode';
 
 export type NotesGraphLayoutFilterRow = {
   id: string;
@@ -89,4 +92,25 @@ export function buildNotesGraphLayoutFilterSummary({
   });
 
   return rows;
+}
+
+export function buildNotesGraphLayoutFilterSummaryFromParsed(
+  parsed: ParsedNotesGraphPersistKey,
+  folderName: string | null,
+  foldersEnabled: boolean,
+  t: TFunction,
+): NotesGraphLayoutFilterRow[] {
+  const simplifyActive =
+    parsed.simplifyOverride ?? shouldAutoSimplifyGraph(parsed.filteredCount);
+  const simplifyIsAuto =
+    parsed.simplifyOverride === null && shouldAutoSimplifyGraph(parsed.filteredCount);
+
+  return buildNotesGraphLayoutFilterSummary({
+    filters: parsedPersistKeyToGraphFilters(parsed),
+    folderName,
+    foldersEnabled,
+    simplifyActive,
+    simplifyIsAuto,
+    t,
+  });
 }

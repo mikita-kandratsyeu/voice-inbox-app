@@ -137,13 +137,31 @@ const ExportPayloadV3Schema = BasePayloadSchema.extend({
   records: z.array(VoiceRecordSchema).max(MAX_RECORDS_COUNT),
 });
 
+const NotesGraphLayoutVersionSchema = z.looseObject({
+  id: safeString,
+  layoutKey: safeString,
+  versionNumber: z.number().int().min(1),
+  createdAt: safeString,
+  payload: safeString,
+});
+
+const ExportPayloadV4Schema = BasePayloadSchema.extend({
+  version: z.literal(4),
+  folders: z.array(FolderSchema).max(MAX_FOLDERS_COUNT).optional(),
+  records: z.array(VoiceRecordSchema).max(MAX_RECORDS_COUNT),
+  graphLayouts: z.array(NotesGraphLayoutVersionSchema).max(5_000).optional(),
+});
+
 const ExportPayloadSchema = z.discriminatedUnion('version', [
   ExportPayloadV1Schema,
   ExportPayloadV2Schema,
   ExportPayloadV3Schema,
+  ExportPayloadV4Schema,
 ]);
 
 export type BackupExportPayload = z.infer<typeof ExportPayloadSchema>;
+
+export type BackupGraphLayoutVersion = z.infer<typeof NotesGraphLayoutVersionSchema>;
 
 const VALID_CLASSIFICATIONS: RecordClassification[] = [
   'personal',
@@ -308,6 +326,25 @@ export function normalizeBackupFolders(
       sortOrder: isNumber(f.sortOrder) && Number.isFinite(f.sortOrder) ? f.sortOrder : 0,
       createdAt: isString(f.createdAt) ? f.createdAt : dayjs().toISOString(),
     }));
+}
+
+export function normalizeBackupGraphLayouts(
+  raw: readonly BackupGraphLayoutVersion[] | undefined,
+): BackupGraphLayoutVersion[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  return raw.filter(
+    (entry) =>
+      isString(entry.id) &&
+      isString(entry.layoutKey) &&
+      Number.isFinite(entry.versionNumber) &&
+      entry.versionNumber >= 1 &&
+      isString(entry.createdAt) &&
+      isString(entry.payload) &&
+      entry.payload.length > 0,
+  );
 }
 
 export function buildLegacyBackupFolders(

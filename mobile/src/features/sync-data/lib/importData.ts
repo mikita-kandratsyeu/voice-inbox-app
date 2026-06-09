@@ -14,8 +14,10 @@ import {
 
 import {
   type BackupExportPayload,
+  type BackupGraphLayoutVersion,
   buildLegacyBackupFolders,
   normalizeBackupFolders,
+  normalizeBackupGraphLayouts,
   normalizeImportedVoiceRecord,
   parseBackupMetadataPayload,
 } from './backupMetadata';
@@ -40,9 +42,17 @@ export type ImportResult =
       folders: Folder[];
       legacyFolders: Folder[];
       exportedAt: string;
+      graphLayouts: BackupGraphLayoutVersion[];
     }
   | { success: false; error: 'cancelled' | string }
   | { success: false; needsPassword: true; zipFsPath: string };
+
+function extractGraphLayouts(payload: ExportPayload): BackupGraphLayoutVersion[] {
+  if (payload.version !== 4) {
+    return [];
+  }
+  return normalizeBackupGraphLayouts(payload.graphLayouts);
+}
 
 function parseExportPayload(raw: unknown): ExportPayload | null {
   return parseBackupMetadataPayload(raw);
@@ -265,7 +275,7 @@ async function importFromZip(fileUri: string, password?: string): Promise<Import
       const relativePath = record.audioPath;
 
       if (
-        (payload.version === 2 || payload.version === 3) &&
+        (payload.version === 2 || payload.version === 3 || payload.version === 4) &&
         relativePath &&
         isRelativeAudioPath(relativePath)
       ) {
@@ -285,9 +295,16 @@ async function importFromZip(fileUri: string, password?: string): Promise<Import
     return {
       success: true,
       records,
-      folders: payload.version === 3 ? normalizeBackupFolders(payload.folders) : [],
-      legacyFolders: payload.version !== 3 ? buildLegacyBackupFolders(payload.records) : [],
+      folders:
+        payload.version === 3 || payload.version === 4
+          ? normalizeBackupFolders(payload.folders)
+          : [],
+      legacyFolders:
+        payload.version !== 3 && payload.version !== 4
+          ? buildLegacyBackupFolders(payload.records)
+          : [],
       exportedAt: payload.exportedAt,
+      graphLayouts: extractGraphLayouts(payload),
     };
   } finally {
     await removeDirRecursive(extractDir).catch(() => {});
@@ -386,9 +403,16 @@ export const importData = async (options?: ImportDataOptions): Promise<ImportRes
     return {
       success: true,
       records,
-      folders: payload.version === 3 ? normalizeBackupFolders(payload.folders) : [],
-      legacyFolders: payload.version !== 3 ? buildLegacyBackupFolders(payload.records) : [],
+      folders:
+        payload.version === 3 || payload.version === 4
+          ? normalizeBackupFolders(payload.folders)
+          : [],
+      legacyFolders:
+        payload.version !== 3 && payload.version !== 4
+          ? buildLegacyBackupFolders(payload.records)
+          : [],
       exportedAt: payload.exportedAt,
+      graphLayouts: extractGraphLayouts(payload),
     };
   } catch (err: unknown) {
     const code = (err as { code?: string })?.code;

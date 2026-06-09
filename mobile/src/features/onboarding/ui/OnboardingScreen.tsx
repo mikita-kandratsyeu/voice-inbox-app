@@ -43,6 +43,7 @@ import { useModelManager } from '@/features/model-manager';
 import {
   IMPORT_ERROR_WRONG_BACKUP_PASSWORD,
   importData,
+  importNotesGraphLayoutVersionsFromBackup,
   type ImportResult,
 } from '@/features/sync-data';
 import {
@@ -1010,7 +1011,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         return false;
       }
 
-      return { toImport, totalInFile: result.records.length };
+      return { toImport, totalInFile: result.records.length, graphLayouts: result.graphLayouts };
     },
     [existingRecords, pendingRestoreZipPath, releasePendingRestoreZip, t],
   );
@@ -1035,6 +1036,9 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
             try {
               for (const record of toImport) {
                 await addRecord(record);
+              }
+              if (prepared.graphLayouts.length > 0) {
+                await importNotesGraphLayoutVersionsFromBackup(prepared.graphLayouts);
               }
               Alert.alert(
                 t('common.done'),
@@ -1083,6 +1087,9 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
               try {
                 for (const record of toImport) {
                   await addRecord(record);
+                }
+                if (prepared.graphLayouts.length > 0) {
+                  await importNotesGraphLayoutVersionsFromBackup(prepared.graphLayouts);
                 }
                 Alert.alert(
                   t('common.done'),

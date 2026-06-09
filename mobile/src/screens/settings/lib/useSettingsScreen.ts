@@ -357,6 +357,7 @@ export function useSettingsScreen() {
         records: result.records,
         folders: result.folders,
         legacyFolders: result.legacyFolders,
+        graphLayouts: result.graphLayouts,
       });
     },
     [navigation, pendingImportZipPath, releasePendingImportZip, t],

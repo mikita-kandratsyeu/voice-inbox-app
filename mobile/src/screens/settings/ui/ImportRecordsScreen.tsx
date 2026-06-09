@@ -24,6 +24,7 @@ import { useRecordStore } from '@/entities/record';
 import { recordRepository } from '@/entities/record/model/repository';
 import { useAdsAllowed } from '@/features/app-storefront';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
+import { importNotesGraphLayoutVersionsFromBackup } from '@/features/sync-data';
 import { tryShowYandexInterstitial } from '@/features/yandex-interstitial';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
@@ -223,7 +224,12 @@ export const ImportRecordsScreen = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute<ImportRecordsRouteProp>();
-  const { records: fileRecords, folders: archiveFolders = [], legacyFolders = [] } = route.params;
+  const {
+    records: fileRecords,
+    folders: archiveFolders = [],
+    legacyFolders = [],
+    graphLayouts = [],
+  } = route.params;
 
   const existingRecords = useRecordStore((s) => s.records);
   const addRecord = useRecordStore((s) => s.addRecord);
@@ -412,6 +418,9 @@ export const ImportRecordsScreen = () => {
         setImportProgress({ current: i + 1, total: toProcess.length });
       }
       await loadRecords();
+      if (graphLayouts.length > 0) {
+        await importNotesGraphLayoutVersionsFromBackup(graphLayouts);
+      }
       navigation.goBack();
       await tryShowYandexInterstitial({ adsAllowed, trigger: 'after_import' });
       Alert.alert(t('common.done'), t('importExport.importSuccess', { count: toProcess.length }));

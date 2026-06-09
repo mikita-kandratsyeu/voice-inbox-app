@@ -75,6 +75,31 @@ describe('backup metadata import', () => {
     expect(record.status).toBe('read');
   });
 
+
+  it('parses v4 payload with graph layout history', () => {
+    const payload = {
+      version: 4,
+      exportedAt: '2026-06-09T12:00:00.000Z',
+      folders: [],
+      records: [{ id: 'rec-1', createdAt: '2026-06-01T10:00:00.000Z', title: 'Note' }],
+      graphLayouts: [
+        {
+          id: 'nglv_test_1',
+          layoutKey: '1:rec-1;;;;auto;1',
+          versionNumber: 1,
+          createdAt: '2026-06-09T11:00:00.000Z',
+          payload: JSON.stringify({ v: 1, positions: { 'record:rec-1': { x: 10, y: 20 } } }),
+        },
+      ],
+    };
+
+    const parsed = parseBackupMetadataPayload(payload);
+    expect(parsed?.version).toBe(4);
+    if (parsed?.version === 4) {
+      expect(parsed.graphLayouts).toHaveLength(1);
+    }
+  });
+
   it('parses v1 and v2 payloads', () => {
     const v1 = parseBackupMetadataPayload({
       version: 1,

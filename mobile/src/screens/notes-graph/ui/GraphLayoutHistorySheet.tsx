@@ -5,32 +5,29 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
+import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
-import { buildNotesGraphLayoutFilterSummary } from '../lib/buildNotesGraphLayoutFilterSummary';
-import type { GraphFilters } from '../lib/graphTypes';
+import { buildNotesGraphLayoutFilterSummaryFromParsed } from '../lib/buildNotesGraphLayoutFilterSummary';
 import type { NotesGraphLayoutVersionEntry } from '../lib/notesGraphLayoutDb';
-import { listNotesGraphLayoutHistory } from '../lib/notesGraphLayoutDb';
+import { listAllNotesGraphLayoutHistory } from '../lib/notesGraphLayoutDb';
+import { parseNotesGraphPersistKey } from '../lib/parseNotesGraphPersistKey';
 
-const HISTORY_LIST_MAX_HEIGHT = 420;
+const HISTORY_LIST_MAX_HEIGHT = 320;
 const HISTORY_ROW_HEIGHT = 68;
 
 type GraphLayoutHistorySheetProps = {
   visible: boolean;
-  layoutKey: string;
-  filters: GraphFilters;
-  folderName: string | null;
+  folders: Folder[];
   foldersEnabled: boolean;
-  simplifyActive: boolean;
-  simplifyIsAuto: boolean;
   activeVersionId: string | null;
   refreshToken: number;
   onClose: () => void;
-  onRestore: (versionId: string) => void;
+  onApply: (entry: NotesGraphLayoutVersionEntry) => void | Promise<void>;
   onDelete: (versionId: string) => void | Promise<void>;
 };
 
@@ -38,71 +35,75 @@ type AppliedFiltersCardProps = {
   color: Colors;
   rows: { id: string; label: string; value: string }[];
   title: string;
+  emptyMessage: string;
 };
 
-function AppliedFiltersCard({ color, rows, title }: AppliedFiltersCardProps) {
+function AppliedFiltersCard({ color, rows, title, emptyMessage }: AppliedFiltersCardProps) {
   return (
     <View
       style={{
         alignSelf: 'stretch',
         backgroundColor: color.background.card,
         borderColor: color.border.default,
-        borderRadius: 12,
+        borderRadius: 10,
         borderWidth: 1,
-        marginBottom: 12,
-        overflow: 'hidden',
-        paddingHorizontal: 14,
-        paddingVertical: 12,
+        gap: 4,
+        marginBottom: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
       }}
     >
       <Text
         style={{
-          color: color.text.primary,
-          fontSize: 14,
+          color: color.text.secondary,
+          fontSize: 12,
           fontWeight: '600',
-          lineHeight: 20,
-          marginBottom: 8,
+          lineHeight: 16,
+          marginBottom: 2,
         }}
       >
         {title}
       </Text>
-      {rows.map((row, index) => (
-        <View
-          key={row.id}
-          style={{
-            alignItems: 'flex-start',
-            borderTopColor: color.border.default,
-            borderTopWidth: index === 0 ? 0 : 1,
-            flexDirection: 'row',
-            gap: 10,
-            paddingTop: index === 0 ? 0 : 8,
-            paddingBottom: index === rows.length - 1 ? 0 : 8,
-          }}
-        >
-          <Text
+      {rows.length === 0 ? (
+        <Text style={{ color: color.text.secondary, fontSize: 12, lineHeight: 16 }}>
+          {emptyMessage}
+        </Text>
+      ) : (
+        rows.map((row) => (
+          <View
+            key={row.id}
             style={{
-              color: color.text.secondary,
-              flexShrink: 0,
-              fontSize: 13,
-              lineHeight: 18,
-              width: 108,
+              alignItems: 'flex-start',
+              flexDirection: 'row',
+              gap: 6,
             }}
           >
-            {row.label}
-          </Text>
-          <Text
-            style={{
-              color: color.text.primary,
-              flex: 1,
-              fontSize: 13,
-              lineHeight: 18,
-              minWidth: 0,
-            }}
-          >
-            {row.value}
-          </Text>
-        </View>
-      ))}
+            <Text
+              style={{
+                color: color.text.secondary,
+                flexShrink: 0,
+                fontSize: 12,
+                lineHeight: 16,
+                width: 88,
+              }}
+            >
+              {row.label}
+            </Text>
+            <Text
+              numberOfLines={2}
+              style={{
+                color: color.text.primary,
+                flex: 1,
+                fontSize: 12,
+                lineHeight: 16,
+                minWidth: 0,
+              }}
+            >
+              {row.value}
+            </Text>
+          </View>
+        ))
+      )}
     </View>
   );
 }
@@ -113,7 +114,7 @@ function formatVersionTimestamp(iso: string, language: string): string {
 }
 
 type HistoryRowProps = {
-  isActive: boolean;
+  isSelected: boolean;
   isLast: boolean;
   isDeleting: boolean;
   color: Colors;
@@ -121,12 +122,12 @@ type HistoryRowProps = {
   versionLabel: string;
   metaLabel: string;
   deleteA11y: string;
-  onRestore: () => void;
+  onSelect: () => void;
   onDelete: () => void;
 };
 
 function HistoryRow({
-  isActive,
+  isSelected,
   isLast,
   isDeleting,
   color,
@@ -134,14 +135,14 @@ function HistoryRow({
   versionLabel,
   metaLabel,
   deleteA11y,
-  onRestore,
+  onSelect,
   onDelete,
 }: HistoryRowProps) {
   return (
     <View
       style={{
         alignSelf: 'stretch',
-        backgroundColor: isActive ? `${color.accent.primary}12` : 'transparent',
+        backgroundColor: isSelected ? `${color.accent.primary}12` : 'transparent',
         borderBottomColor: color.border.default,
         borderBottomWidth: isLast ? 0 : 1,
         opacity: isDeleting ? 0.45 : 1,
@@ -176,12 +177,12 @@ function HistoryRow({
         <View style={{ flex: 1, minWidth: 0 }}>
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ selected: isActive }}
+            accessibilityState={{ selected: isSelected }}
             accessibilityLabel={rowLabel}
             disabled={isDeleting}
             onPress={() => {
               hapticSelection();
-              onRestore();
+              onSelect();
             }}
             style={({ pressed }) => ({
               backgroundColor: pressed ? color.background.tertiary : 'transparent',
@@ -197,7 +198,7 @@ function HistoryRow({
               {versionLabel}
             </Text>
             <Text
-              numberOfLines={1}
+              numberOfLines={2}
               style={{
                 color: color.text.secondary,
                 fontSize: 13,
@@ -232,7 +233,7 @@ function HistoryRow({
           <Trash2 size={18} color={color.status.error.text} strokeWidth={2.2} />
         </Pressable>
 
-        {isActive ? (
+        {isSelected ? (
           <Check size={20} color={color.accent.primary} strokeWidth={2.5} />
         ) : (
           <View style={{ width: 20 }} />
@@ -244,16 +245,12 @@ function HistoryRow({
 
 export function GraphLayoutHistorySheet({
   visible,
-  layoutKey,
-  filters,
-  folderName,
+  folders,
   foldersEnabled,
-  simplifyActive,
-  simplifyIsAuto,
   activeVersionId,
   refreshToken,
   onClose,
-  onRestore,
+  onApply,
   onDelete,
 }: GraphLayoutHistorySheetProps) {
   const { t, i18n } = useTranslation();
@@ -261,17 +258,26 @@ export function GraphLayoutHistorySheet({
   const contentPadding = useBottomSheetContentPadding(12);
   const [loading, setLoading] = useState(false);
   const [entries, setEntries] = useState<NotesGraphLayoutVersionEntry[]>([]);
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
   const [deletingVersionId, setDeletingVersionId] = useState<string | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
 
   const loadHistory = useCallback(async () => {
     setLoading(true);
     try {
-      const rows = await listNotesGraphLayoutHistory(layoutKey);
+      const rows = await listAllNotesGraphLayoutHistory();
       setEntries(rows);
+      setSelectedVersionId((current) => {
+        if (current && rows.some((row) => row.id === current)) return current;
+        if (activeVersionId && rows.some((row) => row.id === activeVersionId)) {
+          return activeVersionId;
+        }
+        return rows[0]?.id ?? null;
+      });
     } finally {
       setLoading(false);
     }
-  }, [layoutKey]);
+  }, [activeVersionId]);
 
   useEffect(() => {
     if (!visible) return;
@@ -279,8 +285,36 @@ export function GraphLayoutHistorySheet({
   }, [visible, loadHistory, refreshToken]);
 
   useEffect(() => {
-    if (!visible) setDeletingVersionId(null);
+    if (!visible) {
+      setDeletingVersionId(null);
+      setIsApplying(false);
+    }
   }, [visible]);
+
+  const selectedEntry = useMemo(
+    () => entries.find((entry) => entry.id === selectedVersionId) ?? null,
+    [entries, selectedVersionId],
+  );
+
+  const selectedParsed = useMemo(
+    () => (selectedEntry ? parseNotesGraphPersistKey(selectedEntry.layoutKey) : null),
+    [selectedEntry],
+  );
+
+  const selectedFolderName = useMemo(() => {
+    if (!selectedParsed?.folderId) return null;
+    return folders.find((folder) => folder.id === selectedParsed.folderId)?.name ?? null;
+  }, [folders, selectedParsed]);
+
+  const filterRows = useMemo(() => {
+    if (!selectedParsed) return [];
+    return buildNotesGraphLayoutFilterSummaryFromParsed(
+      selectedParsed,
+      selectedFolderName,
+      foldersEnabled,
+      t,
+    );
+  }, [foldersEnabled, selectedFolderName, selectedParsed, t]);
 
   const confirmDelete = useCallback(
     (entry: NotesGraphLayoutVersionEntry) => {
@@ -297,7 +331,14 @@ export function GraphLayoutHistorySheet({
                 setDeletingVersionId(entry.id);
                 try {
                   await onDelete(entry.id);
-                  setEntries((prev) => prev.filter((row) => row.id !== entry.id));
+                  setEntries((prev) => {
+                    const next = prev.filter((row) => row.id !== entry.id);
+                    setSelectedVersionId((current) => {
+                      if (current !== entry.id) return current;
+                      return next[0]?.id ?? null;
+                    });
+                    return next;
+                  });
                 } finally {
                   setDeletingVersionId(null);
                 }
@@ -316,18 +357,6 @@ export function GraphLayoutHistorySheet({
   );
 
   const subtitle = t('notesGraph.history.subtitle');
-  const filterRows = useMemo(
-    () =>
-      buildNotesGraphLayoutFilterSummary({
-        filters,
-        folderName,
-        foldersEnabled,
-        simplifyActive,
-        simplifyIsAuto,
-        t,
-      }),
-    [filters, folderName, foldersEnabled, simplifyActive, simplifyIsAuto, t],
-  );
 
   let listBody: React.ReactNode;
 
@@ -344,6 +373,7 @@ export function GraphLayoutHistorySheet({
           color: color.text.secondary,
           fontSize: 15,
           lineHeight: 22,
+          marginBottom: 12,
           paddingVertical: 24,
           textAlign: 'center',
         }}
@@ -361,6 +391,7 @@ export function GraphLayoutHistorySheet({
           borderRadius: 12,
           borderWidth: 1,
           height: listHeight,
+          marginBottom: 12,
           overflow: 'hidden',
         }}
       >
@@ -371,24 +402,24 @@ export function GraphLayoutHistorySheet({
           showsVerticalScrollIndicator={false}
         >
           {entries.map((item, index) => {
-            const isActive = item.id === activeVersionId;
-            const rowLabel = `${t('notesGraph.history.versionLabel', { version: item.versionNumber })} · ${formatVersionTimestamp(item.createdAt, i18n.language)}`;
+            const isSelected = item.id === selectedVersionId;
+            const rowLabel = `${formatVersionTimestamp(item.createdAt, i18n.language)} · ${t('notesGraph.history.nodeCount', { count: item.nodeCount })}`;
 
             return (
               <HistoryRow
                 key={item.id}
-                isActive={isActive}
+                isSelected={isSelected}
                 isLast={index === entries.length - 1}
                 isDeleting={deletingVersionId === item.id}
                 color={color}
                 rowLabel={rowLabel}
-                versionLabel={t('notesGraph.history.versionLabel', { version: item.versionNumber })}
-                metaLabel={`${formatVersionTimestamp(item.createdAt, i18n.language)} · ${t('notesGraph.history.nodeCount', { count: item.nodeCount })}`}
+                versionLabel={formatVersionTimestamp(item.createdAt, i18n.language)}
+                metaLabel={t('notesGraph.history.listMeta', {
+                  version: item.versionNumber,
+                  count: item.nodeCount,
+                })}
                 deleteA11y={t('notesGraph.history.deleteA11y', { version: item.versionNumber })}
-                onRestore={() => {
-                  onRestore(item.id);
-                  onClose();
-                }}
+                onSelect={() => setSelectedVersionId(item.id)}
                 onDelete={() => confirmDelete(item)}
               />
             );
@@ -397,6 +428,20 @@ export function GraphLayoutHistorySheet({
       </View>
     );
   }
+
+  const handleApply = useCallback(() => {
+    if (!selectedEntry || isApplying) return;
+
+    void (async () => {
+      setIsApplying(true);
+      try {
+        await onApply(selectedEntry);
+        onClose();
+      } finally {
+        setIsApplying(false);
+      }
+    })();
+  }, [isApplying, onApply, onClose, selectedEntry]);
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>
@@ -427,18 +472,21 @@ export function GraphLayoutHistorySheet({
           </Text>
         ) : null}
 
+        {listBody}
+
         <AppliedFiltersCard
           color={color}
           rows={filterRows}
           title={t('notesGraph.history.filtersTitle')}
+          emptyMessage={t('notesGraph.history.filtersSelectHint')}
         />
-
-        {listBody}
 
         <SheetFooterButtons
           color={color}
-          onPrimaryPress={onClose}
-          primaryLabel={t('common.close')}
+          onPrimaryPress={handleApply}
+          primaryLabel={t('notesGraph.history.apply')}
+          primaryDisabled={!selectedEntry || isApplying}
+          primaryLoading={isApplying}
         />
       </BottomSheetView>
     </AppBottomSheetModal>

@@ -35,13 +35,18 @@ import {
   getCachedNotesGraphLayout,
 } from '../lib/notesGraphLayoutCache';
 import {
-  deleteNotesGraphLayoutVersion,
+  deleteNotesGraphLayoutVersionById,
   deserializeNotesGraphPositions,
   getLatestNotesGraphLayoutVersion,
   getNotesGraphLayoutVersionPositions,
   saveNotesGraphLayoutVersion,
   serializeNotesGraphPositions,
+  type NotesGraphLayoutVersionEntry,
 } from '../lib/notesGraphLayoutDb';
+import {
+  parsedPersistKeyToGraphFilters,
+  parseNotesGraphPersistKey,
+} from '../lib/parseNotesGraphPersistKey';
 import { GraphBuildingState } from './GraphBuildingState';
 import type { GraphCanvasHandle } from './GraphCanvas';
 import { GraphCanvas } from './GraphCanvas';
@@ -97,6 +102,8 @@ export const NotesGraphScreenBody = () => {
   const [historyRefreshToken, setHistoryRefreshToken] = useState(0);
   const [persistHydrated, setPersistHydrated] = useState(false);
   const savedLayoutSnapshotRef = useRef('');
+  const pendingLayoutApplyVersionIdRef = useRef<string | null>(null);
+  const shouldFitAfterLayoutApplyRef = useRef(false);
   const [activeSearchNodeId, setActiveSearchNodeId] = useState<string | null>(null);
   const [editTaskTarget, setEditTaskTarget] = useState<{
     recordId: string;
@@ -134,16 +141,6 @@ export const NotesGraphScreenBody = () => {
     [filteredRecordCount, simplifyOverride],
   );
 
-  const simplifyIsAuto = useMemo(
-    () => simplifyOverride === null && shouldAutoSimplifyGraph(filteredRecordCount),
-    [filteredRecordCount, simplifyOverride],
-  );
-
-  const activeFolderName = useMemo(() => {
-    if (!filters.folderId) return null;
-    return folders.find((folder) => folder.id === filters.folderId)?.name ?? null;
-  }, [filters.folderId, folders]);
-
   const toggleSimplifyMode = useCallback(() => {
     setSimplifyOverride((current) => {
       if (current === null) return !shouldAutoSimplifyGraph(filteredRecordCount);
@@ -174,16 +171,32 @@ export const NotesGraphScreenBody = () => {
       setPersistHydrated(false);
       replaceSessionNodePositions({});
 
-      const latest = await getLatestNotesGraphLayoutVersion(persistKey);
-      if (cancelled) return;
+      const pendingVersionId = pendingLayoutApplyVersionIdRef.current;
+      if (pendingVersionId) {
+        pendingLayoutApplyVersionIdRef.current = null;
+        const positions = await getNotesGraphLayoutVersionPositions(pendingVersionId);
+        if (cancelled) return;
 
-      if (latest) {
-        replaceSessionNodePositions(latest.positions);
-        savedLayoutSnapshotRef.current = serializeNotesGraphPositions(getSessionNodePositions());
-        setActiveSavedVersionId(latest.id);
+        if (positions) {
+          replaceSessionNodePositions(positions);
+          savedLayoutSnapshotRef.current = serializeNotesGraphPositions(getSessionNodePositions());
+          setActiveSavedVersionId(pendingVersionId);
+        } else {
+          savedLayoutSnapshotRef.current = serializeNotesGraphPositions(new Map());
+          setActiveSavedVersionId(null);
+        }
       } else {
-        savedLayoutSnapshotRef.current = serializeNotesGraphPositions(new Map());
-        setActiveSavedVersionId(null);
+        const latest = await getLatestNotesGraphLayoutVersion(persistKey);
+        if (cancelled) return;
+
+        if (latest) {
+          replaceSessionNodePositions(latest.positions);
+          savedLayoutSnapshotRef.current = serializeNotesGraphPositions(getSessionNodePositions());
+          setActiveSavedVersionId(latest.id);
+        } else {
+          savedLayoutSnapshotRef.current = serializeNotesGraphPositions(new Map());
+          setActiveSavedVersionId(null);
+        }
       }
 
       setHasUnsavedLayoutChanges(false);
@@ -504,35 +517,63 @@ export const NotesGraphScreenBody = () => {
     }
   }, [hasUnsavedLayoutChanges, isGraphReconciling, isSavingLayout, persistKey]);
 
-  const handleRestoreLayoutVersion = useCallback(
-    async (versionId: string) => {
-      const positions = await getNotesGraphLayoutVersionPositions(versionId);
-      if (!positions) return;
+  const handleApplyLayoutVersion = useCallback(
+    async (entry: NotesGraphLayoutVersionEntry) => {
+      const parsed = parseNotesGraphPersistKey(entry.layoutKey);
+      if (!parsed) return;
 
-      replaceSessionNodePositions(positions);
-      setActiveSavedVersionId(versionId);
-      setLayoutRestoreToken((token) => token + 1);
-      syncUnsavedLayoutState();
+      shouldFitAfterLayoutApplyRef.current = true;
+      pendingLayoutApplyVersionIdRef.current = entry.id;
+      setFilters(parsedPersistKeyToGraphFilters(parsed));
+      setSimplifyOverride(parsed.simplifyOverride);
     },
-    [syncUnsavedLayoutState],
+    [],
   );
+
+  useEffect(() => {
+    if (!shouldFitAfterLayoutApplyRef.current) return;
+    if (isBuilding || !persistHydrated || isGraphReconciling || recordCount === 0) return;
+
+    shouldFitAfterLayoutApplyRef.current = false;
+    let innerFrame = 0;
+    const outerFrame = requestAnimationFrame(() => {
+      innerFrame = requestAnimationFrame(() => {
+        canvasRef.current?.fitToScreen();
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(outerFrame);
+      cancelAnimationFrame(innerFrame);
+    };
+  }, [
+    isBuilding,
+    isGraphReconciling,
+    layoutRestoreToken,
+    layoutNodes.length,
+    persistHydrated,
+    recordCount,
+  ]);
 
   const handleDeleteLayoutVersion = useCallback(
     async (versionId: string) => {
-      const deleted = await deleteNotesGraphLayoutVersion(persistKey, versionId);
+      const deleted = await deleteNotesGraphLayoutVersionById(versionId);
       if (!deleted) return;
 
       if (activeSavedVersionId === versionId) {
         const latest = await getLatestNotesGraphLayoutVersion(persistKey);
         if (latest) {
+          replaceSessionNodePositions(latest.positions);
           setActiveSavedVersionId(latest.id);
           savedLayoutSnapshotRef.current = serializeNotesGraphPositions(
             new Map(Object.entries(latest.positions)),
           );
         } else {
+          replaceSessionNodePositions({});
           setActiveSavedVersionId(null);
           savedLayoutSnapshotRef.current = serializeNotesGraphPositions(new Map());
         }
+        setLayoutRestoreToken((token) => token + 1);
         syncUnsavedLayoutState();
       }
 
@@ -716,17 +757,13 @@ export const NotesGraphScreenBody = () => {
 
       <GraphLayoutHistorySheet
         visible={historySheetVisible}
-        layoutKey={persistKey}
-        filters={filters}
-        folderName={activeFolderName}
+        folders={folders}
         foldersEnabled={foldersEnabled}
-        simplifyActive={simplifyActive}
-        simplifyIsAuto={simplifyIsAuto}
         activeVersionId={activeSavedVersionId}
         refreshToken={historyRefreshToken}
         onClose={() => setHistorySheetVisible(false)}
-        onRestore={(versionId) => {
-          void handleRestoreLayoutVersion(versionId);
+        onApply={(entry) => {
+          void handleApplyLayoutVersion(entry);
         }}
         onDelete={(versionId) => {
           void handleDeleteLayoutVersion(versionId);

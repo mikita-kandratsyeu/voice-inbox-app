@@ -116,6 +116,33 @@ export async function getLatestNotesGraphLayoutVersion(
   };
 }
 
+const MAX_ALL_LAYOUT_HISTORY = 200;
+
+export async function listAllNotesGraphLayoutHistory(
+  limit = MAX_ALL_LAYOUT_HISTORY,
+): Promise<NotesGraphLayoutVersionEntry[]> {
+  const db = await waitForDb();
+  const rows = await db
+    .select()
+    .from(notesGraphLayoutVersionTable)
+    .orderBy(desc(notesGraphLayoutVersionTable.createdAt))
+    .limit(limit);
+
+  return rows
+    .map((row) => {
+      const positions = parsePayload(row.payload);
+      if (!positions) return null;
+      return {
+        id: row.id,
+        layoutKey: row.layoutKey,
+        versionNumber: row.versionNumber,
+        createdAt: row.createdAt,
+        nodeCount: Object.keys(positions).length,
+      };
+    })
+    .filter((entry): entry is NotesGraphLayoutVersionEntry => entry != null);
+}
+
 export async function listNotesGraphLayoutHistory(
   layoutKey: string,
   limit = MAX_VERSIONS_PER_LAYOUT,
@@ -205,6 +232,23 @@ export async function saveNotesGraphLayoutVersion(
   };
 }
 
+export async function deleteNotesGraphLayoutVersionById(versionId: string): Promise<boolean> {
+  const db = await waitForDb();
+  const rows = await db
+    .select({ id: notesGraphLayoutVersionTable.id })
+    .from(notesGraphLayoutVersionTable)
+    .where(eq(notesGraphLayoutVersionTable.id, versionId))
+    .limit(1);
+
+  if (!rows[0]) return false;
+
+  await db
+    .delete(notesGraphLayoutVersionTable)
+    .where(eq(notesGraphLayoutVersionTable.id, versionId));
+
+  return true;
+}
+
 export async function deleteNotesGraphLayoutVersion(
   layoutKey: string,
   versionId: string,
@@ -223,16 +267,7 @@ export async function deleteNotesGraphLayoutVersion(
 
   if (!rows[0]) return false;
 
-  await db
-    .delete(notesGraphLayoutVersionTable)
-    .where(
-      and(
-        eq(notesGraphLayoutVersionTable.layoutKey, layoutKey),
-        eq(notesGraphLayoutVersionTable.id, versionId),
-      ),
-    );
-
-  return true;
+  return deleteNotesGraphLayoutVersionById(versionId);
 }
 
 export async function countNotesGraphLayoutHistory(layoutKey: string): Promise<number> {

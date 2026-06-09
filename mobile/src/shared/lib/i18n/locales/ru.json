@@ -220,7 +220,10 @@
     "history": {
       "openA11y": "История изменений",
       "title": "История изменений",
-      "subtitle": "Сохранённые версии расположения узлов для текущих фильтров",
+      "subtitle": "Все сохранения — выберите, чтобы посмотреть фильтры",
+      "apply": "Применить",
+      "filtersSelectHint": "Выберите сохранение, чтобы увидеть фильтры",
+      "listMeta": "Версия {{version}} · {{count}} узлов",
       "filtersTitle": "Применённые фильтры",
       "filters": {
         "folder": "Папка",
@@ -322,6 +325,7 @@
     "calendarNextWeekA11y": "Следующая неделя",
     "calendarExpandA11y": "Развернуть календарь",
     "calendarCollapseA11y": "Свернуть календарь",
+    "calendarGoToTodayA11y": "Перейти к сегодняшнему дню",
     "calendarDayWithTasksA11y": "{{date}}, есть задачи",
     "calendarLegendHasTasks": "Есть задачи",
     "calendarLegendOverdue": "Просрочено",

@@ -6,20 +6,17 @@ import {
   ChevronRight,
   ChevronUp,
 } from 'lucide-react-native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
   FadeIn,
   FadeOut,
   LinearTransition,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  withTiming,
 } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
@@ -41,14 +38,16 @@ const DOT_SIZE = 5;
 const DOT_BOTTOM_INSET = 1.5;
 const SELECTED_DAY_TINT_ALPHA = 0.16;
 const FOOTER_ICON_SIZE = 40;
-const CALENDAR_CARD_LAYOUT_TRANSITION = LinearTransition.duration(260).easing(Easing.out(Easing.quad));
-const CALENDAR_CONTENT_FADE_IN = FadeIn.duration(200);
-const CALENDAR_CONTENT_FADE_OUT = FadeOut.duration(160);
-const SWIPE_COMMIT_DISTANCE = 44;
-const SWIPE_VELOCITY_THRESHOLD = 600;
-const SWIPE_ACTIVE_OFFSET_X = 14;
-const SWIPE_FAIL_OFFSET_Y = 18;
-const SWIPE_COMMIT_NUDGE = 28;
+const IOS_SPRING_SNAPPY = { damping: 18, stiffness: 320, mass: 0.85 };
+const IOS_SPRING_SOFT = { damping: 22, stiffness: 260, mass: 0.9 };
+const CALENDAR_LAYOUT_TRANSITION = LinearTransition.springify()
+  .damping(22)
+  .stiffness(200)
+  .duration(320);
+const CALENDAR_PERIOD_ENTER = FadeIn.duration(240).easing(Easing.out(Easing.cubic));
+const CALENDAR_PERIOD_EXIT = FadeOut.duration(180).easing(Easing.in(Easing.cubic));
+const CALENDAR_CONTROL_ENTER = FadeIn.duration(200).easing(Easing.out(Easing.quad));
+const CALENDAR_CONTROL_EXIT = FadeOut.duration(140).easing(Easing.in(Easing.quad));
 
 function countWeeksInMonthGrid(month: Dayjs): number {
   const gridStart = month.startOf('month').startOf('week');
@@ -191,6 +190,39 @@ function formatSelectedDateSubtitle(date: Dayjs, locale: string, language: strin
   return capitalizeFirst(localized.format('dddd, D MMMM YYYY'));
 }
 
+function CalendarNavButton({
+  onPress,
+  accessibilityLabel,
+  children,
+}: {
+  onPress: () => void;
+  accessibilityLabel: string;
+  children: React.ReactNode;
+}) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={() => {
+        scale.value = withSpring(0.86, IOS_SPRING_SNAPPY);
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, IOS_SPRING_SNAPPY);
+      }}
+      hitSlop={12}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+    >
+      <Animated.View style={animatedStyle}>{children}</Animated.View>
+    </Pressable>
+  );
+}
+
 type CalendarDayCellRenderOptions = {
   color: Colors;
   locale: string;
@@ -203,7 +235,7 @@ type CalendarDayCellRenderOptions = {
   formatDayA11y: (date: Dayjs, hasTasks: boolean) => string;
 };
 
-function CalendarDayCellButton({
+const CalendarDayCellButton = memo(function CalendarDayCellButton({
   cell,
   options,
 }: {
@@ -212,7 +244,6 @@ function CalendarDayCellButton({
 }) {
   const {
     color,
-    locale,
     selected,
     dayMarkers,
     onDateChange,
@@ -231,6 +262,21 @@ function CalendarDayCellButton({
     isToday,
   });
   const dotColor = getTaskMarkerDotColor(marker);
+  const pressScale = useSharedValue(1);
+  const selectionProgress = useSharedValue(isSelected ? 1 : 0);
+
+  useEffect(() => {
+    selectionProgress.value = withSpring(isSelected ? 1 : 0, IOS_SPRING_SOFT);
+  }, [isSelected, selectionProgress]);
+
+  const pressAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pressScale.value }],
+  }));
+
+  const selectionAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: selectionProgress.value,
+    transform: [{ scale: 0.7 + selectionProgress.value * 0.3 }],
+  }));
 
   return (
     <View
@@ -245,29 +291,47 @@ function CalendarDayCellButton({
           hapticSelection();
           onDateChange(cell.date.toDate());
         }}
-        style={({ pressed }) => ({
+        onPressIn={() => {
+          pressScale.value = withSpring(0.9, IOS_SPRING_SNAPPY);
+        }}
+        onPressOut={() => {
+          pressScale.value = withSpring(1, IOS_SPRING_SNAPPY);
+        }}
+        style={{
           width: '100%',
           height: cellHeight,
           alignItems: 'center',
           justifyContent: 'center',
-          opacity: pressed ? 0.82 : 1,
-        })}
+        }}
         accessibilityRole="button"
         accessibilityState={{ selected: isSelected }}
         accessibilityLabel={formatDayA11y(cell.date, Boolean(marker))}
       >
-        <View
-          style={{
-            width: selectionDiameter,
-            height: selectionDiameter,
-            borderRadius: selectionDiameter / 2,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: dayVisual.backgroundColor,
-            borderWidth: dayVisual.borderWidth,
-            borderColor: dayVisual.borderColor,
-          }}
+        <Animated.View
+          style={[
+            {
+              width: selectionDiameter,
+              height: selectionDiameter,
+              borderRadius: selectionDiameter / 2,
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+            pressAnimatedStyle,
+          ]}
         >
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              {
+                position: 'absolute',
+                width: selectionDiameter,
+                height: selectionDiameter,
+                borderRadius: selectionDiameter / 2,
+                backgroundColor: withAlphaHex(color.accent.primary, SELECTED_DAY_TINT_ALPHA),
+              },
+              selectionAnimatedStyle,
+            ]}
+          />
           <Text
             style={{
               color: dayVisual.textColor,
@@ -278,26 +342,471 @@ function CalendarDayCellButton({
           >
             {cell.date.date()}
           </Text>
-        </View>
+          {dotColor ? (
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                bottom: DOT_BOTTOM_INSET,
+                left: '50%',
+                width: DOT_SIZE,
+                height: DOT_SIZE,
+                marginLeft: -DOT_SIZE / 2,
+                borderRadius: DOT_SIZE / 2,
+                backgroundColor: dotColor,
+              }}
+            />
+          ) : null}
+        </Animated.View>
       </Pressable>
-      {dotColor ? (
+    </View>
+  );
+});
+
+type CalendarWeekdayLabelsProps = {
+  labels: string[];
+  color: Colors;
+  fontSize: number;
+  marginBottom: number;
+  keyPrefix: string;
+};
+
+function CalendarWeekdayLabels({
+  labels,
+  color,
+  fontSize,
+  marginBottom,
+  keyPrefix,
+}: CalendarWeekdayLabelsProps) {
+  return (
+    <View style={{ flexDirection: 'row', width: '100%', marginBottom, minHeight: 16 }}>
+      {labels.map((label, index) => (
+        <View key={`${keyPrefix}-${label}-${index}`} style={{ flex: 1, alignItems: 'center' }}>
+          <Text
+            style={{
+              color: color.text.muted,
+              fontSize,
+              fontWeight: '500',
+              letterSpacing: 0.3,
+            }}
+          >
+            {label}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function CalendarGoToTodayButton({
+  color,
+  label,
+  a11yLabel,
+  onPress,
+}: {
+  color: Colors;
+  label: string;
+  a11yLabel: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={a11yLabel}
+      style={({ pressed }) => ({
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+        backgroundColor: withAlphaHex(color.accent.primary, pressed ? 0.2 : 0.12),
+        opacity: pressed ? 0.88 : 1,
+      })}
+    >
+      <Text
+        style={{
+          color: color.accent.primary,
+          fontSize: 13,
+          fontWeight: '600',
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+type WeekCalendarHeaderProps = {
+  title: string;
+  color: Colors;
+  collapsible: boolean;
+  showGoToToday: boolean;
+  onGoToToday: () => void;
+  onExpand?: () => void;
+  onNavigatePrevious: () => void;
+  onNavigateNext: () => void;
+  t: (key: string) => string;
+};
+
+function WeekCalendarHeader({
+  title,
+  color,
+  collapsible,
+  showGoToToday,
+  onGoToToday,
+  onExpand,
+  onNavigatePrevious,
+  onNavigateNext,
+  t,
+}: WeekCalendarHeaderProps) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 10,
+        paddingHorizontal: 4,
+        minHeight: 28,
+      }}
+    >
+      <Text
+        style={{
+          color: color.text.primary,
+          fontSize: 16,
+          fontWeight: '600',
+          flex: 1,
+          minWidth: 0,
+        }}
+        accessibilityRole="header"
+        numberOfLines={1}
+      >
+        {title}
+      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        {showGoToToday ? (
+          <Animated.View entering={CALENDAR_CONTROL_ENTER} exiting={CALENDAR_CONTROL_EXIT}>
+            <CalendarGoToTodayButton
+              color={color}
+              label={t('allTasks.today')}
+              a11yLabel={t('allTasks.calendarGoToTodayA11y')}
+              onPress={onGoToToday}
+            />
+          </Animated.View>
+        ) : null}
+        <CalendarNavButton
+          onPress={onNavigatePrevious}
+          accessibilityLabel={t('allTasks.calendarPreviousWeekA11y')}
+        >
+          <ChevronLeft size={22} color={color.accent.primary} strokeWidth={2.4} />
+        </CalendarNavButton>
+        <CalendarNavButton
+          onPress={onNavigateNext}
+          accessibilityLabel={t('allTasks.calendarNextWeekA11y')}
+        >
+          <ChevronRight size={22} color={color.accent.primary} strokeWidth={2.4} />
+        </CalendarNavButton>
+        {collapsible ? (
+          <CalendarNavButton
+            onPress={onExpand ?? (() => undefined)}
+            accessibilityLabel={t('allTasks.calendarExpandA11y')}
+          >
+            <ChevronDown size={22} color={color.text.secondary} strokeWidth={2.4} />
+          </CalendarNavButton>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function WeekDaysRow({
+  weekAnchor,
+  weekDayCellOptions,
+}: {
+  weekAnchor: Dayjs;
+  weekDayCellOptions: CalendarDayCellRenderOptions;
+}) {
+  const weekDays = useMemo(() => buildWeekDays(weekAnchor), [weekAnchor]);
+
+  return (
+    <View style={{ flexDirection: 'row', width: '100%', height: WEEK_DAY_CELL_HEIGHT }}>
+      {weekDays.map((cell) => (
+        <CalendarDayCellButton key={cell.key} cell={cell} options={weekDayCellOptions} />
+      ))}
+    </View>
+  );
+}
+
+const WeekCalendarBody = memo(function WeekCalendarBody({
+  weekAnchor,
+  weekdayLabels,
+  color,
+  weekDayCellOptions,
+}: {
+  weekAnchor: Dayjs;
+  weekdayLabels: string[];
+  color: Colors;
+  weekDayCellOptions: CalendarDayCellRenderOptions;
+}) {
+  return (
+    <View style={{ width: '100%' }}>
+      <CalendarWeekdayLabels
+        labels={weekdayLabels}
+        color={color}
+        fontSize={11}
+        marginBottom={4}
+        keyPrefix="week"
+      />
+      <WeekDaysRow weekAnchor={weekAnchor} weekDayCellOptions={weekDayCellOptions} />
+    </View>
+  );
+});
+
+type MonthCalendarFooterProps = {
+  color: Colors;
+  selectedDateTitle: string;
+  selectedDateSubtitle: string;
+  hasAnyDayMarkers: boolean;
+  t: (key: string) => string;
+};
+
+function MonthCalendarFooter({
+  color,
+  selectedDateTitle,
+  selectedDateSubtitle,
+  hasAnyDayMarkers,
+  t,
+}: MonthCalendarFooterProps) {
+  return (
+    <View
+      style={{
+        marginTop: 12,
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: color.border.default,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View
-          pointerEvents="none"
           style={{
-            position: 'absolute',
-            bottom: DOT_BOTTOM_INSET,
-            left: '50%',
-            width: DOT_SIZE,
-            height: DOT_SIZE,
-            marginLeft: -DOT_SIZE / 4,
-            borderRadius: DOT_SIZE / 2,
-            backgroundColor: dotColor,
+            width: FOOTER_ICON_SIZE,
+            height: FOOTER_ICON_SIZE,
+            borderRadius: 10,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: color.background.tertiary,
           }}
-        />
+        >
+          <CalendarDays size={20} color={color.accent.primary} strokeWidth={2.2} />
+        </View>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text
+            style={{
+              color: color.text.primary,
+              fontSize: 16,
+              fontWeight: '600',
+            }}
+            numberOfLines={1}
+          >
+            {selectedDateTitle}
+          </Text>
+          <Text
+            style={{
+              color: color.text.secondary,
+              fontSize: 13,
+              marginTop: 2,
+            }}
+            numberOfLines={1}
+          >
+            {selectedDateSubtitle}
+          </Text>
+        </View>
+      </View>
+      {hasAnyDayMarkers ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 12,
+            marginTop: 12,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: 2.5,
+                backgroundColor: CALENDAR_TASK_MARKER_COLOR,
+              }}
+            />
+            <Text style={{ color: color.text.secondary, fontSize: 12 }}>
+              {t('allTasks.calendarLegendHasTasks')}
+            </Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: 2.5,
+                backgroundColor: CALENDAR_OVERDUE_MARKER_COLOR,
+              }}
+            />
+            <Text style={{ color: color.text.secondary, fontSize: 12 }}>
+              {t('allTasks.calendarLegendOverdue')}
+            </Text>
+          </View>
+        </View>
       ) : null}
     </View>
   );
 }
+
+type MonthCalendarHeaderProps = {
+  title: string;
+  color: Colors;
+  collapsible: boolean;
+  showGoToToday: boolean;
+  onGoToToday: () => void;
+  onCollapse?: () => void;
+  onNavigatePrevious: () => void;
+  onNavigateNext: () => void;
+  t: (key: string) => string;
+};
+
+function MonthCalendarHeader({
+  title,
+  color,
+  collapsible,
+  showGoToToday,
+  onGoToToday,
+  onCollapse,
+  onNavigatePrevious,
+  onNavigateNext,
+  t,
+}: MonthCalendarHeaderProps) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+        paddingHorizontal: 4,
+        minHeight: 28,
+      }}
+    >
+      <Text
+        style={{
+          color: color.text.primary,
+          fontSize: 18,
+          fontWeight: '600',
+          flex: 1,
+          minWidth: 0,
+        }}
+        accessibilityRole="header"
+        numberOfLines={1}
+      >
+        {title}
+      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        {showGoToToday ? (
+          <Animated.View entering={CALENDAR_CONTROL_ENTER} exiting={CALENDAR_CONTROL_EXIT}>
+            <CalendarGoToTodayButton
+              color={color}
+              label={t('allTasks.today')}
+              a11yLabel={t('allTasks.calendarGoToTodayA11y')}
+              onPress={onGoToToday}
+            />
+          </Animated.View>
+        ) : null}
+        <CalendarNavButton
+          onPress={onNavigatePrevious}
+          accessibilityLabel={t('allTasks.calendarPreviousMonthA11y')}
+        >
+          <ChevronLeft size={22} color={color.accent.primary} strokeWidth={2.4} />
+        </CalendarNavButton>
+        <CalendarNavButton
+          onPress={onNavigateNext}
+          accessibilityLabel={t('allTasks.calendarNextMonthA11y')}
+        >
+          <ChevronRight size={22} color={color.accent.primary} strokeWidth={2.4} />
+        </CalendarNavButton>
+        {collapsible ? (
+          <CalendarNavButton
+            onPress={onCollapse ?? (() => undefined)}
+            accessibilityLabel={t('allTasks.calendarCollapseA11y')}
+          >
+            <ChevronUp size={22} color={color.text.secondary} strokeWidth={2.4} />
+          </CalendarNavButton>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function MonthGrid({
+  visibleMonth,
+  dayCellOptions,
+  gridHeight,
+}: {
+  visibleMonth: Dayjs;
+  dayCellOptions: CalendarDayCellRenderOptions;
+  gridHeight: number;
+}) {
+  const monthWeeks = useMemo(() => buildMonthWeeks(visibleMonth), [visibleMonth]);
+
+  return (
+    <Animated.View
+      layout={CALENDAR_LAYOUT_TRANSITION}
+      style={{ width: '100%', height: gridHeight }}
+    >
+      {monthWeeks.map((week) => (
+        <View
+          key={week[0]?.key ?? 'week'}
+          style={{ flexDirection: 'row', width: '100%', height: DAY_CELL_HEIGHT }}
+        >
+          {week.map((cell) => (
+            <CalendarDayCellButton key={cell.key} cell={cell} options={dayCellOptions} />
+          ))}
+        </View>
+      ))}
+    </Animated.View>
+  );
+}
+
+const MonthCalendarBody = memo(function MonthCalendarBody({
+  visibleMonth,
+  weekdayLabels,
+  color,
+  dayCellOptions,
+  gridHeight,
+}: {
+  visibleMonth: Dayjs;
+  weekdayLabels: string[];
+  color: Colors;
+  dayCellOptions: CalendarDayCellRenderOptions;
+  gridHeight: number;
+}) {
+  return (
+    <View style={{ width: '100%' }}>
+      <CalendarWeekdayLabels
+        labels={weekdayLabels}
+        color={color}
+        fontSize={12}
+        marginBottom={6}
+        keyPrefix="month"
+      />
+      <MonthGrid
+        visibleMonth={visibleMonth}
+        dayCellOptions={dayCellOptions}
+        gridHeight={gridHeight}
+      />
+    </View>
+  );
+});
 
 export function TasksMonthCalendar({
   color,
@@ -320,12 +829,6 @@ export function TasksMonthCalendar({
     );
   }, [selected]);
 
-  const monthTitle = useMemo(() => {
-    const formatted = visibleMonth.locale(locale).format('MMMM YYYY');
-    const title = formatted.charAt(0).toUpperCase() + formatted.slice(1);
-    return i18n.language.startsWith('ru') ? `${title} г.` : title;
-  }, [i18n.language, locale, visibleMonth]);
-
   const weekdayLabels = useMemo(() => {
     const weekStart = dayjs().locale(locale).startOf('week');
     return Array.from({ length: 7 }, (_, index) =>
@@ -333,15 +836,24 @@ export function TasksMonthCalendar({
     );
   }, [locale]);
 
-  const monthWeeks = useMemo(() => buildMonthWeeks(visibleMonth), [visibleMonth]);
-  const calendarBodyHeight = monthWeeks.length * DAY_CELL_HEIGHT;
-  const weekDays = useMemo(() => buildWeekDays(selected), [selected]);
+  const monthGridHeight = useMemo(
+    () => countWeeksInMonthGrid(visibleMonth) * DAY_CELL_HEIGHT,
+    [visibleMonth],
+  );
+
+  const monthTitle = useMemo(() => {
+    const formatted = visibleMonth.locale(locale).format('MMMM YYYY');
+    const title = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+    return i18n.language.startsWith('ru') ? `${title} г.` : title;
+  }, [i18n.language, locale, visibleMonth]);
+
   const weekStart = useMemo(() => selected.startOf('week'), [selected]);
   const weekEnd = useMemo(() => selected.endOf('week'), [selected]);
   const weekRangeTitle = useMemo(
     () => formatWeekRangeTitle(weekStart, weekEnd, locale, i18n.language),
     [i18n.language, locale, weekEnd, weekStart],
   );
+
   const selectedDateTitle = useMemo(
     () => formatSelectedDateTitle(selected, locale),
     [locale, selected],
@@ -353,12 +865,8 @@ export function TasksMonthCalendar({
   const hasAnyDayMarkers = dayMarkers.size > 0;
 
   const showWeekView = collapsible && !expanded;
-  const slideX = useSharedValue(0);
-  const pageWidthSV = useSharedValue(0);
-
-  useEffect(() => {
-    slideX.value = 0;
-  }, [expanded, selected, slideX, visibleMonth]);
+  const weekPeriodKey = selected.startOf('week').format('YYYY-MM-DD');
+  const monthPeriodKey = visibleMonth.format('YYYY-MM');
 
   const navigatePrevious = useCallback(() => {
     hapticSelection();
@@ -378,54 +886,21 @@ export function TasksMonthCalendar({
     setVisibleMonth((current) => current.add(1, 'month'));
   }, [onDateChange, selected, showWeekView]);
 
-  const swipeGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .activeOffsetX([-SWIPE_ACTIVE_OFFSET_X, SWIPE_ACTIVE_OFFSET_X])
-        .failOffsetY([-SWIPE_FAIL_OFFSET_Y, SWIPE_FAIL_OFFSET_Y])
-        .onUpdate((event) => {
-          const width = Math.max(pageWidthSV.value, 1);
-          const rubberBand = 0.42;
-          const maxDrag = width * 0.34;
-          const nextX = event.translationX * rubberBand;
-          slideX.value = Math.max(-maxDrag, Math.min(maxDrag, nextX));
-        })
-        .onEnd((event) => {
-          const shouldGoNext =
-            event.translationX < -SWIPE_COMMIT_DISTANCE ||
-            event.velocityX < -SWIPE_VELOCITY_THRESHOLD;
-          const shouldGoPrev =
-            event.translationX > SWIPE_COMMIT_DISTANCE ||
-            event.velocityX > SWIPE_VELOCITY_THRESHOLD;
+  const showGoToToday = useMemo(() => {
+    const today = dayjs().startOf('day');
+    if (!selected.isSame(today, 'day')) return true;
+    if (showWeekView) return !selected.isSame(today, 'week');
+    return !visibleMonth.isSame(today, 'month');
+  }, [selected, showWeekView, visibleMonth]);
 
-          if (shouldGoNext) {
-            slideX.value = withTiming(-SWIPE_COMMIT_NUDGE, { duration: 130 }, (finished) => {
-              if (finished) {
-                runOnJS(navigateNext)();
-                slideX.value = 0;
-              }
-            });
-            return;
-          }
-
-          if (shouldGoPrev) {
-            slideX.value = withTiming(SWIPE_COMMIT_NUDGE, { duration: 130 }, (finished) => {
-              if (finished) {
-                runOnJS(navigatePrevious)();
-                slideX.value = 0;
-              }
-            });
-            return;
-          }
-
-          slideX.value = withSpring(0, { damping: 22, stiffness: 320 });
-        }),
-    [navigateNext, navigatePrevious, pageWidthSV, slideX],
-  );
-
-  const swipeAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: slideX.value }],
-  }));
+  const goToToday = useCallback(() => {
+    hapticSelection();
+    const today = dayjs().startOf('day');
+    onDateChange(today.toDate());
+    if (!showWeekView) {
+      setVisibleMonth(today.startOf('month'));
+    }
+  }, [onDateChange, showWeekView]);
 
   const cardStyle = {
     width: '100%' as const,
@@ -441,296 +916,118 @@ export function TasksMonthCalendar({
     elevation: 2,
   };
 
-  const formatDayA11y = (date: Dayjs, hasTasks: boolean) =>
-    hasTasks
-      ? t('allTasks.calendarDayWithTasksA11y', {
-          date: date.locale(locale).format('D MMMM'),
-        })
-      : date.locale(locale).format('D MMMM');
+  const formatDayA11y = useCallback(
+    (date: Dayjs, hasTasks: boolean) =>
+      hasTasks
+        ? t('allTasks.calendarDayWithTasksA11y', {
+            date: date.locale(locale).format('D MMMM'),
+          })
+        : date.locale(locale).format('D MMMM'),
+    [locale, t],
+  );
 
-  const dayCellOptions: CalendarDayCellRenderOptions = {
-    color,
-    locale,
-    selected,
-    dayMarkers,
-    onDateChange,
-    cellHeight: DAY_CELL_HEIGHT,
-    selectionDiameter: SELECTION_DIAMETER,
-    dayNumberFontSize: 20,
-    formatDayA11y,
-  };
+  const dayCellOptions = useMemo<CalendarDayCellRenderOptions>(
+    () => ({
+      color,
+      locale,
+      selected,
+      dayMarkers,
+      onDateChange,
+      cellHeight: DAY_CELL_HEIGHT,
+      selectionDiameter: SELECTION_DIAMETER,
+      dayNumberFontSize: 20,
+      formatDayA11y,
+    }),
+    [color, dayMarkers, formatDayA11y, locale, onDateChange, selected],
+  );
 
-  const weekDayCellOptions: CalendarDayCellRenderOptions = {
-    ...dayCellOptions,
-    cellHeight: WEEK_DAY_CELL_HEIGHT,
-    selectionDiameter: WEEK_SELECTION_DIAMETER,
-    dayNumberFontSize: 18,
-  };
+  const weekDayCellOptions = useMemo<CalendarDayCellRenderOptions>(
+    () => ({
+      ...dayCellOptions,
+      cellHeight: WEEK_DAY_CELL_HEIGHT,
+      selectionDiameter: WEEK_SELECTION_DIAMETER,
+      dayNumberFontSize: 18,
+    }),
+    [dayCellOptions],
+  );
 
   return (
-    <Animated.View layout={CALENDAR_CARD_LAYOUT_TRANSITION} style={cardStyle}>
-      <GestureDetector gesture={swipeGesture}>
-        <Animated.View
-          style={swipeAnimatedStyle}
-          onLayout={(event) => {
-            pageWidthSV.value = event.nativeEvent.layout.width;
-          }}
-        >
+    <Animated.View layout={CALENDAR_LAYOUT_TRANSITION} style={cardStyle}>
       {showWeekView ? (
         <Animated.View
-          key="week-calendar"
-          entering={CALENDAR_CONTENT_FADE_IN}
-          exiting={CALENDAR_CONTENT_FADE_OUT}
+          key="calendar-week-mode"
+          entering={CALENDAR_PERIOD_ENTER}
+          exiting={CALENDAR_PERIOD_EXIT}
+          style={{ width: '100%' }}
         >
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 10,
-              paddingHorizontal: 4,
-              minHeight: 28,
-            }}
+          <WeekCalendarHeader
+            title={weekRangeTitle}
+            color={color}
+            collapsible={collapsible}
+            showGoToToday={showGoToToday}
+            onGoToToday={goToToday}
+            onExpand={() => onExpandedChange?.(true)}
+            onNavigatePrevious={navigatePrevious}
+            onNavigateNext={navigateNext}
+            t={t}
+          />
+          <Animated.View
+            key={weekPeriodKey}
+            entering={CALENDAR_PERIOD_ENTER}
+            exiting={CALENDAR_PERIOD_EXIT}
+            layout={CALENDAR_LAYOUT_TRANSITION}
           >
-            <Text
-              style={{
-                color: color.text.primary,
-                fontSize: 16,
-                fontWeight: '600',
-                flex: 1,
-                minWidth: 0,
-              }}
-              accessibilityRole="header"
-              numberOfLines={1}
-            >
-              {weekRangeTitle}
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Pressable
-                onPress={navigatePrevious}
-                hitSlop={12}
-                accessibilityRole="button"
-                accessibilityLabel={t('allTasks.calendarPreviousWeekA11y')}
-              >
-                <ChevronLeft size={22} color={color.accent.primary} strokeWidth={2.4} />
-              </Pressable>
-              <Pressable
-                onPress={navigateNext}
-                hitSlop={12}
-                accessibilityRole="button"
-                accessibilityLabel={t('allTasks.calendarNextWeekA11y')}
-              >
-                <ChevronRight size={22} color={color.accent.primary} strokeWidth={2.4} />
-              </Pressable>
-              <Pressable
-                onPress={() => onExpandedChange?.(true)}
-                hitSlop={12}
-                accessibilityRole="button"
-                accessibilityLabel={t('allTasks.calendarExpandA11y')}
-              >
-                <ChevronDown size={22} color={color.text.secondary} strokeWidth={2.4} />
-              </Pressable>
-            </View>
-          </View>
-
-          <View style={{ flexDirection: 'row', width: '100%', marginBottom: 4, minHeight: 16 }}>
-            {weekdayLabels.map((label, index) => (
-              <View key={`week-${label}-${index}`} style={{ flex: 1, alignItems: 'center' }}>
-                <Text
-                  style={{
-                    color: color.text.muted,
-                    fontSize: 11,
-                    fontWeight: '500',
-                    letterSpacing: 0.3,
-                  }}
-                >
-                  {label}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          <View style={{ flexDirection: 'row', width: '100%', height: WEEK_DAY_CELL_HEIGHT }}>
-            {weekDays.map((cell) => (
-              <CalendarDayCellButton key={cell.key} cell={cell} options={weekDayCellOptions} />
-            ))}
-          </View>
+            <WeekCalendarBody
+              weekAnchor={selected}
+              weekdayLabels={weekdayLabels}
+              color={color}
+              weekDayCellOptions={weekDayCellOptions}
+            />
+          </Animated.View>
         </Animated.View>
       ) : (
         <Animated.View
-          key="month-calendar"
-          entering={CALENDAR_CONTENT_FADE_IN}
-          exiting={CALENDAR_CONTENT_FADE_OUT}
+          key="calendar-month-mode"
+          entering={CALENDAR_PERIOD_ENTER}
+          exiting={CALENDAR_PERIOD_EXIT}
+          style={{ width: '100%' }}
         >
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 12,
-          paddingHorizontal: 4,
-          minHeight: 28,
-        }}
-      >
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 18,
-            fontWeight: '600',
-            flex: 1,
-            minWidth: 0,
-          }}
-          accessibilityRole="header"
-        >
-          {monthTitle}
-        </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Pressable
-            onPress={navigatePrevious}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel={t('allTasks.calendarPreviousMonthA11y')}
+          <MonthCalendarHeader
+            title={monthTitle}
+            color={color}
+            collapsible={collapsible}
+            showGoToToday={showGoToToday}
+            onGoToToday={goToToday}
+            onCollapse={() => onExpandedChange?.(false)}
+            onNavigatePrevious={navigatePrevious}
+            onNavigateNext={navigateNext}
+            t={t}
+          />
+          <Animated.View
+            key={monthPeriodKey}
+            entering={CALENDAR_PERIOD_ENTER}
+            exiting={CALENDAR_PERIOD_EXIT}
+            layout={CALENDAR_LAYOUT_TRANSITION}
           >
-            <ChevronLeft size={22} color={color.accent.primary} strokeWidth={2.4} />
-          </Pressable>
-          <Pressable
-            onPress={navigateNext}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel={t('allTasks.calendarNextMonthA11y')}
-          >
-            <ChevronRight size={22} color={color.accent.primary} strokeWidth={2.4} />
-          </Pressable>
-          {collapsible ? (
-            <Pressable
-              onPress={() => onExpandedChange?.(false)}
-              hitSlop={12}
-              accessibilityRole="button"
-              accessibilityLabel={t('allTasks.calendarCollapseA11y')}
-            >
-              <ChevronUp size={22} color={color.text.secondary} strokeWidth={2.4} />
-            </Pressable>
-          ) : null}
-        </View>
-      </View>
-
-      <View style={{ flexDirection: 'row', width: '100%', marginBottom: 6, minHeight: 16 }}>
-        {weekdayLabels.map((label, index) => (
-          <View key={`${label}-${index}`} style={{ flex: 1, alignItems: 'center' }}>
-            <Text
-              style={{
-                color: color.text.muted,
-                fontSize: 12,
-                fontWeight: '500',
-                letterSpacing: 0.3,
-              }}
-            >
-              {label}
-            </Text>
-          </View>
-        ))}
-      </View>
-
-      <View style={{ width: '100%', height: calendarBodyHeight }}>
-        {monthWeeks.map((week) => (
-          <View
-            key={week[0]?.key ?? 'week'}
-            style={{ flexDirection: 'row', width: '100%', height: DAY_CELL_HEIGHT }}
-          >
-            {week.map((cell) => (
-              <CalendarDayCellButton key={cell.key} cell={cell} options={dayCellOptions} />
-            ))}
-          </View>
-        ))}
-      </View>
-
-      <View
-        style={{
-          marginTop: 12,
-          paddingTop: 12,
-          borderTopWidth: 1,
-          borderTopColor: color.border.default,
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View
-            style={{
-              width: FOOTER_ICON_SIZE,
-              height: FOOTER_ICON_SIZE,
-              borderRadius: 10,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: color.background.tertiary,
-            }}
-          >
-            <CalendarDays size={20} color={color.accent.primary} strokeWidth={2.2} />
-          </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text
-              style={{
-                color: color.text.primary,
-                fontSize: 16,
-                fontWeight: '600',
-              }}
-              numberOfLines={1}
-            >
-              {selectedDateTitle}
-            </Text>
-            <Text
-              style={{
-                color: color.text.secondary,
-                fontSize: 13,
-                marginTop: 2,
-              }}
-              numberOfLines={1}
-            >
-              {selectedDateSubtitle}
-            </Text>
-          </View>
-        </View>
-        {hasAnyDayMarkers ? (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: 12,
-              marginTop: 12,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View
-                style={{
-                  width: 5,
-                  height: 5,
-                  borderRadius: 2.5,
-                  backgroundColor: CALENDAR_TASK_MARKER_COLOR,
-                }}
-              />
-              <Text style={{ color: color.text.secondary, fontSize: 12 }}>
-                {t('allTasks.calendarLegendHasTasks')}
-              </Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View
-                style={{
-                  width: 5,
-                  height: 5,
-                  borderRadius: 2.5,
-                  backgroundColor: CALENDAR_OVERDUE_MARKER_COLOR,
-                }}
-              />
-              <Text style={{ color: color.text.secondary, fontSize: 12 }}>
-                {t('allTasks.calendarLegendOverdue')}
-              </Text>
-            </View>
-          </View>
-        ) : null}
-      </View>
+            <MonthCalendarBody
+              visibleMonth={visibleMonth}
+              weekdayLabels={weekdayLabels}
+              color={color}
+              dayCellOptions={dayCellOptions}
+              gridHeight={monthGridHeight}
+            />
+          </Animated.View>
+          <Animated.View layout={CALENDAR_LAYOUT_TRANSITION}>
+            <MonthCalendarFooter
+              color={color}
+              selectedDateTitle={selectedDateTitle}
+              selectedDateSubtitle={selectedDateSubtitle}
+              hasAnyDayMarkers={hasAnyDayMarkers}
+              t={t}
+            />
+          </Animated.View>
         </Animated.View>
       )}
-        </Animated.View>
-      </GestureDetector>
     </Animated.View>
   );
 }
