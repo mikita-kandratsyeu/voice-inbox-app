@@ -50,7 +50,7 @@ import {
   supportHomeScreen,
   supportListScreen,
 } from './modules/support.js';
-import { clearFlow, clearSession } from './session/store.js';
+import { clearFlow } from './session/store.js';
 import { sendScreen, type ScreenReply } from './ui/reply.js';
 
 async function withHandler(

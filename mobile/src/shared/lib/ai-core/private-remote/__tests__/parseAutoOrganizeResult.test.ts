@@ -90,9 +90,7 @@ describe('assertAutoOrganizeComplete', () => {
 
 describe('isAutoOrganizeParseFailure', () => {
   it('detects parse errors', () => {
-    expect(isAutoOrganizeParseFailure(new Error('Invalid AI response: malformed JSON'))).toBe(
-      true,
-    );
+    expect(isAutoOrganizeParseFailure(new Error('Invalid AI response: malformed JSON'))).toBe(true);
     expect(isAutoOrganizeParseFailure(new Error('network'))).toBe(false);
     expect(isAutoOrganizeParseFailure('oops')).toBe(false);
   });

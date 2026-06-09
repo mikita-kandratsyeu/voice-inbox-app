@@ -7,7 +7,10 @@ import {
 } from '../applyAllTasksQuickFilter';
 import type { TaskWithRecord } from '../../types';
 
-function row(task: Partial<TaskItem>, recordCreatedAt = '2026-06-01T00:00:00.000Z'): TaskWithRecord {
+function row(
+  task: Partial<TaskItem>,
+  recordCreatedAt = '2026-06-01T00:00:00.000Z',
+): TaskWithRecord {
   return {
     recordId: 'rec-1',
     recordTitle: 'Note',
@@ -104,7 +107,10 @@ describe('sortTaskRows', () => {
     const sorted = [
       row({ id: 'later', deadline: '2026-06-20', priority: 'low' }, '2026-06-01T00:00:00.000Z'),
       row({ id: 'soon', deadline: '2026-06-10', priority: 'high' }, '2026-06-02T00:00:00.000Z'),
-      row({ id: 'soon-medium', deadline: '2026-06-10', priority: 'medium' }, '2026-06-03T00:00:00.000Z'),
+      row(
+        { id: 'soon-medium', deadline: '2026-06-10', priority: 'medium' },
+        '2026-06-03T00:00:00.000Z',
+      ),
     ].sort(sortTaskRows);
 
     expect(sorted.map((r) => r.task.id)).toEqual(['soon', 'soon-medium', 'later']);

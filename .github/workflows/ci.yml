@@ -8,103 +8,118 @@ on:
 
 jobs:
   mobile:
-    name: CI (Mobile)
+    name: Mobile
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: mobile
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set Node.js 24.x
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: 24.x
 
-      - name: Enable Corepack (Yarn 4)
+      - name: Enable Corepack
         run: corepack enable
 
-      - name: Checking node_modules cache
+      - name: Restore yarn cache
         uses: actions/cache@v4
         with:
           path: mobile/node_modules
           key: ${{ runner.os }}-mobile-modules-${{ hashFiles('mobile/yarn.lock', 'mobile/.yarnrc.yml') }}
 
-      - name: Install packages
+      - name: Install dependencies
         run: yarn install --immutable
 
-      - name: ESLint
+      - name: Lint
         run: yarn lint
 
-      - name: Type Check
+      - name: Format check
+        run: yarn format:check
+
+      - name: Typecheck
         run: yarn type:check
 
-      - name: Unit tests (Jest)
+      - name: Test
         run: yarn test --ci --forceExit
 
   web:
-    name: CI (Web)
+    name: Web
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: web
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set Node.js 24.x
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: 24.x
 
-      - name: Enable Corepack (Yarn 4)
+      - name: Enable Corepack
         run: corepack enable
 
-      - name: Checking node_modules cache
+      - name: Restore yarn cache
         uses: actions/cache@v4
         with:
           path: web/node_modules
           key: ${{ runner.os }}-web-modules-${{ hashFiles('web/yarn.lock', 'web/.yarnrc.yml') }}
 
-      - name: Install packages
+      - name: Install dependencies
         run: yarn install --immutable
 
-      - name: ESLint
+      - name: Lint
         run: yarn lint
 
-      - name: Type Check
+      - name: Typecheck
         env:
           # prisma.config.ts requires DATABASE_URL; prisma generate does not open a connection
           DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
         run: yarn type:check
 
+      - name: Test
+        run: yarn test --ci --forceExit
+
   telegram-bot:
-    name: CI (Telegram bot)
+    name: Telegram bot
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: telegram-bot
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set Node.js 24.x
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: 24.x
 
-      - name: Enable Corepack (Yarn 4)
+      - name: Enable Corepack
         run: corepack enable
 
-      - name: Checking node_modules cache
+      - name: Restore yarn cache
         uses: actions/cache@v4
         with:
           path: telegram-bot/node_modules
           key: ${{ runner.os }}-telegram-bot-modules-${{ hashFiles('telegram-bot/yarn.lock', 'telegram-bot/.yarnrc.yml') }}
 
-      - name: Install packages
+      - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Type Check
+      - name: Lint
+        run: yarn lint
+
+      - name: Typecheck
         run: yarn type:check
+
+      - name: Test
+        run: yarn test --ci --forceExit

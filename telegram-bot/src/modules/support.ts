@@ -126,7 +126,6 @@ export async function supportConfirmStatus(
 ): Promise<ScreenReply> {
   const id = getListId(h.telegramUserId, index);
   if (!id) return { text: `${screenTitle('Support')}\nTicket not found.` };
-  const action = close ? 'close' : 'reopen';
   const kb = new InlineKeyboard()
     .text('✅ Confirm', `su:xs:${close ? 'c' : 'o'}:${page}:${index}:${statusFlag}`)
     .text('❌ Cancel', `su:v:${page}:${index}:${statusFlag}`);

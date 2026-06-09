@@ -1,8 +1,4 @@
-import {
-  centeredCosineSimilarity,
-  computeCentroid,
-  cosineSimilarity,
-} from '../cosineSimilarity';
+import { centeredCosineSimilarity, computeCentroid, cosineSimilarity } from '../cosineSimilarity';
 
 describe('cosineSimilarity', () => {
   it('returns 1 for identical vectors', () => {
@@ -25,7 +21,12 @@ describe('cosineSimilarity', () => {
 
 describe('computeCentroid', () => {
   it('averages embeddings dimension-wise', () => {
-    expect(computeCentroid([[0, 0], [2, 4]])).toEqual([1, 2]);
+    expect(
+      computeCentroid([
+        [0, 0],
+        [2, 4],
+      ]),
+    ).toEqual([1, 2]);
   });
 
   it('returns empty array for no embeddings', () => {

@@ -6,11 +6,7 @@ import {
 } from '../buildTaskDeadlineDayMarkers';
 import type { TaskWithRecord } from '../../types';
 
-function row(
-  id: string,
-  deadline: string,
-  isDone = false,
-): TaskWithRecord {
+function row(id: string, deadline: string, isDone = false): TaskWithRecord {
   return {
     recordId: 'rec-1',
     recordTitle: 'Note',

@@ -3,7 +3,7 @@ import { InlineKeyboard } from 'grammy';
 import type { HandlerCtx } from '../context.js';
 import { getListId, setListIds } from '../session/store.js';
 import { requirePerm, paginateRow } from '../ui/keyboards.js';
-import { escapeHtml, formatIsoShort, maskSecret } from '../ui/format.js';
+import { escapeHtml, formatIsoShort } from '../ui/format.js';
 import type { ScreenReply } from '../ui/reply.js';
 import { screenTitle } from '../ui/reply.js';
 

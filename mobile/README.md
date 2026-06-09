@@ -40,12 +40,12 @@ Release builds: `yarn ios:release` / `yarn android:release` (`APP_ENV=production
 
 Shown on the recording detail screen when the note is classified as a **meeting** (Smart or Private AI).
 
-| Capability | Smart (cloud) | Private |
-| ---------- | ------------- | ------- |
-| Speaker-turn markdown | Second job after summarize (`meeting_dialogue` on web) or inline for shorter notes | On-device batch in the same flow as summary/tasks |
-| **Speaker roster** | Rename display names; stored in `meetingSpeakerLabels` (SQLite) | Same |
-| **Regenerate dialogue only** | `POST /api/messages/:jobId/meeting-dialogue` — needs existing `cloudAiJobId` | N/A |
-| Cancel in-flight dialogue | Shared AI cancel + `meeting_dialogue` worker checks cancel flag | Local abort handle |
+| Capability                   | Smart (cloud)                                                                      | Private                                           |
+| ---------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Speaker-turn markdown        | Second job after summarize (`meeting_dialogue` on web) or inline for shorter notes | On-device batch in the same flow as summary/tasks |
+| **Speaker roster**           | Rename display names; stored in `meetingSpeakerLabels` (SQLite)                    | Same                                              |
+| **Regenerate dialogue only** | `POST /api/messages/:jobId/meeting-dialogue` — needs existing `cloudAiJobId`       | N/A                                               |
+| Cancel in-flight dialogue    | Shared AI cancel + `meeting_dialogue` worker checks cancel flag                    | Local abort handle                                |
 
 **UI:** `src/screens/recording-detail/` (`MeetingDialogueTab`, `MeetingDialogueSpeakerRoster`, `parseMeetingDialogue`, `meetingSpeakerLabels`).
 
@@ -54,6 +54,7 @@ Shown on the recording detail screen when the note is classified as a **meeting*
 **Settings → AI:** _Refresh speaker list when regenerating_ (`autoRefreshMeetingSpeakersOnRegen`, default **off**). When **off**, regenerating summary/tasks skips a new meeting-dialogue pass so renamed speakers stay as-is. When **on**, a full regen may replace dialogue and clear `meetingSpeakerLabels`. Dialogue-only regen prunes labels to speakers still present in the new markdown.
 
 **Backup ZIP (v3):** `meetingDialogue` and `meetingSpeakerLabels` are included in `metadata.json` records (full `VoiceRecord` export).
+
 - **Inbox** — Pins, folders, tags, archive/trash, text notes, batch actions.
 - **Search** — Lexical scoring; **hybrid** ranking with local embeddings when stored (`src/features/search-records/`, `src/shared/lib/embeddings/`).
 - **Themes** — System / light / dark (NativeWind + shared tokens).
@@ -74,10 +75,10 @@ Push: `@react-native-firebase/messaging`. Crashlytics, Analytics, Remote Config,
 
 `whisper.rn` downloads **GGML** weights from Hugging Face.
 
-| Platform | Behavior |
-| -------- | -------- |
-| **iOS** | After each `.bin`, fetches matching `ggml-*-encoder.mlmodelc.zip` for Core ML on the Neural Engine when available |
-| **Android** | `.bin` only (default GPU/CPU backend) |
+| Platform    | Behavior                                                                                                          |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- |
+| **iOS**     | After each `.bin`, fetches matching `ggml-*-encoder.mlmodelc.zip` for Core ML on the Neural Engine when available |
+| **Android** | `.bin` only (default GPU/CPU backend)                                                                             |
 
 **Init & lifecycle**
 
@@ -109,18 +110,18 @@ Cold start: `src/features/app-lifecycle/model/useAppBootstrap.ts` — Firebase A
 
 ## Tech stack
 
-| Area | Choice |
-| ---- | ------ |
-| Framework | React Native 0.84 (CLI), TypeScript |
-| UI | React 19, NativeWind v4, `@gorhom/bottom-sheet`, FlashList |
-| Navigation | React Navigation (stack + tabs + modals) |
-| State | Zustand per domain (`entities/*/model`, `features/*/model`) |
-| DB | Drizzle + `@op-engineering/op-sqlite` — `src/shared/lib/db/schema.ts`, migrations in `drizzle/` |
-| Prefs | `react-native-mmkv` |
-| Audio / STT | `react-native-nitro-sound`, `whisper.rn` |
-| On-device LLM | `llama.rn`, optional `@react-native-ai/apple` |
-| i18n | `i18next` |
-| Validation | `zod` |
+| Area          | Choice                                                                                          |
+| ------------- | ----------------------------------------------------------------------------------------------- |
+| Framework     | React Native 0.84 (CLI), TypeScript                                                             |
+| UI            | React 19, NativeWind v4, `@gorhom/bottom-sheet`, FlashList                                      |
+| Navigation    | React Navigation (stack + tabs + modals)                                                        |
+| State         | Zustand per domain (`entities/*/model`, `features/*/model`)                                     |
+| DB            | Drizzle + `@op-engineering/op-sqlite` — `src/shared/lib/db/schema.ts`, migrations in `drizzle/` |
+| Prefs         | `react-native-mmkv`                                                                             |
+| Audio / STT   | `react-native-nitro-sound`, `whisper.rn`                                                        |
+| On-device LLM | `llama.rn`, optional `@react-native-ai/apple`                                                   |
+| i18n          | `i18next`                                                                                       |
+| Validation    | `zod`                                                                                           |
 
 **Path aliases:** `@/`, `@entities/`, `@features/`, `@screens/`, `@shared/`, `@widgets/`, `@app/` (see `tsconfig.json`).
 
@@ -145,18 +146,18 @@ patches/         patch-package overrides
 
 ## Scripts (from `mobile/`)
 
-| Script | Description |
-| ------ | ----------- |
-| `yarn start` | Metro (`APP_ENV=development`) |
-| `yarn ios` / `yarn android` | Dev run on device/simulator |
-| `yarn ios:release` / `yarn android:release` | Release mode on device |
-| `yarn type:check` | `tsc --noEmit` |
-| `yarn lint` / `yarn lint:fix` | ESLint |
-| `yarn test` | Jest |
-| `yarn validate` | lint-staged + types + tests (pre-commit) |
-| `yarn validate:push` | types + tests CI-style |
-| `yarn db:generate` | Drizzle SQL from `schema.ts` |
-| `yarn analyze:bundle` | Bundle size report (optional platform arg) |
+| Script                                      | Description                                |
+| ------------------------------------------- | ------------------------------------------ |
+| `yarn start`                                | Metro (`APP_ENV=development`)              |
+| `yarn ios` / `yarn android`                 | Dev run on device/simulator                |
+| `yarn ios:release` / `yarn android:release` | Release mode on device                     |
+| `yarn type:check`                           | `tsc --noEmit`                             |
+| `yarn lint` / `yarn lint:fix`               | ESLint                                     |
+| `yarn test`                                 | Jest                                       |
+| `yarn validate`                             | lint-staged + types + tests (pre-commit)   |
+| `yarn validate:push`                        | types + tests CI-style                     |
+| `yarn db:generate`                          | Drizzle SQL from `schema.ts`               |
+| `yarn analyze:bundle`                       | Bundle size report (optional platform arg) |
 
 `postinstall` runs `patch-package` and Android NetInfo Gradle fix.
 

@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "type:check": "prisma generate && tsc --noEmit",
+    "test": "jest",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx scripts/db-seed-admin.ts",
@@ -63,6 +64,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^3.0.0",
+    "@types/jest": "^29.5.14",
     "@types/node": "^24",
     "@types/nodemailer": "^7.0.11",
     "@types/pdfkit": "^0.17.6",
@@ -75,6 +77,7 @@
     "eslint-config-next": "16.2.2",
     "eslint-config-prettier": "^10",
     "eslint-plugin-prettier": "^5",
+    "jest": "^29.7.0",
     "prettier": "^3",
     "prisma": "^7.8.0",
     "tailwindcss": "^4",

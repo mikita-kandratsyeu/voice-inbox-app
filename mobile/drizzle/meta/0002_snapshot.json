@@ -136,16 +136,12 @@
       "indexes": {
         "idx_records_isPinned": {
           "name": "idx_records_isPinned",
-          "columns": [
-            "isPinned"
-          ],
+          "columns": ["isPinned"],
           "isUnique": false
         },
         "idx_records_createdAt": {
           "name": "idx_records_createdAt",
-          "columns": [
-            "createdAt"
-          ],
+          "columns": ["createdAt"],
           "isUnique": false
         }
       },

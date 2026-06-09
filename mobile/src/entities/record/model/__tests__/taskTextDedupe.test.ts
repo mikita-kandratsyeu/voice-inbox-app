@@ -70,10 +70,7 @@ describe('taskTextDedupe', () => {
   describe('filterNextStepsByNormalizedTaskSet', () => {
     it('removes next steps that duplicate task text', () => {
       const taskTexts = buildNormalizedTextSet(['call client']);
-      const filtered = filterNextStepsByNormalizedTaskSet(
-        ['Call client', 'Send recap'],
-        taskTexts,
-      );
+      const filtered = filterNextStepsByNormalizedTaskSet(['Call client', 'Send recap'], taskTexts);
       expect(filtered).toEqual(['Send recap']);
     });
   });

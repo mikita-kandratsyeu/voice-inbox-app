@@ -86,7 +86,7 @@ export async function operationsAuditScreen(h: HandlerCtx, page: number): Promis
   return { text: lines.join('\n'), keyboard: kb };
 }
 
-export function operationsLinksScreen(h: HandlerCtx): ScreenReply {
+export function operationsLinksScreen(_h: HandlerCtx): ScreenReply {
   const lines = [screenTitle('Console links'), ''];
   for (const link of CONSOLE_LINKS) {
     const url = process.env[link.env]?.trim();

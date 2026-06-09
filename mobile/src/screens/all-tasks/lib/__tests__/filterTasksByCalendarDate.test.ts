@@ -11,11 +11,7 @@ function row(id: string, deadline: string): TaskWithRecord {
 }
 
 describe('filterTasksByCalendarDate', () => {
-  const rows = [
-    row('t1', '2026-06-09'),
-    row('t2', '2026-06-10'),
-    row('t3', 'not-a-date'),
-  ];
+  const rows = [row('t1', '2026-06-09'), row('t2', '2026-06-10'), row('t3', 'not-a-date')];
 
   it('keeps tasks whose deadline falls on the selected day', () => {
     const filtered = filterTasksByCalendarDate(rows, new Date('2026-06-09T15:30:00'));

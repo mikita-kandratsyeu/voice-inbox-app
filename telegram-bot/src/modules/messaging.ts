@@ -67,7 +67,7 @@ export async function messagingHistoryScreen(h: HandlerCtx, page: number): Promi
   return { text: lines.join('\n'), keyboard: kb };
 }
 
-export function messagingBroadcastTypeScreen(h: HandlerCtx): ScreenReply {
+export function messagingBroadcastTypeScreen(_h: HandlerCtx): ScreenReply {
   const kb = new InlineKeyboard();
   for (const t of PUSH_TYPES) {
     kb.text(t.label, `ms:bct:${t.cb}`).row();
