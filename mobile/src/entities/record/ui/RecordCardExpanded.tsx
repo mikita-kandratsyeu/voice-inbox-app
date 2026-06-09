@@ -1,8 +1,8 @@
 import { MenuView } from '@react-native-menu/menu';
-import { MoreHorizontal, Pin } from 'lucide-react-native';
+import { CalendarDays, MoreHorizontal, Pin } from 'lucide-react-native';
 import React, { memo, useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text, useWindowDimensions, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -43,6 +43,15 @@ type RecordCardExpandedProps = {
   hideAccessibilitySubtree?: boolean;
 };
 
+const sectionTitleStyle = {
+  fontSize: 11,
+  fontWeight: '600' as const,
+  letterSpacing: 0.8,
+  textTransform: 'uppercase' as const,
+};
+
+const COMPACT_CARD_LAYOUT_MAX_WIDTH = 420;
+
 export const RecordCardExpanded = memo(function RecordCardExpanded({
   item,
   color,
@@ -64,6 +73,8 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
   const { i18n, t } = useTranslation();
   const theme = useAppTheme();
   const isDark = theme === 'dark';
+  const { width: windowWidth } = useWindowDimensions();
+  const compactLayout = windowWidth < COMPACT_CARD_LAYOUT_MAX_WIDTH;
   const { isSwiping } = useContext(SwipeableCardContext);
 
   const textPrimaryStyle = { color: color.text.primary };
@@ -135,6 +146,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
     (item.tasks?.length ?? 0) > 0 ||
     hasTranscriptPreview ||
     Boolean(item.summary?.trim());
+  const showFooter = hasTags || categoryLabel;
 
   const menuActions = useMemo(() => {
     const actions: Array<{
@@ -225,15 +237,28 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
         <View
           style={{
             flexDirection: 'row',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             justifyContent: 'space-between',
-            marginBottom: 10,
-            gap: 8,
+            gap: 12,
+            marginBottom: 12,
           }}
         >
-          <Text style={[textSecondaryStyle, { fontSize: 12 }]} numberOfLines={1}>
-            {formatExpandedCardDate(item.createdAt, i18n.language, t)}
-          </Text>
+          <View style={{ flex: 1, minWidth: 0, gap: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <CalendarDays size={13} color={color.icon.muted} strokeWidth={2} />
+              <Text style={[textSecondaryStyle, { fontSize: 12 }]} numberOfLines={2}>
+                {formatExpandedCardDate(item.createdAt, i18n.language, t)}
+              </Text>
+            </View>
+            {showTypeBadges ? (
+              <RecordCardTypeBadges
+                noteKind={noteKind}
+                marksCount={marksCount}
+                color={color}
+                embedded
+              />
+            ) : null}
+          </View>
           {menuActions.length > 0 && !hideAccessibilitySubtree ? (
             <MenuView
               key={`record-expanded-menu-${item.id}-${theme}`}
@@ -263,26 +288,22 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
           ) : null}
         </View>
 
-        {showTypeBadges ? (
-          <RecordCardTypeBadges noteKind={noteKind} marksCount={marksCount} color={color} />
-        ) : null}
-
         <View
           style={{
             flexDirection: 'row',
             alignItems: 'flex-start',
             justifyContent: 'space-between',
             gap: 8,
-            marginBottom: hasPreview || showMetaStrip || openTaskPreview.length > 0 ? 10 : 0,
+            marginBottom: 8,
           }}
         >
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-start', minWidth: 0 }}>
             {item.isPinned ? (
               <Pin
-                size={14}
+                size={16}
                 color={color.accent.pin}
                 strokeWidth={2}
-                style={{ marginRight: 6, marginTop: 4 }}
+                style={{ marginRight: 6, marginTop: 3 }}
               />
             ) : null}
             {isUnread ? (
@@ -292,7 +313,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
                   height: 10,
                   borderRadius: 5,
                   marginRight: 8,
-                  marginTop: 6,
+                  marginTop: 5,
                   backgroundColor: color.accent.delete,
                   borderWidth: 2,
                   borderColor: color.background.card,
@@ -304,7 +325,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
                 textPrimaryStyle,
                 {
                   flex: 1,
-                  fontSize: 17,
+                  fontSize: 18,
                   lineHeight: 24,
                   fontWeight: isUnread ? '700' : '600',
                 },
@@ -315,23 +336,25 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
             </Text>
           </View>
           {showStatusPill ? (
-            <AiStatusPill
-              aiStatus={item.aiStatus ?? 'done'}
-              transcriptProgress={item.transcriptProgress}
-              transcriptProgressLabel={item.transcriptProgressLabel}
-              transcriptProgressSegments={item.transcriptProgressSegments}
-              summaryStatus={item.summaryStatus}
-              tasksStatus={item.tasksStatus}
-              translationStatus={item.translationStatus}
-              askAiStatus={item.askAiStatus}
-              meetingDialogueStatus={item.meetingDialogueStatus}
-              onPress={onStatusPress}
-            />
+            <View style={{ flexShrink: 0, maxWidth: '46%' }}>
+              <AiStatusPill
+                aiStatus={item.aiStatus ?? 'done'}
+                transcriptProgress={item.transcriptProgress}
+                transcriptProgressLabel={item.transcriptProgressLabel}
+                transcriptProgressSegments={item.transcriptProgressSegments}
+                summaryStatus={item.summaryStatus}
+                tasksStatus={item.tasksStatus}
+                translationStatus={item.translationStatus}
+                askAiStatus={item.askAiStatus}
+                meetingDialogueStatus={item.meetingDialogueStatus}
+                onPress={onStatusPress}
+              />
+            </View>
           ) : null}
         </View>
 
         {hasPreview ? (
-          <Text style={[textSecondaryStyle, { fontSize: 14, lineHeight: 20 }]} numberOfLines={3}>
+          <Text style={[textSecondaryStyle, { fontSize: 14, lineHeight: 21 }]} numberOfLines={4}>
             {previewText}
           </Text>
         ) : null}
@@ -350,29 +373,51 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
 
         <RecordCardOpenTasksPreview tasks={openTaskPreview} color={color} />
 
-        {(hasTags || categoryLabel) && (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginTop: 12,
-              gap: 8,
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <RecordCardTagsRow tags={tags} color={color} variant="full" />
+        {showFooter ? (
+          <>
+            <View
+              style={{
+                height: 1,
+                backgroundColor: color.border.default,
+                marginTop: 14,
+                marginBottom: 12,
+              }}
+            />
+            <View
+              style={
+                compactLayout && hasTags && categoryLabel
+                  ? { gap: 10 }
+                  : {
+                      flexDirection: 'row',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }
+              }
+            >
+              {hasTags ? (
+                <View style={{ flex: compactLayout && categoryLabel ? undefined : 1, minWidth: 0 }}>
+                  <Text style={[sectionTitleStyle, { color: color.text.muted, marginBottom: 8 }]}>
+                    {t('inbox.cardLayout.tagsSectionTitle')}
+                  </Text>
+                  <RecordCardTagsRow tags={tags} color={color} variant="full" />
+                </View>
+              ) : compactLayout && categoryLabel ? null : (
+                <View style={{ flex: 1 }} />
+              )}
+              {categoryLabel ? (
+                <View style={compactLayout && hasTags ? { alignSelf: 'flex-start' } : undefined}>
+                  <RecordCardLocationChip
+                    label={categoryLabel}
+                    color={color}
+                    accentColor={locationAccentColor}
+                    folderIconId={isFolderLabel ? folderIconId : undefined}
+                  />
+                </View>
+              ) : null}
             </View>
-            {categoryLabel ? (
-              <RecordCardLocationChip
-                label={categoryLabel}
-                color={color}
-                accentColor={locationAccentColor}
-                folderIconId={isFolderLabel ? folderIconId : undefined}
-              />
-            ) : null}
-          </View>
-        )}
+          </>
+        ) : null}
       </View>
     </>
   );

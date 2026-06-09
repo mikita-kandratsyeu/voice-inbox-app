@@ -10,6 +10,7 @@ type RecordCardTypeBadgesProps = {
   noteKind: RecordCardNoteKind;
   marksCount: number;
   color: Colors;
+  embedded?: boolean;
 };
 
 function TypeBadge({
@@ -43,6 +44,7 @@ export const RecordCardTypeBadges = memo(function RecordCardTypeBadges({
   noteKind,
   marksCount,
   color,
+  embedded = false,
 }: RecordCardTypeBadgesProps) {
   const { t } = useTranslation();
 
@@ -70,7 +72,14 @@ export const RecordCardTypeBadges = memo(function RecordCardTypeBadges({
     );
 
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 6,
+        marginBottom: embedded ? 0 : 10,
+      }}
+    >
       {showNoteKind ? <TypeBadge color={color} icon={noteKindIcon} label={noteKindLabel} /> : null}
       {showMarks ? (
         <TypeBadge
