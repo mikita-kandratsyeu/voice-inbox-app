@@ -198,7 +198,7 @@ export function TasksMonthCalendar({
         <Text
           style={{
             color: color.text.primary,
-            fontSize: 17,
+            fontSize: 18,
             fontWeight: '600',
           }}
         >
@@ -236,7 +236,7 @@ export function TasksMonthCalendar({
             <Text
               style={{
                 color: color.text.muted,
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: '500',
                 letterSpacing: 0.3,
               }}
@@ -310,7 +310,7 @@ export function TasksMonthCalendar({
                       <Text
                         style={{
                           color: dayVisual.textColor,
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: dayVisual.fontWeight,
                           fontVariant: ['tabular-nums'],
                         }}
