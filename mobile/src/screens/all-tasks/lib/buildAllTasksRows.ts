@@ -2,8 +2,8 @@ import dayjs from 'dayjs';
 
 import type { RecordListItem } from '@/entities/record';
 
-import { applyAllTasksQuickFilter } from './applyAllTasksQuickFilter';
 import type { AllTasksQuickFilter, TaskWithRecord } from '../types';
+import { applyAllTasksQuickFilter } from './applyAllTasksQuickFilter';
 
 type BuildAllTasksRowsOptions = {
   effectiveActiveFolderId: string | null;

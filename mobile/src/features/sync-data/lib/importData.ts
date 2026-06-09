@@ -3,7 +3,7 @@ import { isPasswordProtected, unzip, unzipWithPassword } from 'react-native-zip-
 
 import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
-import { ensureRecordingsDir, i18n, isString, RECORDINGS_DIR } from '@/shared/lib';
+import { ensureRecordingsDir, i18n, RECORDINGS_DIR } from '@/shared/lib';
 import { diagWarn } from '@/shared/lib/appLogger';
 import {
   getCachesDirectoryPath,
