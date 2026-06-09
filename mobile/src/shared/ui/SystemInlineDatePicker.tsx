@@ -5,7 +5,11 @@ import { View } from 'react-native';
 import { useAppTheme, useColors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib';
 
-export const IOS_INLINE_DATE_PICKER_HEIGHT = 370;
+/**
+ * iOS inline UICalendarView always reserves six week rows. Keep a fixed height so
+ * month navigation in the picker never clips (dynamic week counts underestimate).
+ */
+export const IOS_INLINE_DATE_PICKER_HEIGHT = 320;
 
 type SystemInlineDatePickerProps = {
   value: Date;
@@ -33,6 +37,13 @@ export function SystemInlineDatePicker({
         alignSelf: 'center',
         backgroundColor: color.background.tertiary,
         width: '100%',
+        ...(IS_IOS
+          ? {
+              height: IOS_INLINE_DATE_PICKER_HEIGHT,
+              maxHeight: IOS_INLINE_DATE_PICKER_HEIGHT,
+              overflow: 'hidden',
+            }
+          : null),
       }}
     >
       <DateTimePicker
