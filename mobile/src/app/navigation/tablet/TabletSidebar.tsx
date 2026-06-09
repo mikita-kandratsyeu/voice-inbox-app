@@ -55,6 +55,7 @@ export const TabletSidebar = () => {
     pinned: pinnedCount,
     archived: archivedCount,
     openTasks: openTasksCount,
+    notesGraphNodes: notesGraphNodeCount,
     folderCounts,
   } = useTabletSidebarNavCounts();
   const aiProcessing = useTabletSidebarAiProcessing();
@@ -214,6 +215,7 @@ export const TabletSidebar = () => {
         pinnedCount={pinnedCount}
         archivedCount={archivedCount}
         openTasksCount={openTasksCount}
+        notesGraphNodeCount={notesGraphNodeCount}
         aiProcessing={aiProcessing}
         inboxActive={inboxActive}
         pinnedActive={pinnedActive}

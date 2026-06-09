@@ -50,6 +50,7 @@ export type TabletSidebarBodyProps = {
   pinnedCount: number;
   archivedCount: number;
   openTasksCount: number;
+  notesGraphNodeCount: number;
   aiProcessing: TabletSidebarAiProcessing;
   inboxActive: boolean;
   pinnedActive: boolean;
@@ -85,6 +86,7 @@ export function TabletSidebarBody({
   pinnedCount,
   archivedCount,
   openTasksCount,
+  notesGraphNodeCount,
   aiProcessing,
   inboxActive,
   pinnedActive,
@@ -204,6 +206,7 @@ export function TabletSidebarBody({
         color={color}
         theme={theme}
         appearance="secondary"
+        badgeCount={notesGraphNodeCount}
         onPress={openNotesGraph}
         trailingAccessory={!isProActive ? <PlanPaywallProChip /> : undefined}
         icon={

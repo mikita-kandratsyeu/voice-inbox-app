@@ -38,6 +38,23 @@ export function countFilteredGraphRecords(allRecords: VoiceRecord[], filters: Gr
   return filterRecords(allRecords, filters).length;
 }
 
+export function countGraphNodes(allRecords: VoiceRecord[], filters: GraphFilters): number {
+  const filtered = filterRecords(allRecords, filters);
+  let count = filtered.length;
+
+  if (filters.showTasks) {
+    for (const record of filtered) {
+      for (const task of record.tasks ?? []) {
+        if (!task.isDone) {
+          count += 1;
+        }
+      }
+    }
+  }
+
+  return count;
+}
+
 function addSimilarEdges(records: VoiceRecord[], edges: GraphEdge[]): void {
   const context = buildSimilarityContext(records);
   const minScore = context.useEmbeddings ? MIN_HYBRID_SCORE : MIN_LEXICAL_ONLY_SCORE;

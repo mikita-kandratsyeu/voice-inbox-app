@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 
 import { useRecordStore } from '@/entities/record';
+import { countGraphNodes } from '@/screens/notes-graph/lib/buildGraphModel';
+import { DEFAULT_EDGE_VISIBILITY } from '@/screens/notes-graph/lib/graphTypes';
 
 export type TabletSidebarNavCounts = {
   inbox: number;
@@ -8,6 +10,7 @@ export type TabletSidebarNavCounts = {
   pinned: number;
   archived: number;
   openTasks: number;
+  notesGraphNodes: number;
   folderCounts: Map<string, number>;
 };
 
@@ -44,7 +47,14 @@ export function useTabletSidebarNavCounts(): TabletSidebarNavCounts {
       }
     }
 
-    return { inbox, unread, pinned, archived, openTasks, folderCounts };
+    const notesGraphNodes = countGraphNodes(records, {
+      folderId: null,
+      tags: [],
+      showTasks: true,
+      edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
+    });
+
+    return { inbox, unread, pinned, archived, openTasks, notesGraphNodes, folderCounts };
   }, [records]);
 }
 
