@@ -27,6 +27,18 @@ function readJsonIfExists(filePath) {
   }
 }
 
+function pickCoverageMetric(summary, key) {
+  const metric = summary?.[key];
+  if (!metric || metric.pct == null) {
+    return null;
+  }
+  return {
+    pct: metric.pct,
+    covered: metric.covered ?? null,
+    total: metric.total ?? null,
+  };
+}
+
 const steps = {
   lint: process.env.STEP_LINT_OUTCOME ?? 'skipped',
   typecheck: process.env.STEP_TYPECHECK_OUTCOME ?? 'skipped',
@@ -44,12 +56,20 @@ const testResults = readJsonIfExists(path.join(appDir, 'test-results.json'));
 
 const coverage = coverageSummary?.total
   ? {
-      lines: coverageSummary.total.lines?.pct ?? null,
-      statements: coverageSummary.total.statements?.pct ?? null,
-      functions: coverageSummary.total.functions?.pct ?? null,
-      branches: coverageSummary.total.branches?.pct ?? null,
+      lines: pickCoverageMetric(coverageSummary.total, 'lines'),
+      statements: pickCoverageMetric(coverageSummary.total, 'statements'),
+      functions: pickCoverageMetric(coverageSummary.total, 'functions'),
+      branches: pickCoverageMetric(coverageSummary.total, 'branches'),
     }
   : null;
+
+let durationMs = null;
+if (testResults?.testResults) {
+  durationMs = testResults.testResults.reduce(
+    (sum, suite) => sum + (suite.perfStats?.runtime ?? 0),
+    0,
+  );
+}
 
 const tests = testResults
   ? {
@@ -57,6 +77,7 @@ const tests = testResults
       passed: testResults.numPassedTests ?? 0,
       failed: testResults.numFailedTests ?? 0,
       skipped: testResults.numPendingTests ?? 0,
+      durationMs,
     }
   : null;
 
