@@ -12,6 +12,7 @@ export {
   sanitizeRecordingMark,
 } from './model/normalizeRecordingMark';
 export type { TrashedRecordListItem } from './model/repository';
+export { recordRepository } from './model/repository';
 export { useRecordStore } from './model/store';
 export type {
   MeetingDialogueLoadStatus,

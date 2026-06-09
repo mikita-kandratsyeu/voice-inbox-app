@@ -234,13 +234,32 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
           <Text style={[textSecondaryStyle, { fontSize: 12 }]} numberOfLines={1}>
             {formatExpandedCardDate(item.createdAt, i18n.language, t)}
           </Text>
-          {categoryLabel ? (
-            <RecordCardLocationChip
-              label={categoryLabel}
-              color={color}
-              accentColor={locationAccentColor}
-              folderIconId={isFolderLabel ? folderIconId : undefined}
-            />
+          {menuActions.length > 0 && !hideAccessibilitySubtree ? (
+            <MenuView
+              key={`record-expanded-menu-${item.id}-${theme}`}
+              title=""
+              themeVariant={isDark ? 'dark' : 'light'}
+              shouldOpenOnLongPress={false}
+              actions={menuActions}
+              onPressAction={({ nativeEvent }) => {
+                const id = nativeEvent.event;
+                if (id === 'select') onSelect?.();
+                if (id === 'togglePin') onPin?.();
+                if (id === 'archive') onArchive?.();
+                if (id === 'unarchive') onUnarchive?.();
+              }}
+            >
+              <HeaderIconButton
+                iconOnly
+                variant="icon"
+                size="md"
+                color={color}
+                icon={<MoreHorizontal size={18} color={color.icon.muted} strokeWidth={2.2} />}
+                onPress={() => {}}
+                accessibilityLabel={t('inbox.cardLayout.noteMenu')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              />
+            </MenuView>
           ) : null}
         </View>
 
@@ -331,7 +350,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
 
         <RecordCardOpenTasksPreview tasks={openTaskPreview} color={color} />
 
-        {(hasTags || menuActions.length > 0) && (
+        {(hasTags || categoryLabel) && (
           <View
             style={{
               flexDirection: 'row',
@@ -344,32 +363,13 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
             <View style={{ flex: 1 }}>
               <RecordCardTagsRow tags={tags} color={color} variant="full" />
             </View>
-            {menuActions.length > 0 && !hideAccessibilitySubtree ? (
-              <MenuView
-                key={`record-expanded-menu-${item.id}-${theme}`}
-                title=""
-                themeVariant={isDark ? 'dark' : 'light'}
-                shouldOpenOnLongPress={false}
-                actions={menuActions}
-                onPressAction={({ nativeEvent }) => {
-                  const id = nativeEvent.event;
-                  if (id === 'select') onSelect?.();
-                  if (id === 'togglePin') onPin?.();
-                  if (id === 'archive') onArchive?.();
-                  if (id === 'unarchive') onUnarchive?.();
-                }}
-              >
-                <HeaderIconButton
-                  iconOnly
-                  variant="icon"
-                  size="md"
-                  color={color}
-                  icon={<MoreHorizontal size={18} color={color.icon.muted} strokeWidth={2.2} />}
-                  onPress={() => {}}
-                  accessibilityLabel={t('inbox.cardLayout.noteMenu')}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                />
-              </MenuView>
+            {categoryLabel ? (
+              <RecordCardLocationChip
+                label={categoryLabel}
+                color={color}
+                accentColor={locationAccentColor}
+                folderIconId={isFolderLabel ? folderIconId : undefined}
+              />
             ) : null}
           </View>
         )}

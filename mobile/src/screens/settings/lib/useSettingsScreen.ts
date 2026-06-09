@@ -9,7 +9,7 @@ import { navigationRef } from '@/app/navigation/navigationRef';
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import { useAppLockStore } from '@/entities/app-lock';
 import { useFolderStore } from '@/entities/folder';
-import { useRecordStore } from '@/entities/record';
+import { recordRepository, useRecordStore } from '@/entities/record';
 import type { AutoArchiveAfterDays } from '@/entities/settings';
 import {
   findCloudAiModelCatalogEntry,
@@ -366,7 +366,7 @@ export function useSettingsScreen() {
     async (password?: string) => {
       try {
         setIsExporting(true);
-        const records = useRecordStore.getState().records;
+        const records = await recordRepository.getAll();
         const folderStore = useFolderStore.getState();
         if (!folderStore.isLoaded) {
           await folderStore.load();

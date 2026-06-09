@@ -400,6 +400,7 @@ export const recordRepository = {
         meetingSpeakerLabels: record.meetingSpeakerLabels
           ? JSON.stringify(record.meetingSpeakerLabels)
           : null,
+        meetingSummaryTemplate: record.meetingSummaryTemplate ?? null,
         cloudAiJobId: record.cloudAiJobId?.trim() ? record.cloudAiJobId.trim() : null,
         summaryReasoning: record.summaryReasoning?.trim() ? record.summaryReasoning.trim() : null,
         summaryAiModel: record.summaryAiModel?.trim() ? record.summaryAiModel.trim() : null,
