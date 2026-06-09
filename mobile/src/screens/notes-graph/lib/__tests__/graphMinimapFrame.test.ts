@@ -42,13 +42,15 @@ describe('computeStaticMinimapFrame', () => {
 describe('computeMinimapViewportRect', () => {
   it('moves the viewport indicator while the minimap world stays fixed', () => {
     const nodes = [recordNode('a', 120, 140), recordNode('b', 420, 360)];
-    const frame = computeStaticMinimapFrame(nodes, 1200, 1400, 120, 120);
+    const canvas = getMinimapCanvasSize(120, 120);
+    const frame = computeStaticMinimapFrame(nodes, 1200, 1400, canvas.width, canvas.height);
+    const inset = GRAPH_MINIMAP_VIEWPORT_STROKE / 2;
 
     const centered = computeMinimapViewportRect(
       frame,
       nodes,
-      120,
-      120,
+      canvas.width,
+      canvas.height,
       390,
       700,
       -40,
@@ -58,8 +60,8 @@ describe('computeMinimapViewportRect', () => {
     const panned = computeMinimapViewportRect(
       frame,
       nodes,
-      120,
-      120,
+      canvas.width,
+      canvas.height,
       390,
       700,
       -240,
@@ -69,12 +71,10 @@ describe('computeMinimapViewportRect', () => {
 
     expect(centered.x).not.toBe(panned.x);
     expect(centered.y).not.toBe(panned.y);
-    expect(panned.x).toBeGreaterThanOrEqual(0);
-    expect(panned.y).toBeGreaterThanOrEqual(0);
-    const canvas = getMinimapCanvasSize(120, 120);
-    const inset = GRAPH_MINIMAP_VIEWPORT_STROKE / 2;
-    expect(panned.x + panned.width).toBeLessThanOrEqual(canvas.width - inset);
-    expect(panned.y + panned.height).toBeLessThanOrEqual(canvas.height - inset);
+    expect(panned.x).toBeGreaterThanOrEqual(inset);
+    expect(panned.y).toBeGreaterThanOrEqual(inset);
+    expect(panned.x + panned.width + inset).toBeLessThanOrEqual(canvas.width);
+    expect(panned.y + panned.height + inset).toBeLessThanOrEqual(canvas.height);
   });
 
   it('clips the viewport indicator inside drawable canvas bounds', () => {
