@@ -8,6 +8,8 @@ export const FILTER_CHIP_GAP = 4;
 export const FILTER_CHIP_BORDER_WIDTH = 1;
 /** Matches icon row + padding + border; aligns with adjacent 32px action buttons. */
 export const FILTER_CHIP_MIN_HEIGHT = 32;
+/** Vertical inset for horizontal chip scrollers (top === bottom). */
+export const FILTER_CHIP_SCROLL_PADDING_V = 9;
 
 export const FILTER_CHIP_LABEL_STYLE: TextStyle = {
   fontSize: 13,
@@ -36,7 +38,12 @@ export function filterChipRowStyle(backgroundColor: string, borderColor?: string
 /** Horizontal chip scroller — matches {@link FolderChipBar}. */
 export const FILTER_CHIP_SCROLL_CONTENT_STYLE: ViewStyle = {
   paddingHorizontal: 16,
-  paddingTop: 8,
-  paddingBottom: 10,
+  paddingVertical: FILTER_CHIP_SCROLL_PADDING_V,
   alignItems: 'center',
+};
+
+/** Nested chip row — parent supplies top spacing. */
+export const FILTER_CHIP_SCROLL_CONTENT_EMBEDDED_STYLE: ViewStyle = {
+  ...FILTER_CHIP_SCROLL_CONTENT_STYLE,
+  paddingTop: 0,
 };

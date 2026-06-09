@@ -24,41 +24,41 @@ export function GraphLayoutModeSheet({
 }: GraphLayoutModeSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(24);
+  const contentPadding = useBottomSheetContentPadding(12);
+  const subtitle = t('notesGraph.filters.layoutModePickerSubtitle');
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>
-      <BottomSheetView
-        style={{
-          paddingHorizontal: 20,
-          paddingTop: 8,
-          ...contentPadding,
-        }}
-      >
+      <BottomSheetView style={{ paddingHorizontal: 20, ...contentPadding }}>
         <Text
           style={{
-            fontSize: 20,
-            fontWeight: '700',
             color: color.text.primary,
-            marginBottom: 6,
+            fontSize: 17,
+            fontWeight: '600',
+            marginBottom: subtitle ? 4 : 10,
+            marginTop: 4,
+            textAlign: 'center',
           }}
         >
           {t('notesGraph.filters.layoutModePickerTitle')}
         </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            lineHeight: 20,
-            color: color.text.muted,
-            marginBottom: 16,
-          }}
-        >
-          {t('notesGraph.filters.layoutModePickerSubtitle')}
-        </Text>
+        {subtitle ? (
+          <Text
+            style={{
+              color: color.text.secondary,
+              fontSize: 14,
+              lineHeight: 20,
+              marginBottom: 10,
+              textAlign: 'center',
+            }}
+          >
+            {subtitle}
+          </Text>
+        ) : null}
 
         <View
           style={{
-            borderRadius: 16,
+            borderRadius: 12,
             overflow: 'hidden',
             borderWidth: 1,
             borderColor: color.border.default,

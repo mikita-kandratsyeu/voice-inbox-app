@@ -212,6 +212,11 @@
     "building": "Mapping your notes…",
     "reconciling": "Updating connections…",
     "saveChangesA11y": "Save layout changes",
+    "saveLayoutBar": {
+      "hint": "Layout changed",
+      "save": "Save",
+      "discard": "Discard"
+    },
     "export": {
       "title": "Share",
       "subtitle": "The full map is captured — drag the frame or pull handles to crop before sharing.",

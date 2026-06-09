@@ -15,6 +15,7 @@ import {
 import {
   FILTER_CHIP_ICON_SIZE,
   FILTER_CHIP_LABEL_STYLE,
+  FILTER_CHIP_SCROLL_CONTENT_STYLE,
   filterChipRowStyle,
 } from '@/shared/ui/filterChipMetrics';
 
@@ -133,12 +134,7 @@ export function AllTasksFiltersPanel({
         <HorizontalScroll
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{
-            alignItems: 'center',
-            paddingHorizontal: 16,
-            paddingTop: 10,
-            paddingBottom: 10,
-          }}
+          contentContainerStyle={FILTER_CHIP_SCROLL_CONTENT_STYLE}
         >
           {foldersEnabled ? (
             <FilterChip

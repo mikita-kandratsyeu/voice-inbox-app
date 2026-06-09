@@ -48,6 +48,7 @@ import { DottedBackground } from './DottedBackground';
 import { GraphControls } from './GraphControls';
 import { GraphEdgeLayer } from './GraphEdgeLayer';
 import { GraphFullExportCapture } from './GraphFullExportCapture';
+import { GraphLayoutSaveBar } from './GraphLayoutSaveBar';
 import { GraphMinimap } from './GraphMinimap';
 import { GRAPH_VIEWPORT_SPRING, GRAPH_VIEWPORT_TIMING_MS } from './graphNodeInteraction';
 import { GraphNodeLayer } from './GraphNodeLayer';
@@ -91,6 +92,10 @@ type GraphCanvasProps = {
   onResetLayoutLongPress?: () => void;
   resetLayoutLongPressEnabled?: boolean;
   layoutRestoreToken?: number;
+  hasUnsavedLayoutChanges?: boolean;
+  isSavingLayout?: boolean;
+  onSaveLayout?: () => void;
+  onDiscardLayout?: () => void;
 };
 
 function mergeNodePositions(
@@ -132,6 +137,10 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     onResetLayoutLongPress,
     resetLayoutLongPressEnabled = false,
     layoutRestoreToken = 0,
+    hasUnsavedLayoutChanges = false,
+    isSavingLayout = false,
+    onSaveLayout,
+    onDiscardLayout,
   },
   ref,
 ) {
@@ -707,6 +716,17 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         isReconciling={isReconciling}
         reconcilingLabel={t('notesGraph.reconciling')}
       />
+
+      {hasUnsavedLayoutChanges && onSaveLayout && onDiscardLayout ? (
+        <GraphLayoutSaveBar
+          color={color}
+          bottomInset={bottomInset}
+          isSaving={isSavingLayout}
+          disabled={isReconciling}
+          onSave={onSaveLayout}
+          onDiscard={onDiscardLayout}
+        />
+      ) : null}
     </View>
   );
 });

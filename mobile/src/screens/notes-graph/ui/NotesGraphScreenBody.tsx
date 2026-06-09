@@ -2,7 +2,7 @@ import { MenuView } from '@react-native-menu/menu';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MoreVertical, Save, Search } from 'lucide-react-native';
+import { MoreVertical, Search } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, Text, useWindowDimensions, View } from 'react-native';
@@ -684,19 +684,6 @@ export const NotesGraphScreenBody = () => {
             }
           />
         ) : null}
-        {hasUnsavedLayoutChanges ? (
-          <HeaderIconButton
-            iconOnly
-            variant="icon"
-            size="md"
-            icon={<Save size={21} color={color.accent.primary} strokeWidth={2.2} />}
-            color={color}
-            onPress={() => {
-              void handleSaveLayout();
-            }}
-            accessibilityLabel={t('notesGraph.saveChangesA11y')}
-          />
-        ) : null}
         <MenuView
           key={`notes-graph-menu-${theme}`}
           title=""
@@ -794,6 +781,12 @@ export const NotesGraphScreenBody = () => {
           onResetLayoutLongPress={handleDiscardUnsavedLayoutChanges}
           resetLayoutLongPressEnabled={hasUnsavedLayoutChanges}
           layoutRestoreToken={layoutRestoreToken}
+          hasUnsavedLayoutChanges={hasUnsavedLayoutChanges}
+          isSavingLayout={isSavingLayout}
+          onSaveLayout={() => {
+            void handleSaveLayout();
+          }}
+          onDiscardLayout={handleDiscardUnsavedLayoutChanges}
         />
       )}
 
