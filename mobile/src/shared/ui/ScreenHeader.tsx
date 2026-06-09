@@ -80,7 +80,12 @@ export const ScreenHeader = ({
             </Text>
           </Pressable>
         ) : (
-          <Text className={titleClass} style={titleStyle}>
+          <Text
+            className={titleClass}
+            style={titleStyle}
+            accessibilityRole="header"
+            accessibilityLabel={title}
+          >
             {title}
           </Text>
         )}

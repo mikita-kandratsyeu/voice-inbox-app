@@ -480,6 +480,8 @@ export const ImportRecordsScreen = () => {
               color={color}
               onPress={handleImportPress}
               disabled={selectedTotalCount === 0 || isImporting}
+              accessibilityLabel={t('importExport.importConfirmA11y')}
+              accessibilityState={{ disabled: selectedTotalCount === 0 || isImporting }}
             />
           ) : null
         }
@@ -598,6 +600,9 @@ export const ImportRecordsScreen = () => {
                   <TouchableOpacity
                     onPress={selectAll}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('importExport.selectAll')}
+                    accessibilityState={{ selected: allImportableSelected }}
                     style={{
                       flex: 1,
                       paddingVertical: 10,
@@ -621,6 +626,9 @@ export const ImportRecordsScreen = () => {
                   <TouchableOpacity
                     onPress={deselectAll}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('importExport.deselectAll')}
+                    accessibilityState={{ selected: selectedRecordCount === 0 }}
                     style={{
                       flex: 1,
                       paddingVertical: 10,

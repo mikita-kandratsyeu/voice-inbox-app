@@ -201,6 +201,7 @@ export function TasksMonthCalendar({
             fontSize: 18,
             fontWeight: '600',
           }}
+          accessibilityRole="header"
         >
           {monthTitle}
         </Text>

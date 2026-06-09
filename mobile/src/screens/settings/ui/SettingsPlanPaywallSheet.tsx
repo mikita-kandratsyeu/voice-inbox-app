@@ -158,11 +158,13 @@ function SubscriptionPlanOptionCard({
 }: SubscriptionPlanOptionCardProps) {
   const introText = introCaptionForFreeTrial(intro, t);
   const showBadge = saveBadgePercent != null && saveBadgePercent > 0;
+  const a11yLabel = [title, introText, billedHeadline, subordinateLine].filter(Boolean).join(', ');
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ selected }}
+      accessibilityLabel={a11yLabel}
+      accessibilityState={{ selected, disabled }}
       disabled={disabled}
       onPress={onPress}
       className="w-full rounded-2xl px-4 pb-2.5 pt-2.5"
@@ -582,6 +584,7 @@ export function SettingsPlanPaywallSheet({
             <View className="mt-2.5 items-center gap-y-1 gap-x-3 px-2 flex-row justify-center">
               <Pressable
                 accessibilityRole="link"
+                accessibilityLabel={t('settings.planPaywall.termsLink')}
                 className="py-1"
                 onPress={() =>
                   void openInAppBrowser(`${getWebsiteUrl()}/terms`, browserColorScheme)
@@ -597,6 +600,7 @@ export function SettingsPlanPaywallSheet({
               </Pressable>
               <Pressable
                 accessibilityRole="link"
+                accessibilityLabel={t('settings.planPaywall.privacyLink')}
                 className="py-1"
                 onPress={() =>
                   void openInAppBrowser(`${getWebsiteUrl()}/privacy`, browserColorScheme)

@@ -38,14 +38,20 @@ function MetaStat({
   icon,
   value,
   label,
+  accessibilityLabel,
 }: {
   color: Colors;
   icon: React.ReactNode;
   value: string;
   label?: string;
+  accessibilityLabel: string;
 }) {
   return (
-    <View style={{ alignItems: 'flex-start', flexShrink: 0 }} accessibilityRole="text">
+    <View
+      style={{ alignItems: 'flex-start', flexShrink: 0 }}
+      accessibilityRole="text"
+      accessibilityLabel={accessibilityLabel}
+    >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         {icon}
         <Text
@@ -297,6 +303,8 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
         backgroundColor: color.background.card,
         flexShrink: 0,
       }}
+      accessibilityRole="text"
+      accessibilityLabel={sourceChipLabel}
     >
       <FileText size={14} color={color.text.secondary} strokeWidth={2} />
       <Text
@@ -338,6 +346,7 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
             icon={<Clock size={15} color={color.icon.muted} strokeWidth={2} />}
             value={duration}
             label={t('inbox.cardLayout.recordingDuration')}
+            accessibilityLabel={`${duration}, ${t('inbox.cardLayout.recordingDuration')}`}
           />
         ) : null}
 
@@ -347,6 +356,7 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
             icon={<FileText size={15} color={color.icon.muted} strokeWidth={2} />}
             value={String(textFragmentCount)}
             label={t('inbox.cardLayout.textFragments', { count: textFragmentCount })}
+            accessibilityLabel={t('inbox.cardLayout.textFragments', { count: textFragmentCount })}
           />
         ) : null}
 
@@ -362,6 +372,7 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
             }
             value={`${doneCount}/${tasks.length}`}
             label={t('inbox.cardLayout.tasksCompletedLabel')}
+            accessibilityLabel={`${doneCount}/${tasks.length}, ${t('inbox.cardLayout.tasksCompletedLabel')}`}
           />
         ) : null}
       </View>

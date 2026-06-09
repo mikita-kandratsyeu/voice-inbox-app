@@ -246,6 +246,7 @@ export const AutoOrganizeReviewScreen = () => {
             iconOnly
             variant="icon"
             size="md"
+            accessibilityLabel={t('folders.autoOrganizeApplyA11y')}
             accessibilityState={{ disabled: isApplying || applyOverlayVisible }}
             icon={<Check size={22} color={color.accent.primary} strokeWidth={2.5} />}
             color={color}

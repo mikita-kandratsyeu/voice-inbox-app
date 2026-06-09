@@ -122,6 +122,8 @@ function StickySearchBar({
             onPress={handleClear}
             hitSlop={iosHitSlopForVisualSize(16, 16)}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.clear')}
           >
             <View
               style={{

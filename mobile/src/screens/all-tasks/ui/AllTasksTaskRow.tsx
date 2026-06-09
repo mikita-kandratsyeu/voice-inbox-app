@@ -188,7 +188,7 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
             <Pressable
               onPress={handleEdit}
               accessibilityRole="button"
-              accessibilityLabel={t('tasks.editTask')}
+              accessibilityLabel={t('tasks.editTaskA11y', { text: task.text })}
             >
               <Text
                 className="text-[15px] leading-5 mb-2.5"

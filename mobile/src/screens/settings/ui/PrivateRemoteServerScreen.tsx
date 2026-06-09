@@ -182,6 +182,8 @@ export const PrivateRemoteServerScreen = () => {
                 onPress={() => screen.applyQuickTemplate(template.baseUrl, template.model)}
                 className="rounded-lg border px-3 py-2"
                 style={{ borderColor: color.border.default }}
+                accessibilityRole="button"
+                accessibilityLabel={t(`aiSettings.privateProvider.templates.${template.id}`)}
               >
                 <Text style={{ color: color.text.primary }}>
                   {t(`aiSettings.privateProvider.templates.${template.id}`)}
@@ -210,6 +212,12 @@ export const PrivateRemoteServerScreen = () => {
                   backgroundColor: color.background.tertiary,
                   opacity: screen.hasSavedProfiles ? 1 : 0.45,
                 }}
+                accessibilityRole="button"
+                accessibilityLabel={t('aiSettings.privateProvider.editConfig')}
+                accessibilityState={{
+                  selected: !screen.isCreatingNewConnection,
+                  disabled: !screen.hasSavedProfiles,
+                }}
               >
                 <Text
                   className="text-center text-[15px] font-semibold leading-5"
@@ -233,6 +241,9 @@ export const PrivateRemoteServerScreen = () => {
                     : color.border.default,
                   backgroundColor: color.background.tertiary,
                 }}
+                accessibilityRole="button"
+                accessibilityLabel={t('aiSettings.privateProvider.newConnectionSwitch')}
+                accessibilityState={{ selected: screen.isCreatingNewConnection }}
               >
                 <Text
                   className="text-center text-[15px] font-semibold leading-5"
@@ -280,6 +291,11 @@ export const PrivateRemoteServerScreen = () => {
                 opacity:
                   screen.isExportingProfiles || screen.privateRemoteProfiles.length === 0 ? 0.5 : 1,
               }}
+              accessibilityRole="button"
+              accessibilityLabel={t('aiSettings.privateProvider.exportProfiles')}
+              accessibilityState={{
+                disabled: screen.isExportingProfiles || screen.privateRemoteProfiles.length === 0,
+              }}
             >
               {screen.isExportingProfiles ? (
                 <ActivityIndicator size="small" color={color.text.muted} />
@@ -299,6 +315,9 @@ export const PrivateRemoteServerScreen = () => {
                 borderColor: color.border.default,
                 opacity: screen.isImportingProfiles ? 0.5 : 1,
               }}
+              accessibilityRole="button"
+              accessibilityLabel={t('aiSettings.privateProvider.importProfiles')}
+              accessibilityState={{ disabled: screen.isImportingProfiles }}
             >
               {screen.isImportingProfiles ? (
                 <ActivityIndicator size="small" color={color.text.muted} />

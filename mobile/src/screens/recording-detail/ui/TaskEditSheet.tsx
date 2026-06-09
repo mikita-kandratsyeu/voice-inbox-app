@@ -602,6 +602,7 @@ export function TaskEditSheet({
                   <SystemInlineDatePicker
                     value={datePickerValue}
                     minimumDate={new Date()}
+                    accessibilityLabel={t('tasks.deadlineDatePickerA11y')}
                     onChange={(selectedDate) => {
                       setDeadlineDraft(formatTaskDeadline(selectedDate));
                       if (!IS_IOS) {

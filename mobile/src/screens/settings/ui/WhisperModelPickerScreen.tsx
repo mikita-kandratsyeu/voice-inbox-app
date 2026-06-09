@@ -240,6 +240,11 @@ export const WhisperModelPickerScreen = () => {
                       opacity: hasActiveWhisperDownload && !selected ? 0.6 : 1,
                     }}
                     accessibilityRole="button"
+                    accessibilityLabel={
+                      format === 'q5_1'
+                        ? t('whisper.weightsFormatQ5')
+                        : t('whisper.weightsFormatFull')
+                    }
                     accessibilityState={{
                       selected,
                     }}

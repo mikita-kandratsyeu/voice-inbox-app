@@ -18,6 +18,7 @@ type SystemInlineDatePickerProps = {
   maximumDate?: Date;
   /** Android only. Use `calendar` for full-screen month grids outside sheets. */
   androidDisplay?: 'default' | 'calendar';
+  accessibilityLabel?: string;
 };
 
 export function SystemInlineDatePicker({
@@ -26,6 +27,7 @@ export function SystemInlineDatePicker({
   minimumDate,
   maximumDate,
   androidDisplay = 'default',
+  accessibilityLabel,
 }: SystemInlineDatePickerProps) {
   const color = useColors();
   const theme = useAppTheme();
@@ -33,6 +35,7 @@ export function SystemInlineDatePicker({
   return (
     <View
       className="items-center overflow-hidden rounded-2xl"
+      accessibilityLabel={accessibilityLabel}
       style={{
         alignSelf: 'center',
         backgroundColor: color.background.tertiary,

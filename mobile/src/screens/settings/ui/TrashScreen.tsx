@@ -288,6 +288,7 @@ export const TrashScreen = () => {
                 <View style={{ marginTop: 12, gap: 6 }}>
                   <Pressable
                     accessibilityRole="button"
+                    accessibilityLabel={t('trash.restoreItemA11y', { title: item.title })}
                     onPress={() => onRestore(item)}
                     style={{
                       height: TRASH_RESTORE_BTN_H,
@@ -311,6 +312,7 @@ export const TrashScreen = () => {
                   </Pressable>
                   <Pressable
                     accessibilityRole="button"
+                    accessibilityLabel={t('trash.deleteForeverItemA11y', { title: item.title })}
                     onPress={() => onDeleteForever(item)}
                     style={{
                       paddingVertical: 12,

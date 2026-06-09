@@ -448,6 +448,9 @@ export const AiSettingsScreen = () => {
                   disabled={!customProviderLocked}
                   onPress={() => setPrivateServerProSheet(true)}
                   accessibilityRole={customProviderLocked ? 'button' : undefined}
+                  accessibilityLabel={
+                    customProviderLocked ? t('aiSettings.privateProvider.proOnlyA11y') : undefined
+                  }
                   accessibilityHint={
                     customProviderLocked ? t('aiSettings.privateProvider.proOnlyHint') : undefined
                   }
