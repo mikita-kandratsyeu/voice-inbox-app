@@ -14,16 +14,17 @@ yarn install
 cp .env.example .env
 ```
 
-1. Set **`DATABASE_URL`** and **`DIRECT_URL`** (Supabase Postgres; see `.env.example` for pooler URLs).
+1. Set **`DATABASE_URL`** and **`DIRECT_URL`** (Supabase Postgres; see `.env.example` for pooler URLs). Use the **`postgres`** pooler user — Prisma bypasses RLS; `anon` / `authenticated` do not.
 2. Set **`JWT_SECRET`** and **`APP_SECRET`** (min 32 characters for JWT).
 3. Apply schema: `yarn db:push` (or `prisma migrate deploy` in production).
-4. Seed the first superadmin (empty `AdminUser` table only):
+4. On Supabase, harden Data API once: `yarn db:rls`, then `yarn db:verify-rls` (RLS + revoke for `anon`/`authenticated` only; does not affect Prisma).
+5. Seed the first superadmin (empty `AdminUser` table only):
 
    ```bash
    ADMIN_SEED_LOGIN=admin ADMIN_SEED_PASSWORD='your-secure-password' yarn db:seed
    ```
 
-5. Run dev server: `yarn dev` → open `/admin` to sign in.
+6. Run dev server: `yarn dev` → open `/admin` to sign in.
 
 Without Redis (`UPSTASH_*`), the API uses an in-memory job store — fine for local development.
 

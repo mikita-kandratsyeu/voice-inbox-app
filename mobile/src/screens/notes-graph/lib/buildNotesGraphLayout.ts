@@ -31,7 +31,7 @@ export function buildNotesGraphLayout(
   clearStaleSessionPositions(validIds);
   const sessionPositions = getSessionNodePositions();
   const layoutViewportWidth = Math.max(windowWidth, 390);
-  const layoutViewportHeight = Math.max(windowHeight * 0.65, 640);
+  const layoutViewportHeight = Math.max(windowHeight * 0.72, 640);
   const layout = runForceLayout(
     model.nodes,
     model.edges,

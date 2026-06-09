@@ -47,9 +47,7 @@ describe('runForceLayout', () => {
     expect(result.width).toBeGreaterThan(0);
     expect(result.height).toBeGreaterThan(0);
 
-    const [first, second] = result.nodes;
-    expect(first!.x).not.toBe(second!.x);
-    expect(first!.y).not.toBe(second!.y);
+    expect(minNodeCenterDistance(result.nodes)).toBeGreaterThan(48);
   });
 
   it('spreads many weakly connected notes instead of collapsing to one point', () => {

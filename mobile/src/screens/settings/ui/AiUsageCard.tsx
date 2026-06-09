@@ -201,16 +201,17 @@ function ResetProLimitPressableBody({
       </View>
       {resetPriceLabel ? (
         <View
-          className="shrink-0 items-center justify-center rounded-xl px-4 py-2.5"
+          className="shrink-0 items-center justify-center rounded-xl border-[1.5px] px-3.5 py-2"
           style={{
             minWidth: 76,
-            backgroundColor: color.accent.primary,
+            borderColor: color.accent.primary,
+            backgroundColor: `${color.accent.primary}12`,
           }}
         >
           <Text
-            className="text-[15px] font-bold leading-5"
+            className="text-[15px] font-bold  leading-5 tracking-tight"
             numberOfLines={1}
-            style={[styles.tabular, { color: color.icon.onAccent }]}
+            style={[styles.tabular, { color: color.accent.primary }]}
           >
             {resetPriceLabel}
           </Text>
