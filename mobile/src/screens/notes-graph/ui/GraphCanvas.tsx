@@ -35,7 +35,7 @@ import {
   clampViewportScaleValue,
   clampViewportTransform,
   clampViewportTranslation,
-  computeWorldDimensions,
+  computeWorldDimensionsForNodes,
   GRAPH_PAN_OVERSCROLL,
   GRAPH_VIEWPORT_MAX_SCALE,
   GRAPH_VIEWPORT_MIN_SCALE,
@@ -180,15 +180,33 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     setViewportTransform({ scale: nextScale, translateX: nextX, translateY: nextY });
   }, []);
 
+  const nodeBoundsKey = useMemo(
+    () => displayNodes.map((node) => `${node.id}:${node.x}:${node.y}`).join('|'),
+    [displayNodes],
+  );
+
   const { width: worldWidth, height: worldHeight } = useMemo(
-    () => computeWorldDimensions(graphWidth, graphHeight, viewportWidth, viewportHeight, MIN_SCALE),
-    [graphHeight, graphWidth, viewportHeight, viewportWidth],
+    () =>
+      computeWorldDimensionsForNodes(
+        displayNodes,
+        graphWidth,
+        graphHeight,
+        viewportWidth,
+        viewportHeight,
+        MIN_SCALE,
+      ),
+    [displayNodes, graphHeight, graphWidth, nodeBoundsKey, viewportHeight, viewportWidth],
   );
 
   const worldWidthSV = useSharedValue(worldWidth);
   const worldHeightSV = useSharedValue(worldHeight);
   const viewportWidthSV = useSharedValue(viewportWidth);
   const viewportHeightSV = useSharedValue(viewportHeight);
+  const panOverscrollSV = useSharedValue(GRAPH_PAN_OVERSCROLL);
+  const minScaleSV = useSharedValue(MIN_SCALE);
+  const maxScaleSV = useSharedValue(MAX_SCALE);
+  const doubleTapZoomSV = useSharedValue(DOUBLE_TAP_ZOOM_FACTOR);
+  const viewportTimingMsSV = useSharedValue(GRAPH_VIEWPORT_TIMING_MS);
 
   useEffect(() => {
     worldWidthSV.value = worldWidth;
@@ -430,12 +448,6 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     savedTranslateX.value = translateX.value;
     savedTranslateY.value = translateY.value;
   };
-
-  const panOverscrollSV = useSharedValue(GRAPH_PAN_OVERSCROLL);
-  const minScaleSV = useSharedValue(MIN_SCALE);
-  const maxScaleSV = useSharedValue(MAX_SCALE);
-  const doubleTapZoomSV = useSharedValue(DOUBLE_TAP_ZOOM_FACTOR);
-  const viewportTimingMsSV = useSharedValue(GRAPH_VIEWPORT_TIMING_MS);
 
   const clampTranslationWorklet = (tx: number, ty: number, currentScale: number) => {
     'worklet';

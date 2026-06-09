@@ -1,11 +1,19 @@
+import type { GraphNode } from '../graphTypes';
+import { RECORD_NODE_WIDTH } from '../graphTypes';
 import {
   clampViewportScaleValue,
   clampViewportTranslation,
   computeWorldDimensions,
+  computeWorldDimensionsForNodes,
   GRAPH_PAN_OVERSCROLL,
   GRAPH_VIEWPORT_MAX_SCALE,
   GRAPH_VIEWPORT_MIN_SCALE,
+  GRAPH_WORLD_CONTENT_PADDING,
 } from '../graphViewportBounds';
+
+function recordNode(id: string, x: number, y: number): GraphNode {
+  return { id, kind: 'record', x, y, searchText: id };
+}
 
 describe('clampViewportScaleValue', () => {
   it('clamps scale inside viewport limits', () => {
@@ -31,6 +39,16 @@ describe('computeWorldDimensions', () => {
     const world = computeWorldDimensions(2400, 3000, 390, 700, 0.3);
     expect(world.width).toBe(2400);
     expect(world.height).toBe(3000);
+  });
+});
+
+describe('computeWorldDimensionsForNodes', () => {
+  it('expands world width when nodes extend beyond layout graph size', () => {
+    const nodes = [recordNode('main', 100, 100), recordNode('shelf', 2100, 120)];
+    const world = computeWorldDimensionsForNodes(nodes, 1800, 900, 390, 700, 0.3);
+
+    expect(world.width).toBeGreaterThanOrEqual(2100 + RECORD_NODE_WIDTH + GRAPH_WORLD_CONTENT_PADDING);
+    expect(world.width).toBeGreaterThan(1800);
   });
 });
 
