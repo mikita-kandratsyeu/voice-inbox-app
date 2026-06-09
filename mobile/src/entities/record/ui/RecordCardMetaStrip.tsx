@@ -94,14 +94,14 @@ function CompactStatCell({
     <View
       style={{
         flexDirection: 'row',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         gap: 5,
         flexShrink: 0,
       }}
       accessibilityRole="text"
       accessibilityLabel={accessibilityLabel}
     >
-      <View style={{ marginTop: 2 }}>{icon}</View>
+      <View style={{ marginTop: label ? 2 : 0 }}>{icon}</View>
       <View style={{ alignItems: 'flex-start', minWidth: 0 }}>
         <Text
           style={{ fontSize: 14, fontWeight: '700', color: color.text.primary }}
