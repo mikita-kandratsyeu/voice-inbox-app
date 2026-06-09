@@ -96,6 +96,18 @@ const migration0018 = `ALTER TABLE \`records\` ADD \`summaryAiModelLabel\` text;
 
 const migration0019 = `ALTER TABLE \`records\` ADD \`meetingSummaryTemplate\` text;`;
 
+const migration0020 = `CREATE TABLE IF NOT EXISTS \`notes_graph_layout_version\` (
+	\`id\` text PRIMARY KEY NOT NULL,
+	\`layoutKey\` text NOT NULL,
+	\`versionNumber\` integer NOT NULL,
+	\`payload\` text NOT NULL,
+	\`createdAt\` text NOT NULL
+);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS \`idx_notes_graph_layout_key\` ON \`notes_graph_layout_version\` (\`layoutKey\`);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS \`idx_notes_graph_layout_created\` ON \`notes_graph_layout_version\` (\`createdAt\`);`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -126,5 +138,6 @@ export const migrationsConfig = {
     m0017: migration0017,
     m0018: migration0018,
     m0019: migration0019,
+    m0020: migration0020,
   } as Record<string, string>,
 };

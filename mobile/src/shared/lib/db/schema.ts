@@ -78,9 +78,26 @@ export const cloudAiPendingTable = sqliteTable(
   (t) => [index('idx_cloud_ai_pending_jobId').on(t.jobId)],
 );
 
+/** Versioned note-map node positions (per filter layout key). */
+export const notesGraphLayoutVersionTable = sqliteTable(
+  'notes_graph_layout_version',
+  {
+    id: text('id').primaryKey(),
+    layoutKey: text('layoutKey').notNull(),
+    versionNumber: integer('versionNumber').notNull(),
+    payload: text('payload').notNull(),
+    createdAt: text('createdAt').notNull(),
+  },
+  (t) => [
+    index('idx_notes_graph_layout_key').on(t.layoutKey),
+    index('idx_notes_graph_layout_created').on(t.createdAt),
+  ],
+);
+
 export type RecordRow = typeof recordsTable.$inferSelect;
 export type RecordInsert = typeof recordsTable.$inferInsert;
 export type FolderRow = typeof foldersTable.$inferSelect;
 export type FolderInsert = typeof foldersTable.$inferInsert;
 export type RecordAskAiRow = typeof recordAskAiTable.$inferSelect;
 export type CloudAiPendingRow = typeof cloudAiPendingTable.$inferSelect;
+export type NotesGraphLayoutVersionRow = typeof notesGraphLayoutVersionTable.$inferSelect;

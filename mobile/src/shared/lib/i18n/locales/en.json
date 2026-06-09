@@ -211,6 +211,16 @@
     "proBody": "Explore a zoomable map of your notes — linked by tags, folders, similar content, and open tasks.",
     "building": "Mapping your notes…",
     "reconciling": "Updating connections…",
+    "saveChangesA11y": "Save layout changes",
+    "history": {
+      "openA11y": "Layout history",
+      "title": "Layout history",
+      "subtitle": "Saved versions of node positions for the current filters.",
+      "empty": "No saved layouts yet. Move nodes on the map and tap Save.",
+      "versionLabel": "Version {{version}}",
+      "nodeCount_one": "{{count}} node moved",
+      "nodeCount_other": "{{count}} nodes moved"
+    },
     "loadingTips": {
       "pinchPan": "Pinch to zoom and drag with one finger to move around the map.",
       "doubleTap": "Double-tap an area to zoom in quickly.",

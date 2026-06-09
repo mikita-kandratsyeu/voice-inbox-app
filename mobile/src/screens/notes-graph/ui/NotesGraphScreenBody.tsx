@@ -1,7 +1,7 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Search } from 'lucide-react-native';
+import { History, Save, Search } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, useWindowDimensions, View } from 'react-native';
@@ -20,7 +20,9 @@ import { useColors } from '@/shared/config';
 import { EmptyState, HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 import { collectUniqueTags, countFilteredGraphRecords } from '../lib/buildGraphModel';
+import { buildNotesGraphPersistKey } from '../lib/buildNotesGraphPersistKey';
 import { findGraphSearchMatchIds, type GraphSearchIndexEntry } from '../lib/graphSearch';
+import { getSessionNodePositions, replaceSessionNodePositions } from '../lib/graphSessionLayout';
 import { shouldAutoSimplifyGraph } from '../lib/graphSimplifyMode';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
 import { DEFAULT_EDGE_VISIBILITY, type GraphFilters } from '../lib/graphTypes';
@@ -30,10 +32,17 @@ import {
   buildNotesGraphLayoutCacheKey,
   getCachedNotesGraphLayout,
 } from '../lib/notesGraphLayoutCache';
+import {
+  getLatestNotesGraphLayoutVersion,
+  getNotesGraphLayoutVersionPositions,
+  saveNotesGraphLayoutVersion,
+  serializeNotesGraphPositions,
+} from '../lib/notesGraphLayoutDb';
 import { GraphBuildingState } from './GraphBuildingState';
 import type { GraphCanvasHandle } from './GraphCanvas';
 import { GraphCanvas } from './GraphCanvas';
 import { GraphFilterBar } from './GraphFilterBar';
+import { GraphLayoutHistorySheet } from './GraphLayoutHistorySheet';
 import { GraphStickySearchBar } from './GraphStickySearchBar';
 
 const LARGE_GRAPH_RECORD_THRESHOLD = 150;
@@ -73,6 +82,14 @@ export const NotesGraphScreenBody = () => {
   const [recordCount, setRecordCount] = useState(0);
   const [isBuilding, setIsBuilding] = useState(true);
   const [isGraphReconciling, setIsGraphReconciling] = useState(false);
+  const [hasUnsavedLayoutChanges, setHasUnsavedLayoutChanges] = useState(false);
+  const [isSavingLayout, setIsSavingLayout] = useState(false);
+  const [historySheetVisible, setHistorySheetVisible] = useState(false);
+  const [activeSavedVersionId, setActiveSavedVersionId] = useState<string | null>(null);
+  const [layoutRestoreToken, setLayoutRestoreToken] = useState(0);
+  const [historyRefreshToken, setHistoryRefreshToken] = useState(0);
+  const [persistHydrated, setPersistHydrated] = useState(false);
+  const savedLayoutSnapshotRef = useRef('');
   const [activeSearchNodeId, setActiveSearchNodeId] = useState<string | null>(null);
   const [editTaskTarget, setEditTaskTarget] = useState<{
     recordId: string;
@@ -123,7 +140,47 @@ export const NotesGraphScreenBody = () => {
     [filters, records, simplifyOverride, windowHeight, windowWidth],
   );
 
+  const persistKey = useMemo(
+    () => buildNotesGraphPersistKey(records, filters, simplifyOverride),
+    [filters, records, simplifyOverride],
+  );
+
+  const syncUnsavedLayoutState = useCallback(() => {
+    const snapshot = serializeNotesGraphPositions(getSessionNodePositions());
+    setHasUnsavedLayoutChanges(snapshot !== savedLayoutSnapshotRef.current);
+  }, []);
+
   useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      setPersistHydrated(false);
+      replaceSessionNodePositions({});
+
+      const latest = await getLatestNotesGraphLayoutVersion(persistKey);
+      if (cancelled) return;
+
+      if (latest) {
+        replaceSessionNodePositions(latest.positions);
+        savedLayoutSnapshotRef.current = serializeNotesGraphPositions(getSessionNodePositions());
+        setActiveSavedVersionId(latest.id);
+      } else {
+        savedLayoutSnapshotRef.current = serializeNotesGraphPositions(new Map());
+        setActiveSavedVersionId(null);
+      }
+
+      setHasUnsavedLayoutChanges(false);
+      setLayoutRestoreToken((token) => token + 1);
+      setPersistHydrated(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [persistKey]);
+
+  useEffect(() => {
+    if (!persistHydrated) return;
     let cancelled = false;
 
     const applyBuilt = (built: {
@@ -184,6 +241,7 @@ export const NotesGraphScreenBody = () => {
     filteredRecordCount,
     filters,
     layoutCacheKey,
+    persistHydrated,
     records,
     simplifyOverride,
     windowHeight,
@@ -373,41 +431,104 @@ export const NotesGraphScreenBody = () => {
 
   const showLargeGraphHint = !isBuilding && filteredRecordCount > LARGE_GRAPH_RECORD_THRESHOLD;
 
-  const searchHeaderButton =
-    records.length > 0 ? (
+  const handleLayoutPositionsChange = useCallback(() => {
+    syncUnsavedLayoutState();
+  }, [syncUnsavedLayoutState]);
+
+  const handleSaveLayout = useCallback(async () => {
+    if (isSavingLayout || isGraphReconciling || !hasUnsavedLayoutChanges) return;
+
+    setIsSavingLayout(true);
+    try {
+      const positions = getSessionNodePositions();
+      const entry = await saveNotesGraphLayoutVersion(persistKey, positions);
+      savedLayoutSnapshotRef.current = serializeNotesGraphPositions(positions);
+      setHasUnsavedLayoutChanges(false);
+      setActiveSavedVersionId(entry.id);
+      setHistoryRefreshToken((token) => token + 1);
+    } finally {
+      setIsSavingLayout(false);
+    }
+  }, [hasUnsavedLayoutChanges, isGraphReconciling, isSavingLayout, persistKey]);
+
+  const handleRestoreLayoutVersion = useCallback(
+    async (versionId: string) => {
+      const positions = await getNotesGraphLayoutVersionPositions(versionId);
+      if (!positions) return;
+
+      replaceSessionNodePositions(positions);
+      setLayoutRestoreToken((token) => token + 1);
+      syncUnsavedLayoutState();
+    },
+    [syncUnsavedLayoutState],
+  );
+
+  const headerControlsDisabled = isGraphReconciling || isSavingLayout;
+
+  const headerRightSlot =
+    recordCount > 0 ? (
       <View
-        style={{ opacity: isGraphReconciling ? 0.45 : 1 }}
-        pointerEvents={isGraphReconciling ? 'none' : 'auto'}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 2,
+          opacity: headerControlsDisabled ? 0.45 : 1,
+        }}
+        pointerEvents={headerControlsDisabled ? 'none' : 'auto'}
       >
+        {hasUnsavedLayoutChanges ? (
+          <HeaderIconButton
+            iconOnly
+            variant="icon"
+            size="md"
+            icon={<Save size={21} color={color.accent.primary} strokeWidth={2.2} />}
+            color={color}
+            onPress={() => {
+              void handleSaveLayout();
+            }}
+            accessibilityLabel={t('notesGraph.saveChangesA11y')}
+          />
+        ) : null}
         <HeaderIconButton
           iconOnly
           variant="icon"
           size="md"
-          icon={
-            <Search
-              size={21}
-              color={
-                searchBarExplicitOpen || searchQuery.trim().length > 0
-                  ? color.accent.primary
-                  : color.text.primary
-              }
-              strokeWidth={2.2}
-            />
-          }
+          icon={<History size={21} color={color.text.primary} strokeWidth={2.2} />}
           color={color}
-          onPress={handleSearchHeaderPress}
-          accessibilityLabel={
-            !showGraphSearchBar
-              ? t('search.a11yOpen')
-              : searchQuery.trim() === ''
-                ? t('search.a11yHide')
-                : t('search.a11yFocus')
-          }
+          onPress={() => setHistorySheetVisible(true)}
+          accessibilityLabel={t('notesGraph.history.openA11y')}
         />
+        {records.length > 0 ? (
+          <HeaderIconButton
+            iconOnly
+            variant="icon"
+            size="md"
+            icon={
+              <Search
+                size={21}
+                color={
+                  searchBarExplicitOpen || searchQuery.trim().length > 0
+                    ? color.accent.primary
+                    : color.text.primary
+                }
+                strokeWidth={2.2}
+              />
+            }
+            color={color}
+            onPress={handleSearchHeaderPress}
+            accessibilityLabel={
+              !showGraphSearchBar
+                ? t('search.a11yOpen')
+                : searchQuery.trim() === ''
+                  ? t('search.a11yHide')
+                  : t('search.a11yFocus')
+            }
+          />
+        ) : null}
       </View>
     ) : null;
 
-  if (isBuilding) {
+  if (isBuilding || !persistHydrated) {
     return (
       <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
         <ScreenHeader title={t('notesGraph.title')} onBack={handleBack} />
@@ -418,11 +539,7 @@ export const NotesGraphScreenBody = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader
-        title={t('notesGraph.title')}
-        onBack={handleBack}
-        rightSlot={searchHeaderButton}
-      />
+      <ScreenHeader title={t('notesGraph.title')} onBack={handleBack} rightSlot={headerRightSlot} />
 
       <GraphFilterBar
         color={color}
@@ -474,6 +591,8 @@ export const NotesGraphScreenBody = () => {
           onRecordPress={handleRecordPress}
           onTaskPress={handleTaskPress}
           onReconcilingChange={setIsGraphReconciling}
+          onLayoutPositionsChange={handleLayoutPositionsChange}
+          layoutRestoreToken={layoutRestoreToken}
         />
       )}
 
@@ -487,6 +606,17 @@ export const NotesGraphScreenBody = () => {
         onClose={() => setEditTaskTarget(null)}
         onSave={handleSaveTask}
         sheetTitleKey="recordingDetail.editTask"
+      />
+
+      <GraphLayoutHistorySheet
+        visible={historySheetVisible}
+        layoutKey={persistKey}
+        activeVersionId={hasUnsavedLayoutChanges ? null : activeSavedVersionId}
+        refreshToken={historyRefreshToken}
+        onClose={() => setHistorySheetVisible(false)}
+        onRestore={(versionId) => {
+          void handleRestoreLayoutVersion(versionId);
+        }}
       />
 
       {showGraphSearchBar ? (

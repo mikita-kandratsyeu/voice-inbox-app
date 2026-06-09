@@ -57,6 +57,8 @@ type GraphCanvasProps = {
   onRecordPress: (recordId: string) => void;
   onTaskPress: (recordId: string, taskId: string) => void;
   onReconcilingChange?: (isReconciling: boolean) => void;
+  onLayoutPositionsChange?: () => void;
+  layoutRestoreToken?: number;
 };
 
 function mergeNodePositions(
@@ -85,6 +87,8 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     onRecordPress,
     onTaskPress,
     onReconcilingChange,
+    onLayoutPositionsChange,
+    layoutRestoreToken = 0,
   },
   ref,
 ) {
@@ -242,7 +246,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       if (pos) next.set(node.id, pos);
     }
     setPositionOverrides(next);
-  }, [nodeIdsKey, nodes]);
+  }, [layoutRestoreToken, nodeIdsKey, nodes]);
 
   const layoutSignature = useMemo(
     () => `${nodes.map((node) => node.id).join('|')}:${graphWidth}:${graphHeight}`,
@@ -271,8 +275,9 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         next.set(nodeId, { x, y });
         return next;
       });
+      onLayoutPositionsChange?.();
     },
-    [isNodeDragging, setReconciling],
+    [isNodeDragging, onLayoutPositionsChange, setReconciling],
   );
 
   useEffect(() => {
