@@ -4,6 +4,7 @@ import forceAtlas2 from 'graphology-layout-forceatlas2';
 
 import { nodeDimensions } from './graphNodeMetrics';
 import type { GraphEdge, GraphNode } from './graphTypes';
+import type { GraphViewportInsets } from './graphViewportInsets';
 import { layoutIsolatedRecordNodes } from './layoutIsolatedNodes';
 
 const NODE_LAYOUT_PADDING = 16;
@@ -328,14 +329,23 @@ export function computeFocusTransform(
   viewportWidth: number,
   viewportHeight: number,
   scale = 1.1,
+  insets: GraphViewportInsets = {},
 ): { scale: number; translateX: number; translateY: number } {
+  const top = insets.top ?? 0;
+  const bottom = insets.bottom ?? 0;
+  const left = insets.left ?? 0;
+  const right = insets.right ?? 0;
+
   const { width, height } = nodeDimensions(node.kind);
   const centerX = node.x + width / 2;
   const centerY = node.y + height / 2;
+  const visibleCenterX = left + (viewportWidth - left - right) / 2;
+  const visibleCenterY = top + (viewportHeight - top - bottom) / 2;
+
   return {
     scale,
-    translateX: viewportWidth / 2 - centerX * scale,
-    translateY: viewportHeight / 2 - centerY * scale,
+    translateX: visibleCenterX - centerX * scale,
+    translateY: visibleCenterY - centerY * scale,
   };
 }
 

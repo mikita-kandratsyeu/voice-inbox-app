@@ -34,7 +34,19 @@ export function GraphBuildingState({ label, showTips = true }: GraphBuildingStat
   const tipKey = NOTES_GRAPH_LOADING_TIP_KEYS[tipIndex];
 
   return (
-    <View className="flex-1 items-center justify-center px-6">
+    <View
+      pointerEvents="box-none"
+      style={{
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 24,
+      }}
+    >
       <ProgressStatusCard
         title={label}
         subtitle={

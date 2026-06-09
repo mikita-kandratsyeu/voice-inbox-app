@@ -26,7 +26,7 @@ type AnimatedNodeCardShellProps = {
   minHeight: number;
   borderRadius: number;
   backgroundColor: string;
-  onPress: () => void;
+  onPress?: () => void;
   children: React.ReactNode;
   taskStyle?: boolean;
 };
@@ -106,9 +106,13 @@ function AnimatedNodeCardShell({
         animatedShellStyle,
       ]}
     >
-      <Pressable onPress={onPress} accessibilityRole="button" style={{ flex: 1 }}>
-        {children}
-      </Pressable>
+      {onPress ? (
+        <Pressable onPress={onPress} accessibilityRole="button" style={{ flex: 1 }}>
+          {children}
+        </Pressable>
+      ) : (
+        <View style={{ flex: 1 }}>{children}</View>
+      )}
     </Animated.View>
   );
 }
@@ -206,7 +210,7 @@ export function GraphAnimatedNodeCard({
   active: boolean;
   highlighted: boolean;
   nodeKind: GraphNode['kind'];
-  onPress: () => void;
+  onPress?: () => void;
   children: React.ReactNode;
 }) {
   const isTask = nodeKind === 'task';

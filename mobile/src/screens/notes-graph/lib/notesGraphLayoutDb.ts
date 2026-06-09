@@ -188,6 +188,36 @@ export async function saveNotesGraphLayoutVersion(
   };
 }
 
+export async function deleteNotesGraphLayoutVersion(
+  layoutKey: string,
+  versionId: string,
+): Promise<boolean> {
+  const db = await waitForDb();
+  const rows = await db
+    .select({ id: notesGraphLayoutVersionTable.id })
+    .from(notesGraphLayoutVersionTable)
+    .where(
+      and(
+        eq(notesGraphLayoutVersionTable.layoutKey, layoutKey),
+        eq(notesGraphLayoutVersionTable.id, versionId),
+      ),
+    )
+    .limit(1);
+
+  if (!rows[0]) return false;
+
+  await db
+    .delete(notesGraphLayoutVersionTable)
+    .where(
+      and(
+        eq(notesGraphLayoutVersionTable.layoutKey, layoutKey),
+        eq(notesGraphLayoutVersionTable.id, versionId),
+      ),
+    );
+
+  return true;
+}
+
 export async function countNotesGraphLayoutHistory(layoutKey: string): Promise<number> {
   const db = await waitForDb();
   const rows = await db

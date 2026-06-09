@@ -25,6 +25,7 @@ import { findGraphSearchMatchIds, type GraphSearchIndexEntry } from '../lib/grap
 import { getSessionNodePositions, replaceSessionNodePositions } from '../lib/graphSessionLayout';
 import { shouldAutoSimplifyGraph } from '../lib/graphSimplifyMode';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
+import { estimateGraphSearchFocusBottomInset } from '../lib/graphViewportInsets';
 import { DEFAULT_EDGE_VISIBILITY, type GraphFilters } from '../lib/graphTypes';
 import {
   awaitPendingNotesGraphLayout,
@@ -33,6 +34,7 @@ import {
   getCachedNotesGraphLayout,
 } from '../lib/notesGraphLayoutCache';
 import {
+  deleteNotesGraphLayoutVersion,
   getLatestNotesGraphLayoutVersion,
   getNotesGraphLayoutVersionPositions,
   saveNotesGraphLayoutVersion,
@@ -87,6 +89,7 @@ export const NotesGraphScreenBody = () => {
   const [historySheetVisible, setHistorySheetVisible] = useState(false);
   const [activeSavedVersionId, setActiveSavedVersionId] = useState<string | null>(null);
   const [layoutRestoreToken, setLayoutRestoreToken] = useState(0);
+  const [nodePositionRevision, setNodePositionRevision] = useState(0);
   const [historyRefreshToken, setHistoryRefreshToken] = useState(0);
   const [persistHydrated, setPersistHydrated] = useState(false);
   const savedLayoutSnapshotRef = useRef('');
@@ -270,10 +273,14 @@ export const NotesGraphScreenBody = () => {
     setDebouncedSearchQuery(searchQuery);
   }, [searchQuery]);
 
-  const layoutNodesById = useMemo(
-    () => new Map(layoutNodes.map((node) => [node.id, node])),
-    [layoutNodes],
-  );
+  const layoutNodesById = useMemo(() => {
+    const session = getSessionNodePositions();
+    const merged = layoutNodes.map((node) => {
+      const pos = session.get(node.id);
+      return pos ? { ...node, x: pos.x, y: pos.y } : node;
+    });
+    return new Map(merged.map((node) => [node.id, node]));
+  }, [layoutNodes, layoutRestoreToken, nodePositionRevision]);
 
   const searchMatchIds = useMemo(
     () => findGraphSearchMatchIds(searchIndex, debouncedSearchQuery),
@@ -299,6 +306,21 @@ export const NotesGraphScreenBody = () => {
 
   const showGraphSearchBar =
     records.length > 0 && (searchBarExplicitOpen || searchQuery.trim().length > 0);
+
+  const searchFocusBottomInset = useMemo(
+    () =>
+      estimateGraphSearchFocusBottomInset({
+        searchBarVisible: showGraphSearchBar,
+        hasMatchLabel: debouncedSearchQuery.trim().length > 0 && searchMatches.length > 0,
+        safeAreaBottom: insets.bottom,
+      }),
+    [debouncedSearchQuery, insets.bottom, searchMatches.length, showGraphSearchBar],
+  );
+
+  const focusViewportInsets = useMemo(
+    () => ({ bottom: searchFocusBottomInset, top: 12 }),
+    [searchFocusBottomInset],
+  );
 
   const handleSearchHeaderPress = useCallback(() => {
     if (isGraphReconciling) return;
@@ -357,6 +379,14 @@ export const NotesGraphScreenBody = () => {
     },
     [debouncedSearchQuery, resolveSearchMatches],
   );
+
+  const focusSearchMatchAtRef = useRef(focusSearchMatchAt);
+  focusSearchMatchAtRef.current = focusSearchMatchAt;
+
+  useEffect(() => {
+    if (!debouncedSearchQuery.trim()) return;
+    focusSearchMatchAtRef.current(0, debouncedSearchQuery);
+  }, [debouncedSearchQuery]);
 
   const handleSearchSubmit = useCallback(() => {
     flushDebouncedSearchQuery();
@@ -433,6 +463,7 @@ export const NotesGraphScreenBody = () => {
 
   const handleLayoutPositionsChange = useCallback(() => {
     syncUnsavedLayoutState();
+    setNodePositionRevision((revision) => revision + 1);
   }, [syncUnsavedLayoutState]);
 
   const handleSaveLayout = useCallback(async () => {
@@ -460,6 +491,30 @@ export const NotesGraphScreenBody = () => {
     setLayoutRestoreToken((token) => token + 1);
     syncUnsavedLayoutState();
   }, [syncUnsavedLayoutState]);
+
+  const handleDeleteLayoutVersion = useCallback(
+    async (versionId: string) => {
+      const deleted = await deleteNotesGraphLayoutVersion(persistKey, versionId);
+      if (!deleted) return;
+
+      if (activeSavedVersionId === versionId) {
+        const latest = await getLatestNotesGraphLayoutVersion(persistKey);
+        if (latest) {
+          setActiveSavedVersionId(latest.id);
+          savedLayoutSnapshotRef.current = serializeNotesGraphPositions(
+            new Map(Object.entries(latest.positions)),
+          );
+        } else {
+          setActiveSavedVersionId(null);
+          savedLayoutSnapshotRef.current = serializeNotesGraphPositions(new Map());
+        }
+        syncUnsavedLayoutState();
+      }
+
+      setHistoryRefreshToken((token) => token + 1);
+    },
+    [activeSavedVersionId, persistKey, syncUnsavedLayoutState],
+  );
 
   const headerControlsDisabled = isGraphReconciling || isSavingLayout;
 
@@ -586,6 +641,7 @@ export const NotesGraphScreenBody = () => {
           matchedNodeIds={matchedNodeIds}
           activeNodeId={activeSearchNodeId}
           bottomInset={insets.bottom}
+          focusViewportInsets={focusViewportInsets}
           onRecordPress={handleRecordPress}
           onTaskPress={handleTaskPress}
           onReconcilingChange={setIsGraphReconciling}
@@ -614,6 +670,9 @@ export const NotesGraphScreenBody = () => {
         onClose={() => setHistorySheetVisible(false)}
         onRestore={(versionId) => {
           void handleRestoreLayoutVersion(versionId);
+        }}
+        onDelete={(versionId) => {
+          void handleDeleteLayoutVersion(versionId);
         }}
       />
 

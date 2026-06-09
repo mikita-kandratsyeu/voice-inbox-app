@@ -3,7 +3,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { graphNodeSearchText } from '../graphNodeSearchText';
 import type { GraphEdge, GraphNode } from '../graphTypes';
 import { recordNodeId } from '../graphTypes';
-import { minNodeCenterDistance, runForceLayout } from '../runForceLayout';
+import { minNodeCenterDistance, runForceLayout, computeFocusTransform } from '../runForceLayout';
 
 function makeRecord(id: string, title: string): VoiceRecord {
   return {
@@ -105,5 +105,19 @@ describe('runForceLayout', () => {
 
     expect(pinnedNode?.x).toBe(420);
     expect(pinnedNode?.y).toBe(280);
+  });
+});
+
+describe('computeFocusTransform', () => {
+  it('centers node in visible viewport when bottom inset is provided', () => {
+    const node = makeRecordNode(makeRecord('a', 'Alpha'));
+    node.x = 100;
+    node.y = 200;
+
+    const fullCenter = computeFocusTransform(node, 400, 800, 1, {});
+    const obstructed = computeFocusTransform(node, 400, 800, 1, { bottom: 200, top: 12 });
+
+    expect(obstructed.translateY).toBeLessThan(fullCenter.translateY);
+    expect(obstructed.translateX).toBe(fullCenter.translateX);
   });
 });

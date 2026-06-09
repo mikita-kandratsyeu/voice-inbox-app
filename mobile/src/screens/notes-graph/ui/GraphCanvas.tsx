@@ -26,6 +26,7 @@ import type { Colors } from '@/shared/config';
 import { GRAPH_DRAG_RECONCILE_MIN_MS } from '../lib/graphDragReconcile';
 import { getSessionNodePositions, setSessionNodePosition } from '../lib/graphSessionLayout';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
+import type { GraphViewportInsets } from '../lib/graphViewportInsets';
 import { computeFitTransform, computeFocusTransform } from '../lib/runForceLayout';
 import { DottedBackground } from './DottedBackground';
 import { GraphControls } from './GraphControls';
@@ -57,6 +58,7 @@ type GraphCanvasProps = {
   matchedNodeIds: ReadonlySet<string> | null;
   activeNodeId: string | null;
   bottomInset: number;
+  focusViewportInsets?: GraphViewportInsets;
   onRecordPress: (recordId: string) => void;
   onTaskPress: (recordId: string, taskId: string) => void;
   onReconcilingChange?: (isReconciling: boolean) => void;
@@ -87,6 +89,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     matchedNodeIds,
     activeNodeId,
     bottomInset,
+    focusViewportInsets,
     onRecordPress,
     onTaskPress,
     onReconcilingChange,
@@ -201,10 +204,16 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
   const focusNode = useCallback(
     (node: GraphNode) => {
-      const transform = computeFocusTransform(node, viewportWidth, viewportHeight, 1.15);
+      const transform = computeFocusTransform(
+        node,
+        viewportWidth,
+        viewportHeight,
+        1.15,
+        focusViewportInsets,
+      );
       applyTransform(transform);
     },
-    [applyTransform, viewportHeight, viewportWidth],
+    [applyTransform, focusViewportInsets, viewportHeight, viewportWidth],
   );
 
   const zoomIn = useCallback(() => {
@@ -241,21 +250,6 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
   const nodeIdsKey = useMemo(() => nodes.map((node) => node.id).join('|'), [nodes]);
 
-  useEffect(() => {
-    const session = getSessionNodePositions();
-    if (session.size === 0) {
-      setPositionOverrides(new Map());
-      return;
-    }
-
-    const next = new Map<string, { x: number; y: number }>();
-    for (const node of nodes) {
-      const pos = session.get(node.id);
-      if (pos) next.set(node.id, pos);
-    }
-    setPositionOverrides(next);
-  }, [layoutRestoreToken, nodeIdsKey, nodes]);
-
   const layoutSignature = useMemo(
     () => `${nodes.map((node) => node.id).join('|')}:${graphWidth}:${graphHeight}`,
     [graphHeight, graphWidth, nodes],
@@ -269,6 +263,10 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
   const handleNodeDragStart = useCallback(() => {
     isNodeDragging.value = true;
+  }, [isNodeDragging]);
+
+  const handleNodeDragCancel = useCallback(() => {
+    isNodeDragging.value = false;
   }, [isNodeDragging]);
 
   const handleNodeDragEnd = useCallback(
@@ -287,6 +285,32 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     },
     [isNodeDragging, onLayoutPositionsChange, setReconciling],
   );
+
+  useEffect(() => {
+    const session = getSessionNodePositions();
+    if (session.size === 0) {
+      setPositionOverrides((prev) => (prev.size === 0 ? prev : new Map()));
+      return;
+    }
+
+    setPositionOverrides((prev) => {
+      const next = new Map<string, { x: number; y: number }>();
+      for (const node of nodes) {
+        const pos = session.get(node.id);
+        if (pos) next.set(node.id, pos);
+      }
+      if (
+        prev.size === next.size &&
+        [...next.entries()].every(([id, pos]) => {
+          const existing = prev.get(id);
+          return existing?.x === pos.x && existing?.y === pos.y;
+        })
+      ) {
+        return prev;
+      }
+      return next;
+    });
+  }, [layoutRestoreToken, nodeIdsKey, nodes]);
 
   useEffect(() => {
     if (!isReconciling) return;
@@ -340,8 +364,12 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   };
 
   const pinch = Gesture.Pinch()
-    .onBegin(syncGestureBaseline)
+    .onBegin(() => {
+      if (isNodeDragging.value) return;
+      syncGestureBaseline();
+    })
     .onUpdate((event) => {
+      if (isNodeDragging.value) return;
       const nextScale = savedScale.value * event.scale;
       applyFocalZoom(
         nextScale,
@@ -360,6 +388,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     });
 
   const pan = Gesture.Pan()
+    .maxPointers(1)
     .activeOffsetX([-PAN_ACTIVATION_DISTANCE, PAN_ACTIVATION_DISTANCE])
     .activeOffsetY([-PAN_ACTIVATION_DISTANCE, PAN_ACTIVATION_DISTANCE])
     .onBegin(() => {
@@ -466,6 +495,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               onTaskPress={onTaskPress}
               onNodeDragStart={handleNodeDragStart}
               onNodeDragEnd={handleNodeDragEnd}
+              onNodeDragCancel={handleNodeDragCancel}
             />
           </Animated.View>
         </View>

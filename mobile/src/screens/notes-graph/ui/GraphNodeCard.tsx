@@ -23,7 +23,7 @@ type GraphNodeCardProps = {
   isProActive: boolean;
   highlighted: boolean;
   interactionPhase: SharedValue<number>;
-  onPress: () => void;
+  onPress?: () => void;
 };
 
 export function GraphNodeCard({

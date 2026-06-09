@@ -215,11 +215,14 @@
     "history": {
       "openA11y": "Layout history",
       "title": "Layout history",
-      "subtitle": "Saved versions of node positions for the current filters.",
+      "subtitle": "Saved versions of node positions for the current filters",
       "empty": "No saved layouts yet. Move nodes on the map and tap Save.",
       "versionLabel": "Version {{version}}",
       "nodeCount_one": "{{count}} node moved",
-      "nodeCount_other": "{{count}} nodes moved"
+      "nodeCount_other": "{{count}} nodes moved",
+      "deleteA11y": "Delete version {{version}}",
+      "deleteTitle": "Delete layout version?",
+      "deleteMessage": "Version {{version}} will be removed from history. This cannot be undone."
     },
     "loadingTips": {
       "pinchPan": "Pinch to zoom and drag with one finger to move around the map.",

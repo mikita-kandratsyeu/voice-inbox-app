@@ -14,7 +14,8 @@ import type { Colors } from '@/shared/config';
 import { hapticLight } from '@/shared/lib';
 
 import type { GraphNode } from '../lib/graphTypes';
-import { GraphNodeCard, GraphNodeCardWrapper } from './GraphNodeCard';
+import { RECORD_NODE_WIDTH, TASK_NODE_WIDTH } from '../lib/graphTypes';
+import { GraphNodeCard } from './GraphNodeCard';
 import {
   GRAPH_NODE_INTERACTION_DRAGGING,
   GRAPH_NODE_INTERACTION_IDLE,
@@ -37,6 +38,7 @@ type GraphNodeLayerProps = {
   onTaskPress: (recordId: string, taskId: string) => void;
   onNodeDragStart: () => void;
   onNodeDragEnd: (nodeId: string, x: number, y: number) => void;
+  onNodeDragCancel: () => void;
 };
 
 function nodeIsDimmed(
@@ -54,35 +56,79 @@ function DraggableNodeShell({
   canvasScale,
   onDragStart,
   onDragEnd,
+  onDragCancel,
+  onPress,
   children,
 }: {
   node: GraphNode;
   canvasScale: SharedValue<number>;
   onDragStart: () => void;
   onDragEnd: (nodeId: string, x: number, y: number) => void;
+  onDragCancel: () => void;
+  onPress: () => void;
   children: (interactionPhase: SharedValue<number>) => React.ReactNode;
 }) {
   const nodeRef = React.useRef(node);
   nodeRef.current = node;
-  const dragOriginRef = React.useRef({ x: node.x, y: node.y });
+  const isDraggingRef = useRef(false);
   const interactionPhase = useSharedValue(GRAPH_NODE_INTERACTION_IDLE);
 
+  const nodeLeft = useSharedValue(node.x);
+  const nodeTop = useSharedValue(node.y);
   const dragOffsetX = useSharedValue(0);
   const dragOffsetY = useSharedValue(0);
 
+  const nodeWidth = node.kind === 'task' ? TASK_NODE_WIDTH : RECORD_NODE_WIDTH;
+
   useLayoutEffect(() => {
+    if (isDraggingRef.current) return;
+    nodeLeft.value = node.x;
+    nodeTop.value = node.y;
     dragOffsetX.value = 0;
     dragOffsetY.value = 0;
-  }, [node.x, node.y, dragOffsetX, dragOffsetY]);
+  }, [node.x, node.y, dragOffsetX, dragOffsetY, nodeLeft, nodeTop]);
+
+  const handleDragEndComplete = useCallback(
+    (nodeId: string, x: number, y: number) => {
+      isDraggingRef.current = false;
+      onDragEnd(nodeId, x, y);
+    },
+    [onDragEnd],
+  );
+
+  const handleDragCancel = useCallback(() => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    const current = nodeRef.current;
+    nodeLeft.value = current.x;
+    nodeTop.value = current.y;
+    dragOffsetX.value = 0;
+    dragOffsetY.value = 0;
+    onDragCancel();
+  }, [dragOffsetX, dragOffsetY, nodeLeft, nodeTop, onDragCancel]);
 
   const handleCanvasDragStart = useCallback(() => {
-    dragOriginRef.current = { x: nodeRef.current.x, y: nodeRef.current.y };
+    const current = nodeRef.current;
+    isDraggingRef.current = true;
+    nodeLeft.value = current.x;
+    nodeTop.value = current.y;
     dragOffsetX.value = 0;
     dragOffsetY.value = 0;
     onDragStart();
-  }, [dragOffsetX, dragOffsetY, onDragStart]);
+  }, [dragOffsetX, dragOffsetY, nodeLeft, nodeTop, onDragStart]);
+
+  const handlePress = useCallback(() => {
+    onPress();
+  }, [onPress]);
 
   const dragGesture = useMemo(() => {
+    const tap = Gesture.Tap()
+      .maxDuration(GRAPH_NODE_LONG_PRESS_MS - 20)
+      .onEnd((_event, success) => {
+        if (!success) return;
+        runOnJS(handlePress)();
+      });
+
     const longPressHint = Gesture.LongPress()
       .minDuration(GRAPH_NODE_LONG_PRESS_MS)
       .onBegin(() => {
@@ -99,10 +145,8 @@ function DraggableNodeShell({
 
     const pan = Gesture.Pan()
       .activateAfterLongPress(GRAPH_NODE_LONG_PRESS_MS)
-      .onBegin(() => {
-        runOnJS(handleCanvasDragStart)();
-      })
       .onStart(() => {
+        runOnJS(handleCanvasDragStart)();
         interactionPhase.value = GRAPH_NODE_INTERACTION_DRAGGING;
         runOnJS(hapticLight)();
       })
@@ -114,26 +158,59 @@ function DraggableNodeShell({
       .onEnd((event) => {
         const current = nodeRef.current;
         const viewportScale = Math.max(canvasScale.value, 0.001);
+        const finalX = nodeLeft.value + event.translationX / viewportScale;
+        const finalY = nodeTop.value + event.translationY / viewportScale;
+
+        nodeLeft.value = finalX;
+        nodeTop.value = finalY;
+        dragOffsetX.value = 0;
+        dragOffsetY.value = 0;
+
         interactionPhase.value = withTiming(GRAPH_NODE_INTERACTION_IDLE, {
           duration: GRAPH_NODE_RELEASE_MS,
         });
-        runOnJS(onDragEnd)(
-          current.id,
-          dragOriginRef.current.x + event.translationX / viewportScale,
-          dragOriginRef.current.y + event.translationY / viewportScale,
-        );
+        runOnJS(handleDragEndComplete)(current.id, finalX, finalY);
+      })
+      .onFinalize((_event, success) => {
+        if (success) return;
+        if (interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING) {
+          runOnJS(handleDragCancel)();
+        }
+        interactionPhase.value = withTiming(GRAPH_NODE_INTERACTION_IDLE, {
+          duration: GRAPH_NODE_RELEASE_MS,
+        });
       });
 
-    return Gesture.Simultaneous(longPressHint, pan);
-  }, [canvasScale, dragOffsetX, dragOffsetY, handleCanvasDragStart, interactionPhase, onDragEnd]);
+    return Gesture.Simultaneous(Gesture.Exclusive(pan, tap), longPressHint);
+  }, [
+    canvasScale,
+    dragOffsetX,
+    dragOffsetY,
+    handleCanvasDragStart,
+    handleDragCancel,
+    handleDragEndComplete,
+    handlePress,
+    interactionPhase,
+    nodeLeft,
+    nodeTop,
+  ]);
 
-  const animatedDragStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: dragOffsetX.value }, { translateY: dragOffsetY.value }],
+  const shellStyle = useAnimatedStyle(() => ({
+    position: 'absolute',
+    left: nodeLeft.value + dragOffsetX.value,
+    top: nodeTop.value + dragOffsetY.value,
+    width: nodeWidth,
+    zIndex:
+      interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING
+        ? 20
+        : interactionPhase.value >= GRAPH_NODE_INTERACTION_PRESSING
+          ? 10
+          : 0,
   }));
 
   return (
     <GestureDetector gesture={dragGesture}>
-      <Animated.View collapsable={false} style={animatedDragStyle}>
+      <Animated.View collapsable={false} style={shellStyle}>
         {children(interactionPhase)}
       </Animated.View>
     </GestureDetector>
@@ -152,6 +229,7 @@ type GraphNodeItemProps = {
   onTaskPress: (recordId: string, taskId: string) => void;
   onNodeDragStart: () => void;
   onNodeDragEnd: (nodeId: string, x: number, y: number) => void;
+  onNodeDragCancel: () => void;
   canvasScale: SharedValue<number>;
 };
 
@@ -167,6 +245,7 @@ const GraphNodeItem = React.memo(function GraphNodeItem({
   onTaskPress,
   onNodeDragStart,
   onNodeDragEnd,
+  onNodeDragCancel,
   canvasScale,
 }: GraphNodeItemProps) {
   const skipNextPressRef = useRef(false);
@@ -200,23 +279,22 @@ const GraphNodeItem = React.memo(function GraphNodeItem({
       canvasScale={canvasScale}
       onDragStart={onNodeDragStart}
       onDragEnd={handleDragEnd}
+      onDragCancel={onNodeDragCancel}
+      onPress={handlePress}
     >
       {(interactionPhase) => (
-        <GraphNodeCardWrapper node={node} interactionPhase={interactionPhase}>
-          <GraphNodeCard
-            node={node}
-            color={color}
-            folderName={folder?.name}
-            folderColor={folder?.color}
-            folderIcon={folder?.icon}
-            isProActive={isProActive}
-            highlighted={highlighted}
-            dimmed={dimmed}
-            active={active}
-            interactionPhase={interactionPhase}
-            onPress={handlePress}
-          />
-        </GraphNodeCardWrapper>
+        <GraphNodeCard
+          node={node}
+          color={color}
+          folderName={folder?.name}
+          folderColor={folder?.color}
+          folderIcon={folder?.icon}
+          isProActive={isProActive}
+          highlighted={highlighted}
+          dimmed={dimmed}
+          active={active}
+          interactionPhase={interactionPhase}
+        />
       )}
     </DraggableNodeShell>
   );
@@ -235,6 +313,7 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
   onTaskPress,
   onNodeDragStart,
   onNodeDragEnd,
+  onNodeDragCancel,
 }: GraphNodeLayerProps) {
   const sortedNodes = useMemo(() => {
     const tasks = nodes.filter((n) => n.kind === 'task');
@@ -268,6 +347,7 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
             onTaskPress={onTaskPress}
             onNodeDragStart={onNodeDragStart}
             onNodeDragEnd={onNodeDragEnd}
+            onNodeDragCancel={onNodeDragCancel}
             canvasScale={canvasScale}
           />
         );
