@@ -1,3 +1,7 @@
+jest.mock('@/shared/lib/folderColor', () => ({
+  DEFAULT_FOLDER_BRAND_HEX: '#3b82f6',
+}));
+
 import { normalizeImportedVoiceRecord, parseBackupMetadataPayload } from '../backupMetadata';
 import { normalizeImportedTasks } from '../normalizeImportedTasks';
 
