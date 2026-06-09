@@ -444,6 +444,7 @@ export const ImportRecordsScreen = () => {
     selectedIds,
     t,
     trashIdsForReplace,
+    graphLayouts,
   ]);
 
   const handleImportPress = useCallback(() => {

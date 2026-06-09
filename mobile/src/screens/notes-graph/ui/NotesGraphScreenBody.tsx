@@ -309,14 +309,16 @@ export const NotesGraphScreenBody = () => {
     setDebouncedSearchQuery(searchQuery);
   }, [searchQuery]);
 
+  const sessionLayoutRevision = layoutRestoreToken + nodePositionRevision;
   const layoutNodesById = useMemo(() => {
+    void sessionLayoutRevision;
     const session = getSessionNodePositions();
     const merged = layoutNodes.map((node) => {
       const pos = session.get(node.id);
       return pos ? { ...node, x: pos.x, y: pos.y } : node;
     });
     return new Map(merged.map((node) => [node.id, node]));
-  }, [layoutNodes, layoutRestoreToken, nodePositionRevision]);
+  }, [layoutNodes, sessionLayoutRevision]);
 
   const searchMatchIds = useMemo(
     () => findGraphSearchMatchIds(searchIndex, debouncedSearchQuery),

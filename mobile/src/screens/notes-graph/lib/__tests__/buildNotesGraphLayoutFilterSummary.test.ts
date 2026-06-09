@@ -1,5 +1,9 @@
-import { buildNotesGraphLayoutFilterSummary } from '../buildNotesGraphLayoutFilterSummary';
+import {
+  buildNotesGraphLayoutFilterSummary,
+  buildNotesGraphLayoutFilterSummaryFromParsed,
+} from '../buildNotesGraphLayoutFilterSummary';
 import { DEFAULT_EDGE_VISIBILITY, type GraphFilters } from '../graphTypes';
+import { parseNotesGraphPersistKey } from '../parseNotesGraphPersistKey';
 
 const t = ((key: string) => key) as Parameters<typeof buildNotesGraphLayoutFilterSummary>[0]['t'];
 
@@ -39,6 +43,27 @@ describe('buildNotesGraphLayoutFilterSummary', () => {
 
     expect(rows.find((row) => row.id === 'folder')).toBeUndefined();
     expect(rows.find((row) => row.id === 'tags')?.value).toBe('alpha, beta');
+    expect(rows.find((row) => row.id === 'view')?.value).toBe(
+      'notesGraph.history.filters.viewSimplifiedAuto',
+    );
+  });
+});
+
+describe('buildNotesGraphLayoutFilterSummaryFromParsed', () => {
+  it('derives simplify state from parsed persist key', () => {
+    const layoutKey = [
+      '2:a,b',
+      '',
+      'work',
+      '1',
+      'contains:1,sameFolder:1,sharedTag:1,similar:1',
+      'auto',
+      '200',
+    ].join(';');
+    const parsed = parseNotesGraphPersistKey(layoutKey)!;
+
+    const rows = buildNotesGraphLayoutFilterSummaryFromParsed(parsed, null, true, t);
+
     expect(rows.find((row) => row.id === 'view')?.value).toBe(
       'notesGraph.history.filters.viewSimplifiedAuto',
     );

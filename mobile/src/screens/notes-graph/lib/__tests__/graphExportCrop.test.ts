@@ -4,6 +4,7 @@ import {
   computeContainLayout,
   computeCropCaptureLayout,
   computeCropForAspectTemplate,
+  displayDeltaToImageDelta,
   formatImageCropSize,
   fullImageCrop,
   GRAPH_EXPORT_CROP_CAPTURE_MAX_DIMENSION,
@@ -87,6 +88,23 @@ describe('graphExportCrop', () => {
     expect(crop.width).toBe(2000);
     expect(crop.height).toBe(2000);
     expect(crop.x).toBe(400);
+    expect(crop.y).toBe(0);
+  });
+
+  it('converts display drag deltas to image-space deltas', () => {
+    const layout = computeContainLayout(2000, 1000, 500, 500);
+
+    expect(displayDeltaToImageDelta(50, 25, layout.scale)).toEqual({
+      dx: 50 / layout.scale,
+      dy: 25 / layout.scale,
+    });
+  });
+
+  it('builds portrait 9:16 crop for landscape images', () => {
+    const crop = computeCropForAspectTemplate('9:16', { width: 2800, height: 2000 });
+
+    expect(crop.width / crop.height).toBeCloseTo(9 / 16, 5);
+    expect(crop.x).toBeGreaterThanOrEqual(0);
     expect(crop.y).toBe(0);
   });
 

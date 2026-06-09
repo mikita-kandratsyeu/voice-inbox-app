@@ -93,7 +93,9 @@ async function main(): Promise<void> {
     throw new Error(`RLS is OFF on: ${rlsOff.join(', ')} — run db:rls migration`);
   }
   if (forcedRls.length > 0) {
-    throw new Error(`FORCE ROW LEVEL SECURITY is on: ${forcedRls.join(', ')} — Prisma may be blocked`);
+    throw new Error(
+      `FORCE ROW LEVEL SECURITY is on: ${forcedRls.join(', ')} — Prisma may be blocked`,
+    );
   }
 
   const prismaBypassesRls =

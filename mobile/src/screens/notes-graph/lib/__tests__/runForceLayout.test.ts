@@ -3,7 +3,12 @@ import type { VoiceRecord } from '@/entities/record';
 import { graphNodeSearchText } from '../graphNodeSearchText';
 import type { GraphEdge, GraphNode } from '../graphTypes';
 import { recordNodeId } from '../graphTypes';
-import { computeFocusTransform, minNodeCenterDistance, runForceLayout } from '../runForceLayout';
+import {
+  computeFitTransform,
+  computeFocusTransform,
+  minNodeCenterDistance,
+  runForceLayout,
+} from '../runForceLayout';
 
 function makeRecord(id: string, title: string): VoiceRecord {
   return {
@@ -103,6 +108,29 @@ describe('runForceLayout', () => {
 
     expect(pinnedNode?.x).toBe(420);
     expect(pinnedNode?.y).toBe(280);
+  });
+});
+
+describe('computeFitTransform', () => {
+  it('returns identity transform for empty graphs', () => {
+    expect(computeFitTransform([], 400, 800, 390, 700)).toEqual({
+      scale: 1,
+      translateX: 0,
+      translateY: 0,
+    });
+  });
+
+  it('fits node bounds inside the viewport', () => {
+    const node = makeRecordNode(makeRecord('a', 'Alpha'));
+    node.x = 100;
+    node.y = 200;
+
+    const transform = computeFitTransform([node], 800, 1200, 390, 700);
+
+    expect(transform.scale).toBeGreaterThan(0);
+    expect(transform.scale).toBeLessThanOrEqual(1.2);
+    expect(Number.isFinite(transform.translateX)).toBe(true);
+    expect(Number.isFinite(transform.translateY)).toBe(true);
   });
 });
 

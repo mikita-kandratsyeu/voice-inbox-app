@@ -54,9 +54,7 @@
       "indexes": {
         "idx_cloud_ai_pending_jobId": {
           "name": "idx_cloud_ai_pending_jobId",
-          "columns": [
-            "jobId"
-          ],
+          "columns": ["jobId"],
           "isUnique": false
         }
       },
@@ -162,16 +160,12 @@
       "indexes": {
         "idx_notes_graph_layout_key": {
           "name": "idx_notes_graph_layout_key",
-          "columns": [
-            "layoutKey"
-          ],
+          "columns": ["layoutKey"],
           "isUnique": false
         },
         "idx_notes_graph_layout_created": {
           "name": "idx_notes_graph_layout_created",
-          "columns": [
-            "createdAt"
-          ],
+          "columns": ["createdAt"],
           "isUnique": false
         }
       },
@@ -493,30 +487,22 @@
       "indexes": {
         "idx_records_isPinned": {
           "name": "idx_records_isPinned",
-          "columns": [
-            "isPinned"
-          ],
+          "columns": ["isPinned"],
           "isUnique": false
         },
         "idx_records_createdAt": {
           "name": "idx_records_createdAt",
-          "columns": [
-            "createdAt"
-          ],
+          "columns": ["createdAt"],
           "isUnique": false
         },
         "idx_records_folderId": {
           "name": "idx_records_folderId",
-          "columns": [
-            "folderId"
-          ],
+          "columns": ["folderId"],
           "isUnique": false
         },
         "idx_records_purgeAt": {
           "name": "idx_records_purgeAt",
-          "columns": [
-            "purgeAt"
-          ],
+          "columns": ["purgeAt"],
           "isUnique": false
         }
       },

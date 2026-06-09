@@ -191,11 +191,6 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     setViewportTransform({ scale: nextScale, translateX: nextX, translateY: nextY });
   }, []);
 
-  const nodeBoundsKey = useMemo(
-    () => displayNodes.map((node) => `${node.id}:${node.x}:${node.y}`).join('|'),
-    [displayNodes],
-  );
-
   const { width: worldWidth, height: worldHeight } = useMemo(
     () =>
       computeWorldDimensionsForNodes(
@@ -206,7 +201,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         viewportHeight,
         MIN_SCALE,
       ),
-    [displayNodes, graphHeight, graphWidth, nodeBoundsKey, viewportHeight, viewportWidth],
+    [displayNodes, graphHeight, graphWidth, viewportHeight, viewportWidth],
   );
 
   const worldWidthSV = useSharedValue(worldWidth);
