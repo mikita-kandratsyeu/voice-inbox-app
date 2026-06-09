@@ -9,6 +9,7 @@ function record(overrides: Partial<VoiceRecord> = {}): VoiceRecord {
     transcript: '',
     duration: '1:00',
     createdAt: '2026-06-01T00:00:00.000Z',
+    status: 'unread',
     ...overrides,
   };
 }
