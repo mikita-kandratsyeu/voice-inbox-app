@@ -2,7 +2,12 @@ jest.mock('@/shared/lib/folderColor', () => ({
   DEFAULT_FOLDER_BRAND_HEX: '#3b82f6',
 }));
 
-import { normalizeImportedVoiceRecord, parseBackupMetadataPayload } from '../backupMetadata';
+import {
+  buildLegacyBackupFolders,
+  normalizeBackupFolders,
+  normalizeImportedVoiceRecord,
+  parseBackupMetadataPayload,
+} from '../backupMetadata';
 import { normalizeImportedTasks } from '../normalizeImportedTasks';
 
 describe('backup metadata import', () => {
@@ -68,6 +73,66 @@ describe('backup metadata import', () => {
     });
 
     expect(record.status).toBe('read');
+  });
+
+  it('parses v1 and v2 payloads', () => {
+    const v1 = parseBackupMetadataPayload({
+      version: 1,
+      exportedAt: '2026-01-01T00:00:00.000Z',
+      records: [{ id: 'r1', createdAt: '2026-01-01T00:00:00.000Z' }],
+    });
+    const v2 = parseBackupMetadataPayload({
+      version: 2,
+      exportedAt: '2026-01-01T00:00:00.000Z',
+      records: [{ id: 'r1', createdAt: '2026-01-01T00:00:00.000Z' }],
+    });
+
+    expect(v1?.version).toBe(1);
+    expect(v2?.version).toBe(2);
+  });
+
+  it('rejects malformed payloads', () => {
+    expect(parseBackupMetadataPayload(null)).toBeNull();
+    expect(parseBackupMetadataPayload({ version: 99, exportedAt: 'x', records: [] })).toBeNull();
+    expect(
+      parseBackupMetadataPayload({
+        version: 3,
+        exportedAt: '2026-01-01T00:00:00.000Z',
+        records: [{ id: 'r1' }],
+      }),
+    ).toBeNull();
+  });
+});
+
+describe('normalizeBackupFolders', () => {
+  it('maps folders with defaults for missing fields', () => {
+    const folders = normalizeBackupFolders([
+      { id: 'f1', name: 'Work', color: '#111111', icon: 'briefcase', sortOrder: 2 },
+      { id: 'f2', name: 'Personal' },
+    ]);
+
+    expect(folders).toHaveLength(2);
+    expect(folders[0]).toMatchObject({ id: 'f1', name: 'Work', sortOrder: 2 });
+    expect(folders[1]?.color).toBe('#3b82f6');
+    expect(folders[1]?.icon).toBe('briefcase');
+  });
+
+  it('returns empty array for invalid input', () => {
+    expect(normalizeBackupFolders(undefined)).toEqual([]);
+  });
+});
+
+describe('buildLegacyBackupFolders', () => {
+  it('creates placeholder folders from unique record folderIds', () => {
+    const folders = buildLegacyBackupFolders([
+      { id: 'r1', createdAt: '2026-01-01T00:00:00.000Z', folderId: 'legacy-a' },
+      { id: 'r2', createdAt: '2026-01-01T00:00:00.000Z', folderId: 'legacy-a' },
+      { id: 'r3', createdAt: '2026-01-01T00:00:00.000Z', folderId: 'legacy-b' },
+    ]);
+
+    expect(folders).toHaveLength(2);
+    expect(folders.map((f) => f.id).sort()).toEqual(['legacy-a', 'legacy-b']);
+    expect(folders[0]?.name).toMatch(/^Imported folder /);
   });
 });
 
