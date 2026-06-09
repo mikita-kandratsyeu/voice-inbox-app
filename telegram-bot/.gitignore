@@ -20,3 +20,6 @@
 
 # typescript
 *.tsbuildinfo
+
+# jest coverage
+/coverage

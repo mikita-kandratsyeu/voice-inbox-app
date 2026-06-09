@@ -1,5 +1,9 @@
 # misc
 .DS_Store
 
+# CI PR metrics (generated in Actions / local CI dry-runs)
+/ci-metrics/
+**/test-results.json
+
 # APNs keys — never commit
 **/*.p8
