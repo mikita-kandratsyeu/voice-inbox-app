@@ -209,6 +209,7 @@ jobs:
     needs: [mobile, web, telegram-bot]
     if: github.event_name == 'pull_request' && always()
     permissions:
+      contents: read
       pull-requests: write
 
     steps:
