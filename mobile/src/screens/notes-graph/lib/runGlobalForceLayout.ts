@@ -4,7 +4,6 @@ import forceAtlas2 from 'graphology-layout-forceatlas2';
 
 import { nodeDimensions } from './graphNodeMetrics';
 import type { GraphEdge, GraphNode } from './graphTypes';
-import { layoutIsolatedRecordNodes } from './layoutIsolatedNodes';
 
 const NODE_LAYOUT_PADDING = 24;
 

@@ -1,4 +1,28 @@
-import { recordNodeId, taskNodeId } from '../graphTypes';
+import {
+  DEFAULT_GRAPH_LAYOUT_MODE,
+  GRAPH_LAYOUT_MODES,
+  isGraphLayoutMode,
+  recordNodeId,
+  taskNodeId,
+} from '../graphTypes';
+
+describe('graph layout modes', () => {
+  it('defaults to cluster layout', () => {
+    expect(DEFAULT_GRAPH_LAYOUT_MODE).toBe('cluster');
+  });
+
+  it('exposes all supported layout modes', () => {
+    expect(GRAPH_LAYOUT_MODES).toEqual(['cluster', 'force', 'circular']);
+  });
+
+  it('validates layout mode tokens', () => {
+    expect(isGraphLayoutMode('cluster')).toBe(true);
+    expect(isGraphLayoutMode('force')).toBe(true);
+    expect(isGraphLayoutMode('circular')).toBe(true);
+    expect(isGraphLayoutMode('grid')).toBe(false);
+    expect(isGraphLayoutMode('')).toBe(false);
+  });
+});
 
 describe('graphTypes node ids', () => {
   it('builds stable record node ids', () => {

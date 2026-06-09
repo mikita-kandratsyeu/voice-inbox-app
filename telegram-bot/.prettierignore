@@ -1,6 +1,7 @@
 node_modules/
 .yarn/
 coverage/
+test-results.json
 dist/
 build/
 *.lock

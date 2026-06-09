@@ -14,7 +14,11 @@ import {
   countFilteredGraphRecords,
   countGraphNodes,
 } from '../buildGraphModel';
-import { DEFAULT_EDGE_VISIBILITY, DEFAULT_GRAPH_LAYOUT_MODE, type GraphFilters } from '../graphTypes';
+import {
+  DEFAULT_EDGE_VISIBILITY,
+  DEFAULT_GRAPH_LAYOUT_MODE,
+  type GraphFilters,
+} from '../graphTypes';
 import { recordNodeId, taskNodeId } from '../graphTypes';
 
 function makeRecord(id: string, title: string, extras: Partial<VoiceRecord> = {}): VoiceRecord {

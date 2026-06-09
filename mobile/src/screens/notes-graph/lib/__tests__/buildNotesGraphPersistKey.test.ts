@@ -61,4 +61,17 @@ describe('buildNotesGraphPersistKey', () => {
 
     expect(parseNotesGraphPersistKey(key)?.simplifyOverride).toBe(true);
   });
+
+  it.each(['force', 'circular'] as const)(
+    'round-trips %s layout mode in persist keys',
+    (layoutMode) => {
+      const key = buildNotesGraphPersistKey(
+        [makeRecord('a'), makeRecord('b')],
+        { ...filters, layoutMode },
+        null,
+      );
+
+      expect(parseNotesGraphPersistKey(key)?.layoutMode).toBe(layoutMode);
+    },
+  );
 });

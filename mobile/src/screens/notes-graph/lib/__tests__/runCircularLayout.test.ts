@@ -1,7 +1,7 @@
 import type { VoiceRecord } from '@/entities/record';
 
-import { graphNodeSearchText } from '../graphNodeSearchText';
 import { nodeDimensions } from '../graphNodeMetrics';
+import { graphNodeSearchText } from '../graphNodeSearchText';
 import type { GraphNode } from '../graphTypes';
 import { recordNodeId } from '../graphTypes';
 import { layoutNodesInCircle } from '../runCircularLayout';

@@ -1,10 +1,6 @@
 module.exports = {
   preset: 'react-native',
-  collectCoverageFrom: [
-    'src/**/*.{ts,tsx}',
-    '!src/**/*.test.{ts,tsx}',
-    '!src/**/__tests__/**',
-  ],
+  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.test.{ts,tsx}', '!src/**/__tests__/**'],
   coverageDirectory: 'coverage',
   moduleNameMapper: {
     '^react-native-in-app-review$': '<rootDir>/__mocks__/react-native-in-app-review.js',

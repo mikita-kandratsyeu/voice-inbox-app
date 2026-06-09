@@ -3,6 +3,7 @@ node_modules/
 build/
 dist/
 coverage/
+test-results.json
 *.lock
 .yarn/
 android/

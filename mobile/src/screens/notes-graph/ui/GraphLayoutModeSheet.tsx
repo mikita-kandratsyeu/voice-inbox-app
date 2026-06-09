@@ -98,7 +98,9 @@ export function GraphLayoutModeSheet({
                       {t(`notesGraph.filters.layoutModeHint.${mode}`)}
                     </Text>
                   </View>
-                  {selected ? <Check size={18} color={color.accent.primary} strokeWidth={2.6} /> : null}
+                  {selected ? (
+                    <Check size={18} color={color.accent.primary} strokeWidth={2.6} />
+                  ) : null}
                 </View>
               </TouchableOpacity>
             );

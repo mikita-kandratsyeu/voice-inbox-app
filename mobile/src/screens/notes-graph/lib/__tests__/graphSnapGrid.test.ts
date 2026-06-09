@@ -15,4 +15,15 @@ describe('graphSnapGrid', () => {
       y: 80,
     });
   });
+
+  it('snaps dragged node positions to the shared grid spacing', () => {
+    expect(snapGraphPointToGrid(101, 203)).toEqual({
+      x: 96,
+      y: 208,
+    });
+    expect(snapGraphPointToGrid(-17, 25)).toEqual({
+      x: -16,
+      y: 32,
+    });
+  });
 });

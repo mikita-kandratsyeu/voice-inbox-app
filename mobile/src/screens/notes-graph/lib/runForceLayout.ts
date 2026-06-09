@@ -1,6 +1,6 @@
 import { layoutNodesByClusters } from './graphClusterLayout';
 import { nodeDimensions } from './graphNodeMetrics';
-import type { GraphEdge, GraphNode, GraphLayoutMode } from './graphTypes';
+import type { GraphEdge, GraphLayoutMode, GraphNode } from './graphTypes';
 import { DEFAULT_GRAPH_LAYOUT_MODE } from './graphTypes';
 import type { GraphViewportInsets } from './graphViewportInsets';
 import { layoutIsolatedRecordNodes } from './layoutIsolatedNodes';

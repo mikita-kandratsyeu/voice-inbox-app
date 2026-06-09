@@ -2,7 +2,11 @@ import {
   buildNotesGraphLayoutFilterSummary,
   buildNotesGraphLayoutFilterSummaryFromParsed,
 } from '../buildNotesGraphLayoutFilterSummary';
-import { DEFAULT_EDGE_VISIBILITY, DEFAULT_GRAPH_LAYOUT_MODE, type GraphFilters } from '../graphTypes';
+import {
+  DEFAULT_EDGE_VISIBILITY,
+  DEFAULT_GRAPH_LAYOUT_MODE,
+  type GraphFilters,
+} from '../graphTypes';
 import { parseNotesGraphPersistKey } from '../parseNotesGraphPersistKey';
 
 const t = ((key: string) => key) as Parameters<typeof buildNotesGraphLayoutFilterSummary>[0]['t'];
@@ -40,6 +44,22 @@ describe('buildNotesGraphLayoutFilterSummary', () => {
       'notesGraph.filters.layoutMode.cluster',
     );
     expect(rows[5]?.value).toBe('notesGraph.history.filters.viewFull');
+  });
+
+  it.each([
+    ['force', 'notesGraph.filters.layoutMode.force'],
+    ['circular', 'notesGraph.filters.layoutMode.circular'],
+  ] as const)('maps %s layout mode to history label', (layoutMode, expectedValue) => {
+    const rows = buildNotesGraphLayoutFilterSummary({
+      filters: { ...baseFilters, layoutMode },
+      folderName: null,
+      foldersEnabled: true,
+      simplifyActive: false,
+      simplifyIsAuto: false,
+      t,
+    });
+
+    expect(rows.find((row) => row.id === 'layoutMode')?.value).toBe(expectedValue);
   });
 
   it('omits folder row when folders are disabled', () => {

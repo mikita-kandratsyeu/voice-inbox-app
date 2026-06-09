@@ -52,6 +52,39 @@ describe('buildNotesGraphLayout', () => {
     ]);
   });
 
+  it('builds circular layout inside viewport bounds', () => {
+    const records = Array.from({ length: 8 }, (_, index) =>
+      makeRecord(`note-${index}`, `Note ${index}`),
+    );
+    const width = 900;
+    const height = 700;
+    const result = buildNotesGraphLayout(
+      records,
+      { ...filters, layoutMode: 'circular' },
+      records.length,
+      null,
+      width,
+      height,
+    );
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (const node of result.layoutNodes) {
+      minX = Math.min(minX, node.x);
+      minY = Math.min(minY, node.y);
+      maxX = Math.max(maxX, node.x + 158);
+      maxY = Math.max(maxY, node.y + 82);
+    }
+
+    expect(minX).toBeGreaterThanOrEqual(0);
+    expect(minY).toBeGreaterThanOrEqual(0);
+    expect(maxX).toBeLessThanOrEqual(width);
+    expect(maxY).toBeLessThanOrEqual(height);
+  });
+
   it('applies simplify mode for large filtered record counts', () => {
     const records = [makeRecord('a', 'Alpha')];
     const fullTasks = {

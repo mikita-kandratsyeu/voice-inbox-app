@@ -1,5 +1,9 @@
 import type { GraphEdgeVisibility, GraphFilters, GraphLayoutMode } from './graphTypes';
-import { DEFAULT_EDGE_VISIBILITY, DEFAULT_GRAPH_LAYOUT_MODE, isGraphLayoutMode } from './graphTypes';
+import {
+  DEFAULT_EDGE_VISIBILITY,
+  DEFAULT_GRAPH_LAYOUT_MODE,
+  isGraphLayoutMode,
+} from './graphTypes';
 
 const PERSIST_KEY_TAIL_PARTS = 7;
 const LEGACY_PERSIST_KEY_TAIL_PARTS = 6;
