@@ -1,5 +1,5 @@
 import dayjs, { type Dayjs } from 'dayjs';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
@@ -9,16 +9,18 @@ import { hapticSelection, withAlphaHex } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 
 import {
+  CALENDAR_OVERDUE_MARKER_COLOR,
+  CALENDAR_TASK_MARKER_COLOR,
   getTaskMarkerDotColor,
   type TaskDeadlineDayMarker,
 } from '../lib/buildTaskDeadlineDayMarkers';
 
 const DAY_CELL_HEIGHT = 44;
 const SELECTION_DIAMETER = 38;
-const TODAY_RING_WIDTH = 2;
 const DOT_SIZE = 5;
-const DOT_BOTTOM_INSET = 0;
+const DOT_BOTTOM_INSET = 1.5;
 const SELECTED_DAY_TINT_ALPHA = 0.16;
+const FOOTER_ICON_SIZE = 40;
 
 function countWeeksInMonthGrid(month: Dayjs): number {
   const gridStart = month.startOf('month').startOf('week');
@@ -59,8 +61,8 @@ function getCalendarDayVisualState(
   if (isToday) {
     return {
       backgroundColor: 'transparent',
-      borderColor: color.accent.primary,
-      borderWidth: TODAY_RING_WIDTH,
+      borderColor: 'transparent',
+      borderWidth: 0,
       textColor: color.accent.primary,
       fontWeight: '600',
     };
@@ -110,6 +112,23 @@ function buildMonthWeeks(visibleMonth: Dayjs): CalendarDayCell[][] {
   return weeks;
 }
 
+function capitalizeFirst(value: string): string {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function formatSelectedDateTitle(date: Dayjs, locale: string): string {
+  return date.locale(locale).format('D MMMM YYYY');
+}
+
+function formatSelectedDateSubtitle(date: Dayjs, locale: string, language: string): string {
+  const localized = date.locale(locale);
+  if (language.startsWith('ru')) {
+    return `${capitalizeFirst(localized.format('dddd'))}, ${localized.format('D MMMM YYYY')} г.`;
+  }
+  return capitalizeFirst(localized.format('dddd, D MMMM YYYY'));
+}
+
 export function TasksMonthCalendar({
   color,
   selectedDate,
@@ -143,16 +162,27 @@ export function TasksMonthCalendar({
 
   const monthWeeks = useMemo(() => buildMonthWeeks(visibleMonth), [visibleMonth]);
   const calendarBodyHeight = monthWeeks.length * DAY_CELL_HEIGHT;
+  const selectedDateTitle = useMemo(
+    () => formatSelectedDateTitle(selected, locale),
+    [locale, selected],
+  );
+  const selectedDateSubtitle = useMemo(
+    () => formatSelectedDateSubtitle(selected, locale, i18n.language),
+    [i18n.language, locale, selected],
+  );
+  const hasAnyDayMarkers = dayMarkers.size > 0;
 
   return (
     <View
       style={{
         width: '100%',
-        backgroundColor: color.background.tertiary,
+        backgroundColor: color.background.card,
         borderRadius: 16,
-        paddingHorizontal: 12,
-        paddingTop: 12,
-        paddingBottom: 10,
+        borderWidth: 1,
+        borderColor: color.border.default,
+        paddingHorizontal: 14,
+        paddingTop: 14,
+        paddingBottom: 14,
       }}
     >
       <View
@@ -200,15 +230,15 @@ export function TasksMonthCalendar({
         </View>
       </View>
 
-      <View style={{ flexDirection: 'row', width: '100%', marginBottom: 4, minHeight: 16 }}>
+      <View style={{ flexDirection: 'row', width: '100%', marginBottom: 6, minHeight: 16 }}>
         {weekdayLabels.map((label, index) => (
           <View key={`${label}-${index}`} style={{ flex: 1, alignItems: 'center' }}>
             <Text
               style={{
-                color: color.text.secondary,
+                color: color.text.muted,
                 fontSize: 11,
-                fontWeight: '600',
-                letterSpacing: 0.4,
+                fontWeight: '500',
+                letterSpacing: 0.3,
               }}
             >
               {label}
@@ -273,6 +303,8 @@ export function TasksMonthCalendar({
                         alignItems: 'center',
                         justifyContent: 'center',
                         backgroundColor: dayVisual.backgroundColor,
+                        borderWidth: dayVisual.borderWidth,
+                        borderColor: dayVisual.borderColor,
                       }}
                     >
                       <Text
@@ -292,7 +324,7 @@ export function TasksMonthCalendar({
                       pointerEvents="none"
                       style={{
                         position: 'absolute',
-                        bottom: DOT_BOTTOM_INSET - 1,
+                        bottom: DOT_BOTTOM_INSET,
                         left: '50%',
                         width: DOT_SIZE,
                         height: DOT_SIZE,
@@ -307,6 +339,90 @@ export function TasksMonthCalendar({
             })}
           </View>
         ))}
+      </View>
+
+      <View
+        style={{
+          marginTop: 12,
+          paddingTop: 12,
+          borderTopWidth: 1,
+          borderTopColor: color.border.default,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View
+            style={{
+              width: FOOTER_ICON_SIZE,
+              height: FOOTER_ICON_SIZE,
+              borderRadius: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: color.background.tertiary,
+            }}
+          >
+            <CalendarDays size={20} color={color.accent.primary} strokeWidth={2.2} />
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text
+              style={{
+                color: color.text.primary,
+                fontSize: 16,
+                fontWeight: '600',
+              }}
+              numberOfLines={1}
+            >
+              {selectedDateTitle}
+            </Text>
+            <Text
+              style={{
+                color: color.text.secondary,
+                fontSize: 13,
+                marginTop: 2,
+              }}
+              numberOfLines={1}
+            >
+              {selectedDateSubtitle}
+            </Text>
+          </View>
+        </View>
+        {hasAnyDayMarkers ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 12,
+              marginTop: 12,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: 2.5,
+                  backgroundColor: CALENDAR_TASK_MARKER_COLOR,
+                }}
+              />
+              <Text style={{ color: color.text.secondary, fontSize: 12 }}>
+                {t('allTasks.calendarLegendHasTasks')}
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: 2.5,
+                  backgroundColor: CALENDAR_OVERDUE_MARKER_COLOR,
+                }}
+              />
+              <Text style={{ color: color.text.secondary, fontSize: 12 }}>
+                {t('allTasks.calendarLegendOverdue')}
+              </Text>
+            </View>
+          </View>
+        ) : null}
       </View>
     </View>
   );
