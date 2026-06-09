@@ -33,8 +33,6 @@ export function AllTasksCalendarPanel({
         paddingTop: 8,
         paddingBottom: 4,
         backgroundColor: color.background.secondary,
-        borderBottomWidth: 1,
-        borderBottomColor: color.border.default,
       }}
     >
       <TasksMonthCalendar
