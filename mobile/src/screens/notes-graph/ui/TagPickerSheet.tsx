@@ -90,7 +90,13 @@ function TagPickerRow({ tag, selected, color, isLast, onPress }: TagPickerRowPro
           <Tag size={18} color={color.text.secondary} strokeWidth={2} />
         </View>
         <Text
-          style={{ color: color.text.primary, flex: 1, fontSize: 16, fontWeight: '600', lineHeight: 21 }}
+          style={{
+            color: color.text.primary,
+            flex: 1,
+            fontSize: 16,
+            fontWeight: '600',
+            lineHeight: 21,
+          }}
           numberOfLines={1}
         >
           {tag}
@@ -139,10 +145,7 @@ export function TagPickerSheet({
     [normalizedQuery, sortedTags],
   );
 
-  const selectedSet = useMemo(
-    () => new Set(draftTags.map(normalizeTag)),
-    [draftTags],
-  );
+  const selectedSet = useMemo(() => new Set(draftTags.map(normalizeTag)), [draftTags]);
 
   const handleClose = useCallback(() => {
     setQuery('');
@@ -154,9 +157,7 @@ export function TagPickerSheet({
     const normalized = normalizeTag(tag);
     setDraftTags((prev) => {
       const has = prev.some((item) => normalizeTag(item) === normalized);
-      return has
-        ? prev.filter((item) => normalizeTag(item) !== normalized)
-        : [...prev, tag];
+      return has ? prev.filter((item) => normalizeTag(item) !== normalized) : [...prev, tag];
     });
   }, []);
 

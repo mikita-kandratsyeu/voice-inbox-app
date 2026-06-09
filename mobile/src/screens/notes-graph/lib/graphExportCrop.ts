@@ -17,6 +17,21 @@ export type DisplayRect = {
 export const MIN_GRAPH_EXPORT_CROP_SIZE = 64;
 export const GRAPH_EXPORT_CROP_CAPTURE_MAX_DIMENSION = 2800;
 
+export type CropAspectTemplateId = 'full' | '1:1' | '4:5' | '16:9' | '9:16' | 'custom';
+
+export type CropAspectTemplate = {
+  id: Exclude<CropAspectTemplateId, 'custom'>;
+  ratio: [number, number] | null;
+};
+
+export const CROP_ASPECT_TEMPLATES: CropAspectTemplate[] = [
+  { id: 'full', ratio: null },
+  { id: '1:1', ratio: [1, 1] },
+  { id: '4:5', ratio: [4, 5] },
+  { id: '16:9', ratio: [16, 9] },
+  { id: '9:16', ratio: [9, 16] },
+];
+
 export type CropResizeHandle =
   | 'topLeft'
   | 'topRight'
@@ -73,10 +88,30 @@ export function imageCropToDisplayRect(
   layout: DisplayRect & { scale: number },
 ): DisplayRect {
   return {
-    x: layout.x + crop.x * layout.scale,
-    y: layout.y + crop.y * layout.scale,
-    width: crop.width * layout.scale,
-    height: crop.height * layout.scale,
+    x: Math.round(layout.x + crop.x * layout.scale),
+    y: Math.round(layout.y + crop.y * layout.scale),
+    width: Math.round(crop.width * layout.scale),
+    height: Math.round(crop.height * layout.scale),
+  };
+}
+
+/** Keep crop frame inside the fitted image — avoids a dark letterbox strip inside the frame. */
+export function clipDisplayCropToImageLayout(
+  displayCrop: DisplayRect,
+  layout: DisplayRect,
+): DisplayRect {
+  const imageRight = layout.x + layout.width;
+  const imageBottom = layout.y + layout.height;
+  const x1 = Math.max(displayCrop.x, layout.x);
+  const y1 = Math.max(displayCrop.y, layout.y);
+  const x2 = Math.min(displayCrop.x + displayCrop.width, imageRight);
+  const y2 = Math.min(displayCrop.y + displayCrop.height, imageBottom);
+
+  return {
+    x: x1,
+    y: y1,
+    width: Math.max(0, x2 - x1),
+    height: Math.max(0, y2 - y1),
   };
 }
 
@@ -177,6 +212,46 @@ export function computeCropCaptureLayout(
     offsetX: -crop.x * scale,
     offsetY: -crop.y * scale,
   };
+}
+
+export function computeCropForAspectTemplate(
+  templateId: Exclude<CropAspectTemplateId, 'custom'>,
+  imageSize: ImageSize,
+): ImageCropRect {
+  if (templateId === 'full') {
+    return fullImageCrop(imageSize.width, imageSize.height);
+  }
+
+  const template = CROP_ASPECT_TEMPLATES.find((item) => item.id === templateId);
+  if (!template?.ratio) {
+    return fullImageCrop(imageSize.width, imageSize.height);
+  }
+
+  const [aspectWidth, aspectHeight] = template.ratio;
+  const targetAspect = aspectWidth / aspectHeight;
+  const imageAspect = imageSize.width / imageSize.height;
+
+  let width: number;
+  let height: number;
+
+  if (targetAspect >= imageAspect) {
+    width = imageSize.width;
+    height = width / targetAspect;
+  } else {
+    height = imageSize.height;
+    width = height * targetAspect;
+  }
+
+  return clampImageCropRect(
+    {
+      x: (imageSize.width - width) / 2,
+      y: (imageSize.height - height) / 2,
+      width,
+      height,
+    },
+    imageSize.width,
+    imageSize.height,
+  );
 }
 
 export function formatImageCropSize(crop: ImageCropRect): string {

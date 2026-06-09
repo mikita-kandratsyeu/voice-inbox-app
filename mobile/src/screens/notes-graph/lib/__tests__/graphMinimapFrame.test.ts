@@ -1,5 +1,3 @@
-import { nodeBounds } from '../graphNodeMetrics';
-import type { GraphNode } from '../graphTypes';
 import {
   clipMinimapViewportRect,
   computeMinimapViewportRect,
@@ -9,6 +7,8 @@ import {
   minimapToWorldPoint,
   worldToMinimapPoint,
 } from '../graphMinimapFrame';
+import { nodeBounds } from '../graphNodeMetrics';
+import type { GraphNode } from '../graphTypes';
 
 function recordNode(id: string, x: number, y: number): GraphNode {
   return {
@@ -126,6 +126,8 @@ describe('computeMinimapViewportRect', () => {
     expect(world?.x).toBeCloseTo(180, 0);
     expect(world?.y).toBeCloseTo(200, 0);
     expect(minimapToWorldPoint(-1, 2, frame, canvas.width, canvas.height)).toBeNull();
-    expect(minimapToWorldPoint(2, canvas.height + 1, frame, canvas.width, canvas.height)).toBeNull();
+    expect(
+      minimapToWorldPoint(2, canvas.height + 1, frame, canvas.width, canvas.height),
+    ).toBeNull();
   });
 });

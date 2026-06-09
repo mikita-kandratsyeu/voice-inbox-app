@@ -18,7 +18,9 @@ export function prefetchNotesGraphScreenBody(): Promise<NotesGraphScreenBodyModu
   return prefetchPromise;
 }
 
-export function getPrefetchedNotesGraphScreenBody(): NotesGraphScreenBodyModule['NotesGraphScreenBody'] | null {
+export function getPrefetchedNotesGraphScreenBody():
+  | NotesGraphScreenBodyModule['NotesGraphScreenBody']
+  | null {
   return prefetchedModule?.NotesGraphScreenBody ?? null;
 }
 

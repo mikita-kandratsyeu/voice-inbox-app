@@ -66,11 +66,7 @@ export function computeWorldDimensionsForNodes(
   );
 }
 
-export function clampViewportScaleValue(
-  value: number,
-  minScale: number,
-  maxScale: number,
-): number {
+export function clampViewportScaleValue(value: number, minScale: number, maxScale: number): number {
   'worklet';
   return Math.min(maxScale, Math.max(minScale, value));
 }

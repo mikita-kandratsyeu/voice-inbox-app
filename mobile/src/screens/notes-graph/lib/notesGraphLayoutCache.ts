@@ -13,7 +13,10 @@ export const DEFAULT_NOTES_GRAPH_FILTERS: GraphFilters = {
 
 function buildRecordsRevision(records: VoiceRecord[]): string {
   if (records.length === 0) return '0';
-  return `${records.length}:${records.map((record) => record.id).sort().join(',')}`;
+  return `${records.length}:${records
+    .map((record) => record.id)
+    .sort()
+    .join(',')}`;
 }
 
 export function buildNotesGraphLayoutCacheKey(
@@ -139,13 +142,7 @@ export function warmNotesGraphLayoutWithFilters(
   windowWidth: number,
   windowHeight: number,
 ): void {
-  scheduleNotesGraphLayoutWarm(
-    records,
-    filters,
-    simplifyOverride,
-    windowWidth,
-    windowHeight,
-  );
+  scheduleNotesGraphLayoutWarm(records, filters, simplifyOverride, windowWidth, windowHeight);
 }
 
 export function warmNotesGraphLayoutImmediate(
@@ -181,7 +178,9 @@ export function warmNotesGraphLayoutDebounced(
   }, delayMs);
 }
 
-export async function awaitPendingNotesGraphLayout(key: string): Promise<NotesGraphLayoutResult | null> {
+export async function awaitPendingNotesGraphLayout(
+  key: string,
+): Promise<NotesGraphLayoutResult | null> {
   if (cachedEntry?.key === key) return cachedEntry.result;
   if (pendingBuild?.key === key) return pendingBuild.promise;
   return null;

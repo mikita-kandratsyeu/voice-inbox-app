@@ -13,10 +13,13 @@ import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComin
 import { useColors } from '@/shared/config';
 import { ScreenHeader } from '@/shared/ui';
 
-import { beginNotesGraphScreenWarm } from '../lib/warmNotesGraph';
 import { DEFAULT_EDGE_VISIBILITY, type GraphFilters } from '../lib/graphTypes';
-import { getPrefetchedNotesGraphScreenBody, prefetchNotesGraphScreenBody } from '../lib/prefetchNotesGraphScreenBody';
+import {
+  getPrefetchedNotesGraphScreenBody,
+  prefetchNotesGraphScreenBody,
+} from '../lib/prefetchNotesGraphScreenBody';
 import { unloadNotesGraphScreen } from '../lib/unloadNotesGraphScreen';
+import { beginNotesGraphScreenWarm } from '../lib/warmNotesGraph';
 import { GraphBuildingState } from './GraphBuildingState';
 
 type NotesGraphScreenBodyComponent = React.ComponentType;
@@ -30,8 +33,8 @@ export const NotesGraphScreen = () => {
   const records = useRecordStore((state) => state.records);
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const [proSheetVisible, setProSheetVisible] = useState(true);
-  const [Body, setBody] = useState<NotesGraphScreenBodyComponent | null>(
-    () => getPrefetchedNotesGraphScreenBody(),
+  const [Body, setBody] = useState<NotesGraphScreenBodyComponent | null>(() =>
+    getPrefetchedNotesGraphScreenBody(),
   );
 
   const initialFilters = useMemo<GraphFilters>(

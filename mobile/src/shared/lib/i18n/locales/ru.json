@@ -227,6 +227,12 @@
       "moveCropA11y": "Переместить область обрезки",
       "resizeCornerA11y": "Изменить размер с угла",
       "resizeEdgeA11y": "Изменить размер со стороны",
+      "cropTemplates": "Формат",
+      "cropTemplateFull": "Целиком",
+      "cropTemplateSquare": "1:1",
+      "cropTemplatePortrait": "4:5",
+      "cropTemplateLandscape": "16:9",
+      "cropTemplateStory": "9:16",
       "failed": "Не удалось экспортировать картинку карты. Попробуйте ещё раз."
     },
     "history": {

@@ -1,9 +1,9 @@
 import type { VoiceRecord } from '@/entities/record';
 
-import type { GraphNode } from '../graphTypes';
-import { recordNodeId } from '../graphTypes';
 import { graphNodeSearchText } from '../graphNodeSearchText';
 import { buildGraphSearchIndex, findGraphSearchMatchIds } from '../graphSearch';
+import type { GraphNode } from '../graphTypes';
+import { recordNodeId } from '../graphTypes';
 
 function makeRecord(id: string, title: string): VoiceRecord {
   return {

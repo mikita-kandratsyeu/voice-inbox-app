@@ -1,17 +1,7 @@
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { RotateCcw } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Pressable,
-  Share,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Image, Share, StyleSheet, Text, View } from 'react-native';
 import ViewShot, { type ViewShotRef } from 'react-native-view-shot';
 
 import { isUserCancelledShare } from '@/features/share-record/lib/isUserCancelledShare';
@@ -21,8 +11,11 @@ import { hapticLight, hapticSuccess } from '@/shared/lib/haptics';
 import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
 import {
+  clipDisplayCropToImageLayout,
   computeContainLayout,
   computeCropCaptureLayout,
+  computeCropForAspectTemplate,
+  type CropAspectTemplateId,
   fullImageCrop,
   type ImageCropRect,
   imageCropToDisplayRect,
@@ -30,6 +23,7 @@ import {
   isFullImageCrop,
 } from '../lib/graphExportCrop';
 import { GraphExportCropOverlay } from './GraphExportCropOverlay';
+import { GraphExportCropTemplates } from './GraphExportCropTemplates';
 
 const PREVIEW_HEIGHT = 380;
 
@@ -82,17 +76,20 @@ export function GraphExportPreviewSheet({
   const [crop, setCrop] = useState<ImageCropRect | null>(null);
   const [previewWidth, setPreviewWidth] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
+  const [cropTemplateId, setCropTemplateId] = useState<CropAspectTemplateId>('full');
 
   useEffect(() => {
     if (!visible || !imageUri) {
       setImageSize(null);
       setCrop(null);
+      setCropTemplateId('full');
       return;
     }
 
     if (imagePixelSize) {
       setImageSize(imagePixelSize);
       setCrop(fullImageCrop(imagePixelSize.width, imagePixelSize.height));
+      setCropTemplateId('full');
       return;
     }
 
@@ -104,6 +101,7 @@ export function GraphExportPreviewSheet({
         if (cancelled) return;
         setImageSize({ width, height });
         setCrop(fullImageCrop(width, height));
+        setCropTemplateId('full');
       },
       (error) => {
         diagWarn('[notesGraph.export] image size failed', error);
@@ -126,7 +124,8 @@ export function GraphExportPreviewSheet({
 
   const displayCrop = useMemo(() => {
     if (!crop || !containLayout) return null;
-    return imageCropToDisplayRect(crop, containLayout);
+    const mapped = imageCropToDisplayRect(crop, containLayout);
+    return clipDisplayCropToImageLayout(mapped, containLayout);
   }, [containLayout, crop]);
 
   const canResetCrop = Boolean(
@@ -136,10 +135,21 @@ export function GraphExportPreviewSheet({
   const handleResetCrop = useCallback(() => {
     if (!imageSize || !canResetCrop) return;
     hapticLight();
+    setCropTemplateId('full');
     setCrop(fullImageCrop(imageSize.width, imageSize.height));
   }, [canResetCrop, imageSize]);
 
+  const handleApplyCropTemplate = useCallback(
+    (templateId: Exclude<CropAspectTemplateId, 'custom'>) => {
+      if (!imageSize) return;
+      setCropTemplateId(templateId);
+      setCrop(computeCropForAspectTemplate(templateId, imageSize));
+    },
+    [imageSize],
+  );
+
   const handleCropChange = useCallback((next: ImageCropRect) => {
+    setCropTemplateId('custom');
     setCrop(next);
   }, []);
 
@@ -237,26 +247,26 @@ export function GraphExportPreviewSheet({
             overflow: 'hidden',
           }}
         >
-          {imageUri ? (
+          {imageUri && containLayout ? (
             <Image
               source={{ uri: imageUri }}
-              resizeMode="contain"
               style={{
-                height: PREVIEW_HEIGHT,
-                width: '100%',
+                height: containLayout.height,
+                left: containLayout.x,
+                position: 'absolute',
+                top: containLayout.y,
+                width: containLayout.width,
               }}
             />
           ) : null}
 
           {displayCrop && crop && imageSize && containLayout && !isPreviewBusy ? (
             <GraphExportCropOverlay
-              color={color}
               crop={crop}
               displayCrop={displayCrop}
+              imageLayout={containLayout}
               imageSize={imageSize}
               layoutScale={containLayout.scale}
-              previewHeight={PREVIEW_HEIGHT}
-              previewWidth={previewWidth}
               onCropChange={handleCropChange}
             />
           ) : null}
@@ -264,41 +274,15 @@ export function GraphExportPreviewSheet({
           {isPreviewBusy ? <ExportSheetLoadingOverlay color={color} label={loadingLabel} /> : null}
         </View>
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !canResetCrop || isPreviewBusy }}
-          disabled={!canResetCrop || isPreviewBusy}
-          onPress={handleResetCrop}
-          style={{
-            alignItems: 'center',
-            alignSelf: 'center',
-            backgroundColor: canResetCrop ? color.background.card : color.background.tertiary,
-            borderColor: color.border.default,
-            borderRadius: 999,
-            borderWidth: 1,
-            flexDirection: 'row',
-            gap: 6,
-            marginBottom: 16,
-            opacity: canResetCrop ? 1 : 0.45,
-            paddingHorizontal: 14,
-            paddingVertical: 8,
-          }}
-        >
-          <RotateCcw
-            color={canResetCrop ? color.accent.primary : color.text.muted}
-            size={15}
-            strokeWidth={2.2}
+        {imageSize && !isPreviewBusy ? (
+          <GraphExportCropTemplates
+            activeTemplateId={cropTemplateId}
+            canReset={canResetCrop}
+            color={color}
+            onReset={handleResetCrop}
+            onSelect={handleApplyCropTemplate}
           />
-          <Text
-            style={{
-              color: canResetCrop ? color.accent.primary : color.text.muted,
-              fontSize: 14,
-              fontWeight: '600',
-            }}
-          >
-            {t('notesGraph.export.resetCrop')}
-          </Text>
-        </Pressable>
+        ) : null}
 
         <SheetFooterButtons
           color={color}

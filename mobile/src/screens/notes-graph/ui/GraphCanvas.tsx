@@ -24,6 +24,7 @@ import type { ViewShotRef } from 'react-native-view-shot';
 import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
 
+import { computeGraphExportLayout } from '../lib/computeGraphExportLayout';
 import {
   computeMapDoubleTapTransform,
   computeMapPanTransform,
@@ -32,7 +33,6 @@ import {
 import { GRAPH_DRAG_RECONCILE_MIN_MS } from '../lib/graphDragReconcile';
 import { getSessionNodePositions, setSessionNodePosition } from '../lib/graphSessionLayout';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
-import { computeGraphExportLayout } from '../lib/computeGraphExportLayout';
 import {
   clampViewportScaleValue,
   clampViewportTransform,

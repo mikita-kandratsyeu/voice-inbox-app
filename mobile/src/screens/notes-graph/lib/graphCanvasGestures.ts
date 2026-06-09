@@ -16,13 +16,9 @@ export function computeMapPinchTransform(
   return {
     scale: nextScale,
     translateX:
-      savedTranslateX +
-      (focalX - savedFocalX) -
-      (savedFocalX - savedTranslateX) * (scaleRatio - 1),
+      savedTranslateX + (focalX - savedFocalX) - (savedFocalX - savedTranslateX) * (scaleRatio - 1),
     translateY:
-      savedTranslateY +
-      (focalY - savedFocalY) -
-      (savedFocalY - savedTranslateY) * (scaleRatio - 1),
+      savedTranslateY + (focalY - savedFocalY) - (savedFocalY - savedTranslateY) * (scaleRatio - 1),
   };
 }
 

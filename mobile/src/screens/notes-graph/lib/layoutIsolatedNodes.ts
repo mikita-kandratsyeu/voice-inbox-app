@@ -9,9 +9,7 @@ const ISOLATED_EDGE_PADDING = 80;
 
 function isRecordWithoutNoteLinks(nodeId: string, edges: GraphEdge[]): boolean {
   return !edges.some(
-    (edge) =>
-      edge.kind !== 'contains' &&
-      (edge.sourceId === nodeId || edge.targetId === nodeId),
+    (edge) => edge.kind !== 'contains' && (edge.sourceId === nodeId || edge.targetId === nodeId),
   );
 }
 
@@ -49,9 +47,7 @@ export function layoutIsolatedRecordNodes(
   const sectionStartX = ISOLATED_EDGE_PADDING;
   const columnStride = RECORD_NODE_WIDTH + ISOLATED_COLUMN_GAP;
   const columns =
-    layoutWidth != null
-      ? computeIsolatedGridColumns(isolated.length, layoutWidth)
-      : 1;
+    layoutWidth != null ? computeIsolatedGridColumns(isolated.length, layoutWidth) : 1;
 
   return nodes.map((node) => {
     if (!isolatedIds.has(node.id)) return node;

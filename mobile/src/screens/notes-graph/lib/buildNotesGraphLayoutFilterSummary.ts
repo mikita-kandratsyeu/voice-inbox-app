@@ -1,9 +1,9 @@
 import type { TFunction } from 'i18next';
 
+import { shouldAutoSimplifyGraph } from './graphSimplifyMode';
 import type { GraphEdgeVisibility, GraphFilters } from './graphTypes';
 import type { ParsedNotesGraphPersistKey } from './parseNotesGraphPersistKey';
 import { parsedPersistKeyToGraphFilters } from './parseNotesGraphPersistKey';
-import { shouldAutoSimplifyGraph } from './graphSimplifyMode';
 
 export type NotesGraphLayoutFilterRow = {
   id: string;
@@ -20,10 +20,7 @@ type BuildNotesGraphLayoutFilterSummaryParams = {
   t: TFunction;
 };
 
-function formatEdgeVisibility(
-  edgeVisibility: GraphEdgeVisibility,
-  t: TFunction,
-): string {
+function formatEdgeVisibility(edgeVisibility: GraphEdgeVisibility, t: TFunction): string {
   const enabled: string[] = [];
   if (edgeVisibility.similar) enabled.push(t('notesGraph.filters.similar'));
   if (edgeVisibility.sharedTag) enabled.push(t('notesGraph.filters.tags'));
@@ -69,7 +66,10 @@ export function buildNotesGraphLayoutFilterSummary({
     label: t('notesGraph.history.filters.tags'),
     value:
       filters.tags.length > 0
-        ? filters.tags.slice().sort((a, b) => a.localeCompare(b)).join(', ')
+        ? filters.tags
+            .slice()
+            .sort((a, b) => a.localeCompare(b))
+            .join(', ')
         : t('notesGraph.history.filters.tagsNone'),
   });
 
@@ -100,8 +100,7 @@ export function buildNotesGraphLayoutFilterSummaryFromParsed(
   foldersEnabled: boolean,
   t: TFunction,
 ): NotesGraphLayoutFilterRow[] {
-  const simplifyActive =
-    parsed.simplifyOverride ?? shouldAutoSimplifyGraph(parsed.filteredCount);
+  const simplifyActive = parsed.simplifyOverride ?? shouldAutoSimplifyGraph(parsed.filteredCount);
   const simplifyIsAuto =
     parsed.simplifyOverride === null && shouldAutoSimplifyGraph(parsed.filteredCount);
 

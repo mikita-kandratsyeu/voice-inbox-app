@@ -314,10 +314,8 @@ function computeClusterGridColumns(
   if (clusterCount <= 1) return 1;
 
   const avgClusterWidth =
-    entries.reduce(
-      (sum, entry) => sum + Math.max(entry.bounds.width, AVG_NODE_SPAN * 0.75),
-      0,
-    ) / clusterCount;
+    entries.reduce((sum, entry) => sum + Math.max(entry.bounds.width, AVG_NODE_SPAN * 0.75), 0) /
+    clusterCount;
   const widthBasedCols = Math.floor(
     (layoutWidth + CLUSTER_GRID_GAP) / (avgClusterWidth + CLUSTER_GRID_GAP),
   );
@@ -390,11 +388,7 @@ export function layoutNodesByClusters(
     };
   });
 
-  const mergedPositions = placeClustersOnViewportGrid(
-    clusterLayouts,
-    layoutWidth,
-    layoutHeight,
-  );
+  const mergedPositions = placeClustersOnViewportGrid(clusterLayouts, layoutWidth, layoutHeight);
 
   return nodes.map((node) => {
     const position = mergedPositions.get(node.id) ?? { x: 0, y: 0 };

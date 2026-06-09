@@ -5,7 +5,10 @@ import type { GraphFilters } from './graphTypes';
 
 function buildRecordsRevision(records: VoiceRecord[]): string {
   if (records.length === 0) return '0';
-  return `${records.length}:${records.map((record) => record.id).sort().join(',')}`;
+  return `${records.length}:${records
+    .map((record) => record.id)
+    .sort()
+    .join(',')}`;
 }
 
 /** Stable DB key for saved layouts (filters + library revision, no viewport). */

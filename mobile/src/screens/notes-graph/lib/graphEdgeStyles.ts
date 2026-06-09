@@ -18,8 +18,7 @@ export function resolveGraphEdgeEmphasis(
   activeNodeId: string | null,
 ): GraphEdgeEmphasis {
   const touchesActive =
-    activeNodeId != null &&
-    (edge.sourceId === activeNodeId || edge.targetId === activeNodeId);
+    activeNodeId != null && (edge.sourceId === activeNodeId || edge.targetId === activeNodeId);
 
   if (touchesActive) return 'highlighted';
 
@@ -33,10 +32,7 @@ export function resolveGraphEdgeEmphasis(
   return 'default';
 }
 
-export function getLegendEdgeStrokeStyle(
-  kind: GraphEdgeKind,
-  color: Colors,
-): GraphEdgeStrokeStyle {
+export function getLegendEdgeStrokeStyle(kind: GraphEdgeKind, color: Colors): GraphEdgeStrokeStyle {
   switch (kind) {
     case 'similar':
       return {

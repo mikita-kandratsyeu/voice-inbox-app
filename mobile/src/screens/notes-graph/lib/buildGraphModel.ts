@@ -7,9 +7,9 @@ import {
   shouldPrefilterSimilarityPair,
 } from '@/features/related-notes/lib/computeRecordSimilarity';
 
+import { graphNodeSearchText } from './graphNodeSearchText';
 import type { GraphEdge, GraphFilters, GraphModel, GraphNode } from './graphTypes';
 import { recordNodeId, taskNodeId } from './graphTypes';
-import { graphNodeSearchText } from './graphNodeSearchText';
 
 const MAX_SIMILAR_EDGES_PER_RECORD = 3;
 const MAX_TAG_EDGES_PER_RECORD = 5;
@@ -34,7 +34,10 @@ function filterRecords(records: VoiceRecord[], filters: GraphFilters): VoiceReco
   return result;
 }
 
-export function countFilteredGraphRecords(allRecords: VoiceRecord[], filters: GraphFilters): number {
+export function countFilteredGraphRecords(
+  allRecords: VoiceRecord[],
+  filters: GraphFilters,
+): number {
   return filterRecords(allRecords, filters).length;
 }
 

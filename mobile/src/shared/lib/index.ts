@@ -21,7 +21,13 @@ export { formatDurationMmSs, formatTime, formatTimeWithMs } from './date';
 export type { Database } from './db/client';
 export { getDB, initDB, isDbReady, waitForDb } from './db/client';
 export type { FolderInsert, FolderRow, RecordInsert, RecordRow } from './db/schema';
-export { cloudAiPendingTable, foldersTable, notesGraphLayoutVersionTable, recordAskAiTable, recordsTable } from './db/schema';
+export {
+  cloudAiPendingTable,
+  foldersTable,
+  notesGraphLayoutVersionTable,
+  recordAskAiTable,
+  recordsTable,
+} from './db/schema';
 export {
   checkEmbeddingAvailability,
   cosineSimilarity,

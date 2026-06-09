@@ -11,8 +11,8 @@ import {
 import {
   getGraphEdgeGlowStyle,
   getGraphEdgeStrokeStyle,
-  resolveGraphEdgeEmphasis,
   type GraphEdgeEmphasis,
+  resolveGraphEdgeEmphasis,
 } from '../lib/graphEdgeStyles';
 import { nodeBorderAnchor, nodeCenter } from '../lib/graphNodeMetrics';
 import type { GraphEdge, GraphEdgeKind, GraphNode } from '../lib/graphTypes';
@@ -80,7 +80,8 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
     }
 
     items.sort((a, b) => {
-      const emphasisDelta = EDGE_EMPHASIS_DRAW_ORDER[a.emphasis] - EDGE_EMPHASIS_DRAW_ORDER[b.emphasis];
+      const emphasisDelta =
+        EDGE_EMPHASIS_DRAW_ORDER[a.emphasis] - EDGE_EMPHASIS_DRAW_ORDER[b.emphasis];
       if (emphasisDelta !== 0) return emphasisDelta;
 
       const kindDelta = EDGE_KIND_DRAW_ORDER[a.edge.kind] - EDGE_KIND_DRAW_ORDER[b.edge.kind];
@@ -99,8 +100,7 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
     >
       {renderedEdges.map(({ edge, path, emphasis }) => {
         const style = getGraphEdgeStrokeStyle(edge.kind, color, emphasis);
-        const glow =
-          emphasis === 'highlighted' ? getGraphEdgeGlowStyle(edge.kind, color) : null;
+        const glow = emphasis === 'highlighted' ? getGraphEdgeGlowStyle(edge.kind, color) : null;
 
         return (
           <React.Fragment key={edge.id}>

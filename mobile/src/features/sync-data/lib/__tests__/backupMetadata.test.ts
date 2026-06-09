@@ -75,7 +75,6 @@ describe('backup metadata import', () => {
     expect(record.status).toBe('read');
   });
 
-
   it('parses v4 payload with graph layout history', () => {
     const payload = {
       version: 4,

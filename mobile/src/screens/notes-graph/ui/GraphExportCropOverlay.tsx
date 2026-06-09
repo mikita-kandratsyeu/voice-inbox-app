@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
-import type { Colors } from '@/shared/config';
 import { hapticLight } from '@/shared/lib/haptics';
 
 import {
@@ -18,13 +17,17 @@ import {
 } from '../lib/graphExportCrop';
 
 const OVERLAY_COLOR = 'rgba(0,0,0,0.58)';
-const GRID_LINE_COLOR = 'rgba(255,255,255,0.28)';
-const CORNER_ARM = 20;
-const CORNER_THICKNESS = 3;
-const CORNER_HANDLE_SIZE = 26;
-const EDGE_HANDLE_LENGTH = 36;
-const EDGE_HANDLE_THICKNESS = 7;
-const MOVE_INSET = 28;
+const GRID_LINE_COLOR = 'rgba(255,255,255,0.22)';
+const FRAME_BORDER_COLOR = 'rgba(255,255,255,0.9)';
+const HANDLE_STROKE = '#FFFFFF';
+const CORNER_ARM = 18;
+const CORNER_THICKNESS = 2;
+const CORNER_HIT = 32;
+const EDGE_HIT_LONG = 40;
+const EDGE_HIT_SHORT = 20;
+const EDGE_BAR_LONG = 22;
+const EDGE_BAR_SHORT = 3;
+const MOVE_INSET = 24;
 
 const RESIZE_HANDLES: CropResizeHandle[] = [
   'topLeft',
@@ -38,22 +41,18 @@ const RESIZE_HANDLES: CropResizeHandle[] = [
 ];
 
 type GraphExportCropOverlayProps = {
-  color: Colors;
   crop: ImageCropRect;
   displayCrop: DisplayRect;
+  imageLayout: DisplayRect;
   imageSize: ImageSize;
   layoutScale: number;
-  previewHeight: number;
-  previewWidth: number;
   onCropChange: (next: ImageCropRect) => void;
 };
 
 function CropCornerBracket({
   corner,
-  strokeColor,
 }: {
   corner: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight';
-  strokeColor: string;
 }) {
   const horizontalStyle =
     corner === 'topLeft' || corner === 'bottomLeft' ? { left: 0 } : { right: 0 };
@@ -65,7 +64,7 @@ function CropCornerBracket({
         pointerEvents="none"
         style={[
           {
-            backgroundColor: strokeColor,
+            backgroundColor: HANDLE_STROKE,
             height: CORNER_THICKNESS,
             position: 'absolute',
             width: CORNER_ARM,
@@ -78,7 +77,7 @@ function CropCornerBracket({
         pointerEvents="none"
         style={[
           {
-            backgroundColor: strokeColor,
+            backgroundColor: HANDLE_STROKE,
             height: CORNER_ARM,
             position: 'absolute',
             width: CORNER_THICKNESS,
@@ -124,121 +123,124 @@ function CropGrid() {
   );
 }
 
-function CropHandleDot({ accentColor }: { accentColor: string }) {
+function CropEdgeBar({ vertical = false }: { vertical?: boolean }) {
   return (
     <View
+      pointerEvents="none"
       style={{
-        backgroundColor: '#FFFFFF',
-        borderColor: accentColor,
-        borderRadius: CORNER_HANDLE_SIZE / 2,
-        borderWidth: 2,
-        height: CORNER_HANDLE_SIZE,
+        backgroundColor: 'rgba(255,255,255,0.95)',
+        borderRadius: 999,
+        height: vertical ? EDGE_BAR_LONG : EDGE_BAR_SHORT,
         shadowColor: '#000000',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.28,
-        shadowRadius: 2,
-        width: CORNER_HANDLE_SIZE,
+        shadowOpacity: 0.18,
+        shadowRadius: 1.5,
+        width: vertical ? EDGE_BAR_SHORT : EDGE_BAR_LONG,
       }}
     />
   );
 }
 
-function CropEdgeHandle({
-  accentColor,
-  vertical = false,
-}: {
-  accentColor: string;
-  vertical?: boolean;
-}) {
-  return (
-    <View
-      style={{
-        backgroundColor: '#FFFFFF',
-        borderColor: accentColor,
-        borderRadius: EDGE_HANDLE_THICKNESS / 2,
-        borderWidth: 1.5,
-        height: vertical ? EDGE_HANDLE_LENGTH : EDGE_HANDLE_THICKNESS,
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.22,
-        shadowRadius: 2,
-        width: vertical ? EDGE_HANDLE_THICKNESS : EDGE_HANDLE_LENGTH,
-      }}
-    />
-  );
+function getCornerHandleAlignment(handle: CropResizeHandle) {
+  switch (handle) {
+    case 'topLeft':
+      return { alignItems: 'flex-end' as const, justifyContent: 'flex-end' as const };
+    case 'topRight':
+      return { alignItems: 'flex-start' as const, justifyContent: 'flex-end' as const };
+    case 'bottomLeft':
+      return { alignItems: 'flex-end' as const, justifyContent: 'flex-start' as const };
+    case 'bottomRight':
+      return { alignItems: 'flex-start' as const, justifyContent: 'flex-start' as const };
+    default:
+      return { alignItems: 'center' as const, justifyContent: 'center' as const };
+  }
 }
 
 function getHandleStyle(handle: CropResizeHandle) {
   switch (handle) {
     case 'topLeft':
       return {
-        left: -CORNER_HANDLE_SIZE / 2,
+        height: CORNER_HIT,
+        left: -CORNER_HIT / 2,
         position: 'absolute' as const,
-        top: -CORNER_HANDLE_SIZE / 2,
+        top: -CORNER_HIT / 2,
+        width: CORNER_HIT,
       };
     case 'topRight':
       return {
+        height: CORNER_HIT,
         position: 'absolute' as const,
-        right: -CORNER_HANDLE_SIZE / 2,
-        top: -CORNER_HANDLE_SIZE / 2,
+        right: -CORNER_HIT / 2,
+        top: -CORNER_HIT / 2,
+        width: CORNER_HIT,
       };
     case 'bottomLeft':
       return {
-        bottom: -CORNER_HANDLE_SIZE / 2,
-        left: -CORNER_HANDLE_SIZE / 2,
+        bottom: -CORNER_HIT / 2,
+        height: CORNER_HIT,
+        left: -CORNER_HIT / 2,
         position: 'absolute' as const,
+        width: CORNER_HIT,
       };
     case 'bottomRight':
       return {
-        bottom: -CORNER_HANDLE_SIZE / 2,
+        bottom: -CORNER_HIT / 2,
+        height: CORNER_HIT,
         position: 'absolute' as const,
-        right: -CORNER_HANDLE_SIZE / 2,
+        right: -CORNER_HIT / 2,
+        width: CORNER_HIT,
       };
     case 'top':
       return {
         alignItems: 'center' as const,
-        left: 0,
+        height: EDGE_HIT_SHORT,
+        justifyContent: 'center' as const,
+        left: '50%' as const,
+        marginLeft: -EDGE_HIT_LONG / 2,
         position: 'absolute' as const,
-        right: 0,
-        top: -EDGE_HANDLE_THICKNESS / 2,
+        top: -EDGE_HIT_SHORT / 2,
+        width: EDGE_HIT_LONG,
       };
     case 'bottom':
       return {
         alignItems: 'center' as const,
-        bottom: -EDGE_HANDLE_THICKNESS / 2,
-        left: 0,
+        bottom: -EDGE_HIT_SHORT / 2,
+        height: EDGE_HIT_SHORT,
+        justifyContent: 'center' as const,
+        left: '50%' as const,
+        marginLeft: -EDGE_HIT_LONG / 2,
         position: 'absolute' as const,
-        right: 0,
+        width: EDGE_HIT_LONG,
       };
     case 'left':
       return {
-        bottom: 0,
+        height: EDGE_HIT_LONG,
         justifyContent: 'center' as const,
-        left: -EDGE_HANDLE_THICKNESS / 2,
+        left: -EDGE_HIT_SHORT / 2,
+        marginTop: -EDGE_HIT_LONG / 2,
         position: 'absolute' as const,
-        top: 0,
-        width: EDGE_HANDLE_THICKNESS,
+        top: '50%' as const,
+        width: EDGE_HIT_SHORT,
       };
     case 'right':
       return {
-        bottom: 0,
+        height: EDGE_HIT_LONG,
         justifyContent: 'center' as const,
+        marginTop: -EDGE_HIT_LONG / 2,
         position: 'absolute' as const,
-        right: -EDGE_HANDLE_THICKNESS / 2,
-        top: 0,
-        width: EDGE_HANDLE_THICKNESS,
+        right: -EDGE_HIT_SHORT / 2,
+        top: '50%' as const,
+        width: EDGE_HIT_SHORT,
       };
   }
 }
 
 export function GraphExportCropOverlay({
-  color,
   crop,
   displayCrop,
+  imageLayout,
   imageSize,
   layoutScale,
-  previewHeight,
-  previewWidth,
   onCropChange,
 }: GraphExportCropOverlayProps) {
   const { t } = useTranslation();
@@ -303,39 +305,33 @@ export function GraphExportCropOverlay({
     ) as Record<CropResizeHandle, ReturnType<typeof Gesture.Pan>>;
   }, [crop, imageSize.height, imageSize.width, layoutScale, onCropChange]);
 
+  const imageRight = imageLayout.x + imageLayout.width;
+  const imageBottom = imageLayout.y + imageLayout.height;
+  const cropRight = displayCrop.x + displayCrop.width;
+  const cropBottom = displayCrop.y + displayCrop.height;
+
   return (
     <>
       <View
         pointerEvents="none"
         style={{
           backgroundColor: OVERLAY_COLOR,
-          height: displayCrop.y,
-          left: 0,
+          height: Math.max(0, displayCrop.y - imageLayout.y),
+          left: imageLayout.x,
           position: 'absolute',
-          right: 0,
-          top: 0,
+          top: imageLayout.y,
+          width: imageLayout.width,
         }}
       />
       <View
         pointerEvents="none"
         style={{
           backgroundColor: OVERLAY_COLOR,
-          bottom: 0,
-          height: Math.max(0, previewHeight - displayCrop.y - displayCrop.height),
-          left: 0,
+          height: Math.max(0, imageBottom - cropBottom),
+          left: imageLayout.x,
           position: 'absolute',
-          right: 0,
-        }}
-      />
-      <View
-        pointerEvents="none"
-        style={{
-          backgroundColor: OVERLAY_COLOR,
-          height: displayCrop.height,
-          left: 0,
-          position: 'absolute',
-          top: displayCrop.y,
-          width: displayCrop.x,
+          top: cropBottom,
+          width: imageLayout.width,
         }}
       />
       <View
@@ -343,15 +339,28 @@ export function GraphExportCropOverlay({
         style={{
           backgroundColor: OVERLAY_COLOR,
           height: displayCrop.height,
+          left: imageLayout.x,
           position: 'absolute',
-          right: 0,
           top: displayCrop.y,
-          width: Math.max(0, previewWidth - displayCrop.x - displayCrop.width),
+          width: Math.max(0, displayCrop.x - imageLayout.x),
+        }}
+      />
+      <View
+        pointerEvents="none"
+        style={{
+          backgroundColor: OVERLAY_COLOR,
+          height: displayCrop.height,
+          left: cropRight,
+          position: 'absolute',
+          top: displayCrop.y,
+          width: Math.max(0, imageRight - cropRight),
         }}
       />
 
       <View
         style={{
+          borderColor: FRAME_BORDER_COLOR,
+          borderWidth: StyleSheet.hairlineWidth,
           height: displayCrop.height,
           left: displayCrop.x,
           position: 'absolute',
@@ -361,22 +370,24 @@ export function GraphExportCropOverlay({
       >
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
           <CropGrid />
-          <CropCornerBracket corner="topLeft" strokeColor="#FFFFFF" />
-          <CropCornerBracket corner="topRight" strokeColor="#FFFFFF" />
-          <CropCornerBracket corner="bottomLeft" strokeColor="#FFFFFF" />
-          <CropCornerBracket corner="bottomRight" strokeColor="#FFFFFF" />
+          <CropCornerBracket corner="topLeft" />
+          <CropCornerBracket corner="topRight" />
+          <CropCornerBracket corner="bottomLeft" />
+          <CropCornerBracket corner="bottomRight" />
           <View
             style={{
               alignSelf: 'center',
-              backgroundColor: 'rgba(0,0,0,0.62)',
-              borderRadius: 8,
-              bottom: 10,
-              paddingHorizontal: 10,
-              paddingVertical: 5,
+              backgroundColor: 'rgba(0,0,0,0.55)',
+              borderRadius: 6,
+              bottom: 8,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
               position: 'absolute',
             }}
           >
-            <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '600', letterSpacing: 0.2 }}>
+            <Text
+              style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '600', letterSpacing: 0.15 }}
+            >
               {formatImageCropSize(crop)}
             </Text>
           </View>
@@ -397,7 +408,11 @@ export function GraphExportCropOverlay({
         </GestureDetector>
 
         {RESIZE_HANDLES.map((handle) => {
-          const isCorner = handle === 'topLeft' || handle === 'topRight' || handle === 'bottomLeft' || handle === 'bottomRight';
+          const isCorner =
+            handle === 'topLeft' ||
+            handle === 'topRight' ||
+            handle === 'bottomLeft' ||
+            handle === 'bottomRight';
           const isVerticalEdge = handle === 'left' || handle === 'right';
 
           return (
@@ -409,13 +424,9 @@ export function GraphExportCropOverlay({
                     : t('notesGraph.export.resizeEdgeA11y')
                 }
                 accessibilityRole="adjustable"
-                style={getHandleStyle(handle)}
+                style={[getHandleStyle(handle), getCornerHandleAlignment(handle)]}
               >
-                {isCorner ? (
-                  <CropHandleDot accentColor={color.accent.primary} />
-                ) : (
-                  <CropEdgeHandle accentColor={color.accent.primary} vertical={isVerticalEdge} />
-                )}
+                {isCorner ? null : <CropEdgeBar vertical={isVerticalEdge} />}
               </View>
             </GestureDetector>
           );

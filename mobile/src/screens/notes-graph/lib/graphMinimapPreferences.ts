@@ -17,7 +17,10 @@ export type GraphMinimapSize = {
 export function clampGraphMinimapSize(width: number, height: number): GraphMinimapSize {
   return {
     width: Math.min(GRAPH_MINIMAP_MAX_WIDTH, Math.max(GRAPH_MINIMAP_MIN_WIDTH, Math.round(width))),
-    height: Math.min(GRAPH_MINIMAP_MAX_HEIGHT, Math.max(GRAPH_MINIMAP_MIN_HEIGHT, Math.round(height))),
+    height: Math.min(
+      GRAPH_MINIMAP_MAX_HEIGHT,
+      Math.max(GRAPH_MINIMAP_MIN_HEIGHT, Math.round(height)),
+    ),
   };
 }
 

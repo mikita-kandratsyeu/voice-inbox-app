@@ -222,6 +222,12 @@
       "moveCropA11y": "Move crop area",
       "resizeCornerA11y": "Resize crop from corner",
       "resizeEdgeA11y": "Resize crop from edge",
+      "cropTemplates": "Crop ratio",
+      "cropTemplateFull": "Full",
+      "cropTemplateSquare": "1:1",
+      "cropTemplatePortrait": "4:5",
+      "cropTemplateLandscape": "16:9",
+      "cropTemplateStory": "9:16",
       "failed": "Could not export the map image. Try again."
     },
     "history": {

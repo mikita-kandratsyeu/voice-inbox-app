@@ -45,7 +45,9 @@ export function SystemInlineDatePicker({
 
   return (
     <View
-      className={embedded ? 'items-center overflow-hidden' : 'items-center overflow-hidden rounded-2xl'}
+      className={
+        embedded ? 'items-center overflow-hidden' : 'items-center overflow-hidden rounded-2xl'
+      }
       accessibilityLabel={accessibilityLabel}
       style={{
         alignSelf: 'center',

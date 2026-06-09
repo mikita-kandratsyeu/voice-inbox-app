@@ -18,11 +18,7 @@ describe('computeGraphExportLayout', () => {
   });
 
   it('fits wide content into export bitmap with max dimension on width', () => {
-    const nodes = [
-      recordNode('a', 40, 60),
-      recordNode('b', 1800, 120),
-      recordNode('c', 900, 500),
-    ];
+    const nodes = [recordNode('a', 40, 60), recordNode('b', 1800, 120), recordNode('c', 900, 500)];
 
     const layout = computeGraphExportLayout(nodes, 2000, 1200);
     expect(layout).not.toBeNull();

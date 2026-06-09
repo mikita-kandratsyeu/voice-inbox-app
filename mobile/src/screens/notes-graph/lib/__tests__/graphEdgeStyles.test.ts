@@ -1,5 +1,5 @@
-import type { GraphEdge } from '../graphTypes';
 import { resolveGraphEdgeEmphasis } from '../graphEdgeStyles';
+import type { GraphEdge } from '../graphTypes';
 
 const edge: GraphEdge = {
   id: 'similar:a|b',

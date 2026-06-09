@@ -17,12 +17,6 @@ export function beginNotesGraphScreenWarm(
   if (records.length === 0) return;
 
   setTimeout(() => {
-    warmNotesGraphLayoutWithFilters(
-      records,
-      filters,
-      simplifyOverride,
-      windowWidth,
-      windowHeight,
-    );
+    warmNotesGraphLayoutWithFilters(records, filters, simplifyOverride, windowWidth, windowHeight);
   }, 0);
 }

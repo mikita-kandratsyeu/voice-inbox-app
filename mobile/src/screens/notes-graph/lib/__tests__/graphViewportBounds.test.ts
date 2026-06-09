@@ -47,7 +47,9 @@ describe('computeWorldDimensionsForNodes', () => {
     const nodes = [recordNode('main', 100, 100), recordNode('shelf', 2100, 120)];
     const world = computeWorldDimensionsForNodes(nodes, 1800, 900, 390, 700, 0.3);
 
-    expect(world.width).toBeGreaterThanOrEqual(2100 + RECORD_NODE_WIDTH + GRAPH_WORLD_CONTENT_PADDING);
+    expect(world.width).toBeGreaterThanOrEqual(
+      2100 + RECORD_NODE_WIDTH + GRAPH_WORLD_CONTENT_PADDING,
+    );
     expect(world.width).toBeGreaterThan(1800);
   });
 });

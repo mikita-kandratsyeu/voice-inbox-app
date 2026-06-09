@@ -98,13 +98,7 @@ export function runForceLayout(
     viewportHeight,
   );
 
-  let layoutNodes = layoutNodesByClusters(
-    nodes,
-    edges,
-    layoutWidth,
-    layoutHeight,
-    fixedPositions,
-  );
+  let layoutNodes = layoutNodesByClusters(nodes, edges, layoutWidth, layoutHeight, fixedPositions);
 
   layoutNodes = resolveNodeOverlaps(layoutNodes);
   layoutNodes = layoutIsolatedRecordNodes(layoutNodes, edges, layoutWidth);
