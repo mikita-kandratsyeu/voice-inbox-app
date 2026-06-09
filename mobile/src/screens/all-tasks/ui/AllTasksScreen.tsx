@@ -36,9 +36,7 @@ import {
 import { EmptyState, HeaderIconButton, ScreenHeader, SectionHeader } from '@/shared/ui';
 
 import { sortTaskRows } from '../lib/applyAllTasksQuickFilter';
-import { getAllTasksCardInsetH } from '../lib/allTasksLayoutInsets';
 import { buildAllTasksRows } from '../lib/buildAllTasksRows';
-import { buildTaskDeadlineDayMarkers } from '../lib/buildTaskDeadlineDayMarkers';
 import { filterTasksByCalendarDate } from '../lib/filterTasksByCalendarDate';
 import {
   getTaskDeadlineBucket,
@@ -142,7 +140,6 @@ export const AllTasksScreen = () => {
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const { adsAllowed } = useAdsAllowed();
   const filterPadH = isTablet ? 20 : 16;
-  const taskCardInsetH = getAllTasksCardInsetH(isTablet);
 
   const showTaskUpdateError = useCallback(() => {
     Alert.alert(t('common.error'), t('allTasks.taskUpdateError'));
@@ -194,8 +191,6 @@ export const AllTasksScreen = () => {
   const calendarListData = useMemo((): AllTasksListItem[] => {
     return calendarDayRows.map((row) => ({ type: 'task', row }));
   }, [calendarDayRows]);
-
-  const calendarDayMarkers = useMemo(() => buildTaskDeadlineDayMarkers(taskRows), [taskRows]);
 
   useEffect(() => {
     if (viewMode === 'calendar' && quickFilter === 'today') {
@@ -748,9 +743,8 @@ export const AllTasksScreen = () => {
         <AllTasksCalendarPanel
           color={color}
           selectedDate={selectedCalendarDate}
-          dayMarkers={calendarDayMarkers}
           onDateChange={setSelectedCalendarDate}
-          horizontalPadding={taskCardInsetH}
+          compactHorizontalMargin={isTablet}
           maxWidth={contentMaxWidth}
         />
       ) : null}

@@ -18,6 +18,8 @@ type SystemInlineDatePickerProps = {
   maximumDate?: Date;
   /** Android only. Use `calendar` for full-screen month grids outside sheets. */
   androidDisplay?: 'default' | 'calendar';
+  /** Flat layout without tertiary chrome — for embedding inside cards. */
+  embedded?: boolean;
   accessibilityLabel?: string;
 };
 
@@ -27,26 +29,29 @@ export function SystemInlineDatePicker({
   minimumDate,
   maximumDate,
   androidDisplay = 'default',
+  embedded = false,
   accessibilityLabel,
 }: SystemInlineDatePickerProps) {
   const color = useColors();
   const theme = useAppTheme();
 
+  const fixedIosHeight = IS_IOS
+    ? {
+        height: IOS_INLINE_DATE_PICKER_HEIGHT,
+        maxHeight: IOS_INLINE_DATE_PICKER_HEIGHT,
+        overflow: 'hidden' as const,
+      }
+    : null;
+
   return (
     <View
-      className="items-center overflow-hidden rounded-2xl"
+      className={embedded ? 'items-center overflow-hidden' : 'items-center overflow-hidden rounded-2xl'}
       accessibilityLabel={accessibilityLabel}
       style={{
         alignSelf: 'center',
-        backgroundColor: color.background.tertiary,
+        backgroundColor: embedded ? 'transparent' : color.background.tertiary,
         width: '100%',
-        ...(IS_IOS
-          ? {
-              height: IOS_INLINE_DATE_PICKER_HEIGHT,
-              maxHeight: IOS_INLINE_DATE_PICKER_HEIGHT,
-              overflow: 'hidden',
-            }
-          : null),
+        ...fixedIosHeight,
       }}
     >
       <DateTimePicker
