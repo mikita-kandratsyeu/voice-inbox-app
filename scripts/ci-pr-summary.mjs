@@ -190,8 +190,6 @@ const commitUrl = [
 const shortSha = (process.env.GITHUB_SHA ?? '').slice(0, 7);
 const prNumber = process.env.GITHUB_PR_NUMBER;
 const headRef = process.env.GITHUB_HEAD_REF;
-const runAttempt = process.env.GITHUB_RUN_ATTEMPT ?? '1';
-
 const rows = APPS.map((app) => {
   const report = readReport(app.id);
   const jobResult = process.env[app.jobResultEnv] ?? 'unknown';
@@ -283,11 +281,6 @@ if (hasCoverageDetails) {
   lines.push('', '</details>');
 }
 
-lines.push(
-  '',
-  '---',
-  `<sub>🤖 Auto-updated on push · attempt ${runAttempt}</sub>`,
-  '',
-);
+lines.push('');
 
 process.stdout.write(`${lines.join('\n')}\n`);
