@@ -7,7 +7,7 @@ import type { TaskItem } from '@/entities/record';
 import type { RecordCardNoteKind } from '@/entities/record/lib/recordCardExpandedPreview';
 import type { Colors } from '@/shared/config';
 
-/** Below this width, stats and transcript chip stack vertically. */
+/** Below this width, the strip uses a single dense toolbar row. */
 const COMPACT_LAYOUT_MAX_WIDTH = 420;
 
 type RecordCardMetaStripProps = {
@@ -20,6 +20,19 @@ type RecordCardMetaStripProps = {
   tasks?: TaskItem[];
 };
 
+function MetaStripDivider({ color }: { color: Colors }) {
+  return (
+    <View
+      style={{
+        width: 1,
+        alignSelf: 'stretch',
+        marginVertical: 2,
+        backgroundColor: color.border.default,
+      }}
+    />
+  );
+}
+
 function MetaStat({
   color,
   icon,
@@ -29,10 +42,10 @@ function MetaStat({
   color: Colors;
   icon: React.ReactNode;
   value: string;
-  label: string;
+  label?: string;
 }) {
   return (
-    <View style={{ alignItems: 'flex-start', flexShrink: 0 }}>
+    <View style={{ alignItems: 'flex-start', flexShrink: 0 }} accessibilityRole="text">
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         {icon}
         <Text
@@ -42,49 +55,93 @@ function MetaStat({
           {value}
         </Text>
       </View>
-      <Text
-        style={{
-          fontSize: 11,
-          lineHeight: 14,
-          color: color.text.muted,
-          marginTop: 3,
-        }}
-      >
-        {label}
-      </Text>
+      {label && (
+        <Text
+          style={{
+            fontSize: 11,
+            lineHeight: 14,
+            color: color.text.muted,
+            marginTop: 3,
+          }}
+        >
+          {label}
+        </Text>
+      )}
     </View>
   );
 }
 
-function TranscriptChip({
+function CompactStatCell({
   color,
+  icon,
+  value,
   label,
-  compact,
+  accessibilityLabel,
 }: {
   color: Colors;
-  label: string;
-  compact?: boolean;
+  icon: React.ReactNode;
+  value: string;
+  label?: string;
+  accessibilityLabel: string;
 }) {
   return (
     <View
       style={{
         flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: compact ? 10 : 12,
-        paddingVertical: compact ? 7 : 8,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: color.border.default,
-        backgroundColor: color.background.card,
-        alignSelf: compact ? 'flex-start' : undefined,
+        alignItems: 'flex-start',
+        gap: 5,
         flexShrink: 0,
       }}
+      accessibilityRole="text"
+      accessibilityLabel={accessibilityLabel}
+    >
+      <View style={{ marginTop: 2 }}>{icon}</View>
+      <View style={{ alignItems: 'flex-start', minWidth: 0 }}>
+        <Text
+          style={{ fontSize: 14, fontWeight: '700', color: color.text.primary }}
+          numberOfLines={1}
+        >
+          {value}
+        </Text>
+        {label && (
+          <Text
+            style={{
+              fontSize: 10,
+              lineHeight: 13,
+              fontWeight: '500',
+              color: color.text.muted,
+            }}
+            numberOfLines={1}
+          >
+            {label}
+          </Text>
+        )}
+      </View>
+    </View>
+  );
+}
+
+function CompactSourceCell({ color, label }: { color: Colors; label?: string }) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        flexShrink: 0,
+      }}
+      accessibilityRole="text"
+      accessibilityLabel={label}
     >
       <FileText size={14} color={color.text.secondary} strokeWidth={2} />
-      <Text style={{ fontSize: 13, fontWeight: '600', color: color.text.secondary }} numberOfLines={1}>
-        {label}
-      </Text>
+      {label && (
+        <Text
+          style={{ fontSize: 13, fontWeight: '600', color: color.text.secondary }}
+          numberOfLines={1}
+        >
+          {label}
+        </Text>
+      )}
     </View>
   );
 }
@@ -116,7 +173,6 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
   }
 
   const compact = windowWidth < COMPACT_LAYOUT_MAX_WIDTH;
-  const stackSourceChip = compact && showSourceChip;
   const sourceChipLabel =
     noteKind === 'text'
       ? t('inbox.cardLayout.noteTypeText')
@@ -124,57 +180,144 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
         ? t('inbox.cardLayout.sourceText')
         : t('inbox.cardLayout.hasSummary');
 
-  const stats = (
-    <>
-      {showDuration ? (
-        <MetaStat
-          color={color}
-          icon={<Clock size={15} color={color.icon.muted} strokeWidth={2} />}
-          value={duration}
-          label={t('inbox.cardLayout.recordingDuration')}
-        />
-      ) : null}
+  if (compact) {
+    const statSegments: Array<{ key: string; node: React.ReactNode }> = [];
 
-      {showTextFragments ? (
-        <MetaStat
-          color={color}
-          icon={<FileText size={15} color={color.icon.muted} strokeWidth={2} />}
-          value={String(textFragmentCount)}
-          label={t('inbox.cardLayout.textFragments', { count: textFragmentCount })}
-        />
-      ) : null}
+    if (showDuration) {
+      statSegments.push({
+        key: 'duration',
+        node: (
+          <CompactStatCell
+            color={color}
+            icon={<Clock size={14} color={color.icon.muted} strokeWidth={2} />}
+            value={duration}
+            accessibilityLabel={`${duration}, ${t('inbox.cardLayout.recordingDuration')}`}
+          />
+        ),
+      });
+    }
 
-      {hasTasks ? (
-        <MetaStat
-          color={color}
-          icon={
-            allTasksDone ? (
-              <CheckCircle2 size={15} color={color.accent.success} strokeWidth={2} />
-            ) : (
-              <ListChecks size={15} color={color.icon.muted} strokeWidth={2} />
-            )
-          }
-          value={`${doneCount}/${tasks.length}`}
-          label={t('inbox.cardLayout.tasksCompletedLabel')}
-        />
-      ) : null}
-    </>
-  );
+    if (showTextFragments) {
+      statSegments.push({
+        key: 'fragments',
+        node: (
+          <CompactStatCell
+            color={color}
+            icon={<FileText size={14} color={color.icon.muted} strokeWidth={2} />}
+            value={String(textFragmentCount)}
+            accessibilityLabel={t('inbox.cardLayout.textFragments', { count: textFragmentCount })}
+          />
+        ),
+      });
+    }
+
+    if (hasTasks) {
+      statSegments.push({
+        key: 'tasks',
+        node: (
+          <CompactStatCell
+            color={color}
+            icon={
+              allTasksDone ? (
+                <CheckCircle2 size={14} color={color.accent.success} strokeWidth={2} />
+              ) : (
+                <ListChecks size={14} color={color.icon.muted} strokeWidth={2} />
+              )
+            }
+            value={`${doneCount}/${tasks.length}`}
+            accessibilityLabel={`${doneCount}/${tasks.length}, ${t('inbox.cardLayout.tasksCompletedLabel')}`}
+          />
+        ),
+      });
+    }
+
+    const hasStatSegments = statSegments.length > 0;
+
+    return (
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginTop: 14,
+          paddingVertical: 8,
+          paddingHorizontal: 12,
+          borderRadius: 12,
+          backgroundColor: color.background.tertiary,
+        }}
+        accessibilityRole="text"
+      >
+        {hasStatSegments ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              flexShrink: 1,
+              minWidth: 0,
+              gap: 4,
+            }}
+          >
+            {statSegments.map((segment, index) => (
+              <React.Fragment key={segment.key}>
+                {index > 0 ? <MetaStripDivider color={color} /> : null}
+                {segment.node}
+              </React.Fragment>
+            ))}
+          </View>
+        ) : null}
+
+        {showSourceChip ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              flexShrink: 0,
+              marginLeft: 'auto',
+              gap: 4,
+            }}
+          >
+            {hasStatSegments ? <MetaStripDivider color={color} /> : null}
+            <CompactSourceCell color={color} label={sourceChipLabel} />
+          </View>
+        ) : null}
+      </View>
+    );
+  }
 
   const sourceChipButton = showSourceChip ? (
-    <TranscriptChip color={color} label={sourceChipLabel} compact={stackSourceChip} />
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: color.border.default,
+        backgroundColor: color.background.card,
+        flexShrink: 0,
+      }}
+    >
+      <FileText size={14} color={color.text.secondary} strokeWidth={2} />
+      <Text
+        style={{ fontSize: 13, fontWeight: '600', color: color.text.secondary }}
+        numberOfLines={1}
+      >
+        {sourceChipLabel}
+      </Text>
+    </View>
   ) : null;
 
   return (
     <View
       style={{
-        flexDirection: stackSourceChip ? 'column' : 'row',
-        alignItems: stackSourceChip ? 'stretch' : 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'flex-start',
-        gap: stackSourceChip ? 10 : 20,
+        gap: 20,
         marginTop: 14,
-        paddingHorizontal: compact ? 12 : 14,
-        paddingVertical: compact ? 10 : 12,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
         borderRadius: 12,
         backgroundColor: color.background.tertiary,
       }}
@@ -183,20 +326,48 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
       <View
         style={{
           flexDirection: 'row',
-          flexWrap: compact ? 'wrap' : 'nowrap',
           alignItems: 'flex-start',
-          gap: compact ? 12 : 20,
-          flex: stackSourceChip ? undefined : 1,
+          gap: 20,
+          flex: 1,
           minWidth: 0,
         }}
       >
-        {stats}
+        {showDuration ? (
+          <MetaStat
+            color={color}
+            icon={<Clock size={15} color={color.icon.muted} strokeWidth={2} />}
+            value={duration}
+            label={t('inbox.cardLayout.recordingDuration')}
+          />
+        ) : null}
+
+        {showTextFragments ? (
+          <MetaStat
+            color={color}
+            icon={<FileText size={15} color={color.icon.muted} strokeWidth={2} />}
+            value={String(textFragmentCount)}
+            label={t('inbox.cardLayout.textFragments', { count: textFragmentCount })}
+          />
+        ) : null}
+
+        {hasTasks ? (
+          <MetaStat
+            color={color}
+            icon={
+              allTasksDone ? (
+                <CheckCircle2 size={15} color={color.accent.success} strokeWidth={2} />
+              ) : (
+                <ListChecks size={15} color={color.icon.muted} strokeWidth={2} />
+              )
+            }
+            value={`${doneCount}/${tasks.length}`}
+            label={t('inbox.cardLayout.tasksCompletedLabel')}
+          />
+        ) : null}
       </View>
 
       {sourceChipButton ? (
-        <View style={stackSourceChip ? undefined : { flexShrink: 0, marginLeft: 'auto' }}>
-          {sourceChipButton}
-        </View>
+        <View style={{ flexShrink: 0, marginLeft: 'auto' }}>{sourceChipButton}</View>
       ) : null}
     </View>
   );
