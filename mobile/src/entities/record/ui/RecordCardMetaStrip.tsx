@@ -239,8 +239,8 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
           flexDirection: 'row',
           alignItems: 'center',
           marginTop: 14,
-          paddingVertical: 8,
-          paddingHorizontal: 12,
+          paddingVertical: 14,
+          paddingHorizontal: 14,
           borderRadius: 12,
           backgroundColor: color.background.tertiary,
         }}
