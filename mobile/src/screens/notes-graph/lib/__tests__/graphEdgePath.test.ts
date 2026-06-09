@@ -31,7 +31,7 @@ describe('graphEdgePath', () => {
     const layout = buildParallelEdgeBendLayout(edges);
     const curvatures = edges.map((edge) => {
       const bend = layout.get(edge.id)!;
-      return computeEdgeCurvature(200, edge.id, bend);
+      return computeEdgeCurvature(200, edge.id, bend, edge.kind);
     });
 
     expect(layout.get('folder:a|b')).toEqual({ index: 0, total: 3 });
@@ -44,5 +44,13 @@ describe('graphEdgePath', () => {
     const path = computeQuadraticEdgePath({ x: 0, y: 0 }, { x: 100, y: 0 }, 24);
     expect(path.startsWith('M 0 0 Q')).toBe(true);
     expect(path.endsWith('100 0')).toBe(true);
+  });
+
+  it('keeps task links straighter than similar links', () => {
+    const bend = { index: 0, total: 1 };
+    const similar = Math.abs(computeEdgeCurvature(180, 'similar:a|b', bend, 'similar'));
+    const contains = Math.abs(computeEdgeCurvature(180, 'contains:task', bend, 'contains'));
+
+    expect(contains).toBeLessThan(similar);
   });
 });

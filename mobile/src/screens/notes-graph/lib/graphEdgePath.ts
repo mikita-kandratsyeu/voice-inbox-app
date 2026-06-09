@@ -47,12 +47,28 @@ export function buildParallelEdgeBendLayout(edges: GraphEdge[]): Map<string, Par
   return layout;
 }
 
+function edgeCurvatureFactor(kind: GraphEdgeKind): number {
+  switch (kind) {
+    case 'contains':
+      return 0.12;
+    case 'sameFolder':
+      return 0.55;
+    case 'sharedTag':
+      return 0.82;
+    case 'similar':
+    default:
+      return 1;
+  }
+}
+
 export function computeEdgeCurvature(
   distance: number,
   edgeId: string,
   bend: ParallelEdgeBend,
+  kind: GraphEdgeKind = 'similar',
 ): number {
-  const base = Math.min(64, Math.max(20, distance * 0.22));
+  const straightness = edgeCurvatureFactor(kind);
+  const base = Math.min(64, Math.max(16, distance * 0.22)) * straightness;
 
   if (bend.total <= 1) {
     return base * edgeBendSign(edgeId);

@@ -8,15 +8,26 @@ import {
   computeEdgeCurvature,
   computeQuadraticEdgePath,
 } from '../lib/graphEdgePath';
-import { getGraphEdgeStrokeStyle } from '../lib/graphEdgeStyles';
+import {
+  getGraphEdgeGlowStyle,
+  getGraphEdgeStrokeStyle,
+  resolveGraphEdgeEmphasis,
+  type GraphEdgeEmphasis,
+} from '../lib/graphEdgeStyles';
 import { nodeBorderAnchor, nodeCenter } from '../lib/graphNodeMetrics';
 import type { GraphEdge, GraphEdgeKind, GraphNode } from '../lib/graphTypes';
 
-const EDGE_DRAW_ORDER: Record<GraphEdgeKind, number> = {
+const EDGE_KIND_DRAW_ORDER: Record<GraphEdgeKind, number> = {
   sameFolder: 0,
   sharedTag: 1,
   contains: 2,
   similar: 3,
+};
+
+const EDGE_EMPHASIS_DRAW_ORDER: Record<GraphEdgeEmphasis, number> = {
+  dimmed: 0,
+  default: 1,
+  highlighted: 2,
 };
 
 type GraphEdgeLayerProps = {
@@ -29,17 +40,11 @@ type GraphEdgeLayerProps = {
   activeNodeId: string | null;
 };
 
-function edgeIsDimmed(
-  edge: GraphEdge,
-  matchedNodeIds: ReadonlySet<string> | null,
-  activeNodeId: string | null,
-): boolean {
-  if (!matchedNodeIds || matchedNodeIds.size === 0) return false;
-  if (activeNodeId && (edge.sourceId === activeNodeId || edge.targetId === activeNodeId)) {
-    return false;
-  }
-  return !matchedNodeIds.has(edge.sourceId) && !matchedNodeIds.has(edge.targetId);
-}
+type RenderedEdge = {
+  edge: GraphEdge;
+  path: string;
+  emphasis: GraphEdgeEmphasis;
+};
 
 export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
   nodes,
@@ -52,14 +57,38 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
 }: GraphEdgeLayerProps) {
   const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
   const bendLayout = useMemo(() => buildParallelEdgeBendLayout(edges), [edges]);
-  const sortedEdges = useMemo(
-    () =>
-      [...edges].sort((a, b) => {
-        const orderDelta = EDGE_DRAW_ORDER[a.kind] - EDGE_DRAW_ORDER[b.kind];
-        return orderDelta !== 0 ? orderDelta : a.id.localeCompare(b.id);
-      }),
-    [edges],
-  );
+
+  const renderedEdges = useMemo(() => {
+    const items: RenderedEdge[] = [];
+
+    for (const edge of edges) {
+      const source = nodeById.get(edge.sourceId);
+      const target = nodeById.get(edge.targetId);
+      if (!source || !target) continue;
+
+      const targetCenter = nodeCenter(target);
+      const sourceCenter = nodeCenter(source);
+      const from = nodeBorderAnchor(source, targetCenter);
+      const to = nodeBorderAnchor(target, sourceCenter);
+      const bend = bendLayout.get(edge.id) ?? { index: 0, total: 1 };
+      const distance = Math.hypot(to.x - from.x, to.y - from.y);
+      const curvature = computeEdgeCurvature(distance, edge.id, bend, edge.kind);
+      const path = computeQuadraticEdgePath(from, to, curvature);
+      const emphasis = resolveGraphEdgeEmphasis(edge, matchedNodeIds, activeNodeId);
+
+      items.push({ edge, path, emphasis });
+    }
+
+    items.sort((a, b) => {
+      const emphasisDelta = EDGE_EMPHASIS_DRAW_ORDER[a.emphasis] - EDGE_EMPHASIS_DRAW_ORDER[b.emphasis];
+      if (emphasisDelta !== 0) return emphasisDelta;
+
+      const kindDelta = EDGE_KIND_DRAW_ORDER[a.edge.kind] - EDGE_KIND_DRAW_ORDER[b.edge.kind];
+      return kindDelta !== 0 ? kindDelta : a.edge.id.localeCompare(b.edge.id);
+    });
+
+    return items;
+  }, [activeNodeId, bendLayout, edges, matchedNodeIds, nodeById]);
 
   return (
     <Svg
@@ -68,33 +97,33 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
       style={{ position: 'absolute', left: 0, top: 0 }}
       pointerEvents="none"
     >
-      {sortedEdges.map((edge) => {
-        const source = nodeById.get(edge.sourceId);
-        const target = nodeById.get(edge.targetId);
-        if (!source || !target) return null;
-
-        const targetCenter = nodeCenter(target);
-        const sourceCenter = nodeCenter(source);
-        const from = nodeBorderAnchor(source, targetCenter);
-        const to = nodeBorderAnchor(target, sourceCenter);
-        const style = getGraphEdgeStrokeStyle(edge.kind, color);
-        const dimmed = edgeIsDimmed(edge, matchedNodeIds, activeNodeId);
-        const bend = bendLayout.get(edge.id) ?? { index: 0, total: 1 };
-        const distance = Math.hypot(to.x - from.x, to.y - from.y);
-        const curvature = computeEdgeCurvature(distance, edge.id, bend);
-        const path = computeQuadraticEdgePath(from, to, curvature);
+      {renderedEdges.map(({ edge, path, emphasis }) => {
+        const style = getGraphEdgeStrokeStyle(edge.kind, color, emphasis);
+        const glow =
+          emphasis === 'highlighted' ? getGraphEdgeGlowStyle(edge.kind, color) : null;
 
         return (
-          <Path
-            key={edge.id}
-            d={path}
-            stroke={style.stroke}
-            strokeWidth={style.strokeWidth}
-            strokeDasharray={style.strokeDasharray}
-            strokeLinecap={style.strokeLinecap ?? 'round'}
-            opacity={dimmed ? style.opacity * 0.25 : style.opacity}
-            fill="none"
-          />
+          <React.Fragment key={edge.id}>
+            {glow ? (
+              <Path
+                d={path}
+                stroke={glow.stroke}
+                strokeWidth={glow.strokeWidth}
+                strokeLinecap={glow.strokeLinecap ?? 'round'}
+                opacity={glow.opacity}
+                fill="none"
+              />
+            ) : null}
+            <Path
+              d={path}
+              stroke={style.stroke}
+              strokeWidth={style.strokeWidth}
+              strokeDasharray={style.strokeDasharray}
+              strokeLinecap={style.strokeLinecap ?? 'round'}
+              opacity={style.opacity}
+              fill="none"
+            />
+          </React.Fragment>
         );
       })}
     </Svg>
