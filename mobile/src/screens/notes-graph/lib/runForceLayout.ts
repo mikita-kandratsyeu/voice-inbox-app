@@ -1,8 +1,11 @@
 import { layoutNodesByClusters } from './graphClusterLayout';
 import { nodeDimensions } from './graphNodeMetrics';
-import type { GraphEdge, GraphNode } from './graphTypes';
+import type { GraphEdge, GraphNode, GraphLayoutMode } from './graphTypes';
+import { DEFAULT_GRAPH_LAYOUT_MODE } from './graphTypes';
 import type { GraphViewportInsets } from './graphViewportInsets';
 import { layoutIsolatedRecordNodes } from './layoutIsolatedNodes';
+import { layoutNodesInCircle } from './runCircularLayout';
+import { layoutNodesWithGlobalForce } from './runGlobalForceLayout';
 
 const GRAPH_BOUNDS_PADDING = 80;
 
@@ -87,21 +90,38 @@ export function runForceLayout(
   viewportWidth: number,
   viewportHeight: number,
   fixedPositions?: Map<string, { x: number; y: number }>,
+  layoutMode: GraphLayoutMode = DEFAULT_GRAPH_LAYOUT_MODE,
 ): LayoutResult {
   if (nodes.length === 0) {
     return { nodes: [], width: viewportWidth, height: viewportHeight };
   }
 
-  const { width: layoutWidth, height: layoutHeight } = computeLayoutMetrics(
-    nodes.length,
-    viewportWidth,
-    viewportHeight,
-  );
+  const isCircular = layoutMode === 'circular';
+  const { width: layoutWidth, height: layoutHeight } = isCircular
+    ? { width: viewportWidth, height: viewportHeight }
+    : computeLayoutMetrics(nodes.length, viewportWidth, viewportHeight);
+  const boundsFloorWidth = isCircular ? viewportWidth : layoutWidth;
+  const boundsFloorHeight = isCircular ? viewportHeight : layoutHeight;
 
-  let layoutNodes = layoutNodesByClusters(nodes, edges, layoutWidth, layoutHeight, fixedPositions);
+  let layoutNodes: GraphNode[];
+  if (layoutMode === 'force') {
+    layoutNodes = layoutNodesWithGlobalForce(
+      nodes,
+      edges,
+      layoutWidth,
+      layoutHeight,
+      fixedPositions,
+    );
+  } else if (isCircular) {
+    layoutNodes = layoutNodesInCircle(nodes, viewportWidth, viewportHeight, fixedPositions);
+  } else {
+    layoutNodes = layoutNodesByClusters(nodes, edges, layoutWidth, layoutHeight, fixedPositions);
+  }
 
-  layoutNodes = resolveNodeOverlaps(layoutNodes);
-  layoutNodes = layoutIsolatedRecordNodes(layoutNodes, edges, layoutWidth);
+  if (layoutMode !== 'circular') {
+    layoutNodes = resolveNodeOverlaps(layoutNodes);
+    layoutNodes = layoutIsolatedRecordNodes(layoutNodes, edges, layoutWidth);
+  }
 
   let minX = Infinity;
   let minY = Infinity;
@@ -116,8 +136,8 @@ export function runForceLayout(
     maxY = Math.max(maxY, node.y + nodeHeight);
   }
 
-  let graphWidth = Math.max(maxX - minX + GRAPH_BOUNDS_PADDING * 2, layoutWidth);
-  let graphHeight = Math.max(maxY - minY + GRAPH_BOUNDS_PADDING * 2, layoutHeight);
+  let graphWidth = Math.max(maxX - minX + GRAPH_BOUNDS_PADDING * 2, boundsFloorWidth);
+  let graphHeight = Math.max(maxY - minY + GRAPH_BOUNDS_PADDING * 2, boundsFloorHeight);
   const offsetX = GRAPH_BOUNDS_PADDING - minX;
   const offsetY = GRAPH_BOUNDS_PADDING - minY;
 
@@ -146,8 +166,8 @@ export function runForceLayout(
       maxY = Math.max(maxY, node.y + nodeHeight);
     }
 
-    graphWidth = Math.max(maxX - minX + GRAPH_BOUNDS_PADDING * 2, layoutWidth);
-    graphHeight = Math.max(maxY - minY + GRAPH_BOUNDS_PADDING * 2, layoutHeight);
+    graphWidth = Math.max(maxX - minX + GRAPH_BOUNDS_PADDING * 2, boundsFloorWidth);
+    graphHeight = Math.max(maxY - minY + GRAPH_BOUNDS_PADDING * 2, boundsFloorHeight);
   }
 
   return {

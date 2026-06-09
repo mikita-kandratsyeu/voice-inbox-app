@@ -86,6 +86,12 @@ export function buildNotesGraphLayoutFilterSummary({
   });
 
   rows.push({
+    id: 'layoutMode',
+    label: t('notesGraph.history.filters.layoutMode'),
+    value: t(`notesGraph.filters.layoutMode.${filters.layoutMode}`),
+  });
+
+  rows.push({
     id: 'view',
     label: t('notesGraph.history.filters.view'),
     value: formatSimplifyView(simplifyActive, simplifyIsAuto, t),

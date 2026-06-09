@@ -5,13 +5,18 @@ import {
   shouldAutoSimplifyGraph,
   simplifiedEdgeVisibility,
 } from '../graphSimplifyMode';
-import { DEFAULT_EDGE_VISIBILITY, type GraphFilters } from '../graphTypes';
+import {
+  DEFAULT_EDGE_VISIBILITY,
+  DEFAULT_GRAPH_LAYOUT_MODE,
+  type GraphFilters,
+} from '../graphTypes';
 
 const baseFilters: GraphFilters = {
   folderId: null,
   tags: ['work'],
   showTasks: true,
   edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
+  layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
 };
 
 describe('shouldAutoSimplifyGraph', () => {

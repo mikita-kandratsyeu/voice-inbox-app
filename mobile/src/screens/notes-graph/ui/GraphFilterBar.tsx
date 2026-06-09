@@ -1,4 +1,4 @@
-import { Folder as FolderIcon } from 'lucide-react-native';
+import { Folder as FolderIcon, LayoutGrid, Tag as TagIcon } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -6,10 +6,12 @@ import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { type Folder, FolderPickerSheet } from '@/entities/folder';
 import { FolderLucideIcon } from '@/entities/folder/lib/folderLucideIcons';
 import type { Colors } from '@/shared/config';
+import { useAppTheme } from '@/shared/config';
 import {
   folderChipActiveForeground,
   hapticSelection,
   resolveDisplayFolderColor,
+  withAlphaHex,
 } from '@/shared/lib';
 import {
   FILTER_CHIP_ICON_SIZE,
@@ -19,6 +21,7 @@ import {
 } from '@/shared/ui/filterChipMetrics';
 
 import type { GraphEdgeVisibility, GraphFilters } from '../lib/graphTypes';
+import { GraphLayoutModeSheet } from './GraphLayoutModeSheet';
 import { TagPickerSheet } from './TagPickerSheet';
 
 type GraphFilterBarProps = {
@@ -32,16 +35,107 @@ type GraphFilterBarProps = {
   onFiltersChange: (patch: Partial<GraphFilters>) => void;
 };
 
+type ChipTone = {
+  backgroundColor: string;
+  borderColor: string;
+  foregroundColor: string;
+};
+
+function pickerChipTone(color: Colors, emphasized: boolean, isDark: boolean): ChipTone {
+  if (emphasized) {
+    const fillAlpha = isDark ? 0.2 : 0.12;
+    const borderAlpha = isDark ? 0.48 : 0.34;
+    return {
+      backgroundColor: withAlphaHex(color.accent.primary, fillAlpha),
+      borderColor: withAlphaHex(color.accent.primary, borderAlpha),
+      foregroundColor: color.accent.primary,
+    };
+  }
+
+  return {
+    backgroundColor: color.background.card,
+    borderColor: color.border.default,
+    foregroundColor: color.text.primary,
+  };
+}
+
+function toggleChipTone(color: Colors, active: boolean, isDark: boolean): ChipTone {
+  if (active) {
+    const fillAlpha = isDark ? 0.22 : 0.14;
+    const borderAlpha = isDark ? 0.46 : 0.32;
+    return {
+      backgroundColor: withAlphaHex(color.accent.primary, fillAlpha),
+      borderColor: withAlphaHex(color.accent.primary, borderAlpha),
+      foregroundColor: color.accent.primary,
+    };
+  }
+
+  return {
+    backgroundColor: color.background.tertiary,
+    borderColor: color.background.tertiary,
+    foregroundColor: color.text.secondary,
+  };
+}
+
+type SelectorChipProps = {
+  label: string;
+  icon: React.ReactNode;
+  tone: ChipTone;
+  disabled?: boolean;
+  selected?: boolean;
+  onPress: () => void;
+};
+
+function SelectorChip({
+  label,
+  icon,
+  tone,
+  disabled = false,
+  selected = false,
+  onPress,
+}: SelectorChipProps) {
+  return (
+    <TouchableOpacity
+      onPress={() => {
+        if (disabled) return;
+        hapticSelection();
+        onPress();
+      }}
+      disabled={disabled}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected, disabled }}
+      style={[
+        filterChipRowStyle(tone.backgroundColor, tone.borderColor),
+        disabled ? { opacity: 0.45 } : null,
+      ]}
+    >
+      {icon}
+      <Text
+        style={{
+          ...FILTER_CHIP_LABEL_STYLE,
+          color: tone.foregroundColor,
+        }}
+        numberOfLines={1}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
 type ToggleChipProps = {
   label: string;
   active: boolean;
   color: Colors;
+  isDark: boolean;
   disabled?: boolean;
   onPress: () => void;
 };
 
-function ToggleChip({ label, active, color, disabled = false, onPress }: ToggleChipProps) {
-  const backgroundColor = active ? color.accent.primary : color.background.tertiary;
+function ToggleChip({ label, active, color, isDark, disabled = false, onPress }: ToggleChipProps) {
+  const tone = toggleChipTone(color, active, isDark);
 
   return (
     <TouchableOpacity
@@ -55,12 +149,15 @@ function ToggleChip({ label, active, color, disabled = false, onPress }: ToggleC
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected: active, disabled }}
-      style={[filterChipRowStyle(backgroundColor), disabled ? { opacity: 0.45 } : null]}
+      style={[
+        filterChipRowStyle(tone.backgroundColor, tone.borderColor),
+        disabled ? { opacity: 0.45 } : null,
+      ]}
     >
       <Text
         style={{
           ...FILTER_CHIP_LABEL_STYLE,
-          color: active ? color.icon.onAccent : color.text.primary,
+          color: tone.foregroundColor,
         }}
         numberOfLines={1}
       >
@@ -81,8 +178,10 @@ export function GraphFilterBar({
   onFiltersChange,
 }: GraphFilterBarProps) {
   const { t } = useTranslation();
+  const isDark = useAppTheme() === 'dark';
   const [folderPickerVisible, setFolderPickerVisible] = useState(false);
   const [tagPickerVisible, setTagPickerVisible] = useState(false);
+  const [layoutModePickerVisible, setLayoutModePickerVisible] = useState(false);
 
   const activeFolder = useMemo(
     () => (filters.folderId ? folders.find((f) => f.id === filters.folderId) : null),
@@ -96,22 +195,24 @@ export function GraphFilterBar({
     ? folderChipActiveForeground(color, folderChipColor)
     : color.text.primary;
 
-  const allFoldersActive = filters.folderId === null;
-  const folderChipBackground = activeFolder
-    ? folderChipColor!
-    : allFoldersActive
-      ? color.accent.primary
-      : color.background.tertiary;
-  const folderChipBorder = activeFolder
-    ? folderChipColor!
-    : allFoldersActive
-      ? color.accent.primary
-      : color.background.tertiary;
-  const folderChipForeground = activeFolder
-    ? activeFolderForeground
-    : allFoldersActive
-      ? color.icon.onAccent
-      : color.text.primary;
+  const tagsSelected = filters.tags.length > 0;
+  const tagsChipLabel = tagsSelected
+    ? t('notesGraph.filters.tagsCount', { count: filters.tags.length })
+    : t('notesGraph.filters.pickTags');
+
+  const layoutChipTone = pickerChipTone(color, false, isDark);
+  const tagsChipTone = pickerChipTone(color, tagsSelected, isDark);
+
+  const folderChipTone: ChipTone = activeFolder
+    ? {
+        backgroundColor: folderChipColor!,
+        borderColor: folderChipColor!,
+        foregroundColor: activeFolderForeground,
+      }
+    : pickerChipTone(color, false, isDark);
+
+  const pickerIconColor = (tone: ChipTone) =>
+    tone.foregroundColor === color.text.primary ? color.text.secondary : tone.foregroundColor;
 
   const toggleEdge = (key: keyof GraphEdgeVisibility) => {
     if (disabled) return;
@@ -138,50 +239,68 @@ export function GraphFilterBar({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={FILTER_CHIP_SCROLL_CONTENT_STYLE}
       >
+        <SelectorChip
+          label={t(`notesGraph.filters.layoutMode.${filters.layoutMode}`)}
+          tone={layoutChipTone}
+          disabled={disabled}
+          onPress={() => setLayoutModePickerVisible(true)}
+          icon={
+            <LayoutGrid
+              size={FILTER_CHIP_ICON_SIZE}
+              color={pickerIconColor(layoutChipTone)}
+              strokeWidth={2}
+            />
+          }
+        />
+
         {foldersEnabled ? (
-          <TouchableOpacity
-            onPress={() => {
-              if (disabled) return;
-              hapticSelection();
-              setFolderPickerVisible(true);
-            }}
+          <SelectorChip
+            label={activeFolder?.name ?? t('notesGraph.filters.allFolders')}
+            tone={folderChipTone}
             disabled={disabled}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel={activeFolder?.name ?? t('notesGraph.filters.allFolders')}
-            accessibilityState={{ selected: allFoldersActive || activeFolder != null }}
-            style={filterChipRowStyle(folderChipBackground, folderChipBorder)}
-          >
-            {activeFolder ? (
-              <FolderLucideIcon
-                iconId={activeFolder.icon}
+            selected={activeFolder != null}
+            onPress={() => setFolderPickerVisible(true)}
+            icon={
+              activeFolder ? (
+                <FolderLucideIcon
+                  iconId={activeFolder.icon}
+                  size={FILTER_CHIP_ICON_SIZE}
+                  color={folderChipTone.foregroundColor}
+                  strokeWidth={2}
+                />
+              ) : (
+                <FolderIcon
+                  size={FILTER_CHIP_ICON_SIZE}
+                  color={pickerIconColor(folderChipTone)}
+                  strokeWidth={2}
+                />
+              )
+            }
+          />
+        ) : null}
+
+        {availableTags.length > 0 ? (
+          <SelectorChip
+            label={tagsChipLabel}
+            tone={tagsChipTone}
+            disabled={disabled}
+            selected={tagsSelected}
+            onPress={() => setTagPickerVisible(true)}
+            icon={
+              <TagIcon
                 size={FILTER_CHIP_ICON_SIZE}
-                color={folderChipForeground}
+                color={pickerIconColor(tagsChipTone)}
                 strokeWidth={2}
               />
-            ) : (
-              <FolderIcon
-                size={FILTER_CHIP_ICON_SIZE}
-                color={folderChipForeground}
-                strokeWidth={2}
-              />
-            )}
-            <Text
-              style={{
-                ...FILTER_CHIP_LABEL_STYLE,
-                color: folderChipForeground,
-              }}
-              numberOfLines={1}
-            >
-              {activeFolder?.name ?? t('notesGraph.filters.allFolders')}
-            </Text>
-          </TouchableOpacity>
+            }
+          />
         ) : null}
 
         <ToggleChip
           label={t('notesGraph.filters.showTasks')}
           active={filters.showTasks}
           color={color}
+          isDark={isDark}
           disabled={disabled}
           onPress={() => onFiltersChange({ showTasks: !filters.showTasks })}
         />
@@ -190,6 +309,7 @@ export function GraphFilterBar({
           label={t('notesGraph.filters.similar')}
           active={filters.edgeVisibility.similar}
           color={color}
+          isDark={isDark}
           disabled={disabled}
           onPress={() => toggleEdge('similar')}
         />
@@ -198,6 +318,7 @@ export function GraphFilterBar({
           label={t('notesGraph.filters.tags')}
           active={filters.edgeVisibility.sharedTag}
           color={color}
+          isDark={isDark}
           disabled={disabled}
           onPress={() => toggleEdge('sharedTag')}
         />
@@ -206,24 +327,21 @@ export function GraphFilterBar({
           label={t('notesGraph.filters.folders')}
           active={filters.edgeVisibility.sameFolder}
           color={color}
+          isDark={isDark}
           disabled={disabled}
           onPress={() => toggleEdge('sameFolder')}
         />
-
-        {availableTags.length > 0 ? (
-          <ToggleChip
-            label={
-              filters.tags.length > 0
-                ? t('notesGraph.filters.tagsCount', { count: filters.tags.length })
-                : t('notesGraph.filters.pickTags')
-            }
-            active={filters.tags.length > 0}
-            color={color}
-            disabled={disabled}
-            onPress={() => setTagPickerVisible(true)}
-          />
-        ) : null}
       </ScrollView>
+
+      <GraphLayoutModeSheet
+        visible={layoutModePickerVisible}
+        selectedMode={filters.layoutMode}
+        onClose={() => setLayoutModePickerVisible(false)}
+        onSelect={(layoutMode) => {
+          onFiltersChange({ layoutMode });
+          setLayoutModePickerVisible(false);
+        }}
+      />
 
       <TagPickerSheet
         visible={tagPickerVisible}

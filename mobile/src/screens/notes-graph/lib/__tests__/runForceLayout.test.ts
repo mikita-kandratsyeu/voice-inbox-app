@@ -82,6 +82,43 @@ describe('runForceLayout', () => {
     expect(minNodeCenterDistance(result.nodes)).toBeGreaterThan(48);
   });
 
+  it('supports circular layout mode', () => {
+    const nodes = Array.from({ length: 10 }, (_, index) =>
+      makeRecordNode(makeRecord(`note-${index}`, `Note ${index}`)),
+    );
+
+    const result = runForceLayout(nodes, [], 390, 700, undefined, 'circular');
+
+    expect(result.nodes).toHaveLength(10);
+    expect(result.width).toBeGreaterThan(0);
+    expect(result.height).toBeGreaterThan(0);
+  });
+
+  it('supports global force layout mode', () => {
+    const nodes = Array.from({ length: 12 }, (_, index) =>
+      makeRecordNode(makeRecord(`note-${index}`, `Note ${index}`)),
+    );
+    const edges: GraphEdge[] = [
+      {
+        id: 'similar:note-0|note-1',
+        kind: 'similar',
+        sourceId: recordNodeId('note-0'),
+        targetId: recordNodeId('note-1'),
+      },
+      {
+        id: 'similar:note-2|note-3',
+        kind: 'similar',
+        sourceId: recordNodeId('note-2'),
+        targetId: recordNodeId('note-3'),
+      },
+    ];
+
+    const result = runForceLayout(nodes, edges, 390, 700, undefined, 'force');
+
+    expect(result.nodes).toHaveLength(12);
+    expect(minNodeCenterDistance(result.nodes)).toBeGreaterThan(48);
+  });
+
   it('keeps user-pinned node coordinates after relayout', () => {
     const a = makeRecord('a', 'Alpha');
     const b = makeRecord('b', 'Beta');

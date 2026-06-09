@@ -26,7 +26,11 @@ import { findGraphSearchMatchIds, type GraphSearchIndexEntry } from '../lib/grap
 import { getSessionNodePositions, replaceSessionNodePositions } from '../lib/graphSessionLayout';
 import { shouldAutoSimplifyGraph } from '../lib/graphSimplifyMode';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
-import { DEFAULT_EDGE_VISIBILITY, type GraphFilters } from '../lib/graphTypes';
+import {
+  DEFAULT_EDGE_VISIBILITY,
+  DEFAULT_GRAPH_LAYOUT_MODE,
+  type GraphFilters,
+} from '../lib/graphTypes';
 import { estimateGraphSearchFocusBottomInset } from '../lib/graphViewportInsets';
 import {
   awaitPendingNotesGraphLayout,
@@ -75,6 +79,7 @@ export const NotesGraphScreenBody = () => {
     tags: route.params?.tag ? [route.params.tag] : [],
     showTasks: true,
     edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
+    layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
   }));
 
   const [searchQuery, setSearchQuery] = useState('');

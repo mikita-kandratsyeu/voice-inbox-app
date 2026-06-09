@@ -13,7 +13,11 @@ import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComin
 import { useColors } from '@/shared/config';
 import { ScreenHeader } from '@/shared/ui';
 
-import { DEFAULT_EDGE_VISIBILITY, type GraphFilters } from '../lib/graphTypes';
+import {
+  DEFAULT_EDGE_VISIBILITY,
+  DEFAULT_GRAPH_LAYOUT_MODE,
+  type GraphFilters,
+} from '../lib/graphTypes';
 import {
   getPrefetchedNotesGraphScreenBody,
   prefetchNotesGraphScreenBody,
@@ -43,6 +47,7 @@ export const NotesGraphScreen = () => {
       tags: route.params?.tag ? [route.params.tag] : [],
       showTasks: true,
       edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
+      layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
     }),
     [route.params?.folderId, route.params?.tag],
   );

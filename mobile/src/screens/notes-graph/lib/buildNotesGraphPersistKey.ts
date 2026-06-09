@@ -29,6 +29,7 @@ export function buildNotesGraphPersistKey(
     tagKey,
     filters.showTasks ? 1 : 0,
     edgeKey,
+    filters.layoutMode,
     simplifyOverride === null ? 'auto' : simplifyOverride ? 1 : 0,
     filteredCount,
   ].join(';');

@@ -245,6 +245,7 @@
         "showTasks": "Tasks",
         "links": "Connection lines",
         "linksNone": "Hidden",
+        "layoutMode": "Layout",
         "view": "Map view",
         "viewFull": "All connections",
         "viewSimplified": "Simplified",
@@ -294,7 +295,19 @@
       "folderPickerTitle": "Show folder",
       "tagPickerTitle": "Filter by tags",
       "tagPickerSearchPlaceholder": "Search tags",
-      "tagPickerSearchEmpty": "No tags match your search"
+      "tagPickerSearchEmpty": "No tags match your search",
+      "layoutModePickerTitle": "Map layout",
+      "layoutModePickerSubtitle": "Choose how notes are arranged on the map.",
+      "layoutMode": {
+        "cluster": "By groups",
+        "force": "By links",
+        "circular": "In a circle"
+      },
+      "layoutModeHint": {
+        "cluster": "Groups notes by folder and shared tags, then lays out each group.",
+        "force": "Places notes by connection strength — related notes pull closer together.",
+        "circular": "Arranges all notes evenly around a ring — good for a compact overview."
+      }
     },
     "controls": {
       "fit": "Fit map",

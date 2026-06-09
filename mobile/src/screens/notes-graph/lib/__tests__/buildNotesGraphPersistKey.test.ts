@@ -9,7 +9,11 @@ jest.mock('@/features/related-notes/lib/computeRecordSimilarity', () => ({
 import type { VoiceRecord } from '@/entities/record';
 
 import { buildNotesGraphPersistKey } from '../buildNotesGraphPersistKey';
-import { DEFAULT_EDGE_VISIBILITY, type GraphFilters } from '../graphTypes';
+import {
+  DEFAULT_EDGE_VISIBILITY,
+  DEFAULT_GRAPH_LAYOUT_MODE,
+  type GraphFilters,
+} from '../graphTypes';
 import { parseNotesGraphPersistKey } from '../parseNotesGraphPersistKey';
 
 function makeRecord(id: string): VoiceRecord {
@@ -32,6 +36,7 @@ const filters: GraphFilters = {
     contains: false,
     sharedTag: false,
   },
+  layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
 };
 
 describe('buildNotesGraphPersistKey', () => {
@@ -48,6 +53,7 @@ describe('buildNotesGraphPersistKey', () => {
     expect(parsed?.simplifyOverride).toBeNull();
     expect(parsed?.filteredCount).toBe(2);
     expect(parsed?.edgeVisibility).toEqual(filters.edgeVisibility);
+    expect(parsed?.layoutMode).toBe('cluster');
   });
 
   it('encodes explicit simplify override', () => {

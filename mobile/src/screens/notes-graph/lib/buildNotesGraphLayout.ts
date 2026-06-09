@@ -38,6 +38,7 @@ export function buildNotesGraphLayout(
     layoutViewportWidth,
     layoutViewportHeight,
     sessionPositions,
+    effective.layoutMode,
   );
 
   return {

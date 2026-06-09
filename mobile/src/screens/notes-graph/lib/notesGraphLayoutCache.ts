@@ -2,13 +2,18 @@ import type { VoiceRecord } from '@/entities/record';
 
 import { countFilteredGraphRecords } from './buildGraphModel';
 import { buildNotesGraphLayout, type NotesGraphLayoutResult } from './buildNotesGraphLayout';
-import { DEFAULT_EDGE_VISIBILITY, type GraphFilters } from './graphTypes';
+import {
+  DEFAULT_EDGE_VISIBILITY,
+  DEFAULT_GRAPH_LAYOUT_MODE,
+  type GraphFilters,
+} from './graphTypes';
 
 export const DEFAULT_NOTES_GRAPH_FILTERS: GraphFilters = {
   folderId: null,
   tags: [],
   showTasks: true,
   edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
+  layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
 };
 
 function buildRecordsRevision(records: VoiceRecord[]): string {
@@ -39,6 +44,7 @@ export function buildNotesGraphLayoutCacheKey(
     filters.showTasks ? 1 : 0,
     edgeKey,
     simplifyOverride === null ? 'auto' : simplifyOverride ? 1 : 0,
+    filters.layoutMode,
     Math.round(windowWidth),
     Math.round(windowHeight),
     filteredCount,

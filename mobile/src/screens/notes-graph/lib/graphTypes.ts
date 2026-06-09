@@ -31,11 +31,16 @@ export type GraphEdgeVisibility = {
   contains: boolean;
 };
 
+export const GRAPH_LAYOUT_MODES = ['cluster', 'force', 'circular'] as const;
+
+export type GraphLayoutMode = (typeof GRAPH_LAYOUT_MODES)[number];
+
 export type GraphFilters = {
   folderId: string | null;
   tags: string[];
   showTasks: boolean;
   edgeVisibility: GraphEdgeVisibility;
+  layoutMode: GraphLayoutMode;
 };
 
 export type GraphModel = {
@@ -50,6 +55,12 @@ export const DEFAULT_EDGE_VISIBILITY: GraphEdgeVisibility = {
   sameFolder: true,
   contains: true,
 };
+
+export const DEFAULT_GRAPH_LAYOUT_MODE: GraphLayoutMode = 'cluster';
+
+export function isGraphLayoutMode(value: string): value is GraphLayoutMode {
+  return (GRAPH_LAYOUT_MODES as readonly string[]).includes(value);
+}
 
 export const RECORD_NODE_WIDTH = 158;
 export const RECORD_NODE_HEIGHT = 82;

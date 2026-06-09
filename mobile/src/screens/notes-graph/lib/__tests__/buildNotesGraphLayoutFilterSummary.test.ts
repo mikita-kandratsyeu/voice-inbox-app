@@ -2,7 +2,7 @@ import {
   buildNotesGraphLayoutFilterSummary,
   buildNotesGraphLayoutFilterSummaryFromParsed,
 } from '../buildNotesGraphLayoutFilterSummary';
-import { DEFAULT_EDGE_VISIBILITY, type GraphFilters } from '../graphTypes';
+import { DEFAULT_EDGE_VISIBILITY, DEFAULT_GRAPH_LAYOUT_MODE, type GraphFilters } from '../graphTypes';
 import { parseNotesGraphPersistKey } from '../parseNotesGraphPersistKey';
 
 const t = ((key: string) => key) as Parameters<typeof buildNotesGraphLayoutFilterSummary>[0]['t'];
@@ -12,6 +12,7 @@ const baseFilters: GraphFilters = {
   tags: [],
   showTasks: true,
   edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
+  layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
 };
 
 describe('buildNotesGraphLayoutFilterSummary', () => {
@@ -25,10 +26,20 @@ describe('buildNotesGraphLayoutFilterSummary', () => {
       t,
     });
 
-    expect(rows.map((row) => row.id)).toEqual(['folder', 'tags', 'showTasks', 'links', 'view']);
+    expect(rows.map((row) => row.id)).toEqual([
+      'folder',
+      'tags',
+      'showTasks',
+      'links',
+      'layoutMode',
+      'view',
+    ]);
     expect(rows[0]?.value).toBe('notesGraph.filters.allFolders');
     expect(rows[1]?.value).toBe('notesGraph.history.filters.tagsNone');
-    expect(rows[4]?.value).toBe('notesGraph.history.filters.viewFull');
+    expect(rows.find((row) => row.id === 'layoutMode')?.value).toBe(
+      'notesGraph.filters.layoutMode.cluster',
+    );
+    expect(rows[5]?.value).toBe('notesGraph.history.filters.viewFull');
   });
 
   it('omits folder row when folders are disabled', () => {

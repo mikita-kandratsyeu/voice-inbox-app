@@ -11,6 +11,7 @@ describe('parseNotesGraphPersistKey', () => {
       'beta|alpha',
       '0',
       'contains:0,sameFolder:1,sharedTag:0,similar:1',
+      'cluster',
       'auto',
       '5',
     ].join(';');
@@ -28,6 +29,21 @@ describe('parseNotesGraphPersistKey', () => {
       sameFolder: true,
       contains: false,
     });
+    expect(parsed?.layoutMode).toBe('cluster');
+  });
+
+  it('parses legacy keys without layout mode as cluster', () => {
+    const layoutKey = [
+      '2:a,b',
+      'folder-1',
+      'beta|alpha',
+      '0',
+      'contains:0,sameFolder:1,sharedTag:0,similar:1',
+      'auto',
+      '5',
+    ].join(';');
+
+    expect(parseNotesGraphPersistKey(layoutKey)?.layoutMode).toBe('cluster');
   });
 
   it('returns null for malformed keys', () => {
@@ -41,6 +57,7 @@ describe('parseNotesGraphPersistKey', () => {
       '',
       '1',
       'contains:1,sameFolder:1,sharedTag:1,similar:1',
+      'force',
       '1',
       '1',
     ].join(';');

@@ -1,7 +1,8 @@
-import type { GraphEdgeVisibility, GraphFilters } from './graphTypes';
-import { DEFAULT_EDGE_VISIBILITY } from './graphTypes';
+import type { GraphEdgeVisibility, GraphFilters, GraphLayoutMode } from './graphTypes';
+import { DEFAULT_EDGE_VISIBILITY, DEFAULT_GRAPH_LAYOUT_MODE, isGraphLayoutMode } from './graphTypes';
 
-const PERSIST_KEY_TAIL_PARTS = 6;
+const PERSIST_KEY_TAIL_PARTS = 7;
+const LEGACY_PERSIST_KEY_TAIL_PARTS = 6;
 
 export type ParsedNotesGraphPersistKey = {
   recordsRevision: string;
@@ -9,6 +10,7 @@ export type ParsedNotesGraphPersistKey = {
   tags: string[];
   showTasks: boolean;
   edgeVisibility: GraphEdgeVisibility;
+  layoutMode: GraphLayoutMode;
   simplifyOverride: boolean | null;
   filteredCount: number;
 };
@@ -31,32 +33,67 @@ function parseEdgeVisibility(edgeKey: string): GraphEdgeVisibility | null {
   return edgeVisibility;
 }
 
-export function parseNotesGraphPersistKey(layoutKey: string): ParsedNotesGraphPersistKey | null {
-  const parts = layoutKey.split(';');
-  if (parts.length < PERSIST_KEY_TAIL_PARTS + 1) return null;
+function parseSimplifyToken(token: string): boolean | null | undefined {
+  if (token === 'auto') return null;
+  if (token === '1') return true;
+  if (token === '0') return false;
+  return undefined;
+}
+
+function parseLegacyPersistKey(parts: string[]): ParsedNotesGraphPersistKey | null {
+  if (parts.length < LEGACY_PERSIST_KEY_TAIL_PARTS + 1) return null;
 
   const filteredCount = Number(parts[parts.length - 1]);
   if (!Number.isFinite(filteredCount)) return null;
 
-  const simplifyToken = parts[parts.length - 2];
-  let simplifyOverride: boolean | null;
-  if (simplifyToken === 'auto') {
-    simplifyOverride = null;
-  } else if (simplifyToken === '1') {
-    simplifyOverride = true;
-  } else if (simplifyToken === '0') {
-    simplifyOverride = false;
-  } else {
-    return null;
-  }
+  const simplifyOverride = parseSimplifyToken(parts[parts.length - 2]!);
+  if (simplifyOverride === undefined) return null;
 
-  const edgeKey = parts[parts.length - 3];
+  const edgeKey = parts[parts.length - 3]!;
   const edgeVisibility = parseEdgeVisibility(edgeKey);
   if (!edgeVisibility) return null;
 
   const showTasks = parts[parts.length - 4] === '1';
-  const tagKey = parts[parts.length - 5];
-  const folderIdRaw = parts[parts.length - 6];
+  const tagKey = parts[parts.length - 5]!;
+  const folderIdRaw = parts[parts.length - 6]!;
+  const recordsRevision = parts.slice(0, parts.length - LEGACY_PERSIST_KEY_TAIL_PARTS).join(';');
+
+  return {
+    recordsRevision,
+    folderId: folderIdRaw || null,
+    tags: tagKey ? tagKey.split('|').filter(Boolean) : [],
+    showTasks,
+    edgeVisibility,
+    layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
+    simplifyOverride,
+    filteredCount,
+  };
+}
+
+export function parseNotesGraphPersistKey(layoutKey: string): ParsedNotesGraphPersistKey | null {
+  const parts = layoutKey.split(';');
+  if (parts.length < PERSIST_KEY_TAIL_PARTS + 1) {
+    return parseLegacyPersistKey(parts);
+  }
+
+  const filteredCount = Number(parts[parts.length - 1]);
+  if (!Number.isFinite(filteredCount)) return null;
+
+  const simplifyOverride = parseSimplifyToken(parts[parts.length - 2]!);
+  if (simplifyOverride === undefined) return null;
+
+  const layoutModeToken = parts[parts.length - 3]!;
+  if (!isGraphLayoutMode(layoutModeToken)) {
+    return parseLegacyPersistKey(parts);
+  }
+
+  const edgeKey = parts[parts.length - 4]!;
+  const edgeVisibility = parseEdgeVisibility(edgeKey);
+  if (!edgeVisibility) return null;
+
+  const showTasks = parts[parts.length - 5] === '1';
+  const tagKey = parts[parts.length - 6]!;
+  const folderIdRaw = parts[parts.length - 7]!;
   const recordsRevision = parts.slice(0, parts.length - PERSIST_KEY_TAIL_PARTS).join(';');
 
   return {
@@ -65,6 +102,7 @@ export function parseNotesGraphPersistKey(layoutKey: string): ParsedNotesGraphPe
     tags: tagKey ? tagKey.split('|').filter(Boolean) : [],
     showTasks,
     edgeVisibility,
+    layoutMode: layoutModeToken,
     simplifyOverride,
     filteredCount,
   };
@@ -76,5 +114,6 @@ export function parsedPersistKeyToGraphFilters(parsed: ParsedNotesGraphPersistKe
     tags: parsed.tags,
     showTasks: parsed.showTasks,
     edgeVisibility: { ...parsed.edgeVisibility },
+    layoutMode: parsed.layoutMode,
   };
 }

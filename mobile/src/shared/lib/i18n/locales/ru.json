@@ -250,6 +250,7 @@
         "showTasks": "Задачи",
         "links": "Линии связей",
         "linksNone": "Скрыты",
+        "layoutMode": "Построение",
         "view": "Вид карты",
         "viewFull": "Все связи",
         "viewSimplified": "Упрощённый",
@@ -303,7 +304,19 @@
       "folderPickerTitle": "Показать папку",
       "tagPickerTitle": "Фильтр по тегам",
       "tagPickerSearchPlaceholder": "Поиск тегов",
-      "tagPickerSearchEmpty": "Нет тегов по вашему запросу"
+      "tagPickerSearchEmpty": "Нет тегов по вашему запросу",
+      "layoutModePickerTitle": "Построение карты",
+      "layoutModePickerSubtitle": "Выберите, как расположить заметки на карте.",
+      "layoutMode": {
+        "cluster": "По группам",
+        "force": "По связям",
+        "circular": "По кругу"
+      },
+      "layoutModeHint": {
+        "cluster": "Группирует заметки по папкам и общим тегам, затем раскладывает каждую группу.",
+        "force": "Располагает заметки по силе связей — связанные заметки притягиваются ближе.",
+        "circular": "Равномерно расставляет заметки по кольцу — удобно для обзора всей карты."
+      }
     },
     "controls": {
       "fit": "Вписать карту",
