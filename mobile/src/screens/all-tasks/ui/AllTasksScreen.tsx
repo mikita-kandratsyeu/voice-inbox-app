@@ -36,6 +36,7 @@ import {
 import { EmptyState, HeaderIconButton, ScreenHeader, SectionHeader } from '@/shared/ui';
 
 import { sortTaskRows } from '../lib/applyAllTasksQuickFilter';
+import { getAllTasksCardInsetH } from '../lib/allTasksLayoutInsets';
 import { buildAllTasksRows } from '../lib/buildAllTasksRows';
 import { buildTaskDeadlineDayMarkers } from '../lib/buildTaskDeadlineDayMarkers';
 import { filterTasksByCalendarDate } from '../lib/filterTasksByCalendarDate';
@@ -141,6 +142,7 @@ export const AllTasksScreen = () => {
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const { adsAllowed } = useAdsAllowed();
   const filterPadH = isTablet ? 20 : 16;
+  const taskCardInsetH = getAllTasksCardInsetH(isTablet);
 
   const showTaskUpdateError = useCallback(() => {
     Alert.alert(t('common.error'), t('allTasks.taskUpdateError'));
@@ -748,7 +750,7 @@ export const AllTasksScreen = () => {
           selectedDate={selectedCalendarDate}
           dayMarkers={calendarDayMarkers}
           onDateChange={setSelectedCalendarDate}
-          horizontalPadding={filterPadH}
+          horizontalPadding={taskCardInsetH}
           maxWidth={contentMaxWidth}
         />
       ) : null}

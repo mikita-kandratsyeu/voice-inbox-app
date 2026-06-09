@@ -134,6 +134,16 @@ export const NotesGraphScreenBody = () => {
     [filteredRecordCount, simplifyOverride],
   );
 
+  const simplifyIsAuto = useMemo(
+    () => simplifyOverride === null && shouldAutoSimplifyGraph(filteredRecordCount),
+    [filteredRecordCount, simplifyOverride],
+  );
+
+  const activeFolderName = useMemo(() => {
+    if (!filters.folderId) return null;
+    return folders.find((folder) => folder.id === filters.folderId)?.name ?? null;
+  }, [filters.folderId, folders]);
+
   const toggleSimplifyMode = useCallback(() => {
     setSimplifyOverride((current) => {
       if (current === null) return !shouldAutoSimplifyGraph(filteredRecordCount);
@@ -707,6 +717,11 @@ export const NotesGraphScreenBody = () => {
       <GraphLayoutHistorySheet
         visible={historySheetVisible}
         layoutKey={persistKey}
+        filters={filters}
+        folderName={activeFolderName}
+        foldersEnabled={foldersEnabled}
+        simplifyActive={simplifyActive}
+        simplifyIsAuto={simplifyIsAuto}
         activeVersionId={activeSavedVersionId}
         refreshToken={historyRefreshToken}
         onClose={() => setHistorySheetVisible(false)}

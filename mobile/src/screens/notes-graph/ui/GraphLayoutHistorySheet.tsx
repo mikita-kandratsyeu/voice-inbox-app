@@ -11,6 +11,8 @@ import { hapticSelection } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
+import { buildNotesGraphLayoutFilterSummary } from '../lib/buildNotesGraphLayoutFilterSummary';
+import type { GraphFilters } from '../lib/graphTypes';
 import type { NotesGraphLayoutVersionEntry } from '../lib/notesGraphLayoutDb';
 import { listNotesGraphLayoutHistory } from '../lib/notesGraphLayoutDb';
 
@@ -20,12 +22,90 @@ const HISTORY_ROW_HEIGHT = 68;
 type GraphLayoutHistorySheetProps = {
   visible: boolean;
   layoutKey: string;
+  filters: GraphFilters;
+  folderName: string | null;
+  foldersEnabled: boolean;
+  simplifyActive: boolean;
+  simplifyIsAuto: boolean;
   activeVersionId: string | null;
   refreshToken: number;
   onClose: () => void;
   onRestore: (versionId: string) => void;
   onDelete: (versionId: string) => void | Promise<void>;
 };
+
+type AppliedFiltersCardProps = {
+  color: Colors;
+  rows: { id: string; label: string; value: string }[];
+  title: string;
+};
+
+function AppliedFiltersCard({ color, rows, title }: AppliedFiltersCardProps) {
+  return (
+    <View
+      style={{
+        alignSelf: 'stretch',
+        backgroundColor: color.background.card,
+        borderColor: color.border.default,
+        borderRadius: 12,
+        borderWidth: 1,
+        marginBottom: 12,
+        overflow: 'hidden',
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+      }}
+    >
+      <Text
+        style={{
+          color: color.text.primary,
+          fontSize: 14,
+          fontWeight: '600',
+          lineHeight: 20,
+          marginBottom: 8,
+        }}
+      >
+        {title}
+      </Text>
+      {rows.map((row, index) => (
+        <View
+          key={row.id}
+          style={{
+            alignItems: 'flex-start',
+            borderTopColor: color.border.default,
+            borderTopWidth: index === 0 ? 0 : 1,
+            flexDirection: 'row',
+            gap: 10,
+            paddingTop: index === 0 ? 0 : 8,
+            paddingBottom: index === rows.length - 1 ? 0 : 8,
+          }}
+        >
+          <Text
+            style={{
+              color: color.text.secondary,
+              flexShrink: 0,
+              fontSize: 13,
+              lineHeight: 18,
+              width: 108,
+            }}
+          >
+            {row.label}
+          </Text>
+          <Text
+            style={{
+              color: color.text.primary,
+              flex: 1,
+              fontSize: 13,
+              lineHeight: 18,
+              minWidth: 0,
+            }}
+          >
+            {row.value}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
 
 function formatVersionTimestamp(iso: string, language: string): string {
   const loc = resolveDayjsLocale(language);
@@ -165,6 +245,11 @@ function HistoryRow({
 export function GraphLayoutHistorySheet({
   visible,
   layoutKey,
+  filters,
+  folderName,
+  foldersEnabled,
+  simplifyActive,
+  simplifyIsAuto,
   activeVersionId,
   refreshToken,
   onClose,
@@ -231,6 +316,18 @@ export function GraphLayoutHistorySheet({
   );
 
   const subtitle = t('notesGraph.history.subtitle');
+  const filterRows = useMemo(
+    () =>
+      buildNotesGraphLayoutFilterSummary({
+        filters,
+        folderName,
+        foldersEnabled,
+        simplifyActive,
+        simplifyIsAuto,
+        t,
+      }),
+    [filters, folderName, foldersEnabled, simplifyActive, simplifyIsAuto, t],
+  );
 
   let listBody: React.ReactNode;
 
@@ -329,6 +426,12 @@ export function GraphLayoutHistorySheet({
             {subtitle}
           </Text>
         ) : null}
+
+        <AppliedFiltersCard
+          color={color}
+          rows={filterRows}
+          title={t('notesGraph.history.filtersTitle')}
+        />
 
         {listBody}
 

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
+import { hapticSelection } from '@/shared/lib';
 
 import type { TaskDeadlineDayMarker } from '../lib/buildTaskDeadlineDayMarkers';
 import { TasksMonthCalendar } from './TasksMonthCalendar';
@@ -23,6 +24,13 @@ export function AllTasksCalendarPanel({
   horizontalPadding,
   maxWidth,
 }: AllTasksCalendarPanelProps) {
+  const [calendarExpanded, setCalendarExpanded] = useState(false);
+
+  const handleExpandedChange = useCallback((next: boolean) => {
+    hapticSelection();
+    setCalendarExpanded(next);
+  }, []);
+
   return (
     <View
       style={{
@@ -40,6 +48,9 @@ export function AllTasksCalendarPanel({
         selectedDate={selectedDate}
         dayMarkers={dayMarkers}
         onDateChange={onDateChange}
+        collapsible
+        expanded={calendarExpanded}
+        onExpandedChange={handleExpandedChange}
       />
     </View>
   );
