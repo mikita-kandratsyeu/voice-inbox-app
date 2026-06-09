@@ -32,3 +32,11 @@ export function filterChipRowStyle(backgroundColor: string, borderColor?: string
     borderColor: resolvedBorderColor,
   };
 }
+
+/** Horizontal chip scroller — matches {@link FolderChipBar}. */
+export const FILTER_CHIP_SCROLL_CONTENT_STYLE: ViewStyle = {
+  paddingHorizontal: 16,
+  paddingTop: 8,
+  paddingBottom: 10,
+  alignItems: 'center',
+};

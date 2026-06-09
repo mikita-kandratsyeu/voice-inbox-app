@@ -16,7 +16,8 @@ export type AutomationFeatureKind =
   | 'folderColor'
   | 'batchExport'
   | 'premiumAiModel'
-  | 'privateCustomServer';
+  | 'privateCustomServer'
+  | 'notesGraph';
 
 type AutomationComingSoonSheetProps = {
   visible: boolean;
@@ -53,7 +54,9 @@ export function AutomationComingSoonSheet({
                     ? 'premium_ai_model'
                     : feature === 'privateCustomServer'
                       ? 'private_custom_server'
-                      : 'accent_color',
+                      : feature === 'notesGraph'
+                        ? 'notes_graph'
+                        : 'accent_color',
     });
     if (feature === 'autoTranscribe') {
       void logAnalyticsEvent('premium_feature_tapped_auto_whisper', {
@@ -81,6 +84,10 @@ export function AutomationComingSoonSheet({
       void logAnalyticsEvent('premium_feature_tapped_private_server', {
         surface: 'ai_settings',
       });
+    } else if (feature === 'notesGraph') {
+      void logAnalyticsEvent('premium_feature_tapped_notes_graph', {
+        surface: 'inbox_menu',
+      });
     } else {
       void logAnalyticsEvent('premium_feature_tapped_accent_color', {
         surface: 'appearance_sheet',
@@ -103,7 +110,9 @@ export function AutomationComingSoonSheet({
                 ? t('aiModels.proModelTitle')
                 : feature === 'privateCustomServer'
                   ? t('aiSettings.privateProvider.proTitle')
-                  : t('appearance.accentColor.proTitle');
+                  : feature === 'notesGraph'
+                    ? t('notesGraph.proTitle')
+                    : t('appearance.accentColor.proTitle');
   const body =
     feature === 'autoTranscribe'
       ? t('settings.automationSoon.autoTranscribeBody')
@@ -119,7 +128,9 @@ export function AutomationComingSoonSheet({
                 ? t('aiModels.proModelBody')
                 : feature === 'privateCustomServer'
                   ? t('aiSettings.privateProvider.proBody')
-                  : t('appearance.accentColor.proBody');
+                  : feature === 'notesGraph'
+                    ? t('notesGraph.proBody')
+                    : t('appearance.accentColor.proBody');
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>

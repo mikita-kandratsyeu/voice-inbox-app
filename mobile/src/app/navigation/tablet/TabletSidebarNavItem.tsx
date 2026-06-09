@@ -34,6 +34,8 @@ export type TabletSidebarNavItemProps = {
   showProcessingIndicator?: boolean;
   processingKind?: TabletSidebarAiOperationKind | null;
   accessibilityHint?: string;
+  /** Extra trailing content (e.g. Pro chip). */
+  trailingAccessory?: React.ReactNode;
   /** Folder tint when selected; defaults to accent.primary. */
   accentHex?: string;
 };
@@ -57,6 +59,7 @@ export function TabletSidebarNavItem({
   showProcessingIndicator = false,
   processingKind = null,
   accessibilityHint,
+  trailingAccessory,
   accentHex,
 }: TabletSidebarNavItemProps) {
   const accent = accentHex ?? color.accent.primary;
@@ -109,6 +112,9 @@ export function TabletSidebarNavItem({
 
   const shellStyle = { borderRadius: itemRadius, overflow: 'hidden' as const };
 
+  const hasTrailingChrome =
+    showProcessingIndicator || showUnreadDot || badgeCount > 0 || trailingAccessory != null;
+
   const rowButton = (
     <Button
       variant={appearance === 'ghost' ? 'ghost' : 'secondary'}
@@ -120,7 +126,7 @@ export function TabletSidebarNavItem({
       labelStyle={getTabletSidebarLabelStyle(isActive, labelColor)}
       icon={icon}
       trailingIcon={
-        showProcessingIndicator || showUnreadDot || badgeCount > 0 ? (
+        hasTrailingChrome ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             {showProcessingIndicator ? (
               <TabletSidebarNavProcessingIndicator
@@ -139,6 +145,7 @@ export function TabletSidebarNavItem({
                 onFilledSurface={appearance === 'primary'}
               />
             ) : null}
+            {trailingAccessory}
           </View>
         ) : undefined
       }

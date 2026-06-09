@@ -25,6 +25,7 @@ type InboxScreenHeaderRightProps = {
   onAutoOrganize: () => void;
   onEnterBatchMode: () => void;
   onOpenAllTasks: () => void;
+  onOpenNotesGraph: () => void;
   onCreateTextNote: () => void;
   onImportFile: () => void;
   /** Tablet sidebar: no overflow menu; actions as header icons. */
@@ -52,6 +53,7 @@ function InboxScreenHeaderRightInner({
   onAutoOrganize,
   onEnterBatchMode,
   onOpenAllTasks,
+  onOpenNotesGraph,
   onCreateTextNote,
   onImportFile,
   useTabletShell = false,
@@ -71,18 +73,20 @@ function InboxScreenHeaderRightInner({
       attributes?: { disabled?: boolean };
     }> = [];
 
-    if (!useTabletShell) {
-      items.push({
-        id: 'allTasks',
-        title: t('allTasks.title'),
-        titleColor: color.text.primary,
-        image: 'checklist',
-        imageColor: color.text.primary,
-      });
-    }
+    const push = (item: (typeof items)[number]) => {
+      items.push(item);
+    };
+
+    push({
+      id: 'selectNotes',
+      title: t('inbox.menuSelectNotes'),
+      titleColor: color.text.primary,
+      image: 'checkmark.circle',
+      imageColor: color.text.primary,
+    });
 
     if (foldersEnabled && !useTabletShell) {
-      items.push({
+      push({
         id: 'autoOrganize',
         title: t('inbox.menuAutoOrganize'),
         titleColor: color.text.primary,
@@ -91,20 +95,32 @@ function InboxScreenHeaderRightInner({
         attributes: isAutoOrganizing ? { disabled: true } : undefined,
       });
     }
-    items.push({
-      id: 'selectNotes',
-      title: t('inbox.menuSelectNotes'),
-      titleColor: color.text.primary,
-      image: 'checkmark.circle',
-      imageColor: color.text.primary,
-    });
-    items.push({
+
+    if (!useTabletShell) {
+      push({
+        id: 'allTasks',
+        title: t('allTasks.title'),
+        titleColor: color.text.primary,
+        image: 'checklist',
+        imageColor: color.text.primary,
+      });
+      push({
+        id: 'notesGraph',
+        title: t('notesGraph.title'),
+        titleColor: color.text.primary,
+        image: 'point.3.connected.trianglepath.dotted',
+        imageColor: color.text.primary,
+      });
+    }
+
+    push({
       id: 'importFile',
       title: t('inbox.menuImportFile'),
       titleColor: color.text.primary,
       image: 'doc.badge.plus',
       imageColor: color.text.primary,
     });
+
     return items;
   }, [color.text.primary, foldersEnabled, isAutoOrganizing, t, useTabletShell]);
 
@@ -229,6 +245,7 @@ function InboxScreenHeaderRightInner({
           const id = nativeEvent.event;
           if (id === 'importFile') onImportFile();
           if (id === 'allTasks') onOpenAllTasks();
+          if (id === 'notesGraph') onOpenNotesGraph();
           if (id === 'autoOrganize' && !isAutoOrganizing && foldersEnabled) onAutoOrganize();
           if (id === 'selectNotes') onEnterBatchMode();
         }}

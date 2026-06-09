@@ -1,0 +1,81 @@
+import type { VoiceRecord } from '@/entities/record';
+
+import type { GraphEdge, GraphNode } from '../graphTypes';
+import { recordNodeId } from '../graphTypes';
+import { graphNodeSearchText } from '../graphNodeSearchText';
+import { minNodeCenterDistance, runForceLayout } from '../runForceLayout';
+
+function makeRecord(id: string, title: string): VoiceRecord {
+  return {
+    id,
+    title,
+    transcript: '',
+    duration: '0:00',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    status: 'read',
+  };
+}
+
+function makeRecordNode(record: VoiceRecord): GraphNode {
+  return {
+    id: recordNodeId(record.id),
+    kind: 'record',
+    x: 0,
+    y: 0,
+    searchText: graphNodeSearchText({ kind: 'record', record }),
+    record,
+  };
+}
+
+describe('runForceLayout', () => {
+  it('assigns distinct positions to connected notes', () => {
+    const a = makeRecord('a', 'Alpha');
+    const b = makeRecord('b', 'Beta');
+    const nodes = [makeRecordNode(a), makeRecordNode(b)];
+    const edges: GraphEdge[] = [
+      {
+        id: 'similar:a|b',
+        kind: 'similar',
+        sourceId: recordNodeId('a'),
+        targetId: recordNodeId('b'),
+      },
+    ];
+
+    const result = runForceLayout(nodes, edges, 400, 700);
+
+    expect(result.nodes).toHaveLength(2);
+    expect(result.width).toBeGreaterThan(0);
+    expect(result.height).toBeGreaterThan(0);
+
+    const [first, second] = result.nodes;
+    expect(first!.x).not.toBe(second!.x);
+    expect(first!.y).not.toBe(second!.y);
+  });
+
+  it('spreads many weakly connected notes instead of collapsing to one point', () => {
+    const nodes = Array.from({ length: 36 }, (_, index) =>
+      makeRecordNode(makeRecord(`note-${index}`, `Note ${index}`)),
+    );
+    const edges: GraphEdge[] = [
+      {
+        id: 'similar:note-0|note-1',
+        kind: 'similar',
+        sourceId: recordNodeId('note-0'),
+        targetId: recordNodeId('note-1'),
+      },
+      {
+        id: 'similar:note-2|note-3',
+        kind: 'similar',
+        sourceId: recordNodeId('note-2'),
+        targetId: recordNodeId('note-3'),
+      },
+    ];
+
+    const result = runForceLayout(nodes, edges, 390, 700);
+
+    expect(result.nodes).toHaveLength(36);
+    expect(result.width).toBeGreaterThan(390);
+    expect(result.height).toBeGreaterThan(700);
+    expect(minNodeCenterDistance(result.nodes)).toBeGreaterThan(48);
+  });
+});

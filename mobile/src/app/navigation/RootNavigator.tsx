@@ -8,6 +8,7 @@ import { InboxFiltersResetProvider } from '@/features/inbox-filters';
 import { AllTasksScreen } from '@/screens/all-tasks';
 import { DebugScreen } from '@/screens/debug';
 import { InAppEventDetailScreen } from '@/screens/in-app-event';
+import { NotesGraphScreen } from '@/screens/notes-graph';
 import { RecordScreen, TextNoteScreen } from '@/screens/record';
 import {
   AskAIScreen,
@@ -102,6 +103,15 @@ export const RootNavigator = () => (
           headerShown: false,
           animation: 'slide_from_right',
           gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="NotesGraph"
+        component={NotesGraphScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          gestureEnabled: false,
         }}
       />
       <Stack.Screen

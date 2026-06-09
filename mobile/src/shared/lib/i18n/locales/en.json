@@ -204,6 +204,65 @@
       "moreTags": "+{{count}}"
     }
   },
+  "notesGraph": {
+    "title": "Note map",
+    "menuTitle": "Note map",
+    "proTitle": "See how your notes connect",
+    "proBody": "Explore a zoomable map of your notes — linked by tags, folders, similar content, and open tasks.",
+    "building": "Mapping your notes…",
+    "reconciling": "Updating connections…",
+    "loadingTips": {
+      "pinchPan": "Pinch to zoom and drag with one finger to move around the map.",
+      "doubleTap": "Double-tap an area to zoom in quickly.",
+      "dragNode": "Long-press a note card and drag to rearrange it on the map.",
+      "filters": "Use folder and tag filters at the top to focus on part of your library.",
+      "search": "Tap the search icon to jump between matching notes and tasks.",
+      "legend": "Tap ⓘ in the corner to see what the connection lines mean.",
+      "minimap": "Use the minimap in the corner to jump to another area of the map."
+    },
+    "minimap": {
+      "resizeA11y": "Resize minimap"
+    },
+    "emptyTitle": "Nothing to map yet",
+    "emptyDescription": "Add a note or adjust filters — links appear from tags, folders, and similar content.",
+    "largeGraphHint": "That's a big library. Filter by folder or tag to keep the map easy to explore.",
+    "searchPlaceholder": "Search notes and tasks",
+    "searchResultCount": "{{current}} of {{total}}",
+    "searchNoResults": "No matches",
+    "searchPrevious": "Previous match",
+    "searchNext": "Next match",
+    "simplifyActiveHint": "Simplified view — tap to show all links",
+    "node": {
+      "openTasks_one": "{{count}} task",
+      "openTasks_other": "{{count}} tasks"
+    },
+    "filters": {
+      "allFolders": "All folders",
+      "showTasks": "Show tasks",
+      "similar": "Related",
+      "tags": "Shared tags",
+      "folders": "Same folder",
+      "pickTags": "Choose tags",
+      "tagsCount": "{{count}} tags",
+      "folderPickerTitle": "Show folder",
+      "tagPickerTitle": "Filter by tags",
+      "tagPickerSearchPlaceholder": "Search tags",
+      "tagPickerSearchEmpty": "No tags match your search"
+    },
+    "controls": {
+      "fit": "Fit map",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "reset": "Reset view"
+    },
+    "legend": {
+      "toggle": "What the lines mean",
+      "similar": "Related notes",
+      "sharedTag": "Shared tags",
+      "sameFolder": "Same folder",
+      "tasks": "Open tasks"
+    }
+  },
   "allTasks": {
     "title": "All tasks",
     "openOnly": "Open only",
@@ -1162,6 +1221,7 @@
         "meetingModeAndPinnedMoments": "Meeting mode and pinned moments",
         "premiumAiModels": "Advanced models and an AI server in Private mode",
         "extendedShareAndBatchExport": "Extended note export — summaries, email, and audio",
+        "notesGraph": "Note map — see how your notes relate",
         "noAds": "No ads"
       }
     },

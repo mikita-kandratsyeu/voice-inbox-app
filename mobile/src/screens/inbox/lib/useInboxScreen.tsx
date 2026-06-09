@@ -299,6 +299,23 @@ export function useInboxScreen() {
     navigation.navigate('TextNoteModal');
   }, [navigation]);
 
+  const handleOpenNotesGraph = useCallback(() => {
+    if (isProActive) {
+      navigation.navigate('NotesGraph');
+      return;
+    }
+    setNotesGraphProSheetVisible(true);
+  }, [isProActive, navigation]);
+
+  const handleCloseNotesGraphProSheet = useCallback(() => {
+    setNotesGraphProSheetVisible(false);
+  }, []);
+
+  const handleNotesGraphProUpgrade = useCallback(() => {
+    setNotesGraphProSheetVisible(false);
+    openPlanPaywall();
+  }, []);
+
   const enterBatchMode = useCallback(
     (initialId?: string, options?: { haptic?: boolean }) => {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -342,6 +359,7 @@ export function useInboxScreen() {
   const [folderReorderVisible, setFolderReorderVisible] = useState(false);
   const [batchExportSheetVisible, setBatchExportSheetVisible] = useState(false);
   const [batchExportProSheetVisible, setBatchExportProSheetVisible] = useState(false);
+  const [notesGraphProSheetVisible, setNotesGraphProSheetVisible] = useState(false);
   const [batchEmailSending, setBatchEmailSending] = useState(false);
 
   const handleOpenBatchFolderPicker = useCallback(() => {
@@ -864,6 +882,10 @@ export function useInboxScreen() {
     handleSelectAll,
     handleSearchHeaderPress,
     handleCreateTextNote,
+    handleOpenNotesGraph,
+    handleCloseNotesGraphProSheet,
+    handleNotesGraphProUpgrade,
+    notesGraphProSheetVisible,
     searchBarExplicitOpen,
     showInboxSearchBar,
     emptyStatePlacement,

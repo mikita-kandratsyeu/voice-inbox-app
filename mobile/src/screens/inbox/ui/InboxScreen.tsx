@@ -74,6 +74,10 @@ export const InboxScreen = () => {
     handleSelectAll,
     handleSearchHeaderPress,
     handleCreateTextNote,
+    handleOpenNotesGraph,
+    handleCloseNotesGraphProSheet,
+    handleNotesGraphProUpgrade,
+    notesGraphProSheetVisible,
     searchBarExplicitOpen,
     showInboxSearchBar,
     emptyStatePlacement,
@@ -149,6 +153,7 @@ export const InboxScreen = () => {
             }}
             onEnterBatchMode={() => enterBatchMode(undefined, { haptic: false })}
             onOpenAllTasks={() => navigation.navigate('AllTasks')}
+            onOpenNotesGraph={handleOpenNotesGraph}
             onCreateTextNote={handleCreateTextNote}
             onImportFile={() => {
               void importFile();
@@ -266,6 +271,12 @@ export const InboxScreen = () => {
         feature="batchExport"
         onClose={handleCloseBatchExportProSheet}
         onUpgradePress={handleBatchExportProUpgrade}
+      />
+      <AutomationComingSoonSheet
+        visible={notesGraphProSheetVisible}
+        feature="notesGraph"
+        onClose={handleCloseNotesGraphProSheet}
+        onUpgradePress={handleNotesGraphProUpgrade}
       />
       {foldersEnabled && (
         <FolderReorderSheet

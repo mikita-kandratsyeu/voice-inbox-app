@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { Archive, Inbox, ListChecks, Pin } from 'lucide-react-native';
+import { Archive, Inbox, ListChecks, Pin, Waypoints } from 'lucide-react-native';
 import React from 'react';
 import { View } from 'react-native';
 import type { EdgeInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import type { Folder } from '@/entities/folder';
 import type { MonetizationMode } from '@/features/app-storefront';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
+import { PlanPaywallProChip } from '@/shared/ui';
 
 import type { TabletInboxSidebarTarget } from './tabletInboxNavBridge';
 import { requestTabletOpenEditFolder } from './tabletInboxNavBridge';
@@ -56,6 +57,7 @@ export type TabletSidebarBodyProps = {
   onTextNote: () => void;
   navigateToInbox: (target: TabletInboxSidebarTarget) => void;
   openAllTasks: () => void;
+  openNotesGraph: () => void;
   openCreateFolder: () => void;
 };
 
@@ -90,12 +92,14 @@ export function TabletSidebarBody({
   onTextNote,
   navigateToInbox,
   openAllTasks,
+  openNotesGraph,
   openCreateFolder,
 }: TabletSidebarBodyProps) {
   const inboxIconColor = color.accent.primary;
   const pinnedIconColor = color.accent.unpin;
   const archiveIconColor = color.accent.success;
   const allTasksIconColor = color.accent.primary;
+  const notesGraphIconColor = color.accent.primary;
   const mutedIcon = color.text.secondary;
 
   const aiProcessingHint = t('tablet.sidebar.aiProcessingHint');
@@ -186,6 +190,24 @@ export function TabletSidebarBody({
             inactiveColor={mutedIcon}
           >
             <ListChecks />
+          </TabletSidebarNavIcon>
+        }
+      />
+      <TabletSidebarNavItem
+        label={t('notesGraph.title')}
+        isActive={false}
+        color={color}
+        theme={theme}
+        appearance="secondary"
+        onPress={openNotesGraph}
+        trailingAccessory={!isProActive ? <PlanPaywallProChip /> : undefined}
+        icon={
+          <TabletSidebarNavIcon
+            isActive={false}
+            activeColor={notesGraphIconColor}
+            inactiveColor={mutedIcon}
+          >
+            <Waypoints />
           </TabletSidebarNavIcon>
         }
       />

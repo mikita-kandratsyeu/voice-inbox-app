@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +13,7 @@ import { getMonetizationMode } from '@/features/app-storefront';
 import { openPlanPaywall } from '@/features/plan-paywall';
 import { useProEntitlement } from '@/features/pro-license';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
+import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 
@@ -57,6 +58,7 @@ export const TabletSidebar = () => {
     folderCounts,
   } = useTabletSidebarNavCounts();
   const aiProcessing = useTabletSidebarAiProcessing();
+  const [notesGraphProSheetVisible, setNotesGraphProSheetVisible] = useState(false);
 
   const activeTranscriptionRecord = useRecordStore((s) =>
     s.records.find((r) => r.aiStatus === 'loading_model' || r.aiStatus === 'processing'),
@@ -108,6 +110,25 @@ export const TabletSidebar = () => {
     }
     rootNavigation.navigate('AllTasks');
   }, [currentTab, rootNavigation]);
+
+  const openNotesGraph = useCallback(() => {
+    if (!isProActive) {
+      hapticSelection();
+      setNotesGraphProSheetVisible(true);
+      return;
+    }
+    rootNavigation.navigate('NotesGraph');
+    hapticSelection();
+  }, [isProActive, rootNavigation]);
+
+  const handleCloseNotesGraphProSheet = useCallback(() => {
+    setNotesGraphProSheetVisible(false);
+  }, []);
+
+  const handleNotesGraphProUpgrade = useCallback(() => {
+    setNotesGraphProSheetVisible(false);
+    openPlanPaywall();
+  }, []);
 
   const openCreateFolder = useCallback(() => {
     if (currentTab !== 'Inbox') {
@@ -205,7 +226,14 @@ export const TabletSidebar = () => {
         onTextNote={handleTextNote}
         navigateToInbox={navigateToInbox}
         openAllTasks={openAllTasks}
+        openNotesGraph={openNotesGraph}
         openCreateFolder={openCreateFolder}
+      />
+      <AutomationComingSoonSheet
+        visible={notesGraphProSheetVisible}
+        feature="notesGraph"
+        onClose={handleCloseNotesGraphProSheet}
+        onUpgradePress={handleNotesGraphProUpgrade}
       />
     </View>
   );

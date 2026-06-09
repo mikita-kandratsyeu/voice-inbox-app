@@ -16,6 +16,7 @@ import {
 import {
   FILTER_CHIP_ICON_SIZE,
   FILTER_CHIP_LABEL_STYLE,
+  FILTER_CHIP_SCROLL_CONTENT_STYLE,
   filterChipRowStyle,
 } from '@/shared/ui/filterChipMetrics';
 
@@ -171,12 +172,11 @@ export const FolderChipBar = ({
         ref={scrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: isEmbedded ? 0 : 8,
-          paddingBottom: isEmbedded ? 10 : 10,
-          alignItems: 'center',
-        }}
+        contentContainerStyle={
+          isEmbedded
+            ? { ...FILTER_CHIP_SCROLL_CONTENT_STYLE, paddingTop: 0 }
+            : FILTER_CHIP_SCROLL_CONTENT_STYLE
+        }
       >
         <AllChip
           label={t(allChipLabelKey)}

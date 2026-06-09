@@ -515,6 +515,7 @@ export function SettingsPlanPaywallSheet({
               />
               <FeatureRow text={t('settings.planPaywall.features.premiumAiModels')} />
               <FeatureRow text={t('settings.planPaywall.features.extendedShareAndBatchExport')} />
+              <FeatureRow text={t('settings.planPaywall.features.notesGraph')} />
               <FeatureRow text={t('settings.planPaywall.features.accentCustomization')} />
               <FeatureRow text={t('settings.planPaywall.features.folderColors')} />
               <FeatureRow text={t('settings.planPaywall.features.noAds')} />
