@@ -1,8 +1,8 @@
 import type { VoiceRecord } from '@/entities/record';
 
+import { graphNodeSearchText } from '../graphNodeSearchText';
 import type { GraphEdge, GraphNode } from '../graphTypes';
 import { recordNodeId } from '../graphTypes';
-import { graphNodeSearchText } from '../graphNodeSearchText';
 import { minNodeCenterDistance, runForceLayout } from '../runForceLayout';
 
 function makeRecord(id: string, title: string): VoiceRecord {
@@ -77,5 +77,33 @@ describe('runForceLayout', () => {
     expect(result.width).toBeGreaterThan(390);
     expect(result.height).toBeGreaterThan(700);
     expect(minNodeCenterDistance(result.nodes)).toBeGreaterThan(48);
+  });
+
+  it('keeps user-pinned node coordinates after relayout', () => {
+    const a = makeRecord('a', 'Alpha');
+    const b = makeRecord('b', 'Beta');
+    const c = makeRecord('c', 'Gamma');
+    const nodes = [makeRecordNode(a), makeRecordNode(b), makeRecordNode(c)];
+    const edges: GraphEdge[] = [
+      {
+        id: 'similar:a|b',
+        kind: 'similar',
+        sourceId: recordNodeId('a'),
+        targetId: recordNodeId('b'),
+      },
+      {
+        id: 'similar:b|c',
+        kind: 'similar',
+        sourceId: recordNodeId('b'),
+        targetId: recordNodeId('c'),
+      },
+    ];
+
+    const pinned = new Map([[recordNodeId('b'), { x: 420, y: 280 }]]);
+    const result = runForceLayout(nodes, edges, 400, 700, pinned);
+    const pinnedNode = result.nodes.find((node) => node.id === recordNodeId('b'));
+
+    expect(pinnedNode?.x).toBe(420);
+    expect(pinnedNode?.y).toBe(280);
   });
 });

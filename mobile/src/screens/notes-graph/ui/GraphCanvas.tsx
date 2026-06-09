@@ -22,7 +22,7 @@ import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
 
 import { GRAPH_DRAG_RECONCILE_MIN_MS } from '../lib/graphDragReconcile';
-import { setSessionNodePosition } from '../lib/graphSessionLayout';
+import { getSessionNodePositions, setSessionNodePosition } from '../lib/graphSessionLayout';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
 import { computeFitTransform, computeFocusTransform } from '../lib/runForceLayout';
 import { DottedBackground } from './DottedBackground';
@@ -119,6 +119,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   const savedTranslateX = useSharedValue(0);
   const savedTranslateY = useSharedValue(0);
   const isNodeDragging = useSharedValue(false);
+  const graphScale = useSharedValue(1);
   const [isReconciling, setIsReconciling] = useState(false);
   const reconcilingTokenRef = useRef(0);
   const reconcileStartedAtRef = useRef(0);
@@ -136,9 +137,13 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     [nodes, positionOverrides],
   );
 
-  const syncViewportState = useCallback((nextScale: number, nextX: number, nextY: number) => {
-    setViewportTransform({ scale: nextScale, translateX: nextX, translateY: nextY });
-  }, []);
+  const syncViewportState = useCallback(
+    (nextScale: number, nextX: number, nextY: number) => {
+      graphScale.value = nextScale;
+      setViewportTransform({ scale: nextScale, translateX: nextX, translateY: nextY });
+    },
+    [graphScale],
+  );
 
   const applyTransform = useCallback(
     (next: { scale: number; translateX: number; translateY: number }, animated = true) => {
@@ -222,9 +227,22 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     [displayNodes, fitToScreen, focusNode, resetView, zoomIn, zoomOut],
   );
 
+  const nodeIdsKey = useMemo(() => nodes.map((node) => node.id).join('|'), [nodes]);
+
   useEffect(() => {
-    setPositionOverrides(new Map());
-  }, [nodes]);
+    const session = getSessionNodePositions();
+    if (session.size === 0) {
+      setPositionOverrides(new Map());
+      return;
+    }
+
+    const next = new Map<string, { x: number; y: number }>();
+    for (const node of nodes) {
+      const pos = session.get(node.id);
+      if (pos) next.set(node.id, pos);
+    }
+    setPositionOverrides(next);
+  }, [nodeIdsKey, nodes]);
 
   const layoutSignature = useMemo(
     () => `${nodes.map((node) => node.id).join('|')}:${graphWidth}:${graphHeight}`,
@@ -378,6 +396,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               isProActive={isProActive}
               matchedNodeIds={matchedNodeIds}
               activeNodeId={activeNodeId}
+              graphScale={graphScale}
               interactionsEnabled={!isReconciling}
               onRecordPress={onRecordPress}
               onTaskPress={onTaskPress}

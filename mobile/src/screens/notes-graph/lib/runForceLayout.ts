@@ -2,9 +2,9 @@ import Graph from 'graphology';
 import circular from 'graphology-layout/circular';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 
+import { nodeDimensions } from './graphNodeMetrics';
 import type { GraphEdge, GraphNode } from './graphTypes';
 import { layoutIsolatedRecordNodes } from './layoutIsolatedNodes';
-import { nodeDimensions } from './graphNodeMetrics';
 
 const NODE_LAYOUT_PADDING = 16;
 const GRAPH_BOUNDS_PADDING = 80;
@@ -146,11 +146,11 @@ export function runForceLayout(
     return { nodes: [], width: viewportWidth, height: viewportHeight };
   }
 
-  const { width: layoutWidth, height: layoutHeight, spread } = computeLayoutMetrics(
-    nodes.length,
-    viewportWidth,
-    viewportHeight,
-  );
+  const {
+    width: layoutWidth,
+    height: layoutHeight,
+    spread,
+  } = computeLayoutMetrics(nodes.length, viewportWidth, viewportHeight);
 
   const graph = new Graph({ type: 'undirected', multi: false, allowSelfLoops: false });
   const centerX = layoutWidth / 2;
@@ -241,17 +241,42 @@ export function runForceLayout(
     maxY = Math.max(maxY, node.y + nodeHeight);
   }
 
-  const graphWidth = Math.max(maxX - minX + GRAPH_BOUNDS_PADDING * 2, layoutWidth);
-  const graphHeight = Math.max(maxY - minY + GRAPH_BOUNDS_PADDING * 2, layoutHeight);
+  let graphWidth = Math.max(maxX - minX + GRAPH_BOUNDS_PADDING * 2, layoutWidth);
+  let graphHeight = Math.max(maxY - minY + GRAPH_BOUNDS_PADDING * 2, layoutHeight);
   const offsetX = GRAPH_BOUNDS_PADDING - minX;
   const offsetY = GRAPH_BOUNDS_PADDING - minY;
 
+  let normalizedNodes = layoutNodes.map((node) => ({
+    ...node,
+    x: node.x + offsetX,
+    y: node.y + offsetY,
+  }));
+
+  if (fixedPositions?.size) {
+    normalizedNodes = normalizedNodes.map((node) => {
+      const fixed = fixedPositions.get(node.id);
+      return fixed ? { ...node, x: fixed.x, y: fixed.y } : node;
+    });
+
+    minX = Infinity;
+    minY = Infinity;
+    maxX = -Infinity;
+    maxY = -Infinity;
+
+    for (const node of normalizedNodes) {
+      const { width: nodeWidth, height: nodeHeight } = nodeDimensions(node.kind);
+      minX = Math.min(minX, node.x);
+      minY = Math.min(minY, node.y);
+      maxX = Math.max(maxX, node.x + nodeWidth);
+      maxY = Math.max(maxY, node.y + nodeHeight);
+    }
+
+    graphWidth = Math.max(maxX - minX + GRAPH_BOUNDS_PADDING * 2, layoutWidth);
+    graphHeight = Math.max(maxY - minY + GRAPH_BOUNDS_PADDING * 2, layoutHeight);
+  }
+
   return {
-    nodes: layoutNodes.map((node) => ({
-      ...node,
-      x: node.x + offsetX,
-      y: node.y + offsetY,
-    })),
+    nodes: normalizedNodes,
     width: graphWidth,
     height: graphHeight,
   };
