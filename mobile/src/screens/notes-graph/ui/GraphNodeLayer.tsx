@@ -13,6 +13,7 @@ import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
 import { hapticLight } from '@/shared/lib';
 
+import { snapGraphPointToGrid } from '../lib/graphSnapGrid';
 import type { GraphNode } from '../lib/graphTypes';
 import { RECORD_NODE_WIDTH, TASK_NODE_WIDTH } from '../lib/graphTypes';
 import { GraphNodeCard } from './GraphNodeCard';
@@ -153,16 +154,26 @@ function DraggableNodeShell({
       .onUpdate((event) => {
         'worklet';
         const viewportScale = Math.max(canvasScale.value, 0.001);
-        dragOffsetX.value = event.translationX / viewportScale;
-        dragOffsetY.value = event.translationY / viewportScale;
+        const baseLeft = nodeLeft.value;
+        const baseTop = nodeTop.value;
+        const snapped = snapGraphPointToGrid(
+          baseLeft + event.translationX / viewportScale,
+          baseTop + event.translationY / viewportScale,
+        );
+        dragOffsetX.value = snapped.x - baseLeft;
+        dragOffsetY.value = snapped.y - baseTop;
       })
       .onEnd((event) => {
         'worklet';
         const viewportScale = Math.max(canvasScale.value, 0.001);
         const baseLeft = nodeLeft.value;
         const baseTop = nodeTop.value;
-        const finalX = baseLeft + event.translationX / viewportScale;
-        const finalY = baseTop + event.translationY / viewportScale;
+        const snapped = snapGraphPointToGrid(
+          baseLeft + event.translationX / viewportScale,
+          baseTop + event.translationY / viewportScale,
+        );
+        const finalX = snapped.x;
+        const finalY = snapped.y;
 
         nodeLeft.value = finalX;
         nodeTop.value = finalY;

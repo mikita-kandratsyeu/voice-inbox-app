@@ -77,13 +77,15 @@ function InboxScreenHeaderRightInner({
       items.push(item);
     };
 
-    push({
-      id: 'selectNotes',
-      title: t('inbox.menuSelectNotes'),
-      titleColor: color.text.primary,
-      image: 'checkmark.circle',
-      imageColor: color.text.primary,
-    });
+    if (!useTabletShell) {
+      push({
+        id: 'allTasks',
+        title: t('allTasks.title'),
+        titleColor: color.text.primary,
+        image: 'checklist',
+        imageColor: color.text.primary,
+      });
+    }
 
     if (foldersEnabled && !useTabletShell) {
       push({
@@ -98,13 +100,6 @@ function InboxScreenHeaderRightInner({
 
     if (!useTabletShell) {
       push({
-        id: 'allTasks',
-        title: t('allTasks.title'),
-        titleColor: color.text.primary,
-        image: 'checklist',
-        imageColor: color.text.primary,
-      });
-      push({
         id: 'notesGraph',
         title: t('notesGraph.title'),
         titleColor: color.text.primary,
@@ -112,6 +107,14 @@ function InboxScreenHeaderRightInner({
         imageColor: color.text.primary,
       });
     }
+
+    push({
+      id: 'selectNotes',
+      title: t('inbox.menuSelectNotes'),
+      titleColor: color.text.primary,
+      image: 'checkmark.circle',
+      imageColor: color.text.primary,
+    });
 
     push({
       id: 'importFile',

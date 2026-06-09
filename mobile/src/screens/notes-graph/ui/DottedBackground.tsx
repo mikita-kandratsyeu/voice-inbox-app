@@ -1,6 +1,8 @@
 import React from 'react';
 import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 
+import { GRAPH_SNAP_GRID_SPACING } from '../lib/graphSnapGrid';
+
 type DottedBackgroundProps = {
   width: number;
   height: number;
@@ -14,7 +16,7 @@ export function DottedBackground({
   width,
   height,
   dotColor,
-  spacing = 16,
+  spacing = GRAPH_SNAP_GRID_SPACING,
   dotRadius = 1,
   opacity = 0.35,
 }: DottedBackgroundProps) {

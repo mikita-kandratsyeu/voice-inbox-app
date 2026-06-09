@@ -206,10 +206,7 @@ function AnimatedNodeCardShell({
       phase >= GRAPH_NODE_INTERACTION_PRESSING && phase < GRAPH_NODE_INTERACTION_DRAGGING ? 1 : 0;
     const interactive = dragging > 0 || pressing > 0;
 
-    const scale = interpolate(phase, [0, 1, 2], [1, 0.97, 1.04]);
-    const opacity = dimmed
-      ? interpolate(phase, [0, 1, 2], [idleOpacity, 0.5, 1])
-      : interpolate(phase, [0, 1, 2], [idleOpacity, 0.94, 1]);
+    const opacity = dimmed ? interpolate(phase, [0, 1, 2], [idleOpacity, 0.5, 1]) : idleOpacity;
 
     const borderWidth = dragging > 0 ? 2 : pressing > 0 ? 1.5 : idleBorderWidth;
 
@@ -226,7 +223,6 @@ function AnimatedNodeCardShell({
 
     return {
       opacity,
-      transform: [{ scale }],
       borderWidth,
       borderColor: interactive
         ? color.accent.primary
