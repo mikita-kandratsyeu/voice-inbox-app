@@ -228,7 +228,7 @@
       "resizeCornerA11y": "Изменить размер с угла",
       "resizeEdgeA11y": "Изменить размер со стороны",
       "cropTemplates": "Формат",
-      "cropTemplateFull": "Целиком",
+      "cropTemplateFull": "Оригинал",
       "cropTemplateSquare": "1:1",
       "cropTemplatePortrait": "4:5",
       "cropTemplateLandscape": "16:9",
