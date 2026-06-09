@@ -8,6 +8,8 @@ import { IS_IOS } from '@/shared/lib';
 import { iosHitSlopForVisualSize } from '@/shared/lib/iosTouchTarget';
 import { FrostedBottomChrome, getInputFieldInputStyle, HeaderIconButton } from '@/shared/ui';
 
+import { GRAPH_STICKY_SEARCH_MATCH_LABEL_HEIGHT } from '../lib/graphViewportInsets';
+
 type GraphStickySearchBarProps = {
   query: string;
   debouncedQuery: string;
@@ -165,11 +167,17 @@ export function GraphStickySearchBar({
         />
       </View>
 
-      {currentMatchLabel ? (
-        <Text style={{ color: color.text.secondary, fontSize: 12, paddingHorizontal: 4 }}>
-          {currentMatchLabel}
-        </Text>
-      ) : null}
+      <View
+        style={{
+          minHeight: GRAPH_STICKY_SEARCH_MATCH_LABEL_HEIGHT,
+          justifyContent: 'center',
+          paddingHorizontal: 4,
+        }}
+      >
+        {currentMatchLabel ? (
+          <Text style={{ color: color.text.secondary, fontSize: 12 }}>{currentMatchLabel}</Text>
+        ) : null}
+      </View>
     </FrostedBottomChrome>
   );
 }

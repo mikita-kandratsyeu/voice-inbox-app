@@ -1,8 +1,16 @@
+import dayjs from 'dayjs';
+import { CalendarDays, Circle, Flag, Inbox, ListChecks, Tag as TagIcon } from 'lucide-react-native';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import Animated, { interpolate, type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 
+import { FolderLucideIcon } from '@/entities/folder/lib/folderLucideIcons';
 import type { Colors } from '@/shared/config';
+import { withAlphaHex } from '@/shared/lib';
+import { resolveDayjsLocale } from '@/shared/lib/date';
+import { parseTaskDeadline } from '@/shared/lib/parseTaskDeadline';
+import { formatTaskDeadlineTimeForDisplay } from '@/shared/lib/taskDeadlineTimeDisplay';
 
 import type { GraphNode } from '../lib/graphTypes';
 import {
@@ -16,6 +24,146 @@ import {
   GRAPH_NODE_INTERACTION_PRESSING,
 } from './graphNodeInteraction';
 
+const GRAPH_CHIP_ICON_SIZE = 10;
+const GRAPH_CHIP_FONT_SIZE = 10;
+const GRAPH_CHIP_PAD_X = 6;
+const GRAPH_CHIP_PAD_Y = 2;
+
+function GraphNodeLocationChip({
+  label,
+  color,
+  accentColor,
+  folderIconId,
+  showInboxIcon,
+}: {
+  label: string;
+  color: Colors;
+  accentColor?: string;
+  folderIconId?: string;
+  showInboxIcon?: boolean;
+}) {
+  const isFolder = Boolean(folderIconId);
+  const iconColor = accentColor ?? color.text.secondary;
+  const backgroundColor = accentColor ? withAlphaHex(accentColor, 0.14) : color.background.tertiary;
+
+  return (
+    <View
+      style={{
+        alignItems: 'center',
+        backgroundColor,
+        borderRadius: 999,
+        flexDirection: 'row',
+        flexShrink: 1,
+        gap: 3,
+        maxWidth: '100%',
+        paddingHorizontal: GRAPH_CHIP_PAD_X,
+        paddingVertical: GRAPH_CHIP_PAD_Y,
+        ...(isFolder && accentColor
+          ? { borderColor: withAlphaHex(accentColor, 0.28), borderWidth: 1 }
+          : null),
+      }}
+    >
+      {folderIconId ? (
+        <FolderLucideIcon
+          iconId={folderIconId}
+          size={GRAPH_CHIP_ICON_SIZE}
+          color={iconColor}
+          strokeWidth={2.2}
+        />
+      ) : showInboxIcon ? (
+        <Inbox size={GRAPH_CHIP_ICON_SIZE} color={iconColor} strokeWidth={2.2} />
+      ) : (
+        <TagIcon size={GRAPH_CHIP_ICON_SIZE} color={iconColor} strokeWidth={2.2} />
+      )}
+      <Text
+        numberOfLines={1}
+        style={{
+          color: isFolder ? color.text.primary : iconColor,
+          flexShrink: 1,
+          fontSize: GRAPH_CHIP_FONT_SIZE,
+          fontWeight: '600',
+        }}
+      >
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+function GraphNodeOpenTasksChip({ label, color }: { label: string; color: Colors }) {
+  return (
+    <View
+      style={{
+        alignItems: 'center',
+        backgroundColor: color.background.tertiary,
+        borderRadius: 999,
+        flexDirection: 'row',
+        flexShrink: 0,
+        gap: 3,
+        paddingHorizontal: GRAPH_CHIP_PAD_X,
+        paddingVertical: GRAPH_CHIP_PAD_Y,
+      }}
+    >
+      <ListChecks color={color.icon.muted} size={GRAPH_CHIP_ICON_SIZE} strokeWidth={2.2} />
+      <Text
+        numberOfLines={1}
+        style={{ color: color.text.secondary, fontSize: GRAPH_CHIP_FONT_SIZE, fontWeight: '600' }}
+      >
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+function GraphNodeTagsRow({ tags, color }: { tags: string[]; color: Colors }) {
+  const { t } = useTranslation();
+  if (tags.length === 0) return null;
+
+  const visibleTag = tags[0];
+  const hiddenCount = tags.length - 1;
+
+  return (
+    <View style={{ alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
+      <View
+        style={{
+          backgroundColor: color.status.processing.bg,
+          borderRadius: 999,
+          paddingHorizontal: GRAPH_CHIP_PAD_X,
+          paddingVertical: GRAPH_CHIP_PAD_Y,
+        }}
+      >
+        <Text
+          numberOfLines={1}
+          style={{
+            color: color.status.processing.text,
+            fontSize: GRAPH_CHIP_FONT_SIZE,
+            fontWeight: '500',
+            maxWidth: 72,
+          }}
+        >
+          {visibleTag}
+        </Text>
+      </View>
+      {hiddenCount > 0 ? (
+        <View
+          style={{
+            backgroundColor: color.background.tertiary,
+            borderRadius: 999,
+            paddingHorizontal: GRAPH_CHIP_PAD_X,
+            paddingVertical: GRAPH_CHIP_PAD_Y,
+          }}
+        >
+          <Text
+            style={{ color: color.text.muted, fontSize: GRAPH_CHIP_FONT_SIZE, fontWeight: '600' }}
+          >
+            {t('inbox.cardLayout.moreTags', { count: hiddenCount })}
+          </Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 type AnimatedNodeCardShellProps = {
   interactionPhase: SharedValue<number>;
   color: Colors;
@@ -26,6 +174,7 @@ type AnimatedNodeCardShellProps = {
   minHeight: number;
   borderRadius: number;
   backgroundColor: string;
+  accentStripeColor?: string;
   onPress?: () => void;
   children: React.ReactNode;
   taskStyle?: boolean;
@@ -41,12 +190,14 @@ function AnimatedNodeCardShell({
   minHeight,
   borderRadius,
   backgroundColor,
+  accentStripeColor,
   onPress,
   children,
   taskStyle = false,
 }: AnimatedNodeCardShellProps) {
-  const idleBorderWidth = active ? 2.5 : highlighted ? 2 : 1;
+  const idleBorderWidth = active ? 2 : highlighted ? 1.5 : 1;
   const idleOpacity = dimmed ? 0.28 : 1;
+  const hasStripe = accentStripeColor != null;
 
   const animatedShellStyle = useAnimatedStyle(() => {
     const phase = interactionPhase.value;
@@ -62,9 +213,16 @@ function AnimatedNodeCardShell({
 
     const borderWidth = dragging > 0 ? 2 : pressing > 0 ? 1.5 : idleBorderWidth;
 
-    const shadowOpacity = dragging > 0 ? 0.16 : pressing > 0 ? 0.06 : taskStyle ? 0 : 0.08;
-    const shadowRadius = dragging > 0 ? 12 : pressing > 0 ? 6 : 8;
-    const elevation = dragging > 0 ? 8 : pressing > 0 ? 2 : 2;
+    const shadowOpacity = dragging
+      ? color.shadow.opacity * 2.5
+      : pressing
+        ? color.shadow.opacity * 0.75
+        : taskStyle
+          ? color.shadow.opacity * 0.6
+          : color.shadow.opacity;
+
+    const shadowRadius = dragging > 0 ? 10 : pressing > 0 ? 5 : 7;
+    const elevation = dragging > 0 ? 6 : pressing > 0 ? 2 : 3;
 
     return {
       opacity,
@@ -75,22 +233,32 @@ function AnimatedNodeCardShell({
         : active || highlighted
           ? color.accent.primary
           : color.border.default,
-      shadowColor: '#000',
+      shadowColor: color.shadow.color,
       shadowOpacity,
       shadowRadius,
-      shadowOffset: { width: 0, height: dragging > 0 ? 4 : 2 },
+      shadowOffset: { width: 0, height: dragging > 0 ? 5 : 2 },
       elevation,
     };
   }, [
     active,
     color.accent.primary,
     color.border.default,
+    color.shadow.color,
+    color.shadow.opacity,
     dimmed,
     highlighted,
     idleBorderWidth,
     idleOpacity,
     taskStyle,
   ]);
+
+  const content = onPress ? (
+    <Pressable onPress={onPress} accessibilityRole="button" style={{ flex: 1 }}>
+      {children}
+    </Pressable>
+  ) : (
+    <View style={{ flex: 1 }}>{children}</View>
+  );
 
   return (
     <Animated.View
@@ -99,19 +267,29 @@ function AnimatedNodeCardShell({
           width,
           minHeight,
           borderRadius,
-          paddingHorizontal: taskStyle ? 10 : 12,
-          paddingVertical: taskStyle ? 8 : 10,
           backgroundColor,
+          overflow: 'hidden',
+          flexDirection: hasStripe ? 'row' : undefined,
+          alignItems: hasStripe ? 'stretch' : undefined,
+          paddingHorizontal: hasStripe ? 0 : taskStyle ? 8 : 0,
+          paddingVertical: hasStripe ? 0 : taskStyle ? 7 : 0,
         },
         animatedShellStyle,
       ]}
     >
-      {onPress ? (
-        <Pressable onPress={onPress} accessibilityRole="button" style={{ flex: 1 }}>
-          {children}
-        </Pressable>
+      {hasStripe ? (
+        <View
+          style={{
+            width: 3,
+            alignSelf: 'stretch',
+            backgroundColor: accentStripeColor,
+          }}
+        />
+      ) : null}
+      {hasStripe ? (
+        <View style={{ flex: 1, paddingHorizontal: 8, paddingVertical: 7 }}>{content}</View>
       ) : (
-        <View style={{ flex: 1 }}>{children}</View>
+        content
       )}
     </Animated.View>
   );
@@ -121,76 +299,185 @@ export function GraphRecordNodeCardContent({
   title,
   folderName,
   openTasksLabel,
-  isUnread,
+  tags,
   accentColor,
   color,
+  folderTintHex,
+  showInboxIcon,
+  leadingFolderIconId,
 }: {
   title: string;
   folderName?: string;
   openTasksLabel?: string;
-  isUnread: boolean;
+  tags: string[];
   accentColor: string;
   color: Colors;
+  folderTintHex?: string;
+  showInboxIcon?: boolean;
+  leadingFolderIconId?: string | null;
 }) {
+  const hasMetaChips = Boolean(folderName || openTasksLabel);
+  const hasTags = tags.length > 0;
+  const locationAccent = folderTintHex ?? accentColor;
+
   return (
-    <>
-      <View
-        style={{
-          position: 'absolute',
-          left: 0,
-          top: 10,
-          bottom: 10,
-          width: 3,
-          borderRadius: 2,
-          backgroundColor: accentColor,
-        }}
-      />
+    <View style={{ flex: 1, minWidth: 0 }}>
       <Text
         numberOfLines={2}
         style={{
           color: color.text.primary,
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: '600',
-          lineHeight: 17,
-          paddingLeft: 6,
+          lineHeight: 15,
         }}
       >
         {title}
       </Text>
-      <View
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6, paddingLeft: 6 }}
-      >
-        {folderName ? (
-          <Text
-            numberOfLines={1}
-            style={{ color: color.text.secondary, fontSize: 11, flexShrink: 1 }}
-          >
-            {folderName}
-          </Text>
-        ) : null}
-        {openTasksLabel ? (
-          <Text style={{ color: color.text.muted, fontSize: 11 }}>{openTasksLabel}</Text>
-        ) : null}
-        {isUnread ? (
-          <View
-            style={{
-              width: 7,
-              height: 7,
-              borderRadius: 4,
-              backgroundColor: color.accent.primary,
-            }}
-          />
-        ) : null}
-      </View>
-    </>
+      {hasMetaChips ? (
+        <View
+          style={{
+            alignItems: 'center',
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: 4,
+            marginTop: 4,
+          }}
+        >
+          {folderName ? (
+            <GraphNodeLocationChip
+              label={folderName}
+              color={color}
+              accentColor={locationAccent}
+              folderIconId={leadingFolderIconId ?? undefined}
+              showInboxIcon={showInboxIcon}
+            />
+          ) : null}
+          {openTasksLabel ? <GraphNodeOpenTasksChip label={openTasksLabel} color={color} /> : null}
+        </View>
+      ) : null}
+      {hasTags ? (
+        <View style={{ marginTop: 4 }}>
+          <GraphNodeTagsRow tags={tags} color={color} />
+        </View>
+      ) : null}
+    </View>
   );
 }
 
-export function GraphTaskNodeCardContent({ text, color }: { text: string; color: Colors }) {
+function GraphTaskMetaChip({
+  color,
+  icon,
+  label,
+  labelColor,
+}: {
+  color: Colors;
+  icon: React.ReactNode;
+  label: string;
+  labelColor: string;
+}) {
   return (
-    <Text numberOfLines={2} style={{ color: color.text.primary, fontSize: 12, lineHeight: 15 }}>
-      {text}
-    </Text>
+    <View
+      style={{
+        alignItems: 'center',
+        flexDirection: 'row',
+        borderRadius: 5,
+        backgroundColor: color.background.secondary,
+        flexShrink: 0,
+        gap: 3,
+        paddingHorizontal: 5,
+        paddingVertical: 2,
+      }}
+    >
+      {icon}
+      <Text style={{ color: labelColor, fontSize: 9, fontWeight: '600' }} numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+export function GraphTaskNodeCardContent({
+  text,
+  color,
+  priority,
+  deadline,
+  deadlineTime,
+}: {
+  text: string;
+  color: Colors;
+  priority?: 'high' | 'medium' | 'low';
+  deadline?: string | null;
+  deadlineTime?: string | null;
+}) {
+  const { t, i18n } = useTranslation();
+  const parsedDeadline = parseTaskDeadline(deadline);
+  const deadlineText =
+    parsedDeadline !== null
+      ? `${dayjs(parsedDeadline).locale(resolveDayjsLocale(i18n.language)).format('D MMM')}${
+          deadlineTime ? `, ${formatTaskDeadlineTimeForDisplay(deadlineTime)}` : ''
+        }`
+      : null;
+  const isOverdue = parsedDeadline !== null && dayjs(parsedDeadline).isBefore(dayjs(), 'day');
+  const priorityColor =
+    priority === 'high'
+      ? color.accent.delete
+      : priority === 'medium'
+        ? color.accent.cache
+        : color.text.secondary;
+  const hasMeta = Boolean(deadlineText || priority);
+
+  return (
+    <View style={{ flex: 1, minWidth: 0 }}>
+      <View style={{ alignItems: 'flex-start', flexDirection: 'row', gap: 6 }}>
+        <Circle color={color.icon.muted} size={13} strokeWidth={2} style={{ marginTop: 1 }} />
+        <Text
+          numberOfLines={2}
+          style={{
+            color: color.text.primary,
+            flex: 1,
+            fontSize: 11,
+            fontWeight: '500',
+            lineHeight: 14,
+          }}
+        >
+          {text}
+        </Text>
+      </View>
+      {hasMeta ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: 4,
+            marginLeft: 19,
+            marginTop: 3,
+          }}
+        >
+          {deadlineText ? (
+            <GraphTaskMetaChip
+              color={color}
+              icon={
+                <CalendarDays
+                  size={9}
+                  color={isOverdue ? color.accent.delete : color.icon.muted}
+                  strokeWidth={2}
+                />
+              }
+              label={deadlineText}
+              labelColor={isOverdue ? color.accent.delete : color.text.secondary}
+            />
+          ) : null}
+          {priority ? (
+            <GraphTaskMetaChip
+              color={color}
+              icon={<Flag size={9} color={priorityColor} strokeWidth={2} />}
+              label={t(`tasks.priority.${priority}`)}
+              labelColor={priorityColor}
+            />
+          ) : null}
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -201,6 +488,7 @@ export function GraphAnimatedNodeCard({
   active,
   highlighted,
   nodeKind,
+  accentStripeColor,
   onPress,
   children,
 }: {
@@ -210,6 +498,7 @@ export function GraphAnimatedNodeCard({
   active: boolean;
   highlighted: boolean;
   nodeKind: GraphNode['kind'];
+  accentStripeColor?: string;
   onPress?: () => void;
   children: React.ReactNode;
 }) {
@@ -226,8 +515,9 @@ export function GraphAnimatedNodeCard({
       highlighted={highlighted}
       width={width}
       minHeight={minHeight}
-      borderRadius={isTask ? 10 : 14}
-      backgroundColor={isTask ? color.background.tertiary : color.background.primary}
+      borderRadius={isTask ? 10 : 13}
+      backgroundColor={isTask ? withAlphaHex(color.background.card, 0.95) : color.background.card}
+      accentStripeColor={isTask ? undefined : accentStripeColor}
       onPress={onPress}
       taskStyle={isTask}
     >

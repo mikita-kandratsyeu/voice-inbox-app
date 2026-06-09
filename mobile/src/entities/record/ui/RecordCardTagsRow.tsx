@@ -11,12 +11,14 @@ type RecordCardTagsRowProps = {
   tags: string[];
   color: Colors;
   variant?: 'compact' | 'full';
+  maxVisible?: number;
 };
 
 export const RecordCardTagsRow = memo(function RecordCardTagsRow({
   tags,
   color,
   variant = 'full',
+  maxVisible,
 }: RecordCardTagsRowProps) {
   const { t } = useTranslation();
 
@@ -24,11 +26,12 @@ export const RecordCardTagsRow = memo(function RecordCardTagsRow({
     return null;
   }
 
-  const visibleTags = variant === 'compact' ? tags.slice(0, COMPACT_MAX_TAGS) : tags;
-  const hiddenCount = variant === 'compact' ? Math.max(0, tags.length - COMPACT_MAX_TAGS) : 0;
+  const compactLimit = maxVisible ?? COMPACT_MAX_TAGS;
+  const visibleTags = variant === 'compact' ? tags.slice(0, compactLimit) : tags;
+  const hiddenCount = variant === 'compact' ? Math.max(0, tags.length - compactLimit) : 0;
 
   return (
-    <View className="flex-row flex-wrap items-center gap-2">
+    <View className="flex-row flex-wrap items-center gap-1.5">
       {visibleTags.map((tag) => (
         <Tag key={tag} label={tag} />
       ))}

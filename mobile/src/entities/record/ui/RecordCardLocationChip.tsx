@@ -1,4 +1,4 @@
-import { Tag } from 'lucide-react-native';
+import { Inbox, Tag } from 'lucide-react-native';
 import React, { memo } from 'react';
 import { Text, View } from 'react-native';
 
@@ -11,6 +11,7 @@ type RecordCardLocationChipProps = {
   color: Colors;
   accentColor?: string;
   folderIconId?: string;
+  showInboxIcon?: boolean;
 };
 
 export const RecordCardLocationChip = memo(function RecordCardLocationChip({
@@ -18,6 +19,7 @@ export const RecordCardLocationChip = memo(function RecordCardLocationChip({
   color,
   accentColor,
   folderIconId,
+  showInboxIcon = false,
 }: RecordCardLocationChipProps) {
   const isFolder = Boolean(folderIconId);
   const iconColor = accentColor ?? color.text.secondary;
@@ -46,6 +48,8 @@ export const RecordCardLocationChip = memo(function RecordCardLocationChip({
     >
       {folderIconId ? (
         <FolderLucideIcon iconId={folderIconId} size={12} color={iconColor} strokeWidth={2.2} />
+      ) : showInboxIcon ? (
+        <Inbox size={12} color={iconColor} strokeWidth={2.2} />
       ) : (
         <Tag size={12} color={iconColor} strokeWidth={2.2} />
       )}

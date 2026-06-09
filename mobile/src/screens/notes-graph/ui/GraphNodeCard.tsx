@@ -53,7 +53,13 @@ export function GraphNodeCard({
         nodeKind="task"
         onPress={onPress}
       >
-        <GraphTaskNodeCardContent text={node.task.text} color={color} />
+        <GraphTaskNodeCardContent
+          text={node.task.text}
+          color={color}
+          priority={node.task.priority}
+          deadline={node.task.deadline}
+          deadlineTime={node.task.deadlineTime}
+        />
       </GraphAnimatedNodeCard>
     );
   }
@@ -81,6 +87,11 @@ export function GraphNodeCard({
       },
     });
 
+    const accentColor =
+      record.folderId && folderColor
+        ? resolveDisplayFolderColor(folderColor, isProActive)
+        : color.accent.primary;
+
     return (
       <GraphAnimatedNodeCard
         interactionPhase={interactionPhase}
@@ -89,6 +100,7 @@ export function GraphNodeCard({
         active={active}
         highlighted={highlighted}
         nodeKind="record"
+        accentStripeColor={accentColor}
         onPress={onPress}
       >
         <GraphRecordNodeCardContent
@@ -97,13 +109,12 @@ export function GraphNodeCard({
           openTasksLabel={
             openTasks > 0 ? t('notesGraph.node.openTasks', { count: openTasks }) : undefined
           }
-          isUnread={record.status === 'unread'}
-          accentColor={
-            record.folderId && folderColor
-              ? resolveDisplayFolderColor(folderColor, isProActive)
-              : color.accent.primary
-          }
+          tags={record.tags ?? []}
+          accentColor={accentColor}
           color={color}
+          folderTintHex={chrome.folderTintHex}
+          showInboxIcon={chrome.showInboxIcon}
+          leadingFolderIconId={chrome.leadingFolderIconId}
         />
       </GraphAnimatedNodeCard>
     );

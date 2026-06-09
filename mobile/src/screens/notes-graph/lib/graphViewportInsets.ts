@@ -19,17 +19,16 @@ export type GraphViewportInsets = {
 
 export function estimateGraphSearchFocusBottomInset(options: {
   searchBarVisible: boolean;
-  hasMatchLabel: boolean;
   safeAreaBottom: number;
 }): number {
   if (!options.searchBarVisible) {
     return GRAPH_FLOATING_CONTROLS_BOTTOM_CLEARANCE;
   }
 
-  let height = GRAPH_STICKY_SEARCH_BAR_VERTICAL_PADDING + GRAPH_STICKY_SEARCH_BAR_ROW_HEIGHT;
-  if (options.hasMatchLabel) {
-    height += GRAPH_STICKY_SEARCH_MATCH_LABEL_HEIGHT;
-  }
+  const height =
+    GRAPH_STICKY_SEARCH_BAR_VERTICAL_PADDING +
+    GRAPH_STICKY_SEARCH_BAR_ROW_HEIGHT +
+    GRAPH_STICKY_SEARCH_MATCH_LABEL_HEIGHT;
 
   return height + options.safeAreaBottom + 8;
 }

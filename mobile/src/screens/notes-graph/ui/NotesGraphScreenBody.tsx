@@ -315,10 +315,9 @@ export const NotesGraphScreenBody = () => {
     () =>
       estimateGraphSearchFocusBottomInset({
         searchBarVisible: showGraphSearchBar,
-        hasMatchLabel: debouncedSearchQuery.trim().length > 0 && searchMatches.length > 0,
         safeAreaBottom: insets.bottom,
       }),
-    [debouncedSearchQuery, insets.bottom, searchMatches.length, showGraphSearchBar],
+    [insets.bottom, showGraphSearchBar],
   );
 
   const focusViewportInsets = useMemo(

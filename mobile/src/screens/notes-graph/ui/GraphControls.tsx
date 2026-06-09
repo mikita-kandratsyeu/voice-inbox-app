@@ -1,5 +1,5 @@
 import { Info, Maximize2, Minus, Plus, RotateCcw } from 'lucide-react-native';
-import React from 'react';
+import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
@@ -45,10 +45,15 @@ function ControlButton({
   disabled?: boolean;
   children: React.ReactNode;
 }) {
+  const longPressHandledRef = useRef(false);
+
   return (
     <Pressable
       onPress={() => {
-        if (disabled) return;
+        if (disabled || longPressHandledRef.current) {
+          longPressHandledRef.current = false;
+          return;
+        }
         hapticLight();
         onPress();
       }}
@@ -56,6 +61,7 @@ function ControlButton({
         onLongPress
           ? () => {
               if (disabled) return;
+              longPressHandledRef.current = true;
               hapticLight();
               onLongPress();
             }
