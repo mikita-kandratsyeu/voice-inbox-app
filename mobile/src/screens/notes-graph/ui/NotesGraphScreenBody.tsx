@@ -1,7 +1,8 @@
+import { MenuView } from '@react-native-menu/menu';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { History, Save, Search } from 'lucide-react-native';
+import { MoreVertical, Save, Search } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, useWindowDimensions, View } from 'react-native';
@@ -16,7 +17,7 @@ import { type TaskItem, useRecordStore } from '@/entities/record';
 import { areFoldersEnabledInAiMode, useSettingsStore } from '@/entities/settings';
 import { useProEntitlement } from '@/features/pro-license';
 import { TaskEditSheet } from '@/screens/recording-detail/ui/TaskEditSheet';
-import { useColors } from '@/shared/config';
+import { useAppTheme, useColors } from '@/shared/config';
 import { EmptyState, HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 import { collectUniqueTags, countFilteredGraphRecords } from '../lib/buildGraphModel';
@@ -56,6 +57,8 @@ export const NotesGraphScreenBody = () => {
   const handleBack = useRootStackBack();
   const route = useRoute<RouteProp<RootStackParamList, 'NotesGraph'>>();
   const color = useColors();
+  const theme = useAppTheme();
+  const isDark = theme === 'dark';
   const insets = useSafeAreaInsets();
   const { isProActive } = useProEntitlement();
   const canvasRef = useRef<GraphCanvasHandle>(null);
@@ -521,6 +524,19 @@ export const NotesGraphScreenBody = () => {
 
   const headerControlsDisabled = isGraphReconciling || isSavingLayout;
 
+  const notesGraphMenuActions = useMemo(
+    () => [
+      {
+        id: 'layoutHistory' as const,
+        title: t('notesGraph.history.title'),
+        image: 'clock.arrow.circlepath' as const,
+        imageColor: color.text.primary,
+        titleColor: color.text.primary,
+      },
+    ],
+    [color.text.primary, t],
+  );
+
   const headerRightSlot =
     recordCount > 0 ? (
       <View
@@ -532,28 +548,6 @@ export const NotesGraphScreenBody = () => {
         }}
         pointerEvents={headerControlsDisabled ? 'none' : 'auto'}
       >
-        {hasUnsavedLayoutChanges ? (
-          <HeaderIconButton
-            iconOnly
-            variant="icon"
-            size="md"
-            icon={<Save size={21} color={color.accent.primary} strokeWidth={2.2} />}
-            color={color}
-            onPress={() => {
-              void handleSaveLayout();
-            }}
-            accessibilityLabel={t('notesGraph.saveChangesA11y')}
-          />
-        ) : null}
-        <HeaderIconButton
-          iconOnly
-          variant="icon"
-          size="md"
-          icon={<History size={21} color={color.text.primary} strokeWidth={2.2} />}
-          color={color}
-          onPress={() => setHistorySheetVisible(true)}
-          accessibilityLabel={t('notesGraph.history.openA11y')}
-        />
         {records.length > 0 ? (
           <HeaderIconButton
             iconOnly
@@ -581,6 +575,41 @@ export const NotesGraphScreenBody = () => {
             }
           />
         ) : null}
+        {hasUnsavedLayoutChanges ? (
+          <HeaderIconButton
+            iconOnly
+            variant="icon"
+            size="md"
+            icon={<Save size={21} color={color.accent.primary} strokeWidth={2.2} />}
+            color={color}
+            onPress={() => {
+              void handleSaveLayout();
+            }}
+            accessibilityLabel={t('notesGraph.saveChangesA11y')}
+          />
+        ) : null}
+        <MenuView
+          key={`notes-graph-menu-${theme}`}
+          title=""
+          themeVariant={isDark ? 'dark' : 'light'}
+          shouldOpenOnLongPress={false}
+          actions={notesGraphMenuActions}
+          onPressAction={({ nativeEvent }) => {
+            if (nativeEvent.event === 'layoutHistory') {
+              setHistorySheetVisible(true);
+            }
+          }}
+        >
+          <HeaderIconButton
+            iconOnly
+            variant="icon"
+            size="md"
+            icon={<MoreVertical size={21} color={color.text.primary} strokeWidth={2.2} />}
+            color={color}
+            onPress={() => {}}
+            accessibilityLabel={t('common.moreActions')}
+          />
+        </MenuView>
       </View>
     ) : null;
 

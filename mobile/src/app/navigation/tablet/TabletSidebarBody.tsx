@@ -19,7 +19,11 @@ import {
   TabletSidebarFoldersSection,
 } from './TabletSidebarFoldersSection';
 import { TabletSidebarFooter } from './TabletSidebarFooter';
-import { TabletSidebarNavIcon, TabletSidebarNavItem } from './TabletSidebarNavItem';
+import {
+  TabletSidebarNavIcon,
+  TabletSidebarNavItem,
+  TabletSidebarSectionDivider,
+} from './TabletSidebarNavItem';
 import { TabletSidebarPlanAndUsageCard } from './TabletSidebarPlanAndUsageCard';
 import type { TabletSidebarTheme } from './tabletSidebarTheme';
 import { navigateMainTab } from './tabletTabNavigation';
@@ -175,6 +179,7 @@ export function TabletSidebarBody({
           </TabletSidebarNavIcon>
         }
       />
+      <TabletSidebarSectionDivider color={color} />
       <TabletSidebarNavItem
         label={t('allTasks.title')}
         isActive={false}

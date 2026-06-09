@@ -14,9 +14,9 @@ export function DottedBackground({
   width,
   height,
   dotColor,
-  spacing = 22,
-  dotRadius = 1,
-  opacity = 0.1,
+  spacing = 40,
+  dotRadius = 2.25,
+  opacity = 0.35,
 }: DottedBackgroundProps) {
   const patternId = 'notes-graph-dot-pattern';
 
