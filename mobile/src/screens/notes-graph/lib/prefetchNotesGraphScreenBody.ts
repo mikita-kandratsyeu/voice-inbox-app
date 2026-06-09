@@ -1,3 +1,5 @@
+import { loadNotesGraphScreenBodyModule } from './notesGraphScreenBodyLoader';
+
 type NotesGraphScreenBodyModule = typeof import('../ui/NotesGraphScreenBody');
 
 let prefetchPromise: Promise<NotesGraphScreenBodyModule> | null = null;
@@ -9,7 +11,7 @@ export function prefetchNotesGraphScreenBody(): Promise<NotesGraphScreenBodyModu
   }
 
   if (!prefetchPromise) {
-    prefetchPromise = import('../ui/NotesGraphScreenBody').then((mod) => {
+    prefetchPromise = loadNotesGraphScreenBodyModule().then((mod) => {
       prefetchedModule = mod;
       return mod;
     });

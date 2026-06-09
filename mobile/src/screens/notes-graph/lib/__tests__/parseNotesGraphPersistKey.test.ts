@@ -64,4 +64,52 @@ describe('parseNotesGraphPersistKey', () => {
 
     expect(parseNotesGraphPersistKey(layoutKey)?.simplifyOverride).toBe(true);
   });
+
+  it('maps parsed keys back to graph filters', () => {
+    const layoutKey = [
+      '2:a,b',
+      'folder-1',
+      'beta|alpha',
+      '1',
+      'contains:1,sameFolder:0,sharedTag:1,similar:0',
+      'circular',
+      '0',
+      '5',
+    ].join(';');
+    const parsed = parseNotesGraphPersistKey(layoutKey)!;
+
+    expect(parsedPersistKeyToGraphFilters(parsed)).toEqual({
+      folderId: 'folder-1',
+      tags: ['beta', 'alpha'],
+      showTasks: true,
+      edgeVisibility: {
+        contains: true,
+        sameFolder: false,
+        sharedTag: true,
+        similar: false,
+      },
+      layoutMode: 'circular',
+    });
+  });
+
+  it('returns null when layout mode token is invalid in a modern key', () => {
+    const layoutKey = [
+      '2:a,b',
+      'folder-1',
+      'beta|alpha',
+      '0',
+      'contains:0,sameFolder:1,sharedTag:0,similar:1',
+      'grid',
+      'auto',
+      '5',
+    ].join(';');
+
+    expect(parseNotesGraphPersistKey(layoutKey)).toBeNull();
+  });
+
+  it('returns null for malformed edge visibility segments', () => {
+    const layoutKey = ['1:a', '', '', '1', 'contains:1,invalid', 'cluster', 'auto', '1'].join(';');
+
+    expect(parseNotesGraphPersistKey(layoutKey)).toBeNull();
+  });
 });

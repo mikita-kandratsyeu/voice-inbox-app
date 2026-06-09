@@ -62,6 +62,29 @@ describe('buildNotesGraphLayoutFilterSummary', () => {
     expect(rows.find((row) => row.id === 'layoutMode')?.value).toBe(expectedValue);
   });
 
+  it('reports when all link types are disabled', () => {
+    const rows = buildNotesGraphLayoutFilterSummary({
+      filters: {
+        ...baseFilters,
+        edgeVisibility: {
+          similar: false,
+          sharedTag: false,
+          sameFolder: false,
+          contains: true,
+        },
+      },
+      folderName: null,
+      foldersEnabled: true,
+      simplifyActive: false,
+      simplifyIsAuto: false,
+      t,
+    });
+
+    expect(rows.find((row) => row.id === 'links')?.value).toBe(
+      'notesGraph.history.filters.linksNone',
+    );
+  });
+
   it('omits folder row when folders are disabled', () => {
     const rows = buildNotesGraphLayoutFilterSummary({
       filters: { ...baseFilters, tags: ['alpha', 'beta'] },

@@ -1,6 +1,7 @@
 import {
   getGraphLayoutSaveBarBottom,
   getGraphLayoutSaveDockButtonStyle,
+  getGraphLayoutSaveDockShadowStyle,
   getGraphLayoutSaveDockStyle,
   GRAPH_LAYOUT_SAVE_BUTTON_SIZE,
   GRAPH_LAYOUT_SAVE_CORNER_COLUMN_WIDTH,
@@ -48,5 +49,12 @@ describe('graphLayoutSaveBarMetrics', () => {
     expect(discard.height).toBe(GRAPH_LAYOUT_SAVE_BUTTON_SIZE);
     expect(save.backgroundColor).toBe(color.accent.primary);
     expect(discard.backgroundColor).not.toBe(color.accent.primary);
+  });
+
+  it('adds platform shadow styles to the dock', () => {
+    const shadow = getGraphLayoutSaveDockShadowStyle(color);
+
+    expect(shadow).toBeDefined();
+    expect(Object.keys(shadow).length).toBeGreaterThan(0);
   });
 });

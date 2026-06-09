@@ -77,6 +77,17 @@ describe('layoutNodesInCircle', () => {
     expect(maxY).toBeLessThanOrEqual(height);
   });
 
+  it('centers a single node in the viewport', () => {
+    const node = makeRecordNode(makeRecord('solo', 'Solo'));
+    const width = 900;
+    const height = 700;
+
+    const [laidOut] = layoutNodesInCircle([node], width, height);
+
+    expect(laidOut?.x).toBe(width / 2 - 79);
+    expect(laidOut?.y).toBe(height / 2 - 41);
+  });
+
   it('keeps pinned node coordinates', () => {
     const nodes = [
       makeRecordNode(makeRecord('a', 'Alpha')),
