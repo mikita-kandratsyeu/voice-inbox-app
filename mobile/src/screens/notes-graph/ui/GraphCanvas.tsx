@@ -12,9 +12,11 @@ import type { LayoutChangeEvent } from 'react-native';
 import { InteractionManager, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  Easing,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -29,6 +31,7 @@ import { DottedBackground } from './DottedBackground';
 import { GraphControls } from './GraphControls';
 import { GraphEdgeLayer } from './GraphEdgeLayer';
 import { GraphMinimap } from './GraphMinimap';
+import { GRAPH_VIEWPORT_SPRING, GRAPH_VIEWPORT_TIMING_MS } from './graphNodeInteraction';
 import { GraphNodeLayer } from './GraphNodeLayer';
 
 const MIN_SCALE = 0.3;
@@ -123,7 +126,6 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   const savedTranslateX = useSharedValue(0);
   const savedTranslateY = useSharedValue(0);
   const isNodeDragging = useSharedValue(false);
-  const graphScale = useSharedValue(1);
   const [isReconciling, setIsReconciling] = useState(false);
   const reconcilingTokenRef = useRef(0);
   const reconcileStartedAtRef = useRef(0);
@@ -141,30 +143,36 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     [nodes, positionOverrides],
   );
 
-  const syncViewportState = useCallback(
-    (nextScale: number, nextX: number, nextY: number) => {
-      graphScale.value = nextScale;
-      setViewportTransform({ scale: nextScale, translateX: nextX, translateY: nextY });
-    },
-    [graphScale],
-  );
+  const syncViewportState = useCallback((nextScale: number, nextX: number, nextY: number) => {
+    setViewportTransform({ scale: nextScale, translateX: nextX, translateY: nextY });
+  }, []);
 
   const applyTransform = useCallback(
     (next: { scale: number; translateX: number; translateY: number }, animated = true) => {
       const clampedScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, next.scale));
+
+      const commitViewportSync = () => {
+        syncViewportState(clampedScale, next.translateX, next.translateY);
+      };
+
+      savedScale.value = clampedScale;
+      savedTranslateX.value = next.translateX;
+      savedTranslateY.value = next.translateY;
+
       if (animated) {
-        scale.value = withTiming(clampedScale, { duration: 220 });
-        translateX.value = withTiming(next.translateX, { duration: 220 });
-        translateY.value = withTiming(next.translateY, { duration: 220 });
+        scale.value = withSpring(clampedScale, GRAPH_VIEWPORT_SPRING, (finished) => {
+          if (finished) {
+            runOnJS(commitViewportSync)();
+          }
+        });
+        translateX.value = withSpring(next.translateX, GRAPH_VIEWPORT_SPRING);
+        translateY.value = withSpring(next.translateY, GRAPH_VIEWPORT_SPRING);
       } else {
         scale.value = clampedScale;
         translateX.value = next.translateX;
         translateY.value = next.translateY;
+        commitViewportSync();
       }
-      savedScale.value = clampedScale;
-      savedTranslateX.value = next.translateX;
-      savedTranslateY.value = next.translateY;
-      syncViewportState(clampedScale, next.translateX, next.translateY);
     },
     [
       savedScale,
@@ -303,18 +311,61 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     };
   }, [isReconciling, positionOverrides, setReconciling]);
 
+  const clampViewportScale = (value: number) => {
+    'worklet';
+    return Math.min(MAX_SCALE, Math.max(MIN_SCALE, value));
+  };
+
+  const syncGestureBaseline = () => {
+    'worklet';
+    savedScale.value = scale.value;
+    savedTranslateX.value = translateX.value;
+    savedTranslateY.value = translateY.value;
+  };
+
+  const applyFocalZoom = (
+    nextScale: number,
+    focalX: number,
+    focalY: number,
+    baseScale: number,
+    baseTranslateX: number,
+    baseTranslateY: number,
+  ) => {
+    'worklet';
+    const clampedScale = clampViewportScale(nextScale);
+    const scaleRatio = clampedScale / baseScale;
+    translateX.value = focalX - (focalX - baseTranslateX) * scaleRatio;
+    translateY.value = focalY - (focalY - baseTranslateY) * scaleRatio;
+    scale.value = clampedScale;
+  };
+
   const pinch = Gesture.Pinch()
+    .onBegin(syncGestureBaseline)
     .onUpdate((event) => {
-      scale.value = Math.min(MAX_SCALE, Math.max(MIN_SCALE, savedScale.value * event.scale));
+      const nextScale = savedScale.value * event.scale;
+      applyFocalZoom(
+        nextScale,
+        event.focalX,
+        event.focalY,
+        savedScale.value,
+        savedTranslateX.value,
+        savedTranslateY.value,
+      );
     })
     .onEnd(() => {
       savedScale.value = scale.value;
+      savedTranslateX.value = translateX.value;
+      savedTranslateY.value = translateY.value;
       runOnJS(syncViewportState)(scale.value, translateX.value, translateY.value);
     });
 
   const pan = Gesture.Pan()
     .activeOffsetX([-PAN_ACTIVATION_DISTANCE, PAN_ACTIVATION_DISTANCE])
     .activeOffsetY([-PAN_ACTIVATION_DISTANCE, PAN_ACTIVATION_DISTANCE])
+    .onBegin(() => {
+      if (isNodeDragging.value) return;
+      syncGestureBaseline();
+    })
     .onUpdate((event) => {
       if (isNodeDragging.value) return;
       translateX.value = savedTranslateX.value + event.translationX;
@@ -330,20 +381,28 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
     .onEnd((event) => {
-      const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, savedScale.value * 1.35));
-      const focalX = event.x;
-      const focalY = event.y;
-      const ratio = nextScale / savedScale.value;
-      const nextTranslateX = focalX - (focalX - savedTranslateX.value) * ratio;
-      const nextTranslateY = focalY - (focalY - savedTranslateY.value) * ratio;
+      const nextScale = clampViewportScale(savedScale.value * 1.35);
+      const nextTranslateX =
+        event.x - (event.x - savedTranslateX.value) * (nextScale / savedScale.value);
+      const nextTranslateY =
+        event.y - (event.y - savedTranslateY.value) * (nextScale / savedScale.value);
 
-      scale.value = withTiming(nextScale, { duration: 220 });
-      translateX.value = withTiming(nextTranslateX, { duration: 220 });
-      translateY.value = withTiming(nextTranslateY, { duration: 220 });
       savedScale.value = nextScale;
       savedTranslateX.value = nextTranslateX;
       savedTranslateY.value = nextTranslateY;
-      runOnJS(syncViewportState)(nextScale, nextTranslateX, nextTranslateY);
+
+      const timing = {
+        duration: GRAPH_VIEWPORT_TIMING_MS,
+        easing: Easing.out(Easing.cubic),
+      };
+
+      scale.value = withTiming(nextScale, timing, (finished) => {
+        if (finished) {
+          runOnJS(syncViewportState)(nextScale, nextTranslateX, nextTranslateY);
+        }
+      });
+      translateX.value = withTiming(nextTranslateX, timing);
+      translateY.value = withTiming(nextTranslateY, timing);
     });
 
   const canvasGesture = Gesture.Simultaneous(pinch, pan, doubleTap);
@@ -401,7 +460,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               isProActive={isProActive}
               matchedNodeIds={matchedNodeIds}
               activeNodeId={activeNodeId}
-              graphScale={graphScale}
+              canvasScale={scale}
               interactionsEnabled={!isReconciling}
               onRecordPress={onRecordPress}
               onTaskPress={onTaskPress}

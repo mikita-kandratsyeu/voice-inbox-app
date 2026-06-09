@@ -451,17 +451,15 @@ export const NotesGraphScreenBody = () => {
     }
   }, [hasUnsavedLayoutChanges, isGraphReconciling, isSavingLayout, persistKey]);
 
-  const handleRestoreLayoutVersion = useCallback(
-    async (versionId: string) => {
-      const positions = await getNotesGraphLayoutVersionPositions(versionId);
-      if (!positions) return;
+  const handleRestoreLayoutVersion = useCallback(async (versionId: string) => {
+    const positions = await getNotesGraphLayoutVersionPositions(versionId);
+    if (!positions) return;
 
-      replaceSessionNodePositions(positions);
-      setLayoutRestoreToken((token) => token + 1);
-      syncUnsavedLayoutState();
-    },
-    [syncUnsavedLayoutState],
-  );
+    replaceSessionNodePositions(positions);
+    setActiveSavedVersionId(versionId);
+    setLayoutRestoreToken((token) => token + 1);
+    syncUnsavedLayoutState();
+  }, [syncUnsavedLayoutState]);
 
   const headerControlsDisabled = isGraphReconciling || isSavingLayout;
 
@@ -471,7 +469,7 @@ export const NotesGraphScreenBody = () => {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 2,
+          gap: 6,
           opacity: headerControlsDisabled ? 0.45 : 1,
         }}
         pointerEvents={headerControlsDisabled ? 'none' : 'auto'}
@@ -611,7 +609,7 @@ export const NotesGraphScreenBody = () => {
       <GraphLayoutHistorySheet
         visible={historySheetVisible}
         layoutKey={persistKey}
-        activeVersionId={hasUnsavedLayoutChanges ? null : activeSavedVersionId}
+        activeVersionId={activeSavedVersionId}
         refreshToken={historyRefreshToken}
         onClose={() => setHistorySheetVisible(false)}
         onRestore={(versionId) => {
