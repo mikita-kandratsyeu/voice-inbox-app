@@ -37,6 +37,7 @@ import { EmptyState, HeaderIconButton, ScreenHeader, SectionHeader } from '@/sha
 
 import { sortTaskRows } from '../lib/applyAllTasksQuickFilter';
 import { buildAllTasksRows } from '../lib/buildAllTasksRows';
+import { buildTaskDeadlineDayMarkers } from '../lib/buildTaskDeadlineDayMarkers';
 import { filterTasksByCalendarDate } from '../lib/filterTasksByCalendarDate';
 import {
   getTaskDeadlineBucket,
@@ -191,6 +192,8 @@ export const AllTasksScreen = () => {
   const calendarListData = useMemo((): AllTasksListItem[] => {
     return calendarDayRows.map((row) => ({ type: 'task', row }));
   }, [calendarDayRows]);
+
+  const calendarDayMarkers = useMemo(() => buildTaskDeadlineDayMarkers(taskRows), [taskRows]);
 
   useEffect(() => {
     if (viewMode === 'calendar' && quickFilter === 'today') {
@@ -743,6 +746,7 @@ export const AllTasksScreen = () => {
         <AllTasksCalendarPanel
           color={color}
           selectedDate={selectedCalendarDate}
+          dayMarkers={calendarDayMarkers}
           onDateChange={setSelectedCalendarDate}
           horizontalPadding={filterPadH}
           maxWidth={contentMaxWidth}
