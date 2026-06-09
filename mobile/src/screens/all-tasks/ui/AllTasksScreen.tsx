@@ -3,7 +3,6 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
-import dayjs from 'dayjs';
 import { CalendarDays, Plus, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -770,6 +769,7 @@ export const AllTasksScreen = () => {
                     : t('allTasks.emptyFiltered')
               }
               description={t('allTasks.emptyDescription')}
+              onlyText={viewMode === 'calendar'}
             />
           </View>
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />

@@ -5,20 +5,22 @@ import { Text, View } from 'react-native';
 import { useColors } from '@/shared/config';
 
 type EmptyStateProps = {
-  title?: string;
   description?: string;
   hint?: string;
   hintIcon?: React.ReactNode;
   icon?: React.ReactNode;
+  onlyText?: boolean;
+  title?: string;
   verticalPlacement?: 'center' | 'top';
 };
 
 export const EmptyState = ({
-  title,
   description,
   hint,
   hintIcon,
   icon,
+  onlyText = false,
+  title,
   verticalPlacement = 'center',
 }: EmptyStateProps) => {
   const color = useColors();
@@ -28,12 +30,14 @@ export const EmptyState = ({
       className={`flex-1 items-center px-8 ${verticalPlacement === 'top' ? 'justify-start' : 'justify-center'}`}
       style={verticalPlacement === 'top' ? { paddingTop: 48 } : undefined}
     >
-      <View
-        className="mb-4 rounded-full p-5"
-        style={{ backgroundColor: color.background.tertiary }}
-      >
-        {icon ?? <Inbox size={40} color={color.icon.muted} strokeWidth={1.5} />}
-      </View>
+      {!onlyText && (
+        <View
+          className="mb-4 rounded-full p-5"
+          style={{ backgroundColor: color.background.tertiary }}
+        >
+          {icon ?? <Inbox size={40} color={color.icon.muted} strokeWidth={1.5} />}
+        </View>
+      )}
       {Boolean(title) && (
         <Text
           className="mb-2 text-center text-lg font-semibold"
