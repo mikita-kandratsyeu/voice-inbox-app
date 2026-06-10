@@ -102,6 +102,7 @@ export function AdminProLicensesPanel() {
   const [generating, setGenerating] = useState(false);
   const [plainKey, setPlainKey] = useState<string | null>(null);
   const [list, setList] = useState<ProLicenseRow[]>([]);
+  const [listEvaluatedAtMs, setListEvaluatedAtMs] = useState(0);
   const [stats, setStats] = useState<ProLicenseStats | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'unused' | 'redeemed'>('all');
   const [deviceProFilter, setDeviceProFilter] = useState<'any' | 'active' | 'inactive'>('any');
@@ -168,9 +169,11 @@ export function AdminProLicensesPanel() {
         setList([]);
         setStats(null);
         setPagination(null);
+        setListEvaluatedAtMs(Date.now());
         return;
       }
       setList(Array.isArray(data.items) ? data.items : []);
+      setListEvaluatedAtMs(Date.now());
       setStats(data.stats ?? null);
       if (data.pagination) {
         setPagination(data.pagination);
@@ -183,6 +186,7 @@ export function AdminProLicensesPanel() {
       setList([]);
       setStats(null);
       setPagination(null);
+      setListEvaluatedAtMs(Date.now());
     } finally {
       setListLoading(false);
     }
@@ -970,7 +974,10 @@ export function AdminProLicensesPanel() {
                     ? new Date(row.nominalGrantEndsAt).getTime()
                     : null;
                   const keyGrantEnded =
-                    nominalMs !== null && !Number.isNaN(nominalMs) && nominalMs <= Date.now();
+                    nominalMs !== null &&
+                    !Number.isNaN(nominalMs) &&
+                    listEvaluatedAtMs > 0 &&
+                    nominalMs <= listEvaluatedAtMs;
                   const deviceExtended =
                     row.consumed && keyGrantEnded && row.deviceProActive === true;
 

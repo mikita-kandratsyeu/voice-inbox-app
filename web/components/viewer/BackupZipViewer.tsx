@@ -25,7 +25,7 @@ import {
 import { useLocale, useTranslations } from 'next-intl';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   BackupZipParseError,
@@ -241,21 +241,15 @@ export function BackupZipViewer(): React.ReactElement {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tab, setTab] = useState<TabId>('transcript');
   const [copyFeedback, setCopyFeedback] = useState<CopyFeedbackState | null>(null);
-  const copyToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loadedFileName, setLoadedFileName] = useState<string | null>(null);
   const [passwordPromptFile, setPasswordPromptFile] = useState<File | null>(null);
   const [backupPassword, setBackupPassword] = useState('');
   const [passwordFieldError, setPasswordFieldError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sidebarWidthPct, setSidebarWidthPct] = useState(viewerSidebarWidthBounds.default);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => readSidebarCollapsed());
+  const [sidebarWidthPct, setSidebarWidthPct] = useState(() => readSidebarWidthPct());
   const [collapsedSectionKeys, setCollapsedSectionKeys] = useState<Set<string>>(() => new Set());
-
-  useLayoutEffect(() => {
-    setSidebarCollapsed(readSidebarCollapsed());
-    setSidebarWidthPct(readSidebarWidthPct());
-  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
@@ -370,10 +364,10 @@ export function BackupZipViewer(): React.ReactElement {
   );
 
   useEffect(() => {
-    return () => {
-      if (copyToastTimerRef.current) clearTimeout(copyToastTimerRef.current);
-    };
-  }, []);
+    if (!copyFeedback) return;
+    const t = setTimeout(() => setCopyFeedback(null), 2200);
+    return () => clearTimeout(t);
+  }, [copyFeedback]);
 
   useEffect(() => {
     setCopyFeedback(null);
@@ -391,12 +385,7 @@ export function BackupZipViewer(): React.ReactElement {
   }, [selected, tab]);
 
   const flashCopyResult = useCallback((field: CopyFeedbackField, ok: boolean) => {
-    if (copyToastTimerRef.current) clearTimeout(copyToastTimerRef.current);
     setCopyFeedback({ field, result: ok ? 'ok' : 'err' });
-    copyToastTimerRef.current = setTimeout(() => {
-      setCopyFeedback(null);
-      copyToastTimerRef.current = null;
-    }, 2200);
   }, []);
 
   const handleCopyText = useCallback(
