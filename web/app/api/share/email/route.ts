@@ -1,13 +1,5 @@
-import {
-  apiError,
-  checkSupportRateLimit,
-  HttpStatus,
-  parseJsonBody,
-  requireAppAuth,
-  requireMobileUserAgent,
-  validateDeviceId,
-} from '@/lib/api';
-import { HEADER_DEVICE_ID } from '@/config/constants';
+import { apiError, checkSupportRateLimit, HttpStatus, parseJsonBody } from '@/lib/api';
+import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import { isSmtpConfigured, sendTransactionalMail } from '@/lib/mailer';
 import { buildShareNoteEmailHtml } from '@/lib/shareNoteMarkdownEmailHtml';
 import { NextResponse } from 'next/server';
@@ -70,19 +62,12 @@ function safeMarkdownAttachmentFilename(title: string): string {
 export async function POST(request: Request): Promise<NextResponse> {
   const path = new URL(request.url).pathname;
 
-  const authError = await requireAppAuth();
-  if (authError) return authError;
-
-  const uaError = await requireMobileUserAgent();
-  if (uaError) return uaError;
-
-  const deviceId = request.headers.get(HEADER_DEVICE_ID);
-  const deviceIdError = validateDeviceId(deviceId);
-  if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
+  const gate = await assertMobileAuthenticatedDevice(request, path);
+  if (!gate.ok) {
+    return gate.response;
   }
 
-  const rate = await checkSupportRateLimit(deviceId!.trim());
+  const rate = await checkSupportRateLimit(gate.deviceId);
   if (rate) return rate;
 
   if (!isSmtpConfigured()) {

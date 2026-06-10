@@ -1,39 +1,24 @@
 import { NextResponse } from 'next/server';
 
-import { HEADER_DEVICE_ID } from '@/config/constants';
 import { ApiErrorCode } from '@/lib/api-error-codes';
 import { cancelAiJob } from '@/lib/ai-job-cancel';
-import {
-  apiError,
-  HttpStatus,
-  requireAppAuth,
-  requireMobileUserAgent,
-  validateDeviceId,
-} from '@/lib/api';
+import { apiError, HttpStatus } from '@/lib/api';
+import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 
 export const runtime = 'nodejs';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export const POST = async (request: Request, { params }: RouteContext): Promise<NextResponse> => {
-  const pathname = new URL(request.url).pathname;
-
-  const authError = await requireAppAuth();
-  if (authError) return authError;
-
-  const uaError = await requireMobileUserAgent();
-  if (uaError) return uaError;
-
-  const deviceIdRaw = request.headers.get(HEADER_DEVICE_ID);
-  const deviceIdError = validateDeviceId(deviceIdRaw);
-  if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, {
-      pathname,
-      code: ApiErrorCode.InvalidDeviceId,
-    });
+  const gate = await assertMobileAuthenticatedDevice(request, {
+    invalidDeviceIdCode: ApiErrorCode.InvalidDeviceId,
+  });
+  if (!gate.ok) {
+    return gate.response;
   }
 
-  const deviceId = deviceIdRaw!.trim();
+  const pathname = gate.pathname;
+  const deviceId = gate.deviceId;
   const { id: jobId } = await params;
 
   if (!jobId.trim()) {

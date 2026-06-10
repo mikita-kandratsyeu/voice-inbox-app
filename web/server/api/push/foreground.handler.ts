@@ -1,4 +1,4 @@
-import { assertMobileAuthenticatedDevice } from '@/lib/api';
+import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import { setAppForeground } from '@/lib/push-tokens';
 import { NextResponse } from 'next/server';
 

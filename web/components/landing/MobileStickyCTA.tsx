@@ -18,10 +18,7 @@ export function MobileStickyCTA({ socialProof }: MobileStickyCTAProps): React.Re
   const [isVisible, setIsVisible] = useState(false);
   const showRating = socialProof.enabled && socialProof.ratingsCount > 0;
   const subtitle = showRating
-    ? t('stickySubtitle', {
-        rating: socialProof.rating.toFixed(1),
-        count: socialProof.ratingsCount,
-      })
+    ? t('stickySubtitle', { rating: socialProof.rating.toFixed(1) })
     : t('tryFree');
 
   useEffect(() => {

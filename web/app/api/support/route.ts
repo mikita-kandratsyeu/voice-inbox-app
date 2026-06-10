@@ -1,13 +1,5 @@
-import {
-  apiError,
-  checkSupportRateLimit,
-  HttpStatus,
-  parseJsonBody,
-  requireAppAuth,
-  requireMobileUserAgent,
-  validateDeviceId,
-} from '@/lib/api';
-import { HEADER_DEVICE_ID } from '@/config/constants';
+import { apiError, checkSupportRateLimit, HttpStatus, parseJsonBody } from '@/lib/api';
+import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import { prisma } from '@/lib/prisma';
 import { formatSupportReference } from '@/lib/support-reference';
 import { isSupportProKeyRequestSubject } from '@/lib/support-pro-key-request';
@@ -44,18 +36,12 @@ export async function POST(request: Request): Promise<NextResponse> {
     return apiError('Support is not available', 503, { pathname: path });
   }
 
-  const authError = await requireAppAuth();
-  if (authError) return authError;
-
-  const uaError = await requireMobileUserAgent();
-  if (uaError) return uaError;
-
-  const deviceId = request.headers.get(HEADER_DEVICE_ID);
-  const deviceIdError = validateDeviceId(deviceId);
-  if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
+  const gate = await assertMobileAuthenticatedDevice(request, path);
+  if (!gate.ok) {
+    return gate.response;
   }
-  const deviceIdTrimmed = deviceId!.trim();
+
+  const deviceIdTrimmed = gate.deviceId;
 
   const rate = await checkSupportRateLimit(deviceIdTrimmed);
   if (rate) return rate;

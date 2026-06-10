@@ -1,5 +1,6 @@
 import { ApiErrorCode } from '@/lib/api-error-codes';
-import { apiError, HttpStatus, requireAppAuth } from '@/lib/api';
+import { apiError, HttpStatus } from '@/lib/api';
+import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import { jsonWithEtag } from '@/lib/api/etag-response';
 import { getMessageById } from '@/services/message.service';
 import type { NextResponse } from 'next/server';
@@ -21,10 +22,12 @@ function getSyncToken(request: Request): string | undefined {
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(request: Request, { params }: RouteContext): Promise<NextResponse> {
-  const pathname = new URL(request.url).pathname;
-  const authError = await requireAppAuth();
-  if (authError) return authError;
+  const gate = await assertMobileAuthenticatedDevice(request);
+  if (!gate.ok) {
+    return gate.response;
+  }
 
+  const pathname = gate.pathname;
   const { id } = await params;
   const syncToken = getSyncToken(request);
 

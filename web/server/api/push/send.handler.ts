@@ -1,12 +1,5 @@
-import { HEADER_DEVICE_ID } from '@/config/constants';
-import {
-  apiError,
-  checkDeviceRateLimit,
-  HttpStatus,
-  requireAppAuth,
-  requireMobileUserAgent,
-  validateDeviceId,
-} from '@/lib/api';
+import { apiError, HttpStatus } from '@/lib/api';
+import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import { ApiErrorCode } from '@/lib/api-error-codes';
 import { sendPushNotification, type PushPayload } from '@/lib/push';
 import { getPushTokenWithLocale } from '@/lib/push-tokens';
@@ -24,11 +17,10 @@ const VALID_TYPES: PushPayload['type'][] = [
 ];
 
 export async function postPushSend(request: Request): Promise<NextResponse> {
-  const authError = await requireAppAuth();
-  if (authError) return authError;
-
-  const uaError = await requireMobileUserAgent();
-  if (uaError) return uaError;
+  const gate = await assertMobileAuthenticatedDevice(request, PATH);
+  if (!gate.ok) {
+    return gate.response;
+  }
 
   let raw: unknown;
   try {
@@ -46,19 +38,14 @@ export async function postPushSend(request: Request): Promise<NextResponse> {
   }
 
   const body = parsed.data;
+  const deviceIdTrimmed = gate.deviceId;
 
-  const deviceId =
-    body.deviceId && body.deviceId.length > 0
-      ? body.deviceId
-      : request.headers.get(HEADER_DEVICE_ID)?.trim();
-  const deviceIdError = validateDeviceId(deviceId);
-  if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: PATH });
+  if (body.deviceId && body.deviceId.trim() && body.deviceId.trim() !== deviceIdTrimmed) {
+    return apiError('Forbidden', HttpStatus.FORBIDDEN, {
+      pathname: PATH,
+      code: ApiErrorCode.ForbiddenDeviceMismatch,
+    });
   }
-  const deviceIdTrimmed = deviceId!;
-
-  const rateLimitError = await checkDeviceRateLimit(deviceIdTrimmed);
-  if (rateLimitError) return rateLimitError;
 
   const data = await getPushTokenWithLocale(deviceIdTrimmed);
   if (!data) {
@@ -78,14 +65,14 @@ export async function postPushSend(request: Request): Promise<NextResponse> {
     message: body.message,
   };
 
-  console.log('[Push] send request', { deviceId, type: payload.type });
+  console.log('[Push] send request', { deviceId: deviceIdTrimmed, type: payload.type });
   const sent = await sendPushNotification(data.token, payload, data.locale);
 
   if (!sent) {
-    console.warn('[Push] send: failed', { deviceId, type: payload.type });
+    console.warn('[Push] send: failed', { deviceId: deviceIdTrimmed, type: payload.type });
     return apiError('Failed to send push notification', HttpStatus.BAD_REQUEST, { pathname: PATH });
   }
 
-  console.log('[Push] send: ok', { deviceId, type: payload.type });
+  console.log('[Push] send: ok', { deviceId: deviceIdTrimmed, type: payload.type });
   return NextResponse.json({ ok: true });
 }

@@ -15,7 +15,8 @@ function starFillState(starIndex: number, rating: number): 'full' | 'partial' | 
 }
 
 export function HeroSocialProof({ config }: HeroSocialProofProps): React.ReactElement | null {
-  const t = useTranslations('hero.socialProof');
+  const t = useTranslations('hero');
+  const tProof = useTranslations('hero.socialProof');
 
   if (!config.enabled || config.ratingsCount <= 0) {
     return null;
@@ -26,16 +27,10 @@ export function HeroSocialProof({ config }: HeroSocialProofProps): React.ReactEl
       href={GO_STORE_REDIRECT_PATH}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={t('appStoreAria', {
-        rating: config.rating,
-        count: config.ratingsCount,
-      })}
-      className="animate-fade-in-delay-2 group mx-auto mb-6 flex w-fit items-center gap-1.5 text-sm font-medium transition-colors sm:mb-8"
+      aria-label={tProof('appStoreAria', { rating: config.rating })}
+      className="animate-fade-in-delay-2 group mx-auto mb-6 inline-flex max-w-full items-center gap-2 text-sm font-medium transition-colors sm:mb-8"
     >
-      <span
-        className="flex items-center gap-px text-black/75 group-hover:text-black/90 dark:text-white/75 dark:group-hover:text-white/90"
-        aria-hidden
-      >
+      <span className="flex items-center gap-0.5" aria-hidden>
         {Array.from({ length: 5 }, (_, index) => {
           const starIndex = index + 1;
           const state = starFillState(starIndex, config.rating);
@@ -44,24 +39,24 @@ export function HeroSocialProof({ config }: HeroSocialProofProps): React.ReactEl
               key={starIndex}
               className={
                 state === 'full'
-                  ? 'h-3 w-3 fill-amber-400 text-amber-400'
+                  ? 'h-3.5 w-3.5 fill-amber-400 text-amber-400'
                   : state === 'partial'
-                    ? 'h-3 w-3 fill-amber-400/45 text-amber-400'
-                    : 'h-3 w-3 text-black/12 dark:text-white/15'
+                    ? 'h-3.5 w-3.5 fill-amber-400/45 text-amber-400'
+                    : 'h-3.5 w-3.5 text-black/12 dark:text-white/15'
               }
               strokeWidth={1.75}
             />
           );
         })}
       </span>
-      <span className="tabular-nums text-black/75 group-hover:text-black/90 dark:text-white/75 dark:group-hover:text-white/90">
+      <span className="tabular-nums font-semibold text-black/80 group-hover:text-black dark:text-white/85 dark:group-hover:text-white">
         {config.rating.toFixed(1)}
       </span>
-      <span className="font-normal text-black/40 dark:text-white/40" aria-hidden>
+      <span className="font-normal text-black/30 dark:text-white/30" aria-hidden>
         ·
       </span>
       <span className="font-normal text-black/55 group-hover:text-black/70 dark:text-white/55 dark:group-hover:text-white/70">
-        {t('ratingsCount', { count: config.ratingsCount })}
+        {t('appStore')}
       </span>
     </a>
   );

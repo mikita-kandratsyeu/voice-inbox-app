@@ -12,8 +12,7 @@
     "googlePlay": "Google Play",
     "downloadApp": "Скачать приложение",
     "socialProof": {
-      "appStoreAria": "{rating} из 5 в App Store, {count, plural, one {# оценка} few {# оценки} many {# оценок} other {# оценки}}",
-      "ratingsCount": "{count, plural, one {# оценка} few {# оценки} many {# оценок} other {# оценки}}"
+      "appStoreAria": "{rating} из 5 в App Store"
     }
   },
   "features": {
@@ -145,7 +144,7 @@
     "installApp": "Скачать приложение",
     "installAppShort": "Скачать",
     "tryFree": "Попробуйте бесплатно - без аккаунта",
-    "stickySubtitle": "{rating} · {count, plural, one {# оценка} few {# оценки} many {# оценок} other {# оценок}} · бесплатно"
+    "stickySubtitle": "{rating} · бесплатно"
   },
   "releases": {
     "pageTitle": "Блог",

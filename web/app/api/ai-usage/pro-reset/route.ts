@@ -1,14 +1,7 @@
-import { HEADER_DEVICE_ID } from '@/config/constants';
 import { ApiErrorCode, type ApiErrorCodeValue } from '@/lib/api-error-codes';
-import {
-  apiError,
-  checkDeviceRateLimit,
-  HttpStatus,
-  requireAppAuth,
-  requireMobileUserAgent,
-  validateDeviceId,
-} from '@/lib/api';
+import { apiError, HttpStatus } from '@/lib/api';
 import { applyProLimitResetPurchase } from '@/lib/ai-pro-reset';
+import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import { NextResponse } from 'next/server';
 
 type ProResetBody = {
@@ -21,22 +14,13 @@ function readTrimmedString(value: unknown): string | null {
 }
 
 export const POST = async (request: Request): Promise<NextResponse> => {
-  const path = new URL(request.url).pathname;
-  const authError = await requireAppAuth();
-  if (authError) return authError;
-
-  const uaError = await requireMobileUserAgent();
-  if (uaError) return uaError;
-
-  const deviceId = request.headers.get(HEADER_DEVICE_ID);
-  const deviceIdError = validateDeviceId(deviceId);
-  if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
+  const gate = await assertMobileAuthenticatedDevice(request);
+  if (!gate.ok) {
+    return gate.response;
   }
-  const deviceIdTrimmed = deviceId!.trim();
 
-  const rateLimitError = await checkDeviceRateLimit(deviceIdTrimmed);
-  if (rateLimitError) return rateLimitError;
+  const deviceIdTrimmed = gate.deviceId;
+  const path = gate.pathname;
 
   let body: ProResetBody;
   try {

@@ -1,10 +1,5 @@
-import {
-  apiError,
-  HttpStatus,
-  parseJsonBody,
-  requireAppAuth,
-  requireMobileUserAgent,
-} from '@/lib/api';
+import { apiError, HttpStatus, parseJsonBody } from '@/lib/api';
+import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import {
   parseLooseBroadcastBody,
   runBroadcast,
@@ -23,11 +18,10 @@ type BroadcastBody = {
 const PATH = '/api/push/broadcast';
 
 export async function postPushBroadcast(request: Request): Promise<NextResponse> {
-  const authError = await requireAppAuth();
-  if (authError) return authError;
-
-  const uaError = await requireMobileUserAgent();
-  if (uaError) return uaError;
+  const gate = await assertMobileAuthenticatedDevice(request, PATH);
+  if (!gate.ok) {
+    return gate.response;
+  }
 
   const body = await parseJsonBody<BroadcastBody>(request);
 

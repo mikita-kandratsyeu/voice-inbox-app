@@ -244,35 +244,3 @@ export async function requireAppAuth(): Promise<NextResponse | null> {
   return null;
 }
 
-export type AssertMobileDeviceResult =
-  | { ok: true; deviceId: string }
-  | { ok: false; response: NextResponse };
-
-/** App JWT + mobile UA + `x-device-id` + device rate limit (shared by several mobile API handlers). */
-export async function assertMobileAuthenticatedDevice(
-  request: Request,
-  pathname: string,
-): Promise<AssertMobileDeviceResult> {
-  const authError = await requireAppAuth();
-  if (authError) {
-    return { ok: false, response: authError };
-  }
-  const uaError = await requireMobileUserAgent();
-  if (uaError) {
-    return { ok: false, response: uaError };
-  }
-  const deviceId = request.headers.get(HEADER_DEVICE_ID);
-  const deviceIdError = validateDeviceId(deviceId);
-  if (deviceIdError) {
-    return {
-      ok: false,
-      response: apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname }),
-    };
-  }
-  const deviceIdTrimmed = deviceId!.trim();
-  const rateLimitError = await checkDeviceRateLimit(deviceIdTrimmed, { pathname });
-  if (rateLimitError) {
-    return { ok: false, response: rateLimitError };
-  }
-  return { ok: true, deviceId: deviceIdTrimmed };
-}

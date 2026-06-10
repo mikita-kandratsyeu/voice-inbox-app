@@ -1,12 +1,6 @@
-import { BASE_URL_OR_FALLBACK, HEADER_DEVICE_ID } from '@/config/constants';
-import {
-  apiError,
-  checkDeviceRateLimit,
-  HttpStatus,
-  requireAppAuth,
-  requireMobileUserAgent,
-  validateDeviceId,
-} from '@/lib/api';
+import { BASE_URL_OR_FALLBACK } from '@/config/constants';
+import { apiError, HttpStatus } from '@/lib/api';
+import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import { routing } from '@/lib/i18n';
 import {
   createProAccountPortalToken,
@@ -20,24 +14,13 @@ type PortalBody = {
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
-  const path = new URL(request.url).pathname;
-  const authError = await requireAppAuth();
-  if (authError) return authError;
-
-  const uaError = await requireMobileUserAgent();
-  if (uaError) return uaError;
-
-  const deviceId = request.headers.get(HEADER_DEVICE_ID);
-  const deviceIdError = validateDeviceId(deviceId);
-
-  if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
+  const gate = await assertMobileAuthenticatedDevice(request);
+  if (!gate.ok) {
+    return gate.response;
   }
 
-  const deviceIdTrimmed = deviceId!.trim();
-
-  const rateLimitError = await checkDeviceRateLimit(deviceIdTrimmed);
-  if (rateLimitError) return rateLimitError;
+  const deviceIdTrimmed = gate.deviceId;
+  const path = gate.pathname;
 
   if (!isProAccountPortalConfigured()) {
     return apiError('portal_not_configured', HttpStatus.SERVICE_UNAVAILABLE, { pathname: path });

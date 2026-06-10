@@ -1,16 +1,8 @@
-import { HEADER_DEVICE_ID, HEADER_SYNC_TOKEN } from '@/config/constants';
-import {
-  apiError,
-  checkDeviceRateLimit,
-  HttpStatus,
-  parseJsonBody,
-  requireAppAuth,
-  requireMobileUserAgent,
-  validateDeviceId,
-  validateRequiredStrings,
-} from '@/lib/api';
-import { logAiRequest, resolveAiOperation } from '@/lib/ai-operation';
+import { HEADER_SYNC_TOKEN } from '@/config/constants';
+import { apiError, HttpStatus, parseJsonBody, validateRequiredStrings } from '@/lib/api';
+import { logAiRequest } from '@/lib/ai-operation';
 import { ApiErrorCode } from '@/lib/api-error-codes';
+import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
 import { createAutoOrganizeRequest } from '@/services/folder-organize.service';
 import { NextResponse } from 'next/server';
@@ -38,31 +30,12 @@ type RequestBody = {
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
-  const path = new URL(request.url).pathname;
-  const authError = await requireAppAuth();
-  if (authError) return authError;
-
-  const uaError = await requireMobileUserAgent();
-  if (uaError) return uaError;
-
-  const deviceId = request.headers.get(HEADER_DEVICE_ID);
-  const deviceIdError = validateDeviceId(deviceId);
-  if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
+  const guard = await assertMobileAiRouteContext(request);
+  if (!guard.ok) {
+    return guard.response;
   }
-  const deviceIdTrimmed = deviceId!.trim();
 
-  const rateLimitError = await checkDeviceRateLimit(deviceIdTrimmed);
-  if (rateLimitError) return rateLimitError;
-
-  const opResolved = resolveAiOperation(request, path);
-  if (!opResolved.ok) {
-    return apiError(opResolved.error, HttpStatus.BAD_REQUEST, {
-      pathname: path,
-      code: ApiErrorCode.ValidationError,
-    });
-  }
-  const aiOperation = opResolved.operation;
+  const { deviceId: deviceIdTrimmed, pathname: path, aiOperation } = guard.ctx;
 
   const body = await parseJsonBody<RequestBody>(request);
   if (!body) return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, { pathname: path });

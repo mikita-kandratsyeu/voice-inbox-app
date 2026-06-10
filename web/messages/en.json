@@ -12,8 +12,7 @@
     "googlePlay": "Google Play",
     "downloadApp": "Download App",
     "socialProof": {
-      "appStoreAria": "{rating} stars on the App Store, {count} ratings",
-      "ratingsCount": "{count, plural, one {# rating} other {# ratings}}"
+      "appStoreAria": "{rating} out of 5 on the App Store"
     }
   },
   "features": {
@@ -145,7 +144,7 @@
     "installApp": "Download App",
     "installAppShort": "Download",
     "tryFree": "Try for free - no account needed",
-    "stickySubtitle": "{rating} · {count, plural, one {# rating} other {# ratings}} · free"
+    "stickySubtitle": "{rating} · free"
   },
   "releases": {
     "pageTitle": "Blog",

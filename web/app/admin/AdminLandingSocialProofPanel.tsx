@@ -38,31 +38,18 @@ function starFillState(starIndex: number, rating: number): 'full' | 'partial' | 
   return 'empty';
 }
 
-function formatRatingsCount(count: number, locale: PreviewLocale): string {
-  if (locale === 'ru') {
-    const mod10 = count % 10;
-    const mod100 = count % 100;
-    if (mod10 === 1 && mod100 !== 11) return `${count} оценка`;
-    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} оценки`;
-    return `${count} оценок`;
-  }
-  return count === 1 ? '1 rating' : `${count} ratings`;
-}
-
 function AdminHeroRatingPreview({
   config,
-  locale,
 }: {
   config: LandingSocialProofConfig;
-  locale: PreviewLocale;
 }): React.ReactElement {
   if (!config.enabled || config.ratingsCount <= 0) {
     return <p className="text-sm text-zinc-500 dark:text-zinc-400">Hero rating hidden.</p>;
   }
 
   return (
-    <p className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-100">
-      <span className="flex items-center gap-px" aria-hidden>
+    <p className="inline-flex items-center gap-2 text-sm font-medium text-zinc-800 dark:text-zinc-100">
+      <span className="flex items-center gap-0.5" aria-hidden>
         {Array.from({ length: 5 }, (_, index) => {
           const starIndex = index + 1;
           const state = starFillState(starIndex, config.rating);
@@ -71,23 +58,21 @@ function AdminHeroRatingPreview({
               key={starIndex}
               className={
                 state === 'full'
-                  ? 'h-3 w-3 fill-amber-400 text-amber-400'
+                  ? 'h-3.5 w-3.5 fill-amber-400 text-amber-400'
                   : state === 'partial'
-                    ? 'h-3 w-3 fill-amber-400/45 text-amber-400'
-                    : 'h-3 w-3 text-zinc-200 dark:text-zinc-700'
+                    ? 'h-3.5 w-3.5 fill-amber-400/45 text-amber-400'
+                    : 'h-3.5 w-3.5 text-zinc-200 dark:text-zinc-700'
               }
               strokeWidth={1.75}
             />
           );
         })}
       </span>
-      <span className="tabular-nums">{config.rating.toFixed(1)}</span>
-      <span className="font-normal text-zinc-400" aria-hidden>
+      <span className="tabular-nums font-semibold">{config.rating.toFixed(1)}</span>
+      <span className="text-zinc-300 dark:text-zinc-600" aria-hidden>
         ·
       </span>
-      <span className="font-normal text-zinc-500 dark:text-zinc-400">
-        {formatRatingsCount(config.ratingsCount, locale)}
-      </span>
+      <span className="font-normal text-zinc-500 dark:text-zinc-400">App Store</span>
     </p>
   );
 }
@@ -437,7 +422,7 @@ export function AdminLandingSocialProofPanel(): React.ReactElement {
                 <p className="mb-2 text-xs font-semibold tracking-wide text-zinc-500 uppercase">
                   Hero
                 </p>
-                <AdminHeroRatingPreview config={config} locale={previewLocale} />
+                <AdminHeroRatingPreview config={config} />
               </div>
               <div>
                 <p className="mb-2 text-xs font-semibold tracking-wide text-zinc-500 uppercase">

@@ -1,13 +1,6 @@
-import { HEADER_DEVICE_ID } from '@/config/constants';
-import {
-  apiError,
-  checkDeviceRateLimit,
-  HttpStatus,
-  requireAppAuth,
-  requireMobileUserAgent,
-  validateDeviceId,
-} from '@/lib/api';
+import { apiError } from '@/lib/api';
 import { getAiUsageHistory, MAX_AI_USAGE_HISTORY_LIMIT } from '@/lib/ai-usage-ledger';
+import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import { NextResponse } from 'next/server';
 
 const parseLimit = (value: string | null): number | null => {
@@ -19,26 +12,14 @@ const parseLimit = (value: string | null): number | null => {
 
 export const GET = async (request: Request): Promise<NextResponse> => {
   const url = new URL(request.url);
-  const pathname = url.pathname;
-  const authError = await requireAppAuth();
-  if (authError) return authError;
-
-  const uaError = await requireMobileUserAgent();
-  if (uaError) return uaError;
-
-  const deviceId = request.headers.get(HEADER_DEVICE_ID);
-  const deviceIdError = validateDeviceId(deviceId);
-  if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname });
+  const gate = await assertMobileAuthenticatedDevice(request);
+  if (!gate.ok) {
+    return gate.response;
   }
-  const deviceIdTrimmed = deviceId!.trim();
-
-  const rateLimitError = await checkDeviceRateLimit(deviceIdTrimmed);
-  if (rateLimitError) return rateLimitError;
 
   try {
     const history = await getAiUsageHistory({
-      deviceId: deviceIdTrimmed,
+      deviceId: gate.deviceId,
       cursor: url.searchParams.get('cursor'),
       limit: parseLimit(url.searchParams.get('limit')),
     });
@@ -46,7 +27,7 @@ export const GET = async (request: Request): Promise<NextResponse> => {
     return NextResponse.json(history);
   } catch (err) {
     return apiError(err instanceof Error ? err.message : 'AI usage history unavailable', 503, {
-      pathname,
+      pathname: gate.pathname,
     });
   }
 };
