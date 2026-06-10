@@ -15,4 +15,18 @@ describe('formatGithubCommitMessage', () => {
     expect(message).toContain('Folders: 3');
     expect(message).toContain('Graph layouts: 1');
   });
+
+  it('omits edit summary when nothing changed', () => {
+    const message = formatGithubCommitMessage({
+      diff: { added: 0, updated: 0, removed: 0, hasChanges: false, deletionPaths: [] },
+      recordCount: 4,
+      folderCount: 2,
+      graphLayoutCount: 0,
+      syncedAt: new Date('2026-06-10T08:00:00.000Z'),
+    });
+
+    expect(message).toContain('Notes: 4');
+    expect(message).not.toContain('(+');
+    expect(message).not.toContain('edited');
+  });
 });

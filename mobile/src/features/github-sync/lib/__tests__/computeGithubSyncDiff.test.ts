@@ -36,4 +36,18 @@ describe('computeGithubSyncDiff', () => {
     });
     expect(diff.hasChanges).toBe(false);
   });
+
+  it('ignores non-note paths when counting additions', () => {
+    const diff = computeGithubSyncDiff({
+      currentHashes: {
+        'voice-inbox-ai/notes/a.md': '1',
+        'voice-inbox-ai/.voice-inbox-ai/HEAD.json': 'head',
+      },
+      previousHashes: {},
+      notePathPrefix: 'voice-inbox-ai/notes',
+    });
+
+    expect(diff.added).toBe(1);
+    expect(diff.hasChanges).toBe(true);
+  });
 });
