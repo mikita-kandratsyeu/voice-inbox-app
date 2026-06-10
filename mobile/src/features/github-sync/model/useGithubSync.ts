@@ -26,6 +26,7 @@ import {
   isGithubSyncConnected,
   setGithubSyncRepository,
 } from '../lib/githubSecrets';
+import { registerGithubConnectSession } from '../lib/githubSyncConnectSession';
 import { clearGithubSyncState, getGithubSyncLastSyncedAt } from '../lib/githubSyncState';
 import { pushGithubCommit } from '../lib/pushGithubCommit';
 import { restoreGithubSyncVersion } from '../lib/restoreGithubSyncVersion';
@@ -64,7 +65,9 @@ export function useGithubSync() {
   }, []);
 
   useEffect(() => {
+    const unregister = registerGithubConnectSession(cancelConnect);
     return () => {
+      unregister();
       cancelConnect();
     };
   }, [cancelConnect]);

@@ -184,15 +184,21 @@ export async function startGithubDeviceFlow(): Promise<GithubDeviceFlowResult> {
   try {
     const device = await requestDeviceCode(clientId);
     throwIfAborted(abort.signal);
-    void openInAppBrowser(device.verification_uri);
-
-    const accessToken = await pollAccessToken(
+    const pollPromise = pollAccessToken(
       clientId,
       device.device_code,
       device.interval,
       device.expires_in,
       abort.signal,
     );
+
+    await openInAppBrowser(device.verification_uri).catch(() => {});
+
+    if (activeDeviceFlowAbort === abort) {
+      abort.abort();
+    }
+
+    const accessToken = await pollPromise;
 
     await setGithubSyncAccessToken(accessToken);
 

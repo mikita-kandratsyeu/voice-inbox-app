@@ -1,12 +1,13 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { Bug } from 'lucide-react-native';
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { RefreshControl, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { ProLimitResetSuccessSheet } from '@/features/ai-limit-reset';
+import { cancelGithubConnectSession } from '@/features/github-sync/lib/githubSyncConnectSession';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { openPlanPaywall } from '@/features/plan-paywall';
 import { isInternalDebugBuild } from '@/shared/config/buildEnv';
@@ -63,6 +64,21 @@ export const SettingsScreen = () => {
       return () => cancelAnimationFrame(frame);
     }, []),
   );
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        cancelGithubConnectSession();
+      };
+    }, []),
+  );
+
+  useEffect(() => {
+    const unsubscribe = settings.navigation.addListener('blur', () => {
+      cancelGithubConnectSession();
+    });
+    return unsubscribe;
+  }, [settings.navigation]);
 
   const showDebugEntry = isInternalDebugBuild();
 

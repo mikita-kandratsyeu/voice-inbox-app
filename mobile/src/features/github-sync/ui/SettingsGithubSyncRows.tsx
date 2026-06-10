@@ -1,4 +1,4 @@
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { TFunction } from 'i18next';
 import { GitBranch, History, RefreshCw, Unplug } from 'lucide-react-native';
@@ -29,14 +29,6 @@ export function SettingsGithubSyncRows({ color, t, language }: Props) {
   const [repoPickerVisible, setRepoPickerVisible] = useState(false);
   const [historyVisible, setHistoryVisible] = useState(false);
   const [proSheetVisible, setProSheetVisible] = useState(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      return () => {
-        github.cancelConnect();
-      };
-    }, [github]),
-  );
 
   const handleLockedPress = useCallback(() => {
     setProSheetVisible(true);
