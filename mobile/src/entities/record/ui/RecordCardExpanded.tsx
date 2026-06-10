@@ -437,9 +437,6 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
                     compactLayout && hasTags ? { alignSelf: 'flex-start' } : null,
                   ]}
                 >
-                  {showSourceChip ? (
-                    <RecordCardSourceChip label={sourceChipLabel} color={color} />
-                  ) : null}
                   {categoryLabel ? (
                     <RecordCardLocationChip
                       label={categoryLabel}
@@ -447,6 +444,9 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
                       accentColor={locationAccentColor}
                       folderIconId={isFolderLabel ? folderIconId : undefined}
                     />
+                  ) : null}
+                  {showSourceChip ? (
+                    <RecordCardSourceChip label={sourceChipLabel} color={color} />
                   ) : null}
                 </View>
               ) : null}

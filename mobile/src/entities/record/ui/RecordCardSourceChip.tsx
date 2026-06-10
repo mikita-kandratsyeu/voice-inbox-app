@@ -14,7 +14,7 @@ export const RecordCardSourceChip = memo(function RecordCardSourceChip({
   label,
   color,
 }: RecordCardSourceChipProps) {
-  const accentColor = color.accent.primary;
+  const accentColor = color.accent.transcript;
 
   return (
     <View
