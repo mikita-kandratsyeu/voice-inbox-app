@@ -21,8 +21,7 @@
       "cache": false
     },
     "type:check": {
-      "dependsOn": ["^build"],
-      "outputs": ["generated/**"]
+      "dependsOn": ["^build"]
     },
     "test": {
       "dependsOn": ["type:check"]

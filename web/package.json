@@ -85,5 +85,12 @@
   },
   "engines": {
     "node": ">= 24.x"
+  },
+  "turbo": {
+    "tasks": {
+      "type:check": {
+        "outputs": ["generated/**"]
+      }
+    }
   }
 }
