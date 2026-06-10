@@ -10,7 +10,9 @@ import {
   buildEventDocumentHtml,
   type InAppEventContentType,
   type InAppEventTheme,
+  looksLikeHtmlFragment,
 } from './in-app-event-page';
+import { inAppEventSanitizeSchema } from './in-app-event-sanitize-schema';
 
 const eventMarkdownComponents: Components = {
   h1: ({ children }) => <h1 className="event-h1">{children}</h1>,
@@ -28,19 +30,37 @@ const eventMarkdownComponents: Components = {
   li: ({ children }) => <li className="event-li">{children}</li>,
 };
 
+function extractHtmlBodyFragment(html: string): string {
+  const trimmed = html.trim();
+  const bodyMatch = /<body[^>]*>([\s\S]*?)<\/body>/i.exec(trimmed);
+  if (bodyMatch?.[1]) {
+    return bodyMatch[1].trim();
+  }
+  return trimmed
+    .replace(/<!DOCTYPE[^>]*>/gi, '')
+    .replace(/<\/?html[^>]*>/gi, '')
+    .replace(/<head[\s\S]*?<\/head>/gi, '')
+    .trim();
+}
+
 export async function sanitizeHtmlFragment(html: string): Promise<string> {
+  const fragment = extractHtmlBodyFragment(html);
   const file = await unified()
     .use(rehypeParse, { fragment: true })
-    .use(rehypeSanitize)
+    .use(rehypeSanitize, inAppEventSanitizeSchema)
     .use(rehypeStringify)
-    .process(html);
+    .process(fragment);
   return String(file).trim();
 }
 
 export async function renderInAppEventMarkdownToHtml(markdown: string): Promise<string> {
   const { renderToStaticMarkup } = await import('react-dom/server');
   return renderToStaticMarkup(
-    <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]} components={eventMarkdownComponents}>
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      rehypePlugins={[[rehypeSanitize, inAppEventSanitizeSchema]]}
+      components={eventMarkdownComponents}
+    >
       {markdown}
     </ReactMarkdown>,
   );
@@ -50,10 +70,12 @@ export async function renderInAppEventBodyHtml(
   contentType: InAppEventContentType,
   body: string,
 ): Promise<string> {
-  if (contentType === 'markdown') {
-    return renderInAppEventMarkdownToHtml(body);
+  const treatAsHtml =
+    contentType === 'html' || (contentType === 'markdown' && looksLikeHtmlFragment(body));
+  if (treatAsHtml) {
+    return sanitizeHtmlFragment(body);
   }
-  return sanitizeHtmlFragment(body);
+  return renderInAppEventMarkdownToHtml(body);
 }
 
 export async function buildInAppEventDocumentHtml(

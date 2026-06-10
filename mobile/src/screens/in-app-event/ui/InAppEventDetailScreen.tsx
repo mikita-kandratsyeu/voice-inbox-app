@@ -10,6 +10,8 @@ import { WebView } from 'react-native-webview';
 import type { RootStackParamList } from '@/app/navigation/types';
 import { fetchInAppEventPage } from '@/features/in-app-event/api/fetchInAppEventPage';
 import type { InAppEventPagePayload } from '@/features/in-app-event/api/types';
+import { IN_APP_EVENT_NATIVE_TOP_GAP } from '@/features/in-app-event/lib/eventContentMetrics';
+import { getInAppEventSurfaceColor } from '@/features/in-app-event/lib/eventSurfaceColor';
 import { useAppTheme, useColors } from '@/shared/config';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { hapticSelection, IS_ANDROID, useTabletContentMaxWidth } from '@/shared/lib';
@@ -79,9 +81,18 @@ export const InAppEventDetailScreen = () => {
   }, []);
 
   const isContentLoading = loadState.kind === 'loading' || isWebViewLoading;
+  const eventSurfaceColor = getInAppEventSurfaceColor(colorScheme);
 
   return (
-    <View style={{ flex: 1, backgroundColor: color.background.primary }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: eventSurfaceColor,
+        paddingTop: insets.top + IN_APP_EVENT_NATIVE_TOP_GAP,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }}
+    >
       <View
         style={{
           flex: 1,
@@ -131,11 +142,12 @@ export const InAppEventDetailScreen = () => {
 
           {loadState.kind === 'ready' ? (
             <WebView
-              style={{ flex: 1, backgroundColor: 'transparent' }}
+              style={{ flex: 1, backgroundColor: eventSurfaceColor }}
               source={{
                 html: loadState.page.documentHtml,
                 baseUrl: webViewBaseUrl,
               }}
+              contentInsetAdjustmentBehavior="never"
               originWhitelist={['*']}
               javaScriptEnabled={false}
               domStorageEnabled={false}
@@ -165,7 +177,7 @@ export const InAppEventDetailScreen = () => {
                 {
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: color.background.primary,
+                  backgroundColor: eventSurfaceColor,
                 },
               ]}
             >
@@ -174,24 +186,25 @@ export const InAppEventDetailScreen = () => {
           ) : null}
         </View>
 
-        <View
-          style={{
-            backgroundColor: color.background.primary,
-            paddingHorizontal: 20,
-            paddingTop: 8,
-            paddingBottom: insets.bottom + 18,
-          }}
-        >
-          <Button
-            color={color}
-            variant="primary"
-            size="lg"
-            fullWidth
-            label={ctaLabel}
-            onPress={handleClose}
-            disabled={isContentLoading}
-          />
-        </View>
+        {!isContentLoading ? (
+          <View
+            style={{
+              backgroundColor: eventSurfaceColor,
+              paddingHorizontal: 20,
+              paddingTop: 8,
+              paddingBottom: insets.bottom + 18,
+            }}
+          >
+            <Button
+              color={color}
+              variant="primary"
+              size="lg"
+              fullWidth
+              label={ctaLabel}
+              onPress={handleClose}
+            />
+          </View>
+        ) : null}
       </View>
     </View>
   );

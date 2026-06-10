@@ -1,3 +1,8 @@
+import {
+  IN_APP_EVENT_CONTENT_PADDING,
+  IN_APP_EVENT_SURFACE_COLORS,
+} from './in-app-event-content-guide';
+
 export const IN_APP_EVENT_LOCALES = ['en', 'ru'] as const;
 export type InAppEventLocale = (typeof IN_APP_EVENT_LOCALES)[number];
 
@@ -32,78 +37,94 @@ export function parseInAppEventTheme(value: string | null): InAppEventTheme | nu
   return null;
 }
 
+/** True when admin pasted HTML into the body (even if contentType is still markdown). */
+export function looksLikeHtmlFragment(body: string): boolean {
+  const trimmed = body.trim();
+  if (!trimmed.startsWith('<')) return false;
+  return /<\/?[a-z][\w-]*\b/i.test(trimmed);
+}
+
 const EVENT_DOCUMENT_STYLES = `
   :root {
     color-scheme: light dark;
-    --bg: #ffffff;
-    --text: #0f172a;
-    --text-secondary: #64748b;
+    --bg: ${IN_APP_EVENT_SURFACE_COLORS.light};
+    --text: #111827;
+    --text-secondary: #6b7280;
     --accent: #6366f1;
     --accent-soft: rgba(99, 102, 241, 0.12);
-    --card: #ffffff;
+    --card: #f9fafb;
+    --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
     --border: rgba(15, 23, 42, 0.08);
     --pro-bg: rgba(99, 102, 241, 0.14);
     --pro-text: #4f46e5;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #0b0f17;
-      --text: #f8fafc;
-      --text-secondary: #94a3b8;
+      --bg: ${IN_APP_EVENT_SURFACE_COLORS.dark};
+      --text: #f3f4f6;
+      --text-secondary: #9ca3af;
       --accent: #818cf8;
       --accent-soft: rgba(129, 140, 248, 0.16);
-      --card: #111827;
-      --border: rgba(148, 163, 184, 0.18);
-      --pro-bg: rgba(129, 140, 248, 0.2);
-      --pro-text: #a5b4fc;
+      --card: #1c1f28;
+      --card-shadow: none;
+      --border: rgba(255, 255, 255, 0.08);
+      --pro-bg: rgba(129, 140, 248, 0.22);
+      --pro-text: #c7d2fe;
     }
   }
   html[data-theme="light"] {
     color-scheme: light;
-    --bg: #ffffff;
-    --text: #0f172a;
-    --text-secondary: #64748b;
+    --bg: ${IN_APP_EVENT_SURFACE_COLORS.light};
+    --text: #111827;
+    --text-secondary: #6b7280;
     --accent: #6366f1;
     --accent-soft: rgba(99, 102, 241, 0.12);
-    --card: #ffffff;
+    --card: #f9fafb;
+    --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
     --border: rgba(15, 23, 42, 0.08);
     --pro-bg: rgba(99, 102, 241, 0.14);
     --pro-text: #4f46e5;
   }
   html[data-theme="dark"] {
     color-scheme: dark;
-    --bg: #0b0f17;
-    --text: #f8fafc;
-    --text-secondary: #94a3b8;
+    --bg: ${IN_APP_EVENT_SURFACE_COLORS.dark};
+    --text: #f3f4f6;
+    --text-secondary: #9ca3af;
     --accent: #818cf8;
     --accent-soft: rgba(129, 140, 248, 0.16);
-    --card: #111827;
-    --border: rgba(148, 163, 184, 0.18);
-    --pro-bg: rgba(129, 140, 248, 0.2);
-    --pro-text: #a5b4fc;
+    --card: #1c1f28;
+    --card-shadow: none;
+    --border: rgba(255, 255, 255, 0.08);
+    --pro-bg: rgba(129, 140, 248, 0.22);
+    --pro-text: #c7d2fe;
   }
   * { box-sizing: border-box; }
+  html {
+    background: var(--bg);
+    min-height: 100%;
+  }
   body {
     margin: 0;
-    padding: 20px 20px 28px;
+    padding: ${IN_APP_EVENT_CONTENT_PADDING.top}px ${IN_APP_EVENT_CONTENT_PADDING.horizontal}px ${IN_APP_EVENT_CONTENT_PADDING.bottom}px;
     background: var(--bg);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     font-size: 15px;
-    line-height: 1.5;
+    line-height: 1.55;
     -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
   }
   .badge {
     display: inline-block;
-    margin: 0 0 24px;
+    margin: 0 0 20px;
     padding: 6px 12px;
     border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
     background: var(--accent-soft);
     color: var(--accent);
     font-size: 11px;
     font-weight: 600;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
   }
   .app-name {
@@ -111,60 +132,120 @@ const EVENT_DOCUMENT_STYLES = `
     font-size: 26px;
     font-weight: 700;
     letter-spacing: -0.02em;
+    color: var(--text);
+    line-height: 1.2;
   }
   .version {
-    margin: 4px 0 0;
-    font-size: 32px;
+    margin: 6px 0 0;
+    font-size: 30px;
     font-weight: 800;
     line-height: 1.1;
     color: var(--accent);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
   }
   .tagline {
-    margin: 8px 0 0;
+    margin: 10px 0 0;
     color: var(--text-secondary);
-    font-size: 14px;
-    line-height: 1.45;
+    font-size: 15px;
+    line-height: 1.5;
+    max-width: 36em;
   }
   .features {
-    margin: 20px 0 0;
+    margin: 24px 0 0;
     padding: 0;
     list-style: none;
   }
   .features li {
-    margin: 0 0 8px;
-    padding: 16px;
-    border-radius: 14px;
+    margin: 0 0 10px;
+    padding: 16px 18px;
+    border-radius: 16px;
     border: 1px solid var(--border);
     background: var(--card);
+    box-shadow: var(--card-shadow);
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .features li:last-child {
+    margin-bottom: 0;
   }
   .features li strong {
     display: inline;
     font-size: 15px;
     font-weight: 600;
+    color: var(--text);
   }
   .pro {
     display: inline-block;
     margin-left: 6px;
-    padding: 2px 6px;
+    padding: 2px 7px;
     border-radius: 6px;
     background: var(--pro-bg);
     color: var(--pro-text);
     font-size: 10px;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     vertical-align: middle;
   }
-  .event-h1, h1 { margin: 0 0 8px; font-size: 26px; font-weight: 700; }
-  .event-h2, h2 { margin: 16px 0 8px; font-size: 22px; font-weight: 700; }
-  .event-h3, h3 { margin: 14px 0 6px; font-size: 18px; font-weight: 600; }
-  .event-p, p { margin: 0 0 12px; color: var(--text-secondary); }
-  .event-ul, ul { margin: 0 0 12px; padding-left: 1.25rem; }
-  .event-ol, ol { margin: 0 0 12px; padding-left: 1.25rem; }
-  .event-li, li { margin: 0 0 6px; }
-  .event-link, a { color: var(--accent); }
-  img { max-width: 100%; height: auto; border-radius: 12px; }
+  .footnote {
+    margin: 24px 0 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+  .event-h1, h1:not(.app-name) {
+    margin: 0 0 10px;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .event-h2, h2 {
+    margin: 20px 0 10px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.25;
+  }
+  .event-h3, h3 {
+    margin: 16px 0 8px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .event-p, p:not(.badge):not(.version):not(.tagline):not(.footnote) {
+    margin: 0 0 12px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+  .event-ul, ul:not(.features) {
+    margin: 0 0 14px;
+    padding-left: 1.35rem;
+    color: var(--text-secondary);
+  }
+  .event-ol, ol {
+    margin: 0 0 14px;
+    padding-left: 1.35rem;
+    color: var(--text-secondary);
+  }
+  .event-li, li:not(.features li) {
+    margin: 0 0 8px;
+    line-height: 1.5;
+  }
+  .event-link, a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 12px 0;
+    border-radius: 14px;
+  }
 `;
 
 export function buildEventDocumentHtml(innerHtml: string, theme?: InAppEventTheme | null): string {

@@ -4,8 +4,15 @@ import { Copy, Eye } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import {
+  IN_APP_EVENT_AI_PROMPT,
+  IN_APP_EVENT_LAYOUT_CLASSES,
+  getInAppEventBodyExample,
+} from '@/lib/in-app-event-content-guide';
+
+import {
   AdminAlert,
   AdminCard,
+  AdminDetailsSection,
   AdminFormField,
   AdminStatusBadge,
   AdminSubNav,
@@ -75,6 +82,17 @@ export function AdminInAppEventsPanel() {
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewErr, setPreviewErr] = useState<string | null>(null);
+  const [copyMsg, setCopyMsg] = useState<string | null>(null);
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyMsg(`${label} copied`);
+      window.setTimeout(() => setCopyMsg(null), 2000);
+    } catch {
+      setCopyMsg('Copy failed');
+    }
+  };
 
   const fetchList = useCallback(async () => {
     setListLoading(true);
@@ -409,7 +427,14 @@ export function AdminInAppEventsPanel() {
                 />
               </AdminFormField>
               <div className="grid gap-3 sm:grid-cols-2">
-                <AdminFormField label="Content type">
+                <AdminFormField
+                  label="Content type"
+                  hint={
+                    form.contentType === 'html'
+                      ? 'HTML fragment only — set this when pasting layout classes'
+                      : 'GFM markdown — no raw HTML tags'
+                  }
+                >
                   <select
                     value={form.contentType}
                     onChange={(e) =>
@@ -433,8 +458,98 @@ export function AdminInAppEventsPanel() {
                   />
                 </AdminFormField>
               </div>
+              <AdminDetailsSection
+                summary="AI prompt & format guide"
+                defaultOpen={!form.body.trim()}
+                badge={
+                  copyMsg ? (
+                    <span className="text-xs font-normal text-emerald-600 dark:text-emerald-400">
+                      {copyMsg}
+                    </span>
+                  ) : null
+                }
+              >
+                <div className="space-y-4 text-sm text-zinc-600 dark:text-zinc-400">
+                  <p>
+                    Use an LLM to draft copy, but always set <strong>Content type</strong> to match
+                    the output. HTML with layout classes must use <strong>HTML</strong>, not
+                    Markdown.
+                  </p>
+                  <div>
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-medium text-zinc-800 dark:text-zinc-200">
+                        System prompt (English)
+                      </p>
+                      <button
+                        type="button"
+                        className={adminBtnSecondaryClass}
+                        onClick={() => void copyToClipboard(IN_APP_EVENT_AI_PROMPT, 'Prompt')}
+                      >
+                        Copy prompt
+                      </button>
+                    </div>
+                    <pre className="max-h-48 overflow-auto rounded-lg border border-zinc-200 bg-white p-3 font-mono text-[11px] leading-relaxed text-zinc-700 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
+                      {IN_APP_EVENT_AI_PROMPT}
+                    </pre>
+                  </div>
+                  <div>
+                    <p className="mb-2 font-medium text-zinc-800 dark:text-zinc-200">
+                      HTML layout classes
+                    </p>
+                    <ul className="list-inside list-disc space-y-1 text-xs">
+                      {IN_APP_EVENT_LAYOUT_CLASSES.map((line) => (
+                        <li key={line}>
+                          <code className="text-zinc-800 dark:text-zinc-200">{line.split(' — ')[0]}</code>
+                          {line.includes(' — ') ? ` — ${line.split(' — ').slice(1).join(' — ')}` : null}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-medium text-zinc-800 dark:text-zinc-200">
+                        Example {form.contentType === 'markdown' ? 'Markdown' : 'HTML'} body
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          className={adminBtnSecondaryClass}
+                          onClick={() =>
+                            void copyToClipboard(
+                              getInAppEventBodyExample(form.contentType),
+                              'Example',
+                            )
+                          }
+                        >
+                          Copy example
+                        </button>
+                        <button
+                          type="button"
+                          className={adminBtnGhostClass}
+                          onClick={() =>
+                            setForm((f) => ({
+                              ...f,
+                              body: getInAppEventBodyExample(f.contentType),
+                            }))
+                          }
+                        >
+                          Insert into body
+                        </button>
+                      </div>
+                    </div>
+                    <pre className="max-h-56 overflow-auto rounded-lg border border-zinc-200 bg-white p-3 font-mono text-[11px] leading-relaxed text-zinc-700 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
+                      {getInAppEventBodyExample(form.contentType)}
+                    </pre>
+                  </div>
+                </div>
+              </AdminDetailsSection>
               <AdminFormField
                 label={form.contentType === 'markdown' ? 'Body (Markdown)' : 'Body (HTML)'}
+                hint={
+                  form.contentType === 'html'
+                    ? 'Fragment only — no <html>, <head>, or <style>'
+                    : 'Headings, lists, and links only'
+                }
               >
                 <textarea
                   value={form.body}
@@ -442,6 +557,7 @@ export function AdminInAppEventsPanel() {
                   required
                   rows={12}
                   className={`${adminInputClass} min-h-[220px] font-mono text-xs leading-relaxed`}
+                  placeholder={getInAppEventBodyExample(form.contentType)}
                 />
               </AdminFormField>
               <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
@@ -514,7 +630,7 @@ export function AdminInAppEventsPanel() {
               title="In-app event preview"
               srcDoc={previewHtml}
               sandbox=""
-              className="h-[min(72vh,640px)] w-full rounded-lg border border-zinc-200 bg-white dark:border-zinc-700"
+              className="h-[min(72vh,640px)] w-full rounded-lg border border-zinc-200 bg-[#121418] dark:border-zinc-700"
             />
           ) : (
             <p className="py-12 text-center text-sm text-zinc-500">

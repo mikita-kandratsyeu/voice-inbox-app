@@ -3,6 +3,7 @@ import {
   inAppEventEtag,
   isInAppEventContentType,
   isInAppEventLocale,
+  looksLikeHtmlFragment,
   parseInAppEventTheme,
   validateInAppEventId,
 } from './in-app-event-page';
@@ -44,6 +45,13 @@ describe('buildEventDocumentHtml', () => {
     expect(doc).toContain('<!DOCTYPE html>');
     expect(doc).toContain('data-theme="dark"');
     expect(doc).toContain('<p>Hi</p>');
+  });
+});
+
+describe('looksLikeHtmlFragment', () => {
+  it('detects html fragments', () => {
+    expect(looksLikeHtmlFragment('<p class="badge">Hi</p>')).toBe(true);
+    expect(looksLikeHtmlFragment('# Markdown')).toBe(false);
   });
 });
 
