@@ -21,11 +21,14 @@ import {
   setGithubSyncLastError,
   setGithubSyncLastSyncedAt,
 } from './githubSyncState';
+import { updateGithubSyncProgress } from './githubSyncProgress';
 import {
   GITHUB_SYNC_TIMEOUT_ERROR,
   isGithubSyncTimeoutError,
   withGithubSyncTimeout,
 } from './githubSyncTimeout';
+
+const PUSH_REF_CONFLICT_RETRIES = 2;
 
 export type PushGithubCommitResult =
   | { ok: true; commitSha: string; alreadyUpToDate: boolean }
@@ -35,11 +38,18 @@ async function pushGithubCommitInternal(params: {
   secrets: GithubSyncSecrets;
   records: VoiceRecord[];
   folders: Folder[];
+  reportProgress?: boolean;
 }): Promise<PushGithubCommitResult> {
-  const { secrets, records, folders } = params;
+  const { secrets, records, folders, reportProgress = false } = params;
   const { accessToken, owner, repo, branch, basePath } = secrets;
 
+  const reportStage = (stage: 'preparing' | 'uploading' | 'committing') => {
+    if (!reportProgress) return;
+    updateGithubSyncProgress({ stage });
+  };
+
   try {
+    reportStage('preparing');
     try {
       await fetchGithubUserLogin(accessToken);
     } catch (authErr) {
@@ -105,6 +115,11 @@ async function pushGithubCommitInternal(params: {
       graphLayoutCount: snapshot.graphLayoutCount,
     });
 
+    const uploadTotal = snapshot.files.size;
+    if (reportProgress && uploadTotal > 0) {
+      updateGithubSyncProgress({ stage: 'uploading', uploadCurrent: 0, uploadTotal });
+    }
+
     const commitSha = await createGithubCommitWithFiles({
       accessToken,
       owner,
@@ -114,6 +129,12 @@ async function pushGithubCommitInternal(params: {
       files: snapshot.files,
       deletions,
       message,
+      onUploadProgress: reportProgress
+        ? (uploaded, total) => {
+            updateGithubSyncProgress({ stage: 'uploading', uploadCurrent: uploaded, uploadTotal: total });
+          }
+        : undefined,
+      onCommitting: reportProgress ? () => reportStage('committing') : undefined,
     });
 
     setGithubSyncLastCommitSha(commitSha);
@@ -143,13 +164,24 @@ export async function pushGithubCommit(params: {
   secrets: GithubSyncSecrets;
   records: VoiceRecord[];
   folders: Folder[];
+  reportProgress?: boolean;
 }): Promise<PushGithubCommitResult> {
   if (!isProActiveFromStorageSync()) {
     return { ok: false, code: 'pro_required' };
   }
 
   try {
-    return await withGithubSyncTimeout(pushGithubCommitInternal(params));
+    const pushWithRefRetries = async (): Promise<PushGithubCommitResult> => {
+      let lastResult: PushGithubCommitResult = { ok: false, code: 'sync_failed' };
+      for (let attempt = 0; attempt <= PUSH_REF_CONFLICT_RETRIES; attempt += 1) {
+        lastResult = await pushGithubCommitInternal(params);
+        if (lastResult.ok || lastResult.code !== 'ref_conflict') {
+          return lastResult;
+        }
+      }
+      return lastResult;
+    };
+    return await withGithubSyncTimeout(pushWithRefRetries());
   } catch (err) {
     if (isGithubSyncTimeoutError(err)) {
       setGithubSyncLastError(GITHUB_SYNC_TIMEOUT_ERROR);

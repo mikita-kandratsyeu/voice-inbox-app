@@ -25,6 +25,10 @@ export type GithubCommitSummary = {
   committedAt: string;
 };
 
+export type GithubBranchSummary = {
+  name: string;
+};
+
 export type GithubApiError = Error & { status?: number; code?: string };
 
 export function isGithubApiError(err: unknown): err is GithubApiError {
@@ -238,6 +242,43 @@ export async function listGithubRepos(accessToken: string): Promise<GithubRepoSu
   return repos;
 }
 
+export async function listGithubBranches(
+  accessToken: string,
+  owner: string,
+  repo: string,
+): Promise<GithubBranchSummary[]> {
+  const branches: GithubBranchSummary[] = [];
+  let page = 1;
+
+  while (page <= 10) {
+    const response = await githubFetch(
+      accessToken,
+      repoApiPath(owner, repo, `/branches?per_page=100&page=${page}`),
+    );
+    if (!response.ok) {
+      await throwGithubHttpError(`List branches failed: ${response.status}`, response);
+    }
+    const data: unknown = await response.json();
+    if (!isArray(data)) {
+      throw createGithubError('Invalid branches response');
+    }
+    if (data.length === 0) {
+      break;
+    }
+    for (const item of data) {
+      if (isRecord(item) && isString(item.name)) {
+        branches.push({ name: item.name });
+      }
+    }
+    if (data.length < 100) {
+      break;
+    }
+    page += 1;
+  }
+
+  return branches.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+}
+
 export async function createGithubRepo(
   accessToken: string,
   name: string,
@@ -332,6 +373,7 @@ async function createBlobsParallel(
   repo: string,
   files: Map<string, string>,
   concurrency = 4,
+  onBlobUploaded?: (uploaded: number, total: number) => void,
 ): Promise<Map<string, string>> {
   const entries = [...files.entries()];
   if (entries.length === 0) {
@@ -353,6 +395,7 @@ async function createBlobsParallel(
       try {
         const sha = await createBlob(accessToken, owner, repo, content);
         blobShas.set(path, sha);
+        onBlobUploaded?.(blobShas.size, entries.length);
       } catch (err) {
         firstError = err;
         return;
@@ -508,6 +551,8 @@ type CreateGithubCommitParams = {
   files: Map<string, string>;
   deletions: string[];
   message: string;
+  onUploadProgress?: (uploaded: number, total: number) => void;
+  onCommitting?: () => void;
 };
 
 async function createGithubCommitWithFilesInternal(
@@ -523,6 +568,8 @@ async function createGithubCommitWithFilesInternal(
     deletions,
     message,
     refConflictAttempt,
+    onUploadProgress,
+    onCommitting,
   } = params;
   const parentSha = await getBranchRefSha(accessToken, owner, repo, branch);
 
@@ -535,7 +582,16 @@ async function createGithubCommitWithFilesInternal(
     relativeFiles.set(rel, content);
   }
 
-  const blobShas = await createBlobsParallel(accessToken, owner, repo, relativeFiles);
+  const blobShas = await createBlobsParallel(
+    accessToken,
+    owner,
+    repo,
+    relativeFiles,
+    4,
+    onUploadProgress,
+  );
+
+  onCommitting?.();
 
   const treeEntries: TreeEntry[] = [];
   for (const [relPath, blobSha] of blobShas.entries()) {

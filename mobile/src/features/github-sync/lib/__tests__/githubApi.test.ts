@@ -12,6 +12,7 @@ import {
   getBranchRefSha,
   getFileContentAtRef,
   isGithubApiError,
+  listGithubBranches,
   listGithubCommits,
   listGithubRepos,
   listTreePathsAtCommit,
@@ -174,6 +175,28 @@ describe('githubApi', () => {
           defaultBranch: 'main',
         },
       ]);
+    });
+  });
+
+  describe('listGithubBranches', () => {
+    it('parses branch names and sorts them', async () => {
+      mockNitroFetch.mockResolvedValue(
+        jsonResponse([
+          { name: 'voice-inbox-ai-sync' },
+          { name: 'main' },
+          { name: 'develop' },
+        ]),
+      );
+
+      await expect(listGithubBranches('token', 'octocat', 'hello')).resolves.toEqual([
+        { name: 'develop' },
+        { name: 'main' },
+        { name: 'voice-inbox-ai-sync' },
+      ]);
+      expect(mockNitroFetch).toHaveBeenCalledWith(
+        'https://api.github.com/repos/octocat/hello/branches?per_page=100&page=1',
+        expect.objectContaining({ timeoutMs: GITHUB_FETCH_TIMEOUT_MS }),
+      );
     });
   });
 

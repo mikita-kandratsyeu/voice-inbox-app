@@ -1,6 +1,6 @@
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
-import { ChevronRight, GitBranch, Plus, Search, X } from 'lucide-react-native';
+import { ChevronRight, Plus, Search, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
@@ -15,6 +15,7 @@ import {
 
 import { GITHUB_SYNC_DEFAULT_BRANCH, GITHUB_SYNC_DEFAULT_REPO_NAME } from '../lib/constants';
 import type { GithubRepoSummary } from '../lib/githubApi';
+import { GithubIcon } from './GithubIcon';
 import { GithubSyncBranchText } from './GithubSyncBranchText';
 
 const REPO_ROW_HEIGHT = 72;
@@ -87,7 +88,7 @@ function RepoPickerRow({ item, color, isLast, visibilityLabel, onPress }: RepoPi
             width: 36,
           }}
         >
-          <GitBranch size={18} color={color.accent.primary} strokeWidth={2} />
+          <GithubIcon size={18} color={color.accent.primary} />
         </View>
         <View style={{ flex: 1, flexShrink: 1, justifyContent: 'center', minWidth: 0 }}>
           <Text

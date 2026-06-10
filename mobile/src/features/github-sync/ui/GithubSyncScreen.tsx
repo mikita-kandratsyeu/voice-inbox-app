@@ -1,9 +1,9 @@
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { GitBranch, History, RefreshCw, Unplug } from 'lucide-react-native';
+import { CalendarClock, Folder, GitBranch, History, RefreshCw, Unplug } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, ScrollView, Switch, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -14,10 +14,17 @@ import { SCREEN_PADDING, ScreenHeader, SettingsRow, SettingsSection } from '@/sh
 
 import { GITHUB_SYNC_DEFAULT_BRANCH } from '../lib/constants';
 import type { GithubRepoSummary } from '../lib/githubApi';
+import type { GithubSyncAutoIntervalHours } from '../lib/githubSyncState';
 import { useGithubSync } from '../model/useGithubSync';
 import { GithubRepoPickerSheet } from './GithubRepoPickerSheet';
+import { GithubSyncAutoIntervalSheet } from './GithubSyncAutoIntervalSheet';
+import { GithubSyncBranchSheet } from './GithubSyncBranchSheet';
 import { githubSyncBranchA11yLabel, GithubSyncBranchText } from './GithubSyncBranchText';
 import { GithubSyncHistorySheet } from './GithubSyncHistorySheet';
+
+function autoIntervalLabelKey(hours: GithubSyncAutoIntervalHours): string {
+  return `settings.githubSync.autoInterval.h${hours}`;
+}
 
 export function GithubSyncScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
@@ -27,6 +34,7 @@ export function GithubSyncScreen() {
   useEffect(() => {
     isFocusedRef.current = isFocused;
   }, [isFocused]);
+
   const { t, i18n } = useTranslation();
   const color = useColors();
   const insets = useSafeAreaInsets();
@@ -38,21 +46,33 @@ export function GithubSyncScreen() {
     loadRepos,
     loadHistory,
     secrets,
+    githubLogin,
     isSyncing,
     lastSyncedAt,
+    autoSyncEnabled,
+    autoSyncIntervalHours,
     repos,
     isLoadingRepos,
+    branches,
+    isLoadingBranches,
+    loadBranches,
     history,
     isLoadingHistory,
     selectRepository,
     createAndSelectRepository,
     disconnect,
     syncNow,
+    updateBranch,
+    setAutoSyncEnabled,
+    setAutoSyncIntervalHours,
   } = useGithubSync();
 
   const [repoPickerVisible, setRepoPickerVisible] = useState(false);
   const [isCreatingRepo, setIsCreatingRepo] = useState(false);
   const [historyVisible, setHistoryVisible] = useState(false);
+  const [branchSheetVisible, setBranchSheetVisible] = useState(false);
+  const [intervalSheetVisible, setIntervalSheetVisible] = useState(false);
+  const [isSavingBranch, setIsSavingBranch] = useState(false);
 
   const handleLoadRepos = useCallback(async () => {
     const result = await loadRepos();
@@ -132,6 +152,32 @@ export function GithubSyncScreen() {
     Alert.alert(t('common.done'), t('settings.githubSync.syncSuccess'));
   }, [navigation, syncNow, t]);
 
+  const handleSaveBranch = useCallback(
+    async (branchName: string) => {
+      setIsSavingBranch(true);
+      try {
+        const result = await updateBranch(branchName);
+        if (!result.ok) {
+          Alert.alert(t('common.error'), t('settings.githubSync.branchInvalid'));
+          return;
+        }
+        setBranchSheetVisible(false);
+      } finally {
+        setIsSavingBranch(false);
+      }
+    },
+    [t, updateBranch],
+  );
+
+  const handleLoadBranches = useCallback(async () => {
+    const result = await loadBranches();
+    if (!result.ok && result.code === 'unauthorized') {
+      setBranchSheetVisible(false);
+      Alert.alert(t('common.error'), t('settings.githubSync.sessionExpired'));
+      navigation.goBack();
+    }
+  }, [loadBranches, navigation, t]);
+
   const handleDisconnect = useCallback(() => {
     Alert.alert(
       t('settings.githubSync.disconnectTitle'),
@@ -162,6 +208,15 @@ export function GithubSyncScreen() {
       : t('settings.githubSync.neverSynced');
 
   const branchName = secrets?.branch ?? GITHUB_SYNC_DEFAULT_BRANCH;
+  const connectedSubtitle = githubLogin
+    ? t('settings.githubSync.connectedAs', { login: githubLogin })
+    : t('settings.githubSync.connectedStatus');
+
+  const infoTextStyle = {
+    color: color.text.secondary,
+    fontSize: 14,
+    lineHeight: 20,
+  } as const;
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -183,10 +238,20 @@ export function GithubSyncScreen() {
         <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
           {t('settings.githubSync.plaintextWarning')}
         </Text>
+        <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
+          {t('settings.githubSync.audioRestoreHint')}
+        </Text>
 
         <SettingsSection title={t('settings.githubSync.connectedSectionTitle')}>
           <SettingsRow
             label={repoLabel}
+            subtitle={connectedSubtitle}
+            leftIcon={<Folder size={20} color={color.accent.models} strokeWidth={1.8} />}
+            onPress={() => setRepoPickerVisible(true)}
+            isFirst
+          />
+          <SettingsRow
+            label={t('settings.githubSync.branchRow')}
             subtitle={
               <GithubSyncBranchText
                 i18nKey="settings.githubSync.repoBranch"
@@ -200,20 +265,19 @@ export function GithubSyncScreen() {
               'settings.githubSync.repoBranch',
               branchName,
             )}
-            leftIcon={<GitBranch size={20} color={color.accent.primary} strokeWidth={1.8} />}
-            onPress={() => setRepoPickerVisible(true)}
-            isFirst
+            leftIcon={<GitBranch size={20} color={color.accent.transcript} strokeWidth={1.8} />}
+            onPress={() => setBranchSheetVisible(true)}
           />
           <SettingsRow
             label={isSyncing ? t('settings.githubSync.syncing') : t('settings.githubSync.syncNow')}
             subtitle={syncSubtitle}
-            leftIcon={<RefreshCw size={20} color={color.accent.primary} strokeWidth={1.8} />}
+            leftIcon={<RefreshCw size={20} color={color.accent.success} strokeWidth={1.8} />}
             loading={isSyncing}
             onPress={isSyncing ? undefined : () => void handleSync()}
           />
           <SettingsRow
             label={t('settings.githubSync.history')}
-            leftIcon={<History size={20} color={color.accent.primary} strokeWidth={1.8} />}
+            leftIcon={<History size={20} color={color.accent.cache} strokeWidth={1.8} />}
             onPress={() => setHistoryVisible(true)}
           />
           <SettingsRow
@@ -222,6 +286,49 @@ export function GithubSyncScreen() {
             onPress={handleDisconnect}
             isLast
           />
+        </SettingsSection>
+
+        <SettingsSection title={t('settings.githubSync.scheduleSectionTitle')}>
+          <SettingsRow
+            label={t('settings.githubSync.autoSync')}
+            subtitle={t('settings.githubSync.autoSyncHint')}
+            leftIcon={<CalendarClock size={20} color={color.accent.primary} strokeWidth={1.8} />}
+            rightSlot={
+              <Switch
+                value={autoSyncEnabled}
+                onValueChange={setAutoSyncEnabled}
+                accessibilityLabel={t('settings.githubSync.autoSync')}
+                trackColor={{
+                  false: color.background.tertiary,
+                  true: color.accent.primary,
+                }}
+                thumbColor={color.icon.onAccent}
+              />
+            }
+            showChevron={false}
+            isFirst
+            isLast={!autoSyncEnabled}
+          />
+          {autoSyncEnabled ? (
+            <SettingsRow
+              label={t('settings.githubSync.autoIntervalRow')}
+              value={t(autoIntervalLabelKey(autoSyncIntervalHours))}
+              onPress={() => setIntervalSheetVisible(true)}
+              isLast
+            />
+          ) : null}
+        </SettingsSection>
+
+        <SettingsSection title={t('settings.githubSync.aboutSectionTitle')}>
+          <View
+            className="rounded-2xl px-4 py-3.5"
+            style={{ backgroundColor: color.background.card }}
+          >
+            <Text style={infoTextStyle}>{t('settings.githubSync.scopeHint')}</Text>
+            <Text style={[infoTextStyle, { marginTop: 12 }]}>
+              {t('settings.githubSync.multiDeviceHint')}
+            </Text>
+          </View>
         </SettingsSection>
       </ScrollView>
 
@@ -243,6 +350,28 @@ export function GithubSyncScreen() {
         loading={isLoadingHistory}
         onClose={() => setHistoryVisible(false)}
         onLoad={handleLoadHistory}
+      />
+      <GithubSyncBranchSheet
+        visible={branchSheetVisible}
+        color={color}
+        branch={branchName}
+        branches={branches}
+        loading={isLoadingBranches}
+        saving={isSavingBranch}
+        onClose={() => setBranchSheetVisible(false)}
+        onLoadBranches={handleLoadBranches}
+        onSelect={handleSaveBranch}
+        onSave={handleSaveBranch}
+      />
+      <GithubSyncAutoIntervalSheet
+        visible={intervalSheetVisible}
+        color={color}
+        selectedHours={autoSyncIntervalHours}
+        onSelect={(hours) => {
+          setAutoSyncIntervalHours(hours);
+          setIntervalSheetVisible(false);
+        }}
+        onClose={() => setIntervalSheetVisible(false)}
       />
     </View>
   );

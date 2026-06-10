@@ -17,6 +17,7 @@ import {
   useScrollToTopOnTabPress,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
+import { runAfterInteractions } from '@/shared/lib/runAfterInteractions';
 import { PrivateExecutionBadge, SCREEN_PADDING, SettingsRow, SettingsSection } from '@/shared/ui';
 
 import { useSettingsScreen } from '../lib/useSettingsScreen';
@@ -35,10 +36,13 @@ import {
 } from './sections';
 import { SettingsPlanStatusCard } from './SettingsPlanStatusCard';
 
+/** Survives stack pushes that unmount Settings or reset ScrollView offset while blurred. */
+let persistedSettingsScrollY = 0;
+
 export const SettingsScreen = () => {
   const settings = useSettingsScreen();
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
-  const scrollOffsetRef = useRef(0);
+  const trackScrollRef = useRef(true);
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
   const contentMaxWidth = useTabletContentMaxWidth();
@@ -47,19 +51,30 @@ export const SettingsScreen = () => {
   useScrollToTopOnTabPress(scrollRef);
 
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+    if (!trackScrollRef.current) {
+      return;
+    }
+    persistedSettingsScrollY = event.nativeEvent.contentOffset.y;
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      const y = scrollOffsetRef.current;
-      if (y <= 0) {
-        return;
-      }
-      const frame = requestAnimationFrame(() => {
-        scrollRef.current?.scrollTo({ y, animated: false });
+      trackScrollRef.current = true;
+      const y = persistedSettingsScrollY;
+
+      const restoreTask = runAfterInteractions(() => {
+        if (y <= 0) {
+          return;
+        }
+        requestAnimationFrame(() => {
+          scrollRef.current?.scrollTo({ y, animated: false });
+        });
       });
-      return () => cancelAnimationFrame(frame);
+
+      return () => {
+        trackScrollRef.current = false;
+        restoreTask.cancel();
+      };
     }, []),
   );
 
@@ -192,7 +207,6 @@ export const SettingsScreen = () => {
           <SettingsBackupSection
             color={settings.color}
             t={settings.t}
-            language={settings.appLanguage}
             recordsCount={settings.recordsCount}
             navigation={settings.navigation}
           />

@@ -1,8 +1,8 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { TFunction } from 'i18next';
-import { GitBranch } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
@@ -15,15 +15,16 @@ import { SettingsRow } from '@/shared/ui';
 import type { GithubRepoSummary } from '../lib/githubApi';
 import { useGithubSync } from '../model/useGithubSync';
 import { GithubConnectSheet } from './GithubConnectSheet';
+import { GithubIcon } from './GithubIcon';
 import { GithubRepoPickerSheet } from './GithubRepoPickerSheet';
 
 type Props = {
   color: Colors;
   t: TFunction;
-  language: string;
 };
 
-export function SettingsGithubSyncRows({ color, t, language }: Props) {
+export function SettingsGithubSyncRows({ color, t }: Props) {
+  const { i18n } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const {
     loadRepos,
@@ -118,15 +119,11 @@ export function SettingsGithubSyncRows({ color, t, language }: Props) {
     [createAndSelectRepository, navigation, t],
   );
 
-  const repoLabel = secrets
-    ? `${secrets.owner}/${secrets.repo}`
-    : t('settings.githubSync.notConnected');
-
   const syncSubtitle = isSyncing
     ? t('settings.githubSync.syncing')
     : lastSyncedAt != null
       ? t('settings.githubSync.lastSynced', {
-          time: formatRelativeTime(lastSyncedAt, language),
+          time: formatRelativeTime(lastSyncedAt, i18n.language),
         })
       : t('settings.githubSync.neverSynced');
 
@@ -137,7 +134,7 @@ export function SettingsGithubSyncRows({ color, t, language }: Props) {
       <SettingsRow
         label={t('settings.githubSync.connect')}
         subtitle={t('settings.githubSync.connectHint')}
-        leftIcon={<GitBranch size={20} color={color.accent.primary} strokeWidth={1.8} />}
+        leftIcon={<GithubIcon size={20} color={color.accent.primary} />}
         showProBadge
         onPress={handleLockedPress}
         isLast
@@ -150,7 +147,7 @@ export function SettingsGithubSyncRows({ color, t, language }: Props) {
           isConnecting ? t('settings.githubSync.connecting') : t('settings.githubSync.connect')
         }
         subtitle={t('settings.githubSync.connectHint')}
-        leftIcon={<GitBranch size={20} color={color.accent.primary} strokeWidth={1.8} />}
+        leftIcon={<GithubIcon size={20} color={color.accent.primary} />}
         loading={isConnecting}
         onPress={() => void handleConnect()}
         isLast
@@ -159,9 +156,10 @@ export function SettingsGithubSyncRows({ color, t, language }: Props) {
   } else {
     rows = (
       <SettingsRow
-        label={repoLabel}
+        label={t('settings.githubSync.settingsRowTitle')}
         subtitle={syncSubtitle}
-        leftIcon={<GitBranch size={20} color={color.accent.primary} strokeWidth={1.8} />}
+        subtitleA11y={secrets ? `${secrets.owner}/${secrets.repo}, ${syncSubtitle}` : syncSubtitle}
+        leftIcon={<GithubIcon size={20} color={color.accent.primary} />}
         loading={isSyncing}
         onPress={() => navigation.navigate('GithubSync')}
         isLast

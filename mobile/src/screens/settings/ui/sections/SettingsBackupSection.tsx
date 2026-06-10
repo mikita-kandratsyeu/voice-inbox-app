@@ -11,18 +11,11 @@ import { SettingsRow, SettingsSection } from '@/shared/ui';
 type Props = {
   color: Colors;
   t: TFunction;
-  language: string;
   recordsCount: number;
   navigation: NativeStackNavigationProp<SettingsStackParamList>;
 };
 
-export const SettingsBackupSection = ({
-  color,
-  t,
-  language,
-  recordsCount,
-  navigation,
-}: Props) => (
+export const SettingsBackupSection = ({ color, t, recordsCount, navigation }: Props) => (
   <SettingsSection title={t('settings.backupRestore')}>
     <SettingsRow
       label={t('settings.backupRestoreScreen.entryRow')}
@@ -32,6 +25,6 @@ export const SettingsBackupSection = ({
       onPress={() => navigation.navigate('BackupRestore')}
       isFirst
     />
-    <SettingsGithubSyncRows color={color} t={t} language={language} />
+    <SettingsGithubSyncRows color={color} t={t} />
   </SettingsSection>
 );

@@ -20,6 +20,7 @@ import {
 } from '@/features/app-lifecycle';
 import { AppLockGate, AppSwitcherPrivacyOverlay } from '@/features/app-lock';
 import { AppRatingPromptRoot } from '@/features/app-review';
+import { GithubSyncProgressOverlay } from '@/features/github-sync/ui/GithubSyncProgressOverlay';
 import { flushPendingSharedAudioImport } from '@/features/import-audio-file/lib/sharedAudioImportRegistry';
 import { OnboardingGate } from '@/features/onboarding';
 import { PlanPaywallProvider } from '@/features/plan-paywall';
@@ -156,6 +157,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
                 <CloudAiThirdPartyConsentModal />
                 <PushNotificationSheet />
                 <AppRatingPromptRoot />
+                <GithubSyncProgressOverlay />
               </BottomSheetModalProvider>
               <AppSwitcherPrivacyOverlay />
             </NetworkStatusProvider>

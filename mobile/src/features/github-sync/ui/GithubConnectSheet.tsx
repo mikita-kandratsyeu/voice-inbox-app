@@ -1,6 +1,6 @@
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { Check, GitBranch } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -36,6 +36,7 @@ import {
 } from '@/shared/ui/bottom-sheet';
 
 import { GithubConnectCountdownBadge } from './GithubConnectCountdownBadge';
+import { GithubIcon } from './GithubIcon';
 
 type Props = {
   visible: boolean;
@@ -269,7 +270,7 @@ export function GithubConnectSheet({
             className="mb-4 h-14 w-14 items-center justify-center rounded-2xl"
             style={{ backgroundColor: color.background.tertiary }}
           >
-            <GitBranch size={28} color={color.accent.primary} strokeWidth={1.75} />
+            <GithubIcon size={28} color={color.accent.primary} />
           </View>
           <Text
             className="mb-2 text-center text-xl font-bold"
@@ -278,10 +279,16 @@ export function GithubConnectSheet({
             {t('settings.githubSync.connectSheetTitle')}
           </Text>
           <Text
-            className="mb-5 text-center text-sm leading-5"
+            className="mb-3 text-center text-sm leading-5"
             style={{ color: color.text.secondary }}
           >
             {t('settings.githubSync.connectSheetBody')}
+          </Text>
+          <Text
+            className="mb-5 text-center text-[13px] leading-[18px]"
+            style={{ color: color.text.muted }}
+          >
+            {t('settings.githubSync.scopeHint')}
           </Text>
         </View>
 

@@ -5,6 +5,7 @@ import { useRecordStore } from '@/entities/record';
 import { syncPrivateCapabilityTier } from '@/entities/settings';
 import { scheduleResumeAllPendingCloudSummarize } from '@/features/ai-processing';
 import { syncAllBackupReminderNotifications } from '@/features/backup-reminder-notifications';
+import { maybeRunScheduledGithubSync } from '@/features/github-sync/lib/githubSyncSchedule';
 import { localLlmModelDownloader } from '@/features/model-manager/lib/local-llm-download';
 import { whisperModelDownloader } from '@/features/model-manager/lib/whisper-download';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
@@ -92,6 +93,7 @@ export function useAppForegroundLifecycle(): void {
           lastForegroundAt = now;
           scheduleResumeAllPendingCloudSummarize();
           void syncAllBackupReminderNotifications();
+          void maybeRunScheduledGithubSync();
         }
         foregroundInterval = setInterval(maybeNotifyForeground, HEARTBEAT_INTERVAL_MS);
       } else {

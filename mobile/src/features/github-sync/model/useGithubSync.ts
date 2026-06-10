@@ -10,8 +10,10 @@ import { fetchGithubSyncHistory } from '../lib/fetchGithubSyncHistory';
 import {
   createGithubRepo,
   fetchGithubUserLogin,
+  type GithubBranchSummary,
   type GithubCommitSummary,
   type GithubRepoSummary,
+  listGithubBranches,
   listGithubRepos,
 } from '../lib/githubApi';
 import {
@@ -25,12 +27,25 @@ import {
   getGithubSyncSecrets,
   type GithubSyncSecrets,
   isGithubSyncConnected,
+  setGithubSyncBranch,
   setGithubSyncRepository,
 } from '../lib/githubSecrets';
+import { isValidGithubSyncBranchName, normalizeGithubSyncBranchName } from '../lib/githubSyncBranch';
 import { registerGithubConnectSession } from '../lib/githubSyncConnectSession';
+import { beginGithubSyncProgress, endGithubSyncProgress } from '../lib/githubSyncProgress';
 import { runGithubSyncNow } from '../lib/githubSyncNow';
 import { isGithubSyncSessionActive, subscribeGithubSyncSession } from '../lib/githubSyncSession';
-import { clearGithubSyncState, getGithubSyncLastSyncedAt } from '../lib/githubSyncState';
+import {
+  clearGithubSyncState,
+  getGithubSyncAutoEnabled,
+  getGithubSyncAutoIntervalHours,
+  getGithubSyncLastSyncedAt,
+  getGithubSyncLogin,
+  setGithubSyncAutoEnabled,
+  setGithubSyncAutoIntervalHours,
+  setGithubSyncLogin,
+  type GithubSyncAutoIntervalHours,
+} from '../lib/githubSyncState';
 import { pushGithubCommit } from '../lib/pushGithubCommit';
 import { restoreGithubSyncVersion } from '../lib/restoreGithubSyncVersion';
 
@@ -55,16 +70,40 @@ export function useGithubSync() {
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(getGithubSyncLastSyncedAt());
   const [repos, setRepos] = useState<GithubRepoSummary[]>([]);
   const [isLoadingRepos, setIsLoadingRepos] = useState(false);
+  const [branches, setBranches] = useState<GithubBranchSummary[]>([]);
+  const [isLoadingBranches, setIsLoadingBranches] = useState(false);
   const [history, setHistory] = useState<GithubCommitSummary[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [githubLogin, setGithubLogin] = useState<string | null>(getGithubSyncLogin());
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(getGithubSyncAutoEnabled());
+  const [autoSyncIntervalHours, setAutoSyncIntervalHours] = useState(
+    getGithubSyncAutoIntervalHours(),
+  );
   const oauthConfigured = isGithubOAuthConfigured();
+
+  const persistGithubLogin = useCallback(async (accessToken: string) => {
+    try {
+      const login = await fetchGithubUserLogin(accessToken);
+      setGithubSyncLogin(login);
+      setGithubLogin(login);
+      return login;
+    } catch {
+      return null;
+    }
+  }, []);
 
   const refreshSecrets = useCallback(async () => {
     const next = await getGithubSyncSecrets();
     setSecrets(next);
     setConnected(await isGithubSyncConnected());
     setLastSyncedAt(getGithubSyncLastSyncedAt());
-  }, []);
+    setGithubLogin(getGithubSyncLogin());
+    setAutoSyncEnabled(getGithubSyncAutoEnabled());
+    setAutoSyncIntervalHours(getGithubSyncAutoIntervalHours());
+    if (next?.accessToken && !getGithubSyncLogin()) {
+      await persistGithubLogin(next.accessToken);
+    }
+  }, [persistGithubLogin]);
 
   useEffect(() => {
     void refreshSecrets();
@@ -107,6 +146,10 @@ export function useGithubSync() {
       await startGithubDeviceFlow((challenge) => {
         setConnectChallenge(challenge);
       });
+      const nextSecrets = await getGithubSyncSecrets();
+      if (nextSecrets?.accessToken) {
+        await persistGithubLogin(nextSecrets.accessToken);
+      }
       await refreshSecrets();
       return { ok: true as const };
     } catch (err) {
@@ -119,7 +162,7 @@ export function useGithubSync() {
       setConnectChallenge(null);
       setIsConnecting(false);
     }
-  }, [isProActive, oauthConfigured, refreshSecrets]);
+  }, [isProActive, oauthConfigured, persistGithubLogin, refreshSecrets]);
 
   const loadRepos = useCallback(async () => {
     const current = await getGithubSyncSecrets();
@@ -181,35 +224,104 @@ export function useGithubSync() {
     setSecrets(null);
     setConnected(false);
     setRepos([]);
+    setBranches([]);
     setHistory([]);
     setLastSyncedAt(null);
+    setGithubLogin(null);
   }, []);
 
-  const syncNow = useCallback(async () => {
+  const loadBranches = useCallback(async () => {
     const current = await getGithubSyncSecrets();
-    const result = await runGithubSyncNow({
-      isProActive,
-      isConnected: current != null,
-      push: async () => {
-        if (!current) {
-          return { ok: false as const, code: 'not_connected' };
-        }
-        return pushGithubCommit({
-          secrets: current,
-          records,
-          folders,
-        });
-      },
-    });
-    if (result.ok) {
-      setLastSyncedAt(getGithubSyncLastSyncedAt());
-    } else if (result.code === 'unauthorized') {
-      await clearGithubSyncSecrets();
-      setSecrets(null);
-      setConnected(false);
+    if (!current?.accessToken || !current.owner || !current.repo) {
+      return { ok: false as const, code: 'not_connected' };
     }
-    return result;
-  }, [folders, isProActive, records]);
+    setIsLoadingBranches(true);
+    try {
+      const listed = await listGithubBranches(
+        current.accessToken,
+        current.owner,
+        current.repo,
+      );
+      setBranches(listed);
+      return { ok: true as const, branches: listed };
+    } catch (err) {
+      if (getGithubApiErrorStatus(err) === 401) {
+        await clearGithubSyncSecrets();
+        setSecrets(null);
+        setConnected(false);
+        setBranches([]);
+        return { ok: false as const, code: 'unauthorized' };
+      }
+      return { ok: false as const, code: 'failed' };
+    } finally {
+      setIsLoadingBranches(false);
+    }
+  }, []);
+
+  const syncNow = useCallback(
+    async (options?: { silent?: boolean }) => {
+      const silent = options?.silent === true;
+      const current = await getGithubSyncSecrets();
+      if (!silent) {
+        beginGithubSyncProgress(true);
+      }
+      try {
+        const result = await runGithubSyncNow({
+          isProActive,
+          isConnected: current != null,
+          push: async () => {
+            if (!current) {
+              return { ok: false as const, code: 'not_connected' };
+            }
+            return pushGithubCommit({
+              secrets: current,
+              records,
+              folders,
+              reportProgress: !silent,
+            });
+          },
+        });
+        if (result.ok) {
+          setLastSyncedAt(getGithubSyncLastSyncedAt());
+        } else if (result.code === 'unauthorized') {
+          await clearGithubSyncSecrets();
+          clearGithubSyncState();
+          setSecrets(null);
+          setConnected(false);
+          setGithubLogin(null);
+        }
+        return result;
+      } finally {
+        if (!silent) {
+          endGithubSyncProgress();
+        }
+      }
+    },
+    [folders, isProActive, records],
+  );
+
+  const updateBranch = useCallback(
+    async (branch: string) => {
+      const normalized = normalizeGithubSyncBranchName(branch);
+      if (!isValidGithubSyncBranchName(normalized)) {
+        return { ok: false as const, code: 'invalid_branch' };
+      }
+      await setGithubSyncBranch(normalized);
+      await refreshSecrets();
+      return { ok: true as const };
+    },
+    [refreshSecrets],
+  );
+
+  const setAutoSyncEnabledState = useCallback((enabled: boolean) => {
+    setGithubSyncAutoEnabled(enabled);
+    setAutoSyncEnabled(enabled);
+  }, []);
+
+  const setAutoSyncIntervalHoursState = useCallback((hours: GithubSyncAutoIntervalHours) => {
+    setGithubSyncAutoIntervalHours(hours);
+    setAutoSyncIntervalHours(hours);
+  }, []);
 
   const loadHistory = useCallback(async () => {
     const current = await getGithubSyncSecrets();
@@ -275,17 +387,26 @@ export function useGithubSync() {
     isSyncing,
     isRestoring,
     lastSyncedAt,
+    githubLogin,
+    autoSyncEnabled,
+    autoSyncIntervalHours,
     repos,
     isLoadingRepos,
+    branches,
+    isLoadingBranches,
     history,
     isLoadingHistory,
     connectGithub,
     cancelConnect,
     loadRepos,
+    loadBranches,
     selectRepository,
     createAndSelectRepository,
     disconnect,
     syncNow,
+    updateBranch,
+    setAutoSyncEnabled: setAutoSyncEnabledState,
+    setAutoSyncIntervalHours: setAutoSyncIntervalHoursState,
     loadHistory,
     restoreVersion,
     resolveDefaultOwner,

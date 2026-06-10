@@ -81,6 +81,14 @@ export async function setGithubSyncAccessToken(accessToken: string): Promise<voi
   await writePayload({ ...current, accessToken: accessToken.trim() });
 }
 
+export async function setGithubSyncBranch(branch: string): Promise<void> {
+  const current = await readPayload();
+  await writePayload({
+    ...current,
+    branch: branch.trim() || GITHUB_SYNC_DEFAULT_BRANCH,
+  });
+}
+
 export async function setGithubSyncRepository(params: {
   owner: string;
   repo: string;
