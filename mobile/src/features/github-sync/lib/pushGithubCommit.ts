@@ -5,7 +5,12 @@ import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitl
 import { buildGithubSnapshot } from './buildGithubSnapshot';
 import { areGithubSyncHashesEqual, computeGithubSyncDiff } from './computeGithubSyncDiff';
 import { formatGithubCommitMessage } from './formatGithubCommitMessage';
-import { createGithubCommitWithFiles, getBranchRefSha, listTreePathsAtCommit } from './githubApi';
+import {
+  createGithubCommitWithFiles,
+  fetchGithubUserLogin,
+  getBranchRefSha,
+  listTreePathsAtCommit,
+} from './githubApi';
 import type { GithubSyncSecrets } from './githubSecrets';
 import {
   getGithubSyncContentHashes,
@@ -15,24 +20,34 @@ import {
   setGithubSyncLastError,
   setGithubSyncLastSyncedAt,
 } from './githubSyncState';
+import { GITHUB_SYNC_TIMEOUT_ERROR, isGithubSyncTimeoutError, withGithubSyncTimeout } from './githubSyncTimeout';
 
 export type PushGithubCommitResult =
   | { ok: true; commitSha: string; alreadyUpToDate: boolean }
   | { ok: false; code: string; message?: string };
 
-export async function pushGithubCommit(params: {
+async function pushGithubCommitInternal(params: {
   secrets: GithubSyncSecrets;
   records: VoiceRecord[];
   folders: Folder[];
 }): Promise<PushGithubCommitResult> {
-  if (!isProActiveFromStorageSync()) {
-    return { ok: false, code: 'pro_required' };
-  }
-
   const { secrets, records, folders } = params;
   const { accessToken, owner, repo, branch, basePath } = secrets;
 
   try {
+    try {
+      await fetchGithubUserLogin(accessToken);
+    } catch (authErr) {
+      const authStatus =
+        authErr instanceof Error && 'status' in authErr && typeof authErr.status === 'number'
+          ? authErr.status
+          : undefined;
+      if (authStatus === 401) {
+        return { ok: false, code: 'unauthorized' };
+      }
+      throw authErr;
+    }
+
     const snapshot = await buildGithubSnapshot({ records, folders, basePath });
     const previousHashes = getGithubSyncContentHashes();
     const notesPrefix = `${basePath.replace(/^\/+|\/+$/g, '')}/notes`;
@@ -103,6 +118,35 @@ export async function pushGithubCommit(params: {
 
     return { ok: true, commitSha, alreadyUpToDate: false };
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const status =
+      err instanceof Error && 'status' in err && typeof err.status === 'number'
+        ? err.status
+        : undefined;
+    setGithubSyncLastError(message);
+    if (status === 401) {
+      return { ok: false, code: 'unauthorized', message };
+    }
+    return { ok: false, code: 'sync_failed', message };
+  }
+}
+
+export async function pushGithubCommit(params: {
+  secrets: GithubSyncSecrets;
+  records: VoiceRecord[];
+  folders: Folder[];
+}): Promise<PushGithubCommitResult> {
+  if (!isProActiveFromStorageSync()) {
+    return { ok: false, code: 'pro_required' };
+  }
+
+  try {
+    return await withGithubSyncTimeout(pushGithubCommitInternal(params));
+  } catch (err) {
+    if (isGithubSyncTimeoutError(err)) {
+      setGithubSyncLastError(GITHUB_SYNC_TIMEOUT_ERROR);
+      return { ok: false, code: 'sync_timeout' };
+    }
     const message = err instanceof Error ? err.message : String(err);
     setGithubSyncLastError(message);
     return { ok: false, code: 'sync_failed', message };

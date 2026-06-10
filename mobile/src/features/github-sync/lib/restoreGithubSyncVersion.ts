@@ -10,12 +10,6 @@ import { GITHUB_SYNC_MANIFEST_FILE } from './constants';
 import { getFileContentAtRef } from './githubApi';
 import type { GithubSyncSecrets } from './githubSecrets';
 
-function joinRepoPath(basePath: string, ...segments: string[]): string {
-  const base = basePath.replace(/^\/+|\/+$/g, '');
-  const rest = segments.map((s) => s.replace(/^\/+|\/+$/g, '')).filter(Boolean);
-  return [base, ...rest].join('/');
-}
-
 export type RestoreGithubSyncResult =
   | { ok: true; importResult: Extract<ImportResult, { success: true }> }
   | { ok: false; code: string; message?: string };
@@ -29,7 +23,7 @@ export async function restoreGithubSyncVersion(params: {
   }
 
   const { secrets, commitSha } = params;
-  const manifestPath = joinRepoPath(secrets.basePath, GITHUB_SYNC_MANIFEST_FILE);
+  const manifestPath = GITHUB_SYNC_MANIFEST_FILE;
 
   try {
     const raw = await getFileContentAtRef(

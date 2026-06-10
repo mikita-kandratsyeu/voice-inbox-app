@@ -31,7 +31,7 @@ describe('fetchGithubSyncHistory', () => {
       'octocat',
       'notes',
       'voice-inbox-ai',
-      'voice-inbox-ai',
+      'manifest.json',
       2,
     );
   });

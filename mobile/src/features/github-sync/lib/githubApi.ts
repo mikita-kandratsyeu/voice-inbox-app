@@ -1,7 +1,13 @@
 import { nitroFetch } from '@/shared/lib/fetch';
 import { isArray, isRecord, isString } from '@/shared/lib/type-guards';
 
-import { GITHUB_API_BASE } from './constants';
+import {
+  GITHUB_API_BASE,
+  GITHUB_FETCH_MAX_RETRIES,
+  GITHUB_FETCH_RETRY_BASE_MS,
+  GITHUB_FETCH_TIMEOUT_MS,
+  GITHUB_REF_CONFLICT_MAX_RETRIES,
+} from './constants';
 
 export type GithubRepoSummary = {
   id: number;
@@ -19,13 +25,82 @@ export type GithubCommitSummary = {
   committedAt: string;
 };
 
-type GithubApiError = Error & { status?: number; code?: string };
+export type GithubApiError = Error & { status?: number; code?: string };
 
-function createGithubError(message: string, status?: number, code?: string): GithubApiError {
+export function isGithubApiError(err: unknown): err is GithubApiError {
+  return err instanceof Error && ('status' in err || 'code' in err);
+}
+
+export function createGithubError(message: string, status?: number, code?: string): GithubApiError {
   const err = new Error(message) as GithubApiError;
   err.status = status;
   err.code = code;
   return err;
+}
+
+const RETRYABLE_HTTP_STATUSES = new Set([429, 502, 503, 504]);
+
+function buildGithubHeaders(
+  accessToken: string,
+  initHeaders?: HeadersInit,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (initHeaders) {
+    const h = new Headers(initHeaders);
+    h.forEach((value, key) => {
+      out[key] = value;
+    });
+  }
+  out.Accept = 'application/vnd.github+json';
+  out.Authorization = `Bearer ${accessToken}`;
+  out['X-GitHub-Api-Version'] = '2022-11-28';
+  return out;
+}
+
+function encodeRepoSegment(segment: string): string {
+  return encodeURIComponent(segment);
+}
+
+function repoApiPath(owner: string, repo: string, suffix: string): string {
+  return `/repos/${encodeRepoSegment(owner)}/${encodeRepoSegment(repo)}${suffix}`;
+}
+
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function retryDelayMs(response: Response, attempt: number): number {
+  const retryAfterHeader = response.headers.get('retry-after');
+  if (retryAfterHeader) {
+    const retryAfterSec = Number(retryAfterHeader);
+    if (Number.isFinite(retryAfterSec) && retryAfterSec > 0) {
+      return retryAfterSec * 1_000;
+    }
+  }
+  return GITHUB_FETCH_RETRY_BASE_MS * (attempt + 1);
+}
+
+function isRetryableNetworkError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  if (err.name === 'AbortError') return false;
+  return true;
+}
+
+async function githubFetchOnce(
+  accessToken: string,
+  path: string,
+  init?: RequestInit,
+): Promise<Response> {
+  const url = path.startsWith('http') ? path : `${GITHUB_API_BASE}${path}`;
+  const headers = buildGithubHeaders(accessToken, init?.headers);
+
+  return nitroFetch(url, {
+    ...init,
+    headers,
+    timeoutMs: GITHUB_FETCH_TIMEOUT_MS,
+  });
 }
 
 async function githubFetch(
@@ -33,20 +108,55 @@ async function githubFetch(
   path: string,
   init?: RequestInit,
 ): Promise<Response> {
-  const url = path.startsWith('http') ? path : `${GITHUB_API_BASE}${path}`;
-  const headers = new Headers(init?.headers);
-  headers.set('Accept', 'application/vnd.github+json');
-  headers.set('Authorization', `Bearer ${accessToken}`);
-  headers.set('X-GitHub-Api-Version', '2022-11-28');
+  let lastError: unknown;
 
-  const response = await nitroFetch(url, { ...init, headers });
-  return response;
+  for (let attempt = 0; attempt <= GITHUB_FETCH_MAX_RETRIES; attempt += 1) {
+    try {
+      const response = await githubFetchOnce(accessToken, path, init);
+      const shouldRetry =
+        !response.ok &&
+        RETRYABLE_HTTP_STATUSES.has(response.status) &&
+        attempt < GITHUB_FETCH_MAX_RETRIES;
+
+      if (!shouldRetry) {
+        return response;
+      }
+
+      await sleepMs(retryDelayMs(response, attempt));
+    } catch (err) {
+      lastError = err;
+      const shouldRetry = isRetryableNetworkError(err) && attempt < GITHUB_FETCH_MAX_RETRIES;
+      if (!shouldRetry) {
+        throw err;
+      }
+      await sleepMs(GITHUB_FETCH_RETRY_BASE_MS * (attempt + 1));
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : createGithubError('GitHub request failed');
+}
+
+async function readGithubErrorBody(response: Response): Promise<string> {
+  try {
+    return (await response.text()).trim();
+  } catch {
+    return '';
+  }
+}
+
+async function throwGithubHttpError(
+  fallbackMessage: string,
+  response: Response,
+  code?: string,
+): Promise<never> {
+  const body = await readGithubErrorBody(response);
+  throw createGithubError(body || fallbackMessage, response.status, code);
 }
 
 export async function fetchGithubUserLogin(accessToken: string): Promise<string> {
   const response = await githubFetch(accessToken, '/user');
   if (!response.ok) {
-    throw createGithubError(`GitHub user failed: ${response.status}`, response.status);
+    await throwGithubHttpError(`GitHub user failed: ${response.status}`, response);
   }
   const data: unknown = await response.json();
   if (!isRecord(data) || !isString(data.login)) {
@@ -61,7 +171,7 @@ export async function listGithubRepos(accessToken: string): Promise<GithubRepoSu
     '/user/repos?per_page=100&sort=updated&affiliation=owner,organization_member',
   );
   if (!response.ok) {
-    throw createGithubError(`GitHub repos failed: ${response.status}`, response.status);
+    await throwGithubHttpError(`GitHub repos failed: ${response.status}`, response);
   }
   const data: unknown = await response.json();
   if (!isArray(data)) {
@@ -108,8 +218,7 @@ export async function createGithubRepo(
     }),
   });
   if (!response.ok) {
-    const text = await response.text();
-    throw createGithubError(text || `Create repo failed: ${response.status}`, response.status);
+    await throwGithubHttpError(`Create repo failed: ${response.status}`, response);
   }
   const data: unknown = await response.json();
   if (!isRecord(data) || typeof data.id !== 'number' || !isString(data.full_name)) {
@@ -135,13 +244,13 @@ export async function getBranchRefSha(
 ): Promise<string | null> {
   const response = await githubFetch(
     accessToken,
-    `/repos/${owner}/${repo}/git/ref/heads/${branch}`,
+    repoApiPath(owner, repo, `/git/ref/heads/${encodeRepoSegment(branch)}`),
   );
   if (response.status === 404) {
     return null;
   }
   if (!response.ok) {
-    throw createGithubError(`Get ref failed: ${response.status}`, response.status);
+    await throwGithubHttpError(`Get ref failed: ${response.status}`, response);
   }
   const data: unknown = await response.json();
   if (!isRecord(data) || !isRecord(data.object) || !isString(data.object.sha)) {
@@ -163,7 +272,7 @@ async function createBlob(
   repo: string,
   content: string,
 ): Promise<string> {
-  const response = await githubFetch(accessToken, `/repos/${owner}/${repo}/git/blobs`, {
+  const response = await githubFetch(accessToken, repoApiPath(owner, repo, '/git/blobs'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -172,7 +281,7 @@ async function createBlob(
     }),
   });
   if (!response.ok) {
-    throw createGithubError(`Create blob failed: ${response.status}`, response.status);
+    await throwGithubHttpError(`Create blob failed: ${response.status}`, response);
   }
   const data: unknown = await response.json();
   if (!isRecord(data) || !isString(data.sha)) {
@@ -186,24 +295,42 @@ async function createBlobsParallel(
   owner: string,
   repo: string,
   files: Map<string, string>,
-  concurrency = 8,
+  concurrency = 4,
 ): Promise<Map<string, string>> {
   const entries = [...files.entries()];
+  if (entries.length === 0) {
+    return new Map();
+  }
+
   const blobShas = new Map<string, string>();
   let index = 0;
+  let firstError: unknown;
 
   async function worker(): Promise<void> {
     while (index < entries.length) {
+      if (firstError) {
+        return;
+      }
       const current = index;
       index += 1;
       const [path, content] = entries[current];
-      const sha = await createBlob(accessToken, owner, repo, content);
-      blobShas.set(path, sha);
+      try {
+        const sha = await createBlob(accessToken, owner, repo, content);
+        blobShas.set(path, sha);
+      } catch (err) {
+        firstError = err;
+        return;
+      }
     }
   }
 
   const workers = Array.from({ length: Math.min(concurrency, entries.length) }, () => worker());
   await Promise.all(workers);
+
+  if (firstError) {
+    throw firstError;
+  }
+
   return blobShas;
 }
 
@@ -216,10 +343,10 @@ export async function listTreePathsAtCommit(
 ): Promise<string[]> {
   const response = await githubFetch(
     accessToken,
-    `/repos/${owner}/${repo}/git/commits/${commitSha}`,
+    repoApiPath(owner, repo, `/git/commits/${encodeRepoSegment(commitSha)}`),
   );
   if (!response.ok) {
-    throw createGithubError(`Get commit failed: ${response.status}`, response.status);
+    await throwGithubHttpError(`Get commit failed: ${response.status}`, response);
   }
   const commitData: unknown = await response.json();
   if (!isRecord(commitData) || !isRecord(commitData.tree) || !isString(commitData.tree.sha)) {
@@ -229,10 +356,10 @@ export async function listTreePathsAtCommit(
   const treeSha = commitData.tree.sha;
   const treeResponse = await githubFetch(
     accessToken,
-    `/repos/${owner}/${repo}/git/trees/${treeSha}?recursive=1`,
+    repoApiPath(owner, repo, `/git/trees/${encodeRepoSegment(treeSha)}?recursive=1`),
   );
   if (!treeResponse.ok) {
-    throw createGithubError(`Get tree failed: ${treeResponse.status}`, treeResponse.status);
+    await throwGithubHttpError(`Get tree failed: ${treeResponse.status}`, treeResponse);
   }
   const treeData: unknown = await treeResponse.json();
   if (!isRecord(treeData) || !isArray(treeData.tree)) {
@@ -264,13 +391,13 @@ export async function getFileContentAtRef(
     .join('/');
   const response = await githubFetch(
     accessToken,
-    `/repos/${owner}/${repo}/contents/${encodedPath}?ref=${encodeURIComponent(ref)}`,
+    repoApiPath(owner, repo, `/contents/${encodedPath}?ref=${encodeURIComponent(ref)}`),
   );
   if (response.status === 404) {
     return null;
   }
   if (!response.ok) {
-    throw createGithubError(`Get file failed: ${response.status}`, response.status);
+    await throwGithubHttpError(`Get file failed: ${response.status}`, response);
   }
   const data: unknown = await response.json();
   if (!isRecord(data) || !isString(data.content)) {
@@ -306,10 +433,10 @@ export async function listGithubCommits(
   });
   const response = await githubFetch(
     accessToken,
-    `/repos/${owner}/${repo}/commits?${query.toString()}`,
+    repoApiPath(owner, repo, `/commits?${query.toString()}`),
   );
   if (!response.ok) {
-    throw createGithubError(`List commits failed: ${response.status}`, response.status);
+    await throwGithubHttpError(`List commits failed: ${response.status}`, response);
   }
   const data: unknown = await response.json();
   if (!isArray(data)) {
@@ -336,7 +463,7 @@ export async function listGithubCommits(
   return commits;
 }
 
-export async function createGithubCommitWithFiles(params: {
+type CreateGithubCommitParams = {
   accessToken: string;
   owner: string;
   repo: string;
@@ -345,8 +472,22 @@ export async function createGithubCommitWithFiles(params: {
   files: Map<string, string>;
   deletions: string[];
   message: string;
-}): Promise<string> {
-  const { accessToken, owner, repo, branch, basePath, files, deletions, message } = params;
+};
+
+async function createGithubCommitWithFilesInternal(
+  params: CreateGithubCommitParams & { refConflictAttempt: number },
+): Promise<string> {
+  const {
+    accessToken,
+    owner,
+    repo,
+    branch,
+    basePath,
+    files,
+    deletions,
+    message,
+    refConflictAttempt,
+  } = params;
   const parentSha = await getBranchRefSha(accessToken, owner, repo, branch);
 
   const normalizedBase = basePath.replace(/^\/+|\/+$/g, '');
@@ -386,7 +527,7 @@ export async function createGithubCommitWithFiles(params: {
   if (parentSha) {
     const parentCommitResponse = await githubFetch(
       accessToken,
-      `/repos/${owner}/${repo}/git/commits/${parentSha}`,
+      repoApiPath(owner, repo, `/git/commits/${encodeRepoSegment(parentSha)}`),
     );
     if (parentCommitResponse.ok) {
       const parentCommit: unknown = await parentCommitResponse.json();
@@ -400,24 +541,20 @@ export async function createGithubCommitWithFiles(params: {
     }
   }
 
-  const treeResponse = await githubFetch(accessToken, `/repos/${owner}/${repo}/git/trees`, {
+  const treeResponse = await githubFetch(accessToken, repoApiPath(owner, repo, '/git/trees'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(treeBody),
   });
   if (!treeResponse.ok) {
-    const text = await treeResponse.text();
-    throw createGithubError(
-      text || `Create tree failed: ${treeResponse.status}`,
-      treeResponse.status,
-    );
+    await throwGithubHttpError(`Create tree failed: ${treeResponse.status}`, treeResponse);
   }
   const treeData: unknown = await treeResponse.json();
   if (!isRecord(treeData) || !isString(treeData.sha)) {
     throw createGithubError('Invalid tree create response');
   }
 
-  const commitResponse = await githubFetch(accessToken, `/repos/${owner}/${repo}/git/commits`, {
+  const commitResponse = await githubFetch(accessToken, repoApiPath(owner, repo, '/git/commits'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -427,11 +564,7 @@ export async function createGithubCommitWithFiles(params: {
     }),
   });
   if (!commitResponse.ok) {
-    const text = await commitResponse.text();
-    throw createGithubError(
-      text || `Create commit failed: ${commitResponse.status}`,
-      commitResponse.status,
-    );
+    await throwGithubHttpError(`Create commit failed: ${commitResponse.status}`, commitResponse);
   }
   const commitData: unknown = await commitResponse.json();
   if (!isRecord(commitData) || !isString(commitData.sha)) {
@@ -443,7 +576,7 @@ export async function createGithubCommitWithFiles(params: {
   if (parentSha) {
     const updateRefResponse = await githubFetch(
       accessToken,
-      `/repos/${owner}/${repo}/git/refs/heads/${branch}`,
+      repoApiPath(owner, repo, `/git/refs/heads/${encodeRepoSegment(branch)}`),
       {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -451,34 +584,51 @@ export async function createGithubCommitWithFiles(params: {
       },
     );
     if (updateRefResponse.status === 409) {
+      if (refConflictAttempt >= GITHUB_REF_CONFLICT_MAX_RETRIES) {
+        throw createGithubError('Ref conflict', 409, 'ref_conflict');
+      }
       const latestSha = await getBranchRefSha(accessToken, owner, repo, branch);
       if (!latestSha || latestSha === parentSha) {
         throw createGithubError('Ref conflict', 409, 'ref_conflict');
       }
-      return createGithubCommitWithFiles({ ...params, message: `${message} (retry)` });
+      return createGithubCommitWithFilesInternal({
+        ...params,
+        refConflictAttempt: refConflictAttempt + 1,
+        message: `${message} (retry)`,
+      });
     }
     if (!updateRefResponse.ok) {
-      throw createGithubError(
+      await throwGithubHttpError(
         `Update ref failed: ${updateRefResponse.status}`,
-        updateRefResponse.status,
+        updateRefResponse,
       );
     }
   } else {
-    const createRefResponse = await githubFetch(accessToken, `/repos/${owner}/${repo}/git/refs`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ref: `refs/heads/${branch}`,
-        sha: newSha,
-      }),
-    });
+    const createRefResponse = await githubFetch(
+      accessToken,
+      repoApiPath(owner, repo, '/git/refs'),
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ref: `refs/heads/${branch}`,
+          sha: newSha,
+        }),
+      },
+    );
     if (!createRefResponse.ok) {
-      throw createGithubError(
+      await throwGithubHttpError(
         `Create ref failed: ${createRefResponse.status}`,
-        createRefResponse.status,
+        createRefResponse,
       );
     }
   }
 
   return newSha;
+}
+
+export async function createGithubCommitWithFiles(
+  params: CreateGithubCommitParams,
+): Promise<string> {
+  return createGithubCommitWithFilesInternal({ ...params, refConflictAttempt: 0 });
 }

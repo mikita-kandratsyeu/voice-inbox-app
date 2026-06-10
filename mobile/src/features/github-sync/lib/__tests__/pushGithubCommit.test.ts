@@ -2,7 +2,7 @@ import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
 
 import { buildGithubSnapshot } from '../buildGithubSnapshot';
-import { createGithubCommitWithFiles, getBranchRefSha } from '../githubApi';
+import { createGithubCommitWithFiles, fetchGithubUserLogin, getBranchRefSha } from '../githubApi';
 import {
   getGithubSyncContentHashes,
   setGithubSyncContentHashes,
@@ -10,6 +10,7 @@ import {
   setGithubSyncLastError,
   setGithubSyncLastSyncedAt,
 } from '../githubSyncState';
+import { GITHUB_SYNC_TIMEOUT_MS } from '../constants';
 import { pushGithubCommit } from '../pushGithubCommit';
 
 jest.mock('@/features/pro-license/lib/proEntitlementStorage', () => ({
@@ -22,6 +23,7 @@ jest.mock('../buildGithubSnapshot', () => ({
 
 jest.mock('../githubApi', () => ({
   createGithubCommitWithFiles: jest.fn(),
+  fetchGithubUserLogin: jest.fn(),
   getBranchRefSha: jest.fn(),
   listTreePathsAtCommit: jest.fn(),
 }));
@@ -37,6 +39,7 @@ jest.mock('../githubSyncState', () => ({
 
 const mockBuildGithubSnapshot = jest.mocked(buildGithubSnapshot);
 const mockCreateGithubCommitWithFiles = jest.mocked(createGithubCommitWithFiles);
+const mockFetchGithubUserLogin = jest.mocked(fetchGithubUserLogin);
 const mockGetBranchRefSha = jest.mocked(getBranchRefSha);
 const mockGetGithubSyncContentHashes = jest.mocked(getGithubSyncContentHashes);
 
@@ -54,6 +57,7 @@ const folders = [{ id: 'f1', name: 'Work' } as Folder];
 describe('pushGithubCommit', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFetchGithubUserLogin.mockResolvedValue('octocat');
     mockGetBranchRefSha.mockResolvedValue('parent-sha');
     mockCreateGithubCommitWithFiles.mockResolvedValue('new-sha');
     mockBuildGithubSnapshot.mockResolvedValue({
@@ -130,5 +134,47 @@ describe('pushGithubCommit', () => {
       message: 'rate limited',
     });
     expect(setGithubSyncLastError).toHaveBeenCalledWith('rate limited');
+  });
+
+  it('returns unauthorized when token validation fails with 401', async () => {
+    const err = Object.assign(new Error('GitHub user failed: 401'), { status: 401 });
+    mockFetchGithubUserLogin.mockRejectedValue(err);
+
+    await expect(pushGithubCommit({ secrets, records, folders })).resolves.toEqual({
+      ok: false,
+      code: 'unauthorized',
+    });
+    expect(mockCreateGithubCommitWithFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns unauthorized when blob upload fails with 401', async () => {
+    mockGetGithubSyncContentHashes.mockReturnValue({});
+    const err = Object.assign(new Error('Create blob failed: 401'), { status: 401 });
+    mockCreateGithubCommitWithFiles.mockRejectedValue(err);
+
+    await expect(pushGithubCommit({ secrets, records, folders })).resolves.toEqual({
+      ok: false,
+      code: 'unauthorized',
+      message: 'Create blob failed: 401',
+    });
+  });
+
+  it('returns sync_timeout when the operation exceeds the budget', async () => {
+    jest.useFakeTimers();
+    mockGetGithubSyncContentHashes.mockReturnValue({});
+    mockCreateGithubCommitWithFiles.mockImplementation(
+      () => new Promise(() => {}),
+    );
+
+    const resultPromise = pushGithubCommit({ secrets, records, folders });
+    await jest.advanceTimersByTimeAsync(GITHUB_SYNC_TIMEOUT_MS + 1);
+
+    await expect(resultPromise).resolves.toEqual({
+      ok: false,
+      code: 'sync_timeout',
+    });
+    expect(setGithubSyncLastError).toHaveBeenCalledWith('github_sync_timeout');
+
+    jest.useRealTimers();
   });
 });

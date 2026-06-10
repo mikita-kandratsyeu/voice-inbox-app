@@ -15,6 +15,7 @@ import {
 
 import { GITHUB_SYNC_DEFAULT_BRANCH, GITHUB_SYNC_DEFAULT_REPO_NAME } from '../lib/constants';
 import type { GithubRepoSummary } from '../lib/githubApi';
+import { GithubSyncBranchText } from './GithubSyncBranchText';
 
 const REPO_ROW_HEIGHT = 72;
 const REPO_LIST_MAX_HEIGHT = 420;
@@ -259,7 +260,9 @@ export function GithubRepoPickerSheet({
         >
           {t('settings.githubSync.selectRepoTitle')}
         </Text>
-        <Text
+        <GithubSyncBranchText
+          i18nKey="settings.githubSync.selectRepoSubtitle"
+          branch={GITHUB_SYNC_DEFAULT_BRANCH}
           style={{
             color: color.text.secondary,
             fontSize: 14,
@@ -267,9 +270,7 @@ export function GithubRepoPickerSheet({
             marginBottom: 10,
             textAlign: 'center',
           }}
-        >
-          {t('settings.githubSync.selectRepoSubtitle', { branch: GITHUB_SYNC_DEFAULT_BRANCH })}
-        </Text>
+        />
 
         <View
           style={{

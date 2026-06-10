@@ -3,7 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { GitBranch, History, RefreshCw, Unplug } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -16,6 +16,7 @@ import { GITHUB_SYNC_DEFAULT_BRANCH } from '../lib/constants';
 import type { GithubRepoSummary } from '../lib/githubApi';
 import { useGithubSync } from '../model/useGithubSync';
 import { GithubRepoPickerSheet } from './GithubRepoPickerSheet';
+import { GithubSyncBranchText, githubSyncBranchA11yLabel } from './GithubSyncBranchText';
 import { GithubSyncHistorySheet } from './GithubSyncHistorySheet';
 
 export function GithubSyncScreen() {
@@ -32,7 +33,6 @@ export function GithubSyncScreen() {
     loadHistory,
     secrets,
     isSyncing,
-    isRestoring,
     lastSyncedAt,
     repos,
     isLoadingRepos,
@@ -42,7 +42,6 @@ export function GithubSyncScreen() {
     createAndSelectRepository,
     disconnect,
     syncNow,
-    restoreVersion,
   } = useGithubSync();
 
   const [repoPickerVisible, setRepoPickerVisible] = useState(false);
@@ -93,6 +92,18 @@ export function GithubSyncScreen() {
   const handleSync = useCallback(async () => {
     const result = await syncNow();
     if (!result.ok) {
+      if (result.code === 'sync_in_progress' || result.code === 'sync_cooldown') {
+        return;
+      }
+      if (result.code === 'unauthorized') {
+        Alert.alert(t('common.error'), t('settings.githubSync.sessionExpired'));
+        navigation.goBack();
+        return;
+      }
+      if (result.code === 'sync_timeout') {
+        Alert.alert(t('common.error'), t('settings.githubSync.syncTimeout'));
+        return;
+      }
       Alert.alert(t('common.error'), result.message ?? t('settings.githubSync.syncFailed'));
       return;
     }
@@ -101,25 +112,7 @@ export function GithubSyncScreen() {
       return;
     }
     Alert.alert(t('common.done'), t('settings.githubSync.syncSuccess'));
-  }, [syncNow, t]);
-
-  const handleRestore = useCallback(
-    async (commitSha: string) => {
-      const result = await restoreVersion(commitSha);
-      if (!result.ok) {
-        Alert.alert(t('common.error'), result.message ?? t('settings.githubSync.restoreFailed'));
-        return;
-      }
-      setHistoryVisible(false);
-      navigation.navigate('ImportRecords', {
-        records: result.importResult.records,
-        folders: result.importResult.folders,
-        legacyFolders: result.importResult.legacyFolders,
-        graphLayouts: result.importResult.graphLayouts,
-      });
-    },
-    [navigation, restoreVersion, t],
-  );
+  }, [navigation, syncNow, t]);
 
   const handleDisconnect = useCallback(() => {
     Alert.alert(
@@ -150,6 +143,8 @@ export function GithubSyncScreen() {
         })
       : t('settings.githubSync.neverSynced');
 
+  const branchName = secrets?.branch ?? GITHUB_SYNC_DEFAULT_BRANCH;
+
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader
@@ -177,9 +172,15 @@ export function GithubSyncScreen() {
         <SettingsSection title={t('settings.githubSync.connectedSectionTitle')}>
           <SettingsRow
             label={repoLabel}
-            subtitle={t('settings.githubSync.repoBranch', {
-              branch: secrets?.branch ?? GITHUB_SYNC_DEFAULT_BRANCH,
-            })}
+            subtitle={
+              <GithubSyncBranchText
+                i18nKey="settings.githubSync.repoBranch"
+                branch={branchName}
+                className="text-[13px] leading-[18px]"
+                style={{ color: color.text.muted }}
+              />
+            }
+            subtitleA11y={githubSyncBranchA11yLabel(t, 'settings.githubSync.repoBranch', branchName)}
             leftIcon={<GitBranch size={20} color={color.accent.primary} strokeWidth={1.8} />}
             onPress={() => setRepoPickerVisible(true)}
             isFirst
@@ -190,7 +191,13 @@ export function GithubSyncScreen() {
             }
             subtitle={syncSubtitle}
             leftIcon={<RefreshCw size={20} color={color.accent.primary} strokeWidth={1.8} />}
-            onPress={() => void handleSync()}
+            rightSlot={
+              isSyncing ? (
+                <ActivityIndicator size="small" color={color.accent.primary} />
+              ) : undefined
+            }
+            showChevron={!isSyncing}
+            onPress={isSyncing ? undefined : () => void handleSync()}
           />
           <SettingsRow
             label={t('settings.githubSync.history')}
@@ -222,10 +229,8 @@ export function GithubSyncScreen() {
         color={color}
         commits={history}
         loading={isLoadingHistory}
-        restoring={isRestoring}
         onClose={() => setHistoryVisible(false)}
         onLoad={handleLoadHistory}
-        onRestore={handleRestore}
       />
     </View>
   );

@@ -5,7 +5,7 @@ import { useRecordStore } from '@/entities/record';
 import { useProEntitlement } from '@/features/pro-license';
 import type { ImportResult } from '@/features/sync-data';
 
-import { GITHUB_SYNC_DEFAULT_BRANCH } from '../lib/constants';
+import { GITHUB_SYNC_COOLDOWN_MS, GITHUB_SYNC_DEFAULT_BRANCH } from '../lib/constants';
 import { fetchGithubSyncHistory } from '../lib/fetchGithubSyncHistory';
 import {
   createGithubRepo,
@@ -38,6 +38,9 @@ function getGithubApiErrorStatus(err: unknown): number | undefined {
   }
   return undefined;
 }
+
+let githubSyncInFlight = false;
+let githubSyncLastAttemptAt = 0;
 
 export function useGithubSync() {
   const { isProActive } = useProEntitlement();
@@ -177,10 +180,23 @@ export function useGithubSync() {
     if (!isProActive) {
       return { ok: false as const, code: 'pro_required' };
     }
+    if (githubSyncInFlight) {
+      return { ok: false as const, code: 'sync_in_progress' };
+    }
+    const cooldownRemainingMs = GITHUB_SYNC_COOLDOWN_MS - (Date.now() - githubSyncLastAttemptAt);
+    if (cooldownRemainingMs > 0) {
+      return {
+        ok: false as const,
+        code: 'sync_cooldown',
+        retryAfterSec: Math.ceil(cooldownRemainingMs / 1000),
+      };
+    }
     const current = await getGithubSyncSecrets();
     if (!current) {
       return { ok: false as const, code: 'not_connected' };
     }
+    githubSyncInFlight = true;
+    githubSyncLastAttemptAt = Date.now();
     setIsSyncing(true);
     try {
       const result = await pushGithubCommit({
@@ -190,9 +206,14 @@ export function useGithubSync() {
       });
       if (result.ok) {
         setLastSyncedAt(getGithubSyncLastSyncedAt());
+      } else if (result.code === 'unauthorized') {
+        await clearGithubSyncSecrets();
+        setSecrets(null);
+        setConnected(false);
       }
       return result;
     } finally {
+      githubSyncInFlight = false;
       setIsSyncing(false);
     }
   }, [folders, isProActive, records]);

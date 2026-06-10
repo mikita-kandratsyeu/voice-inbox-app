@@ -72,7 +72,7 @@ describe('restoreGithubSyncVersion', () => {
       'token',
       'octocat',
       'notes',
-      'voice-inbox-ai/manifest.json',
+      'manifest.json',
       'abc123',
     );
   });

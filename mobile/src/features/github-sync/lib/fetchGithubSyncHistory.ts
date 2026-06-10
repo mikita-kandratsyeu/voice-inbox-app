@@ -1,17 +1,18 @@
 import { type GithubCommitSummary, listGithubCommits } from './githubApi';
+import { GITHUB_SYNC_MANIFEST_FILE } from './constants';
 import type { GithubSyncSecrets } from './githubSecrets';
 
 export async function fetchGithubSyncHistory(
   secrets: GithubSyncSecrets,
   page = 1,
 ): Promise<GithubCommitSummary[]> {
-  const basePath = secrets.basePath.replace(/^\/+|\/+$/g, '');
+  // Commits store tree paths relative to basePath (see createGithubCommitWithFiles).
   return listGithubCommits(
     secrets.accessToken,
     secrets.owner,
     secrets.repo,
     secrets.branch,
-    basePath,
+    GITHUB_SYNC_MANIFEST_FILE,
     page,
   );
 }

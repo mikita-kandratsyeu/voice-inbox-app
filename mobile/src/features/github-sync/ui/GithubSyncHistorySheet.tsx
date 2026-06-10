@@ -1,9 +1,9 @@
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
-import { Check, ExternalLink, History } from 'lucide-react-native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ExternalLink, History } from 'lucide-react-native';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { openInAppBrowser } from '@/features/in-app-browser';
 import type { Colors } from '@/shared/config';
@@ -20,52 +20,32 @@ type Props = {
   color: Colors;
   commits: GithubCommitSummary[];
   loading: boolean;
-  restoring: boolean;
   onClose: () => void;
   onLoad: () => void | Promise<void>;
-  onRestore: (commitSha: string) => void | Promise<void>;
 };
 
 function shortSha(sha: string): string {
   return sha.slice(0, 7);
 }
 
-type HistoryPickerRowProps = {
+type HistoryListRowProps = {
   color: Colors;
+  commit: GithubCommitSummary;
   isLast: boolean;
-  isSelected: boolean;
   metaLabel: string;
   title: string;
-  onPress: () => void;
 };
 
-function HistoryPickerRow({
-  color,
-  isLast,
-  isSelected,
-  metaLabel,
-  title,
-  onPress,
-}: HistoryPickerRowProps) {
+function HistoryListRow({ color, commit, isLast, metaLabel, title }: HistoryListRowProps) {
+  const { t } = useTranslation();
+
   return (
-    <Pressable
-      onPress={() => {
-        hapticSelection();
-        onPress();
-      }}
-      accessibilityRole="button"
-      accessibilityState={{ selected: isSelected }}
-      accessibilityLabel={title}
-      style={({ pressed }) => ({
-        backgroundColor: pressed
-          ? color.background.tertiary
-          : isSelected
-            ? `${color.accent.primary}14`
-            : 'transparent',
+    <View
+      style={{
         borderBottomColor: color.border.default,
         borderBottomWidth: isLast ? 0 : 1,
         width: '100%',
-      })}
+      }}
     >
       <View
         style={{
@@ -110,13 +90,31 @@ function HistoryPickerRow({
             {metaLabel}
           </Text>
         </View>
-        {isSelected ? (
-          <Check size={20} color={color.accent.primary} strokeWidth={2.5} />
-        ) : (
-          <View style={{ width: 20 }} />
-        )}
+        {commit.htmlUrl ? (
+          <Pressable
+            onPress={() => {
+              hapticSelection();
+              void openInAppBrowser(commit.htmlUrl);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.githubSync.openOnGithub')}
+            hitSlop={4}
+            style={({ pressed }) => ({
+              alignItems: 'center',
+              backgroundColor: color.background.tertiary,
+              borderRadius: 10,
+              flexShrink: 0,
+              height: 36,
+              justifyContent: 'center',
+              opacity: pressed ? 0.6 : 1,
+              width: 36,
+            })}
+          >
+            <ExternalLink size={18} color={color.accent.primary} strokeWidth={2} />
+          </Pressable>
+        ) : null}
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -125,14 +123,11 @@ export function GithubSyncHistorySheet({
   color,
   commits,
   loading,
-  restoring,
   onClose,
   onLoad,
-  onRestore,
 }: Props) {
   const { t, i18n } = useTranslation();
   const contentPadding = useBottomSheetContentPadding(12);
-  const [selectedSha, setSelectedSha] = useState<string | null>(null);
   const onLoadRef = useRef(onLoad);
   onLoadRef.current = onLoad;
 
@@ -142,30 +137,6 @@ export function GithubSyncHistorySheet({
     }
   }, [visible]);
 
-  useEffect(() => {
-    if (!visible) {
-      setSelectedSha(null);
-      return;
-    }
-    if (commits.length > 0 && !selectedSha) {
-      setSelectedSha(commits[0]?.sha ?? null);
-    }
-  }, [commits, selectedSha, visible]);
-
-  const selected = commits.find((c) => c.sha === selectedSha) ?? null;
-
-  const confirmRestore = useCallback(() => {
-    if (!selected) return;
-    Alert.alert(t('settings.githubSync.restoreTitle'), t('settings.githubSync.restoreMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('settings.githubSync.restoreConfirm'),
-        style: 'destructive',
-        onPress: () => void onRestore(selected.sha),
-      },
-    ]);
-  }, [onRestore, selected, t]);
-
   const listHeight = useMemo(
     () => Math.min(commits.length * HISTORY_ROW_HEIGHT, HISTORY_LIST_MAX_HEIGHT),
     [commits.length],
@@ -173,16 +144,15 @@ export function GithubSyncHistorySheet({
 
   const renderItem = useCallback(
     ({ item, index }: { item: GithubCommitSummary; index: number }) => (
-      <HistoryPickerRow
+      <HistoryListRow
         color={color}
+        commit={item}
         isLast={index === commits.length - 1}
-        isSelected={item.sha === selectedSha}
         title={item.message || t('settings.githubSync.untitledCommit')}
         metaLabel={`${formatRelativeTime(item.committedAt, i18n.language)} · ${shortSha(item.sha)}`}
-        onPress={() => setSelectedSha(item.sha)}
       />
     ),
-    [color, commits.length, i18n.language, selectedSha, t],
+    [color, commits.length, i18n.language, t],
   );
 
   const keyExtractor = useCallback((item: GithubCommitSummary) => item.sha, []);
@@ -218,7 +188,6 @@ export function GithubSyncHistorySheet({
         data={commits}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
-        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       />
     </View>
@@ -253,29 +222,11 @@ export function GithubSyncHistorySheet({
 
         {listBody}
 
-        {selected?.htmlUrl ? (
-          <Pressable
-            onPress={() => void openInAppBrowser(selected.htmlUrl)}
-            className="mt-3 flex-row items-center justify-center gap-2 py-2"
-          >
-            <ExternalLink size={16} color={color.accent.primary} strokeWidth={2} />
-            <Text className="text-sm font-medium" style={{ color: color.accent.primary }}>
-              {t('settings.githubSync.openOnGithub')}
-            </Text>
-          </Pressable>
-        ) : null}
-
         <SheetFooterButtons
           color={color}
           className="mt-4 w-full"
-          primaryLabel={
-            restoring ? t('settings.githubSync.restoring') : t('settings.githubSync.restoreConfirm')
-          }
-          onPrimaryPress={confirmRestore}
-          primaryDisabled={!selected || restoring || loading}
-          primaryLoading={restoring}
-          secondaryLabel={t('common.close')}
-          onSecondaryPress={onClose}
+          primaryLabel={t('common.close')}
+          onPrimaryPress={onClose}
         />
       </BottomSheetView>
     </AppBottomSheetModal>

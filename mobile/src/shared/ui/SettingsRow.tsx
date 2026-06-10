@@ -10,7 +10,9 @@ import { SettingsSurfaceColorContext } from './SettingsSurfaceColorContext';
 
 type SettingsRowProps = {
   label: string;
-  subtitle?: string;
+  subtitle?: string | React.ReactNode;
+  /** Plain-text subtitle for accessibility when `subtitle` is a React node. */
+  subtitleA11y?: string;
   value?: string;
   onPress?: () => void;
   leftIcon?: React.ReactNode;
@@ -31,6 +33,7 @@ type SettingsRowInnerProps = SettingsRowProps & {
 const SettingsRowInner = ({
   label,
   subtitle,
+  subtitleA11y,
   value,
   onPress,
   leftIcon,
@@ -86,9 +89,13 @@ const SettingsRowInner = ({
           {showProBadge ? <ProCrownBadge /> : null}
         </View>
         {subtitle ? (
-          <Text className="mt-0.5 text-[13px] leading-[18px]" style={{ color: color.text.muted }}>
-            {subtitle}
-          </Text>
+          typeof subtitle === 'string' ? (
+            <Text className="mt-0.5 text-[13px] leading-[18px]" style={{ color: color.text.muted }}>
+              {subtitle}
+            </Text>
+          ) : (
+            <View className="mt-0.5">{subtitle}</View>
+          )
         ) : null}
       </View>
       {rightSlot && <View className="ml-2 shrink-0">{rightSlot}</View>}
@@ -105,7 +112,9 @@ const SettingsRowInner = ({
     </View>
   );
 
-  const a11yLabel = [label, subtitle, !rightSlot && value ? value : undefined]
+  const subtitleLabel =
+    subtitleA11y ?? (typeof subtitle === 'string' ? subtitle : undefined);
+  const a11yLabel = [label, subtitleLabel, !rightSlot && value ? value : undefined]
     .filter(Boolean)
     .join(', ');
 
