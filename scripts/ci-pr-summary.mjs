@@ -31,7 +31,7 @@ const APPS = [
   },
   {
     id: 'telegram-bot',
-    label: 'Telegram bot',
+    label: 'Telegram Bot',
     icon: '🤖',
     jobResultEnv: 'JOB_TELEGRAM_BOT_RESULT',
     hasFormat: true,
@@ -47,23 +47,19 @@ function readReport(appId) {
   }
 }
 
-function stepIcon(outcome) {
+function stepGate(name, outcome) {
   switch (outcome) {
     case 'success':
-      return '✅';
+      return `✅ ${name}`;
     case 'failure':
-      return '❌';
+      return `❌ ${name}`;
     case 'skipped':
-      return '⏭️';
+      return `⏭️ ${name}`;
     case 'cancelled':
-      return '🚫';
+      return `🚫 ${name}`;
     default:
-      return '—';
+      return `— ${name}`;
   }
-}
-
-function stepLabel(name, outcome) {
-  return `${name} ${stepIcon(outcome)}`;
 }
 
 function jobStatusLabel(result) {
@@ -101,40 +97,30 @@ function formatPct(pct) {
   return `${pct.toFixed(1)}%`;
 }
 
-function formatCoverageCell(coverage) {
+function formatCoveragePct(coverage) {
   const lines = coverage?.lines?.pct;
   if (lines == null) {
     return '—';
   }
-  const branches = coverage.branches?.pct;
-  const linesPart = `${coverageTier(lines)} **${formatPct(lines)}** lines`;
-  if (branches == null) {
-    return linesPart;
-  }
-  return `${linesPart}<br>${coverageTier(branches)} ${formatPct(branches)} branches`;
+  return `${coverageTier(lines)} ${formatPct(lines)}`;
 }
 
-function formatTests(tests) {
-  if (!tests) {
+function formatTestsCount(tests) {
+  if (!tests || tests.total === 0) {
     return '—';
   }
-  if (tests.failed > 0) {
-    return `❌ **${tests.passed}/${tests.total}**<br>${tests.failed} failed`;
-  }
-  if (tests.total === 0) {
-    return '—';
-  }
-  return `✅ **${tests.passed}** passed`;
+  return String(tests.passed);
 }
 
-function formatDuration(ms) {
-  if (ms == null || ms <= 0) {
-    return null;
+function formatTestsSummary(tests, failedTests) {
+  if (!tests && failedTests === 0) {
+    return '—';
   }
-  if (ms < 1000) {
-    return `${ms}ms`;
+  const passed = tests?.passed ?? 0;
+  if (failedTests > 0) {
+    return `❌ ${passed} passed, **${failedTests} failed**`;
   }
-  return `${(ms / 1000).toFixed(1)}s`;
+  return `✅ ${passed} passed`;
 }
 
 function formatChecks(report, hasFormat) {
@@ -142,14 +128,14 @@ function formatChecks(report, hasFormat) {
     return '—';
   }
   const parts = [
-    stepLabel('Lint', report.steps.lint),
-    stepLabel('Types', report.steps.typecheck),
-    stepLabel('Test', report.steps.test),
+    stepGate('Lint', report.steps.lint),
+    stepGate('Types', report.steps.typecheck),
+    stepGate('Test', report.steps.test),
   ];
   if (hasFormat) {
-    parts.splice(1, 0, stepLabel('Format', report.steps.format));
+    parts.splice(1, 0, stepGate('Format', report.steps.format));
   }
-  return parts.join('<br>');
+  return parts.join(' · ');
 }
 
 function weightedCoveragePct(reports) {
@@ -190,6 +176,15 @@ const commitUrl = [
 const shortSha = (process.env.GITHUB_SHA ?? '').slice(0, 7);
 const prNumber = process.env.GITHUB_PR_NUMBER;
 const headRef = process.env.GITHUB_HEAD_REF;
+const prUrl = [
+  process.env.GITHUB_SERVER_URL,
+  process.env.GITHUB_REPOSITORY,
+  'pull',
+  prNumber,
+]
+  .filter(Boolean)
+  .join('/');
+
 const rows = APPS.map((app) => {
   const report = readReport(app.id);
   const jobResult = process.env[app.jobResultEnv] ?? 'unknown';
@@ -207,52 +202,53 @@ const totalTests = reports.reduce((sum, r) => sum + (r.tests?.passed ?? 0), 0);
 const failedTests = reports.reduce((sum, r) => sum + (r.tests?.failed ?? 0), 0);
 const avgCoverage = weightedCoveragePct(reports);
 
-const totalDurationMs = reports.reduce(
-  (sum, r) => sum + (r.tests?.durationMs ?? 0),
-  0,
-);
-const totalDuration = formatDuration(totalDurationMs);
+const summaryTitle = allPassed ? '## ✅ CI Summary' : '## ❌ CI Summary';
+const overallStatus = allPassed ? '✅ Passed' : `❌ ${failedJobs} failed`;
 
-const overallStatus = allPassed
-  ? '✅ **All checks passed**'
-  : `❌ **${failedJobs} of ${APPS.length} packages failed**`;
+const coverageCell =
+  avgCoverage != null
+    ? `${coverageTier(avgCoverage)} **${formatPct(avgCoverage)}** weighted`
+    : '—';
+
+const refParts = [];
+if (headRef) {
+  refParts.push(`\`${headRef}\``);
+}
+if (shortSha) {
+  refParts.push(commitUrl ? `[\`${shortSha}\`](${commitUrl})` : `\`${shortSha}\``);
+}
+if (runUrl) {
+  refParts.push(`[Workflow run](${runUrl})`);
+}
+if (prNumber && prUrl) {
+  refParts.push(`[PR #${prNumber}](${prUrl})`);
+}
 
 const lines = [
-  '## 🔍 CI Report',
+  summaryTitle,
   '',
-  '| | |',
-  '|:--|:--|',
-  `| **Status** | ${overallStatus} |`,
-  `| **Tests** | ${failedTests > 0 ? `❌ ${totalTests} passed, **${failedTests} failed**` : `✅ **${totalTests}** passed`} |`,
+  '| Status | Tests | Coverage |',
+  '|---|---:|---:|',
+  `| ${overallStatus} | ${formatTestsSummary({ passed: totalTests }, failedTests)} | ${coverageCell} |`,
+  '',
 ];
 
-if (avgCoverage != null) {
-  lines.push(
-    `| **Coverage** | ${coverageTier(avgCoverage)} **${formatPct(avgCoverage)}** lines (weighted) |`,
-  );
+if (refParts.length > 0) {
+  lines.push(`${refParts.join(' · ')}`, '');
 }
-
-if (totalDuration) {
-  lines.push(`| **Test time** | ${totalDuration} |`);
-}
-
-const refCell = headRef
-  ? `[\`${headRef}\`](${commitUrl || '#'}) · [\`${shortSha}\`](${commitUrl || '#'})`
-  : `[\`${shortSha || 'commit'}\`](${commitUrl || '#'})`;
 
 lines.push(
-  `| **Ref** | ${refCell} |`,
-  `| **Workflow** | [View run #${process.env.GITHUB_RUN_ID ?? '?'}](${runUrl || '#'})${prNumber ? ` · [PR #${prNumber}](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/pull/${prNumber})` : ''} |`,
+  '---',
   '',
-  '### Packages',
+  '## Packages',
   '',
-  '| Package | Status | Tests | Coverage | Quality gates |',
-  '|:--------|:------:|:-----:|:---------|:--------------|',
+  '| Package | Status | Tests | Coverage | Gates |',
+  '|---|---|---:|---:|---|',
 );
 
 for (const { app, report, jobResult } of rows) {
   lines.push(
-    `| ${app.icon} **${app.label}** | ${jobStatusLabel(jobResult)} | ${formatTests(report?.tests ?? null)} | ${formatCoverageCell(report?.coverage ?? null)} | ${formatChecks(report, app.hasFormat)} |`,
+    `| ${app.icon} **${app.label}** | ${jobStatusLabel(jobResult)} | ${formatTestsCount(report?.tests ?? null)} | ${formatCoveragePct(report?.coverage ?? null)} | ${formatChecks(report, app.hasFormat)} |`,
   );
 }
 
@@ -261,10 +257,10 @@ if (hasCoverageDetails) {
   lines.push(
     '',
     '<details>',
-    '<summary><strong>Coverage breakdown</strong></summary>',
+    '<summary>Coverage breakdown</summary>',
     '',
     '| Package | Lines | Statements | Functions | Branches |',
-    '|:--------|------:|-----------:|----------:|---------:|',
+    '|---|---:|---:|---:|---:|',
   );
 
   for (const { app, report } of rows) {
