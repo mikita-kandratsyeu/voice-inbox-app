@@ -27,9 +27,7 @@ export function parseInAppEventPageResponse(
   const revision = typeof record.revision === 'number' ? record.revision : NaN;
   const documentHtml = typeof record.documentHtml === 'string' ? record.documentHtml : '';
   const ctaLabel =
-    typeof record.ctaLabel === 'string' && record.ctaLabel.trim()
-      ? record.ctaLabel.trim()
-      : null;
+    typeof record.ctaLabel === 'string' && record.ctaLabel.trim() ? record.ctaLabel.trim() : null;
 
   if (!eventId || !locale || !Number.isFinite(revision) || !documentHtml) {
     return { ok: false, error: 'invalid_payload' };

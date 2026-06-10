@@ -243,4 +243,3 @@ export async function requireAppAuth(): Promise<NextResponse | null> {
 
   return null;
 }
-

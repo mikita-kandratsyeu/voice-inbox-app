@@ -112,7 +112,10 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const contentTypeRaw = typeof body.contentType === 'string' ? body.contentType.trim() : '';
   if (!isInAppEventContentType(contentTypeRaw)) {
-    return NextResponse.json({ ok: false, error: 'contentType must be html or markdown' }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: 'contentType must be html or markdown' },
+      { status: 400 },
+    );
   }
 
   const contentBody = typeof body.body === 'string' ? body.body : '';

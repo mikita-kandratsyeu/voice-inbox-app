@@ -1,7 +1,6 @@
 import { HEADER_SYNC_TOKEN } from '@/config/constants';
 import { apiError, HttpStatus, parseJsonBody, validateRequiredStrings } from '@/lib/api';
 import { logAiRequest } from '@/lib/ai-operation';
-import { ApiErrorCode } from '@/lib/api-error-codes';
 import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
 import { createAutoOrganizeRequest } from '@/services/folder-organize.service';

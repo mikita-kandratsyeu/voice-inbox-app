@@ -8,7 +8,7 @@ import type { TranscriptionLanguage } from '@/entities/settings';
 import { TRANSCRIPTION_LANGUAGES } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { hapticSelection, inlineNativeMenuSection } from '@/shared/lib';
+import { hapticSelection, inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
 
 type AudioLanguageSelectorProps = {
   value: TranscriptionLanguage;
@@ -30,13 +30,13 @@ export const AudioLanguageSelector = ({
   const controlLabel = `${t('recordingDetail.audioLanguage')}: ${label}`;
   const titleColor = color.text.primary;
 
-  const menuActions = useMemo(
+  const menuActions = useMemo<NativeMenuAction[]>(
     () => [
       {
         id: 'auto' as const,
         title: t('recordingDetail.language.auto'),
         titleColor,
-        state: (value === 'auto' ? 'on' : 'off') as const,
+        state: value === 'auto' ? 'on' : 'off',
       },
       inlineNativeMenuSection(
         'specificLanguagesSection',
@@ -45,7 +45,7 @@ export const AudioLanguageSelector = ({
           id: lang,
           title: t(`recordingDetail.language.${lang}`),
           titleColor,
-          state: (lang === value ? 'on' : 'off') as const,
+          state: lang === value ? 'on' : 'off',
         })),
       ),
     ],

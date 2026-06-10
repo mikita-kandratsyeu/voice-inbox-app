@@ -15,7 +15,22 @@ function withClassName(tag: string): AttrList {
   return list;
 }
 
-const layoutTags = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'span', 'strong', 'em', 'br'] as const;
+const layoutTags = [
+  'p',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'ul',
+  'ol',
+  'li',
+  'span',
+  'strong',
+  'em',
+  'br',
+] as const;
 
 const layoutAttributes = Object.fromEntries(
   layoutTags.map((tag) => [tag, withClassName(tag)]),

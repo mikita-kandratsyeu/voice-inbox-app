@@ -25,7 +25,10 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const contentTypeRaw = typeof body.contentType === 'string' ? body.contentType.trim() : '';
   if (!isInAppEventContentType(contentTypeRaw)) {
-    return NextResponse.json({ ok: false, error: 'contentType must be html or markdown' }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: 'contentType must be html or markdown' },
+      { status: 400 },
+    );
   }
 
   const contentBody = typeof body.body === 'string' ? body.body : '';
@@ -33,8 +36,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: 'body is required' }, { status: 400 });
   }
 
-  const theme =
-    typeof body.theme === 'string' ? parseInAppEventTheme(body.theme.trim()) : null;
+  const theme = typeof body.theme === 'string' ? parseInAppEventTheme(body.theme.trim()) : null;
 
   try {
     const documentHtml = await buildInAppEventDocumentHtml(contentTypeRaw, contentBody, theme);

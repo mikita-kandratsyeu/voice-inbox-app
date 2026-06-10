@@ -1,9 +1,6 @@
 import type { Components } from 'react-markdown';
-import { normalizeInlineSpeakerLabelsToParagraphBreaks } from '@/lib/normalizeSpeakerTurnsMarkdown';
-import { normalizeSpeakerTurnsForEmail } from '@/lib/normalizeSpeakerTurnsForEmail';
-import { normalizeTranscriptTimestampLinesForEmail } from '@/lib/normalizeTranscriptTimestampsForEmail';
+import { prepareShareNoteEmailMarkdown } from '@/lib/prepareShareNoteEmailMarkdown';
 import { splitShareNoteEmailTableBlocks } from '@/lib/shareNoteEmailMarkdownTables';
-import { stripShareNoteSectionMarkers } from '@/lib/shareNoteSectionMarkers';
 import ReactMarkdown from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkBreaks from 'remark-breaks';
@@ -263,10 +260,7 @@ const emailMarkdownComponents: Components = {
  */
 export async function renderShareNoteMarkdownEmailInnerHtml(markdown: string): Promise<string> {
   const { renderToStaticMarkup } = await import('react-dom/server');
-  let markdownForEmail = normalizeTranscriptTimestampLinesForEmail(markdown);
-  markdownForEmail = normalizeSpeakerTurnsForEmail(markdownForEmail);
-  markdownForEmail = stripShareNoteSectionMarkers(markdownForEmail);
-  markdownForEmail = normalizeInlineSpeakerLabelsToParagraphBreaks(markdownForEmail);
+  const markdownForEmail = prepareShareNoteEmailMarkdown(markdown);
 
   const segments = splitShareNoteEmailTableBlocks(markdownForEmail);
   let key = 0;

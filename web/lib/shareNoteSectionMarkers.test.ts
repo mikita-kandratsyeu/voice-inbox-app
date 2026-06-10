@@ -1,7 +1,19 @@
 import {
   SHARE_SPEAKER_TURNS_SECTION_MARKER,
+  SHARE_SPEAKER_TURNS_SECTION_MARKER_RE,
   stripShareNoteSectionMarkers,
 } from './shareNoteSectionMarkers';
+
+describe('SHARE_SPEAKER_TURNS_SECTION_MARKER_RE', () => {
+  it('matches marker with optional surrounding whitespace and newline', () => {
+    expect(
+      SHARE_SPEAKER_TURNS_SECTION_MARKER_RE.test(`${SHARE_SPEAKER_TURNS_SECTION_MARKER}\n`),
+    ).toBe(true);
+    expect(
+      SHARE_SPEAKER_TURNS_SECTION_MARKER_RE.test(`  ${SHARE_SPEAKER_TURNS_SECTION_MARKER}  `),
+    ).toBe(true);
+  });
+});
 
 describe('stripShareNoteSectionMarkers', () => {
   it('removes marker lines from markdown', () => {
@@ -19,9 +31,16 @@ ${SHARE_SPEAKER_TURNS_SECTION_MARKER}
   });
 
   it('removes inline marker occurrences', () => {
-    expect(stripShareNoteSectionMarkers(`prefix ${SHARE_SPEAKER_TURNS_SECTION_MARKER} suffix`)).toBe(
-      'prefix  suffix',
+    expect(
+      stripShareNoteSectionMarkers(`prefix ${SHARE_SPEAKER_TURNS_SECTION_MARKER} suffix`),
+    ).toBe('prefix  suffix');
+  });
+
+  it('is idempotent', () => {
+    const once = stripShareNoteSectionMarkers(
+      `before\n${SHARE_SPEAKER_TURNS_SECTION_MARKER}\nafter`,
     );
+    expect(stripShareNoteSectionMarkers(once)).toBe(once);
   });
 
   it('cleans marker left before heading when normalization used heading fallback', () => {

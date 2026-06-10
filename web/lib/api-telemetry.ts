@@ -43,8 +43,6 @@ export async function recordApiError(pathname: string, status: number): Promise<
     return;
   }
 
-  const day = new Date().toISOString().slice(0, 10);
-  const key = `admin:api_err:${day}`;
   const field = `${status} ${normalizeApiPath(pathname)}`;
 
   await incrementTelemetryField(field);

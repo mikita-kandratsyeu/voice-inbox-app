@@ -117,7 +117,10 @@ export async function PATCH(request: Request, { params }: RouteContext): Promise
   if (body.contentType !== undefined) {
     const contentTypeRaw = typeof body.contentType === 'string' ? body.contentType.trim() : '';
     if (!isInAppEventContentType(contentTypeRaw)) {
-      return NextResponse.json({ ok: false, error: 'contentType must be html or markdown' }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: 'contentType must be html or markdown' },
+        { status: 400 },
+      );
     }
     data.contentType = contentTypeRaw;
     bumpRevision = true;

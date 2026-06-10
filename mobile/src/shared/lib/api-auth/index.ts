@@ -1,6 +1,6 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
-import { HEADER_FIREBASE_APP_CHECK } from '@/shared/lib/app-check/constants';
 import { getFirebaseAppCheckToken } from '@/shared/lib/app-check/appCheckToken';
+import { HEADER_FIREBASE_APP_CHECK } from '@/shared/lib/app-check/constants';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { nitroFetch } from '@/shared/lib/fetch';
 

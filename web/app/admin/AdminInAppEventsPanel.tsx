@@ -59,9 +59,7 @@ const emptyForm = () => ({
 
 function suggestCloneEventId(eventId: string, locale: string, items: EventItem[]): string {
   const base = eventId.replace(/(-copy(-\d+)?)+$/, '') || eventId;
-  const taken = new Set(
-    items.filter((i) => i.locale === locale).map((i) => i.eventId),
-  );
+  const taken = new Set(items.filter((i) => i.locale === locale).map((i) => i.eventId));
   const first = `${base}-copy`;
   if (!taken.has(first) && first.length <= 120) return first;
   for (let n = 2; n < 500; n++) {
@@ -328,8 +326,7 @@ export function AdminInAppEventsPanel() {
       ? `voiceinbox://in-app-event/${form.eventId.trim().toLowerCase()}`
       : 'voiceinbox://in-app-event/<eventId>';
 
-  const previewSurface =
-    previewTheme === 'dark' ? 'bg-[#121418]' : 'bg-white';
+  const previewSurface = previewTheme === 'dark' ? 'bg-[#121418]' : 'bg-white';
 
   return (
     <div className="space-y-4">
@@ -546,8 +543,8 @@ export function AdminInAppEventsPanel() {
                 >
                   <div className="space-y-4 text-sm text-zinc-600 dark:text-zinc-400">
                     <p>
-                      Set <strong>Content type</strong> to match LLM output. HTML layout events
-                      need <strong>HTML</strong>, not Markdown.
+                      Set <strong>Content type</strong> to match LLM output. HTML layout events need{' '}
+                      <strong>HTML</strong>, not Markdown.
                     </p>
                     <div>
                       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">

@@ -13,8 +13,8 @@ import { syncAllTaskDeadlineNotifications } from '@/features/task-deadline-notif
 import { cleanupOrphanTranscriptionTempWavs } from '@/features/transcription/lib/transcriptionTempAudioCleanup';
 import { initRuntimeConfig } from '@/shared/config/runtimeConfig';
 import { initDB } from '@/shared/lib';
-import { initFirebaseAppCheck } from '@/shared/lib/app-check/appCheckToken';
 import { syncAnalyticsUserId } from '@/shared/lib/analytics';
+import { initFirebaseAppCheck } from '@/shared/lib/app-check/appCheckToken';
 import { diagWarn } from '@/shared/lib/appLogger';
 import { syncCrashlyticsUserId } from '@/shared/lib/crashlytics';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
