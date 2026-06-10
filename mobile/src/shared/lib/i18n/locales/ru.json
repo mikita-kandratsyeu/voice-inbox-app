@@ -1418,6 +1418,7 @@
         "weeklyAi": "До {{limit}} ИИ-кредитов в неделю"
       },
       "proTitle": "Pro",
+      "proFeaturesMoreTitle": "Ещё в Pro",
       "billingMonthly": "Ежемесячно",
       "billingAnnual": "Ежегодно",
       "billingSlashMonth": "/мес",
@@ -1447,13 +1448,13 @@
         "autoArchiveReadNotes": "Авто-архив прочитанных заметок",
         "aiLimit": "До {{limit}} ИИ-кредитов в неделю",
         "recordingUpToOneHour": "Запись до 1 часа",
-        "accentCustomization": "Цвет акцента — кнопки и индикаторы",
+        "accentCustomization": "Цвет акцента",
         "folderColors": "Персональные цвета папок",
         "meetingModeAndPinnedMoments": "Режим встречи и отметки моментов",
-        "premiumAiModels": "Продвинутые модели и ИИ-сервер в режиме Private",
-        "extendedShareAndBatchExport": "Расширенный экспорт заметок — сводки, почта и аудио",
-        "githubSync": "Резервная копия на GitHub — облачная синхронизация в ваш репозиторий с историей версий",
-        "notesGraph": "Карта заметок — как связаны ваши заметки",
+        "premiumAiModels": "Продвинутые модели и свой ИИ-сервер",
+        "extendedShareAndBatchExport": "Расширенный экспорт",
+        "githubSync": "Резервная копия на GitHub",
+        "notesGraph": "Карта заметок",
         "noAds": "Без рекламы"
       }
     },

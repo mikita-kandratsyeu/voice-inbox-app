@@ -1380,6 +1380,7 @@
         "weeklyAi": "Up to {{limit}} AI credits per week"
       },
       "proTitle": "Pro",
+      "proFeaturesMoreTitle": "More in Pro",
       "billingMonthly": "Monthly",
       "billingAnnual": "Annually",
       "billingSlashMonth": "/mo",
@@ -1409,13 +1410,13 @@
         "autoArchiveReadNotes": "Auto-archive for read notes",
         "aiLimit": "Up to {{limit}} AI credits per week",
         "recordingUpToOneHour": "Recordings up to 1 hour",
-        "accentCustomization": "Accent color — buttons & progress",
+        "accentCustomization": "Accent color",
         "folderColors": "Custom folder colors",
         "meetingModeAndPinnedMoments": "Meeting mode and pinned moments",
-        "premiumAiModels": "Advanced models and an AI server in Private mode",
-        "extendedShareAndBatchExport": "Extended note export — summaries, email, and audio",
-        "githubSync": "GitHub backup — cloud sync to your repository with version history",
-        "notesGraph": "Note map — see how your notes relate",
+        "premiumAiModels": "Advanced models and your AI server",
+        "extendedShareAndBatchExport": "Extended export",
+        "githubSync": "GitHub backup & sync",
+        "notesGraph": "Note map",
         "noAds": "No ads"
       }
     },

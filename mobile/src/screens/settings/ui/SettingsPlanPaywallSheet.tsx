@@ -309,11 +309,14 @@ export function SettingsPlanPaywallSheet({
   const browserColorScheme = useAppTheme();
   const insets = useSafeAreaInsets();
   const [freeLimitsExpanded, setFreeLimitsExpanded] = useState(false);
+  const [proFeaturesExpanded, setProFeaturesExpanded] = useState(false);
   const freeLimitsChevronRotation = useSharedValue(0);
+  const proFeaturesChevronRotation = useSharedValue(0);
 
   useEffect(() => {
     if (!visible) {
       setFreeLimitsExpanded(false);
+      setProFeaturesExpanded(false);
     }
   }, [visible]);
 
@@ -324,8 +327,19 @@ export function SettingsPlanPaywallSheet({
     });
   }, [freeLimitsChevronRotation, freeLimitsExpanded]);
 
+  useEffect(() => {
+    proFeaturesChevronRotation.value = withTiming(proFeaturesExpanded ? 180 : 0, {
+      duration: 120,
+      easing: proFeaturesExpanded ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+    });
+  }, [proFeaturesChevronRotation, proFeaturesExpanded]);
+
   const freeLimitsChevronStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${freeLimitsChevronRotation.value}deg` }],
+  }));
+
+  const proFeaturesChevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${proFeaturesChevronRotation.value}deg` }],
   }));
 
   const isComingSoon = mode === 'coming_soon';
@@ -514,13 +528,50 @@ export function SettingsPlanPaywallSheet({
                 emphasized
               />
               <FeatureRow text={t('settings.planPaywall.features.premiumAiModels')} />
-              <FeatureRow text={t('settings.planPaywall.features.extendedShareAndBatchExport')} />
               <FeatureRow text={t('settings.planPaywall.features.githubSync')} />
-              <FeatureRow text={t('settings.planPaywall.features.notesGraph')} />
-              <FeatureRow text={t('settings.planPaywall.features.accentCustomization')} />
-              <FeatureRow text={t('settings.planPaywall.features.folderColors')} />
-              <FeatureRow text={t('settings.planPaywall.features.noAds')} />
             </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded: proFeaturesExpanded }}
+              accessibilityLabel={t('settings.planPaywall.proFeaturesMoreTitle')}
+              onPress={() => {
+                hapticSelection();
+                setProFeaturesExpanded((v) => !v);
+              }}
+              className="-mx-1 mt-1 flex-row items-center justify-between gap-2 rounded-xl px-1 py-1.5"
+              style={{ minHeight: 36 }}
+            >
+              <Text
+                className="min-w-0 flex-1 text-[13px] font-medium"
+                style={{ color: c.text.secondary }}
+                numberOfLines={1}
+              >
+                {t('settings.planPaywall.proFeaturesMoreTitle')}
+              </Text>
+              <Animated.View
+                style={[
+                  proFeaturesChevronStyle,
+                  {
+                    width: 28,
+                    height: 28,
+                    flexShrink: 0,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  },
+                ]}
+              >
+                <ChevronDown size={18} color={c.text.secondary} strokeWidth={2.2} />
+              </Animated.View>
+            </Pressable>
+            {proFeaturesExpanded ? (
+              <View style={{ gap: PLAN_PAYWALL_FEATURE_LIST_GAP }}>
+                <FeatureRow text={t('settings.planPaywall.features.extendedShareAndBatchExport')} />
+                <FeatureRow text={t('settings.planPaywall.features.notesGraph')} />
+                <FeatureRow text={t('settings.planPaywall.features.accentCustomization')} />
+                <FeatureRow text={t('settings.planPaywall.features.folderColors')} />
+                <FeatureRow text={t('settings.planPaywall.features.noAds')} />
+              </View>
+            ) : null}
             {isIapPublic && onIapBillingPeriodChange && iapProPriceLoading ? (
               <IapPlanOptionsSkeleton c={c} />
             ) : null}
