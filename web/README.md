@@ -15,7 +15,7 @@ cp .env.example .env
 ```
 
 1. Set **`DATABASE_URL`** and **`DIRECT_URL`** (Supabase Postgres; see `.env.example` for pooler URLs). Use the **`postgres`** pooler user — Prisma bypasses RLS; `anon` / `authenticated` do not.
-2. Set **`JWT_SECRET`** and **`APP_SECRET`** (min 32 characters for JWT).
+2. Set **`JWT_SECRET`** (min 32 characters) and **`FIREBASE_SERVICE_ACCOUNT`** (FCM + App Check on `POST /api/token`).
 3. Apply schema: `yarn db:push` (or `prisma migrate deploy` in production).
 4. On Supabase, harden Data API once: `yarn db:rls`, then `yarn db:verify-rls` (RLS + revoke for `anon`/`authenticated` only; does not affect Prisma).
 5. Seed the first superadmin (empty `AdminUser` table only):
@@ -85,7 +85,7 @@ See **`.env.example`** for the full list and comments. Core groups:
 | Group | Variables |
 | ----- | ----------- |
 | **Site** | `NEXT_PUBLIC_BASE_URL`, store URLs, waitlist, support email |
-| **Mobile API** | `APP_SECRET`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `MOBILE_USER_AGENT` |
+| **Mobile API** | `JWT_SECRET`, `JWT_EXPIRES_IN`, `MOBILE_USER_AGENT`, `FIREBASE_SERVICE_ACCOUNT` |
 | **AI** | `OPENROUTER_API_KEY`, optional `DEEPSEEK_*`, `AI_JOB_TRANSPORT`, QStash (`QSTASH_*`) |
 | **Cache / jobs** | `UPSTASH_REDIS_REST_*` (optional — in-memory fallback) |
 | **Database** | `DATABASE_URL`, `ADMIN_JWT_SECRET`, `ADMIN_SEED_*` |

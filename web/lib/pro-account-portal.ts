@@ -3,7 +3,7 @@ import { SignJWT, jwtVerify } from 'jose';
 const JWT_AUDIENCE = 'pro_account_portal';
 
 function getPortalSecretKey(): Uint8Array | null {
-  const raw = (process.env.PRO_ACCOUNT_PORTAL_SECRET ?? process.env.APP_SECRET ?? '').trim();
+  const raw = (process.env.PRO_ACCOUNT_PORTAL_SECRET ?? '').trim();
 
   if (!raw) {
     return null;

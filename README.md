@@ -36,7 +36,7 @@ Quality gates: `yarn lint`, `yarn type:check`, `yarn test` (or `yarn validate` b
 cd web
 yarn install
 cp .env.example .env
-# Set DATABASE_URL, JWT_SECRET, APP_SECRET, …
+# Set DATABASE_URL, JWT_SECRET, FIREBASE_SERVICE_ACCOUNT, …
 yarn db:push
 yarn db:seed    # first superadmin when ADMIN_SEED_* are set
 yarn dev

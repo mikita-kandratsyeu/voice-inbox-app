@@ -1,8 +1,3 @@
-import { FIREBASE_APP_CHECK_DEBUG_TOKEN } from '@env';
-import { getApp } from '@react-native-firebase/app';
-import { initializeAppCheck } from '@react-native-firebase/app-check';
-// @ts-ignore
-import ReactNativeFirebaseAppCheckProvider from '@react-native-firebase/app-check/dist/module/ReactNativeFirebaseAppCheckProvider';
 import { getInitialNotification, getMessaging } from '@react-native-firebase/messaging';
 import { useEffect } from 'react';
 
@@ -17,7 +12,8 @@ import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorag
 import { syncAllTaskDeadlineNotifications } from '@/features/task-deadline-notifications';
 import { cleanupOrphanTranscriptionTempWavs } from '@/features/transcription/lib/transcriptionTempAudioCleanup';
 import { initRuntimeConfig } from '@/shared/config/runtimeConfig';
-import { initDB, isString } from '@/shared/lib';
+import { initDB } from '@/shared/lib';
+import { initFirebaseAppCheck } from '@/shared/lib/app-check/appCheckToken';
 import { syncAnalyticsUserId } from '@/shared/lib/analytics';
 import { diagWarn } from '@/shared/lib/appLogger';
 import { syncCrashlyticsUserId } from '@/shared/lib/crashlytics';
@@ -50,27 +46,7 @@ export function useAppBootstrap(
       }
     };
 
-    const appCheckDebugToken =
-      isString(FIREBASE_APP_CHECK_DEBUG_TOKEN) && FIREBASE_APP_CHECK_DEBUG_TOKEN.length > 0
-        ? FIREBASE_APP_CHECK_DEBUG_TOKEN
-        : undefined;
-
-    const rnfbProvider = new ReactNativeFirebaseAppCheckProvider();
-    rnfbProvider.configure({
-      android: {
-        provider: __DEV__ ? 'debug' : 'playIntegrity',
-        ...(appCheckDebugToken != null ? { debugToken: appCheckDebugToken } : {}),
-      },
-      apple: {
-        provider: __DEV__ ? 'debug' : 'appAttestWithDeviceCheckFallback',
-        ...(appCheckDebugToken != null ? { debugToken: appCheckDebugToken } : {}),
-      },
-    });
-
-    void initializeAppCheck(getApp(), {
-      provider: rnfbProvider,
-      isTokenAutoRefreshEnabled: true,
-    }).catch((err) => {
+    void initFirebaseAppCheck().catch((err) => {
       diagWarn('[bootstrap] App Check init failed', err);
     });
 

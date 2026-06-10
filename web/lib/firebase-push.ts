@@ -1,4 +1,6 @@
-import * as admin from 'firebase-admin';
+import type * as admin from 'firebase-admin';
+
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
 
 import { getPushMessages } from './push-messages';
 
@@ -10,37 +12,14 @@ export type PushPayload = {
   message?: string;
 };
 
-const FIREBASE_SERVICE_ACCOUNT = process.env.FIREBASE_SERVICE_ACCOUNT;
-
-let initialized = false;
-
-function initFirebase(): boolean {
-  if (initialized) return admin.apps.length > 0;
-  initialized = true;
-
-  if (admin.apps.length > 0) return true;
-  if (!FIREBASE_SERVICE_ACCOUNT?.trim()) return false;
-
-  try {
-    const raw = process.env.FIREBASE_SERVICE_ACCOUNT!;
-    const serviceAccount = JSON.parse(raw) as admin.ServiceAccount;
-
-    admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-    console.log('[FCM] initialized');
-    return true;
-  } catch (err) {
-    console.error('[FCM] init failed:', err);
-    return false;
-  }
-}
-
 export async function sendPushViaFirebase(
   fcmToken: string,
   payload: PushPayload,
   locale?: string | null,
   completedCount?: number,
 ): Promise<boolean> {
-  if (!initFirebase()) {
+  const admin = getFirebaseAdmin();
+  if (!admin) {
     console.warn('[FCM] not available (no FIREBASE_SERVICE_ACCOUNT)');
     return false;
   }

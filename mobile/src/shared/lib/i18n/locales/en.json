@@ -1307,9 +1307,6 @@
       "userAgent": "Mobile user-agent (MOBILE_USER_AGENT)",
       "databaseUrl": "Database URL (password hidden)",
       "appEnv": "APP_ENV",
-      "webApiSecret": "WEB_API_SECRET",
-      "secretConfigured": "Set",
-      "secretNotSet": "Not set",
       "appVersion": "App version / build",
       "deviceModel": "Device",
       "deviceId": "Device ID",
@@ -1328,7 +1325,7 @@
       "empty": "—",
       "copied": "Copied to clipboard",
       "webApiOverrideTitle": "Web API host override",
-      "webApiOverrideHint": "Point the app at a staging or local server and set WEB_API_SECRET below if it differs from the build. Clears the cached API token when applied. Leave the host empty and tap Apply to use Remote Config / embedded WEB_API_URL.",
+      "webApiOverrideHint": "Point the app at a staging or local server. Clears the cached API token when applied. Leave the host empty and tap Apply to use Remote Config / embedded WEB_API_URL. API auth uses Firebase App Check.",
       "webApiOverridePlaceholder": "https://your-api.example.com",
       "webApiOverrideApply": "Apply",
       "webApiOverrideClear": "Reset to default",
@@ -1336,11 +1333,7 @@
       "webApiOverrideAppliedTitle": "Host updated",
       "webApiOverrideClearedTitle": "Using default host",
       "webApiOverrideInvalidTitle": "Invalid URL",
-      "webApiOverrideInvalidBody": "Enter a full http or https URL (for example https://example.com).",
-      "webApiSecretOverrideTitle": "WEB_API_SECRET override",
-      "webApiSecretOverrideHint": "App secret sent as x-app-secret for /api/token. Leave empty and tap Apply to use the embedded WEB_API_SECRET from the build.",
-      "webApiSecretOverridePlaceholder": "Paste app secret",
-      "webApiSecretOverrideActiveNote": "Manual secret override is active (see status below)."
+      "webApiOverrideInvalidBody": "Enter a full http or https URL (for example https://example.com)."
     },
     "debugScreen": {
       "title": "Debug",

@@ -1,5 +1,6 @@
 import { HEADER_DEVICE_ID } from '@/config/constants';
-import { apiError, HttpStatus, requireAppSecretForToken, validateDeviceId } from '@/lib/api';
+import { apiError, HttpStatus, validateDeviceId } from '@/lib/api';
+import { requireAppCheckForToken } from '@/lib/firebase-app-check';
 import { getExpiresInSeconds as getJwtExpiresInSeconds, signAppToken } from '@/lib/jwt';
 import { redis } from '@/lib/redis';
 import { NextResponse } from 'next/server';
@@ -10,7 +11,7 @@ const TOKEN_RATE_LIMIT_MAX_REQUESTS = 20;
 
 export async function POST(request: Request): Promise<NextResponse> {
   const path = new URL(request.url).pathname;
-  const authError = requireAppSecretForToken(request);
+  const authError = await requireAppCheckForToken(request);
   if (authError) return authError;
 
   const deviceId = request.headers.get(HEADER_DEVICE_ID);

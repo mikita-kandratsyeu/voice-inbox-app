@@ -6,7 +6,6 @@ import {
   DB_LOG,
   MOBILE_USER_AGENT,
   TESTFLIGHT_INTERNAL_BUILD,
-  WEB_API_SECRET,
 } from '@env';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
@@ -81,10 +80,6 @@ export function isTestflightInternalBuild(): boolean {
 /** Dev or internal TestFlight — same gate as Settings → Debug entry. */
 export function isInternalDebugBuild(): boolean {
   return __DEV__ || isTestflightInternalBuild();
-}
-
-export function getWebApiSecret(): string {
-  return trimBuildEnv(WEB_API_SECRET);
 }
 
 export function getMobileUserAgent(): string {

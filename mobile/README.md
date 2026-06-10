@@ -16,7 +16,7 @@ cp .env.example .env
 
 - **iOS:** Xcode, CocoaPods (`pod install` in `ios/` when needed). `GoogleService-Info.plist` is in the project.
 - **Android:** Add `android/app/google-services.json` from Firebase (required for Google Services / Crashlytics Gradle plugins).
-- **Env:** `WEB_API_URL` / `WEB_API_SECRET` for Smart mode; Yandex ad unit IDs optional; RevenueCat keys when subscriptions are enabled.
+- **Env:** `WEB_API_URL` for cloud AI; Firebase App Check for API auth (`FIREBASE_APP_CHECK_DEBUG_TOKEN` in debug); Yandex ad unit IDs optional; RevenueCat keys when subscriptions are enabled.
 
 ```bash
 yarn start

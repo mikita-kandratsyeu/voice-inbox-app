@@ -221,28 +221,6 @@ export async function parseJsonBody<T>(request: Request): Promise<T | null> {
   }
 }
 
-export function getAppSecret(): string | null {
-  const secret = process.env.APP_SECRET?.trim();
-  return secret || null;
-}
-
-export function requireAppSecretForToken(request: Request): NextResponse | null {
-  const secret = request.headers.get('x-app-secret')?.trim();
-  if (!secret) {
-    return apiError('Unauthorized', HttpStatus.UNAUTHORIZED, { code: ApiErrorCode.Unauthorized });
-  }
-  const accepted = getAppSecret();
-  if (!accepted) {
-    return apiError('Server misconfiguration', HttpStatus.UNAUTHORIZED, {
-      code: ApiErrorCode.Unauthorized,
-    });
-  }
-  if (secret !== accepted) {
-    return apiError('Unauthorized', HttpStatus.UNAUTHORIZED, { code: ApiErrorCode.Unauthorized });
-  }
-  return null;
-}
-
 export async function requireAppAuth(): Promise<NextResponse | null> {
   const headersList = await headers();
   const authHeader = headersList.get('authorization')?.trim();
