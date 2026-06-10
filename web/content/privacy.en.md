@@ -16,6 +16,8 @@ Voice recordings, transcripts, summaries, tasks, and tags are stored locally on 
 
 **Crash reporting (Firebase Crashlytics):** In **release** builds, the app may send crash and stability diagnostics to [Google Firebase Crashlytics](https://firebase.google.com/products/crashlytics) so we can find and fix defects. In development/debug builds, crash collection is disabled by default and can be enabled only through explicit debug configuration. We may set an anonymous app-specific device identifier in Crashlytics (the same value used for API access and rate limiting — see “Our Web API” below) so we can relate a support request to crash logs when you contact us. Crashlytics is operated under Google’s terms and policies.
 
+**GitHub note sync (optional, Pro):** If you connect GitHub under **Backup & restore** in Settings, the app uses **GitHub’s OAuth Device Flow** to obtain an access token. The token and your chosen repository settings are stored **only on your device** (in the system keychain). When you sync, the app sends **markdown and metadata** (for example folders and graph layout) — **not audio** — directly to **your GitHub repository** via the GitHub API. We do not receive, store, or process synced note content on our servers. GitHub processes this data under [GitHub’s terms and privacy policy](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). You can disconnect GitHub in Settings at any time, which removes the token from your device.
+
 **Advertising (Yandex Mobile Ads):** *As of the “Last updated” date above*, unless you have an active subscription or purchase that removes advertising, the app may use **Yandex Mobile Ads** — a banner on the note detail screen, optional full-screen (interstitial) ads after certain completed actions (such as saving a note, importing records, or applying suggested folder changes), and an optional rewarded ad that can grant bonus AI quota. We limit how often interstitials can appear. Where required by law, we will provide consent or controls as applicable. The ad SDK operates under Yandex’s policies; we use it only to serve ads, not for cross-app tracking or analytics on our behalf.
 
 **Website — Android waitlist (optional):** If you join the Android release waitlist through our website (for example via an embedded or linked form operated by a third-party form provider), you may provide your **name**, **email address**, and optionally your **Android phone model** and responses to short questions (such as whether you currently use an iOS device). For details about our privacy practices and how we protect your data in this context, this section and our contact details below apply alongside the rest of this Policy.
@@ -63,11 +65,15 @@ We apply **Zero Data Retention (ZDR)** to **cloud** requests where supported: ro
 
 Voice Inbox AI does not require an account or login inside the app. There is no in-app user registration, and we do not ask for your name or a password in the app. If you **voluntarily** include an email address in an in-app support request, we process it only to communicate with you about that request (see “In-app support” above).
 
+**GitHub (optional):** Connecting GitHub is separate from a Voice Inbox account (there is none). It authorizes the app to access repositories you select under the OAuth scope shown in the app (`repo`) solely to sync or restore your notes as described under “GitHub note sync” in section 1.
+
 **Website waitlist:** Separately, if you **choose** to join our Android waitlist on the website, you may voluntarily provide your name, email, and other fields described under “Website — Android waitlist” in section 1. That is optional and independent of using the mobile app.
 
 ## 5. Data Storage
 
-**On your device:** recordings, transcripts, and AI-generated content are stored until you delete them or uninstall the app.
+**On your device:** recordings, transcripts, and AI-generated content are stored until you delete them or uninstall the app. If you connect GitHub, your OAuth access token and sync preferences are stored in the system keychain until you disconnect in Settings or uninstall the app.
+
+**In your GitHub account:** if you use GitHub note sync, copies of exported note data remain in the repository you chose, according to GitHub’s retention and your own actions (commits, branches, deletion).
 
 **On our servers:** Temporary AI job results in our key-value cache are retained until they expire (up to one hour by default; the app may request as little as five minutes, as described in section 2). Per-device **weekly usage counters** for AI credits are stored in a short-lived key-value store for up to 8 days, then reset. **AI credit ledger entries** and **records of one-time limit-restoration purchases** are stored in our database for as long as needed to show your usage history, provide paid features, and prevent abuse (including reuse of the same store transaction). Push tokens are stored for up to 30 days and refreshed on every app launch with notifications enabled. **Support requests** (including optional contact details and diagnostics you send through the support form) are stored in our database as described in section 2. **Subscription and other in-app purchase records** needed to verify entitlements (for example, device identifier, entitlement expiry, and store transaction identifiers) are stored as long as needed for those purposes. **Android waitlist** submissions are retained as long as needed to run the waitlist and send related emails, unless you ask us to delete your entry or applicable law requires otherwise.
 
@@ -77,7 +83,8 @@ You retain full control over your data. You have the right to:
 
 - **Access** — all your data is stored locally and available at any time.
 - **Delete** — you can delete individual recordings or all app data via settings or by uninstalling the app.
-- **Export** — data can be exported from the app at any time.
+- **Export** — data can be exported from the app at any time (including ZIP backup and, if you are eligible and choose to connect GitHub, optional sync to your repository).
+- **Disconnect GitHub** — remove the GitHub connection in Settings to delete the stored token from your device (copies already pushed to GitHub remain under your GitHub account until you delete them there).
 - **Opt out of cloud AI processing** — you may use offline transcription only, use on-device private AI so transcripts are not sent to our servers for inference, or avoid AI features entirely.
 - **Object to processing** — if you have questions about data handling, contact us at the email below.
 - **Support data** — for information you submitted through in-app support, you may contact us using the address below to ask questions or request deletion where applicable law allows.

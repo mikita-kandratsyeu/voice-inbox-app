@@ -33,8 +33,9 @@ Align claims with implementation:
 | Meeting dialogue (cloud) | `web/services/message.service.ts`, `web/app/api/messages/[id]/meeting-dialogue/route.ts`, `web/lib/ai-job-runners/` |
 | Meeting dialogue (mobile UI / labels) | `mobile/src/screens/recording-detail/`, `mobile/src/features/ai-processing/lib/regenerateMeetingDialogue.ts` |
 | Support diagnostics | `mobile/src/features/tech-support/`, `web/app/api/support/**` |
+| GitHub note sync (Pro, mobile) | `mobile/src/features/github-sync/` — OAuth Device Flow, Keychain token, direct GitHub API; no web server involvement |
 | Cloud API / rate limits | `web/services/ai.service.ts`, `web/services/translate.service.ts`, `web/services/ask.service.ts`, `web/config/constants.ts` |
 
 Cursor rule: [`.cursor/rules/legal-content.mdc`](../../.cursor/rules/legal-content.mdc).
 
-Topics covered in legal copy include: cloud AI (OpenRouter and direct providers), on-device / private AI (e.g. Hugging Face model downloads), weekly AI credit limits and usage ledger, Pro limit-restoration consumable purchases, push tokens, in-app support storage, Android waitlist, Yandex Mobile Ads, and App Store / Google Play IAP.
+Topics covered in legal copy include: cloud AI (OpenRouter and direct providers), on-device / private AI (e.g. Hugging Face model downloads), weekly AI credit limits and usage ledger, Pro limit-restoration consumable purchases, optional Pro GitHub note sync (user’s repository), push tokens, in-app support storage, Android waitlist, Yandex Mobile Ads, and App Store / Google Play IAP.

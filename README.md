@@ -89,7 +89,7 @@ Requires `DATABASE_URL`, `WEB_ADMIN_URL`, and `TELEGRAM_BOT_API_SECRET` (same va
 - **AI** — Private (on-device `llama.rn`) and Smart (HTTPS to web API); tabs for transcript, summary, tasks, and **meeting dialogue** (speaker turns, renameable roster on Pro meetings).
 - **Inbox** — Folders, tags, pins, archive/trash, batch actions.
 - **Search** — Hybrid lexical + local embeddings when available (`mobile/src/features/search-records/`, `mobile/src/shared/lib/embeddings/`).
-- **Backup** — ZIP export/import (`mobile/src/features/sync-data/`).
+- **Backup** — ZIP export/import (`mobile/src/features/sync-data/`); optional **Pro GitHub sync** (markdown + metadata to your repo, `mobile/src/features/github-sync/`).
 - **Monetization** — RevenueCat; optional Yandex ads (banner, rewarded, interstitial) without Pro.
 - **Platform** — Firebase, deep links, iOS widgets / App Intents, Android shortcuts.
 
