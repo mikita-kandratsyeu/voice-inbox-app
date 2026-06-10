@@ -20,7 +20,12 @@ import { useAddToCalendar } from '@/features/add-to-calendar';
 import { useAddToReminder } from '@/features/add-to-reminder';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
+import {
+  inlineNativeMenuSection,
+  useAiModelName,
+  useAiTabBannerDismiss,
+  useNetworkStatus,
+} from '@/shared/lib';
 import {
   AiTabErrorBanner,
   AiTabHintIcon,
@@ -337,36 +342,41 @@ export const TasksTab = ({
           />
         )}
         {tasks.map((task) => {
+          const titleColor = color.text.primary;
           const menuActions = [
-            {
-              id: 'addToCalendar',
-              title: t('tasks.addToCalendar'),
-              image: 'calendar',
-              imageColor: color.text.primary,
-              titleColor: color.text.primary,
-            },
-            {
-              id: 'addToReminder',
-              title: t('tasks.addToReminder'),
-              image: 'bell',
-              imageColor: color.text.primary,
-              titleColor: color.text.primary,
-            },
             {
               id: 'editTask',
               title: t('tasks.editTask'),
               image: 'pencil',
-              imageColor: color.text.primary,
-              titleColor: color.text.primary,
+              imageColor: titleColor,
+              titleColor,
             },
-            {
-              id: 'deleteTask',
-              title: t('tasks.deleteTask'),
-              image: 'trash',
-              imageColor: color.accent.delete,
-              titleColor: color.accent.delete,
-              attributes: { destructive: true },
-            },
+            inlineNativeMenuSection('integrationsSection', titleColor, [
+              {
+                id: 'addToCalendar',
+                title: t('tasks.addToCalendar'),
+                image: 'calendar',
+                imageColor: titleColor,
+                titleColor,
+              },
+              {
+                id: 'addToReminder',
+                title: t('tasks.addToReminder'),
+                image: 'bell',
+                imageColor: titleColor,
+                titleColor,
+              },
+            ]),
+            inlineNativeMenuSection('deleteSection', titleColor, [
+              {
+                id: 'deleteTask',
+                title: t('tasks.deleteTask'),
+                image: 'trash',
+                imageColor: color.accent.delete,
+                titleColor: color.accent.delete,
+                attributes: { destructive: true },
+              },
+            ]),
           ];
 
           return (

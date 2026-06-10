@@ -1,6 +1,6 @@
 import { MenuView } from '@react-native-menu/menu';
 import { ChevronDown, Languages } from 'lucide-react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity } from 'react-native';
 
@@ -8,7 +8,7 @@ import type { TranscriptionLanguage } from '@/entities/settings';
 import { TRANSCRIPTION_LANGUAGES } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { hapticSelection } from '@/shared/lib';
+import { hapticSelection, inlineNativeMenuSection } from '@/shared/lib';
 
 type AudioLanguageSelectorProps = {
   value: TranscriptionLanguage;
@@ -28,6 +28,29 @@ export const AudioLanguageSelector = ({
   const isDark = theme === 'dark';
   const label = t(`recordingDetail.language.${value}`);
   const controlLabel = `${t('recordingDetail.audioLanguage')}: ${label}`;
+  const titleColor = color.text.primary;
+
+  const menuActions = useMemo(
+    () => [
+      {
+        id: 'auto' as const,
+        title: t('recordingDetail.language.auto'),
+        titleColor,
+        state: (value === 'auto' ? 'on' : 'off') as const,
+      },
+      inlineNativeMenuSection(
+        'specificLanguagesSection',
+        titleColor,
+        TRANSCRIPTION_LANGUAGES.filter((lang) => lang !== 'auto').map((lang) => ({
+          id: lang,
+          title: t(`recordingDetail.language.${lang}`),
+          titleColor,
+          state: (lang === value ? 'on' : 'off') as const,
+        })),
+      ),
+    ],
+    [t, titleColor, value],
+  );
 
   return (
     <MenuView
@@ -40,12 +63,7 @@ export const AudioLanguageSelector = ({
           onSelect(lang);
         }
       }}
-      actions={TRANSCRIPTION_LANGUAGES.map((lang) => ({
-        id: lang,
-        title: t(`recordingDetail.language.${lang}`),
-        titleColor: color.text.primary,
-        state: lang === value ? 'on' : 'off',
-      }))}
+      actions={menuActions}
     >
       <TouchableOpacity
         accessibilityRole="button"

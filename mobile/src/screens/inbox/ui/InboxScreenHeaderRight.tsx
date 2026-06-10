@@ -7,6 +7,7 @@ import { View } from 'react-native';
 import type { BatchSelectState } from '@/features/batch-select';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
+import { inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
 import { HeaderIconButton } from '@/shared/ui';
 
 type InboxScreenHeaderRightProps = {
@@ -64,16 +65,9 @@ function InboxScreenHeaderRightInner({
   const isDark = theme === 'dark';
 
   const moreMenuActions = useMemo(() => {
-    const items: Array<{
-      id: string;
-      title: string;
-      titleColor: string;
-      image?: string;
-      imageColor?: string;
-      attributes?: { disabled?: boolean };
-    }> = [];
+    const items: NativeMenuAction[] = [];
 
-    const push = (item: (typeof items)[number]) => {
+    const push = (item: NativeMenuAction) => {
       items.push(item);
     };
 
@@ -109,20 +103,24 @@ function InboxScreenHeaderRightInner({
     }
 
     push({
-      id: 'selectNotes',
-      title: t('inbox.menuSelectNotes'),
-      titleColor: color.text.primary,
-      image: 'checkmark.circle',
-      imageColor: color.text.primary,
-    });
-
-    push({
       id: 'importFile',
       title: t('inbox.menuImportFile'),
       titleColor: color.text.primary,
       image: 'doc.badge.plus',
       imageColor: color.text.primary,
     });
+
+    push(
+      inlineNativeMenuSection('selectNotesSection', color.text.primary, [
+        {
+          id: 'selectNotes',
+          title: t('inbox.menuSelectNotes'),
+          titleColor: color.text.primary,
+          image: 'checkmark.circle',
+          imageColor: color.text.primary,
+        },
+      ]),
+    );
 
     return items;
   }, [color.text.primary, foldersEnabled, isAutoOrganizing, t, useTabletShell]);

@@ -31,6 +31,7 @@ import { TranscriptHighlight } from '@/features/transcript-highlight';
 import { useTranscriptionBlockedForRecord } from '@/features/transcription';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
+import { inlineNativeMenuSection } from '@/shared/lib';
 import { hapticSelection } from '@/shared/lib';
 import { Button, RecordVoiceIcon, TabEmptyState } from '@/shared/ui';
 
@@ -274,14 +275,16 @@ export const TranscriptTab = ({
                   : []),
                 ...(hasTranslation && onDeleteTranslation
                   ? [
-                      {
-                        id: 'deleteTranslation',
-                        title: t('recordingDetail.deleteTranslation'),
-                        image: 'trash' as const,
-                        imageColor: color.accent.delete,
-                        titleColor: color.accent.delete,
-                        attributes: { destructive: true },
-                      },
+                      inlineNativeMenuSection('deleteTranslationSection', color.text.primary, [
+                        {
+                          id: 'deleteTranslation',
+                          title: t('recordingDetail.deleteTranslation'),
+                          image: 'trash',
+                          imageColor: color.accent.delete,
+                          titleColor: color.accent.delete,
+                          attributes: { destructive: true },
+                        },
+                      ]),
                     ]
                   : []),
               ]}

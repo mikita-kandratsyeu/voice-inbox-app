@@ -1,6 +1,6 @@
 import { MenuView } from '@react-native-menu/menu';
 import { ChevronLeft, MessageSquare, MoreVertical, Share } from 'lucide-react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { VoiceRecord } from '@/entities/record';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
+import { inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
 import { HeaderIconButton, PrivateExecutionBadge } from '@/shared/ui';
 
 type RecordingDetailHeaderProps = {
@@ -56,6 +57,94 @@ export const RecordingDetailHeader = ({
   const headerTitleStyle = useAnimatedStyle(() => ({
     opacity: headerTitleOpacity.value,
   }));
+
+  const menuActions = useMemo(() => {
+    const titleColor = color.text.primary;
+    const primary: NativeMenuAction[] = [];
+
+    if (onOpenAllTasksForNote && !isArchived) {
+      primary.push({
+        id: 'allTasksForNote',
+        title: t('recordingDetail.allTasksForNote'),
+        image: 'checklist',
+        imageColor: titleColor,
+        titleColor,
+      });
+    }
+
+    primary.push({
+      id: 'togglePin',
+      title: record.isPinned ? t('recordActions.unpin') : t('recordActions.pin'),
+      image: 'pin',
+      imageColor: record.isPinned ? color.accent.pin : titleColor,
+      titleColor,
+    });
+
+    primary.push({
+      id: 'rename',
+      title: t('recordActions.rename'),
+      image: 'pencil',
+      imageColor: titleColor,
+      titleColor,
+    });
+
+    const moveToFolderAction: NativeMenuAction = {
+      id: 'moveToFolder',
+      title: t('folders.moveToFolderMenu'),
+      image: 'folder',
+      imageColor: titleColor,
+      titleColor,
+    };
+
+    const archiveAction: NativeMenuAction = isArchived
+      ? {
+          id: 'unarchive',
+          title: t('recordActions.unarchive'),
+          image: 'arrow.uturn.backward',
+          imageColor: titleColor,
+          titleColor,
+        }
+      : {
+          id: 'archive',
+          title: t('recordActions.archive'),
+          image: 'archivebox',
+          imageColor: titleColor,
+          titleColor,
+        };
+
+    const actions: NativeMenuAction[] = [...primary];
+
+    actions.push(
+      inlineNativeMenuSection(
+        'folderAndArchiveSection',
+        titleColor,
+        !isPrivateMode ? [moveToFolderAction, archiveAction] : [archiveAction],
+      ),
+    );
+    actions.push(
+      inlineNativeMenuSection('deleteSection', titleColor, [
+        {
+          id: 'delete',
+          title: t('recordActions.delete'),
+          image: 'trash',
+          imageColor: color.accent.delete,
+          titleColor: color.accent.delete,
+          attributes: { destructive: true },
+        },
+      ]),
+    );
+
+    return actions;
+  }, [
+    color.accent.delete,
+    color.accent.pin,
+    color.text.primary,
+    isArchived,
+    isPrivateMode,
+    onOpenAllTasksForNote,
+    record.isPinned,
+    t,
+  ]);
 
   return (
     <View
@@ -124,67 +213,7 @@ export const RecordingDetailHeader = ({
             if (nativeEvent.event === 'delete') onDelete();
             if (nativeEvent.event === 'allTasksForNote') onOpenAllTasksForNote?.();
           }}
-          actions={[
-            ...(onOpenAllTasksForNote && !isArchived
-              ? [
-                  {
-                    id: 'allTasksForNote' as const,
-                    title: t('recordingDetail.allTasksForNote'),
-                    image: 'checklist' as const,
-                    imageColor: color.text.primary,
-                    titleColor: color.text.primary,
-                  },
-                ]
-              : []),
-            {
-              id: 'togglePin',
-              title: record.isPinned ? t('recordActions.unpin') : t('recordActions.pin'),
-              image: 'pin',
-              imageColor: record.isPinned ? color.accent.pin : color.text.primary,
-              titleColor: color.text.primary,
-            },
-            {
-              id: 'rename',
-              title: t('recordActions.rename'),
-              image: 'pencil',
-              imageColor: color.text.primary,
-              titleColor: color.text.primary,
-            },
-            ...(!isPrivateMode
-              ? [
-                  {
-                    id: 'moveToFolder' as const,
-                    title: t('folders.moveToFolderMenu'),
-                    image: 'folder' as const,
-                    imageColor: color.text.primary,
-                    titleColor: color.text.primary,
-                  },
-                ]
-              : []),
-            isArchived
-              ? {
-                  id: 'unarchive' as const,
-                  title: t('recordActions.unarchive'),
-                  image: 'arrow.uturn.backward' as const,
-                  imageColor: color.text.primary,
-                  titleColor: color.text.primary,
-                }
-              : {
-                  id: 'archive' as const,
-                  title: t('recordActions.archive'),
-                  image: 'archivebox' as const,
-                  imageColor: color.text.primary,
-                  titleColor: color.text.primary,
-                },
-            {
-              id: 'delete',
-              title: t('recordActions.delete'),
-              image: 'trash',
-              imageColor: color.accent.delete,
-              titleColor: color.accent.delete,
-              attributes: { destructive: true },
-            },
-          ]}
+          actions={menuActions}
         >
           <HeaderIconButton
             iconOnly

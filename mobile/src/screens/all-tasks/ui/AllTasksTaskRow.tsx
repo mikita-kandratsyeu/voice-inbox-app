@@ -19,7 +19,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { type Colors, useAppTheme } from '@/shared/config';
-import { hapticLight, hapticSelection, hapticSuccess } from '@/shared/lib';
+import { hapticLight, hapticSelection, hapticSuccess, inlineNativeMenuSection } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import { parseTaskDeadline } from '@/shared/lib/parseTaskDeadline';
 import { formatTaskDeadlineTimeForDisplay } from '@/shared/lib/taskDeadlineTimeDisplay';
@@ -108,43 +108,48 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
     elevation: 2,
   };
 
+  const titleColor = color.text.primary;
   const menuActions = [
     {
       id: 'openNote',
       title: openNoteLabel,
       image: 'doc.text',
-      imageColor: color.text.primary,
-      titleColor: color.text.primary,
+      imageColor: titleColor,
+      titleColor,
     },
     {
       id: 'editTask',
       title: t('tasks.editTask'),
       image: 'pencil',
-      imageColor: color.text.primary,
-      titleColor: color.text.primary,
+      imageColor: titleColor,
+      titleColor,
     },
-    {
-      id: 'addToReminder',
-      title: t('tasks.addToReminder'),
-      image: 'bell',
-      imageColor: color.text.primary,
-      titleColor: color.text.primary,
-    },
-    {
-      id: 'addToCalendar',
-      title: t('tasks.addToCalendar'),
-      image: 'calendar',
-      imageColor: color.text.primary,
-      titleColor: color.text.primary,
-    },
-    {
-      id: 'deleteTask',
-      title: t('tasks.deleteTask'),
-      image: 'trash',
-      imageColor: color.accent.delete,
-      titleColor: color.accent.delete,
-      attributes: { destructive: true },
-    },
+    inlineNativeMenuSection('integrationsSection', titleColor, [
+      {
+        id: 'addToReminder',
+        title: t('tasks.addToReminder'),
+        image: 'bell',
+        imageColor: titleColor,
+        titleColor,
+      },
+      {
+        id: 'addToCalendar',
+        title: t('tasks.addToCalendar'),
+        image: 'calendar',
+        imageColor: titleColor,
+        titleColor,
+      },
+    ]),
+    inlineNativeMenuSection('deleteSection', titleColor, [
+      {
+        id: 'deleteTask',
+        title: t('tasks.deleteTask'),
+        image: 'trash',
+        imageColor: color.accent.delete,
+        titleColor: color.accent.delete,
+        attributes: { destructive: true },
+      },
+    ]),
   ];
 
   const scheduleChipStyle = {

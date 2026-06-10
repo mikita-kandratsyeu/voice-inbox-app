@@ -15,6 +15,7 @@ import {
 } from '@/entities/record/lib/recordCardExpandedPreview';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
+import { inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
 import { HeaderIconButton, SwipeableCardContext } from '@/shared/ui';
 
 import { AiStatusPill } from './AiStatusPill';
@@ -156,50 +157,56 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
   const showFooter = hasTags || categoryLabel != null || showSourceChip;
 
   const menuActions = useMemo(() => {
-    const actions: Array<{
-      id: string;
-      title: string;
-      titleColor: string;
-      image?: string;
-      imageColor?: string;
-    }> = [];
+    const titleColor = color.text.primary;
+    const primary: NativeMenuAction[] = [];
 
     if (onPin) {
-      actions.push({
+      primary.push({
         id: 'togglePin',
         title: item.isPinned ? t('recordActions.unpin') : t('recordActions.pin'),
-        titleColor: color.text.primary,
+        titleColor,
         image: 'pin',
-        imageColor: item.isPinned ? color.accent.pin : color.text.primary,
+        imageColor: item.isPinned ? color.accent.pin : titleColor,
       });
     }
     if (isArchivedView && onUnarchive) {
-      actions.push({
+      primary.push({
         id: 'unarchive',
         title: t('recordActions.unarchive'),
-        titleColor: color.text.primary,
+        titleColor,
         image: 'arrow.uturn.backward',
-        imageColor: color.text.primary,
+        imageColor: titleColor,
       });
     } else if (!isArchivedView && onArchive) {
-      actions.push({
+      primary.push({
         id: 'archive',
         title: t('recordActions.archive'),
-        titleColor: color.text.primary,
+        titleColor,
         image: 'archivebox',
-        imageColor: color.text.primary,
+        imageColor: titleColor,
       });
     }
-    if (onSelect) {
-      actions.push({
-        id: 'select',
-        title: t('inbox.menuSelectNotes'),
-        titleColor: color.text.primary,
-        image: 'checkmark.circle',
-        imageColor: color.text.primary,
-      });
+
+    if (primary.length === 0 && !onSelect) {
+      return [];
     }
-    return actions;
+
+    if (!onSelect) {
+      return primary;
+    }
+
+    return [
+      ...primary,
+      inlineNativeMenuSection('selectSection', titleColor, [
+        {
+          id: 'select',
+          title: t('inbox.menuSelectNotes'),
+          titleColor,
+          image: 'checkmark.circle',
+          imageColor: titleColor,
+        },
+      ]),
+    ];
   }, [
     color.accent.pin,
     color.text.primary,
