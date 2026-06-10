@@ -20,6 +20,7 @@ const APP_TABLES = [
   'DeviceProEntitlement',
   'ProLicenseKey',
   'ReleasePost',
+  'InAppEventPage',
   'SupportIssue',
 ] as const;
 

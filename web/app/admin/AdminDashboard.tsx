@@ -10,6 +10,7 @@ import {
   LogOut,
   Radio,
   Rocket,
+  Sparkles,
   Settings,
   Shield,
   User,
@@ -49,6 +50,7 @@ import { AdminBudgetPanel } from './AdminBudgetPanel';
 import { AdminChangePasswordForm } from './AdminChangePasswordForm';
 import { AdminConfigPanel } from './AdminConfigPanel';
 import { AdminOperationsPanel } from './AdminOperationsPanel';
+import { AdminInAppEventsPanel } from './AdminInAppEventsPanel';
 import { AdminReleasesPanel } from './AdminReleasesPanel';
 import { AdminSecurityPanel } from './AdminSecurityPanel';
 import { AdminSupportPanel } from './AdminSupportPanel';
@@ -137,6 +139,7 @@ type AdminTab =
   | 'config'
   | 'support'
   | 'releases'
+  | 'in_app_events'
   | 'messaging'
   | 'operations'
   | 'budget'
@@ -170,6 +173,12 @@ const ADMIN_TAB_META: Record<
     description: 'Landing changelog posts per locale',
     icon: Rocket,
   },
+  in_app_events: {
+    label: 'In-app events',
+    short: 'Events',
+    description: 'App Store event pages for the mobile app',
+    icon: Sparkles,
+  },
   messaging: {
     label: 'Push & broadcast',
     short: 'Push',
@@ -201,6 +210,7 @@ const ADMIN_TAB_ORDER: AdminTab[] = [
   'config',
   'support',
   'releases',
+  'in_app_events',
   'messaging',
   'operations',
   'budget',
@@ -862,6 +872,8 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
           {adminTab === 'support' && <AdminSupportPanel />}
 
           {adminTab === 'releases' && <AdminReleasesPanel />}
+
+          {adminTab === 'in_app_events' && <AdminInAppEventsPanel />}
 
           {adminTab === 'operations' && <AdminOperationsPanel />}
 

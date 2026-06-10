@@ -59,6 +59,9 @@ export function resolveAdminApiAccess(pathname: string, method: string): AdminAc
   if (pathname.startsWith('/api/admin/releases')) {
     return { type: 'permission', permission: 'releases' };
   }
+  if (pathname.startsWith('/api/admin/in-app-events')) {
+    return { type: 'permission', permission: 'in_app_events' };
+  }
 
   if (pathname.startsWith('/api/admin/broadcast') || pathname.startsWith('/api/admin/push')) {
     return { type: 'permission', permission: 'messaging' };

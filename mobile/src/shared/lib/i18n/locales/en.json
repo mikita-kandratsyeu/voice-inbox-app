@@ -2262,43 +2262,7 @@
     "autoOrganizeReviewUnnamedFolder": "Untitled"
   },
   "inAppEvent": {
-    "whatsNewBadge": "What's new",
     "primaryCta": "Continue",
-    "update110": {
-      "appName": "Voice Inbox AI",
-      "version": "1.2.0",
-      "tagline": "More powerful AI, richer export, and an inbox that fits your style.",
-      "features": [
-        {
-          "title": "Advanced AI models",
-          "description": "Choose stronger models for summaries, Q&A, and organization when you need more depth.",
-          "isPro": true
-        },
-        {
-          "title": "Extended export & batch",
-          "description": "Email summaries, batch-export multiple notes, and share audio when you need files elsewhere.",
-          "isPro": true
-        },
-        {
-          "title": "Custom folder colors",
-          "description": "Color-code folders so your inbox stays scannable at a glance.",
-          "isPro": true
-        },
-        {
-          "title": "Accent color",
-          "description": "Match buttons and progress accents to your style across the app.",
-          "isPro": true
-        },
-        {
-          "title": "AI organize notes",
-          "description": "Let AI suggest folders and sort notes—review everything before you apply."
-        },
-        {
-          "title": "Polish & stability",
-          "description": "Fixes and refinements across the app for a smoother everyday experience."
-        }
-      ]
-    },
     "unknown": {
       "title": "What’s new",
       "subtitle": "This update highlight isn’t available in your build yet. Update the app from the App Store for the latest improvements."

@@ -4,6 +4,7 @@ export const ADMIN_PERMISSIONS = [
   'config',
   'support',
   'releases',
+  'in_app_events',
   'messaging',
   'operations',
   'budget',
@@ -33,6 +34,10 @@ export const ADMIN_PERMISSION_META: Record<
   releases: {
     label: 'Blog / releases',
     description: 'Landing changelog posts per locale',
+  },
+  in_app_events: {
+    label: 'In-app events',
+    description: 'App Store in-app event pages shown in the mobile app',
   },
   messaging: {
     label: 'Push & broadcast',

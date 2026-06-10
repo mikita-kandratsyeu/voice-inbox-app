@@ -71,6 +71,23 @@ model ReleasePost {
   @@index([locale, published, publishedAt(sort: Desc)])
 }
 
+model InAppEventPage {
+  id          String   @id @default(cuid())
+  eventId     String
+  locale      String
+  title       String
+  contentType String
+  body        String   @db.Text
+  ctaLabel    String?
+  published   Boolean  @default(false)
+  revision    Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([eventId, locale])
+  @@index([eventId, published])
+}
+
 model SupportIssue {
   id                       String    @id @default(cuid())
   referenceNumber          Int       @unique @default(autoincrement())
