@@ -21,7 +21,8 @@
       "cache": false
     },
     "type:check": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "env": ["DATABASE_URL", "DIRECT_URL"]
     },
     "test": {
       "dependsOn": ["type:check"]

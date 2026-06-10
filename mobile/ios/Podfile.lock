@@ -318,7 +318,7 @@ PODS:
   - nanopb/encode (3.30910.0)
   - NitroDeviceInfo (1.7.1):
     - NitroModules
-  - NitroFetch (1.3.2):
+  - NitroFetch (1.4.0):
     - hermes-engine
     - NitroModules
     - RCTRequired
@@ -333,7 +333,6 @@ PODS:
     - React-jsi
     - React-NativeModulesApple
     - React-RCTFabric
-    - React-RCTNetwork
     - React-renderercss
     - React-rendererdebug
     - React-utils
@@ -455,16 +454,16 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - OpenSSL-Universal (3.6.0000)
+  - OpenSSL-Universal (3.6.2000)
   - PromisesObjC (2.4.0)
   - PromisesSwift (2.4.0):
     - PromisesObjC (= 2.4.0)
-  - PurchasesHybridCommon (18.6.0):
-    - RevenueCat (= 5.72.0)
-  - QuickCrypto (1.1.4):
+  - PurchasesHybridCommon (18.10.0):
+    - RevenueCat (= 5.76.0)
+  - QuickCrypto (1.1.5):
     - hermes-engine
     - NitroModules
-    - OpenSSL-Universal (~> 3.6)
+    - OpenSSL-Universal (~> 3.6.2000)
     - RCTRequired
     - RCTTypeSafety
     - React-callinvoker
@@ -1803,7 +1802,7 @@ PODS:
     - ReactNativeDependencies
   - react-native-add-calendar-event (5.0.0):
     - React-Core
-  - react-native-blob-util (0.24.7):
+  - react-native-blob-util (0.24.9):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1870,7 +1869,7 @@ PODS:
     - React-Core
   - react-native-keep-awake (4.0.0):
     - React
-  - react-native-keyboard-controller (1.21.4):
+  - react-native-keyboard-controller (1.21.11):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1881,7 +1880,7 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-keyboard-controller/common (= 1.21.4)
+    - react-native-keyboard-controller/common (= 1.21.11)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -1892,7 +1891,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-keyboard-controller/common (1.21.4):
+  - react-native-keyboard-controller/common (1.21.11):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2483,8 +2482,8 @@ PODS:
     - React-utils (= 0.84.1)
     - ReactNativeDependencies
   - ReactNativeDependencies (0.84.1)
-  - RevenueCat (5.72.0)
-  - RNBootSplash (7.2.0):
+  - RevenueCat (5.76.0)
+  - RNBootSplash (7.3.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2689,7 +2688,7 @@ PODS:
     - ReactNativeDependencies
     - RNFBApp
     - Yoga
-  - RNGestureHandler (2.31.0):
+  - RNGestureHandler (2.31.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2758,7 +2757,7 @@ PODS:
     - RNNotifee/NotifeeCore (= 9.1.8)
   - RNNotifee/NotifeeCore (9.1.8):
     - React-Core
-  - RNPermissions (5.5.1):
+  - RNPermissions (5.5.3):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2779,8 +2778,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNPurchases (10.1.1):
-    - PurchasesHybridCommon (= 18.6.0)
+  - RNPurchases (10.2.2):
+    - PurchasesHybridCommon (= 18.10.0)
     - React-Core
   - RNReactNativeHapticFeedback (3.0.0):
     - hermes-engine
@@ -2921,7 +2920,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNSVG (15.15.3):
+  - RNSVG (15.15.5):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2941,9 +2940,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNSVG/common (= 15.15.3)
+    - RNSVG/common (= 15.15.5)
     - Yoga
-  - RNSVG/common (15.15.3):
+  - RNSVG/common (15.15.5):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3581,17 +3580,17 @@ SPEC CHECKSUMS:
   MMKVCore: 3d16ce9f7d411e135020915fde98a056859a1efa
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   NitroDeviceInfo: 2b461fd75ed6fdeba99d920fc1d88cbe8006d645
-  NitroFetch: ff0dd22e2a55dfbcdf7e69dacd11d89d492c478e
+  NitroFetch: f360c5aa1302e4c381b18af6f1941370d0d12b78
   NitroFS: 671a78596568ba42758ff3ca8cbd8c2fa3b43486
   NitroMmkv: 21968ae5bd91f4569b8a69b2e75357845dac2ca1
   NitroModules: 675efe9b98bac1359517fd33549c7191badebcbc
   NitroSound: 0179b5e66a465e303fb58d4d21db25215c22133a
   op-sqlite: 123f8c93af12f5ead144112c460d5e7aa1c22d99
-  OpenSSL-Universal: 9110d21982bb7e8b22a962b6db56a8aa805afde7
+  OpenSSL-Universal: ecee7b138fa75a74ecf00d7ffd248fb584739b9e
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
-  PurchasesHybridCommon: 89a3ddba365c20457a4712bc3d6377b0ea3c9b4f
-  QuickCrypto: 972ac5e58c445eed182b7ab2e5c1c10602f09701
+  PurchasesHybridCommon: 3e650c7f56ebcd63b37a708685fbf98515305d14
+  QuickCrypto: 17e1a9b8417df15179272bc363e2849b8e33ddc8
   RCTDeprecation: 7489702d717ceea80e271eeacb3fbca39fa3c056
   RCTRequired: 1cceac389e77dc5826c681cb782d864b0ed623fc
   RCTSwiftUI: afc0a0a635860da1040a0b894bfd529da06d7810
@@ -3628,12 +3627,12 @@ SPEC CHECKSUMS:
   React-Mapbuffer: b41ecef79c3b1e95a3e77f17712f2fcc9ad13d57
   React-microtasksnativemodule: a146f4dd455ae81ec6860a1d2a20e76fdeabb76c
   react-native-add-calendar-event: b9802a8be8ad4beb0dcb3efb28969c077558fb29
-  react-native-blob-util: efe7ff4253f3ab637186cb3448191aeb02f33495
+  react-native-blob-util: 14a4767929fa03724e8833d6304694475976e57d
   react-native-blur: 385205a18cbc5ef43aeff7c0386fca04fcdd6fbf
   react-native-document-picker: 6010251edf0563f11efcc3d7a87d668193674418
   react-native-in-app-review: bb863fb300f2c716479c4285201df746cf5e20a2
   react-native-keep-awake: afad8a51dfef9fe9655a6344771be32c8596d774
-  react-native-keyboard-controller: 278a92111e8289cac132cedde45e2d319a2d3efe
+  react-native-keyboard-controller: 4b73d5f65531163a8952986a018157707ae96981
   react-native-menu: 2f87618b07c3ce5eeb0ef17d3ffee52e2575673b
   react-native-netinfo: c9fa0172bba6414449ea5b67fc92f2c99c20cb1d
   react-native-quick-base64: d141c938c88e6c2e6199d5f7c515fe8dc0c0120d
@@ -3675,8 +3674,8 @@ SPEC CHECKSUMS:
   ReactCodegen: 77b3a9c53a1e55bee263ba67fb42740baac0742c
   ReactCommon: 830aace2ab1372d6a923a7d95e629f1d8a21bfd4
   ReactNativeDependencies: 394e7e486c6fb55a3667f642472e683b64dbda97
-  RevenueCat: 136390ad99039cdd692156af5e479293ae83b2a9
-  RNBootSplash: a4ac7d40cc5d7e2b63bbf28e0ad269681efecabb
+  RevenueCat: 792388288b4207a5056550fbf8f673090f1fbe22
+  RNBootSplash: b893ccb7de88f4da98231363dd9abeb8feeb405a
   RNCalendarEvents: 7e65eb4a94f53c1744d1e275f7fafcfaa619f7a3
   RNCClipboard: 26237d7fcfc6359e674655b02d03d6178d63d085
   RNDateTimePicker: 0e47a3a4b2c71c1625ff31d69c929e314c995fc1
@@ -3686,17 +3685,17 @@ SPEC CHECKSUMS:
   RNFBCrashlytics: c03d2b42088a9ec25ee81c360c13fc0ebbadb0dd
   RNFBMessaging: 97b91669d54650231caf9ce9586e487d9aada7ae
   RNFBRemoteConfig: 458fc777d63aa1cdd846f325c7573dcfc5b94922
-  RNGestureHandler: b40c9d33dc5cec2eea4e5ca83bffc8308fe916fa
+  RNGestureHandler: 5d0da9512251cc63cfb8e759d49790efcc603ae0
   RNKeychain: 275ef633df968a177479fcdb2b5cec152af268da
   RNLocalize: 9fd075df3aaccb1b8a7039e805d36d121794ce86
   RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
-  RNPermissions: 63a688f0b715732e2e7cdb7b465f596833853158
-  RNPurchases: b5b781d0c2b67472f203e0aae59907a519d4369b
+  RNPermissions: dc3d7df51e8674bb8e448fce128dcbd0025355c9
+  RNPurchases: 02495b3555a122c908534bb4782255deebdbbe73
   RNReactNativeHapticFeedback: 50fb580f22705e3407d44d208fd113aab5f324bc
   RNReanimated: f219dbf93e54b1858a62e3e2dd7379e9ad3d9952
   RNReminders: e7bdf59616634b7ae180b18f6bf86dba531b0007
   RNScreens: cca7e1ec9184d91c7681160df11bdb7bf1ab0235
-  RNSVG: 9fcdedc0159978b3a7bb25b3e1da4b0b4dd1b137
+  RNSVG: e159713f6708efab643b3d73a41975a52d80c5c2
   RNWorklets: ee6814ab289ae916049337d50d241baba955933a
   RNZipArchive: 071aee69059e0347cb7519c5354aa436b8a23e73
   SSZipArchive: c69881e8ac5521f0e622291387add5f60f30f3c4

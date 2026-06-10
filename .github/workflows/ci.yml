@@ -99,6 +99,8 @@ jobs:
   web:
     name: Web
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
 
     steps:
       - name: Checkout
@@ -135,8 +137,6 @@ jobs:
 
       - name: Typecheck
         id: typecheck
-        env:
-          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
         run: |
           FILTER="voice-inbox-web"
           if [ "${{ github.event_name }}" = "pull_request" ]; then
@@ -298,3 +298,4 @@ jobs:
         with:
           header: ci-summary
           path: pr-summary.md
+          recreate: true
