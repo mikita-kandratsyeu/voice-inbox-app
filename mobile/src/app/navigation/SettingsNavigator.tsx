@@ -4,6 +4,7 @@ import React from 'react';
 import { GithubSyncScreen } from '@/features/github-sync';
 import {
   AboutAppScreen,
+  BackupRestoreScreen,
   AIModelPickerScreen,
   AiSettingsScreen,
   AiUsageDashboardScreen,
@@ -124,6 +125,11 @@ export const SettingsNavigator = () => {
         <Stack.Screen
           name="GithubSync"
           component={GithubSyncScreen}
+          options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="BackupRestore"
+          component={BackupRestoreScreen}
           options={{ animation: 'slide_from_right' }}
         />
       </Stack.Navigator>

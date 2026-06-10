@@ -1,4 +1,5 @@
 export { AboutAppScreen } from './ui/AboutAppScreen';
+export { BackupRestoreScreen } from './ui/BackupRestoreScreen';
 export { AIModelPickerScreen } from './ui/AIModelPickerScreen';
 export { AiSettingsScreen } from './ui/AiSettingsScreen';
 export { AiUsageDashboardScreen } from './ui/AiUsageDashboardScreen';

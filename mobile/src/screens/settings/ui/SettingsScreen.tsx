@@ -23,8 +23,6 @@ import { useSettingsScreen } from '../lib/useSettingsScreen';
 import { AiUsageCard } from './AiUsageCard';
 import { AutoArchiveDelaySheet } from './AutoArchiveDelaySheet';
 import { AutomationComingSoonSheet } from './AutomationComingSoonSheet';
-import { BackupEncryptionNoticeSheet } from './BackupEncryptionNoticeSheet';
-import { BackupPasswordSheet } from './BackupPasswordSheet';
 import {
   SettingsAiProcessingSection,
   SettingsAppearanceSection,
@@ -196,12 +194,7 @@ export const SettingsScreen = () => {
             t={settings.t}
             language={settings.appLanguage}
             recordsCount={settings.recordsCount}
-            encryptBackup={settings.backupEncryptEnabled}
-            onEncryptBackupChange={settings.handleEncryptBackupChange}
-            isExporting={settings.isExporting}
-            isImporting={settings.isImporting}
-            onExport={settings.handleExport}
-            onImport={settings.handleImport}
+            navigation={settings.navigation}
           />
           <SettingsAppearanceSection
             color={settings.color}
@@ -243,18 +236,6 @@ export const SettingsScreen = () => {
           )}
           <DeferredInboxBannerAd color={settings.color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
-        <BackupEncryptionNoticeSheet
-          visible={settings.backupNoticeSheetVisible}
-          onClose={settings.handleBackupNoticeClose}
-          onAcknowledge={settings.handleBackupNoticeAcknowledge}
-        />
-        <BackupPasswordSheet
-          visible={settings.backupPasswordSheetVisible}
-          mode={settings.backupPasswordSheetMode}
-          busy={settings.isExporting || settings.isImporting}
-          onClose={settings.handleBackupPasswordSheetClose}
-          onSubmit={(password) => void settings.handleBackupPasswordSubmit(password)}
-        />
         <ProLimitResetSuccessSheet
           visible={settings.resetProLimitSuccessSheet != null}
           onClose={settings.dismissResetProLimitSuccessSheet}

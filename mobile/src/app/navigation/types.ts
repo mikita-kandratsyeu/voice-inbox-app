@@ -58,4 +58,5 @@ export type SettingsStackParamList = {
   };
   DiagnosticLogs: undefined;
   GithubSync: undefined;
+  BackupRestore: undefined;
 };

@@ -1100,6 +1100,13 @@
     },
     "sync": "Sync",
     "backupRestore": "Backup & restore",
+    "backupRestoreScreen": {
+      "title": "Backup & restore",
+      "intro": "Export your notes to an encrypted ZIP file, then import them on this or another device. Voice recordings are included.",
+      "sectionTitle": "On this device",
+      "entryRow": "Export & import",
+      "entryHint": "Save notes to a file on this device"
+    },
     "backupEncryption": {
       "toggleLabel": "Password-protected backup",
       "toggleHint": "You set a new password each time you export.",
