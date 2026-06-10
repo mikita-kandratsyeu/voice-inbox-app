@@ -30,8 +30,10 @@ yarn install
 | `yarn lint` | ESLint in all apps (via Turbo) |
 | `yarn type:check` | TypeScript + Prisma generate (web) |
 | `yarn test` | Jest in all apps |
-| `yarn validate` | `lint` + `type:check` + `test` everywhere |
-| `yarn validate:affected` | Same gates, only packages changed vs `origin/main` |
+| `yarn ci` | Full CI: `format:check` + `lint` + `type:check` + `build` + `test` (all workspaces) |
+| `yarn ci:affected` | Same as `ci`, only packages changed vs `origin/main` |
+| `yarn validate` | `lint` + `type:check` + `test` (no format/build) |
+| `yarn validate:affected` | Same as `validate`, only changed packages |
 | `yarn dev:web` | Next.js dev server |
 | `yarn build` | Production builds (`web` → `next build`) |
 

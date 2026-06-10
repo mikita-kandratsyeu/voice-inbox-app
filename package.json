@@ -19,6 +19,8 @@
     "type:check": "turbo run type:check",
     "test": "turbo run test",
     "format:check": "turbo run format:check",
+    "ci": "node scripts/ci.mjs",
+    "ci:affected": "node scripts/ci.mjs --affected",
     "validate": "turbo run lint type:check test",
     "validate:affected": "turbo run lint type:check test --filter=...[origin/main]"
   },

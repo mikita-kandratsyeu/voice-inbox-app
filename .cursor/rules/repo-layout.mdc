@@ -20,7 +20,9 @@ node .yarn/releases/yarn-4.16.0.cjs install   # or: yarn install (if no parent Y
 yarn lint
 yarn type:check
 yarn test
-yarn validate:affected   # PR-style: only changed packages vs origin/main
+yarn ci                  # full check: format:check, lint, type:check, build, test
+yarn ci:affected         # same, only changed packages vs origin/main
+yarn validate:affected   # lint + type:check + test only (changed packages)
 ```
 
 App-specific dev servers: `yarn dev:web`, `yarn workspace voice-inbox-app start` (Metro), etc. You can still `cd` into an app and run its scripts.

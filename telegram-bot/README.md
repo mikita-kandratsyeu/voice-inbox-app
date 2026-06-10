@@ -83,12 +83,12 @@ Link your Telegram account:
 
 Run from repo root with `yarn workspace voice-inbox-telegram-bot <script>`, or `cd telegram-bot` and use `yarn <script>`.
 
-| Script            | Description                 |
-| ----------------- | --------------------------- |
-| `dev`             | Long polling (`yarn dev:telegram-bot` from root) |
-| `start`           | Production                  |
-| `type:check`      | TypeScript                  |
-| `test`            | Unit tests (format helpers) |
+| Script       | Description                                      |
+| ------------ | ------------------------------------------------ |
+| `dev`        | Long polling (`yarn dev:telegram-bot` from root) |
+| `start`      | Production                                       |
+| `type:check` | TypeScript                                       |
+| `test`       | Unit tests (format helpers)                      |
 
 Monorepo quality gates: `yarn turbo run lint type:check test --filter=voice-inbox-telegram-bot`.
 

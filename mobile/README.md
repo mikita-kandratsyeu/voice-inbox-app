@@ -150,18 +150,18 @@ patches/         patch-package overrides
 
 Run from repo root with `yarn workspace voice-inbox-app <script>`, or `cd mobile` and use `yarn <script>`.
 
-| Script                                      | Description                                |
-| ------------------------------------------- | ------------------------------------------ |
-| `start`                                     | Metro (`APP_ENV=development`)              |
-| `ios` / `android`                           | Dev run on device/simulator                |
-| `ios:release` / `android:release`           | Release mode on device                     |
-| `type:check`                                | `tsc --noEmit`                             |
-| `lint` / `lint:fix`                         | ESLint                                     |
-| `test`                                      | Jest                                       |
-| `validate`                                  | lint-staged + types + tests (pre-commit)   |
-| `validate:push`                             | types + tests CI-style                     |
-| `db:generate`                               | Drizzle SQL from `schema.ts`               |
-| `analyze:bundle`                            | Bundle size report (optional platform arg) |
+| Script                            | Description                                |
+| --------------------------------- | ------------------------------------------ |
+| `start`                           | Metro (`APP_ENV=development`)              |
+| `ios` / `android`                 | Dev run on device/simulator                |
+| `ios:release` / `android:release` | Release mode on device                     |
+| `type:check`                      | `tsc --noEmit`                             |
+| `lint` / `lint:fix`               | ESLint                                     |
+| `test`                            | Jest                                       |
+| `validate`                        | lint-staged + types + tests (pre-commit)   |
+| `validate:push`                   | types + tests CI-style                     |
+| `db:generate`                     | Drizzle SQL from `schema.ts`               |
+| `analyze:bundle`                  | Bundle size report (optional platform arg) |
 
 Monorepo quality gates: `yarn turbo run lint type:check test --filter=voice-inbox-app`.
 
