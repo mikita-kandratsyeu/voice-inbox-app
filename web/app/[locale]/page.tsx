@@ -15,12 +15,10 @@ import { HowItWorks } from '@/components/landing/HowItWorks';
 import { PrivateModeSection } from '@/components/landing/PrivateModeSection';
 import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
 import { UseCasesSection } from '@/components/landing/UseCasesSection';
-import {
-  getLandingSocialProof,
-  LANDING_SOCIAL_PROOF_REVALIDATE_SECONDS,
-} from '@/lib/landing-social-proof';
+import { getLandingSocialProof } from '@/lib/landing-social-proof';
 
-export const revalidate = LANDING_SOCIAL_PROOF_REVALIDATE_SECONDS;
+// Next.js segment config must be a build-time literal (not an imported binding).
+export const revalidate = 300; // LANDING_SOCIAL_PROOF_REVALIDATE_SECONDS
 
 type Props = {
   params: Promise<{ locale: string }>;
