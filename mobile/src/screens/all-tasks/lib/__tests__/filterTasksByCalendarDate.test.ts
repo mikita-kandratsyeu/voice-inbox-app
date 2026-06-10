@@ -1,5 +1,8 @@
 import type { TaskWithRecord } from '../../types';
-import { filterTasksByCalendarDate } from '../filterTasksByCalendarDate';
+import {
+  buildTaskCountsByDeadlineDay,
+  filterTasksByCalendarDate,
+} from '../filterTasksByCalendarDate';
 
 function row(id: string, deadline: string): TaskWithRecord {
   return {
@@ -21,5 +24,22 @@ describe('filterTasksByCalendarDate', () => {
   it('excludes tasks without valid deadline', () => {
     const filtered = filterTasksByCalendarDate(rows, new Date('2026-01-01T00:00:00'));
     expect(filtered).toHaveLength(0);
+  });
+});
+
+describe('buildTaskCountsByDeadlineDay', () => {
+  const rows = [
+    row('t1', '2026-06-09'),
+    row('t2', '2026-06-09'),
+    row('t3', '2026-06-10'),
+    row('t4', 'not-a-date'),
+  ];
+
+  it('counts tasks per deadline day', () => {
+    const counts = buildTaskCountsByDeadlineDay(rows);
+
+    expect(counts.get('2026-06-09')).toBe(2);
+    expect(counts.get('2026-06-10')).toBe(1);
+    expect(counts.has('2026-06-11')).toBe(false);
   });
 });

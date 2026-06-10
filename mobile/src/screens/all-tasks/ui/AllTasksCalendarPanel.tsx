@@ -19,15 +19,19 @@ import type { Colors } from '@/shared/config';
 import { hapticSelection, useIsTablet, withAlphaHex } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 
+import {
+  formatCalendarHeaderDate,
+  formatWeekdayShort,
+  getIsoWeekDays,
+  resolveWeekSlideDirection,
+  shiftCalendarDateByWeeks,
+  type WeekSlideDirection,
+} from '../lib/allTasksCalendarDate';
 import { getAllTasksCalendarMetrics } from '../lib/allTasksLayoutMetrics';
 
 const CARD_RADIUS = 16;
 const CALENDAR_SELECTION_MS = 200;
 const CALENDAR_WEEK_SLIDE_MS = 220;
-
-const RU_WEEKDAY_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] as const;
-
-type WeekSlideDirection = 'prev' | 'next' | 'none';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -41,27 +45,6 @@ type AllTasksCalendarPanelProps = {
   compactHorizontalMargin?: boolean;
   maxWidth?: number;
 };
-
-function capitalizeFirst(value: string): string {
-  if (!value) return value;
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function formatWeekdayShort(date: dayjs.Dayjs, locale: 'en' | 'ru'): string {
-  if (locale === 'ru') {
-    return RU_WEEKDAY_SHORT[date.isoWeekday() - 1] ?? date.format('dd');
-  }
-
-  return capitalizeFirst(date.format('ddd'));
-}
-
-function formatCalendarHeaderDate(date: dayjs.Dayjs, language: string): string {
-  if (language.startsWith('ru')) {
-    return `${date.format('D MMMM YYYY')} г.`;
-  }
-
-  return date.format('D MMMM YYYY');
-}
 
 function WeekNavControls({
   color,
@@ -317,12 +300,10 @@ export function AllTasksCalendarPanel({
     return tasksLabel;
   }, [t, tasksCount]);
 
-  const monthLabel = useMemo(() => capitalizeFirst(selected.format('MMMM YYYY')), [selected]);
-
-  const weekDays = useMemo(() => {
-    const startOfWeek = selected.startOf('isoWeek');
-    return Array.from({ length: 7 }, (_, index) => startOfWeek.add(index, 'day'));
-  }, [selected]);
+  const weekDays = useMemo(
+    () => getIsoWeekDays(selectedDate, locale).map((date) => date.locale(locale)),
+    [locale, selectedDate],
+  );
 
   const weekKey = weekDays[0]?.format('YYYY-MM-DD') ?? selected.format('YYYY-MM-DD');
 
@@ -349,36 +330,24 @@ export function AllTasksCalendarPanel({
     return undefined;
   }, [weekSlideDirection]);
 
-  const resolveWeekSlideDirection = useCallback(
-    (targetDate: dayjs.Dayjs): WeekSlideDirection => {
-      const currentWeek = selected.startOf('isoWeek');
-      const targetWeek = targetDate.startOf('isoWeek');
-
-      if (targetWeek.isBefore(currentWeek, 'day')) return 'prev';
-      if (targetWeek.isAfter(currentWeek, 'day')) return 'next';
-      return 'none';
-    },
-    [selected],
-  );
-
   const goToToday = useCallback(() => {
     hapticSelection();
-    const today = dayjs();
-    setWeekSlideDirection(resolveWeekSlideDirection(today));
-    onDateChange(today.toDate());
-  }, [onDateChange, resolveWeekSlideDirection]);
+    const today = new Date();
+    setWeekSlideDirection(resolveWeekSlideDirection(selectedDate, today));
+    onDateChange(today);
+  }, [onDateChange, selectedDate]);
 
   const goToPreviousWeek = useCallback(() => {
     hapticSelection();
     setWeekSlideDirection('prev');
-    onDateChange(selected.subtract(7, 'day').toDate());
-  }, [onDateChange, selected]);
+    onDateChange(shiftCalendarDateByWeeks(selectedDate, -1));
+  }, [onDateChange, selectedDate]);
 
   const goToNextWeek = useCallback(() => {
     hapticSelection();
     setWeekSlideDirection('next');
-    onDateChange(selected.add(7, 'day').toDate());
-  }, [onDateChange, selected]);
+    onDateChange(shiftCalendarDateByWeeks(selectedDate, 1));
+  }, [onDateChange, selectedDate]);
 
   const handleSelectDay = useCallback(
     (date: dayjs.Dayjs) => {
@@ -506,24 +475,9 @@ export function AllTasksCalendarPanel({
           </View>
         </View>
 
-        <Text
-          style={{
-            marginTop: 12,
-            width: '100%',
-            color: color.text.secondary,
-            fontSize: metrics.monthFontSize,
-            fontWeight: '500',
-            lineHeight: metrics.monthFontSize + 2,
-            textAlign: 'center',
-          }}
-          numberOfLines={1}
-        >
-          {monthLabel}
-        </Text>
-
         <View
           style={{
-            marginTop: 8,
+            marginTop: 12,
             width: '100%',
             height: metrics.dayCellHeight,
             overflow: 'hidden',
