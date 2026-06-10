@@ -3,7 +3,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Image, Text, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 
@@ -31,10 +31,12 @@ export const InAppEventDetailScreen = () => {
 
   const { eventId } = route.params;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'loading' });
+  const [isWebViewLoading, setIsWebViewLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setLoadState({ kind: 'loading' });
+    setIsWebViewLoading(false);
 
     void (async () => {
       const result = await fetchInAppEventPage(eventId, {
@@ -44,6 +46,7 @@ export const InAppEventDetailScreen = () => {
       if (cancelled) return;
 
       if (result.ok) {
+        setIsWebViewLoading(true);
         setLoadState({ kind: 'ready', page: result.page });
         return;
       }
@@ -75,6 +78,8 @@ export const InAppEventDetailScreen = () => {
     return base ? base.replace(/\/$/, '') : undefined;
   }, []);
 
+  const isContentLoading = loadState.kind === 'loading' || isWebViewLoading;
+
   return (
     <View style={{ flex: 1, backgroundColor: color.background.primary }}>
       <View
@@ -85,69 +90,89 @@ export const InAppEventDetailScreen = () => {
           maxWidth: contentMaxWidth,
         }}
       >
-        {loadState.kind === 'loading' ? (
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color={color.accent.primary} />
-          </View>
-        ) : null}
-
-        {loadState.kind === 'error' ? (
-          <View className="flex-1 justify-center px-6">
-            <View className="mb-6 w-full flex-row items-center gap-3 self-stretch">
-              <View
-                className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-[18px]"
-                style={{
-                  borderWidth: 1,
-                  borderColor: `${color.accent.primary}40`,
-                  backgroundColor: color.background.card,
-                }}
-              >
-                <Image
-                  source={require('@/shared/assets/app-icon.png')}
-                  className="h-full w-full"
-                  resizeMode="cover"
-                  accessibilityRole="image"
-                  accessibilityLabel={t('inAppEvent.unknown.title')}
-                />
-              </View>
-              <View className="min-w-0 flex-1 py-0.5">
-                <Text
-                  className="text-left text-[20px] font-bold leading-6 tracking-tight"
-                  style={[{ color: color.text.primary }, titleStyle]}
-                  accessibilityRole="header"
+        <View style={{ flex: 1 }}>
+          {loadState.kind === 'error' ? (
+            <View className="flex-1 justify-center px-6">
+              <View className="mb-6 w-full flex-row items-center gap-3 self-stretch">
+                <View
+                  className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-[18px]"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: `${color.accent.primary}40`,
+                    backgroundColor: color.background.card,
+                  }}
                 >
-                  {t('inAppEvent.unknown.title')}
-                </Text>
-                <Text
-                  className="mt-2 text-left text-[14px] leading-5"
-                  style={[{ color: color.text.secondary }, titleStyle]}
-                >
-                  {t('inAppEvent.unknown.subtitle')}
-                </Text>
+                  <Image
+                    source={require('@/shared/assets/app-icon.png')}
+                    className="h-full w-full"
+                    resizeMode="cover"
+                    accessibilityRole="image"
+                    accessibilityLabel={t('inAppEvent.unknown.title')}
+                  />
+                </View>
+                <View className="min-w-0 flex-1 py-0.5">
+                  <Text
+                    className="text-left text-[20px] font-bold leading-6 tracking-tight"
+                    style={[{ color: color.text.primary }, titleStyle]}
+                    accessibilityRole="header"
+                  >
+                    {t('inAppEvent.unknown.title')}
+                  </Text>
+                  <Text
+                    className="mt-2 text-left text-[14px] leading-5"
+                    style={[{ color: color.text.secondary }, titleStyle]}
+                  >
+                    {t('inAppEvent.unknown.subtitle')}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
-        ) : null}
+          ) : null}
 
-        {loadState.kind === 'ready' ? (
-          <WebView
-            style={{ flex: 1, backgroundColor: 'transparent' }}
-            source={{
-              html: loadState.page.documentHtml,
-              baseUrl: webViewBaseUrl,
-            }}
-            originWhitelist={['*']}
-            javaScriptEnabled={false}
-            domStorageEnabled={false}
-            allowsInlineMediaPlayback={false}
-            mediaPlaybackRequiresUserAction
-            showsVerticalScrollIndicator={false}
-            onShouldStartLoadWithRequest={(request) => {
-              const url = request.url.trim();
-              return url === 'about:blank' || url.startsWith('about:srcdoc');
-            }}
-          />
-        ) : null}
+          {loadState.kind === 'ready' ? (
+            <WebView
+              style={{ flex: 1, backgroundColor: 'transparent' }}
+              source={{
+                html: loadState.page.documentHtml,
+                baseUrl: webViewBaseUrl,
+              }}
+              originWhitelist={['*']}
+              javaScriptEnabled={false}
+              domStorageEnabled={false}
+              allowsInlineMediaPlayback={false}
+              mediaPlaybackRequiresUserAction
+              showsVerticalScrollIndicator={false}
+              onLoadStart={() => setIsWebViewLoading(true)}
+              onLoadEnd={() => setIsWebViewLoading(false)}
+              onError={() => setIsWebViewLoading(false)}
+              onShouldStartLoadWithRequest={(request) => {
+                const url = request.url.trim();
+                const base = webViewBaseUrl?.replace(/\/$/, '');
+                return (
+                  url === 'about:blank' ||
+                  url.startsWith('about:srcdoc') ||
+                  (base != null && (url === base || url === `${base}/`))
+                );
+              }}
+            />
+          ) : null}
+
+          {isContentLoading ? (
+            <View
+              pointerEvents="none"
+              style={[
+                StyleSheet.absoluteFillObject,
+                {
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: color.background.primary,
+                },
+              ]}
+            >
+              <ActivityIndicator size="large" color={color.accent.primary} />
+            </View>
+          ) : null}
+        </View>
 
         <View
           style={{
@@ -164,7 +189,7 @@ export const InAppEventDetailScreen = () => {
             fullWidth
             label={ctaLabel}
             onPress={handleClose}
-            disabled={loadState.kind === 'loading'}
+            disabled={isContentLoading}
           />
         </View>
       </View>
