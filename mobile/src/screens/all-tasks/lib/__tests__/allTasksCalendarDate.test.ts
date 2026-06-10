@@ -1,6 +1,6 @@
-import dayjs from 'dayjs';
-
 import '@/shared/lib/date';
+
+import dayjs from 'dayjs';
 
 import {
   formatCalendarHeaderDate,

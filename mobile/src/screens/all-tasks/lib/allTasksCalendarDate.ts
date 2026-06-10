@@ -35,7 +35,9 @@ export function getIsoWeekDays(selectedDate: Date, locale: 'en' | 'ru' = 'en'): 
 }
 
 export function shiftCalendarDateByWeeks(date: Date, weeks: number): Date {
-  return dayjs(date).add(weeks * 7, 'day').toDate();
+  return dayjs(date)
+    .add(weeks * 7, 'day')
+    .toDate();
 }
 
 export function resolveWeekSlideDirection(
