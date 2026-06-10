@@ -10,7 +10,13 @@ import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import { useColors } from '@/shared/config';
 import { formatRelativeTime, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
-import { SCREEN_PADDING, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
+import {
+  HeaderIconButton,
+  SCREEN_PADDING,
+  ScreenHeader,
+  SettingsRow,
+  SettingsSection,
+} from '@/shared/ui';
 
 import { GITHUB_SYNC_DEFAULT_BRANCH } from '../lib/constants';
 import type { GithubRepoSummary } from '../lib/githubApi';
@@ -254,6 +260,17 @@ export function GithubSyncScreen() {
       <ScreenHeader
         title={t('settings.githubSync.sectionTitle')}
         onBack={() => navigation.goBack()}
+        rightSlot={
+          <HeaderIconButton
+            iconOnly
+            variant="icon"
+            size="md"
+            accessibilityLabel={t('settings.githubSync.disconnect')}
+            icon={<Unplug size={18} color={color.status.error.text} strokeWidth={2.2} />}
+            color={color}
+            onPress={handleDisconnect}
+          />
+        }
       />
       <ScrollView
         contentContainerStyle={{
@@ -310,11 +327,6 @@ export function GithubSyncScreen() {
             label={t('settings.githubSync.history')}
             leftIcon={<History size={20} color={color.accent.cache} strokeWidth={1.8} />}
             onPress={() => setHistoryVisible(true)}
-          />
-          <SettingsRow
-            label={t('settings.githubSync.disconnect')}
-            leftIcon={<Unplug size={20} color={color.status.error.text} strokeWidth={1.8} />}
-            onPress={handleDisconnect}
             isLast
           />
         </SettingsSection>

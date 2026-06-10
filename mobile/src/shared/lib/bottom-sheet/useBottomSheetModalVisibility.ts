@@ -9,10 +9,7 @@ import { Keyboard } from 'react-native';
  */
 export const bottomSheetModalStackBehavior = 'replace' as const;
 
-/**
- * Present/dismiss driven by `visible`. Skips `dismiss()` on mount and after the user
- * already closed the sheet (gesture/backdrop) so gorhom internal state can re-present.
- */
+/** Present/dismiss driven by `visible`; always calls `dismiss()` when hiding. */
 type UseBottomSheetModalVisibilityOptions = {
   /** Set false when `present()` is invoked elsewhere (e.g. async gate). Default true. */
   presentOnVisible?: boolean;
@@ -26,18 +23,15 @@ export function useBottomSheetModalVisibility(
 ) {
   const presentOnVisible = options?.presentOnVisible !== false;
   const wasVisibleRef = useRef(false);
-  const dismissedFromModalRef = useRef(false);
 
   const handleDismiss = useCallback(() => {
     Keyboard.dismiss();
-    dismissedFromModalRef.current = true;
     onClose();
   }, [onClose]);
 
   useEffect(() => {
     if (visible) {
       wasVisibleRef.current = true;
-      dismissedFromModalRef.current = false;
       if (!presentOnVisible) {
         return undefined;
       }
@@ -49,9 +43,7 @@ export function useBottomSheetModalVisibility(
 
     if (wasVisibleRef.current) {
       Keyboard.dismiss();
-      if (!dismissedFromModalRef.current) {
-        ref.current?.dismiss();
-      }
+      ref.current?.dismiss();
       wasVisibleRef.current = false;
     }
     return undefined;

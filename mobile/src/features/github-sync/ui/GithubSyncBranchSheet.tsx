@@ -1,9 +1,10 @@
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
 import { Check, GitBranch, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Keyboard, Pressable, Text, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
@@ -201,6 +202,7 @@ export function GithubSyncBranchSheet({
   const onLoadBranchesRef = useRef(onLoadBranches);
   const onDeleteRef = useRef(onDelete);
   const didLoadBranchesForOpenRef = useRef(false);
+  const modalRef = useRef<BottomSheetModal>(null);
   const [draft, setDraft] = useState(branch);
   onLoadBranchesRef.current = onLoadBranches;
   onDeleteRef.current = onDelete;
@@ -221,6 +223,13 @@ export function GithubSyncBranchSheet({
       setDraft(branch);
     }
   }, [branch, visible]);
+
+  const handleClosePress = useCallback(() => {
+    Keyboard.dismiss();
+    setDraft(branch);
+    modalRef.current?.dismiss();
+    onClose();
+  }, [branch, onClose]);
 
   const trimmed = draft.trim();
   const canSave =
@@ -372,7 +381,7 @@ export function GithubSyncBranchSheet({
   );
 
   return (
-    <AppBottomSheetModal visible={visible} onClose={onClose}>
+    <AppBottomSheetModal ref={modalRef} visible={visible} onClose={onClose}>
       <BottomSheetView style={{ paddingHorizontal: 20, paddingTop: 4, ...contentPadding }}>
         <Text
           style={{
@@ -449,8 +458,7 @@ export function GithubSyncBranchSheet({
           primaryDisabled={!canSave}
           primaryLoading={saving}
           secondaryLabel={t('common.cancel')}
-          onSecondaryPress={onClose}
-          secondaryDisabled={saving || deletingBranch != null}
+          onSecondaryPress={handleClosePress}
         />
       </BottomSheetView>
     </AppBottomSheetModal>
