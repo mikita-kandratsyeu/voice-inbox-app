@@ -11,6 +11,7 @@ import {
   BONUS_APP_CONFIG_KEYS,
   getAiWeeklyLimits,
   getBonusConfig,
+  invalidateAppConfigCache,
   WEEKLY_LIMIT_APP_CONFIG_KEYS,
 } from '@/lib/app-config';
 import { prisma } from '@/lib/prisma';
@@ -234,6 +235,8 @@ export async function PUT(request: Request): Promise<NextResponse> {
     console.error('[admin/app-config PUT]', e);
     return NextResponse.json({ ok: false, error: 'Failed to save' }, { status: 503 });
   }
+
+  invalidateAppConfigCache();
 
   const [effectiveBonus, weeklyLimits] = await Promise.all([getBonusConfig(), getAiWeeklyLimits()]);
   const rows = await prisma.appConfig.findMany({ where: { key: { in: ALL_KEYS } } });

@@ -1,16 +1,37 @@
 import { prisma } from '@/lib/prisma';
 
+const PRO_ENTITLEMENT_CACHE_TTL_MS = 60_000;
+
+const proExpiresCache = new Map<string, { expiresAt: Date | null; loadedAt: number }>();
+
+/** Clear cached Pro expiry after redeem, webhook sync, or admin reset. */
+export function invalidateProEntitlementCache(deviceId?: string): void {
+  if (deviceId) {
+    proExpiresCache.delete(deviceId);
+    return;
+  }
+  proExpiresCache.clear();
+}
+
 export async function getProExpiresAtUtc(deviceId: string): Promise<Date | null> {
   if (!process.env.DATABASE_URL?.trim()) {
     return null;
   }
+
+  const now = Date.now();
+  const hit = proExpiresCache.get(deviceId);
+  if (hit && now - hit.loadedAt < PRO_ENTITLEMENT_CACHE_TTL_MS) {
+    return hit.expiresAt;
+  }
+
   try {
     const row = await prisma.deviceProEntitlement.findUnique({
       where: { deviceId },
       select: { expiresAt: true },
     });
-    if (!row) return null;
-    return row.expiresAt;
+    const expiresAt = row?.expiresAt ?? null;
+    proExpiresCache.set(deviceId, { expiresAt, loadedAt: now });
+    return expiresAt;
   } catch {
     return null;
   }

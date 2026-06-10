@@ -105,6 +105,36 @@ export function AdminSupportPanel() {
   const [inlineEmailSuccessId, setInlineEmailSuccessId] = useState<string | null>(null);
   const [supportProKeyDuration, setSupportProKeyDuration] = useState<Record<string, string>>({});
   const [supportProKeySendingId, setSupportProKeySendingId] = useState<string | null>(null);
+  const [appLogsById, setAppLogsById] = useState<Record<string, string | null>>({});
+  const [appLogsLoadingId, setAppLogsLoadingId] = useState<string | null>(null);
+
+  const loadAppLogs = useCallback(async (issueId: string) => {
+    if (appLogsById[issueId] !== undefined) {
+      return;
+    }
+    setAppLogsLoadingId(issueId);
+    try {
+      const res = await fetch(`/api/admin/support/${issueId}`, { credentials: 'include' });
+      const data = (await res.json()) as { ok?: boolean; appLogs?: string | null };
+      if (data.ok) {
+        setAppLogsById((prev) => ({ ...prev, [issueId]: data.appLogs ?? null }));
+      }
+    } finally {
+      setAppLogsLoadingId(null);
+    }
+  }, [appLogsById]);
+
+  const toggleIssueLogs = useCallback(
+    (issueId: string, isOpen: boolean) => {
+      if (isOpen) {
+        setExpanded(null);
+        return;
+      }
+      setExpanded(issueId);
+      void loadAppLogs(issueId);
+    },
+    [loadAppLogs],
+  );
 
   const getDraft = useCallback(
     (id: string): ReplyDraft =>
@@ -485,7 +515,7 @@ export function AdminSupportPanel() {
                       </select>
                       <button
                         type="button"
-                        onClick={() => setExpanded(isOpen ? null : row.id)}
+                        onClick={() => toggleIssueLogs(row.id, isOpen)}
                         className={adminBtnGhostClass}
                       >
                         {isOpen ? 'Hide logs' : 'Logs'}
@@ -665,16 +695,20 @@ export function AdminSupportPanel() {
                         {JSON.stringify(row.diagnostics, null, 2)}
                       </pre>
                     </div>
-                    {row.appLogs && (
-                      <div>
-                        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                          Extra logs from user
-                        </p>
+                    <div>
+                      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                        Extra logs from user
+                      </p>
+                      {appLogsLoadingId === row.id ? (
+                        <p className="text-xs text-zinc-500">Loading logs…</p>
+                      ) : appLogsById[row.id] ? (
                         <pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded-lg border border-zinc-200 bg-white p-3 text-xs text-zinc-800 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-200">
-                          {row.appLogs}
+                          {appLogsById[row.id]}
                         </pre>
-                      </div>
-                    )}
+                      ) : appLogsById[row.id] === null ? (
+                        <p className="text-xs text-zinc-500">No extra logs attached.</p>
+                      ) : null}
+                    </div>
                   </div>
                 )}
               </li>

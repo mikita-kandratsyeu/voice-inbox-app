@@ -1,5 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
 
+import { invalidateProEntitlementCache } from '@/lib/pro-entitlement';
 import { prisma } from '@/lib/prisma';
 import { isAiResetProductId } from '@/lib/revenuecat-reset-purchase';
 
@@ -116,6 +117,7 @@ export async function applyRevenueCatWebhookPayload(payload: unknown): Promise<v
   if (type === 'EXPIRATION') {
     try {
       await prisma.deviceProEntitlement.delete({ where: { deviceId } });
+      invalidateProEntitlementCache(deviceId);
     } catch {
       console.error('[revenuecat-webhook]', 'delete', 'not found', deviceId);
     }
@@ -136,6 +138,7 @@ export async function applyRevenueCatWebhookPayload(payload: unknown): Promise<v
         create: { deviceId, expiresAt },
         update: { expiresAt },
       });
+      invalidateProEntitlementCache(deviceId);
       return;
     }
 
@@ -144,6 +147,7 @@ export async function applyRevenueCatWebhookPayload(payload: unknown): Promise<v
     }
     try {
       await prisma.deviceProEntitlement.delete({ where: { deviceId } });
+      invalidateProEntitlementCache(deviceId);
     } catch {
       console.error('[revenuecat-webhook]', 'delete', 'not found', deviceId);
     }
@@ -157,5 +161,6 @@ export async function applyRevenueCatWebhookPayload(payload: unknown): Promise<v
       create: { deviceId, expiresAt: LIFETIME_FAR },
       update: { expiresAt: LIFETIME_FAR },
     });
+    invalidateProEntitlementCache(deviceId);
   }
 }

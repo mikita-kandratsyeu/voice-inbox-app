@@ -24,7 +24,7 @@ function stripMarkdownForDescription(md: string, maxLen = 400): string {
 
 export async function buildBlogRssXml(locale: string): Promise<string> {
   const loc = locale === 'ru' ? 'ru' : 'en';
-  const prefix = loc === 'en' ? '' : `/${loc}`;
+  const prefix = `/${loc}`;
   const channelUrl = `${BASE_URL_OR_FALLBACK}${prefix}/blog`;
   const posts = await listPublishedReleases(loc);
   const channelTitle = loc === 'ru' ? 'Voice Inbox AI — блог' : 'Voice Inbox AI — Blog';

@@ -1,4 +1,4 @@
-import type { Prisma } from '@/generated/prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 
 import { prisma } from '@/lib/prisma';
 import { computeNominalGrantEndUtc } from '@/lib/pro-license-expiry-math';
@@ -135,6 +135,20 @@ export async function fetchActiveProDeviceIds(now: Date): Promise<string[]> {
   return rows.map((r) => r.deviceId);
 }
 
+type ProLicenseGlobalStatsRow = {
+  total: bigint;
+  unused: bigint;
+  redeemed: bigint;
+  redeemed_7d: bigint;
+  redeemed_30d: bigint;
+};
+
+function bigintToNumber(value: bigint | undefined): number {
+  if (value == null) return 0;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
 export async function fetchProLicenseGlobalStats(now: Date): Promise<{
   totalKeys: number;
   unusedKeys: number;
@@ -146,22 +160,27 @@ export async function fetchProLicenseGlobalStats(now: Date): Promise<{
   const sevenAgo = new Date(now.getTime() - 7 * 86_400_000);
   const thirtyAgo = new Date(now.getTime() - 30 * 86_400_000);
 
-  const [totalKeys, unusedKeys, redeemedKeys, redeemed7d, redeemed30d, devicesWithActivePro] =
-    await Promise.all([
-      prisma.proLicenseKey.count(),
-      prisma.proLicenseKey.count({ where: { consumedAt: null } }),
-      prisma.proLicenseKey.count({ where: { consumedAt: { not: null } } }),
-      prisma.proLicenseKey.count({ where: { consumedAt: { gte: sevenAgo } } }),
-      prisma.proLicenseKey.count({ where: { consumedAt: { gte: thirtyAgo } } }),
-      prisma.deviceProEntitlement.count({ where: { expiresAt: { gt: now } } }),
-    ]);
+  const [statsRows, devicesWithActivePro] = await Promise.all([
+    prisma.$queryRaw<ProLicenseGlobalStatsRow[]>(Prisma.sql`
+      SELECT
+        COUNT(*)::bigint AS total,
+        COUNT(*) FILTER (WHERE "consumedAt" IS NULL)::bigint AS unused,
+        COUNT(*) FILTER (WHERE "consumedAt" IS NOT NULL)::bigint AS redeemed,
+        COUNT(*) FILTER (WHERE "consumedAt" >= ${sevenAgo})::bigint AS redeemed_7d,
+        COUNT(*) FILTER (WHERE "consumedAt" >= ${thirtyAgo})::bigint AS redeemed_30d
+      FROM "ProLicenseKey"
+    `),
+    prisma.deviceProEntitlement.count({ where: { expiresAt: { gt: now } } }),
+  ]);
+
+  const stats = statsRows[0];
 
   return {
-    totalKeys,
-    unusedKeys,
-    redeemedKeys,
-    redeemedLast7Days: redeemed7d,
-    redeemedLast30Days: redeemed30d,
+    totalKeys: bigintToNumber(stats?.total),
+    unusedKeys: bigintToNumber(stats?.unused),
+    redeemedKeys: bigintToNumber(stats?.redeemed),
+    redeemedLast7Days: bigintToNumber(stats?.redeemed_7d),
+    redeemedLast30Days: bigintToNumber(stats?.redeemed_30d),
     devicesWithActivePro,
   };
 }

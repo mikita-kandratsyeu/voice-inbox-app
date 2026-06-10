@@ -16,8 +16,16 @@ cp web/.env.example web/.env
 
 1. Set **`DATABASE_URL`** and **`DIRECT_URL`** (Supabase Postgres; see `.env.example` for pooler URLs). Use the **`postgres`** pooler user — Prisma bypasses RLS; `anon` / `authenticated` do not.
 2. Set **`JWT_SECRET`** (min 32 characters) and **`FIREBASE_SERVICE_ACCOUNT`** (FCM + App Check on `POST /api/token`).
-3. Apply schema: `yarn db:push` (or `prisma migrate deploy` in production).
-4. On Supabase, harden Data API once: `yarn db:rls`, then `yarn db:verify-rls` (RLS + revoke for `anon`/`authenticated` only; does not affect Prisma).
+3. Apply schema:
+   - **New empty DB:** `yarn db:push` (quick dev) or `yarn db:migrate` (tracked migrations).
+   - **Existing Supabase DB** that was created with `db:push` and shows **P3005** on `yarn db:migrate`: baseline once, then deploy pending SQL:
+     ```bash
+     cd web
+     yarn db:baseline-and-migrate   # marks older migrations as applied, runs the rest
+     yarn db:verify-rls
+     ```
+     Dry run: `yarn db:baseline -- --dry-run`. Mark only through a specific migration: `yarn db:baseline -- --through 20260610120000_in_app_event_page --then-deploy`.
+4. On Supabase, harden Data API once: `yarn db:rls`, then `yarn db:verify-rls` (RLS + revoke for `anon`/`authenticated` only; does not affect Prisma). Use **`DIRECT_URL`** (session pooler, port 5432) for migrate/baseline — not the transaction pooler (6543).
 5. Seed the first superadmin (empty `AdminUser` table only):
 
    ```bash
@@ -74,6 +82,12 @@ Run from repo root with `yarn workspace voice-inbox-web <script>`, or `cd web` a
 | `type:check` | Prisma generate + `tsc` |
 | `db:generate` | Prisma client only |
 | `db:push` | Push schema to database (dev) |
+| `db:migrate` | Apply pending Prisma migrations (`migrate deploy`) |
+| `db:baseline` | Mark existing migrations as applied (fix P3005 after `db:push`) |
+| `db:baseline-and-migrate` | Baseline + `migrate deploy` (typical one-time Supabase fix) |
+| `db:check-local` | **Local only:** `migrate deploy` + Supabase RLS verify (`db:verify-rls`) |
+| `db:rls` | Re-apply RLS hardening SQL (Supabase; run after migrations) |
+| `db:verify-rls` | Assert RLS is on and Prisma (`postgres` role) can still read |
 | `db:seed` | Create first superadmin (`ADMIN_SEED_*`) |
 | `db:backup` / `db:restore` | `pg_dump` / restore helpers (requires `libpq`) |
 | `release-post:draft` | Draft blog release post from git + `package.json` version |

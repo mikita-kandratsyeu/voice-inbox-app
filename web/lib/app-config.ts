@@ -20,23 +20,81 @@ export const WEEKLY_LIMIT_APP_CONFIG_KEYS = {
 
 const CONFIG_KEYS = BONUS_APP_CONFIG_KEYS;
 
-async function getConfigValue(key: string, fallback: string): Promise<string> {
-  if (!process.env.DATABASE_URL?.trim()) {
-    return fallback;
+const ALL_MANAGED_KEYS = [
+  ...Object.values(BONUS_APP_CONFIG_KEYS),
+  ...Object.values(WEEKLY_LIMIT_APP_CONFIG_KEYS),
+] as const;
+
+const DEFAULTS: Record<(typeof ALL_MANAGED_KEYS)[number], string> = {
+  [BONUS_APP_CONFIG_KEYS.AI_BONUS_AMOUNT]: String(AI_BONUS_AMOUNT),
+  [BONUS_APP_CONFIG_KEYS.AI_BONUS_COOLDOWN_SECONDS]: String(AI_BONUS_COOLDOWN_SECONDS),
+  [BONUS_APP_CONFIG_KEYS.AI_BONUS_COOLDOWN_KEY_PREFIX]: AI_BONUS_COOLDOWN_KEY_PREFIX,
+  [WEEKLY_LIMIT_APP_CONFIG_KEYS.AI_WEEKLY_LIMIT_FREE]: String(FREE_WEEKLY_LIMIT),
+  [WEEKLY_LIMIT_APP_CONFIG_KEYS.AI_WEEKLY_LIMIT_PRO]: String(PRO_WEEKLY_LIMIT),
+};
+
+/** In-process cache TTL for hot-path AppConfig reads (AI routes). */
+const APP_CONFIG_CACHE_TTL_MS = 60_000;
+
+let cachedValues: Map<string, string> | null = null;
+let cachedAt = 0;
+let loadInFlight: Promise<Map<string, string>> | null = null;
+
+/** Call after admin updates AppConfig so AI limits refresh without waiting for TTL. */
+export function invalidateAppConfigCache(): void {
+  cachedValues = null;
+  cachedAt = 0;
+  loadInFlight = null;
+}
+
+function defaultValuesMap(): Map<string, string> {
+  return new Map(ALL_MANAGED_KEYS.map((key) => [key, DEFAULTS[key]]));
+}
+
+async function loadManagedAppConfigValues(): Promise<Map<string, string>> {
+  const now = Date.now();
+  if (cachedValues && now - cachedAt < APP_CONFIG_CACHE_TTL_MS) {
+    return cachedValues;
   }
+
+  if (loadInFlight) {
+    return loadInFlight;
+  }
+
+  loadInFlight = (async () => {
+    const map = defaultValuesMap();
+
+    if (process.env.DATABASE_URL?.trim()) {
+      try {
+        const rows = await prisma.appConfig.findMany({
+          where: { key: { in: [...ALL_MANAGED_KEYS] } },
+          select: { key: true, value: true },
+        });
+        for (const row of rows) {
+          const value = row.value?.trim();
+          if (value) {
+            map.set(row.key, value);
+          }
+        }
+      } catch (e) {
+        console.error('[app-config] load failed', e);
+      }
+    }
+
+    cachedValues = map;
+    cachedAt = Date.now();
+    return map;
+  })();
 
   try {
-    const row = await prisma.appConfig.findUnique({ where: { key } });
-    if (row?.value?.trim()) {
-      return row.value.trim();
-    }
-  } catch {
-    console.error('[getConfigValue]', key, 'error');
-
-    return fallback;
+    return await loadInFlight;
+  } finally {
+    loadInFlight = null;
   }
+}
 
-  return fallback;
+function readConfigValue(map: Map<string, string>, key: string, fallback: string): string {
+  return map.get(key)?.trim() || fallback;
 }
 
 export type BonusConfig = {
@@ -46,11 +104,18 @@ export type BonusConfig = {
 };
 
 export async function getBonusConfig(): Promise<BonusConfig> {
-  const [amountStr, cooldownStr, prefix] = await Promise.all([
-    getConfigValue(CONFIG_KEYS.AI_BONUS_AMOUNT, String(AI_BONUS_AMOUNT)),
-    getConfigValue(CONFIG_KEYS.AI_BONUS_COOLDOWN_SECONDS, String(AI_BONUS_COOLDOWN_SECONDS)),
-    getConfigValue(CONFIG_KEYS.AI_BONUS_COOLDOWN_KEY_PREFIX, AI_BONUS_COOLDOWN_KEY_PREFIX),
-  ]);
+  const map = await loadManagedAppConfigValues();
+  const amountStr = readConfigValue(map, CONFIG_KEYS.AI_BONUS_AMOUNT, String(AI_BONUS_AMOUNT));
+  const cooldownStr = readConfigValue(
+    map,
+    CONFIG_KEYS.AI_BONUS_COOLDOWN_SECONDS,
+    String(AI_BONUS_COOLDOWN_SECONDS),
+  );
+  const prefix = readConfigValue(
+    map,
+    CONFIG_KEYS.AI_BONUS_COOLDOWN_KEY_PREFIX,
+    AI_BONUS_COOLDOWN_KEY_PREFIX,
+  );
 
   const amount = Math.max(1, parseInt(amountStr, 10) || AI_BONUS_AMOUNT);
   const cooldownSeconds = Math.max(60, parseInt(cooldownStr, 10) || AI_BONUS_COOLDOWN_SECONDS);
@@ -68,10 +133,17 @@ const LIMIT_MIN = 1;
 const LIMIT_MAX = 500;
 
 export async function getAiWeeklyLimits(): Promise<AiWeeklyLimits> {
-  const [freeStr, proStr] = await Promise.all([
-    getConfigValue(WEEKLY_LIMIT_APP_CONFIG_KEYS.AI_WEEKLY_LIMIT_FREE, String(FREE_WEEKLY_LIMIT)),
-    getConfigValue(WEEKLY_LIMIT_APP_CONFIG_KEYS.AI_WEEKLY_LIMIT_PRO, String(PRO_WEEKLY_LIMIT)),
-  ]);
+  const map = await loadManagedAppConfigValues();
+  const freeStr = readConfigValue(
+    map,
+    WEEKLY_LIMIT_APP_CONFIG_KEYS.AI_WEEKLY_LIMIT_FREE,
+    String(FREE_WEEKLY_LIMIT),
+  );
+  const proStr = readConfigValue(
+    map,
+    WEEKLY_LIMIT_APP_CONFIG_KEYS.AI_WEEKLY_LIMIT_PRO,
+    String(PRO_WEEKLY_LIMIT),
+  );
 
   let freeWeeklyLimit = parseInt(freeStr, 10);
   let proWeeklyLimit = parseInt(proStr, 10);

@@ -7,6 +7,7 @@
 --   • REVOKE only targets anon + authenticated, not postgres.
 --
 -- Verify after apply: yarn db:verify-rls
+-- Run after all migrations (InAppEventPage is created in a later migration).
 
 ALTER TABLE "AdminUser" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "AdminAuditLog" ENABLE ROW LEVEL SECURITY;
@@ -18,6 +19,7 @@ ALTER TABLE "BroadcastHistory" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "DeviceProEntitlement" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "ProLicenseKey" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "ReleasePost" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "InAppEventPage" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "SupportIssue" ENABLE ROW LEVEL SECURITY;
 
 -- Defense in depth: strip default grants from Supabase API roles.

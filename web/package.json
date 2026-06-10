@@ -15,9 +15,13 @@
     "test": "jest",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
+    "db:migrate": "prisma migrate deploy",
+    "db:baseline": "node scripts/db-baseline-migrations.mjs",
+    "db:baseline-and-migrate": "node scripts/db-baseline-migrations.mjs --then-deploy",
     "db:seed": "tsx scripts/db-seed-admin.ts",
     "db:rls": "prisma db execute --file prisma/migrations/20260609120000_enable_rls_on_public_tables/migration.sql",
     "db:verify-rls": "tsx scripts/db-verify-rls.ts",
+    "db:check-local": "prisma migrate deploy && tsx scripts/db-verify-rls.ts",
     "db:backup": "tsx scripts/db-backup.ts",
     "db:restore": "tsx scripts/db-restore.ts",
     "release-post:draft": "tsx scripts/generate-release-post.ts"

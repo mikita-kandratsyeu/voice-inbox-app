@@ -108,6 +108,7 @@ model SupportIssue {
   @@index([deviceId])
   @@index([createdAt(sort: Desc)])
   @@index([status])
+  @@index([status, createdAt(sort: Desc)])
 }
 
 model ProLicenseKey {
@@ -132,12 +133,16 @@ model ProLicenseKey {
 
   @@index([createdAt(sort: Desc)])
   @@index([voucherBatchId])
+  @@index([consumedByDeviceId])
+  @@index([consumedAt(sort: Desc)])
 }
 
 model DeviceProEntitlement {
   deviceId  String   @id
   expiresAt DateTime
   updatedAt DateTime @updatedAt
+
+  @@index([expiresAt])
 }
 
 model AiUsageLedgerEntry {
@@ -152,6 +157,7 @@ model AiUsageLedgerEntry {
   metadata    Json?
 
   @@index([deviceId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([deviceId, operation, jobId])
   @@index([jobId])
 }
 

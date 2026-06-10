@@ -1,3 +1,4 @@
+import { invalidateProEntitlementCache } from '@/lib/pro-entitlement';
 import { prisma } from '@/lib/prisma';
 
 const RC_API = 'https://api.revenuecat.com/v1';
@@ -152,6 +153,7 @@ export async function syncDeviceProEntitlementFromRevenueCatRest(
     }
     try {
       await prisma.deviceProEntitlement.delete({ where: { deviceId } });
+      invalidateProEntitlementCache(deviceId);
     } catch {
       /* no row */
     }
@@ -166,6 +168,7 @@ export async function syncDeviceProEntitlementFromRevenueCatRest(
     }
     try {
       await prisma.deviceProEntitlement.delete({ where: { deviceId } });
+      invalidateProEntitlementCache(deviceId);
     } catch {
       /* no row */
     }
@@ -178,6 +181,7 @@ export async function syncDeviceProEntitlementFromRevenueCatRest(
       create: { deviceId, expiresAt: LIFETIME_FAR },
       update: { expiresAt: LIFETIME_FAR },
     });
+    invalidateProEntitlementCache(deviceId);
     return { ok: true, updated: true };
   }
 
@@ -195,6 +199,7 @@ export async function syncDeviceProEntitlementFromRevenueCatRest(
     }
     try {
       await prisma.deviceProEntitlement.delete({ where: { deviceId } });
+      invalidateProEntitlementCache(deviceId);
     } catch {
       /* no row */
     }
@@ -206,5 +211,6 @@ export async function syncDeviceProEntitlementFromRevenueCatRest(
     create: { deviceId, expiresAt },
     update: { expiresAt },
   });
+  invalidateProEntitlementCache(deviceId);
   return { ok: true, updated: true };
 }
