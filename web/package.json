@@ -89,7 +89,9 @@
   "turbo": {
     "tasks": {
       "type:check": {
-        "outputs": ["generated/**"]
+        "outputs": [
+          "generated/**"
+        ]
       }
     }
   }
