@@ -1414,6 +1414,7 @@
         "meetingModeAndPinnedMoments": "Meeting mode and pinned moments",
         "premiumAiModels": "Advanced models and an AI server in Private mode",
         "extendedShareAndBatchExport": "Extended note export — summaries, email, and audio",
+        "githubSync": "GitHub backup — cloud sync to your repository with version history",
         "notesGraph": "Note map — see how your notes relate",
         "noAds": "No ads"
       }

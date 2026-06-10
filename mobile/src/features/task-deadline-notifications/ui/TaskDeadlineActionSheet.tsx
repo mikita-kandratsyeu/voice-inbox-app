@@ -1,5 +1,6 @@
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import dayjs from 'dayjs';
+import { CheckCircle2, Clock3, FileText, Sun } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -28,11 +29,12 @@ const SNOOZE_PRESETS: TaskDeadlineSnoozePreset[] = ['15m', '1h', 'tomorrow'];
 
 type SheetOptionRowProps = {
   label: string;
+  icon: React.ReactNode;
   onPress: () => void;
   isLast?: boolean;
 };
 
-function SheetOptionRow({ label, onPress, isLast = false }: SheetOptionRowProps) {
+function SheetOptionRow({ label, icon, onPress, isLast = false }: SheetOptionRowProps) {
   const color = useColors();
 
   return (
@@ -46,9 +48,13 @@ function SheetOptionRow({ label, onPress, isLast = false }: SheetOptionRowProps)
         paddingVertical: 14,
         borderBottomWidth: isLast ? 0 : 1,
         borderBottomColor: color.border.default,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
       }}
     >
-      <Text style={{ fontSize: 16, color: color.text.primary }}>{label}</Text>
+      {icon}
+      <Text style={{ fontSize: 16, color: color.text.primary, flex: 1 }}>{label}</Text>
     </TouchableOpacity>
   );
 }
@@ -153,11 +159,19 @@ export function TaskDeadlineActionSheet({
     }
   };
 
+  const iconSize = 18;
+
   const actionRows =
     mode === 'snooze'
       ? SNOOZE_PRESETS.map((preset) => ({
           key: preset,
           label: snoozeLabel(preset),
+          icon:
+            preset === 'tomorrow' ? (
+              <Sun size={iconSize} color={color.accent.cache} strokeWidth={2} />
+            ) : (
+              <Clock3 size={iconSize} color={color.accent.primary} strokeWidth={2} />
+            ),
           onPress: () => handleSnooze(preset),
         }))
       : [
@@ -166,6 +180,9 @@ export function TaskDeadlineActionSheet({
                 {
                   key: 'mark-done',
                   label: t('taskDeadlineNotifications.sheet.markDone'),
+                  icon: (
+                    <CheckCircle2 size={iconSize} color={color.accent.success} strokeWidth={2} />
+                  ),
                   onPress: () => {
                     void handleMarkDone();
                   },
@@ -175,6 +192,7 @@ export function TaskDeadlineActionSheet({
           {
             key: 'snooze',
             label: t('taskDeadlineNotifications.sheet.snooze'),
+            icon: <Clock3 size={iconSize} color={color.accent.primary} strokeWidth={2} />,
             onPress: () => {
               hapticSelection();
               setMode('snooze');
@@ -183,6 +201,7 @@ export function TaskDeadlineActionSheet({
           {
             key: 'open-note',
             label: t('taskDeadlineNotifications.sheet.openNote'),
+            icon: <FileText size={iconSize} color={color.text.secondary} strokeWidth={2} />,
             onPress: handleOpenNote,
           },
         ];
@@ -230,6 +249,7 @@ export function TaskDeadlineActionSheet({
             <SheetOptionRow
               key={row.key}
               label={row.label}
+              icon={row.icon}
               onPress={row.onPress}
               isLast={index === actionRows.length - 1}
             />
