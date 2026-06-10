@@ -22,6 +22,7 @@ import { EmptyState, HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 import { collectUniqueTags, countFilteredGraphRecords } from '../lib/buildGraphModel';
 import { buildNotesGraphPersistKey } from '../lib/buildNotesGraphPersistKey';
+import { formatGraphAppliedLayoutHeaderSubtitle } from '../lib/formatGraphAppliedLayoutHeaderSubtitle';
 import { findGraphSearchMatchIds, type GraphSearchIndexEntry } from '../lib/graphSearch';
 import { getSessionNodePositions, replaceSessionNodePositions } from '../lib/graphSessionLayout';
 import { shouldAutoSimplifyGraph } from '../lib/graphSimplifyMode';
@@ -56,7 +57,6 @@ import type { GraphCanvasHandle } from './GraphCanvas';
 import { GraphCanvas } from './GraphCanvas';
 import { GraphExportPreviewSheet } from './GraphExportPreviewSheet';
 import { GraphFilterBar } from './GraphFilterBar';
-import { formatGraphAppliedLayoutHeaderSubtitle } from '../lib/formatGraphAppliedLayoutHeaderSubtitle';
 import { GraphLayoutHistorySheet } from './GraphLayoutHistorySheet';
 import { GraphLayoutSaveSheet } from './GraphLayoutSaveSheet';
 import { GraphStickySearchBar } from './GraphStickySearchBar';
@@ -630,12 +630,7 @@ export const NotesGraphScreenBody = () => {
   const headerControlsDisabled = isGraphReconciling || isSavingLayout || isCapturingExport;
 
   const appliedLayoutHeaderSubtitle = useMemo(() => {
-    if (
-      recordCount === 0 ||
-      !activeSavedVersion ||
-      hasUnsavedLayoutChanges ||
-      isGraphReconciling
-    ) {
+    if (recordCount === 0 || !activeSavedVersion || hasUnsavedLayoutChanges || isGraphReconciling) {
       return undefined;
     }
 

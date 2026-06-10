@@ -10,10 +10,7 @@ const t = ((key: string, params?: Record<string, unknown>) => {
 describe('getNotesGraphLayoutVersionDisplayName', () => {
   it('returns trimmed custom name when present', () => {
     expect(
-      getNotesGraphLayoutVersionDisplayName(
-        { name: '  My layout  ', versionNumber: 3 },
-        t,
-      ),
+      getNotesGraphLayoutVersionDisplayName({ name: '  My layout  ', versionNumber: 3 }, t),
     ).toBe('My layout');
   });
 
