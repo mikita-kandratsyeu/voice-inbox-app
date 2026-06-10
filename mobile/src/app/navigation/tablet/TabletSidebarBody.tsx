@@ -207,7 +207,7 @@ export function TabletSidebarBody({
         color={color}
         theme={theme}
         appearance="secondary"
-        badgeCount={notesGraphNodeCount}
+        badgeCount={isProActive ? notesGraphNodeCount : 0}
         onPress={openNotesGraph}
         trailingAccessory={!isProActive ? <PlanPaywallProChip /> : undefined}
         icon={

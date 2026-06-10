@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, FileText, ListChecks } from 'lucide-react-native';
+import { Check, Clock, FileText, ListChecks } from 'lucide-react-native';
 import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
@@ -6,30 +6,69 @@ import { Text, useWindowDimensions, View } from 'react-native';
 import type { TaskItem } from '@/entities/record';
 import type { RecordCardNoteKind } from '@/entities/record/lib/recordCardExpandedPreview';
 import type { Colors } from '@/shared/config';
+import { withAlphaHex } from '@/shared/lib';
 
-/** Below this width, the strip uses a single dense toolbar row. */
+/** Below this width, the strip uses shorter labels and tighter spacing. */
 const COMPACT_LAYOUT_MAX_WIDTH = 420;
+/** Below this width, stat labels are hidden to save horizontal space. */
+const DENSE_LAYOUT_MAX_WIDTH = 380;
 
 type RecordCardMetaStripProps = {
   noteKind: RecordCardNoteKind;
   duration: string;
   color: Colors;
-  hasTranscript: boolean;
-  hasSummary: boolean;
   textFragmentCount?: number;
   tasks?: TaskItem[];
 };
 
-function MetaStripDivider({ color }: { color: Colors }) {
+type IconBadgeTone = 'info' | 'success' | 'neutral';
+type LayoutDensity = 'regular' | 'compact' | 'dense';
+
+function MetaStripDivider({ color, dense }: { color: Colors; dense: boolean }) {
   return (
     <View
       style={{
         width: 1,
         alignSelf: 'stretch',
-        marginVertical: 2,
+        marginVertical: dense ? 2 : 4,
         backgroundColor: color.border.default,
       }}
     />
+  );
+}
+
+function MetaIconBadge({
+  color,
+  tone,
+  children,
+  size = 32,
+}: {
+  color: Colors;
+  tone: IconBadgeTone;
+  children: React.ReactNode;
+  size?: number;
+}) {
+  const backgroundColor =
+    tone === 'info'
+      ? color.status.processing.bg
+      : tone === 'success'
+        ? withAlphaHex(color.accent.success, 0.16)
+        : color.background.tertiary;
+
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor,
+        flexShrink: 0,
+      }}
+    >
+      {children}
+    </View>
   );
 }
 
@@ -39,115 +78,131 @@ function MetaStat({
   value,
   label,
   accessibilityLabel,
+  density,
 }: {
   color: Colors;
   icon: React.ReactNode;
   value: string;
   label?: string;
   accessibilityLabel: string;
+  density: LayoutDensity;
 }) {
-  return (
-    <View
-      style={{ alignItems: 'flex-start', flexShrink: 0 }}
-      accessibilityRole="text"
-      accessibilityLabel={accessibilityLabel}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        {icon}
-        <Text
-          style={{ fontSize: 15, fontWeight: '700', color: color.text.primary }}
-          numberOfLines={1}
-        >
-          {value}
-        </Text>
-      </View>
-      {label && (
-        <Text
-          style={{
-            fontSize: 11,
-            lineHeight: 14,
-            color: color.text.muted,
-            marginTop: 3,
-          }}
-        >
-          {label}
-        </Text>
-      )}
-    </View>
-  );
-}
+  const dense = density === 'dense';
+  const compact = density !== 'regular';
+  const iconSize = dense ? 26 : compact ? 28 : 32;
 
-function CompactStatCell({
-  color,
-  icon,
-  value,
-  label,
-  accessibilityLabel,
-}: {
-  color: Colors;
-  icon: React.ReactNode;
-  value: string;
-  label?: string;
-  accessibilityLabel: string;
-}) {
   return (
     <View
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 5,
+        gap: dense ? 6 : compact ? 8 : 10,
         flexShrink: 0,
       }}
       accessibilityRole="text"
       accessibilityLabel={accessibilityLabel}
     >
-      <View style={{ marginTop: label ? 2 : 0 }}>{icon}</View>
-      <View style={{ alignItems: 'flex-start', minWidth: 0 }}>
+      <MetaIconBadge color={color} tone="info" size={iconSize}>
+        {icon}
+      </MetaIconBadge>
+      <View style={{ flexShrink: 0 }}>
         <Text
-          style={{ fontSize: 14, fontWeight: '700', color: color.text.primary }}
+          style={{
+            fontSize: dense ? 14 : compact ? 15 : 17,
+            fontWeight: '700',
+            color: color.text.primary,
+            letterSpacing: -0.2,
+          }}
           numberOfLines={1}
         >
           {value}
         </Text>
-        {label && (
+        {label ? (
           <Text
             style={{
-              fontSize: 10,
-              lineHeight: 13,
-              fontWeight: '500',
+              fontSize: dense ? 10 : 11,
+              lineHeight: dense ? 12 : 14,
               color: color.text.muted,
+              marginTop: dense ? 1 : 2,
             }}
             numberOfLines={1}
           >
             {label}
           </Text>
-        )}
+        ) : null}
       </View>
     </View>
   );
 }
 
-function CompactSourceCell({ color, label }: { color: Colors; label?: string }) {
+function TasksMetaStat({
+  color,
+  doneCount,
+  totalCount,
+  allTasksDone,
+  label,
+  accessibilityLabel,
+  density,
+}: {
+  color: Colors;
+  doneCount: number;
+  totalCount: number;
+  allTasksDone: boolean;
+  label?: string;
+  accessibilityLabel: string;
+  density: LayoutDensity;
+}) {
+  const dense = density === 'dense';
+  const compact = density !== 'regular';
+  const iconSize = dense ? 26 : compact ? 28 : 32;
+  const tone: IconBadgeTone = allTasksDone ? 'success' : 'neutral';
+  const iconColor = allTasksDone ? color.accent.success : color.icon.muted;
+  const iconPx = dense ? 13 : compact ? 14 : 15;
+
   return (
     <View
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 5,
+        gap: dense ? 6 : compact ? 8 : 10,
         flexShrink: 0,
       }}
       accessibilityRole="text"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel}
     >
-      <FileText size={14} color={color.text.secondary} strokeWidth={2} />
-      {label && (
+      <MetaIconBadge color={color} tone={tone} size={iconSize}>
+        {allTasksDone ? (
+          <Check size={iconPx} color={iconColor} strokeWidth={2.5} />
+        ) : (
+          <ListChecks size={iconPx} color={iconColor} strokeWidth={2} />
+        )}
+      </MetaIconBadge>
+      <View style={{ flexShrink: 0 }}>
         <Text
-          style={{ fontSize: 13, fontWeight: '600', color: color.text.secondary }}
+          style={{
+            fontSize: dense ? 14 : compact ? 15 : 17,
+            fontWeight: '700',
+            color: color.text.primary,
+            letterSpacing: -0.2,
+          }}
           numberOfLines={1}
         >
-          {label}
+          {`${doneCount}/${totalCount}`}
         </Text>
-      )}
+        {label ? (
+          <Text
+            style={{
+              fontSize: dense ? 10 : 11,
+              lineHeight: dense ? 12 : 14,
+              color: color.text.muted,
+              marginTop: dense ? 1 : 2,
+            }}
+            numberOfLines={1}
+          >
+            {label}
+          </Text>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -156,8 +211,6 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
   noteKind,
   duration,
   color,
-  hasTranscript,
-  hasSummary,
   textFragmentCount = 0,
   tasks = [],
 }: RecordCardMetaStripProps) {
@@ -169,217 +222,117 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
   const allTasksDone = hasTasks && doneCount === tasks.length;
   const showDuration = noteKind !== 'text';
   const showTextFragments = noteKind === 'text' && textFragmentCount > 0;
-  const showSourceChip =
-    noteKind === 'text'
-      ? hasTranscript || hasSummary
-      : hasTranscript || (!hasTranscript && hasSummary);
 
-  if (!showDuration && !showTextFragments && !hasTasks && !showSourceChip) {
+  if (!showDuration && !showTextFragments && !hasTasks) {
     return null;
   }
 
-  const compact = windowWidth < COMPACT_LAYOUT_MAX_WIDTH;
-  const sourceChipLabel =
-    noteKind === 'text'
-      ? t('inbox.cardLayout.noteTypeText')
-      : hasTranscript
-        ? t('inbox.cardLayout.sourceText')
-        : t('inbox.cardLayout.hasSummary');
+  const density: LayoutDensity =
+    windowWidth < DENSE_LAYOUT_MAX_WIDTH
+      ? 'dense'
+      : windowWidth < COMPACT_LAYOUT_MAX_WIDTH
+        ? 'compact'
+        : 'regular';
+  const compact = density !== 'regular';
+  const dense = density === 'dense';
 
-  if (compact) {
-    const statSegments: Array<{ key: string; node: React.ReactNode }> = [];
+  const durationLabel = dense
+    ? undefined
+    : compact
+      ? t('inbox.cardLayout.recordingDurationShort')
+      : t('inbox.cardLayout.recordingDuration');
+  const tasksLabel = dense
+    ? undefined
+    : compact
+      ? t('inbox.cardLayout.tasksCompletedShort')
+      : t('inbox.cardLayout.tasksCompletedLabel');
 
-    if (showDuration) {
-      statSegments.push({
-        key: 'duration',
-        node: (
-          <CompactStatCell
-            color={color}
-            icon={<Clock size={14} color={color.icon.muted} strokeWidth={2} />}
-            value={duration}
-            accessibilityLabel={`${duration}, ${t('inbox.cardLayout.recordingDuration')}`}
-          />
-        ),
-      });
-    }
+  const statSegments: Array<{ key: string; node: React.ReactNode }> = [];
 
-    if (showTextFragments) {
-      statSegments.push({
-        key: 'fragments',
-        node: (
-          <CompactStatCell
-            color={color}
-            icon={<FileText size={14} color={color.icon.muted} strokeWidth={2} />}
-            value={String(textFragmentCount)}
-            accessibilityLabel={t('inbox.cardLayout.textFragments', { count: textFragmentCount })}
-          />
-        ),
-      });
-    }
-
-    if (hasTasks) {
-      statSegments.push({
-        key: 'tasks',
-        node: (
-          <CompactStatCell
-            color={color}
-            icon={
-              allTasksDone ? (
-                <CheckCircle2 size={14} color={color.accent.success} strokeWidth={2} />
-              ) : (
-                <ListChecks size={14} color={color.icon.muted} strokeWidth={2} />
-              )
-            }
-            value={`${doneCount}/${tasks.length}`}
-            accessibilityLabel={`${doneCount}/${tasks.length}, ${t('inbox.cardLayout.tasksCompletedLabel')}`}
-          />
-        ),
-      });
-    }
-
-    const hasStatSegments = statSegments.length > 0;
-
-    return (
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginTop: 14,
-          paddingVertical: 14,
-          paddingHorizontal: 14,
-          borderRadius: 12,
-          backgroundColor: color.background.tertiary,
-        }}
-        accessibilityRole="text"
-      >
-        {hasStatSegments ? (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              flexShrink: 1,
-              minWidth: 0,
-              gap: 4,
-            }}
-          >
-            {statSegments.map((segment, index) => (
-              <React.Fragment key={segment.key}>
-                {index > 0 ? <MetaStripDivider color={color} /> : null}
-                {segment.node}
-              </React.Fragment>
-            ))}
-          </View>
-        ) : null}
-
-        {showSourceChip ? (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              flexShrink: 0,
-              marginLeft: 'auto',
-              gap: 4,
-            }}
-          >
-            {hasStatSegments ? <MetaStripDivider color={color} /> : null}
-            <CompactSourceCell color={color} label={sourceChipLabel} />
-          </View>
-        ) : null}
-      </View>
-    );
+  if (showDuration) {
+    statSegments.push({
+      key: 'duration',
+      node: (
+        <MetaStat
+          color={color}
+          density={density}
+          icon={
+            <Clock
+              size={dense ? 13 : compact ? 14 : 15}
+              color={color.status.processing.text}
+              strokeWidth={2}
+            />
+          }
+          value={duration}
+          label={durationLabel}
+          accessibilityLabel={`${duration}, ${t('inbox.cardLayout.recordingDuration')}`}
+        />
+      ),
+    });
   }
 
-  const sourceChipButton = showSourceChip ? (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: color.border.default,
-        backgroundColor: color.background.card,
-        flexShrink: 0,
-      }}
-      accessibilityRole="text"
-      accessibilityLabel={sourceChipLabel}
-    >
-      <FileText size={14} color={color.text.secondary} strokeWidth={2} />
-      <Text
-        style={{ fontSize: 13, fontWeight: '600', color: color.text.secondary }}
-        numberOfLines={1}
-      >
-        {sourceChipLabel}
-      </Text>
-    </View>
-  ) : null;
+  if (showTextFragments) {
+    statSegments.push({
+      key: 'fragments',
+      node: (
+        <MetaStat
+          color={color}
+          density={density}
+          icon={
+            <FileText
+              size={dense ? 13 : compact ? 14 : 15}
+              color={color.status.processing.text}
+              strokeWidth={2}
+            />
+          }
+          value={String(textFragmentCount)}
+          label={
+            dense ? undefined : t('inbox.cardLayout.textFragments', { count: textFragmentCount })
+          }
+          accessibilityLabel={t('inbox.cardLayout.textFragments', { count: textFragmentCount })}
+        />
+      ),
+    });
+  }
+
+  if (hasTasks) {
+    statSegments.push({
+      key: 'tasks',
+      node: (
+        <TasksMetaStat
+          color={color}
+          density={density}
+          doneCount={doneCount}
+          totalCount={tasks.length}
+          allTasksDone={allTasksDone}
+          label={tasksLabel}
+          accessibilityLabel={`${doneCount}/${tasks.length}, ${t('inbox.cardLayout.tasksCompletedLabel')}`}
+        />
+      ),
+    });
+  }
 
   return (
     <View
       style={{
+        alignSelf: 'flex-start',
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'flex-start',
-        gap: 20,
+        gap: dense ? 8 : compact ? 10 : 12,
         marginTop: 14,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
+        paddingHorizontal: dense ? 10 : compact ? 12 : 14,
+        paddingVertical: dense ? 8 : compact ? 10 : 12,
         borderRadius: 12,
-        backgroundColor: color.background.tertiary,
+        backgroundColor: color.background.card,
       }}
       accessibilityRole="text"
     >
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-          gap: 20,
-          flex: 1,
-          minWidth: 0,
-        }}
-      >
-        {showDuration ? (
-          <MetaStat
-            color={color}
-            icon={<Clock size={15} color={color.icon.muted} strokeWidth={2} />}
-            value={duration}
-            label={t('inbox.cardLayout.recordingDuration')}
-            accessibilityLabel={`${duration}, ${t('inbox.cardLayout.recordingDuration')}`}
-          />
-        ) : null}
-
-        {showTextFragments ? (
-          <MetaStat
-            color={color}
-            icon={<FileText size={15} color={color.icon.muted} strokeWidth={2} />}
-            value={String(textFragmentCount)}
-            label={t('inbox.cardLayout.textFragments', { count: textFragmentCount })}
-            accessibilityLabel={t('inbox.cardLayout.textFragments', { count: textFragmentCount })}
-          />
-        ) : null}
-
-        {hasTasks ? (
-          <MetaStat
-            color={color}
-            icon={
-              allTasksDone ? (
-                <CheckCircle2 size={15} color={color.accent.success} strokeWidth={2} />
-              ) : (
-                <ListChecks size={15} color={color.icon.muted} strokeWidth={2} />
-              )
-            }
-            value={`${doneCount}/${tasks.length}`}
-            label={t('inbox.cardLayout.tasksCompletedLabel')}
-            accessibilityLabel={`${doneCount}/${tasks.length}, ${t('inbox.cardLayout.tasksCompletedLabel')}`}
-          />
-        ) : null}
-      </View>
-
-      {sourceChipButton ? (
-        <View style={{ flexShrink: 0, marginLeft: 'auto' }}>{sourceChipButton}</View>
-      ) : null}
+      {statSegments.map((segment, index) => (
+        <React.Fragment key={segment.key}>
+          {index > 0 ? <MetaStripDivider color={color} dense={dense} /> : null}
+          {segment.node}
+        </React.Fragment>
+      ))}
     </View>
   );
 });

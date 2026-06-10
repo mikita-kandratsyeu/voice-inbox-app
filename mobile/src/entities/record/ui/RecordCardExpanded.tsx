@@ -21,6 +21,7 @@ import { AiStatusPill } from './AiStatusPill';
 import { RecordCardLocationChip } from './RecordCardLocationChip';
 import { RecordCardMetaStrip } from './RecordCardMetaStrip';
 import { RecordCardOpenTasksPreview } from './RecordCardOpenTasksPreview';
+import { RecordCardSourceChip } from './RecordCardSourceChip';
 import { RecordCardTagsRow } from './RecordCardTagsRow';
 import { RecordCardTypeBadges } from './RecordCardTypeBadges';
 
@@ -140,13 +141,19 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
     : (folderAccentColor ?? color.accent.primary);
   const showFolderStripe = Boolean(folderAccentColor);
   const showTypeBadges = noteKind !== 'voice' || marksCount > 0;
-  const showMetaStrip =
-    hasAudio ||
-    noteKind === 'text' ||
-    (item.tasks?.length ?? 0) > 0 ||
-    hasTranscriptPreview ||
-    Boolean(item.summary?.trim());
-  const showFooter = hasTags || categoryLabel;
+  const hasSummaryPreview = Boolean(item.summary?.trim());
+  const showSourceChip =
+    noteKind === 'text'
+      ? hasTranscriptPreview || hasSummaryPreview
+      : hasTranscriptPreview || (!hasTranscriptPreview && hasSummaryPreview);
+  const sourceChipLabel =
+    noteKind === 'text'
+      ? t('inbox.cardLayout.noteTypeText')
+      : hasTranscriptPreview
+        ? t('inbox.cardLayout.sourceText')
+        : t('inbox.cardLayout.hasSummary');
+  const showMetaStrip = hasAudio || noteKind === 'text' || (item.tasks?.length ?? 0) > 0;
+  const showFooter = hasTags || categoryLabel != null || showSourceChip;
 
   const menuActions = useMemo(() => {
     const actions: Array<{
@@ -364,8 +371,6 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
             noteKind={noteKind}
             duration={item.duration}
             color={color}
-            hasTranscript={hasTranscriptPreview}
-            hasSummary={Boolean(item.summary?.trim())}
             textFragmentCount={textFragmentCount}
             tasks={item.tasks}
           />
@@ -385,7 +390,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
             />
             <View
               style={
-                compactLayout && hasTags && categoryLabel
+                compactLayout && hasTags && (categoryLabel != null || showSourceChip)
                   ? { gap: 10 }
                   : {
                       flexDirection: 'row',
@@ -396,23 +401,46 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
               }
             >
               {hasTags ? (
-                <View style={{ flex: compactLayout && categoryLabel ? undefined : 1, minWidth: 0 }}>
+                <View
+                  style={{
+                    flex:
+                      compactLayout && (categoryLabel != null || showSourceChip) ? undefined : 1,
+                    minWidth: 0,
+                  }}
+                >
                   <Text style={[sectionTitleStyle, { color: color.text.muted, marginBottom: 8 }]}>
                     {t('inbox.cardLayout.tagsSectionTitle')}
                   </Text>
                   <RecordCardTagsRow tags={tags} color={color} variant="full" />
                 </View>
-              ) : compactLayout && categoryLabel ? null : (
+              ) : compactLayout && (categoryLabel != null || showSourceChip) ? null : (
                 <View style={{ flex: 1 }} />
               )}
-              {categoryLabel ? (
-                <View style={compactLayout && hasTags ? { alignSelf: 'flex-start' } : undefined}>
-                  <RecordCardLocationChip
-                    label={categoryLabel}
-                    color={color}
-                    accentColor={locationAccentColor}
-                    folderIconId={isFolderLabel ? folderIconId : undefined}
-                  />
+              {showSourceChip || categoryLabel ? (
+                <View
+                  style={[
+                    {
+                      flexDirection: 'row',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      gap: 6,
+                      flexShrink: 0,
+                    },
+                    compactLayout && hasTags ? { alignSelf: 'flex-start' } : null,
+                  ]}
+                >
+                  {showSourceChip ? (
+                    <RecordCardSourceChip label={sourceChipLabel} color={color} />
+                  ) : null}
+                  {categoryLabel ? (
+                    <RecordCardLocationChip
+                      label={categoryLabel}
+                      color={color}
+                      accentColor={locationAccentColor}
+                      folderIconId={isFolderLabel ? folderIconId : undefined}
+                    />
+                  ) : null}
                 </View>
               ) : null}
             </View>
