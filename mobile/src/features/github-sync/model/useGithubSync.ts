@@ -14,7 +14,11 @@ import {
   type GithubRepoSummary,
   listGithubRepos,
 } from '../lib/githubApi';
-import { isGithubOAuthConfigured, startGithubDeviceFlow } from '../lib/githubAuth';
+import {
+  cancelGithubDeviceFlow,
+  isGithubOAuthConfigured,
+  startGithubDeviceFlow,
+} from '../lib/githubAuth';
 import {
   clearGithubSyncSecrets,
   getGithubSyncSecrets,
@@ -54,6 +58,17 @@ export function useGithubSync() {
     void refreshSecrets();
   }, [refreshSecrets]);
 
+  const cancelConnect = useCallback(() => {
+    cancelGithubDeviceFlow();
+    setIsConnecting(false);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      cancelConnect();
+    };
+  }, [cancelConnect]);
+
   const connectGithub = useCallback(async () => {
     if (!isProActive) {
       return { ok: false as const, code: 'pro_required' };
@@ -68,6 +83,9 @@ export function useGithubSync() {
       return { ok: true as const };
     } catch (err) {
       const code = err instanceof Error ? err.message : 'connect_failed';
+      if (code === 'device_flow_cancelled') {
+        return { ok: false as const, code: 'cancelled' };
+      }
       return { ok: false as const, code };
     } finally {
       setIsConnecting(false);
@@ -208,6 +226,7 @@ export function useGithubSync() {
     history,
     isLoadingHistory,
     connectGithub,
+    cancelConnect,
     loadRepos,
     selectRepository,
     createAndSelectRepository,

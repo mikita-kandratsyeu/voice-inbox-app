@@ -1,9 +1,9 @@
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { TFunction } from 'i18next';
 import { GitBranch, History, RefreshCw, Unplug } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Alert } from 'react-native';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import { openPlanPaywall } from '@/features/plan-paywall';
@@ -30,6 +30,14 @@ export function SettingsGithubSyncRows({ color, t, language }: Props) {
   const [historyVisible, setHistoryVisible] = useState(false);
   const [proSheetVisible, setProSheetVisible] = useState(false);
 
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        github.cancelConnect();
+      };
+    }, [github]),
+  );
+
   const handleLockedPress = useCallback(() => {
     setProSheetVisible(true);
   }, []);
@@ -45,6 +53,9 @@ export function SettingsGithubSyncRows({ color, t, language }: Props) {
     }
     const result = await github.connectGithub();
     if (!result.ok) {
+      if (result.code === 'cancelled') {
+        return;
+      }
       if (result.code === 'access_denied') {
         Alert.alert(
           t('settings.githubSync.connectCancelledTitle'),
@@ -141,14 +152,6 @@ export function SettingsGithubSyncRows({ color, t, language }: Props) {
       ? formatRelativeTime(github.lastSyncedAt, language)
       : t('settings.githubSync.neverSynced');
 
-  const githubHint = (
-    <View className="px-4 pb-1 pt-3">
-      <Text className="text-xs" style={{ color: color.text.secondary }}>
-        {t('settings.githubSync.plaintextWarning')}
-      </Text>
-    </View>
-  );
-
   let rows: React.ReactNode;
 
   if (!github.isProActive) {
@@ -164,25 +167,22 @@ export function SettingsGithubSyncRows({ color, t, language }: Props) {
     );
   } else if (!github.connected) {
     rows = (
-      <>
-        {githubHint}
-        <SettingsRow
-          label={
-            github.isConnecting
-              ? t('settings.githubSync.connecting')
-              : t('settings.githubSync.connect')
-          }
-          subtitle={t('settings.githubSync.connectHint')}
-          leftIcon={<GitBranch size={20} color={color.accent.primary} strokeWidth={1.8} />}
-          onPress={() => void handleConnect()}
-          isLast
-        />
-      </>
+      <SettingsRow
+        label={
+          github.isConnecting
+            ? t('settings.githubSync.connecting')
+            : t('settings.githubSync.connect')
+        }
+        subtitle={t('settings.githubSync.connectHint')}
+        leftIcon={<GitBranch size={20} color={color.accent.primary} strokeWidth={1.8} />}
+        onPress={github.isConnecting ? undefined : () => void handleConnect()}
+        showChevron={!github.isConnecting}
+        isLast
+      />
     );
   } else {
     rows = (
       <>
-        {githubHint}
         <SettingsRow
           label={repoLabel}
           subtitle={t('settings.githubSync.repoBranch', {

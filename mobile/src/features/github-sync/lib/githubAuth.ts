@@ -7,6 +7,38 @@ import { GITHUB_ACCESS_TOKEN_URL, GITHUB_DEVICE_CODE_URL, GITHUB_OAUTH_SCOPE } f
 import { setGithubSyncAccessToken } from './githubSecrets';
 
 const POLL_TIMEOUT_MS = 10 * 60 * 1_000;
+const DEVICE_FLOW_CANCELLED = 'device_flow_cancelled';
+
+let activeDeviceFlowAbort: AbortController | null = null;
+
+export function cancelGithubDeviceFlow(): void {
+  activeDeviceFlowAbort?.abort();
+  activeDeviceFlowAbort = null;
+}
+
+function throwIfAborted(signal: AbortSignal | undefined): void {
+  if (signal?.aborted) {
+    throw new Error(DEVICE_FLOW_CANCELLED);
+  }
+}
+
+function sleepMs(ms: number, signal?: AbortSignal): Promise<void> {
+  throwIfAborted(signal);
+
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new Error(DEVICE_FLOW_CANCELLED));
+    };
+
+    signal?.addEventListener('abort', onAbort);
+  });
+}
 
 type DeviceCodeResponse = {
   device_code: string;
@@ -82,13 +114,15 @@ async function pollAccessToken(
   deviceCode: string,
   intervalSec: number,
   expiresInSec: number,
+  signal?: AbortSignal,
 ): Promise<string> {
   const started = Date.now();
   const deadline = started + Math.min(expiresInSec * 1_000, POLL_TIMEOUT_MS);
   const intervalMs = Math.max(intervalSec, 4) * 1_000;
 
   while (Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    throwIfAborted(signal);
+    await sleepMs(intervalMs, signal);
 
     const response = await nitroFetch(GITHUB_ACCESS_TOKEN_URL, {
       method: 'POST',
@@ -116,7 +150,7 @@ async function pollAccessToken(
       continue;
     }
     if (data.error === 'slow_down') {
-      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+      await sleepMs(intervalMs, signal);
       continue;
     }
     if (data.error === 'access_denied') {
@@ -143,22 +177,34 @@ export async function startGithubDeviceFlow(): Promise<GithubDeviceFlowResult> {
     throw new Error('github_oauth_not_configured');
   }
 
-  const device = await requestDeviceCode(clientId);
-  void openInAppBrowser(device.verification_uri);
+  cancelGithubDeviceFlow();
+  const abort = new AbortController();
+  activeDeviceFlowAbort = abort;
 
-  const accessToken = await pollAccessToken(
-    clientId,
-    device.device_code,
-    device.interval,
-    device.expires_in,
-  );
+  try {
+    const device = await requestDeviceCode(clientId);
+    throwIfAborted(abort.signal);
+    void openInAppBrowser(device.verification_uri);
 
-  await setGithubSyncAccessToken(accessToken);
+    const accessToken = await pollAccessToken(
+      clientId,
+      device.device_code,
+      device.interval,
+      device.expires_in,
+      abort.signal,
+    );
 
-  return {
-    userCode: device.user_code,
-    verificationUri: device.verification_uri,
-  };
+    await setGithubSyncAccessToken(accessToken);
+
+    return {
+      userCode: device.user_code,
+      verificationUri: device.verification_uri,
+    };
+  } finally {
+    if (activeDeviceFlowAbort === abort) {
+      activeDeviceFlowAbort = null;
+    }
+  }
 }
 
 export async function revokeGithubConnection(): Promise<void> {
