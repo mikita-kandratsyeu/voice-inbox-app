@@ -1,21 +1,41 @@
 import dayjs from 'dayjs';
-import { CalendarDays, ChevronDown, ChevronUp } from 'lucide-react-native';
-import React, { useCallback, useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  interpolateColor,
+  SlideInLeft,
+  SlideInRight,
+  SlideOutLeft,
+  SlideOutRight,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
-import { hapticSelection, IS_IOS, withAlphaHex } from '@/shared/lib';
+import { hapticSelection, useIsTablet, withAlphaHex } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
-import { IOS_INLINE_DATE_PICKER_HEIGHT, SystemInlineDatePicker } from '@/shared/ui';
 
-const CALENDAR_PICKER_GAP = 12;
-const CALENDAR_PICKER_HEIGHT = IS_IOS ? IOS_INLINE_DATE_PICKER_HEIGHT : 340;
+import { getAllTasksCalendarMetrics } from '../lib/allTasksLayoutMetrics';
+
 const CARD_RADIUS = 16;
+const CALENDAR_SELECTION_MS = 200;
+const CALENDAR_WEEK_SLIDE_MS = 220;
+
+const RU_WEEKDAY_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] as const;
+
+type WeekSlideDirection = 'prev' | 'next' | 'none';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 type AllTasksCalendarPanelProps = {
   color: Colors;
   selectedDate: Date;
+  tasksCount: number;
+  taskCountsByDay: ReadonlyMap<string, number>;
   onDateChange: (date: Date) => void;
   /** Match AllTasksTaskRow: tablet FlashList padding 12 + mx-3; phone mx-4. */
   compactHorizontalMargin?: boolean;
@@ -27,179 +47,235 @@ function capitalizeFirst(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-function formatCollapsedCalendarLabels(
-  date: Date,
-  locale: string,
-  language: string,
-): { weekday: string; dateLine: string } {
-  const localized = dayjs(date).locale(locale);
-  const weekday = capitalizeFirst(localized.format('dddd'));
-  const dateLine = language.startsWith('ru')
-    ? `${localized.format('D MMMM YYYY')} г.`
-    : localized.format('D MMMM YYYY');
+function formatWeekdayShort(date: dayjs.Dayjs, locale: 'en' | 'ru'): string {
+  if (locale === 'ru') {
+    return RU_WEEKDAY_SHORT[date.isoWeekday() - 1] ?? date.format('dd');
+  }
 
-  return { weekday, dateLine };
+  return capitalizeFirst(date.format('ddd'));
 }
 
-function CalendarGoToTodayButton({
+function formatCalendarHeaderDate(date: dayjs.Dayjs, language: string): string {
+  if (language.startsWith('ru')) {
+    return `${date.format('D MMMM YYYY')} г.`;
+  }
+
+  return date.format('D MMMM YYYY');
+}
+
+function WeekNavControls({
   color,
-  label,
-  a11yLabel,
-  onPress,
+  metrics,
+  onPreviousWeek,
+  onNextWeek,
+  previousWeekA11y,
+  nextWeekA11y,
 }: {
   color: Colors;
-  label: string;
-  a11yLabel: string;
-  onPress: () => void;
+  metrics: ReturnType<typeof getAllTasksCalendarMetrics>;
+  onPreviousWeek: () => void;
+  onNextWeek: () => void;
+  previousWeekA11y: string;
+  nextWeekA11y: string;
 }) {
   return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={8}
-      accessibilityRole="button"
-      accessibilityLabel={a11yLabel}
-      style={({ pressed }) => [
-        {
-          flexShrink: 0,
-          paddingHorizontal: 10,
-          paddingVertical: 6,
-          borderRadius: 8,
-          backgroundColor: withAlphaHex(color.accent.primary, pressed ? 0.2 : 0.12),
-        },
-        pressed ? { opacity: 0.88 } : null,
-      ]}
-    >
-      <Text
-        style={{
-          color: color.accent.primary,
-          fontSize: 16,
-          fontWeight: '600',
-        }}
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: metrics.weekNavGap }}>
+      <Pressable
+        onPress={onPreviousWeek}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={previousWeekA11y}
+        style={({ pressed }) => [
+          {
+            width: metrics.navButtonSize,
+            height: metrics.navButtonSize,
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+          pressed ? { opacity: 0.7 } : null,
+        ]}
       >
-        {label}
-      </Text>
-    </Pressable>
+        <ChevronLeft size={20} color={color.text.secondary} strokeWidth={2.4} />
+      </Pressable>
+      <Pressable
+        onPress={onNextWeek}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={nextWeekA11y}
+        style={({ pressed }) => [
+          {
+            width: metrics.navButtonSize,
+            height: metrics.navButtonSize,
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+          pressed ? { opacity: 0.7 } : null,
+        ]}
+      >
+        <ChevronRight size={20} color={color.text.secondary} strokeWidth={2.4} />
+      </Pressable>
+    </View>
   );
 }
 
-type CalendarPanelHeaderProps = {
+type WeekDayCellProps = {
   color: Colors;
-  weekday: string;
-  dateLine: string;
-  isToday: boolean;
-  expanded: boolean;
-  todayLabel: string;
-  goToTodayA11y: string;
-  expandA11y: string;
-  collapseA11y: string;
-  onToggleExpanded: () => void;
-  onGoToToday: () => void;
+  date: dayjs.Dayjs;
+  locale: 'en' | 'ru';
+  selected: boolean;
+  hasTasks: boolean;
+  cellWidth?: number;
+  metrics: ReturnType<typeof getAllTasksCalendarMetrics>;
+  selectedDayBackground: string;
+  a11yLabel: string;
+  onPress: () => void;
 };
 
-function CalendarPanelHeader({
+function WeekDayCell({
   color,
-  weekday,
-  dateLine,
-  isToday,
-  expanded,
-  todayLabel,
-  goToTodayA11y,
-  expandA11y,
-  collapseA11y,
-  onToggleExpanded,
-  onGoToToday,
-}: CalendarPanelHeaderProps) {
+  date,
+  locale,
+  selected,
+  hasTasks,
+  cellWidth,
+  metrics,
+  selectedDayBackground,
+  a11yLabel,
+  onPress,
+}: WeekDayCellProps) {
+  const weekday = formatWeekdayShort(date, locale);
+  const dayNumber = date.format('D');
+  const selectedProgress = useSharedValue(selected ? 1 : 0);
+  const pressScale = useSharedValue(1);
+  const dotOpacity = useSharedValue(hasTasks ? 1 : 0);
+
+  useEffect(() => {
+    selectedProgress.value = withTiming(selected ? 1 : 0, {
+      duration: CALENDAR_SELECTION_MS,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [selected, selectedProgress]);
+
+  useEffect(() => {
+    dotOpacity.value = withTiming(hasTasks ? 1 : 0, {
+      duration: CALENDAR_SELECTION_MS,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [dotOpacity, hasTasks]);
+
+  const cellAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pressScale.value }],
+  }));
+
+  const selectionAnimatedStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
+      selectedProgress.value,
+      [0, 1],
+      ['rgba(0,0,0,0)', selectedDayBackground],
+    ),
+  }));
+
+  const dayNumberAnimatedStyle = useAnimatedStyle(() => ({
+    color: interpolateColor(
+      selectedProgress.value,
+      [0, 1],
+      [color.text.primary, color.accent.primary],
+    ),
+  }));
+
+  const dotAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: dotOpacity.value,
+    transform: [{ scale: dotOpacity.value }],
+  }));
+
   return (
-    <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center' }}>
-      <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
-        <Pressable
-          onPress={onToggleExpanded}
-          accessibilityRole="button"
-          accessibilityLabel={expanded ? collapseA11y : `${weekday}, ${dateLine}`}
-          accessibilityState={{ expanded }}
-          style={({ pressed }) => [{ width: '100%' }, pressed ? { opacity: 0.88 } : null]}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
-            <View
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: withAlphaHex(color.accent.primary, 0.12),
-              }}
-            >
-              <CalendarDays size={22} color={color.accent.primary} strokeWidth={2.2} />
-            </View>
-
-            <View style={{ flex: 1, minWidth: 0, marginLeft: 12 }}>
-              <Text
-                style={{
-                  color: color.text.secondary,
-                  fontSize: 13,
-                  fontWeight: '500',
-                }}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {weekday}
-              </Text>
-              <Text
-                style={{
-                  color: color.text.primary,
-                  fontSize: 17,
-                  fontWeight: '600',
-                  marginTop: 2,
-                  letterSpacing: -0.2,
-                }}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {dateLine}
-              </Text>
-            </View>
-          </View>
-        </Pressable>
-      </View>
-
-      <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
-        {!isToday ? (
-          <View style={{ marginRight: 12 }}>
-            <CalendarGoToTodayButton
-              color={color}
-              label={todayLabel}
-              a11yLabel={goToTodayA11y}
-              onPress={onGoToToday}
-            />
-          </View>
-        ) : null}
-
-        <Pressable
-          onPress={onToggleExpanded}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={expanded ? collapseA11y : expandA11y}
-          accessibilityState={{ expanded }}
-          style={({ pressed }) => [
+    <View
+      style={{
+        width: cellWidth,
+        flex: cellWidth ? undefined : 1,
+        minWidth: cellWidth ? undefined : 0,
+        height: metrics.dayCellHeight,
+      }}
+    >
+      <AnimatedPressable
+        onPress={onPress}
+        onPressIn={() => {
+          pressScale.value = withTiming(0.94, { duration: 80 });
+        }}
+        onPressOut={() => {
+          pressScale.value = withTiming(1, { duration: 140, easing: Easing.out(Easing.cubic) });
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={a11yLabel}
+        accessibilityState={{ selected }}
+        style={[
+          {
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+          cellAnimatedStyle,
+        ]}
+      >
+        <Animated.View
+          style={[
             {
-              width: 32,
-              height: 32,
-              borderRadius: 16,
+              width: '100%',
+              height: '100%',
+              borderRadius: metrics.selectedDayRadius,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: color.background.tertiary,
             },
-            pressed ? { opacity: 0.88 } : null,
+            selectionAnimatedStyle,
           ]}
         >
-          {expanded ? (
-            <ChevronUp size={18} color={color.text.secondary} strokeWidth={2.4} />
-          ) : (
-            <ChevronDown size={18} color={color.text.secondary} strokeWidth={2.4} />
-          )}
-        </Pressable>
-      </View>
+          <Text
+            style={{
+              color: color.text.secondary,
+              fontSize: metrics.weekdayFontSize,
+              fontWeight: '500',
+              lineHeight: metrics.weekdayFontSize + 2,
+            }}
+            numberOfLines={1}
+          >
+            {weekday}
+          </Text>
+          <Animated.Text
+            style={[
+              {
+                fontSize: metrics.dayNumberFontSize,
+                fontWeight: '600',
+                lineHeight: metrics.dayNumberFontSize + 2,
+                marginTop: metrics.weekdayToDayNumberGap,
+              },
+              dayNumberAnimatedStyle,
+            ]}
+            numberOfLines={1}
+          >
+            {dayNumber}
+          </Animated.Text>
+          <View
+            style={{
+              height: metrics.dotSize + 4,
+              marginTop: 2,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Animated.View
+              style={[
+                {
+                  width: metrics.dotSize,
+                  height: metrics.dotSize,
+                  borderRadius: metrics.dotSize / 2,
+                  backgroundColor: color.accent.primary,
+                },
+                dotAnimatedStyle,
+              ]}
+            />
+          </View>
+        </Animated.View>
+      </AnimatedPressable>
     </View>
   );
 }
@@ -207,37 +283,108 @@ function CalendarPanelHeader({
 export function AllTasksCalendarPanel({
   color,
   selectedDate,
+  tasksCount,
+  taskCountsByDay,
   onDateChange,
   compactHorizontalMargin = false,
   maxWidth,
 }: AllTasksCalendarPanelProps) {
   const { i18n, t } = useTranslation();
-  const [expanded, setExpanded] = useState(false);
+  const isTablet = useIsTablet();
+  const metrics = getAllTasksCalendarMetrics(isTablet);
   const locale = resolveDayjsLocale(i18n.language);
+  const [weekDaysWidth, setWeekDaysWidth] = useState(0);
+  const [weekSlideDirection, setWeekSlideDirection] = useState<WeekSlideDirection>('none');
+  const dayCellWidth = weekDaysWidth > 0 ? weekDaysWidth / 7 : 0;
+  const selectedDayBackground = withAlphaHex(color.accent.primary, 0.14);
 
-  const { weekday, dateLine } = useMemo(
-    () => formatCollapsedCalendarLabels(selectedDate, locale, i18n.language),
-    [i18n.language, locale, selectedDate],
+  const selected = useMemo(() => dayjs(selectedDate).locale(locale), [locale, selectedDate]);
+
+  const isToday = useMemo(() => selected.isSame(dayjs(), 'day'), [selected]);
+
+  const selectedDateTitle = useMemo(
+    () => formatCalendarHeaderDate(selected, i18n.language),
+    [i18n.language, selected],
   );
 
-  const isToday = useMemo(() => dayjs(selectedDate).isSame(dayjs(), 'day'), [selectedDate]);
+  const selectedDateSubtitle = useMemo(() => {
+    if (tasksCount === 0) {
+      return t('allTasks.calendarNoTasksOnDay');
+    }
 
-  const toggleExpanded = useCallback(() => {
-    hapticSelection();
-    setExpanded((current) => !current);
-  }, []);
+    const tasksLabel = t('allTasks.calendarTasksCount', { count: tasksCount });
+
+    return tasksLabel;
+  }, [t, tasksCount]);
+
+  const monthLabel = useMemo(() => capitalizeFirst(selected.format('MMMM YYYY')), [selected]);
+
+  const weekDays = useMemo(() => {
+    const startOfWeek = selected.startOf('isoWeek');
+    return Array.from({ length: 7 }, (_, index) => startOfWeek.add(index, 'day'));
+  }, [selected]);
+
+  const weekKey = weekDays[0]?.format('YYYY-MM-DD') ?? selected.format('YYYY-MM-DD');
+
+  const headerSummaryMinHeight =
+    metrics.selectedDateTitleFontSize + 2 + 4 + metrics.headerSubtitleFontSize + 2;
+
+  const weekRowEntering = useMemo(() => {
+    if (weekSlideDirection === 'prev') {
+      return SlideInLeft.duration(CALENDAR_WEEK_SLIDE_MS).easing(Easing.out(Easing.cubic));
+    }
+    if (weekSlideDirection === 'next') {
+      return SlideInRight.duration(CALENDAR_WEEK_SLIDE_MS).easing(Easing.out(Easing.cubic));
+    }
+    return undefined;
+  }, [weekSlideDirection]);
+
+  const weekRowExiting = useMemo(() => {
+    if (weekSlideDirection === 'prev') {
+      return SlideOutRight.duration(CALENDAR_WEEK_SLIDE_MS - 40).easing(Easing.in(Easing.cubic));
+    }
+    if (weekSlideDirection === 'next') {
+      return SlideOutLeft.duration(CALENDAR_WEEK_SLIDE_MS - 40).easing(Easing.in(Easing.cubic));
+    }
+    return undefined;
+  }, [weekSlideDirection]);
+
+  const resolveWeekSlideDirection = useCallback(
+    (targetDate: dayjs.Dayjs): WeekSlideDirection => {
+      const currentWeek = selected.startOf('isoWeek');
+      const targetWeek = targetDate.startOf('isoWeek');
+
+      if (targetWeek.isBefore(currentWeek, 'day')) return 'prev';
+      if (targetWeek.isAfter(currentWeek, 'day')) return 'next';
+      return 'none';
+    },
+    [selected],
+  );
 
   const goToToday = useCallback(() => {
     hapticSelection();
-    onDateChange(new Date());
-    setExpanded(false);
-  }, [onDateChange]);
+    const today = dayjs();
+    setWeekSlideDirection(resolveWeekSlideDirection(today));
+    onDateChange(today.toDate());
+  }, [onDateChange, resolveWeekSlideDirection]);
 
-  const handleDateChange = useCallback(
-    (date: Date) => {
+  const goToPreviousWeek = useCallback(() => {
+    hapticSelection();
+    setWeekSlideDirection('prev');
+    onDateChange(selected.subtract(7, 'day').toDate());
+  }, [onDateChange, selected]);
+
+  const goToNextWeek = useCallback(() => {
+    hapticSelection();
+    setWeekSlideDirection('next');
+    onDateChange(selected.add(7, 'day').toDate());
+  }, [onDateChange, selected]);
+
+  const handleSelectDay = useCallback(
+    (date: dayjs.Dayjs) => {
       hapticSelection();
-      onDateChange(date);
-      setExpanded(false);
+      setWeekSlideDirection('none');
+      onDateChange(date.toDate());
     },
     [onDateChange],
   );
@@ -269,42 +416,143 @@ export function AllTasksCalendarPanel({
           {
             backgroundColor: color.background.card,
             borderRadius: CARD_RADIUS,
-            paddingHorizontal: 14,
-            paddingVertical: 12,
+            paddingHorizontal: metrics.cardPaddingH,
+            paddingVertical: metrics.cardPaddingV,
           },
         ]}
       >
-        <CalendarPanelHeader
-          color={color}
-          weekday={weekday}
-          dateLine={dateLine}
-          isToday={isToday}
-          expanded={expanded}
-          todayLabel={t('allTasks.today')}
-          goToTodayA11y={t('allTasks.calendarGoToTodayA11y')}
-          expandA11y={t('allTasks.calendarExpandA11y')}
-          collapseA11y={t('allTasks.calendarCollapseA11y')}
-          onToggleExpanded={toggleExpanded}
-          onGoToToday={goToToday}
-        />
-
         <View
-          pointerEvents={expanded ? 'auto' : 'none'}
           style={{
-            height: expanded ? CALENDAR_PICKER_HEIGHT + CALENDAR_PICKER_GAP : 0,
-            marginTop: expanded ? CALENDAR_PICKER_GAP : 0,
-            overflow: 'hidden',
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 12,
           }}
         >
-          <View style={{ height: CALENDAR_PICKER_HEIGHT }}>
-            <SystemInlineDatePicker
-              value={selectedDate}
-              onChange={handleDateChange}
-              androidDisplay="calendar"
-              embedded
-              accessibilityLabel={t('allTasks.calendarDatePickerA11y')}
+          <View style={{ flex: 1, minWidth: 0, minHeight: headerSummaryMinHeight }}>
+            <Text
+              accessibilityRole="header"
+              style={{
+                color: color.text.primary,
+                fontSize: metrics.selectedDateTitleFontSize,
+                fontWeight: '700',
+                letterSpacing: -0.3,
+                lineHeight: metrics.selectedDateTitleFontSize + 2,
+              }}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {selectedDateTitle}
+            </Text>
+            <Text
+              style={{
+                marginTop: 4,
+                color: color.text.secondary,
+                fontSize: metrics.headerSubtitleFontSize,
+                fontWeight: '500',
+                lineHeight: metrics.headerSubtitleFontSize + 2,
+              }}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {selectedDateSubtitle}
+            </Text>
+          </View>
+
+          <View
+            style={{
+              marginTop: 2,
+              flexShrink: 0,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            {!isToday ? (
+              <Pressable
+                onPress={goToToday}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={t('allTasks.calendarGoToTodayA11y')}
+                style={({ pressed }) => [pressed ? { opacity: 0.88 } : null]}
+              >
+                <Text
+                  style={{
+                    color: color.accent.primary,
+                    fontSize: metrics.headerFontSize,
+                    fontWeight: '600',
+                  }}
+                >
+                  {t('allTasks.today')}
+                </Text>
+              </Pressable>
+            ) : null}
+
+            <WeekNavControls
+              color={color}
+              metrics={metrics}
+              onPreviousWeek={goToPreviousWeek}
+              onNextWeek={goToNextWeek}
+              previousWeekA11y={t('allTasks.calendarPreviousWeekA11y')}
+              nextWeekA11y={t('allTasks.calendarNextWeekA11y')}
             />
           </View>
+        </View>
+
+        <Text
+          style={{
+            marginTop: 12,
+            color: color.text.secondary,
+            fontSize: metrics.monthFontSize,
+            fontWeight: '500',
+            lineHeight: metrics.monthFontSize + 2,
+          }}
+          numberOfLines={1}
+        >
+          {monthLabel}
+        </Text>
+
+        <View
+          style={{
+            marginTop: 8,
+            width: '100%',
+            height: metrics.dayCellHeight,
+            overflow: 'hidden',
+          }}
+          onLayout={(event) => {
+            const nextWidth = Math.round(event.nativeEvent.layout.width);
+            setWeekDaysWidth((current) => (current === nextWidth ? current : nextWidth));
+          }}
+        >
+          <Animated.View
+            key={weekKey}
+            entering={weekRowEntering}
+            exiting={weekRowExiting}
+            style={{ flexDirection: 'row', width: weekDaysWidth > 0 ? weekDaysWidth : '100%' }}
+          >
+            {weekDays.map((date) => {
+              const dayKey = date.format('YYYY-MM-DD');
+              const isSelected = date.isSame(selected, 'day');
+              const hasTasks = (taskCountsByDay.get(dayKey) ?? 0) > 0;
+              const dateLabel = formatCalendarHeaderDate(date.locale(locale), i18n.language);
+
+              return (
+                <WeekDayCell
+                  key={dayKey}
+                  color={color}
+                  date={date}
+                  locale={locale}
+                  selected={isSelected}
+                  hasTasks={hasTasks}
+                  cellWidth={dayCellWidth > 0 ? dayCellWidth : undefined}
+                  metrics={metrics}
+                  selectedDayBackground={selectedDayBackground}
+                  a11yLabel={t('allTasks.calendarSelectDayA11y', { date: dateLabel })}
+                  onPress={() => handleSelectDay(date)}
+                />
+              );
+            })}
+          </Animated.View>
         </View>
       </View>
     </View>

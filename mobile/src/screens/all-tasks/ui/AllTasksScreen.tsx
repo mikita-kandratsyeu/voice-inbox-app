@@ -37,7 +37,10 @@ import { EmptyState, HeaderIconButton, ScreenHeader, SectionHeader } from '@/sha
 
 import { sortTaskRows } from '../lib/applyAllTasksQuickFilter';
 import { buildAllTasksRows } from '../lib/buildAllTasksRows';
-import { filterTasksByCalendarDate } from '../lib/filterTasksByCalendarDate';
+import {
+  buildTaskCountsByDeadlineDay,
+  filterTasksByCalendarDate,
+} from '../lib/filterTasksByCalendarDate';
 import {
   getTaskDeadlineBucket,
   TASK_DEADLINE_BUCKET_ORDER,
@@ -182,6 +185,8 @@ export const AllTasksScreen = () => {
 
     return sections;
   }, [taskRows, t]);
+
+  const calendarTaskCountsByDay = useMemo(() => buildTaskCountsByDeadlineDay(taskRows), [taskRows]);
 
   const calendarDayRows = useMemo(() => {
     const filtered = filterTasksByCalendarDate(taskRows, selectedCalendarDate);
@@ -743,6 +748,8 @@ export const AllTasksScreen = () => {
         <AllTasksCalendarPanel
           color={color}
           selectedDate={selectedCalendarDate}
+          tasksCount={calendarDayRows.length}
+          taskCountsByDay={calendarTaskCountsByDay}
           onDateChange={setSelectedCalendarDate}
           compactHorizontalMargin={isTablet}
           maxWidth={contentMaxWidth}
@@ -769,7 +776,6 @@ export const AllTasksScreen = () => {
                     : t('allTasks.emptyFiltered')
               }
               description={t('allTasks.emptyDescription')}
-              onlyText={viewMode === 'calendar'}
             />
           </View>
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
