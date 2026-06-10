@@ -1,3 +1,5 @@
+import { SHARE_SPEAKER_TURNS_SECTION_MARKER } from '@/lib/shareNoteSectionMarkers';
+
 export type ShareNoteEmailPreviewVariant = 'speaker-turns' | 'transcript' | 'meeting-brief';
 
 const DISCLAIMER_RU =
@@ -27,7 +29,8 @@ const MEETING_BRIEF_EXTRA = `## Сводка
 - Согласовать встречу во вторник после обеда`;
 
 function speakerTurnsSection(): string {
-  return `## Реплики по спикерам
+  return `${SHARE_SPEAKER_TURNS_SECTION_MARKER}
+## По участникам
 
 _${DISCLAIMER_RU}_
 

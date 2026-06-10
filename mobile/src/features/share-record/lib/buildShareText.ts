@@ -13,6 +13,7 @@ import {
   formatTranscriptBodyForShare,
 } from './formatShareMarkdown';
 import { resolveShareExportContext, type ShareExportContext } from './shareExportContext';
+import { SHARE_SPEAKER_TURNS_SECTION_MARKER } from './shareSectionMarkers';
 
 export type ShareBriefTemplate =
   | 'noteBrief'
@@ -272,6 +273,17 @@ const pushTranscript = (lines: string[], record: VoiceRecord, ctx: ShareExportCo
   }
 };
 
+const pushMeetingDialogueSectionHeader = (lines: string[], ctx: ShareExportContext): void => {
+  lines.push('');
+  if (ctx.forEmail) {
+    lines.push(SHARE_SPEAKER_TURNS_SECTION_MARKER);
+  }
+  lines.push(`## ${i18n.t('recordingDetail.meetingDialogueTitle')}`);
+  lines.push('');
+  lines.push(`_${i18n.t('recordingDetail.meetingDialogueDisclaimer')}_`);
+  lines.push('');
+};
+
 const pushMeetingDialogue = (
   lines: string[],
   record: VoiceRecord,
@@ -280,11 +292,7 @@ const pushMeetingDialogue = (
   const body = record.meetingDialogue?.trim();
   if (!body) return;
 
-  lines.push('');
-  lines.push(`## ${i18n.t('recordingDetail.meetingDialogueTitle')}`);
-  lines.push('');
-  lines.push(`_${i18n.t('recordingDetail.meetingDialogueDisclaimer')}_`);
-  lines.push('');
+  pushMeetingDialogueSectionHeader(lines, ctx);
   lines.push(
     formatMeetingDialogueForShareMarkdown(body, ctx.forEmail, record.meetingSpeakerLabels),
   );
@@ -339,11 +347,7 @@ function buildMeetingSpeakerTurnsOnly(record: VoiceRecord, ctx: ShareExportConte
   const lines: string[] = [];
   pushRecordHeader(lines, record, ctx);
   pushTags(lines, record);
-  lines.push('');
-  lines.push(`## ${i18n.t('recordingDetail.meetingDialogueTitle')}`);
-  lines.push('');
-  lines.push(`_${i18n.t('recordingDetail.meetingDialogueDisclaimer')}_`);
-  lines.push('');
+  pushMeetingDialogueSectionHeader(lines, ctx);
   const body = record.meetingDialogue?.trim();
   if (body) {
     lines.push(

@@ -16,7 +16,7 @@ export function Hero({ socialProof }: HeroProps): React.ReactElement {
 
   return (
     <section
-      className={`relative overflow-hidden pt-12 pb-8 sm:pt-16 sm:pb-10 md:pt-24 md:pb-11 ${marketingGutterClass}`}
+      className={`relative overflow-x-clip pt-12 pb-8 sm:pt-16 sm:pb-10 md:pt-24 md:pb-11 ${marketingGutterClass}`}
     >
       <div
         className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_-10%,rgba(99,102,241,0.16)_0%,transparent_55%)]"
@@ -28,7 +28,7 @@ export function Hero({ socialProof }: HeroProps): React.ReactElement {
           {t('eyebrow')}
         </p>
 
-        <h1 className="hero-headline-gradient animate-fade-in mb-4 text-balance text-[2rem] leading-[1.05] font-bold tracking-tight min-[400px]:text-[2.5rem] sm:mb-5 sm:text-5xl sm:leading-[1.03] md:text-6xl lg:text-7xl">
+        <h1 className="hero-headline-gradient animate-fade-in mb-4 text-balance text-[2rem] font-bold tracking-tight min-[400px]:text-[2.5rem] sm:mb-5 sm:text-5xl md:text-6xl lg:text-7xl">
           {t('headline')}
         </h1>
 

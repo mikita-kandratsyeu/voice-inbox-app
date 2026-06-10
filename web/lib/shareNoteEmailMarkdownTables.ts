@@ -118,3 +118,25 @@ export function replaceMarkdownSection(
   const normalizedBody = transformBody(body);
   return markdown.slice(0, headingEnd) + normalizedBody + tail;
 }
+
+/** Like `replaceMarkdownSection`, but keyed on a stable HTML comment marker (marker is stripped). */
+export function replaceMarkdownSectionByMarker(
+  markdown: string,
+  markerPattern: RegExp,
+  transformBody: (body: string) => string,
+): string | null {
+  const markerMatch = markdown.match(markerPattern);
+  if (!markerMatch || markerMatch.index == null) {
+    return null;
+  }
+
+  const markerEnd = markerMatch.index + markerMatch[0].length;
+  const rest = markdown.slice(markerEnd);
+  const endMatch = rest.match(SHARE_NOTE_SECTION_END);
+  const bodyEnd = endMatch?.index ?? rest.length;
+  const body = rest.slice(0, bodyEnd);
+  const tail = rest.slice(bodyEnd);
+
+  const normalizedBody = transformBody(body);
+  return markdown.slice(0, markerMatch.index) + normalizedBody + tail;
+}

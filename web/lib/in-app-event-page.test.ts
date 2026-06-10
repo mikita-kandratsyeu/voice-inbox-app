@@ -3,6 +3,7 @@ import {
   inAppEventEtag,
   isInAppEventContentType,
   isInAppEventLocale,
+  generateInAppEventId,
   looksLikeHtmlFragment,
   parseInAppEventTheme,
   validateInAppEventId,
@@ -45,6 +46,14 @@ describe('buildEventDocumentHtml', () => {
     expect(doc).toContain('<!DOCTYPE html>');
     expect(doc).toContain('data-theme="dark"');
     expect(doc).toContain('<p>Hi</p>');
+  });
+});
+
+describe('generateInAppEventId', () => {
+  it('returns a lowercase uuid slug', () => {
+    const id = generateInAppEventId();
+    expect(validateInAppEventId(id)).toBeNull();
+    expect(id).toMatch(/^[0-9a-f-]+$/);
   });
 });
 

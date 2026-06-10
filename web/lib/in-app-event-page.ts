@@ -23,6 +23,11 @@ export function isInAppEventContentType(value: string): value is InAppEventConte
   return (IN_APP_EVENT_CONTENT_TYPES as readonly string[]).includes(value);
 }
 
+/** Random slug-safe id for new events (lowercase UUID). */
+export function generateInAppEventId(): string {
+  return crypto.randomUUID();
+}
+
 export function validateInAppEventId(eventId: string): string | null {
   const trimmed = eventId.trim().toLowerCase();
   if (trimmed.length < 2 || trimmed.length > 120) return 'eventId length 2–120';

@@ -1,13 +1,15 @@
 'use client';
 
-import { Copy, Eye } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { Copy, Eye, Link2, RefreshCw, Shuffle } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   IN_APP_EVENT_AI_PROMPT,
   IN_APP_EVENT_LAYOUT_CLASSES,
   getInAppEventBodyExample,
 } from '@/lib/in-app-event-content-guide';
+import { generateInAppEventId } from '@/lib/in-app-event-page';
+import type { InAppEventTheme } from '@/lib/in-app-event-page';
 
 import {
   AdminAlert,
@@ -43,15 +45,17 @@ const LOCALE_FILTERS = [
   { id: 'ru', label: 'Russian' },
 ] as const;
 
-const emptyForm = {
-  eventId: '',
+const PREVIEW_DEBOUNCE_MS = 700;
+
+const emptyForm = () => ({
+  eventId: generateInAppEventId(),
   locale: 'en' as 'en' | 'ru',
   title: '',
   contentType: 'html' as 'html' | 'markdown',
   body: '',
   ctaLabel: '',
   published: false,
-};
+});
 
 function suggestCloneEventId(eventId: string, locale: string, items: EventItem[]): string {
   const base = eventId.replace(/(-copy(-\d+)?)+$/, '') || eventId;
@@ -82,7 +86,9 @@ export function AdminInAppEventsPanel() {
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewErr, setPreviewErr] = useState<string | null>(null);
+  const [previewTheme, setPreviewTheme] = useState<InAppEventTheme>('dark');
   const [copyMsg, setCopyMsg] = useState<string | null>(null);
+  const previewRequestId = useRef(0);
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
@@ -117,6 +123,68 @@ export function AdminInAppEventsPanel() {
     void fetchList();
   }, [fetchList]);
 
+  const runPreview = useCallback(
+    async (contentType: 'html' | 'markdown', body: string, theme: InAppEventTheme) => {
+      const trimmed = body.trim();
+      if (!trimmed) {
+        setPreviewHtml(null);
+        setPreviewErr(null);
+        setPreviewLoading(false);
+        return;
+      }
+
+      const requestId = ++previewRequestId.current;
+      setPreviewLoading(true);
+      setPreviewErr(null);
+
+      try {
+        const res = await fetch('/api/admin/in-app-events/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ contentType, body: trimmed, theme }),
+        });
+        const data = (await res.json()) as {
+          ok?: boolean;
+          documentHtml?: string;
+          error?: string;
+        };
+        if (requestId !== previewRequestId.current) return;
+
+        if (!res.ok || !data.ok || !data.documentHtml) {
+          setPreviewErr(data.error ?? 'Preview failed');
+          setPreviewHtml(null);
+          return;
+        }
+        setPreviewHtml(data.documentHtml);
+      } catch {
+        if (requestId !== previewRequestId.current) return;
+        setPreviewErr('Preview request failed');
+        setPreviewHtml(null);
+      } finally {
+        if (requestId === previewRequestId.current) {
+          setPreviewLoading(false);
+        }
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!form.body.trim()) {
+      setPreviewHtml(null);
+      setPreviewErr(null);
+      setPreviewLoading(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      void runPreview(form.contentType, form.body, previewTheme);
+    }, PREVIEW_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [form.body, form.contentType, previewTheme, runPreview]);
+
   const selectItem = (item: EventItem) => {
     setEditingId(item.id);
     setSaveMsg(null);
@@ -140,7 +208,7 @@ export function AdminInAppEventsPanel() {
     setSaveErr(null);
     setPreviewHtml(null);
     setPreviewErr(null);
-    setForm({ ...emptyForm });
+    setForm(emptyForm());
   };
 
   const cloneEvent = (item: EventItem) => {
@@ -179,38 +247,6 @@ export function AdminInAppEventsPanel() {
       published: false,
     });
     setSaveMsg(`Copied body to ${nextLocale} locale — translate and save.`);
-  };
-
-  const handlePreview = async () => {
-    setPreviewLoading(true);
-    setPreviewErr(null);
-    try {
-      const res = await fetch('/api/admin/in-app-events/preview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          contentType: form.contentType,
-          body: form.body,
-        }),
-      });
-      const data = (await res.json()) as {
-        ok?: boolean;
-        documentHtml?: string;
-        error?: string;
-      };
-      if (!res.ok || !data.ok || !data.documentHtml) {
-        setPreviewErr(data.error ?? 'Preview failed');
-        setPreviewHtml(null);
-        return;
-      }
-      setPreviewHtml(data.documentHtml);
-    } catch {
-      setPreviewErr('Preview request failed');
-      setPreviewHtml(null);
-    } finally {
-      setPreviewLoading(false);
-    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -292,6 +328,9 @@ export function AdminInAppEventsPanel() {
       ? `voiceinbox://in-app-event/${form.eventId.trim().toLowerCase()}`
       : 'voiceinbox://in-app-event/<eventId>';
 
+  const previewSurface =
+    previewTheme === 'dark' ? 'bg-[#121418]' : 'bg-white';
+
   return (
     <div className="space-y-4">
       <AdminCard>
@@ -318,13 +357,14 @@ export function AdminInAppEventsPanel() {
 
       {listError ? <AdminAlert tone="error">{listError}</AdminAlert> : null}
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,280px)_1fr_minmax(0,320px)] xl:items-start">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,240px)_minmax(0,1fr)] xl:items-start">
         <AdminCard
           title="Events"
           description={listLoading ? 'Loading…' : `${items.length} in list`}
           padding={false}
+          className="xl:sticky xl:top-4"
         >
-          <div className="max-h-[min(72vh,640px)] overflow-y-auto p-2">
+          <div className="max-h-[min(85vh,720px)] overflow-y-auto p-2">
             {!listLoading && items.length === 0 ? (
               <p className="px-3 py-6 text-center text-sm text-zinc-500">No events yet.</p>
             ) : (
@@ -373,271 +413,363 @@ export function AdminInAppEventsPanel() {
           </div>
         </AdminCard>
 
-        <AdminCard
-          title={editingId ? 'Edit event' : 'New event'}
-          description="HTML or Markdown body · eventId matches App Store deep link slug."
-        >
-          {saveMsg || saveErr ? (
-            <div className="mb-4 space-y-2">
-              {saveMsg ? <AdminAlert tone="success">{saveMsg}</AdminAlert> : null}
-              {saveErr ? <AdminAlert tone="error">{saveErr}</AdminAlert> : null}
-            </div>
-          ) : null}
-          <form
-            onSubmit={(e) => void handleSave(e)}
-            className="flex max-h-[min(72vh,640px)] flex-col"
+        <div className="grid min-w-0 gap-4 lg:grid-cols-2 lg:items-start">
+          <AdminCard
+            title={editingId ? 'Edit event' : 'New event'}
+            description="HTML or Markdown body · eventId is the App Store deep link slug."
+            className="min-w-0"
           >
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
-              <AdminFormField label="Deep link" hint="Use in App Store Connect → Event deep link">
-                <input
-                  readOnly
-                  value={deepLink}
-                  className={`${adminInputClass} font-mono text-xs`}
-                />
-              </AdminFormField>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <AdminFormField label="Locale">
-                  <select
-                    value={form.locale}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, locale: e.target.value as 'en' | 'ru' }))
-                    }
-                    className={adminSelectClass}
-                  >
-                    <option value="en">English (en)</option>
-                    <option value="ru">Russian (ru)</option>
-                  </select>
+            {saveMsg || saveErr ? (
+              <div className="mb-4 space-y-2">
+                {saveMsg ? <AdminAlert tone="success">{saveMsg}</AdminAlert> : null}
+                {saveErr ? <AdminAlert tone="error">{saveErr}</AdminAlert> : null}
+              </div>
+            ) : null}
+            <form onSubmit={(e) => void handleSave(e)} className="flex flex-col">
+              <div className="space-y-3">
+                <AdminFormField label="Deep link" hint="App Store Connect → Event deep link">
+                  <div className="flex gap-2">
+                    <input
+                      readOnly
+                      value={deepLink}
+                      className={`${adminInputClass} min-w-0 flex-1 font-mono text-xs`}
+                    />
+                    <button
+                      type="button"
+                      title="Copy deep link"
+                      aria-label="Copy deep link"
+                      disabled={!form.eventId.trim()}
+                      onClick={() => void copyToClipboard(deepLink, 'Deep link')}
+                      className={`${adminBtnSecondaryClass} shrink-0 px-3`}
+                    >
+                      <Link2 className="h-4 w-4" aria-hidden />
+                    </button>
+                  </div>
                 </AdminFormField>
-                <AdminFormField label="Event ID" hint="e.g. update_1-1-0">
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <AdminFormField label="Locale">
+                    <select
+                      value={form.locale}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, locale: e.target.value as 'en' | 'ru' }))
+                      }
+                      className={adminSelectClass}
+                    >
+                      <option value="en">English (en)</option>
+                      <option value="ru">Russian (ru)</option>
+                    </select>
+                  </AdminFormField>
+                  <AdminFormField
+                    label="Event ID"
+                    hint={editingId ? 'Slug is fixed after create' : 'UUID or slug, lowercase'}
+                  >
+                    <div className="flex gap-2">
+                      <input
+                        value={form.eventId}
+                        onChange={(e) => setForm((f) => ({ ...f, eventId: e.target.value }))}
+                        required
+                        readOnly={Boolean(editingId)}
+                        className={`${adminInputClass} min-w-0 flex-1 font-mono text-xs`}
+                        placeholder="550e8400-e29b-41d4-a716-446655440000"
+                      />
+                      {!editingId ? (
+                        <button
+                          type="button"
+                          title="Generate random UUID"
+                          aria-label="Generate random UUID"
+                          onClick={() =>
+                            setForm((f) => ({ ...f, eventId: generateInAppEventId() }))
+                          }
+                          className={`${adminBtnSecondaryClass} shrink-0 px-3`}
+                        >
+                          <Shuffle className="h-4 w-4" aria-hidden />
+                        </button>
+                      ) : null}
+                    </div>
+                  </AdminFormField>
+                </div>
+
+                <AdminFormField label="Title (admin list)">
                   <input
-                    value={form.eventId}
-                    onChange={(e) => setForm((f) => ({ ...f, eventId: e.target.value }))}
+                    value={form.title}
+                    onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                     required
-                    className={`${adminInputClass} font-mono`}
-                    placeholder="update_1-1-0"
+                    className={adminInputClass}
+                    placeholder="Summer promo"
                   />
                 </AdminFormField>
-              </div>
-              <AdminFormField label="Title (admin list)">
-                <input
-                  value={form.title}
-                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  required
-                  className={adminInputClass}
-                />
-              </AdminFormField>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <AdminFormField
-                  label="Content type"
-                  hint={
-                    form.contentType === 'html'
-                      ? 'HTML fragment only — set this when pasting layout classes'
-                      : 'GFM markdown — no raw HTML tags'
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <AdminFormField
+                    label="Content type"
+                    hint={
+                      form.contentType === 'html'
+                        ? 'HTML fragment with layout classes'
+                        : 'GFM markdown'
+                    }
+                  >
+                    <select
+                      value={form.contentType}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          contentType: e.target.value as 'html' | 'markdown',
+                        }))
+                      }
+                      className={adminSelectClass}
+                    >
+                      <option value="html">HTML</option>
+                      <option value="markdown">Markdown</option>
+                    </select>
+                  </AdminFormField>
+                  <AdminFormField label="CTA label (optional)" hint="Mobile footer button">
+                    <input
+                      value={form.ctaLabel}
+                      onChange={(e) => setForm((f) => ({ ...f, ctaLabel: e.target.value }))}
+                      className={adminInputClass}
+                      placeholder="Continue"
+                    />
+                  </AdminFormField>
+                </div>
+
+                <AdminDetailsSection
+                  summary="AI prompt & format guide"
+                  defaultOpen={!form.body.trim()}
+                  badge={
+                    copyMsg ? (
+                      <span className="text-xs font-normal text-emerald-600 dark:text-emerald-400">
+                        {copyMsg}
+                      </span>
+                    ) : null
                   }
                 >
-                  <select
-                    value={form.contentType}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        contentType: e.target.value as 'html' | 'markdown',
-                      }))
-                    }
-                    className={adminSelectClass}
-                  >
-                    <option value="html">HTML</option>
-                    <option value="markdown">Markdown</option>
-                  </select>
-                </AdminFormField>
-                <AdminFormField label="CTA label (optional)" hint="Mobile footer button">
-                  <input
-                    value={form.ctaLabel}
-                    onChange={(e) => setForm((f) => ({ ...f, ctaLabel: e.target.value }))}
-                    className={adminInputClass}
-                    placeholder="Continue"
-                  />
-                </AdminFormField>
-              </div>
-              <AdminDetailsSection
-                summary="AI prompt & format guide"
-                defaultOpen={!form.body.trim()}
-                badge={
-                  copyMsg ? (
-                    <span className="text-xs font-normal text-emerald-600 dark:text-emerald-400">
-                      {copyMsg}
-                    </span>
-                  ) : null
-                }
-              >
-                <div className="space-y-4 text-sm text-zinc-600 dark:text-zinc-400">
-                  <p>
-                    Use an LLM to draft copy, but always set <strong>Content type</strong> to match
-                    the output. HTML with layout classes must use <strong>HTML</strong>, not
-                    Markdown.
-                  </p>
-                  <div>
-                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                      <p className="font-medium text-zinc-800 dark:text-zinc-200">
-                        System prompt (English)
-                      </p>
-                      <button
-                        type="button"
-                        className={adminBtnSecondaryClass}
-                        onClick={() => void copyToClipboard(IN_APP_EVENT_AI_PROMPT, 'Prompt')}
-                      >
-                        Copy prompt
-                      </button>
-                    </div>
-                    <pre className="max-h-48 overflow-auto rounded-lg border border-zinc-200 bg-white p-3 font-mono text-[11px] leading-relaxed text-zinc-700 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
-                      {IN_APP_EVENT_AI_PROMPT}
-                    </pre>
-                  </div>
-                  <div>
-                    <p className="mb-2 font-medium text-zinc-800 dark:text-zinc-200">
-                      HTML layout classes
+                  <div className="space-y-4 text-sm text-zinc-600 dark:text-zinc-400">
+                    <p>
+                      Set <strong>Content type</strong> to match LLM output. HTML layout events
+                      need <strong>HTML</strong>, not Markdown.
                     </p>
-                    <ul className="list-inside list-disc space-y-1 text-xs">
-                      {IN_APP_EVENT_LAYOUT_CLASSES.map((line) => (
-                        <li key={line}>
-                          <code className="text-zinc-800 dark:text-zinc-200">{line.split(' — ')[0]}</code>
-                          {line.includes(' — ') ? ` — ${line.split(' — ').slice(1).join(' — ')}` : null}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                      <p className="font-medium text-zinc-800 dark:text-zinc-200">
-                        Example {form.contentType === 'markdown' ? 'Markdown' : 'HTML'} body
-                      </p>
-                      <div className="flex flex-wrap gap-2">
+                    <div>
+                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                        <p className="font-medium text-zinc-800 dark:text-zinc-200">
+                          System prompt (English)
+                        </p>
                         <button
                           type="button"
                           className={adminBtnSecondaryClass}
-                          onClick={() =>
-                            void copyToClipboard(
-                              getInAppEventBodyExample(form.contentType),
-                              'Example',
-                            )
-                          }
+                          onClick={() => void copyToClipboard(IN_APP_EVENT_AI_PROMPT, 'Prompt')}
                         >
-                          Copy example
-                        </button>
-                        <button
-                          type="button"
-                          className={adminBtnGhostClass}
-                          onClick={() =>
-                            setForm((f) => ({
-                              ...f,
-                              body: getInAppEventBodyExample(f.contentType),
-                            }))
-                          }
-                        >
-                          Insert into body
+                          Copy prompt
                         </button>
                       </div>
+                      <pre className="max-h-40 overflow-auto rounded-lg border border-zinc-200 bg-white p-3 font-mono text-[11px] leading-relaxed text-zinc-700 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
+                        {IN_APP_EVENT_AI_PROMPT}
+                      </pre>
                     </div>
-                    <pre className="max-h-56 overflow-auto rounded-lg border border-zinc-200 bg-white p-3 font-mono text-[11px] leading-relaxed text-zinc-700 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
-                      {getInAppEventBodyExample(form.contentType)}
-                    </pre>
+                    <div>
+                      <p className="mb-2 font-medium text-zinc-800 dark:text-zinc-200">
+                        HTML layout classes
+                      </p>
+                      <ul className="list-inside list-disc space-y-1 text-xs">
+                        {IN_APP_EVENT_LAYOUT_CLASSES.map((line) => (
+                          <li key={line}>
+                            <code className="text-zinc-800 dark:text-zinc-200">
+                              {line.split(' — ')[0]}
+                            </code>
+                            {line.includes(' — ')
+                              ? ` — ${line.split(' — ').slice(1).join(' — ')}`
+                              : null}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                        <p className="font-medium text-zinc-800 dark:text-zinc-200">
+                          Example {form.contentType === 'markdown' ? 'Markdown' : 'HTML'} body
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            className={adminBtnSecondaryClass}
+                            onClick={() =>
+                              void copyToClipboard(
+                                getInAppEventBodyExample(form.contentType),
+                                'Example',
+                              )
+                            }
+                          >
+                            Copy example
+                          </button>
+                          <button
+                            type="button"
+                            className={adminBtnGhostClass}
+                            onClick={() =>
+                              setForm((f) => ({
+                                ...f,
+                                body: getInAppEventBodyExample(f.contentType),
+                              }))
+                            }
+                          >
+                            Insert into body
+                          </button>
+                        </div>
+                      </div>
+                      <pre className="max-h-48 overflow-auto rounded-lg border border-zinc-200 bg-white p-3 font-mono text-[11px] leading-relaxed text-zinc-700 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
+                        {getInAppEventBodyExample(form.contentType)}
+                      </pre>
+                    </div>
                   </div>
-                </div>
-              </AdminDetailsSection>
-              <AdminFormField
-                label={form.contentType === 'markdown' ? 'Body (Markdown)' : 'Body (HTML)'}
-                hint={
-                  form.contentType === 'html'
-                    ? 'Fragment only — no <html>, <head>, or <style>'
-                    : 'Headings, lists, and links only'
-                }
-              >
-                <textarea
-                  value={form.body}
-                  onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
-                  required
-                  rows={12}
-                  className={`${adminInputClass} min-h-[220px] font-mono text-xs leading-relaxed`}
-                  placeholder={getInAppEventBodyExample(form.contentType)}
-                />
-              </AdminFormField>
-              <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-                <input
-                  type="checkbox"
-                  checked={form.published}
-                  onChange={(e) => setForm((f) => ({ ...f, published: e.target.checked }))}
-                  className="rounded border-zinc-300"
-                />
-                Published (visible in mobile app)
-              </label>
-            </div>
+                </AdminDetailsSection>
 
-            <div className="mt-4 shrink-0 space-y-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-              <div className="flex flex-wrap gap-2">
-                <button type="submit" disabled={saving} className={adminBtnPrimaryClass}>
-                  {saving ? 'Saving…' : editingId ? 'Save' : 'Create'}
-                </button>
-                <button
-                  type="button"
-                  disabled={previewLoading || !form.body.trim()}
-                  onClick={() => void handlePreview()}
-                  className={adminBtnSecondaryClass}
+                <AdminFormField
+                  label={form.contentType === 'markdown' ? 'Body (Markdown)' : 'Body (HTML)'}
+                  hint={
+                    form.contentType === 'html'
+                      ? 'Fragment only — preview updates automatically'
+                      : 'Headings, lists, links'
+                  }
                 >
-                  <span className="inline-flex items-center gap-1.5">
-                    <Eye className="h-4 w-4" aria-hidden />
-                    {previewLoading ? 'Preview…' : 'Preview'}
-                  </span>
-                </button>
-                {editingId ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const source = items.find((i) => i.id === editingId);
-                        if (source) cloneLocale(source);
-                      }}
-                      className={adminBtnSecondaryClass}
-                    >
-                      Copy locale
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const source = items.find((i) => i.id === editingId);
-                        if (source) cloneEvent(source);
-                      }}
-                      className={adminBtnSecondaryClass}
-                    >
-                      Clone
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleDelete()}
-                      className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
-                    >
-                      Delete
-                    </button>
-                  </>
-                ) : null}
-              </div>
-            </div>
-          </form>
-        </AdminCard>
+                  <textarea
+                    value={form.body}
+                    onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
+                    required
+                    rows={16}
+                    className={`${adminInputClass} min-h-[280px] font-mono text-xs leading-relaxed`}
+                    placeholder={getInAppEventBodyExample(form.contentType)}
+                  />
+                </AdminFormField>
 
-        <AdminCard title="Preview" description="Approximate WebView rendering in the app.">
-          {previewErr ? <AdminAlert tone="error">{previewErr}</AdminAlert> : null}
-          {previewHtml ? (
-            <iframe
-              title="In-app event preview"
-              srcDoc={previewHtml}
-              sandbox=""
-              className="h-[min(72vh,640px)] w-full rounded-lg border border-zinc-200 bg-[#121418] dark:border-zinc-700"
-            />
-          ) : (
-            <p className="py-12 text-center text-sm text-zinc-500">
-              Click Preview to render the current body.
-            </p>
-          )}
-        </AdminCard>
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                  <input
+                    type="checkbox"
+                    checked={form.published}
+                    onChange={(e) => setForm((f) => ({ ...f, published: e.target.checked }))}
+                    className="rounded border-zinc-300"
+                  />
+                  Published (visible in mobile app)
+                </label>
+              </div>
+
+              <div className="mt-4 space-y-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+                <div className="flex flex-wrap gap-2">
+                  <button type="submit" disabled={saving} className={adminBtnPrimaryClass}>
+                    {saving ? 'Saving…' : editingId ? 'Save' : 'Create'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={previewLoading || !form.body.trim()}
+                    onClick={() => void runPreview(form.contentType, form.body, previewTheme)}
+                    className={adminBtnSecondaryClass}
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      <RefreshCw
+                        className={`h-4 w-4 ${previewLoading ? 'animate-spin' : ''}`}
+                        aria-hidden
+                      />
+                      Refresh preview
+                    </span>
+                  </button>
+                  {editingId ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const source = items.find((i) => i.id === editingId);
+                          if (source) cloneLocale(source);
+                        }}
+                        className={adminBtnSecondaryClass}
+                      >
+                        Copy locale
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const source = items.find((i) => i.id === editingId);
+                          if (source) cloneEvent(source);
+                        }}
+                        className={adminBtnSecondaryClass}
+                      >
+                        Clone
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleDelete()}
+                        className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+            </form>
+          </AdminCard>
+
+          <AdminCard
+            title="Live preview"
+            description="Updates as you type · matches mobile WebView"
+            className="min-w-0 lg:sticky lg:top-4"
+          >
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="inline-flex rounded-lg border border-zinc-200 p-0.5 dark:border-zinc-700">
+                {(['light', 'dark'] as const).map((theme) => (
+                  <button
+                    key={theme}
+                    type="button"
+                    onClick={() => setPreviewTheme(theme)}
+                    className={`rounded-md px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
+                      previewTheme === theme
+                        ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800'
+                    }`}
+                  >
+                    {theme}
+                  </button>
+                ))}
+              </div>
+              {previewLoading ? (
+                <span className="text-xs text-zinc-500">Rendering…</span>
+              ) : previewHtml ? (
+                <span className="inline-flex items-center gap-1 text-xs text-zinc-500">
+                  <Eye className="h-3.5 w-3.5" aria-hidden />
+                  Ready
+                </span>
+              ) : null}
+            </div>
+
+            {previewErr ? <AdminAlert tone="error">{previewErr}</AdminAlert> : null}
+
+            <div
+              className={`relative min-h-[min(85vh,820px)] overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 ${previewSurface}`}
+            >
+              {previewHtml ? (
+                <iframe
+                  title="In-app event preview"
+                  srcDoc={previewHtml}
+                  sandbox=""
+                  className="h-[min(85vh,820px)] w-full border-0"
+                />
+              ) : (
+                <div className="flex h-[min(85vh,820px)] flex-col items-center justify-center gap-2 px-6 text-center">
+                  <Eye className="h-8 w-8 text-zinc-400" aria-hidden />
+                  <p className="text-sm text-zinc-500">
+                    {form.body.trim()
+                      ? 'Preview will appear in a moment…'
+                      : 'Add body content to see the preview.'}
+                  </p>
+                </div>
+              )}
+              {previewLoading ? (
+                <div
+                  className={`absolute inset-0 flex items-center justify-center ${previewSurface} bg-opacity-80`}
+                >
+                  <RefreshCw className="h-6 w-6 animate-spin text-zinc-400" aria-hidden />
+                </div>
+              ) : null}
+            </div>
+          </AdminCard>
+        </div>
       </div>
     </div>
   );
