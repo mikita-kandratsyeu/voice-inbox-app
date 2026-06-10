@@ -1,10 +1,16 @@
-import { openInAppBrowser } from '@/features/in-app-browser';
 import { getGithubOAuthClientId as getGithubOAuthClientIdFromConfig } from '@/shared/config/runtimeConfig';
 import { nitroFetch } from '@/shared/lib/fetch';
 import { isRecord, isString } from '@/shared/lib/type-guards';
 
 import { GITHUB_ACCESS_TOKEN_URL, GITHUB_DEVICE_CODE_URL, GITHUB_OAUTH_SCOPE } from './constants';
 import { setGithubSyncAccessToken } from './githubSecrets';
+import {
+  type GithubDeviceFlowChallenge,
+  toGithubDeviceFlowChallenge,
+} from './githubVerificationUri';
+
+export type { GithubDeviceFlowChallenge } from './githubVerificationUri';
+export { buildGithubVerificationUriComplete } from './githubVerificationUri';
 
 const POLL_TIMEOUT_MS = 10 * 60 * 1_000;
 const DEVICE_FLOW_CANCELLED = 'device_flow_cancelled';
@@ -44,6 +50,7 @@ type DeviceCodeResponse = {
   device_code: string;
   user_code: string;
   verification_uri: string;
+  verification_uri_complete?: string;
   expires_in: number;
   interval: number;
 };
@@ -70,9 +77,19 @@ function parseDeviceCodeResponse(data: unknown): DeviceCodeResponse | null {
   if (!isString(device_code) || !isString(user_code) || !isString(verification_uri)) {
     return null;
   }
+  const verification_uri_complete = isString(data.verification_uri_complete)
+    ? data.verification_uri_complete
+    : undefined;
   const expires_in = typeof data.expires_in === 'number' ? data.expires_in : 900;
   const interval = typeof data.interval === 'number' ? data.interval : 5;
-  return { device_code, user_code, verification_uri, expires_in, interval };
+  return {
+    device_code,
+    user_code,
+    verification_uri,
+    verification_uri_complete,
+    expires_in,
+    interval,
+  };
 }
 
 function parseAccessTokenResponse(data: unknown): AccessTokenResponse | null {
@@ -166,12 +183,9 @@ async function pollAccessToken(
   throw new Error('expired_token');
 }
 
-export type GithubDeviceFlowResult = {
-  userCode: string;
-  verificationUri: string;
-};
-
-export async function startGithubDeviceFlow(): Promise<GithubDeviceFlowResult> {
+export async function startGithubDeviceFlow(
+  onChallenge?: (challenge: GithubDeviceFlowChallenge) => void,
+): Promise<GithubDeviceFlowChallenge> {
   const clientId = getGithubOAuthClientId();
   if (!clientId) {
     throw new Error('github_oauth_not_configured');
@@ -184,7 +198,10 @@ export async function startGithubDeviceFlow(): Promise<GithubDeviceFlowResult> {
   try {
     const device = await requestDeviceCode(clientId);
     throwIfAborted(abort.signal);
-    const pollPromise = pollAccessToken(
+    const challenge = toGithubDeviceFlowChallenge(device);
+    onChallenge?.(challenge);
+
+    const accessToken = await pollAccessToken(
       clientId,
       device.device_code,
       device.interval,
@@ -192,20 +209,9 @@ export async function startGithubDeviceFlow(): Promise<GithubDeviceFlowResult> {
       abort.signal,
     );
 
-    await openInAppBrowser(device.verification_uri).catch(() => {});
-
-    if (activeDeviceFlowAbort === abort) {
-      abort.abort();
-    }
-
-    const accessToken = await pollPromise;
-
     await setGithubSyncAccessToken(accessToken);
 
-    return {
-      userCode: device.user_code,
-      verificationUri: device.verification_uri,
-    };
+    return challenge;
   } finally {
     if (activeDeviceFlowAbort === abort) {
       activeDeviceFlowAbort = null;

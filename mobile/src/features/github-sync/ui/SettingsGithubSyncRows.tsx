@@ -14,6 +14,7 @@ import { SettingsRow } from '@/shared/ui';
 
 import type { GithubRepoSummary } from '../lib/githubApi';
 import { useGithubSync } from '../model/useGithubSync';
+import { GithubConnectSheet } from './GithubConnectSheet';
 import { GithubRepoPickerSheet } from './GithubRepoPickerSheet';
 import { GithubSyncHistorySheet } from './GithubSyncHistorySheet';
 
@@ -209,6 +210,15 @@ export function SettingsGithubSyncRows({ color, t, language }: Props) {
   return (
     <>
       {rows}
+      <GithubConnectSheet
+        visible={github.connectChallenge != null}
+        color={color}
+        userCode={github.connectChallenge?.userCode ?? null}
+        verificationUri={github.connectChallenge?.verificationUri ?? null}
+        waiting={github.isConnecting}
+        onClose={() => github.cancelConnect()}
+        onCancel={() => github.cancelConnect()}
+      />
       <GithubRepoPickerSheet
         visible={repoPickerVisible}
         color={color}

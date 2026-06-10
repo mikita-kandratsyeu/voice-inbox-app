@@ -16,6 +16,7 @@ import {
 } from '../lib/githubApi';
 import {
   cancelGithubDeviceFlow,
+  type GithubDeviceFlowChallenge,
   isGithubOAuthConfigured,
   startGithubDeviceFlow,
 } from '../lib/githubAuth';
@@ -39,6 +40,7 @@ export function useGithubSync() {
   const [secrets, setSecrets] = useState<GithubSyncSecrets | null>(null);
   const [connected, setConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [connectChallenge, setConnectChallenge] = useState<GithubDeviceFlowChallenge | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(getGithubSyncLastSyncedAt());
@@ -61,6 +63,7 @@ export function useGithubSync() {
 
   const cancelConnect = useCallback(() => {
     cancelGithubDeviceFlow();
+    setConnectChallenge(null);
     setIsConnecting(false);
   }, []);
 
@@ -80,8 +83,11 @@ export function useGithubSync() {
       return { ok: false as const, code: 'oauth_not_configured' };
     }
     setIsConnecting(true);
+    setConnectChallenge(null);
     try {
-      await startGithubDeviceFlow();
+      await startGithubDeviceFlow((challenge) => {
+        setConnectChallenge(challenge);
+      });
       await refreshSecrets();
       return { ok: true as const };
     } catch (err) {
@@ -91,6 +97,7 @@ export function useGithubSync() {
       }
       return { ok: false as const, code };
     } finally {
+      setConnectChallenge(null);
       setIsConnecting(false);
     }
   }, [isProActive, oauthConfigured, refreshSecrets]);
@@ -221,6 +228,7 @@ export function useGithubSync() {
     secrets,
     connected,
     isConnecting,
+    connectChallenge,
     isSyncing,
     isRestoring,
     lastSyncedAt,
