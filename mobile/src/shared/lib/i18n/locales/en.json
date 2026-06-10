@@ -1185,6 +1185,8 @@
       "branchDeleteActive": "Switch to another sync branch before deleting this one.",
       "branchDeleteDefault": "The repository default branch cannot be deleted.",
       "branchDeleteFailed": "Couldn't delete the branch. Try again.",
+      "branchListActive": "Active sync branch",
+      "branchListDefault": "Repository default",
       "scheduleSectionTitle": "Schedule",
       "autoSync": "Sync on a schedule",
       "autoSyncHint": "Runs in the background when you open the app — no need to tap Sync every time.",

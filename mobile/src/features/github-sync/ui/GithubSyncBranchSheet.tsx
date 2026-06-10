@@ -18,7 +18,7 @@ import { GITHUB_SYNC_DEFAULT_BRANCH } from '../lib/constants';
 import type { GithubBranchSummary } from '../lib/githubApi';
 import { isValidGithubSyncBranchName } from '../lib/githubSyncBranch';
 
-const BRANCH_ROW_HEIGHT = 84;
+const BRANCH_ROW_HEIGHT = 64;
 const BRANCH_LIST_MAX_HEIGHT = 420;
 
 type DeleteBranchResult =
@@ -44,6 +44,7 @@ type Props = {
 type BranchPickerRowProps = {
   item: GithubBranchSummary;
   color: Colors;
+  defaultBranch: string | null;
   isLast: boolean;
   isSelected: boolean;
   canDelete: boolean;
@@ -52,9 +53,27 @@ type BranchPickerRowProps = {
   onDelete: () => void;
 };
 
+const trailingSlotStyle = {
+  alignItems: 'center' as const,
+  flexShrink: 0,
+  height: 36,
+  justifyContent: 'center' as const,
+  width: 36,
+};
+
+function trailingButtonStyle(color: Colors, pressed = false, faded = false) {
+  return {
+    ...trailingSlotStyle,
+    backgroundColor: color.background.tertiary,
+    borderRadius: 10,
+    opacity: pressed || faded ? 0.6 : 1,
+  };
+}
+
 function BranchPickerRow({
   item,
   color,
+  defaultBranch,
   isLast,
   isSelected,
   canDelete,
@@ -64,22 +83,20 @@ function BranchPickerRow({
 }: BranchPickerRowProps) {
   const { t } = useTranslation();
 
-  const trailingActionStyle = {
-    alignItems: 'center' as const,
-    borderRadius: 10,
-    flexShrink: 0,
-    height: 36,
-    justifyContent: 'center' as const,
-    width: 36,
-  };
+  const subtitle = isSelected
+    ? t('settings.githubSync.branchListActive')
+    : defaultBranch != null && item.name === defaultBranch
+      ? t('settings.githubSync.branchListDefault')
+      : null;
 
-  const trailingAction = isSelected ? (
-    <View style={trailingActionStyle}>
-      <Check size={18} color={color.accent.primary} strokeWidth={2} />
+  const trailing = isSelected ? (
+    <View style={{ ...trailingSlotStyle, alignItems: 'flex-end' as const }}>
+      <Check size={20} color={color.accent.primary} strokeWidth={2.5} />
     </View>
   ) : canDelete ? (
     <Pressable
-      onPress={() => {
+      onPress={(event) => {
+        event.stopPropagation();
         hapticSelection();
         onDelete();
       }}
@@ -87,10 +104,7 @@ function BranchPickerRow({
       accessibilityRole="button"
       accessibilityLabel={t('settings.githubSync.branchDeleteA11y', { branch: item.name })}
       hitSlop={4}
-      style={({ pressed }) => ({
-        ...trailingActionStyle,
-        opacity: pressed || deleting ? 0.6 : 1,
-      })}
+      style={({ pressed }) => trailingButtonStyle(color, pressed, deleting)}
     >
       {deleting ? (
         <ActivityIndicator size="small" color={color.accent.delete} />
@@ -101,82 +115,69 @@ function BranchPickerRow({
   ) : null;
 
   return (
-    <View
-      style={{
-        // borderBottomColor: color.border.default,
-        // borderBottomWidth: isLast ? 0 : 1,
-        // width: '100%',
-        alignItems: 'center',
-        flexDirection: 'row',
-        gap: 12,
-        minHeight: 52,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        width: '100%',
+    <Pressable
+      onPress={() => {
+        hapticSelection();
+        onPress();
       }}
+      accessibilityRole="button"
+      accessibilityState={{ selected: isSelected }}
+      accessibilityLabel={subtitle ? `${item.name}, ${subtitle}` : item.name}
+      style={({ pressed }) => ({
+        backgroundColor: pressed ? color.background.tertiary : 'transparent',
+        borderBottomColor: color.border.default,
+        borderBottomWidth: isLast ? 0 : 1,
+        width: '100%',
+      })}
     >
       <View
         style={{
-          // alignItems: 'center',
-          // flexDirection: 'row',
-          // gap: 12,
-          // minHeight: 52,
-          // paddingHorizontal: 14,
-          // paddingVertical: 12,
-          // width: '100%',
-          alignSelf: 'stretch',
-          borderRadius: 2,
-          flexShrink: 0,
-          width: 3,
+          alignItems: 'center',
+          flexDirection: 'row',
+          gap: 12,
+          minHeight: 52,
+          paddingHorizontal: 14,
+          paddingVertical: 12,
+          width: '100%',
         }}
       >
-        <Pressable
-          onPress={() => {
-            hapticSelection();
-            onPress();
-          }}
-          accessibilityRole="button"
-          accessibilityState={{ selected: isSelected }}
-          accessibilityLabel={item.name}
-          style={({ pressed }) => ({
+        <View
+          style={{
             alignItems: 'center',
-            flex: 1,
-            flexDirection: 'row',
-            gap: 12,
-            minWidth: 0,
-            opacity: pressed ? 0.7 : 1,
-          })}
+            backgroundColor: color.background.tertiary,
+            borderRadius: 10,
+            flexShrink: 0,
+            height: 36,
+            justifyContent: 'center',
+            width: 36,
+          }}
         >
-          <View
-            style={{
-              alignItems: 'center',
-              backgroundColor: color.background.tertiary,
-              borderRadius: 10,
-              flexShrink: 0,
-              height: 36,
-              justifyContent: 'center',
-              width: 36,
-            }}
+          <GitBranch size={18} color={color.accent.primary} strokeWidth={2} />
+        </View>
+        <View style={{ flex: 1, flexShrink: 1, justifyContent: 'center', minWidth: 0 }}>
+          <Text
+            style={{ color: color.text.primary, fontSize: 16, fontWeight: '600', lineHeight: 21 }}
+            numberOfLines={2}
           >
-            <GitBranch size={18} color={color.accent.primary} strokeWidth={2} />
-          </View>
-          <View style={{ flex: 1, flexShrink: 1, justifyContent: 'center', minWidth: 0 }}>
+            {item.name}
+          </Text>
+          {subtitle ? (
             <Text
+              numberOfLines={1}
               style={{
-                color: color.text.primary,
-                fontSize: 16,
-                fontWeight: isSelected ? '600' : '500',
-                lineHeight: 21,
+                color: color.text.secondary,
+                fontSize: 12,
+                lineHeight: 18,
+                marginTop: 3,
               }}
-              numberOfLines={2}
             >
-              {item.name}
+              {subtitle}
             </Text>
-          </View>
-        </Pressable>
-        {trailingAction}
+          ) : null}
+        </View>
+        {trailing}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -305,6 +306,7 @@ export function GithubSyncBranchSheet({
       <BranchPickerRow
         item={item}
         color={color}
+        defaultBranch={defaultBranch}
         isLast={index === branches.length - 1}
         isSelected={item.name === branch}
         canDelete={canDeleteBranch(item.name)}
@@ -317,6 +319,7 @@ export function GithubSyncBranchSheet({
       branch,
       canDeleteBranch,
       color,
+      defaultBranch,
       deletingBranch,
       branches.length,
       handleDeletePress,

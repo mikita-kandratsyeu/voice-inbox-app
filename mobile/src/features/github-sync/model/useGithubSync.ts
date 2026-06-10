@@ -33,15 +33,13 @@ import {
   setGithubSyncBranch,
   setGithubSyncRepository,
 } from '../lib/githubSecrets';
-import { isValidGithubSyncBranchName, normalizeGithubSyncBranchName } from '../lib/githubSyncBranch';
 import {
-  buildGithubBranchList,
-  unionGithubBranchLists,
-  withoutGithubBranch,
-} from '../lib/mergeGithubBranchList';
+  isValidGithubSyncBranchName,
+  normalizeGithubSyncBranchName,
+} from '../lib/githubSyncBranch';
 import { registerGithubConnectSession } from '../lib/githubSyncConnectSession';
-import { beginGithubSyncProgress, endGithubSyncProgress } from '../lib/githubSyncProgress';
 import { runGithubSyncNow } from '../lib/githubSyncNow';
+import { beginGithubSyncProgress, endGithubSyncProgress } from '../lib/githubSyncProgress';
 import { isGithubSyncSessionActive, subscribeGithubSyncSession } from '../lib/githubSyncSession';
 import {
   clearGithubSyncState,
@@ -49,11 +47,17 @@ import {
   getGithubSyncAutoIntervalHours,
   getGithubSyncLastSyncedAt,
   getGithubSyncLogin,
+  type GithubSyncAutoIntervalHours,
   setGithubSyncAutoEnabled,
   setGithubSyncAutoIntervalHours,
   setGithubSyncLogin,
-  type GithubSyncAutoIntervalHours,
 } from '../lib/githubSyncState';
+import {
+  buildGithubBranchList,
+  sortGithubBranchList,
+  unionGithubBranchLists,
+  withoutGithubBranch,
+} from '../lib/mergeGithubBranchList';
 import { pushGithubCommit } from '../lib/pushGithubCommit';
 import { restoreGithubSyncVersion } from '../lib/restoreGithubSyncVersion';
 
@@ -250,7 +254,9 @@ export function useGithubSync() {
       listed: GithubBranchSummary[],
       activeBranch: string,
       options?: { pruneExcluded?: boolean },
+      defaultBranch?: string | null,
     ) => {
+      const sortedDefaultBranch = defaultBranch ?? repoDefaultBranch;
       const apiNameSet = new Set(listed.map((item) => item.name));
 
       for (const item of listed) {
@@ -270,8 +276,14 @@ export function useGithubSync() {
       const combined = unionGithubBranchLists(
         listed,
         supplementalNames.map((name) => ({ name })),
+        sortedDefaultBranch,
       );
-      const merged = buildGithubBranchList(combined, activeBranch, excludedBranchesRef.current);
+      const merged = buildGithubBranchList(
+        combined,
+        activeBranch,
+        excludedBranchesRef.current,
+        sortedDefaultBranch,
+      );
 
       if (options?.pruneExcluded === true) {
         for (const excluded of [...excludedBranchesRef.current]) {
@@ -283,7 +295,7 @@ export function useGithubSync() {
       }
       return merged;
     },
-    [],
+    [repoDefaultBranch],
   );
 
   const loadBranches = useCallback(async () => {
@@ -298,7 +310,12 @@ export function useGithubSync() {
         getGithubRepoDefaultBranch(current.accessToken, current.owner, current.repo),
       ]);
       setRepoDefaultBranch(defaultBranch);
-      const merged = resolveBranchList(listed, current.branch, { pruneExcluded: true });
+      const merged = resolveBranchList(
+        listed,
+        current.branch,
+        { pruneExcluded: true },
+        defaultBranch,
+      );
       setBranches(merged);
       return { ok: true as const, branches: merged };
     } catch (err) {
@@ -415,11 +432,7 @@ export function useGithubSync() {
       try {
         const defaultBranch =
           repoDefaultBranch ??
-          (await getGithubRepoDefaultBranch(
-            current.accessToken,
-            current.owner,
-            current.repo,
-          ));
+          (await getGithubRepoDefaultBranch(current.accessToken, current.owner, current.repo));
         setRepoDefaultBranch(defaultBranch);
         if (normalized === defaultBranch) {
           return { ok: false as const, code: 'default_branch' };
@@ -427,21 +440,16 @@ export function useGithubSync() {
 
         excludedBranchesRef.current.add(normalized);
         knownBranchesRef.current.delete(normalized);
-        setBranches((prev) => withoutGithubBranch(prev, normalized));
-
-        await deleteGithubBranch(
-          current.accessToken,
-          current.owner,
-          current.repo,
-          normalized,
+        setBranches((prev) =>
+          sortGithubBranchList(withoutGithubBranch(prev, normalized), repoDefaultBranch),
         );
 
-        const listed = await listGithubBranches(
-          current.accessToken,
-          current.owner,
-          current.repo,
+        await deleteGithubBranch(current.accessToken, current.owner, current.repo, normalized);
+
+        const listed = await listGithubBranches(current.accessToken, current.owner, current.repo);
+        setBranches(
+          resolveBranchList(listed, current.branch, { pruneExcluded: true }, defaultBranch),
         );
-        setBranches(resolveBranchList(listed, current.branch, { pruneExcluded: true }));
         return { ok: true as const };
       } catch (err) {
         excludedBranchesRef.current.delete(normalized);
@@ -453,12 +461,10 @@ export function useGithubSync() {
           return { ok: false as const, code: 'unauthorized' };
         }
         try {
-          const listed = await listGithubBranches(
-            current.accessToken,
-            current.owner,
-            current.repo,
+          const listed = await listGithubBranches(current.accessToken, current.owner, current.repo);
+          setBranches(
+            resolveBranchList(listed, current.branch, { pruneExcluded: true }, defaultBranch),
           );
-          setBranches(resolveBranchList(listed, current.branch, { pruneExcluded: true }));
         } catch {
           setBranches((prev) => prev);
         }
