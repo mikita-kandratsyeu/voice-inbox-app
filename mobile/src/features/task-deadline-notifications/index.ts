@@ -23,3 +23,5 @@ export {
   scheduleTaskDeadlineNotificationSync,
   syncAllTaskDeadlineNotifications,
 } from './lib/syncTaskDeadlineNotifications';
+export { resolveTaskDeadlineTriggerAt } from './lib/resolveTaskDeadlineTriggerAt';
+export type { TaskDeadlineSheetPayload } from './lib/resolveTaskDeadlineSheetPayload';

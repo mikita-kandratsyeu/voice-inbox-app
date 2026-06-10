@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import { useProEntitlement } from '@/features/pro-license';
-import type { ImportResult } from '@/features/sync-data';
 
 import { GITHUB_SYNC_DEFAULT_BRANCH } from '../lib/constants';
 import { fetchGithubSyncHistory } from '../lib/fetchGithubSyncHistory';
@@ -59,7 +58,10 @@ import {
   withoutGithubBranch,
 } from '../lib/mergeGithubBranchList';
 import { pushGithubCommit } from '../lib/pushGithubCommit';
-import { restoreGithubSyncVersion } from '../lib/restoreGithubSyncVersion';
+import {
+  type RestoreGithubSyncResult,
+  restoreGithubSyncVersion,
+} from '../lib/restoreGithubSyncVersion';
 
 function getGithubApiErrorStatus(err: unknown): number | undefined {
   if (err instanceof Error && 'status' in err && typeof err.status === 'number') {
@@ -463,7 +465,7 @@ export function useGithubSync() {
         try {
           const listed = await listGithubBranches(current.accessToken, current.owner, current.repo);
           setBranches(
-            resolveBranchList(listed, current.branch, { pruneExcluded: true }, defaultBranch),
+            resolveBranchList(listed, current.branch, { pruneExcluded: true }, repoDefaultBranch),
           );
         } catch {
           setBranches((prev) => prev);
@@ -509,12 +511,7 @@ export function useGithubSync() {
   }, []);
 
   const restoreVersion = useCallback(
-    async (
-      commitSha: string,
-    ): Promise<
-      | { ok: true; importResult: Extract<ImportResult, { success: true }> }
-      | { ok: false; code: string; message?: string }
-    > => {
+    async (commitSha: string): Promise<RestoreGithubSyncResult> => {
       if (!isProActive) {
         return { ok: false, code: 'pro_required' };
       }

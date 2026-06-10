@@ -31,6 +31,7 @@ import {
   useResetProOnlyAiModelWhenNotPro,
 } from '@/features/pro-license';
 import { useTaskDeadlineNotificationHandlers } from '@/features/task-deadline-notifications/model/useTaskDeadlineNotificationHandlers';
+import { TaskDeadlineActionSheet } from '@/features/task-deadline-notifications/ui/TaskDeadlineActionSheet';
 import { TranscriptionResumePrompt } from '@/features/transcription';
 import {
   BootSplashVisibleProvider,
@@ -50,6 +51,7 @@ import {
 import { WarmupBottomSheet } from '@/shared/ui';
 
 import { flushPendingRecordModalNavigation, useInitDeepLinking } from './deep-linking';
+import { openTaskDeadlineRecord } from './model/taskDeadlineNavigationHandler';
 import { handlePushNotification } from './model/pushNavigationHandler';
 import { navigationRef } from './navigation/navigationRef';
 import { RootNavigator } from './navigation/RootNavigator';
@@ -156,6 +158,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
                 <WarmupBottomSheet />
                 <CloudAiThirdPartyConsentModal />
                 <PushNotificationSheet />
+                <TaskDeadlineActionSheet onOpenNote={openTaskDeadlineRecord} />
                 <AppRatingPromptRoot />
                 <GithubSyncProgressOverlay />
               </BottomSheetModalProvider>

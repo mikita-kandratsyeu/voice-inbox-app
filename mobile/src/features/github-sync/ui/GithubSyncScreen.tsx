@@ -19,7 +19,7 @@ import {
 } from '@/shared/ui';
 
 import { GITHUB_SYNC_DEFAULT_BRANCH } from '../lib/constants';
-import type { GithubRepoSummary } from '../lib/githubApi';
+import type { GithubCommitSummary, GithubRepoSummary } from '../lib/githubApi';
 import type { GithubSyncAutoIntervalHours } from '../lib/githubSyncState';
 import { useGithubSync } from '../model/useGithubSync';
 import { GithubRepoPickerSheet } from './GithubRepoPickerSheet';
@@ -70,6 +70,7 @@ export function GithubSyncScreen() {
     createAndSelectRepository,
     disconnect,
     syncNow,
+    restoreVersion,
     updateBranch,
     setAutoSyncEnabled,
     setAutoSyncIntervalHours,
@@ -82,6 +83,7 @@ export function GithubSyncScreen() {
   const [intervalSheetVisible, setIntervalSheetVisible] = useState(false);
   const [isSavingBranch, setIsSavingBranch] = useState(false);
   const [deletingBranch, setDeletingBranch] = useState<string | null>(null);
+  const [restoringSha, setRestoringSha] = useState<string | null>(null);
 
   const handleLoadRepos = useCallback(async () => {
     const result = await loadRepos();
@@ -214,6 +216,52 @@ export function GithubSyncScreen() {
       navigation.goBack();
     }
   }, [loadBranches, navigation, t]);
+
+  const handleRestoreCommit = useCallback(
+    (commit: GithubCommitSummary) => {
+      Alert.alert(t('settings.githubSync.restoreTitle'), t('settings.githubSync.restoreMessage'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('settings.githubSync.restoreConfirm'),
+          onPress: () => {
+            void (async () => {
+              setRestoringSha(commit.sha);
+              try {
+                const result = await restoreVersion(commit.sha);
+                if (!isFocusedRef.current) {
+                  return;
+                }
+                if (!result.ok) {
+                  if (result.code === 'unauthorized') {
+                    setHistoryVisible(false);
+                    Alert.alert(t('common.error'), t('settings.githubSync.sessionExpired'));
+                    navigation.goBack();
+                    return;
+                  }
+                  Alert.alert(t('common.error'), t('settings.githubSync.restoreFailed'));
+                  return;
+                }
+                setHistoryVisible(false);
+                navigation.navigate('ImportRecords', {
+                  records: result.importResult.records,
+                  folders: result.importResult.folders,
+                  legacyFolders: result.importResult.legacyFolders,
+                  graphLayouts: result.importResult.graphLayouts,
+                  githubRestore: {
+                    commitSha: commit.sha,
+                    exportedAt: result.exportedAt,
+                  },
+                });
+              } finally {
+                setRestoringSha(null);
+              }
+            })();
+          },
+        },
+      ]);
+    },
+    [navigation, restoreVersion, t],
+  );
 
   const handleDisconnect = useCallback(() => {
     Alert.alert(
@@ -391,8 +439,10 @@ export function GithubSyncScreen() {
         color={color}
         commits={history}
         loading={isLoadingHistory}
+        restoringSha={restoringSha}
         onClose={() => setHistoryVisible(false)}
         onLoad={handleLoadHistory}
+        onRestore={handleRestoreCommit}
       />
       <GithubSyncBranchSheet
         visible={branchSheetVisible}

@@ -48,6 +48,24 @@ describe('collectSchedulableTaskDeadlines', () => {
     expect(result).toHaveLength(0);
   });
 
+  it('uses active snooze when deadline already passed', () => {
+    const snoozeAt = Date.parse('2099-06-12T09:00:00');
+    const result = collectSchedulableTaskDeadlines(
+      [
+        {
+          id: 'rec-1',
+          title: 'Note',
+          tasks: [baseTask({ deadline: '2020-01-01' })],
+        },
+      ],
+      Date.parse('2099-01-01T00:00:00'),
+      { 'task-1': snoozeAt },
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.triggerAt).toBe(snoozeAt);
+  });
+
   it('sorts by trigger time ascending', () => {
     const result = collectSchedulableTaskDeadlines(
       [

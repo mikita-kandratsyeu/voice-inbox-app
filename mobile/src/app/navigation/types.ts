@@ -55,6 +55,10 @@ export type SettingsStackParamList = {
     folders?: Folder[];
     legacyFolders?: Folder[];
     graphLayouts?: import('@/features/sync-data').BackupGraphLayoutVersion[];
+    githubRestore?: {
+      commitSha: string;
+      exportedAt: string;
+    };
   };
   DiagnosticLogs: undefined;
   GithubSync: undefined;

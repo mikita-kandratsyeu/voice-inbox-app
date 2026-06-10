@@ -24,6 +24,7 @@ import { useRecordStore } from '@/entities/record';
 import { recordRepository } from '@/entities/record/model/repository';
 import { useAdsAllowed } from '@/features/app-storefront';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
+import { finalizeGithubSyncRestore } from '@/features/github-sync/lib/finalizeGithubSyncRestore';
 import { importNotesGraphLayoutVersionsFromBackup } from '@/features/sync-data';
 import { tryShowYandexInterstitial } from '@/features/yandex-interstitial';
 import type { Colors } from '@/shared/config';
@@ -229,6 +230,7 @@ export const ImportRecordsScreen = () => {
     folders: archiveFolders = [],
     legacyFolders = [],
     graphLayouts = [],
+    githubRestore,
   } = route.params;
 
   const existingRecords = useRecordStore((s) => s.records);
@@ -421,6 +423,18 @@ export const ImportRecordsScreen = () => {
       if (graphLayouts.length > 0) {
         await importNotesGraphLayoutVersionsFromBackup(graphLayouts);
       }
+      if (githubRestore) {
+        const folderStore = useFolderStore.getState();
+        if (!folderStore.isLoaded) {
+          await folderStore.load();
+        }
+        await finalizeGithubSyncRestore({
+          commitSha: githubRestore.commitSha,
+          exportedAt: githubRestore.exportedAt,
+          records: useRecordStore.getState().records,
+          folders: useFolderStore.getState().folders,
+        });
+      }
       navigation.goBack();
       await tryShowYandexInterstitial({ adsAllowed, trigger: 'after_import' });
       Alert.alert(t('common.done'), t('importExport.importSuccess', { count: toProcess.length }));
@@ -444,6 +458,7 @@ export const ImportRecordsScreen = () => {
     selectedIds,
     t,
     trashIdsForReplace,
+    githubRestore,
     graphLayouts,
   ]);
 

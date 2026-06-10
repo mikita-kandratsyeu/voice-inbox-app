@@ -1201,7 +1201,7 @@
       },
       "aboutSectionTitle": "Good to know",
       "scopeHint": "GitHub asks for repository access so the app can write backups to the branch you choose. Voice Inbox AI doesn't read your other repos.",
-      "multiDeviceHint": "Sync sends notes from this device to GitHub. It doesn't download changes from another phone — each device keeps its own copy and adds new versions on top.",
+      "multiDeviceHint": "Sync sends notes from this device to GitHub. To bring an older backup back, open Version history and tap Restore on the version you need.",
       "progressTitle": "Saving to GitHub",
       "progressPreparing": "Preparing your notes…",
       "progressUploading": "Uploading to GitHub…",
@@ -1209,12 +1209,13 @@
       "progressUploadCounter": "{{current}} of {{total}} notes",
       "history": "Version history",
       "historyTitle": "Backup history",
-      "historySubtitle": "Each sync is saved as a separate version in your repository.",
+      "historySubtitle": "Each sync is saved as a separate version. Tap the restore icon to bring a version back into the app.",
       "historyEmpty": "No saved versions yet.",
       "untitledCommit": "Voice Inbox AI backup",
       "restoreTitle": "Restore this version?",
       "restoreMessage": "Notes in the app will be replaced with the version you selected. Voice recordings won't be restored.",
       "restoreConfirm": "Restore",
+      "restoreVersionA11y": "Restore {{title}}",
       "restoring": "Restoring…",
       "restoreFailed": "Couldn't restore this version. Try again later.",
       "openOnGithub": "Open on GitHub",
@@ -2178,7 +2179,23 @@
   "taskDeadlineNotifications": {
     "fallbackTitle": "Task due",
     "body": "From {{recordTitle}}",
-    "bodyWithTime": "Due at {{time}} · {{recordTitle}}"
+    "bodyWithTime": "Due at {{time}} · {{recordTitle}}",
+    "actions": {
+      "markDone": "Done",
+      "snooze1h": "Snooze 1h"
+    },
+    "sheet": {
+      "subtitle": "{{recordTitle}} · {{date}}",
+      "subtitleWithTime": "{{recordTitle}} · {{date}}, {{time}}",
+      "markDone": "Mark as done",
+      "snooze": "Snooze",
+      "snoozeTitle": "Remind me again",
+      "snooze15m": "In 15 minutes",
+      "snooze1h": "In 1 hour",
+      "snoozeTomorrow": "Tomorrow at 9:00",
+      "openNote": "Open note",
+      "close": "Close"
+    }
   },
   "backupReminderNotifications": {
     "title": "Create a backup",

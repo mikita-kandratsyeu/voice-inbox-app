@@ -71,11 +71,12 @@ describe('restoreGithubSyncVersion', () => {
       title: 'Meeting',
     });
     expect(result.importResult.records[0]).not.toHaveProperty('audioPath');
-    expect(mockGetFileContentAtRef).toHaveBeenCalledWith(
+    expect(mockGetFileContentAtRef).toHaveBeenNthCalledWith(
+      1,
       'token',
       'octocat',
       'notes',
-      'manifest.json',
+      'voice-inbox-ai/manifest.json',
       'abc123',
     );
   });

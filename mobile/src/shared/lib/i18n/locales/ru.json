@@ -1235,7 +1235,7 @@
       },
       "aboutSectionTitle": "Важно знать",
       "scopeHint": "GitHub запрашивает доступ к репозиториям, чтобы приложение могло записывать бэкапы в выбранную ветку. Voice Inbox AI не читает ваши другие репозитории.",
-      "multiDeviceHint": "Синхронизация отправляет заметки с этого устройства на GitHub. Загрузки с другого телефона нет — у каждого устройства своя копия, новые версии добавляются поверх.",
+      "multiDeviceHint": "Синхронизация отправляет заметки с этого устройства на GitHub. Чтобы вернуть старую копию, откройте «История версий» и нажмите «Вернуть» у нужной версии.",
       "progressTitle": "Сохраняем на GitHub",
       "progressPreparing": "Готовим заметки…",
       "progressUploading": "Загружаем на GitHub…",
@@ -1243,12 +1243,13 @@
       "progressUploadCounter": "{{current}} из {{total}} заметок",
       "history": "История версий",
       "historyTitle": "История резервных копий",
-      "historySubtitle": "Каждая синхронизация — отдельная версия в вашем репозитории.",
+      "historySubtitle": "Каждая синхронизация — отдельная версия. Нажмите на иконку восстановления, чтобы вернуть версию в приложение.",
       "historyEmpty": "Пока нет сохранённых версий.",
       "untitledCommit": "Резервная копия Voice Inbox AI",
       "restoreTitle": "Вернуть эту версию?",
       "restoreMessage": "Заметки в приложении заменятся выбранной версией. Записи голоса не восстанавливаются.",
       "restoreConfirm": "Вернуть",
+      "restoreVersionA11y": "Вернуть {{title}}",
       "restoring": "Восстанавливаем…",
       "restoreFailed": "Не удалось вернуть эту версию. Попробуйте позже.",
       "openOnGithub": "Открыть на GitHub",
@@ -2224,7 +2225,23 @@
   "taskDeadlineNotifications": {
     "fallbackTitle": "Срок задачи",
     "body": "Задача из «{{recordTitle}}»",
-    "bodyWithTime": "Срок в {{time}} · «{{recordTitle}}»"
+    "bodyWithTime": "Срок в {{time}} · «{{recordTitle}}»",
+    "actions": {
+      "markDone": "Готово",
+      "snooze1h": "Через 1 ч"
+    },
+    "sheet": {
+      "subtitle": "«{{recordTitle}}» · {{date}}",
+      "subtitleWithTime": "«{{recordTitle}}» · {{date}}, {{time}}",
+      "markDone": "Отметить выполненной",
+      "snooze": "Отложить",
+      "snoozeTitle": "Напомнить снова",
+      "snooze15m": "Через 15 минут",
+      "snooze1h": "Через 1 час",
+      "snoozeTomorrow": "Завтра в 9:00",
+      "openNote": "Открыть заметку",
+      "close": "Закрыть"
+    }
   },
   "backupReminderNotifications": {
     "title": "Пора сделать резервную копию",

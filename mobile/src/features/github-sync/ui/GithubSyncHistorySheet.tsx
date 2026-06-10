@@ -1,6 +1,6 @@
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
-import { ExternalLink, History } from 'lucide-react-native';
+import { ExternalLink, History, RotateCcw } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
@@ -14,14 +14,18 @@ import type { GithubCommitSummary } from '../lib/githubApi';
 
 const HISTORY_ROW_HEIGHT = 72;
 const HISTORY_LIST_MAX_HEIGHT = 420;
+const HISTORY_ACTION_BUTTON_SIZE = 36;
+const HISTORY_ACTION_ICON_SIZE = 18;
 
 type Props = {
   visible: boolean;
   color: Colors;
   commits: GithubCommitSummary[];
   loading: boolean;
+  restoringSha: string | null;
   onClose: () => void;
   onLoad: () => void | Promise<void>;
+  onRestore: (commit: GithubCommitSummary) => void;
 };
 
 function shortSha(sha: string): string {
@@ -34,9 +38,19 @@ type HistoryListRowProps = {
   isLast: boolean;
   metaLabel: string;
   title: string;
+  restoring: boolean;
+  onRestore: (commit: GithubCommitSummary) => void;
 };
 
-function HistoryListRow({ color, commit, isLast, metaLabel, title }: HistoryListRowProps) {
+function HistoryListRow({
+  color,
+  commit,
+  isLast,
+  metaLabel,
+  title,
+  restoring,
+  onRestore,
+}: HistoryListRowProps) {
   const { t } = useTranslation();
 
   return (
@@ -90,29 +104,91 @@ function HistoryListRow({ color, commit, isLast, metaLabel, title }: HistoryList
             {metaLabel}
           </Text>
         </View>
-        {commit.htmlUrl ? (
+        <View
+          style={{
+            alignItems: 'center',
+            alignSelf: 'center',
+            flexDirection: 'row',
+            flexShrink: 0,
+            gap: 8,
+          }}
+        >
           <Pressable
             onPress={() => {
+              if (restoring) return;
               hapticSelection();
-              void openInAppBrowser(commit.htmlUrl);
+              onRestore(commit);
             }}
             accessibilityRole="button"
-            accessibilityLabel={t('settings.githubSync.openOnGithub')}
+            accessibilityLabel={t('settings.githubSync.restoreVersionA11y', { title })}
+            accessibilityState={{ disabled: restoring, busy: restoring }}
+            disabled={restoring}
             hitSlop={4}
             style={({ pressed }) => ({
               alignItems: 'center',
               backgroundColor: color.background.tertiary,
               borderRadius: 10,
-              flexShrink: 0,
-              height: 36,
+              height: HISTORY_ACTION_BUTTON_SIZE,
               justifyContent: 'center',
-              opacity: pressed ? 0.6 : 1,
-              width: 36,
+              opacity: restoring ? 0.45 : pressed ? 0.6 : 1,
+              width: HISTORY_ACTION_BUTTON_SIZE,
             })}
           >
-            <ExternalLink size={18} color={color.accent.primary} strokeWidth={2} />
+            <View
+              style={{
+                alignItems: 'center',
+                height: HISTORY_ACTION_ICON_SIZE,
+                justifyContent: 'center',
+                width: HISTORY_ACTION_ICON_SIZE,
+              }}
+            >
+              {restoring ? (
+                <ActivityIndicator color={color.accent.primary} size="small" />
+              ) : (
+                <RotateCcw
+                  size={HISTORY_ACTION_ICON_SIZE}
+                  color={color.accent.success}
+                  strokeWidth={2}
+                />
+              )}
+            </View>
           </Pressable>
-        ) : null}
+          {commit.htmlUrl ? (
+            <Pressable
+              onPress={() => {
+                hapticSelection();
+                void openInAppBrowser(commit.htmlUrl);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={t('settings.githubSync.openOnGithub')}
+              hitSlop={4}
+              style={({ pressed }) => ({
+                alignItems: 'center',
+                backgroundColor: color.background.tertiary,
+                borderRadius: 10,
+                height: HISTORY_ACTION_BUTTON_SIZE,
+                justifyContent: 'center',
+                opacity: pressed ? 0.6 : 1,
+                width: HISTORY_ACTION_BUTTON_SIZE,
+              })}
+            >
+              <View
+                style={{
+                  alignItems: 'center',
+                  height: HISTORY_ACTION_ICON_SIZE,
+                  justifyContent: 'center',
+                  width: HISTORY_ACTION_ICON_SIZE,
+                }}
+              >
+                <ExternalLink
+                  size={HISTORY_ACTION_ICON_SIZE}
+                  color={color.accent.primary}
+                  strokeWidth={2}
+                />
+              </View>
+            </Pressable>
+          ) : null}
+        </View>
       </View>
     </View>
   );
@@ -123,8 +199,10 @@ export function GithubSyncHistorySheet({
   color,
   commits,
   loading,
+  restoringSha,
   onClose,
   onLoad,
+  onRestore,
 }: Props) {
   const { t, i18n } = useTranslation();
   const contentPadding = useBottomSheetContentPadding(12);
@@ -150,9 +228,11 @@ export function GithubSyncHistorySheet({
         isLast={index === commits.length - 1}
         title={item.message || t('settings.githubSync.untitledCommit')}
         metaLabel={`${formatRelativeTime(item.committedAt, i18n.language)} · ${shortSha(item.sha)}`}
+        restoring={restoringSha === item.sha}
+        onRestore={onRestore}
       />
     ),
-    [color, commits.length, i18n.language, t],
+    [color, commits.length, i18n.language, onRestore, restoringSha, t],
   );
 
   const keyExtractor = useCallback((item: GithubCommitSummary) => item.sha, []);

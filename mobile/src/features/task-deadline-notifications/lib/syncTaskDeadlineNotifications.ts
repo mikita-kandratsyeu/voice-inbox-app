@@ -3,6 +3,7 @@ import notifee, { TriggerType } from '@notifee/react-native';
 import type { TaskItem } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { diagWarn } from '@/shared/lib/appLogger';
+import { i18n } from '@/shared/lib/i18n';
 
 import { buildTaskDeadlineNotificationCopy } from './buildTaskDeadlineNotificationCopy';
 import { collectSchedulableTaskDeadlines } from './collectSchedulableTaskDeadlines';
@@ -10,10 +11,15 @@ import {
   getTaskDeadlineNotificationId,
   isTaskDeadlineNotificationId,
   MAX_TASK_DEADLINE_NOTIFICATIONS,
+  TASK_DEADLINE_ACTION_MARK_DONE,
+  TASK_DEADLINE_ACTION_SNOOZE_1H,
   TASK_DEADLINE_NOTIFICATION_CHANNEL_ID,
+  TASK_DEADLINE_NOTIFICATION_IOS_CATEGORY_ID,
   TASK_DEADLINE_NOTIFICATION_TYPE,
+  TASK_DEADLINE_PRESS_OPEN,
 } from './constants';
 import { ensureTaskDeadlineNotificationChannel } from './ensureTaskDeadlineNotificationChannel';
+import { pruneExpiredTaskDeadlineSnoozes } from './taskDeadlineSnoozeStorage';
 import {
   checkTaskNotificationPermission,
   requestTaskNotificationPermission,
@@ -51,11 +57,22 @@ async function scheduleTaskDeadlineNotification(input: {
       },
       android: {
         channelId: TASK_DEADLINE_NOTIFICATION_CHANNEL_ID,
-        pressAction: { id: 'default' },
+        pressAction: { id: TASK_DEADLINE_PRESS_OPEN },
+        actions: [
+          {
+            title: i18n.t('taskDeadlineNotifications.actions.markDone'),
+            pressAction: { id: TASK_DEADLINE_ACTION_MARK_DONE },
+          },
+          {
+            title: i18n.t('taskDeadlineNotifications.actions.snooze1h'),
+            pressAction: { id: TASK_DEADLINE_ACTION_SNOOZE_1H },
+          },
+        ],
         sound: 'default',
       },
       ios: {
         sound: 'default',
+        categoryId: TASK_DEADLINE_NOTIFICATION_IOS_CATEGORY_ID,
       },
     },
     {
@@ -83,7 +100,8 @@ export async function syncAllTaskDeadlineNotifications(): Promise<void> {
 
   const { useRecordStore } = await import('@/entities/record');
   const records = useRecordStore.getState().records;
-  const schedulable = collectSchedulableTaskDeadlines(records).slice(
+  const snoozeByTaskId = pruneExpiredTaskDeadlineSnoozes();
+  const schedulable = collectSchedulableTaskDeadlines(records, Date.now(), snoozeByTaskId).slice(
     0,
     MAX_TASK_DEADLINE_NOTIFICATIONS,
   );
@@ -127,6 +145,8 @@ export async function enableTaskDeadlineNotifications(): Promise<boolean> {
 
 export async function disableTaskDeadlineNotifications(): Promise<void> {
   useSettingsStore.getState().setTaskDeadlineNotificationsEnabled(false);
+  const { clearAllTaskDeadlineSnoozes } = await import('./taskDeadlineSnoozeStorage');
+  clearAllTaskDeadlineSnoozes();
   await cancelAllTaskDeadlineNotifications();
 }
 

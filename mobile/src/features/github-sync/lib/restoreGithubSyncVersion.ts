@@ -11,8 +11,20 @@ import { getFileContentAtRef } from './githubApi';
 import type { GithubSyncSecrets } from './githubSecrets';
 
 export type RestoreGithubSyncResult =
-  | { ok: true; importResult: Extract<ImportResult, { success: true }> }
+  | {
+      ok: true;
+      importResult: Extract<ImportResult, { success: true }>;
+      exportedAt: string;
+    }
   | { ok: false; code: string; message?: string };
+
+function joinManifestRepoPath(basePath: string): string {
+  const normalized = basePath.replace(/^\/+|\/+$/g, '');
+  if (!normalized) {
+    return GITHUB_SYNC_MANIFEST_FILE;
+  }
+  return `${normalized}/${GITHUB_SYNC_MANIFEST_FILE}`;
+}
 
 export async function restoreGithubSyncVersion(params: {
   secrets: GithubSyncSecrets;
@@ -23,16 +35,25 @@ export async function restoreGithubSyncVersion(params: {
   }
 
   const { secrets, commitSha } = params;
-  const manifestPath = GITHUB_SYNC_MANIFEST_FILE;
+  const manifestPaths = [
+    joinManifestRepoPath(secrets.basePath),
+    GITHUB_SYNC_MANIFEST_FILE,
+  ];
 
   try {
-    const raw = await getFileContentAtRef(
-      secrets.accessToken,
-      secrets.owner,
-      secrets.repo,
-      manifestPath,
-      commitSha,
-    );
+    let raw: string | null = null;
+    for (const manifestPath of manifestPaths) {
+      raw = await getFileContentAtRef(
+        secrets.accessToken,
+        secrets.owner,
+        secrets.repo,
+        manifestPath,
+        commitSha,
+      );
+      if (raw) {
+        break;
+      }
+    }
 
     if (!raw) {
       return { ok: false, code: 'manifest_not_found' };
@@ -52,7 +73,7 @@ export async function restoreGithubSyncVersion(params: {
     } as BackupExportPayload;
 
     const importResult = buildImportResultFromPayload(stripped);
-    return { ok: true, importResult };
+    return { ok: true, importResult, exportedAt: payload.exportedAt };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return { ok: false, code: 'restore_failed', message };
