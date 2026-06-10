@@ -54,8 +54,10 @@ export function GithubSyncScreen() {
     repos,
     isLoadingRepos,
     branches,
+    repoDefaultBranch,
     isLoadingBranches,
     loadBranches,
+    deleteBranch,
     history,
     isLoadingHistory,
     selectRepository,
@@ -73,6 +75,7 @@ export function GithubSyncScreen() {
   const [branchSheetVisible, setBranchSheetVisible] = useState(false);
   const [intervalSheetVisible, setIntervalSheetVisible] = useState(false);
   const [isSavingBranch, setIsSavingBranch] = useState(false);
+  const [deletingBranch, setDeletingBranch] = useState<string | null>(null);
 
   const handleLoadRepos = useCallback(async () => {
     const result = await loadRepos();
@@ -158,7 +161,17 @@ export function GithubSyncScreen() {
       try {
         const result = await updateBranch(branchName);
         if (!result.ok) {
-          Alert.alert(t('common.error'), t('settings.githubSync.branchInvalid'));
+          if (result.code === 'invalid_branch') {
+            Alert.alert(t('common.error'), t('settings.githubSync.branchInvalid'));
+            return;
+          }
+          if (result.code === 'unauthorized') {
+            setBranchSheetVisible(false);
+            Alert.alert(t('common.error'), t('settings.githubSync.sessionExpired'));
+            navigation.goBack();
+            return;
+          }
+          Alert.alert(t('common.error'), t('settings.githubSync.branchCreateFailed'));
           return;
         }
         setBranchSheetVisible(false);
@@ -166,7 +179,25 @@ export function GithubSyncScreen() {
         setIsSavingBranch(false);
       }
     },
-    [t, updateBranch],
+    [navigation, t, updateBranch],
+  );
+
+  const handleDeleteBranch = useCallback(
+    async (branchName: string) => {
+      setDeletingBranch(branchName);
+      try {
+        const result = await deleteBranch(branchName);
+        if (!result.ok && result.code === 'unauthorized') {
+          setBranchSheetVisible(false);
+          Alert.alert(t('common.error'), t('settings.githubSync.sessionExpired'));
+          navigation.goBack();
+        }
+        return result;
+      } finally {
+        setDeletingBranch(null);
+      }
+    },
+    [deleteBranch, navigation, t],
   );
 
   const handleLoadBranches = useCallback(async () => {
@@ -355,13 +386,16 @@ export function GithubSyncScreen() {
         visible={branchSheetVisible}
         color={color}
         branch={branchName}
+        defaultBranch={repoDefaultBranch}
         branches={branches}
         loading={isLoadingBranches}
         saving={isSavingBranch}
+        deletingBranch={deletingBranch}
         onClose={() => setBranchSheetVisible(false)}
         onLoadBranches={handleLoadBranches}
         onSelect={handleSaveBranch}
         onSave={handleSaveBranch}
+        onDelete={handleDeleteBranch}
       />
       <GithubSyncAutoIntervalSheet
         visible={intervalSheetVisible}

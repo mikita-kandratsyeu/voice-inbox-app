@@ -8,6 +8,8 @@ import {
   createGithubCommitWithFiles,
   createGithubError,
   createGithubRepo,
+  deleteGithubBranch,
+  ensureGithubBranchExists,
   fetchGithubUserLogin,
   getBranchRefSha,
   getFileContentAtRef,
@@ -259,6 +261,92 @@ describe('githubApi', () => {
         'https://api.github.com/repos/org%2Fname/repo%2Fname/git/ref/heads/feature%2Fsync',
         expect.any(Object),
       );
+    });
+  });
+
+  describe('ensureGithubBranchExists', () => {
+    it('is a no-op when the branch already exists', async () => {
+      mockNitroFetch.mockResolvedValue(
+        jsonResponse({
+          object: { sha: 'existing-sha' },
+        }),
+      );
+
+      await expect(
+        ensureGithubBranchExists('token', 'octocat', 'hello', 'voice-inbox-ai-sync'),
+      ).resolves.toEqual({ created: false });
+      expect(mockNitroFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('creates the branch from the repo default branch tip', async () => {
+      mockNitroFetch
+        .mockResolvedValueOnce(jsonResponse({}, false, 404))
+        .mockResolvedValueOnce(jsonResponse({ default_branch: 'main' }))
+        .mockResolvedValueOnce(
+          jsonResponse({
+            object: { sha: 'main-sha' },
+          }),
+        )
+        .mockResolvedValueOnce(jsonResponse({}));
+
+      await expect(
+        ensureGithubBranchExists('token', 'octocat', 'hello', 'voice-inbox-ai-sync-2'),
+      ).resolves.toEqual({ created: true });
+
+      expect(mockNitroFetch).toHaveBeenNthCalledWith(
+        4,
+        'https://api.github.com/repos/octocat/hello/git/refs',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            ref: 'refs/heads/voice-inbox-ai-sync-2',
+            sha: 'main-sha',
+          }),
+        }),
+      );
+    });
+
+    it('treats a 422 race as success when the branch appears', async () => {
+      mockNitroFetch
+        .mockResolvedValueOnce(jsonResponse({}, false, 404))
+        .mockResolvedValueOnce(jsonResponse({ default_branch: 'main' }))
+        .mockResolvedValueOnce(
+          jsonResponse({
+            object: { sha: 'main-sha' },
+          }),
+        )
+        .mockResolvedValueOnce(jsonResponse('Reference already exists', false, 422))
+        .mockResolvedValueOnce(
+          jsonResponse({
+            object: { sha: 'race-sha' },
+          }),
+        );
+
+      await expect(
+        ensureGithubBranchExists('token', 'octocat', 'hello', 'voice-inbox-ai-sync-2'),
+      ).resolves.toEqual({ created: false });
+    });
+  });
+
+  describe('deleteGithubBranch', () => {
+    it('deletes an existing branch ref', async () => {
+      mockNitroFetch.mockResolvedValue(jsonResponse(null, true, 204));
+
+      await expect(
+        deleteGithubBranch('token', 'octocat', 'hello', 'voice-inbox-ai-sync-2'),
+      ).resolves.toBeUndefined();
+      expect(mockNitroFetch).toHaveBeenCalledWith(
+        'https://api.github.com/repos/octocat/hello/git/refs/heads/voice-inbox-ai-sync-2',
+        expect.objectContaining({ method: 'DELETE' }),
+      );
+    });
+
+    it('ignores missing branch refs', async () => {
+      mockNitroFetch.mockResolvedValue(jsonResponse({}, false, 404));
+
+      await expect(
+        deleteGithubBranch('token', 'octocat', 'hello', 'missing'),
+      ).resolves.toBeUndefined();
     });
   });
 

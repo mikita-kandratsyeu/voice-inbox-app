@@ -336,6 +336,82 @@ export async function getBranchRefSha(
   return data.object.sha;
 }
 
+export async function getGithubRepoDefaultBranch(
+  accessToken: string,
+  owner: string,
+  repo: string,
+): Promise<string> {
+  const response = await githubFetch(accessToken, repoApiPath(owner, repo, ''));
+  if (!response.ok) {
+    await throwGithubHttpError(`Get repo failed: ${response.status}`, response);
+  }
+  const data: unknown = await response.json();
+  return isRecord(data) && isString(data.default_branch) ? data.default_branch : 'main';
+}
+
+/** Creates `branch` from the repo default branch tip when it does not exist yet. */
+export async function ensureGithubBranchExists(
+  accessToken: string,
+  owner: string,
+  repo: string,
+  branch: string,
+): Promise<{ created: boolean }> {
+  const existingSha = await getBranchRefSha(accessToken, owner, repo, branch);
+  if (existingSha) {
+    return { created: false };
+  }
+
+  const defaultBranch = await getGithubRepoDefaultBranch(accessToken, owner, repo);
+  const baseSha =
+    branch === defaultBranch
+      ? null
+      : await getBranchRefSha(accessToken, owner, repo, defaultBranch);
+  if (!baseSha) {
+    throw createGithubError('Base branch not found', 404, 'base_branch_not_found');
+  }
+
+  const createRefResponse = await githubFetch(accessToken, repoApiPath(owner, repo, '/git/refs'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ref: `refs/heads/${branch}`,
+      sha: baseSha,
+    }),
+  });
+
+  if (createRefResponse.status === 422) {
+    const shaAfterRace = await getBranchRefSha(accessToken, owner, repo, branch);
+    if (shaAfterRace) {
+      return { created: false };
+    }
+  }
+
+  if (!createRefResponse.ok) {
+    await throwGithubHttpError(`Create ref failed: ${createRefResponse.status}`, createRefResponse);
+  }
+
+  return { created: true };
+}
+
+export async function deleteGithubBranch(
+  accessToken: string,
+  owner: string,
+  repo: string,
+  branch: string,
+): Promise<void> {
+  const response = await githubFetch(
+    accessToken,
+    repoApiPath(owner, repo, `/git/refs/heads/${encodeRepoSegment(branch)}`),
+    { method: 'DELETE' },
+  );
+  if (response.status === 404) {
+    return;
+  }
+  if (!response.ok) {
+    await throwGithubHttpError(`Delete branch failed: ${response.status}`, response);
+  }
+}
+
 type TreeEntry = {
   path: string;
   mode: '100644';
