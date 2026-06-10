@@ -1,5 +1,5 @@
-import { type GithubCommitSummary, listGithubCommits } from './githubApi';
 import { GITHUB_SYNC_MANIFEST_FILE } from './constants';
+import { type GithubCommitSummary, listGithubCommits } from './githubApi';
 import type { GithubSyncSecrets } from './githubSecrets';
 
 export async function fetchGithubSyncHistory(

@@ -125,8 +125,7 @@ const SettingsRowInner = ({
     </View>
   );
 
-  const subtitleLabel =
-    subtitleA11y ?? (typeof subtitle === 'string' ? subtitle : undefined);
+  const subtitleLabel = subtitleA11y ?? (typeof subtitle === 'string' ? subtitle : undefined);
   const a11yLabel = [label, subtitleLabel, !resolvedRightSlot && value ? value : undefined]
     .filter(Boolean)
     .join(', ');

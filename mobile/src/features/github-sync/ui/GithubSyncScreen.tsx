@@ -16,7 +16,7 @@ import { GITHUB_SYNC_DEFAULT_BRANCH } from '../lib/constants';
 import type { GithubRepoSummary } from '../lib/githubApi';
 import { useGithubSync } from '../model/useGithubSync';
 import { GithubRepoPickerSheet } from './GithubRepoPickerSheet';
-import { GithubSyncBranchText, githubSyncBranchA11yLabel } from './GithubSyncBranchText';
+import { githubSyncBranchA11yLabel, GithubSyncBranchText } from './GithubSyncBranchText';
 import { GithubSyncHistorySheet } from './GithubSyncHistorySheet';
 
 export function GithubSyncScreen() {
@@ -117,7 +117,12 @@ export function GithubSyncScreen() {
         Alert.alert(t('common.error'), t('settings.githubSync.syncRefConflict'));
         return;
       }
-      Alert.alert(t('common.error'), result.message ?? t('settings.githubSync.syncFailed'));
+      Alert.alert(
+        t('common.error'),
+        'message' in result && result.message
+          ? result.message
+          : t('settings.githubSync.syncFailed'),
+      );
       return;
     }
     if (result.alreadyUpToDate) {
@@ -175,10 +180,7 @@ export function GithubSyncScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Text
-          className="mb-4 text-[14px] leading-5"
-          style={{ color: color.text.secondary }}
-        >
+        <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
           {t('settings.githubSync.plaintextWarning')}
         </Text>
 
@@ -193,15 +195,17 @@ export function GithubSyncScreen() {
                 style={{ color: color.text.muted }}
               />
             }
-            subtitleA11y={githubSyncBranchA11yLabel(t, 'settings.githubSync.repoBranch', branchName)}
+            subtitleA11y={githubSyncBranchA11yLabel(
+              t,
+              'settings.githubSync.repoBranch',
+              branchName,
+            )}
             leftIcon={<GitBranch size={20} color={color.accent.primary} strokeWidth={1.8} />}
             onPress={() => setRepoPickerVisible(true)}
             isFirst
           />
           <SettingsRow
-            label={
-              isSyncing ? t('settings.githubSync.syncing') : t('settings.githubSync.syncNow')
-            }
+            label={isSyncing ? t('settings.githubSync.syncing') : t('settings.githubSync.syncNow')}
             subtitle={syncSubtitle}
             leftIcon={<RefreshCw size={20} color={color.accent.primary} strokeWidth={1.8} />}
             loading={isSyncing}

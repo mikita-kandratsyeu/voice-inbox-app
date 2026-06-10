@@ -5,7 +5,7 @@ import { useRecordStore } from '@/entities/record';
 import { useProEntitlement } from '@/features/pro-license';
 import type { ImportResult } from '@/features/sync-data';
 
-import { GITHUB_SYNC_COOLDOWN_MS, GITHUB_SYNC_DEFAULT_BRANCH } from '../lib/constants';
+import { GITHUB_SYNC_DEFAULT_BRANCH } from '../lib/constants';
 import { fetchGithubSyncHistory } from '../lib/fetchGithubSyncHistory';
 import {
   createGithubRepo,
@@ -28,11 +28,8 @@ import {
   setGithubSyncRepository,
 } from '../lib/githubSecrets';
 import { registerGithubConnectSession } from '../lib/githubSyncConnectSession';
-import {
-  isGithubSyncSessionActive,
-  setGithubSyncSessionActive,
-  subscribeGithubSyncSession,
-} from '../lib/githubSyncSession';
+import { runGithubSyncNow } from '../lib/githubSyncNow';
+import { isGithubSyncSessionActive, subscribeGithubSyncSession } from '../lib/githubSyncSession';
 import { clearGithubSyncState, getGithubSyncLastSyncedAt } from '../lib/githubSyncState';
 import { pushGithubCommit } from '../lib/pushGithubCommit';
 import { restoreGithubSyncVersion } from '../lib/restoreGithubSyncVersion';
@@ -43,9 +40,6 @@ function getGithubApiErrorStatus(err: unknown): number | undefined {
   }
   return undefined;
 }
-
-let githubSyncInFlight = false;
-let githubSyncLastAttemptAt = 0;
 
 export function useGithubSync() {
   const { isProActive } = useProEntitlement();
@@ -192,45 +186,29 @@ export function useGithubSync() {
   }, []);
 
   const syncNow = useCallback(async () => {
-    if (!isProActive) {
-      return { ok: false as const, code: 'pro_required' };
-    }
-    if (githubSyncInFlight) {
-      return { ok: false as const, code: 'sync_in_progress' };
-    }
-    const cooldownRemainingMs = GITHUB_SYNC_COOLDOWN_MS - (Date.now() - githubSyncLastAttemptAt);
-    if (cooldownRemainingMs > 0) {
-      return {
-        ok: false as const,
-        code: 'sync_cooldown',
-        retryAfterSec: Math.ceil(cooldownRemainingMs / 1000),
-      };
-    }
     const current = await getGithubSyncSecrets();
-    if (!current) {
-      return { ok: false as const, code: 'not_connected' };
+    const result = await runGithubSyncNow({
+      isProActive,
+      isConnected: current != null,
+      push: async () => {
+        if (!current) {
+          return { ok: false as const, code: 'not_connected' };
+        }
+        return pushGithubCommit({
+          secrets: current,
+          records,
+          folders,
+        });
+      },
+    });
+    if (result.ok) {
+      setLastSyncedAt(getGithubSyncLastSyncedAt());
+    } else if (result.code === 'unauthorized') {
+      await clearGithubSyncSecrets();
+      setSecrets(null);
+      setConnected(false);
     }
-    githubSyncInFlight = true;
-    githubSyncLastAttemptAt = Date.now();
-    setGithubSyncSessionActive(true);
-    try {
-      const result = await pushGithubCommit({
-        secrets: current,
-        records,
-        folders,
-      });
-      if (result.ok) {
-        setLastSyncedAt(getGithubSyncLastSyncedAt());
-      } else if (result.code === 'unauthorized') {
-        await clearGithubSyncSecrets();
-        setSecrets(null);
-        setConnected(false);
-      }
-      return result;
-    } finally {
-      githubSyncInFlight = false;
-      setGithubSyncSessionActive(false);
-    }
+    return result;
   }, [folders, isProActive, records]);
 
   const loadHistory = useCallback(async () => {

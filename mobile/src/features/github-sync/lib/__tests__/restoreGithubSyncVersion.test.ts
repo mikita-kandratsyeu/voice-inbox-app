@@ -11,6 +11,8 @@ jest.mock('@/features/sync-data', () => {
   };
 });
 
+import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
+
 jest.mock('@/features/pro-license/lib/proEntitlementStorage', () => ({
   isProActiveFromStorageSync: jest.fn(() => true),
 }));
@@ -23,6 +25,7 @@ jest.mock('../githubApi', () => ({
 }));
 
 const mockGetFileContentAtRef = jest.mocked(getFileContentAtRef);
+const mockIsProActiveFromStorageSync = jest.mocked(isProActiveFromStorageSync);
 
 const manifest = {
   version: 4,
@@ -92,6 +95,44 @@ describe('restoreGithubSyncVersion', () => {
         commitSha: 'missing',
       }),
     ).resolves.toEqual({ ok: false, code: 'manifest_not_found' });
+  });
+
+  it('returns pro_required when pro is inactive', async () => {
+    mockIsProActiveFromStorageSync.mockReturnValueOnce(false);
+
+    await expect(
+      restoreGithubSyncVersion({
+        secrets: {
+          accessToken: 'token',
+          owner: 'octocat',
+          repo: 'notes',
+          branch: 'voice-inbox-ai',
+          basePath: 'voice-inbox-ai',
+        },
+        commitSha: 'abc123',
+      }),
+    ).resolves.toEqual({ ok: false, code: 'pro_required' });
+  });
+
+  it('returns restore_failed when manifest cannot be fetched', async () => {
+    mockGetFileContentAtRef.mockRejectedValue(new Error('network down'));
+
+    await expect(
+      restoreGithubSyncVersion({
+        secrets: {
+          accessToken: 'token',
+          owner: 'octocat',
+          repo: 'notes',
+          branch: 'voice-inbox-ai',
+          basePath: 'voice-inbox-ai',
+        },
+        commitSha: 'abc123',
+      }),
+    ).resolves.toEqual({
+      ok: false,
+      code: 'restore_failed',
+      message: 'network down',
+    });
   });
 
   it('returns invalid_manifest for unsupported payload', async () => {

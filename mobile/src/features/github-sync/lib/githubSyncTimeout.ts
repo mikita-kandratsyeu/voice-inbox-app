@@ -16,7 +16,9 @@ export function withGithubSyncTimeout<T>(
 ): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => {
-      reject(Object.assign(new Error(GITHUB_SYNC_TIMEOUT_ERROR), { code: GITHUB_SYNC_TIMEOUT_ERROR }));
+      reject(
+        Object.assign(new Error(GITHUB_SYNC_TIMEOUT_ERROR), { code: GITHUB_SYNC_TIMEOUT_ERROR }),
+      );
     }, timeoutMs);
 
     promise.then(

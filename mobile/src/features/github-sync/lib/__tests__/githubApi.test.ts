@@ -388,8 +388,7 @@ describe('githubApi', () => {
 
       const createTreeCall = mockNitroFetch.mock.calls.find(
         ([url, init]) =>
-          url === 'https://api.github.com/repos/octocat/hello/git/trees' &&
-          init?.method === 'POST',
+          url === 'https://api.github.com/repos/octocat/hello/git/trees' && init?.method === 'POST',
       );
       expect(JSON.parse(String(createTreeCall?.[1]?.body))).toEqual({
         base_tree: 'parent-tree-sha',

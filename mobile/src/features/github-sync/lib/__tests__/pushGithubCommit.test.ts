@@ -1,8 +1,15 @@
 import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
+import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 
 import { buildGithubSnapshot } from '../buildGithubSnapshot';
-import { createGithubCommitWithFiles, fetchGithubUserLogin, getBranchRefSha } from '../githubApi';
+import { GITHUB_SYNC_TIMEOUT_MS } from '../constants';
+import {
+  createGithubCommitWithFiles,
+  fetchGithubUserLogin,
+  getBranchRefSha,
+  listTreePathsAtCommit,
+} from '../githubApi';
 import {
   getGithubSyncContentHashes,
   setGithubSyncContentHashes,
@@ -10,7 +17,6 @@ import {
   setGithubSyncLastError,
   setGithubSyncLastSyncedAt,
 } from '../githubSyncState';
-import { GITHUB_SYNC_TIMEOUT_MS } from '../constants';
 import { pushGithubCommit } from '../pushGithubCommit';
 
 jest.mock('@/features/pro-license/lib/proEntitlementStorage', () => ({
@@ -39,10 +45,12 @@ jest.mock('../githubSyncState', () => ({
   setGithubSyncLastSyncedAt: jest.fn(),
 }));
 
+const mockIsProActiveFromStorageSync = jest.mocked(isProActiveFromStorageSync);
 const mockBuildGithubSnapshot = jest.mocked(buildGithubSnapshot);
 const mockCreateGithubCommitWithFiles = jest.mocked(createGithubCommitWithFiles);
 const mockFetchGithubUserLogin = jest.mocked(fetchGithubUserLogin);
 const mockGetBranchRefSha = jest.mocked(getBranchRefSha);
+const mockListTreePathsAtCommit = jest.mocked(listTreePathsAtCommit);
 const mockGetGithubSyncContentHashes = jest.mocked(getGithubSyncContentHashes);
 
 const secrets = {
@@ -84,6 +92,16 @@ describe('pushGithubCommit', () => {
       folderCount: 1,
       graphLayoutCount: 0,
     });
+  });
+
+  it('returns pro_required when pro is inactive', async () => {
+    mockIsProActiveFromStorageSync.mockReturnValueOnce(false);
+
+    await expect(pushGithubCommit({ secrets, records, folders })).resolves.toEqual({
+      ok: false,
+      code: 'pro_required',
+    });
+    expect(mockFetchGithubUserLogin).not.toHaveBeenCalled();
   });
 
   it('returns alreadyUpToDate when hashes are unchanged', async () => {
@@ -138,6 +156,35 @@ describe('pushGithubCommit', () => {
     expect(setGithubSyncLastError).toHaveBeenCalledWith('rate limited');
   });
 
+  it('propagates non-401 auth failures as sync_failed', async () => {
+    const err = Object.assign(new Error('GitHub user failed: 503'), { status: 503 });
+    mockFetchGithubUserLogin.mockRejectedValue(err);
+
+    await expect(pushGithubCommit({ secrets, records, folders })).resolves.toEqual({
+      ok: false,
+      code: 'sync_failed',
+      message: 'GitHub user failed: 503',
+    });
+  });
+
+  it('detects deleted note files from the remote tree', async () => {
+    mockGetGithubSyncContentHashes.mockReturnValue({
+      'voice-inbox-ai/notes/rec-1.md': 'old-hash',
+    });
+    mockListTreePathsAtCommit.mockResolvedValue([
+      'voice-inbox-ai/notes/rec-1.md',
+      'voice-inbox-ai/notes/rec-old.md',
+    ]);
+
+    await pushGithubCommit({ secrets, records, folders });
+
+    expect(mockCreateGithubCommitWithFiles).toHaveBeenCalledWith(
+      expect.objectContaining({
+        deletions: ['voice-inbox-ai/notes/rec-old.md'],
+      }),
+    );
+  });
+
   it('returns unauthorized when token validation fails with 401', async () => {
     const err = Object.assign(new Error('GitHub user failed: 401'), { status: 401 });
     mockFetchGithubUserLogin.mockRejectedValue(err);
@@ -175,9 +222,7 @@ describe('pushGithubCommit', () => {
   it('returns sync_timeout when the operation exceeds the budget', async () => {
     jest.useFakeTimers();
     mockGetGithubSyncContentHashes.mockReturnValue({});
-    mockCreateGithubCommitWithFiles.mockImplementation(
-      () => new Promise(() => {}),
-    );
+    mockCreateGithubCommitWithFiles.mockImplementation(() => new Promise(() => {}));
 
     const resultPromise = pushGithubCommit({ secrets, records, folders });
     await jest.advanceTimersByTimeAsync(GITHUB_SYNC_TIMEOUT_MS + 1);
