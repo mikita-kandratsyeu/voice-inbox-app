@@ -108,21 +108,24 @@ export function AdminSupportPanel() {
   const [appLogsById, setAppLogsById] = useState<Record<string, string | null>>({});
   const [appLogsLoadingId, setAppLogsLoadingId] = useState<string | null>(null);
 
-  const loadAppLogs = useCallback(async (issueId: string) => {
-    if (appLogsById[issueId] !== undefined) {
-      return;
-    }
-    setAppLogsLoadingId(issueId);
-    try {
-      const res = await fetch(`/api/admin/support/${issueId}`, { credentials: 'include' });
-      const data = (await res.json()) as { ok?: boolean; appLogs?: string | null };
-      if (data.ok) {
-        setAppLogsById((prev) => ({ ...prev, [issueId]: data.appLogs ?? null }));
+  const loadAppLogs = useCallback(
+    async (issueId: string) => {
+      if (appLogsById[issueId] !== undefined) {
+        return;
       }
-    } finally {
-      setAppLogsLoadingId(null);
-    }
-  }, [appLogsById]);
+      setAppLogsLoadingId(issueId);
+      try {
+        const res = await fetch(`/api/admin/support/${issueId}`, { credentials: 'include' });
+        const data = (await res.json()) as { ok?: boolean; appLogs?: string | null };
+        if (data.ok) {
+          setAppLogsById((prev) => ({ ...prev, [issueId]: data.appLogs ?? null }));
+        }
+      } finally {
+        setAppLogsLoadingId(null);
+      }
+    },
+    [appLogsById],
+  );
 
   const toggleIssueLogs = useCallback(
     (issueId: string, isOpen: boolean) => {
