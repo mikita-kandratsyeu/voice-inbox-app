@@ -248,6 +248,8 @@
       "filtersSelectHint": "Выберите сохранение, чтобы увидеть фильтры",
       "listMeta": "Версия {{version}} · {{count}} узлов",
       "filtersTitle": "Применённые фильтры",
+      "filtersExpandA11y": "Показать применённые фильтры",
+      "filtersCollapseA11y": "Скрыть применённые фильтры",
       "filters": {
         "folder": "Папка",
         "tags": "Теги",

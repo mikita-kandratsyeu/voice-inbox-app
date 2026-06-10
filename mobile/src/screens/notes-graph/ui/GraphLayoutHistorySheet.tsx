@@ -1,9 +1,23 @@
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import dayjs from 'dayjs';
-import { Check, History, Trash2 } from 'lucide-react-native';
+import { Check, ChevronRight, History, SlidersHorizontal, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  LayoutAnimation,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
@@ -39,6 +53,27 @@ type AppliedFiltersCardProps = {
 };
 
 function AppliedFiltersCard({ color, rows, title, emptyMessage }: AppliedFiltersCardProps) {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+  const chevronRotation = useSharedValue(0);
+
+  useEffect(() => {
+    chevronRotation.value = withTiming(expanded ? 90 : 0, {
+      duration: 120,
+      easing: expanded ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+    });
+  }, [chevronRotation, expanded]);
+
+  const chevronAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${chevronRotation.value}deg` }],
+  }));
+
+  const toggleExpanded = useCallback(() => {
+    hapticSelection();
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded((value) => !value);
+  }, []);
+
   return (
     <View
       style={{
@@ -47,63 +82,131 @@ function AppliedFiltersCard({ color, rows, title, emptyMessage }: AppliedFilters
         borderColor: color.border.default,
         borderRadius: 10,
         borderWidth: 1,
-        gap: 4,
         marginBottom: 10,
-        paddingHorizontal: 10,
-        paddingVertical: 8,
+        overflow: 'hidden',
       }}
     >
-      <Text
-        style={{
-          color: color.text.secondary,
-          fontSize: 12,
-          fontWeight: '600',
-          lineHeight: 16,
-          marginBottom: 2,
-        }}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        accessibilityLabel={
+          expanded
+            ? t('notesGraph.history.filtersCollapseA11y')
+            : t('notesGraph.history.filtersExpandA11y')
+        }
+        onPress={toggleExpanded}
+        style={({ pressed }) => ({
+          backgroundColor: pressed ? color.background.tertiary : 'transparent',
+          width: '100%',
+        })}
       >
-        {title}
-      </Text>
-      {rows.length === 0 ? (
-        <Text style={{ color: color.text.secondary, fontSize: 12, lineHeight: 16 }}>
-          {emptyMessage}
-        </Text>
-      ) : (
-        rows.map((row) => (
+        <View
+          style={{
+            alignItems: 'center',
+            flexDirection: 'row',
+            gap: 12,
+            minHeight: 52,
+            paddingHorizontal: 12,
+            paddingVertical: 10,
+            width: '100%',
+          }}
+        >
           <View
-            key={row.id}
             style={{
-              alignItems: 'flex-start',
-              flexDirection: 'row',
-              gap: 6,
+              alignItems: 'center',
+              backgroundColor: color.background.tertiary,
+              borderRadius: 10,
+              flexShrink: 0,
+              height: 36,
+              justifyContent: 'center',
+              width: 36,
             }}
           >
-            <Text
-              style={{
-                color: color.text.secondary,
-                flexShrink: 0,
-                fontSize: 12,
-                lineHeight: 16,
-                width: 88,
-              }}
-            >
-              {row.label}
-            </Text>
-            <Text
-              numberOfLines={2}
-              style={{
-                color: color.text.primary,
-                flex: 1,
-                fontSize: 12,
-                lineHeight: 16,
-                minWidth: 0,
-              }}
-            >
-              {row.value}
-            </Text>
+            <SlidersHorizontal size={18} color={color.text.secondary} strokeWidth={2} />
           </View>
-        ))
-      )}
+          <Text
+            style={{
+              color: color.text.primary,
+              flex: 1,
+              flexShrink: 1,
+              fontSize: 16,
+              fontWeight: '600',
+              lineHeight: 21,
+              minWidth: 0,
+            }}
+            numberOfLines={1}
+          >
+            {title}
+          </Text>
+          <Animated.View
+            style={[
+              chevronAnimatedStyle,
+              {
+                alignItems: 'center',
+                flexShrink: 0,
+                height: 28,
+                justifyContent: 'center',
+                width: 28,
+              },
+            ]}
+          >
+            <ChevronRight size={18} color={color.text.muted} strokeWidth={2.2} />
+          </Animated.View>
+        </View>
+      </Pressable>
+      {expanded ? (
+        <View
+          style={{
+            borderTopColor: color.border.default,
+            borderTopWidth: 1,
+            gap: 4,
+            paddingBottom: 10,
+            paddingHorizontal: 12,
+            paddingTop: 8,
+          }}
+        >
+          {rows.length === 0 ? (
+            <Text style={{ color: color.text.secondary, fontSize: 12, lineHeight: 16 }}>
+              {emptyMessage}
+            </Text>
+          ) : (
+            rows.map((row) => (
+              <View
+                key={row.id}
+                style={{
+                  alignItems: 'flex-start',
+                  flexDirection: 'row',
+                  gap: 6,
+                }}
+              >
+                <Text
+                  style={{
+                    color: color.text.secondary,
+                    flexShrink: 0,
+                    fontSize: 12,
+                    lineHeight: 16,
+                    width: 88,
+                  }}
+                >
+                  {row.label}
+                </Text>
+                <Text
+                  numberOfLines={2}
+                  style={{
+                    color: color.text.primary,
+                    flex: 1,
+                    fontSize: 12,
+                    lineHeight: 16,
+                    minWidth: 0,
+                  }}
+                >
+                  {row.value}
+                </Text>
+              </View>
+            ))
+          )}
+        </View>
+      ) : null}
     </View>
   );
 }

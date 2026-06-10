@@ -243,6 +243,8 @@
       "filtersSelectHint": "Select a saved layout to see its filters",
       "listMeta": "Version {{version}} · {{count}} nodes moved",
       "filtersTitle": "Applied filters",
+      "filtersExpandA11y": "Show applied filters",
+      "filtersCollapseA11y": "Hide applied filters",
       "filters": {
         "folder": "Folder",
         "tags": "Tags",
