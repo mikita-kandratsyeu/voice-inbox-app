@@ -11,7 +11,7 @@ export type AllTasksCalendarMetrics = {
   dayCellHeight: number;
   selectedDayRadius: number;
   navButtonSize: number;
-  weekNavGap: number;
+  navIconSize: number;
   dotSize: number;
 };
 
@@ -29,8 +29,8 @@ export function getAllTasksCalendarMetrics(isTablet: boolean): AllTasksCalendarM
       dayNumberFontSize: 18,
       dayCellHeight: 64,
       selectedDayRadius: 14,
-      navButtonSize: 30,
-      weekNavGap: 2,
+      navButtonSize: 36,
+      navIconSize: 24,
       dotSize: 4,
     };
   }
@@ -47,8 +47,8 @@ export function getAllTasksCalendarMetrics(isTablet: boolean): AllTasksCalendarM
     dayNumberFontSize: 16,
     dayCellHeight: 56,
     selectedDayRadius: 12,
-    navButtonSize: 28,
-    weekNavGap: 0,
+    navButtonSize: 32,
+    navIconSize: 22,
     dotSize: 3.5,
   };
 }

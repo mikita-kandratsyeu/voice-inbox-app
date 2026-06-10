@@ -79,10 +79,10 @@ function WeekNavControls({
   nextWeekA11y: string;
 }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: metrics.weekNavGap }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       <Pressable
         onPress={onPreviousWeek}
-        hitSlop={8}
+        hitSlop={10}
         accessibilityRole="button"
         accessibilityLabel={previousWeekA11y}
         style={({ pressed }) => [
@@ -95,11 +95,11 @@ function WeekNavControls({
           pressed ? { opacity: 0.7 } : null,
         ]}
       >
-        <ChevronLeft size={20} color={color.text.secondary} strokeWidth={2.4} />
+        <ChevronLeft size={metrics.navIconSize} color={color.text.secondary} strokeWidth={2.5} />
       </Pressable>
       <Pressable
         onPress={onNextWeek}
-        hitSlop={8}
+        hitSlop={10}
         accessibilityRole="button"
         accessibilityLabel={nextWeekA11y}
         style={({ pressed }) => [
@@ -112,7 +112,7 @@ function WeekNavControls({
           pressed ? { opacity: 0.7 } : null,
         ]}
       >
-        <ChevronRight size={20} color={color.text.secondary} strokeWidth={2.4} />
+        <ChevronRight size={metrics.navIconSize} color={color.text.secondary} strokeWidth={2.5} />
       </Pressable>
     </View>
   );
@@ -424,7 +424,7 @@ export function AllTasksCalendarPanel({
         <View
           style={{
             flexDirection: 'row',
-            alignItems: 'flex-start',
+            alignItems: 'center',
             justifyContent: 'space-between',
             gap: 12,
           }}
@@ -461,11 +461,11 @@ export function AllTasksCalendarPanel({
 
           <View
             style={{
-              marginTop: 2,
               flexShrink: 0,
               flexDirection: 'row',
               alignItems: 'center',
               gap: 8,
+              minHeight: metrics.navButtonSize,
             }}
           >
             {!isToday ? (
@@ -474,13 +474,20 @@ export function AllTasksCalendarPanel({
                 hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel={t('allTasks.calendarGoToTodayA11y')}
-                style={({ pressed }) => [pressed ? { opacity: 0.88 } : null]}
+                style={({ pressed }) => [
+                  {
+                    height: metrics.navButtonSize,
+                    justifyContent: 'center',
+                  },
+                  pressed ? { opacity: 0.88 } : null,
+                ]}
               >
                 <Text
                   style={{
                     color: color.accent.primary,
                     fontSize: metrics.headerFontSize,
                     fontWeight: '600',
+                    lineHeight: metrics.headerFontSize + 2,
                   }}
                 >
                   {t('allTasks.today')}
@@ -502,10 +509,12 @@ export function AllTasksCalendarPanel({
         <Text
           style={{
             marginTop: 12,
+            width: '100%',
             color: color.text.secondary,
             fontSize: metrics.monthFontSize,
             fontWeight: '500',
             lineHeight: metrics.monthFontSize + 2,
+            textAlign: 'center',
           }}
           numberOfLines={1}
         >
