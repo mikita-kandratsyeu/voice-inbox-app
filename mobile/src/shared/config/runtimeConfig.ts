@@ -1,6 +1,7 @@
 import {
   APP_STORE_URL,
   GOOGLE_PLAY_URL,
+  PREVIEW_WEB_API_URL,
   PRO_LICENSE_KEY_ACTIVATION_ENABLED,
   REVENUECAT_AI_RESET_PRODUCT_ID,
   REVENUECAT_API_KEY_ANDROID,
@@ -22,7 +23,11 @@ import {
   setConfigSettings,
   setDefaults,
 } from '@react-native-firebase/remote-config';
+import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
+import { isNumber, isString } from '@/shared/lib/type-guards';
+
+import { shouldUsePreviewWebApi } from './previewWebApiRouting';
 import { readTestflightWebApiUrlOverride } from './testflightWebApiOverride';
 
 type RemoteKey =
@@ -30,6 +35,7 @@ type RemoteKey =
   | 'APP_STORE_URL'
   | 'GOOGLE_PLAY_URL'
   | 'WEB_API_URL'
+  | 'PREVIEW_WEB_API_URL'
   | 'YANDEX_REWARDED_AD_UNIT_ID'
   | 'YANDEX_BANNER_AD_UNIT_ID'
   | 'YANDEX_INTERSTITIAL_AD_UNIT_ID'
@@ -48,6 +54,8 @@ export type RuntimeConfigSnapshot = {
   appStoreUrl: string;
   googlePlayUrl: string;
   webApiUrl: string;
+  /** TEMPORARY: staging/preview host; remove with previewWebApiRouting. */
+  previewWebApiUrl: string;
   yandexRewardedAdUnitId: string;
   yandexBannerAdUnitId: string;
   yandexInterstitialAdUnitId: string;
@@ -72,6 +80,7 @@ function buildEmbedded(): RuntimeConfigSnapshot {
     appStoreUrl: APP_STORE_URL?.trim() ?? '',
     googlePlayUrl: GOOGLE_PLAY_URL?.trim() ?? '',
     webApiUrl: WEB_API_URL?.trim() ?? '',
+    previewWebApiUrl: PREVIEW_WEB_API_URL?.trim() ?? '',
     yandexRewardedAdUnitId: YANDEX_REWARDED_AD_UNIT_ID?.trim() ?? '',
     yandexBannerAdUnitId: YANDEX_BANNER_AD_UNIT_ID?.trim() ?? '',
     yandexInterstitialAdUnitId: YANDEX_INTERSTITIAL_AD_UNIT_ID?.trim() ?? '',
@@ -91,6 +100,7 @@ function toFirebaseDefaults(s: RuntimeConfigSnapshot): Record<string, string> {
     APP_STORE_URL: s.appStoreUrl,
     GOOGLE_PLAY_URL: s.googlePlayUrl,
     WEB_API_URL: s.webApiUrl,
+    PREVIEW_WEB_API_URL: s.previewWebApiUrl,
     YANDEX_REWARDED_AD_UNIT_ID: s.yandexRewardedAdUnitId,
     YANDEX_BANNER_AD_UNIT_ID: s.yandexBannerAdUnitId,
     YANDEX_INTERSTITIAL_AD_UNIT_ID: s.yandexInterstitialAdUnitId,
@@ -114,8 +124,12 @@ function isValidAbsoluteHttpUrl(url: string): boolean {
   }
 }
 
-function readRemoteWebApiUrl(rc: RemoteConfigModule, embeddedFallback: string): string {
-  const raw = getValue(rc, 'WEB_API_URL').asString().trim();
+function readRemoteHttpApiUrl(
+  rc: RemoteConfigModule,
+  key: 'WEB_API_URL' | 'PREVIEW_WEB_API_URL',
+  embeddedFallback: string,
+): string {
+  const raw = getValue(rc, key).asString().trim();
 
   if (raw.length === 0) {
     return embeddedFallback;
@@ -174,7 +188,8 @@ function mergeRemote(
     websiteUrl: readRemoteString(rc, 'WEBSITE_URL', embedded.websiteUrl),
     appStoreUrl: readRemoteString(rc, 'APP_STORE_URL', embedded.appStoreUrl),
     googlePlayUrl: readRemoteString(rc, 'GOOGLE_PLAY_URL', embedded.googlePlayUrl),
-    webApiUrl: readRemoteWebApiUrl(rc, embedded.webApiUrl),
+    webApiUrl: readRemoteHttpApiUrl(rc, 'WEB_API_URL', embedded.webApiUrl),
+    previewWebApiUrl: readRemoteHttpApiUrl(rc, 'PREVIEW_WEB_API_URL', embedded.previewWebApiUrl),
     yandexRewardedAdUnitId: readRemoteString(
       rc,
       'YANDEX_REWARDED_AD_UNIT_ID',
@@ -269,6 +284,39 @@ export function getGooglePlayUrl(): string {
   return snapshot.googlePlayUrl;
 }
 
+function readNativeAppVersionAndBuild(): { appVersion: string; buildNumber: string } {
+  let appVersion = '';
+  let buildNumber = '';
+
+  try {
+    appVersion = String(DeviceInfoModule.version ?? '').trim();
+    const buildRaw =
+      'buildNumber' in DeviceInfoModule
+        ? (DeviceInfoModule as { buildNumber?: string | number }).buildNumber
+        : undefined;
+    buildNumber = isString(buildRaw) || isNumber(buildRaw) ? String(buildRaw).trim() : '';
+  } catch {
+    // Fall through with empty strings; routing stays on production WEB_API_URL.
+  }
+
+  return { appVersion, buildNumber };
+}
+
+function resolveWebApiUrlFromSnapshot(config: RuntimeConfigSnapshot): string {
+  const previewUrl = config.previewWebApiUrl.trim();
+
+  if (previewUrl.length > 0) {
+    const { appVersion, buildNumber } = readNativeAppVersionAndBuild();
+
+    // TEMPORARY: remove preview routing once staging is merged into WEB_API_URL.
+    if (shouldUsePreviewWebApi(appVersion, buildNumber)) {
+      return previewUrl;
+    }
+  }
+
+  return config.webApiUrl;
+}
+
 export function getWebApiUrl(): string {
   const override = readTestflightWebApiUrlOverride();
 
@@ -276,7 +324,7 @@ export function getWebApiUrl(): string {
     return override;
   }
 
-  return snapshot.webApiUrl;
+  return resolveWebApiUrlFromSnapshot(snapshot);
 }
 
 export function getYandexRewardedAdUnitId(): string {
