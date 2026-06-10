@@ -8,10 +8,10 @@ Repository overview: [../README.md](../README.md).
 
 ## Getting started
 
+Install dependencies from the **repository root** (`yarn install` — see [../README.md](../README.md#monorepo-setup)).
+
 ```bash
-cd mobile
-yarn install
-cp .env.example .env
+cp mobile/.env.example mobile/.env
 ```
 
 - **iOS:** Xcode, CocoaPods (`pod install` in `ios/` when needed). `GoogleService-Info.plist` is in the project.
@@ -19,10 +19,12 @@ cp .env.example .env
 - **Env:** `WEB_API_URL` for cloud AI; Firebase App Check for API auth (`FIREBASE_APP_CHECK_DEBUG_TOKEN` in debug); Yandex ad unit IDs optional; RevenueCat keys when subscriptions are enabled.
 
 ```bash
-yarn start
-yarn ios       # APP_ENV=development
-yarn android
+yarn workspace voice-inbox-app start
+yarn workspace voice-inbox-app ios       # APP_ENV=development
+yarn workspace voice-inbox-app android
 ```
+
+From `mobile/` you can still run `yarn start`, `yarn ios`, etc. after a root install.
 
 Release builds: `yarn ios:release` / `yarn android:release` (`APP_ENV=production`).
 
@@ -144,20 +146,24 @@ patches/         patch-package overrides
 
 ---
 
-## Scripts (from `mobile/`)
+## Scripts
+
+Run from repo root with `yarn workspace voice-inbox-app <script>`, or `cd mobile` and use `yarn <script>`.
 
 | Script                                      | Description                                |
 | ------------------------------------------- | ------------------------------------------ |
-| `yarn start`                                | Metro (`APP_ENV=development`)              |
-| `yarn ios` / `yarn android`                 | Dev run on device/simulator                |
-| `yarn ios:release` / `yarn android:release` | Release mode on device                     |
-| `yarn type:check`                           | `tsc --noEmit`                             |
-| `yarn lint` / `yarn lint:fix`               | ESLint                                     |
-| `yarn test`                                 | Jest                                       |
-| `yarn validate`                             | lint-staged + types + tests (pre-commit)   |
-| `yarn validate:push`                        | types + tests CI-style                     |
-| `yarn db:generate`                          | Drizzle SQL from `schema.ts`               |
-| `yarn analyze:bundle`                       | Bundle size report (optional platform arg) |
+| `start`                                     | Metro (`APP_ENV=development`)              |
+| `ios` / `android`                           | Dev run on device/simulator                |
+| `ios:release` / `android:release`           | Release mode on device                     |
+| `type:check`                                | `tsc --noEmit`                             |
+| `lint` / `lint:fix`                         | ESLint                                     |
+| `test`                                      | Jest                                       |
+| `validate`                                  | lint-staged + types + tests (pre-commit)   |
+| `validate:push`                             | types + tests CI-style                     |
+| `db:generate`                               | Drizzle SQL from `schema.ts`               |
+| `analyze:bundle`                            | Bundle size report (optional platform arg) |
+
+Monorepo quality gates: `yarn turbo run lint type:check test --filter=voice-inbox-app`.
 
 `postinstall` runs `patch-package` and Android NetInfo Gradle fix.
 

@@ -10,54 +10,74 @@ jobs:
   mobile:
     name: Mobile
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: mobile
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: 24.x
 
-      - name: Enable Corepack
-        run: corepack enable
-
       - name: Restore yarn cache
         uses: actions/cache@v4
         with:
-          path: mobile/node_modules
-          key: ${{ runner.os }}-mobile-modules-${{ hashFiles('mobile/yarn.lock', 'mobile/.yarnrc.yml') }}
+          path: |
+            node_modules
+            mobile/node_modules
+            .yarn/cache
+            .turbo
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock', '.yarnrc.yml', 'package.json', 'mobile/package.json', 'web/package.json', 'telegram-bot/package.json') }}
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: node .yarn/releases/yarn-4.16.0.cjs install --immutable
 
       - name: Lint
         id: lint
-        run: yarn lint
+        run: |
+          FILTER="voice-inbox-app"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            FILTER="${FILTER}...[origin/main]"
+          fi
+          yarn turbo run lint --filter="$FILTER"
 
       - name: Format check
         id: format
-        run: yarn format:check
+        run: |
+          FILTER="voice-inbox-app"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            FILTER="${FILTER}...[origin/main]"
+          fi
+          yarn turbo run format:check --filter="$FILTER"
 
       - name: Typecheck
         id: typecheck
-        run: yarn type:check
+        run: |
+          FILTER="voice-inbox-app"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            FILTER="${FILTER}...[origin/main]"
+          fi
+          yarn turbo run type:check --filter="$FILTER"
 
       - name: Test
         id: test
         run: |
+          FILTER="voice-inbox-app"
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            yarn test --ci --forceExit --coverage --coverageReporters=json-summary --json --outputFile=test-results.json
+            FILTER="${FILTER}...[origin/main]"
+          fi
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            yarn turbo run test --filter="$FILTER" -- --ci --forceExit --coverage --coverageReporters=json-summary --json --outputFile=test-results.json
           else
-            yarn test --ci --forceExit
+            yarn turbo run test --filter="$FILTER" -- --ci --forceExit
           fi
 
       - name: Collect PR metrics
         if: always() && github.event_name == 'pull_request'
+        working-directory: mobile
         env:
           STEP_LINT_OUTCOME: ${{ steps.lint.outcome }}
           STEP_FORMAT_OUTCOME: ${{ steps.format.outcome }}
@@ -76,53 +96,67 @@ jobs:
   web:
     name: Web
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: 24.x
 
-      - name: Enable Corepack
-        run: corepack enable
-
       - name: Restore yarn cache
         uses: actions/cache@v4
         with:
-          path: web/node_modules
-          key: ${{ runner.os }}-web-modules-${{ hashFiles('web/yarn.lock', 'web/.yarnrc.yml') }}
+          path: |
+            node_modules
+            web/node_modules
+            .yarn/cache
+            .turbo
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock', '.yarnrc.yml', 'package.json', 'mobile/package.json', 'web/package.json', 'telegram-bot/package.json') }}
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: node .yarn/releases/yarn-4.16.0.cjs install --immutable
 
       - name: Lint
         id: lint
-        run: yarn lint
+        run: |
+          FILTER="voice-inbox-web"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            FILTER="${FILTER}...[origin/main]"
+          fi
+          yarn turbo run lint --filter="$FILTER"
 
       - name: Typecheck
         id: typecheck
         env:
-          # prisma.config.ts requires DATABASE_URL; prisma generate does not open a connection
           DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
-        run: yarn type:check
+        run: |
+          FILTER="voice-inbox-web"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            FILTER="${FILTER}...[origin/main]"
+          fi
+          yarn turbo run type:check --filter="$FILTER"
 
       - name: Test
         id: test
         run: |
+          FILTER="voice-inbox-web"
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            yarn test --ci --forceExit --coverage --coverageReporters=json-summary --json --outputFile=test-results.json
+            FILTER="${FILTER}...[origin/main]"
+          fi
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            yarn turbo run test --filter="$FILTER" -- --ci --forceExit --coverage --coverageReporters=json-summary --json --outputFile=test-results.json
           else
-            yarn test --ci --forceExit
+            yarn turbo run test --filter="$FILTER" -- --ci --forceExit
           fi
 
       - name: Collect PR metrics
         if: always() && github.event_name == 'pull_request'
+        working-directory: web
         env:
           STEP_LINT_OUTCOME: ${{ steps.lint.outcome }}
           STEP_TYPECHECK_OUTCOME: ${{ steps.typecheck.outcome }}
@@ -140,54 +174,74 @@ jobs:
   telegram-bot:
     name: Telegram bot
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: telegram-bot
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: 24.x
 
-      - name: Enable Corepack
-        run: corepack enable
-
       - name: Restore yarn cache
         uses: actions/cache@v4
         with:
-          path: telegram-bot/node_modules
-          key: ${{ runner.os }}-telegram-bot-modules-${{ hashFiles('telegram-bot/yarn.lock', 'telegram-bot/.yarnrc.yml') }}
+          path: |
+            node_modules
+            telegram-bot/node_modules
+            .yarn/cache
+            .turbo
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock', '.yarnrc.yml', 'package.json', 'mobile/package.json', 'web/package.json', 'telegram-bot/package.json') }}
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: node .yarn/releases/yarn-4.16.0.cjs install --immutable
 
       - name: Lint
         id: lint
-        run: yarn lint
+        run: |
+          FILTER="voice-inbox-telegram-bot"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            FILTER="${FILTER}...[origin/main]"
+          fi
+          yarn turbo run lint --filter="$FILTER"
 
       - name: Format check
         id: format
-        run: yarn format:check
+        run: |
+          FILTER="voice-inbox-telegram-bot"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            FILTER="${FILTER}...[origin/main]"
+          fi
+          yarn turbo run format:check --filter="$FILTER"
 
       - name: Typecheck
         id: typecheck
-        run: yarn type:check
+        run: |
+          FILTER="voice-inbox-telegram-bot"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            FILTER="${FILTER}...[origin/main]"
+          fi
+          yarn turbo run type:check --filter="$FILTER"
 
       - name: Test
         id: test
         run: |
+          FILTER="voice-inbox-telegram-bot"
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            yarn test --ci --forceExit --coverage --coverageReporters=json-summary --json --outputFile=test-results.json
+            FILTER="${FILTER}...[origin/main]"
+          fi
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            yarn turbo run test --filter="$FILTER" -- --ci --forceExit --coverage --coverageReporters=json-summary --json --outputFile=test-results.json
           else
-            yarn test --ci --forceExit
+            yarn turbo run test --filter="$FILTER" -- --ci --forceExit
           fi
 
       - name: Collect PR metrics
         if: always() && github.event_name == 'pull_request'
+        working-directory: telegram-bot
         env:
           STEP_LINT_OUTCOME: ${{ steps.lint.outcome }}
           STEP_FORMAT_OUTCOME: ${{ steps.format.outcome }}

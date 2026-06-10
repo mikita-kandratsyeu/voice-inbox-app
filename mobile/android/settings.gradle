@@ -21,7 +21,7 @@ def autolinkCommand = { ->
   }
   def cli = new File(rootDir, "../node_modules/@react-native-community/cli/build/bin.js").canonicalFile
   if (!cli.exists()) {
-    throw new org.gradle.api.GradleException("Autolinking: missing ${cli}. From repo root, run: cd mobile && yarn install")
+    throw new org.gradle.api.GradleException("Autolinking: missing ${cli}. From repo root, run: yarn install")
   }
   return [node, cli.absolutePath, "config"]
 }.call()

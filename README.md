@@ -2,17 +2,42 @@
 
 Voice Inbox AI is an **offline-first voice notes** application: capture audio on device, then get **transcripts, summaries, and actionable tasks** — with optional cloud AI and a public web presence.
 
-This repository is a **single Git repo** with **standalone** apps (no root `package.json`, no Yarn workspaces). Install dependencies and run scripts **from each app directory**. **Node.js ≥ 24.**
+This repository is a **Yarn 4 workspaces** monorepo with **Turborepo** task orchestration. One `yarn.lock` at the root; apps in `web/`, `mobile/`, and `telegram-bot/`. **Node.js ≥ 24.**
 
-| App | Path | Role |
-|-----|------|------|
-| **Mobile** | [`mobile/`](mobile/) | React Native app — Drizzle + SQLite, on-device Whisper, optional cloud API |
-| **Web** | [`web/`](web/) | Next.js landing, legal pages, mobile API, admin dashboard |
-| **Telegram bot** | [`telegram-bot/`](telegram-bot/) | Optional Grammy admin bot (same Postgres as web) |
+| App | Package | Path | Role |
+|-----|---------|------|------|
+| **Mobile** | `voice-inbox-app` | [`mobile/`](mobile/) | React Native app — Drizzle + SQLite, on-device Whisper, optional cloud API |
+| **Web** | `voice-inbox-web` | [`web/`](web/) | Next.js landing, legal pages, mobile API, admin dashboard |
+| **Telegram bot** | `voice-inbox-telegram-bot` | [`telegram-bot/`](telegram-bot/) | Optional Grammy admin bot (same Postgres as web) |
 
-Detailed setup and feature lists: **[mobile/README.md](mobile/README.md)** · **[web/README.md](web/README.md)** · **[telegram-bot/README.md](telegram-bot/README.md)**.
+Detailed setup and feature lists: **[mobile/README.md](mobile/README.md)** · **[web/README.md](web/README.md)** · **[telegram-bot/README.md](telegram-bot/README.md)** · shared packages: **[packages/README.md](packages/README.md)**.
 
 Cursor/agent conventions: [`.cursor/rules/repo-layout.mdc`](.cursor/rules/repo-layout.mdc).
+
+
+## Monorepo setup
+
+From the **repository root**:
+
+```bash
+yarn install
+# If a parent directory also has Yarn workspaces, use:
+# node .yarn/releases/yarn-4.16.0.cjs install
+```
+
+| Command | Description |
+| ------- | ----------- |
+| `yarn lint` | ESLint in all apps (via Turbo) |
+| `yarn type:check` | TypeScript + Prisma generate (web) |
+| `yarn test` | Jest in all apps |
+| `yarn validate` | `lint` + `type:check` + `test` everywhere |
+| `yarn validate:affected` | Same gates, only packages changed vs `origin/main` |
+| `yarn dev:web` | Next.js dev server |
+| `yarn build` | Production builds (`web` → `next build`) |
+
+Filter a single app: `yarn turbo run test --filter=voice-inbox-web`.
+
+Workspace scripts: `yarn workspace voice-inbox-app ios`, `yarn workspace voice-inbox-web db:push`, etc.
 
 
 ## Quick start
@@ -20,37 +45,36 @@ Cursor/agent conventions: [`.cursor/rules/repo-layout.mdc`](.cursor/rules/repo-l
 ### Mobile (`mobile/`)
 
 ```bash
-cd mobile
-yarn install
-cp .env.example .env
+yarn install    # from repo root
+cp mobile/.env.example mobile/.env
 # iOS: Xcode + CocoaPods; Android: google-services.json from Firebase
-yarn start
-yarn ios    # or yarn android
+yarn workspace voice-inbox-app start
+yarn workspace voice-inbox-app ios    # or android
 ```
 
-Quality gates: `yarn lint`, `yarn type:check`, `yarn test` (or `yarn validate` before push).
+Quality gates: `yarn turbo run lint type:check test --filter=voice-inbox-app`, or `yarn workspace voice-inbox-app validate` before push.
 
 ### Web (`web/`)
 
 ```bash
-cd web
-yarn install
-cp .env.example .env
+yarn install    # from repo root
+cp web/.env.example web/.env
 # Set DATABASE_URL, JWT_SECRET, FIREBASE_SERVICE_ACCOUNT, …
-yarn db:push
-yarn db:seed    # first superadmin when ADMIN_SEED_* are set
-yarn dev
+yarn workspace voice-inbox-web db:push
+yarn workspace voice-inbox-web db:seed    # first superadmin when ADMIN_SEED_* are set
+yarn dev:web
 ```
 
 Admin UI: `/admin`. Legal copy: [`web/content/`](web/content/).
 
+**Vercel:** set **Root Directory** to `web` and **Install Command** to `cd .. && yarn install --immutable` (monorepo install from parent), or deploy from repo root with build `yarn turbo run build --filter=voice-inbox-web`.
+
 ### Telegram bot (`telegram-bot/`)
 
 ```bash
-cd telegram-bot
-yarn install
-cp .env.example .env
-yarn dev
+yarn install    # from repo root
+cp telegram-bot/.env.example telegram-bot/.env
+yarn dev:telegram-bot
 ```
 
 Requires `DATABASE_URL`, `WEB_ADMIN_URL`, and `TELEGRAM_BOT_API_SECRET` (same value as on web) for API-backed menus.

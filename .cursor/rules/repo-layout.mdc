@@ -1,40 +1,47 @@
 ---
-description: Single Git repo with web and mobile apps (no workspace tooling)
+description: Yarn workspaces + Turborepo monorepo layout
 alwaysApply: true
 ---
 
 # Voice Inbox — repository layout
 
-One **Git repository** with **standalone** apps in `web/`, `mobile/`, and optionally `telegram-bot/`. There is **no** root `package.json`, **no** Yarn/npm workspaces, and **no** Turborepo/Nx-style orchestration — each app is its own Yarn 4 project (`packageManager` in that app’s `package.json`). **Node:** >= 24.
+One **Git repository** with **Yarn 4 workspaces** and **Turborepo** orchestration. Apps live in `web/`, `mobile/`, and `telegram-bot/`; future shared code goes in `packages/*`. **Node:** >= 24.
 
-| App | Path | Role |
-|-----|------|------|
-| Web | `web/` | Next.js, Prisma, public site / API / admin |
-| Mobile | `mobile/` | React Native (CLI), Drizzle, offline-first app |
-| Telegram bot | `telegram-bot/` | Optional admin bot (Grammy); `AdminUser.telegramUserId` + web `/api/admin/*` |
+| App | Package name | Path | Role |
+|-----|--------------|------|------|
+| Web | `voice-inbox-web` | `web/` | Next.js, Prisma, public site / API / admin |
+| Mobile | `voice-inbox-app` | `mobile/` | React Native (CLI), Drizzle, offline-first app |
+| Telegram bot | `voice-inbox-telegram-bot` | `telegram-bot/` | Optional Grammy admin bot |
 
-Install dependencies and run scripts **from the app directory** (`cd web`, `cd mobile`, or `cd telegram-bot`), not from the repo root.
+**Install and quality gates from the repository root** (uses committed Yarn 4.16.0 in `.yarn/releases/`):
 
-## Commands (from each app directory)
+```bash
+node .yarn/releases/yarn-4.16.0.cjs install   # or: yarn install (if no parent Yarn project)
+yarn lint
+yarn type:check
+yarn test
+yarn validate:affected   # PR-style: only changed packages vs origin/main
+```
 
-**Web:** `yarn dev`, `yarn build`, `yarn lint`, `yarn type:check`, `yarn db:generate`, `yarn db:push`, `yarn db:seed` (first admin via `ADMIN_SEED_*`), `yarn db:backup` / `yarn db:restore`
+App-specific dev servers: `yarn dev:web`, `yarn workspace voice-inbox-app start` (Metro), etc. You can still `cd` into an app and run its scripts.
 
-**Mobile:** `yarn start`, `yarn ios`, `yarn android`, `yarn lint`, `yarn type:check`, `yarn test`, `yarn db:generate`
+**Repo root:** `node scripts/release.mjs` — bump mobile/web semver + native build numbers.
 
-**Telegram bot:** `yarn dev`, `yarn start`, `yarn type:check`, `yarn test`
+## Monorepo notes
 
-**Repo root:** `node scripts/release.mjs` — bump mobile/web semver + native build numbers
+- Single `yarn.lock` at root; `nmHoistingLimits: workspaces` keeps `mobile/node_modules` for React Native autolinking.
+- `turbo.json` defines `lint`, `type:check`, `test`, `build`, `dev` pipelines.
+- Do not copy Prisma (web) and Drizzle (mobile) schemas between apps.
 
 ## Data layers
 
 - **Web:** Prisma + Postgres — admin, `AppConfig`, support, blog, Pro keys; **not** mobile note payloads.
 - **Mobile:** Drizzle + SQLite (op-sqlite) — records, transcripts, embeddings locally.
 
-Do not copy schemas between apps. When changing shared business logic (AI modes, backup format, entitlements), consider both sides.
-
 ## Docs & legal
 
 - Overview: root `README.md`
+- Shared packages placeholder: `packages/README.md`
 - Legal Markdown: `web/content/` — see `web/content/README.md` and `.cursor/rules/legal-content.mdc`
 
 ## Scope of changes

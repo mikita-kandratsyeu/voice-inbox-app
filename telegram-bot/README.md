@@ -40,12 +40,12 @@ Secrets (keys, passwords) are never shown in full; API keys use masked prefixes 
 
 ## Setup
 
+Install dependencies from the **repository root** (`yarn install` — see [../README.md](../README.md#monorepo-setup)).
+
 ```bash
-cd telegram-bot
-yarn install
-cp .env.example .env
-# Configure .env; ensure web schema is applied (yarn db:push in web/)
-yarn dev
+cp telegram-bot/.env.example telegram-bot/.env
+# Configure .env; ensure web schema is applied (yarn workspace voice-inbox-web db:push)
+yarn dev:telegram-bot
 ```
 
 Link your Telegram account:
@@ -81,12 +81,16 @@ Link your Telegram account:
 
 ## Scripts
 
+Run from repo root with `yarn workspace voice-inbox-telegram-bot <script>`, or `cd telegram-bot` and use `yarn <script>`.
+
 | Script            | Description                 |
 | ----------------- | --------------------------- |
-| `yarn dev`        | Long polling (development)  |
-| `yarn start`      | Production                  |
-| `yarn type:check` | TypeScript                  |
-| `yarn test`       | Unit tests (format helpers) |
+| `dev`             | Long polling (`yarn dev:telegram-bot` from root) |
+| `start`           | Production                  |
+| `type:check`      | TypeScript                  |
+| `test`            | Unit tests (format helpers) |
+
+Monorepo quality gates: `yarn turbo run lint type:check test --filter=voice-inbox-telegram-bot`.
 
 ## Project layout
 

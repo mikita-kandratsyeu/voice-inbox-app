@@ -8,10 +8,10 @@ Repository overview: [../README.md](../README.md).
 
 ## Getting started
 
+Install dependencies from the **repository root** (`yarn install` — see [../README.md](../README.md#monorepo-setup)).
+
 ```bash
-cd web
-yarn install
-cp .env.example .env
+cp web/.env.example web/.env
 ```
 
 1. Set **`DATABASE_URL`** and **`DIRECT_URL`** (Supabase Postgres; see `.env.example` for pooler URLs). Use the **`postgres`** pooler user — Prisma bypasses RLS; `anon` / `authenticated` do not.
@@ -24,7 +24,7 @@ cp .env.example .env
    ADMIN_SEED_LOGIN=admin ADMIN_SEED_PASSWORD='your-secure-password' yarn db:seed
    ```
 
-6. Run dev server: `yarn dev` → open `/admin` to sign in.
+6. Run dev server: `yarn dev:web` (from repo root) or `yarn workspace voice-inbox-web dev` → open `/admin` to sign in.
 
 Without Redis (`UPSTASH_*`), the API uses an in-memory job store — fine for local development.
 
@@ -61,20 +61,26 @@ Without Redis (`UPSTASH_*`), the API uses an in-memory job store — fine for lo
 
 ---
 
-## Scripts (from `web/`)
+## Scripts
+
+Run from repo root with `yarn workspace voice-inbox-web <script>`, or `cd web` and use `yarn <script>`.
 
 | Script | Description |
 | ------ | ----------- |
-| `yarn dev` | Next.js dev server |
-| `yarn build` | `prisma generate` + production build |
-| `yarn start` | Production server |
-| `yarn lint` / `yarn lint:fix` | ESLint |
-| `yarn type:check` | Prisma generate + `tsc` |
-| `yarn db:generate` | Prisma client only |
-| `yarn db:push` | Push schema to database (dev) |
-| `yarn db:seed` | Create first superadmin (`ADMIN_SEED_*`) |
-| `yarn db:backup` / `yarn db:restore` | `pg_dump` / restore helpers (requires `libpq`) |
-| `yarn release-post:draft` | Draft blog release post from git + `package.json` version |
+| `dev` | Next.js dev server (`yarn dev:web` from root) |
+| `build` | `prisma generate` + production build |
+| `start` | Production server |
+| `lint` / `lint:fix` | ESLint |
+| `type:check` | Prisma generate + `tsc` |
+| `db:generate` | Prisma client only |
+| `db:push` | Push schema to database (dev) |
+| `db:seed` | Create first superadmin (`ADMIN_SEED_*`) |
+| `db:backup` / `db:restore` | `pg_dump` / restore helpers (requires `libpq`) |
+| `release-post:draft` | Draft blog release post from git + `package.json` version |
+
+Monorepo quality gates: `yarn turbo run lint type:check test --filter=voice-inbox-web`.
+
+**Vercel (monorepo):** Root Directory `web`, Install Command `cd .. && yarn install --immutable`, Build Command `yarn build` (or from repo root: `yarn turbo run build --filter=voice-inbox-web`).
 
 ---
 
