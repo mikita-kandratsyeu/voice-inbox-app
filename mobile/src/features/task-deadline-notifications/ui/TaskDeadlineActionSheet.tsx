@@ -10,11 +10,7 @@ import { resolveDayjsLocale } from '@/shared/lib/date';
 import { hapticSelection, hapticSuccess } from '@/shared/lib/haptics';
 import { parseTaskDeadline } from '@/shared/lib/parseTaskDeadline';
 import { formatTaskDeadlineTimeForDisplay } from '@/shared/lib/taskDeadlineTimeDisplay';
-import {
-  AppBottomSheetModal,
-  SheetFooterButtons,
-  useBottomSheetContentPadding,
-} from '@/shared/ui';
+import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
 import {
   markTaskDeadlineNotificationDone,
@@ -82,9 +78,7 @@ export function TaskDeadlineActionSheet({
     const parsed = parseTaskDeadline(payload.deadline);
     if (!parsed) return payload.recordTitle;
 
-    const dateLabel = dayjs(parsed)
-      .locale(resolveDayjsLocale(i18n.language))
-      .format('D MMM');
+    const dateLabel = dayjs(parsed).locale(resolveDayjsLocale(i18n.language)).format('D MMM');
     const timeLabel = payload.deadlineTime
       ? formatTaskDeadlineTimeForDisplay(payload.deadlineTime)
       : null;

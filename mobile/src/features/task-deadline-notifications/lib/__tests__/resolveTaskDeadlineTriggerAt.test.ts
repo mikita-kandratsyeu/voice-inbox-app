@@ -40,8 +40,6 @@ describe('snooze trigger helpers', () => {
 
   it('schedules tomorrow morning at 9:00', () => {
     const now = Date.parse('2099-06-10T12:00:00');
-    expect(getTaskDeadlineTomorrowMorningTriggerAt(now)).toBe(
-      Date.parse('2099-06-11T09:00:00'),
-    );
+    expect(getTaskDeadlineTomorrowMorningTriggerAt(now)).toBe(Date.parse('2099-06-11T09:00:00'));
   });
 });

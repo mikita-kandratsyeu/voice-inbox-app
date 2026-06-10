@@ -26,11 +26,7 @@ export function collectSchedulableTaskDeadlines(
       if (task.isDone || !task.deadline) continue;
 
       const deadlineAt = getTaskDeadlineTimestamp(task.deadline, task.deadlineTime, nowMs);
-      const triggerAt = resolveTaskDeadlineTriggerAt(
-        deadlineAt,
-        snoozeByTaskId[task.id],
-        nowMs,
-      );
+      const triggerAt = resolveTaskDeadlineTriggerAt(deadlineAt, snoozeByTaskId[task.id], nowMs);
       if (triggerAt == null) continue;
 
       out.push({

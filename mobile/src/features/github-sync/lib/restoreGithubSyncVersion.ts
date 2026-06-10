@@ -35,10 +35,7 @@ export async function restoreGithubSyncVersion(params: {
   }
 
   const { secrets, commitSha } = params;
-  const manifestPaths = [
-    joinManifestRepoPath(secrets.basePath),
-    GITHUB_SYNC_MANIFEST_FILE,
-  ];
+  const manifestPaths = [joinManifestRepoPath(secrets.basePath), GITHUB_SYNC_MANIFEST_FILE];
 
   try {
     let raw: string | null = null;

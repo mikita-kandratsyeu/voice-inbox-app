@@ -3,11 +3,11 @@ import { useRecordStore } from '@/entities/record';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import { diagWarn } from '@/shared/lib/appLogger';
 
-import { setGithubSyncLastAutoAttemptAt } from './githubSyncState';
 import { getGithubSyncSecrets, isGithubSyncConnected } from './githubSecrets';
+import { runGithubSyncNow } from './githubSyncNow';
 import { beginGithubSyncProgress, endGithubSyncProgress } from './githubSyncProgress';
 import { isGithubSyncScheduleDue } from './githubSyncSchedulePolicy';
-import { runGithubSyncNow } from './githubSyncNow';
+import { setGithubSyncLastAutoAttemptAt } from './githubSyncState';
 import { pushGithubCommit } from './pushGithubCommit';
 
 export { isGithubSyncScheduleDue } from './githubSyncSchedulePolicy';

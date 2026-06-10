@@ -23,6 +23,7 @@ jest.mock('@/shared/lib/async-storage/mmkv', () => ({
   },
 }));
 
+import { isGithubSyncScheduleDue } from '../githubSyncSchedulePolicy';
 import {
   getGithubSyncAutoEnabled,
   getGithubSyncLastAutoAttemptAt,
@@ -31,7 +32,6 @@ import {
   setGithubSyncLastAutoAttemptAt,
   setGithubSyncLastSyncedAt,
 } from '../githubSyncState';
-import { isGithubSyncScheduleDue } from '../githubSyncSchedulePolicy';
 
 describe('githubSyncSchedule', () => {
   beforeEach(() => {

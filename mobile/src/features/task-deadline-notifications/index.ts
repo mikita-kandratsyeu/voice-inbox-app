@@ -17,11 +17,11 @@ export {
   requestTaskNotificationPermission,
   type TaskNotificationPermissionStatus,
 } from './lib/requestTaskNotificationPermission';
+export type { TaskDeadlineSheetPayload } from './lib/resolveTaskDeadlineSheetPayload';
+export { resolveTaskDeadlineTriggerAt } from './lib/resolveTaskDeadlineTriggerAt';
 export {
   disableTaskDeadlineNotifications,
   enableTaskDeadlineNotifications,
   scheduleTaskDeadlineNotificationSync,
   syncAllTaskDeadlineNotifications,
 } from './lib/syncTaskDeadlineNotifications';
-export { resolveTaskDeadlineTriggerAt } from './lib/resolveTaskDeadlineTriggerAt';
-export type { TaskDeadlineSheetPayload } from './lib/resolveTaskDeadlineSheetPayload';

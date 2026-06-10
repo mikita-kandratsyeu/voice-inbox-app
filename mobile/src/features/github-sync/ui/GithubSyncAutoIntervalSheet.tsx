@@ -79,8 +79,7 @@ export function GithubSyncAutoIntervalSheet({
                 style={{
                   alignItems: 'center',
                   borderBottomColor: color.border.default,
-                  borderBottomWidth:
-                    index < GITHUB_SYNC_AUTO_INTERVAL_OPTIONS.length - 1 ? 1 : 0,
+                  borderBottomWidth: index < GITHUB_SYNC_AUTO_INTERVAL_OPTIONS.length - 1 ? 1 : 0,
                   flexDirection: 'row',
                   justifyContent: 'space-between',
                   minHeight: 52,
@@ -89,7 +88,9 @@ export function GithubSyncAutoIntervalSheet({
                 }}
               >
                 <Text style={{ color: color.text.primary, fontSize: 16 }}>{label}</Text>
-                {selected ? <Check size={20} color={color.accent.primary} strokeWidth={2.5} /> : null}
+                {selected ? (
+                  <Check size={20} color={color.accent.primary} strokeWidth={2.5} />
+                ) : null}
               </TouchableOpacity>
             );
           })}

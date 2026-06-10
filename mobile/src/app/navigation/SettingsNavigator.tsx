@@ -4,12 +4,12 @@ import React from 'react';
 import { GithubSyncScreen } from '@/features/github-sync';
 import {
   AboutAppScreen,
-  BackupRestoreScreen,
   AIModelPickerScreen,
   AiSettingsScreen,
   AiUsageDashboardScreen,
   AppearanceScreen,
   AppLockSetupScreen,
+  BackupRestoreScreen,
   DiagnosticLogsScreen,
   DigestScreen,
   ImportRecordsScreen,

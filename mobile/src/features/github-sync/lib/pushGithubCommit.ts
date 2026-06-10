@@ -13,6 +13,7 @@ import {
   listTreePathsAtCommit,
 } from './githubApi';
 import type { GithubSyncSecrets } from './githubSecrets';
+import { updateGithubSyncProgress } from './githubSyncProgress';
 import {
   getGithubSyncContentHashes,
   getGithubSyncLastCommitSha,
@@ -21,7 +22,6 @@ import {
   setGithubSyncLastError,
   setGithubSyncLastSyncedAt,
 } from './githubSyncState';
-import { updateGithubSyncProgress } from './githubSyncProgress';
 import {
   GITHUB_SYNC_TIMEOUT_ERROR,
   isGithubSyncTimeoutError,
@@ -131,7 +131,11 @@ async function pushGithubCommitInternal(params: {
       message,
       onUploadProgress: reportProgress
         ? (uploaded, total) => {
-            updateGithubSyncProgress({ stage: 'uploading', uploadCurrent: uploaded, uploadTotal: total });
+            updateGithubSyncProgress({
+              stage: 'uploading',
+              uploadCurrent: uploaded,
+              uploadTotal: total,
+            });
           }
         : undefined,
       onCommitting: reportProgress ? () => reportStage('committing') : undefined,

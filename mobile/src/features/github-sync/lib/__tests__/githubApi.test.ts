@@ -183,11 +183,7 @@ describe('githubApi', () => {
   describe('listGithubBranches', () => {
     it('parses branch names and sorts them', async () => {
       mockNitroFetch.mockResolvedValue(
-        jsonResponse([
-          { name: 'voice-inbox-ai-sync' },
-          { name: 'main' },
-          { name: 'develop' },
-        ]),
+        jsonResponse([{ name: 'voice-inbox-ai-sync' }, { name: 'main' }, { name: 'develop' }]),
       );
 
       await expect(listGithubBranches('token', 'octocat', 'hello')).resolves.toEqual([

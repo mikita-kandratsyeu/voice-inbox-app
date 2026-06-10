@@ -40,7 +40,10 @@ export const BackupRestoreScreen = () => {
           }}
           showsVerticalScrollIndicator={false}
         >
-          <Text className="mb-4 text-[14px] leading-5" style={{ color: screen.color.text.secondary }}>
+          <Text
+            className="mb-4 text-[14px] leading-5"
+            style={{ color: screen.color.text.secondary }}
+          >
             {screen.t('settings.backupRestoreScreen.intro')}
           </Text>
 
@@ -81,7 +84,9 @@ export const BackupRestoreScreen = () => {
               label={
                 screen.isImporting ? screen.t('settings.importing') : screen.t('settings.import')
               }
-              leftIcon={<Download size={20} color={screen.color.accent.primary} strokeWidth={1.8} />}
+              leftIcon={
+                <Download size={20} color={screen.color.accent.primary} strokeWidth={1.8} />
+              }
               loading={screen.isImporting}
               onPress={() => void screen.handleImport()}
               isLast

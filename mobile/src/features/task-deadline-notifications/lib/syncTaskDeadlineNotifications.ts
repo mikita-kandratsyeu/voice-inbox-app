@@ -19,11 +19,11 @@ import {
   TASK_DEADLINE_PRESS_OPEN,
 } from './constants';
 import { ensureTaskDeadlineNotificationChannel } from './ensureTaskDeadlineNotificationChannel';
-import { pruneExpiredTaskDeadlineSnoozes } from './taskDeadlineSnoozeStorage';
 import {
   checkTaskNotificationPermission,
   requestTaskNotificationPermission,
 } from './requestTaskNotificationPermission';
+import { pruneExpiredTaskDeadlineSnoozes } from './taskDeadlineSnoozeStorage';
 
 const SYNC_DEBOUNCE_MS = 500;
 let syncTimer: ReturnType<typeof setTimeout> | null = null;

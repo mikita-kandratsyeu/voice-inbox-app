@@ -5,8 +5,8 @@ import { BlockingProgressModal } from '@/shared/ui';
 
 import {
   getGithubSyncProgressState,
-  subscribeGithubSyncProgress,
   type GithubSyncProgressStage,
+  subscribeGithubSyncProgress,
 } from '../lib/githubSyncProgress';
 
 function stageDescriptionKey(stage: GithubSyncProgressStage | null): string {

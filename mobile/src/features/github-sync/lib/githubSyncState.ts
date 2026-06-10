@@ -90,12 +90,7 @@ export function setGithubSyncAutoEnabled(enabled: boolean): void {
 
 export function getGithubSyncAutoIntervalHours(): GithubSyncAutoIntervalHours {
   const raw = storage.getNumber(KEY_AUTO_INTERVAL_HOURS);
-  if (
-    raw === 12 ||
-    raw === 24 ||
-    raw === 72 ||
-    raw === 168
-  ) {
+  if (raw === 12 || raw === 24 || raw === 72 || raw === 168) {
     return raw;
   }
   return DEFAULT_AUTO_INTERVAL_HOURS;

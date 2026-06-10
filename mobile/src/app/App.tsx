@@ -51,8 +51,8 @@ import {
 import { WarmupBottomSheet } from '@/shared/ui';
 
 import { flushPendingRecordModalNavigation, useInitDeepLinking } from './deep-linking';
-import { openTaskDeadlineRecord } from './model/taskDeadlineNavigationHandler';
 import { handlePushNotification } from './model/pushNavigationHandler';
+import { openTaskDeadlineRecord } from './model/taskDeadlineNavigationHandler';
 import { navigationRef } from './navigation/navigationRef';
 import { RootNavigator } from './navigation/RootNavigator';
 
