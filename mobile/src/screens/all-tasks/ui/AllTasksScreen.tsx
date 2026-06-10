@@ -70,14 +70,29 @@ export const AllTasksScreen = () => {
   const [quickFilter, setQuickFilter] = useState<AllTasksQuickFilter>('all');
   const [recentlyCompleted, setRecentlyCompleted] = useState<Set<string>>(new Set());
   const timeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
-  const [editTaskTarget, setEditTaskTarget] = useState<{
+  type EditTaskTarget = {
     recordId: string;
     taskId: string;
     text: string;
     deadline?: string | null;
     deadlineTime?: string | null;
     priority?: TaskItem['priority'];
-  } | null>(null);
+  };
+
+  const [editTaskTarget, setEditTaskTarget] = useState<EditTaskTarget | null>(null);
+
+  const openEditTaskSheet = useCallback((target: EditTaskTarget) => {
+    setEditTaskTarget((current) => {
+      if (current === null) {
+        return target;
+      }
+      requestAnimationFrame(() => {
+        setEditTaskTarget(target);
+      });
+      return null;
+    });
+  }, []);
+
   const [notePickerVisible, setNotePickerVisible] = useState(false);
   const [createTaskRecordId, setCreateTaskRecordId] = useState<string | null>(null);
   const [createTaskFromPicker, setCreateTaskFromPicker] = useState(false);
@@ -612,7 +627,7 @@ export const AllTasksScreen = () => {
           onToggle={onToggle}
           onOpenNote={openNote}
           onEditTask={(recordId, taskId, text) => {
-            setEditTaskTarget({
+            openEditTaskSheet({
               recordId,
               taskId,
               text,
@@ -642,6 +657,7 @@ export const AllTasksScreen = () => {
       color,
       onToggle,
       openNote,
+      openEditTaskSheet,
       onAddTaskToReminder,
       onAddTaskToCalendar,
       t,

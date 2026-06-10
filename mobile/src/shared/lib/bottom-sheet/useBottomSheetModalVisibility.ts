@@ -23,8 +23,19 @@ export function useBottomSheetModalVisibility(
 ) {
   const presentOnVisible = options?.presentOnVisible !== false;
   const wasVisibleRef = useRef(false);
+  const presentationGenerationRef = useRef(0);
+  const pendingDismissGenerationRef = useRef<number | null>(null);
 
   const handleDismiss = useCallback(() => {
+    const pendingGeneration = pendingDismissGenerationRef.current;
+    const currentGeneration = presentationGenerationRef.current;
+    const isStaleDismiss = pendingGeneration !== null && pendingGeneration < currentGeneration;
+
+    if (isStaleDismiss) {
+      return;
+    }
+
+    pendingDismissGenerationRef.current = null;
     Keyboard.dismiss();
     onClose();
   }, [onClose]);
@@ -32,6 +43,7 @@ export function useBottomSheetModalVisibility(
   useEffect(() => {
     if (visible) {
       wasVisibleRef.current = true;
+      presentationGenerationRef.current += 1;
       if (!presentOnVisible) {
         return undefined;
       }
@@ -42,6 +54,7 @@ export function useBottomSheetModalVisibility(
     }
 
     if (wasVisibleRef.current) {
+      pendingDismissGenerationRef.current = presentationGenerationRef.current;
       Keyboard.dismiss();
       ref.current?.dismiss();
       wasVisibleRef.current = false;
