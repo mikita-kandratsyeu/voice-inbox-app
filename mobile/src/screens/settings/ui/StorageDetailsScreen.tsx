@@ -1113,7 +1113,8 @@ export const StorageDetailsScreen = () => {
             <SettingsRow
               label={t('storage.deleteAllData')}
               leftIcon={<Trash2 size={20} color={color.accent.delete} strokeWidth={1.8} />}
-              onPress={isDeletingAll ? undefined : handleOpenDeleteStorageSheet}
+              loading={isDeletingAll}
+              onPress={handleOpenDeleteStorageSheet}
               dangerous
               isFirst
               isLast

@@ -153,6 +153,42 @@ async function throwGithubHttpError(
   throw createGithubError(body || fallbackMessage, response.status, code);
 }
 
+async function isRetryableRefUpdateConflict(response: Response): Promise<boolean> {
+  if (response.status === 409) {
+    return true;
+  }
+  if (response.status !== 422) {
+    return false;
+  }
+  const body = await readGithubErrorBody(response);
+  return body.length === 0 || /not a fast forward/i.test(body);
+}
+
+async function retryGithubCommitAfterRefConflict(
+  params: CreateGithubCommitParams & { refConflictAttempt: number },
+  parentSha: string,
+  message: string,
+): Promise<string> {
+  const { refConflictAttempt } = params;
+  if (refConflictAttempt >= GITHUB_REF_CONFLICT_MAX_RETRIES) {
+    throw createGithubError('Ref conflict', 422, 'ref_conflict');
+  }
+  const latestSha = await getBranchRefSha(
+    params.accessToken,
+    params.owner,
+    params.repo,
+    params.branch,
+  );
+  if (!latestSha || latestSha === parentSha) {
+    throw createGithubError('Ref conflict', 422, 'ref_conflict');
+  }
+  return createGithubCommitWithFilesInternal({
+    ...params,
+    refConflictAttempt: refConflictAttempt + 1,
+    message: `${message} (retry)`,
+  });
+}
+
 export async function fetchGithubUserLogin(accessToken: string): Promise<string> {
   const response = await githubFetch(accessToken, '/user');
   if (!response.ok) {
@@ -583,19 +619,12 @@ async function createGithubCommitWithFilesInternal(
         body: JSON.stringify({ sha: newSha }),
       },
     );
-    if (updateRefResponse.status === 409) {
-      if (refConflictAttempt >= GITHUB_REF_CONFLICT_MAX_RETRIES) {
-        throw createGithubError('Ref conflict', 409, 'ref_conflict');
-      }
-      const latestSha = await getBranchRefSha(accessToken, owner, repo, branch);
-      if (!latestSha || latestSha === parentSha) {
-        throw createGithubError('Ref conflict', 409, 'ref_conflict');
-      }
-      return createGithubCommitWithFilesInternal({
-        ...params,
-        refConflictAttempt: refConflictAttempt + 1,
-        message: `${message} (retry)`,
-      });
+    if (await isRetryableRefUpdateConflict(updateRefResponse)) {
+      return retryGithubCommitAfterRefConflict(
+        { ...params, refConflictAttempt },
+        parentSha,
+        message,
+      );
     }
     if (!updateRefResponse.ok) {
       await throwGithubHttpError(

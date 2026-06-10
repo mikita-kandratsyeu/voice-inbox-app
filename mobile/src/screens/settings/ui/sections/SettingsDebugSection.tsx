@@ -33,7 +33,8 @@ export const SettingsDebugSection = ({
     <SettingsRow
       label={isHardResetting ? 'Hard reset in progress...' : 'Hard reset (wipe all app data)'}
       leftIcon={<RotateCcw size={20} color={color.status.error.text} strokeWidth={1.8} />}
-      onPress={isHardResetting ? undefined : onHardReset}
+      loading={isHardResetting}
+      onPress={onHardReset}
       showChevron={false}
       isFirst={!showCrashlyticsButton}
       isLast

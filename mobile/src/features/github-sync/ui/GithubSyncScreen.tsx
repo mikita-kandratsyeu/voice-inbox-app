@@ -3,7 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { GitBranch, History, RefreshCw, Unplug } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -104,6 +104,10 @@ export function GithubSyncScreen() {
         Alert.alert(t('common.error'), t('settings.githubSync.syncTimeout'));
         return;
       }
+      if (result.code === 'ref_conflict') {
+        Alert.alert(t('common.error'), t('settings.githubSync.syncRefConflict'));
+        return;
+      }
       Alert.alert(t('common.error'), result.message ?? t('settings.githubSync.syncFailed'));
       return;
     }
@@ -191,13 +195,8 @@ export function GithubSyncScreen() {
             }
             subtitle={syncSubtitle}
             leftIcon={<RefreshCw size={20} color={color.accent.primary} strokeWidth={1.8} />}
-            rightSlot={
-              isSyncing ? (
-                <ActivityIndicator size="small" color={color.accent.primary} />
-              ) : undefined
-            }
-            showChevron={!isSyncing}
-            onPress={isSyncing ? undefined : () => void handleSync()}
+            loading={isSyncing}
+            onPress={() => void handleSync()}
           />
           <SettingsRow
             label={t('settings.githubSync.history')}

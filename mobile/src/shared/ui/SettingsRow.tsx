@@ -1,6 +1,6 @@
 import { ChevronRight } from 'lucide-react-native';
 import React, { useContext } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
@@ -17,6 +17,8 @@ type SettingsRowProps = {
   onPress?: () => void;
   leftIcon?: React.ReactNode;
   rightSlot?: React.ReactNode;
+  /** Spinner on the right; hides chevron and disables press while true. */
+  loading?: boolean;
   showChevron?: boolean;
   isFirst?: boolean;
   isLast?: boolean;
@@ -38,6 +40,7 @@ const SettingsRowInner = ({
   onPress,
   leftIcon,
   rightSlot,
+  loading = false,
   showChevron = true,
   isFirst = false,
   isLast = false,
@@ -46,6 +49,15 @@ const SettingsRowInner = ({
   showProBadge = false,
   color,
 }: SettingsRowInnerProps) => {
+  const isBusy = loading;
+  const resolvedOnPress = isBusy ? undefined : onPress;
+  const resolvedShowChevron = isBusy ? false : showChevron;
+  const resolvedRightSlot = isBusy ? (
+    <ActivityIndicator size="small" color={color.accent.primary} />
+  ) : (
+    rightSlot
+  );
+
   const borderStyle = !isLast
     ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
     : {};
@@ -71,6 +83,7 @@ const SettingsRowInner = ({
         { backgroundColor: color.background.card, minHeight: subtitle ? 68 : 52 },
         borderStyle,
       ]}
+      accessibilityState={isBusy ? { busy: true } : undefined}
     >
       {leftIcon && (
         <View className="mr-3 h-6 w-6 shrink-0 items-center justify-center">{leftIcon}</View>
@@ -98,15 +111,15 @@ const SettingsRowInner = ({
           )
         ) : null}
       </View>
-      {rightSlot && <View className="ml-2 shrink-0">{rightSlot}</View>}
-      {!rightSlot && value && (
+      {resolvedRightSlot && <View className="ml-2 shrink-0">{resolvedRightSlot}</View>}
+      {!resolvedRightSlot && value && (
         <View className="ml-2 mr-2 shrink-0 self-center">
           <Text className="text-right text-[16px]" style={{ color: color.text.secondary }}>
             {value}
           </Text>
         </View>
       )}
-      {showChevron && onPress && (
+      {resolvedShowChevron && resolvedOnPress && (
         <ChevronRight size={18} color={color.icon.muted} strokeWidth={2} />
       )}
     </View>
@@ -114,16 +127,16 @@ const SettingsRowInner = ({
 
   const subtitleLabel =
     subtitleA11y ?? (typeof subtitle === 'string' ? subtitle : undefined);
-  const a11yLabel = [label, subtitleLabel, !rightSlot && value ? value : undefined]
+  const a11yLabel = [label, subtitleLabel, !resolvedRightSlot && value ? value : undefined]
     .filter(Boolean)
     .join(', ');
 
-  if (onPress) {
+  if (resolvedOnPress) {
     return (
       <TouchableOpacity
         accessibilityRole="button"
         accessibilityLabel={a11yLabel}
-        onPress={onPress}
+        onPress={resolvedOnPress}
         activeOpacity={0.7}
       >
         {content}

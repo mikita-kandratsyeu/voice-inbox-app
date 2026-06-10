@@ -1154,6 +1154,7 @@
       "syncSuccess": "Notes saved to your GitHub repository.",
       "syncFailed": "Couldn't sync. Check your connection and try again.",
       "syncTimeout": "Sync took too long and was stopped. Try again when your connection is stable.",
+      "syncRefConflict": "The sync branch changed on GitHub. Wait a moment and try again.",
       "alreadyUpToDate": "You're already up to date — nothing new to save.",
       "lastSynced": "Last synced: {{time}}",
       "neverSynced": "Not synced yet",

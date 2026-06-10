@@ -14,7 +14,6 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ActivityIndicator,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -575,12 +574,8 @@ export const AiUsageDashboardScreen = () => {
                     {historyCursor ? (
                       <SettingsRow
                         label={t('settings.aiUsageDashboard.history.loadMore')}
-                        onPress={historyLoadingMore ? undefined : loadMoreHistory}
-                        rightSlot={
-                          historyLoadingMore ? (
-                            <ActivityIndicator size="small" color={color.accent.primary} />
-                          ) : undefined
-                        }
+                        loading={historyLoadingMore}
+                        onPress={loadMoreHistory}
                         showChevron={false}
                         isLast
                       />

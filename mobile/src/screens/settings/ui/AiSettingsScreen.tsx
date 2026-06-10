@@ -5,7 +5,6 @@ import { Check, Crown } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ActivityIndicator,
   Alert,
   ScrollView,
   Switch,
@@ -543,15 +542,8 @@ export const AiSettingsScreen = () => {
                           style={{ backgroundColor: remoteConnectionStatusColor }}
                         />
                       }
-                      rightSlot={
-                        connectionCheckInProgress ? (
-                          <View className="h-[26px] w-[26px] items-center justify-center">
-                            <ActivityIndicator size="small" color={color.text.muted} />
-                          </View>
-                        ) : undefined
-                      }
+                      loading={connectionCheckInProgress}
                       onPress={openPrivateRemoteServerScreen}
-                      showChevron={!connectionCheckInProgress}
                       isFirst
                       isLast
                     />

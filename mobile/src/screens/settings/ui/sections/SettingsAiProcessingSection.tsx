@@ -72,7 +72,8 @@ export const SettingsAiProcessingSection = ({
             isUpdatingEmbeddings ? t('settings.updatingEmbeddings') : t('settings.updateEmbeddings')
           }
           leftIcon={<RefreshCw size={20} color={color.accent.primary} strokeWidth={1.8} />}
-          onPress={isUpdatingEmbeddings ? undefined : onUpdateEmbeddings}
+          loading={isUpdatingEmbeddings}
+          onPress={onUpdateEmbeddings}
           isLast
         />
       )}

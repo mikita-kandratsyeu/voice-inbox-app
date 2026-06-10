@@ -26,6 +26,8 @@ jest.mock('../githubApi', () => ({
   fetchGithubUserLogin: jest.fn(),
   getBranchRefSha: jest.fn(),
   listTreePathsAtCommit: jest.fn(),
+  isGithubApiError: (err: unknown): err is Error & { code?: string } =>
+    err instanceof Error && 'code' in err,
 }));
 
 jest.mock('../githubSyncState', () => ({
@@ -145,6 +147,17 @@ describe('pushGithubCommit', () => {
       code: 'unauthorized',
     });
     expect(mockCreateGithubCommitWithFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns ref_conflict when the branch tip moved on GitHub', async () => {
+    mockGetGithubSyncContentHashes.mockReturnValue({});
+    const err = Object.assign(new Error('Ref conflict'), { status: 422, code: 'ref_conflict' });
+    mockCreateGithubCommitWithFiles.mockRejectedValue(err);
+
+    await expect(pushGithubCommit({ secrets, records, folders })).resolves.toEqual({
+      ok: false,
+      code: 'ref_conflict',
+    });
   });
 
   it('returns unauthorized when blob upload fails with 401', async () => {

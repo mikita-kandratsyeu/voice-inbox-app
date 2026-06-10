@@ -149,8 +149,8 @@ export function SettingsGithubSyncRows({ color, t, language }: Props) {
         }
         subtitle={t('settings.githubSync.connectHint')}
         leftIcon={<GitBranch size={20} color={color.accent.primary} strokeWidth={1.8} />}
-        onPress={isConnecting ? undefined : () => void handleConnect()}
-        showChevron={!isConnecting}
+        loading={isConnecting}
+        onPress={() => void handleConnect()}
         isLast
       />
     );

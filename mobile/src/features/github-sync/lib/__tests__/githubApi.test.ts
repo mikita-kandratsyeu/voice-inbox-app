@@ -400,6 +400,41 @@ describe('githubApi', () => {
       });
     });
 
+    it('retries once after a 422 fast-forward conflict and then succeeds', async () => {
+      mockNitroFetch
+        .mockResolvedValueOnce(jsonResponse({ object: { sha: 'parent-sha' } }))
+        .mockResolvedValueOnce(jsonResponse({ sha: 'blob-sha' }))
+        .mockResolvedValueOnce(jsonResponse({ tree: { sha: 'parent-tree-sha' } }))
+        .mockResolvedValueOnce(jsonResponse({ sha: 'tree-sha' }))
+        .mockResolvedValueOnce(jsonResponse({ sha: 'commit-sha' }))
+        .mockResolvedValueOnce(
+          jsonResponse(
+            {
+              message: 'Update is not a fast forward',
+              documentation_url: 'https://docs.github.com/rest/git/refs#update-a-reference',
+              status: '422',
+            },
+            false,
+            422,
+          ),
+        )
+        .mockResolvedValueOnce(jsonResponse({ object: { sha: 'new-parent-sha' } }))
+        .mockResolvedValueOnce(jsonResponse({ object: { sha: 'new-parent-sha' } }))
+        .mockResolvedValueOnce(jsonResponse({ sha: 'blob-sha-2' }))
+        .mockResolvedValueOnce(jsonResponse({ tree: { sha: 'parent-tree-sha-2' } }))
+        .mockResolvedValueOnce(jsonResponse({ sha: 'tree-sha-2' }))
+        .mockResolvedValueOnce(jsonResponse({ sha: 'commit-sha-2' }))
+        .mockResolvedValueOnce(jsonResponse({}));
+
+      const commitSha = await createGithubCommitWithFiles({
+        ...baseParams,
+        files: new Map([['voice-inbox-ai/manifest.json', '{"version":5}']]),
+        deletions: [],
+      });
+
+      expect(commitSha).toBe('commit-sha-2');
+    });
+
     it('retries once after a ref conflict and then succeeds', async () => {
       mockNitroFetch
         .mockResolvedValueOnce(jsonResponse({ object: { sha: 'parent-sha' } }))
@@ -454,7 +489,7 @@ describe('githubApi', () => {
         }),
       ).rejects.toMatchObject({
         code: 'ref_conflict',
-        status: 409,
+        status: 422,
       });
     });
   });

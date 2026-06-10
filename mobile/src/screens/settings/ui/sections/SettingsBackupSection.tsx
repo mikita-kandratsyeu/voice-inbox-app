@@ -56,11 +56,13 @@ export const SettingsBackupSection = ({
       label={isExporting ? t('settings.exporting') : t('settings.export')}
       value={t('inbox.recordsCount', { count: recordsCount })}
       leftIcon={<UploadCloud size={20} color={color.accent.primary} strokeWidth={1.8} />}
+      loading={isExporting}
       onPress={onExport}
     />
     <SettingsRow
       label={isImporting ? t('settings.importing') : t('settings.import')}
       leftIcon={<Download size={20} color={color.accent.primary} strokeWidth={1.8} />}
+      loading={isImporting}
       onPress={onImport}
     />
     <SettingsGithubSyncRows color={color} t={t} language={language} />

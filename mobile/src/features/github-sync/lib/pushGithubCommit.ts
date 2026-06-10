@@ -9,6 +9,7 @@ import {
   createGithubCommitWithFiles,
   fetchGithubUserLogin,
   getBranchRefSha,
+  isGithubApiError,
   listTreePathsAtCommit,
 } from './githubApi';
 import type { GithubSyncSecrets } from './githubSecrets';
@@ -20,7 +21,11 @@ import {
   setGithubSyncLastError,
   setGithubSyncLastSyncedAt,
 } from './githubSyncState';
-import { GITHUB_SYNC_TIMEOUT_ERROR, isGithubSyncTimeoutError, withGithubSyncTimeout } from './githubSyncTimeout';
+import {
+  GITHUB_SYNC_TIMEOUT_ERROR,
+  isGithubSyncTimeoutError,
+  withGithubSyncTimeout,
+} from './githubSyncTimeout';
 
 export type PushGithubCommitResult =
   | { ok: true; commitSha: string; alreadyUpToDate: boolean }
@@ -126,6 +131,9 @@ async function pushGithubCommitInternal(params: {
     setGithubSyncLastError(message);
     if (status === 401) {
       return { ok: false, code: 'unauthorized', message };
+    }
+    if (isGithubApiError(err) && err.code === 'ref_conflict') {
+      return { ok: false, code: 'ref_conflict' };
     }
     return { ok: false, code: 'sync_failed', message };
   }
