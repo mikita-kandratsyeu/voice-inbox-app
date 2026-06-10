@@ -217,6 +217,14 @@
       "save": "Save",
       "discard": "Discard"
     },
+    "saveLayoutSheet": {
+      "title": "Save layout",
+      "namePlaceholder": "Layout name (optional)",
+      "nameInputHint": "Enter a name or leave blank.",
+      "autoName": "Map layout",
+      "movedNodes_one": "{{count}} node moved",
+      "movedNodes_other": "{{count}} nodes moved"
+    },
     "export": {
       "title": "Share",
       "subtitle": "The full map is captured — drag the frame or pull handles to crop before sharing.",
@@ -238,13 +246,15 @@
     "history": {
       "openA11y": "Layout history",
       "title": "Layout history",
-      "subtitle": "All saved layouts — pick one to preview its filters",
+      "subtitle": "All saved layouts — pick one to see details",
       "apply": "Apply",
-      "filtersSelectHint": "Select a saved layout to see its filters",
+      "detailsTitle": "Details",
+      "detailsSelectHint": "Select a saved layout to see details",
+      "detailsExpandA11y": "Show details",
+      "detailsCollapseA11y": "Hide details",
+      "detailsSavedOn": "Saved",
+      "detailsNodes": "Nodes moved",
       "listMeta": "Version {{version}} · {{count}} nodes moved",
-      "filtersTitle": "Applied filters",
-      "filtersExpandA11y": "Show applied filters",
-      "filtersCollapseA11y": "Hide applied filters",
       "filters": {
         "folder": "Folder",
         "tags": "Tags",
@@ -260,6 +270,7 @@
       },
       "empty": "No saved layouts yet. Move nodes on the map and tap Save.",
       "versionLabel": "Version {{version}}",
+      "appliedOnMapA11y": "Applied layout {{name}}, saved {{date}}",
       "nodeCount_one": "{{count}} node moved",
       "nodeCount_other": "{{count}} nodes moved",
       "deleteA11y": "Delete version {{version}}",

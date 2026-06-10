@@ -8,6 +8,7 @@ export type NotesGraphLayoutBackupEntry = {
   versionNumber: number;
   createdAt: string;
   payload: string;
+  name?: string;
 };
 
 const PERSIST_VERSION = 1 as const;
@@ -45,6 +46,7 @@ export async function listNotesGraphLayoutsForBackup(): Promise<NotesGraphLayout
       versionNumber: row.versionNumber,
       createdAt: row.createdAt,
       payload: row.payload,
+      name: row.name?.trim() || undefined,
     }));
 }
 
@@ -69,6 +71,7 @@ export async function importNotesGraphLayoutVersionsFromBackup(
         versionNumber: entry.versionNumber,
         payload: entry.payload,
         createdAt: entry.createdAt,
+        name: entry.name?.trim() || null,
       })
       .onConflictDoUpdate({
         target: notesGraphLayoutVersionTable.id,
@@ -77,6 +80,7 @@ export async function importNotesGraphLayoutVersionsFromBackup(
           versionNumber: entry.versionNumber,
           payload: entry.payload,
           createdAt: entry.createdAt,
+          name: entry.name?.trim() || null,
         },
       });
 

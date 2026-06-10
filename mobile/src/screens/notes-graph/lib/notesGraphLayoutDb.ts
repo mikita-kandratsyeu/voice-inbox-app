@@ -11,6 +11,7 @@ export type NotesGraphLayoutVersionEntry = {
   versionNumber: number;
   createdAt: string;
   nodeCount: number;
+  name: string | null;
 };
 
 const PERSIST_VERSION = 1 as const;
@@ -112,6 +113,7 @@ export async function getLatestNotesGraphLayoutVersion(
     versionNumber: row.versionNumber,
     createdAt: row.createdAt,
     nodeCount: Object.keys(positions).length,
+    name: row.name ?? null,
     positions,
   };
 }
@@ -138,6 +140,7 @@ export async function listAllNotesGraphLayoutHistory(
         versionNumber: row.versionNumber,
         createdAt: row.createdAt,
         nodeCount: Object.keys(positions).length,
+        name: row.name ?? null,
       };
     })
     .filter((entry): entry is NotesGraphLayoutVersionEntry => entry != null);
@@ -165,6 +168,7 @@ export async function listNotesGraphLayoutHistory(
         versionNumber: row.versionNumber,
         createdAt: row.createdAt,
         nodeCount: Object.keys(positions).length,
+        name: row.name ?? null,
       };
     })
     .filter((entry): entry is NotesGraphLayoutVersionEntry => entry != null);
@@ -188,6 +192,7 @@ export async function getNotesGraphLayoutVersionPositions(
 export async function saveNotesGraphLayoutVersion(
   layoutKey: string,
   positions: Map<string, NotesGraphNodePosition>,
+  name?: string | null,
 ): Promise<NotesGraphLayoutVersionEntry> {
   const db = await waitForDb();
   const record = positionsFromMap(positions);
@@ -203,12 +208,15 @@ export async function saveNotesGraphLayoutVersion(
   const nextVersion = (maxRow[0]?.versionNumber ?? 0) + 1;
   const id = `nglv_${layoutKey.slice(0, 24)}_${nextVersion}_${Date.now()}`;
 
+  const resolvedName = name?.trim() || null;
+
   await db.insert(notesGraphLayoutVersionTable).values({
     id,
     layoutKey,
     versionNumber: nextVersion,
     payload: serializePayload(record),
     createdAt,
+    name: resolvedName,
   });
 
   if (nextVersion > MAX_VERSIONS_PER_LAYOUT) {
@@ -229,6 +237,7 @@ export async function saveNotesGraphLayoutVersion(
     versionNumber: nextVersion,
     createdAt,
     nodeCount: Object.keys(record).length,
+    name: resolvedName,
   };
 }
 

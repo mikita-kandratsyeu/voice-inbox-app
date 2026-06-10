@@ -1,6 +1,5 @@
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import dayjs from 'dayjs';
-import { Check, ChevronRight, History, SlidersHorizontal, Trash2 } from 'lucide-react-native';
+import { Check, ChevronRight, History, Info, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -23,10 +22,11 @@ import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
-import { resolveDayjsLocale } from '@/shared/lib/date';
 import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
+import { buildNotesGraphLayoutDetailRows } from '../lib/buildNotesGraphLayoutDetailRows';
 import { buildNotesGraphLayoutFilterSummaryFromParsed } from '../lib/buildNotesGraphLayoutFilterSummary';
+import { getNotesGraphLayoutVersionDisplayName } from '../lib/getNotesGraphLayoutVersionDisplayName';
 import type { NotesGraphLayoutVersionEntry } from '../lib/notesGraphLayoutDb';
 import { listAllNotesGraphLayoutHistory } from '../lib/notesGraphLayoutDb';
 import { parseNotesGraphPersistKey } from '../lib/parseNotesGraphPersistKey';
@@ -45,14 +45,14 @@ type GraphLayoutHistorySheetProps = {
   onDelete: (versionId: string) => void | Promise<void>;
 };
 
-type AppliedFiltersCardProps = {
+type LayoutDetailsCardProps = {
   color: Colors;
   rows: { id: string; label: string; value: string }[];
   title: string;
   emptyMessage: string;
 };
 
-function AppliedFiltersCard({ color, rows, title, emptyMessage }: AppliedFiltersCardProps) {
+function LayoutDetailsCard({ color, rows, title, emptyMessage }: LayoutDetailsCardProps) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const chevronRotation = useSharedValue(0);
@@ -91,8 +91,8 @@ function AppliedFiltersCard({ color, rows, title, emptyMessage }: AppliedFilters
         accessibilityState={{ expanded }}
         accessibilityLabel={
           expanded
-            ? t('notesGraph.history.filtersCollapseA11y')
-            : t('notesGraph.history.filtersExpandA11y')
+            ? t('notesGraph.history.detailsCollapseA11y')
+            : t('notesGraph.history.detailsExpandA11y')
         }
         onPress={toggleExpanded}
         style={({ pressed }) => ({
@@ -122,7 +122,7 @@ function AppliedFiltersCard({ color, rows, title, emptyMessage }: AppliedFilters
               width: 36,
             }}
           >
-            <SlidersHorizontal size={18} color={color.text.secondary} strokeWidth={2} />
+            <Info size={18} color={color.text.secondary} strokeWidth={2} />
           </View>
           <Text
             style={{
@@ -211,19 +211,14 @@ function AppliedFiltersCard({ color, rows, title, emptyMessage }: AppliedFilters
   );
 }
 
-function formatVersionTimestamp(iso: string, language: string): string {
-  const loc = resolveDayjsLocale(language);
-  return `${dayjs(iso).locale(loc).format('D MMM YYYY')} · ${dayjs(iso).locale(loc).format('HH:mm')}`;
-}
-
 type HistoryRowProps = {
   isSelected: boolean;
   isLast: boolean;
   isDeleting: boolean;
   color: Colors;
   rowLabel: string;
+  nameLabel: string;
   versionLabel: string;
-  metaLabel: string;
   deleteA11y: string;
   onSelect: () => void;
   onDelete: () => void;
@@ -235,8 +230,8 @@ function HistoryRow({
   isDeleting,
   color,
   rowLabel,
+  nameLabel,
   versionLabel,
-  metaLabel,
   deleteA11y,
   onSelect,
   onDelete,
@@ -298,10 +293,10 @@ function HistoryRow({
               style={{ color: color.text.primary, fontSize: 16, fontWeight: '600', lineHeight: 21 }}
               numberOfLines={1}
             >
-              {versionLabel}
+              {nameLabel}
             </Text>
             <Text
-              numberOfLines={2}
+              numberOfLines={1}
               style={{
                 color: color.text.secondary,
                 fontSize: 13,
@@ -309,7 +304,7 @@ function HistoryRow({
                 marginTop: 3,
               }}
             >
-              {metaLabel}
+              {versionLabel}
             </Text>
           </Pressable>
         </View>
@@ -419,6 +414,16 @@ export function GraphLayoutHistorySheet({
     );
   }, [foldersEnabled, selectedFolderName, selectedParsed, t]);
 
+  const detailRows = useMemo(() => {
+    if (!selectedEntry) return [];
+    return buildNotesGraphLayoutDetailRows({
+      entry: selectedEntry,
+      filterRows,
+      language: i18n.language,
+      t,
+    });
+  }, [filterRows, i18n.language, selectedEntry, t]);
+
   const confirmDelete = useCallback(
     (entry: NotesGraphLayoutVersionEntry) => {
       Alert.alert(
@@ -506,7 +511,11 @@ export function GraphLayoutHistorySheet({
         >
           {entries.map((item, index) => {
             const isSelected = item.id === selectedVersionId;
-            const rowLabel = `${formatVersionTimestamp(item.createdAt, i18n.language)} · ${t('notesGraph.history.nodeCount', { count: item.nodeCount })}`;
+            const displayName = getNotesGraphLayoutVersionDisplayName(item, t);
+            const versionLabel = t('notesGraph.history.versionLabel', {
+              version: item.versionNumber,
+            });
+            const rowLabel = `${displayName}. ${versionLabel}`;
 
             return (
               <HistoryRow
@@ -516,11 +525,8 @@ export function GraphLayoutHistorySheet({
                 isDeleting={deletingVersionId === item.id}
                 color={color}
                 rowLabel={rowLabel}
-                versionLabel={formatVersionTimestamp(item.createdAt, i18n.language)}
-                metaLabel={t('notesGraph.history.listMeta', {
-                  version: item.versionNumber,
-                  count: item.nodeCount,
-                })}
+                nameLabel={displayName}
+                versionLabel={versionLabel}
                 deleteA11y={t('notesGraph.history.deleteA11y', { version: item.versionNumber })}
                 onSelect={() => setSelectedVersionId(item.id)}
                 onDelete={() => confirmDelete(item)}
@@ -577,11 +583,11 @@ export function GraphLayoutHistorySheet({
 
         {listBody}
 
-        <AppliedFiltersCard
+        <LayoutDetailsCard
           color={color}
-          rows={filterRows}
-          title={t('notesGraph.history.filtersTitle')}
-          emptyMessage={t('notesGraph.history.filtersSelectHint')}
+          rows={detailRows}
+          title={t('notesGraph.history.detailsTitle')}
+          emptyMessage={t('notesGraph.history.detailsSelectHint')}
         />
 
         <SheetFooterButtons

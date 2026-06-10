@@ -12,6 +12,7 @@ import { HeaderIconButton } from './HeaderIconButton';
 
 type ScreenHeaderProps = {
   title: string;
+  subtitle?: string;
   onBack?: () => void;
   rightSlot?: React.ReactNode;
   titleAlign?: 'left' | 'center';
@@ -21,6 +22,7 @@ type ScreenHeaderProps = {
 
 export const ScreenHeader = ({
   title,
+  subtitle,
   onBack,
   rightSlot,
   titleAlign = 'center',
@@ -35,11 +37,18 @@ export const ScreenHeader = ({
   }, []);
 
   const titleClass = `w-full text-[18px] font-semibold leading-[22px] ${titleAlign === 'center' ? 'text-center' : 'text-left'}`;
+  const subtitleClass = `w-full text-[13px] leading-[18px] ${titleAlign === 'center' ? 'text-center' : 'text-left'}`;
   const titleStyle = [
     { color: color.text.primary },
     titleAlign === 'left' ? { paddingLeft: onBack ? 8 : 0 } : null,
     IS_ANDROID ? { includeFontPadding: false } : null,
   ];
+  const subtitleStyle = [
+    { color: color.text.secondary, marginTop: subtitle ? 2 : 0 },
+    titleAlign === 'left' ? { paddingLeft: onBack ? 8 : 0 } : null,
+    IS_ANDROID ? { includeFontPadding: false } : null,
+  ];
+  const headerAccessibilityLabel = subtitle ? `${title}. ${subtitle}` : title;
 
   return (
     <View
@@ -66,10 +75,10 @@ export const ScreenHeader = ({
           />
         ) : null}
       </View>
-      <View className="min-w-0 flex-1 justify-center" style={{ minHeight: 44 }}>
+      <View className="min-w-0 flex-1 justify-center" style={{ minHeight: subtitle ? 52 : 44 }}>
         {dismissKeyboardOnPress ? (
           <Pressable
-            accessibilityLabel={title}
+            accessibilityLabel={headerAccessibilityLabel}
             accessibilityRole="header"
             onPress={handleTitlePress}
             className="w-full min-w-0"
@@ -78,16 +87,28 @@ export const ScreenHeader = ({
             <Text className={titleClass} style={titleStyle}>
               {title}
             </Text>
+            {subtitle ? (
+              <Text className={subtitleClass} style={subtitleStyle} numberOfLines={1}>
+                {subtitle}
+              </Text>
+            ) : null}
           </Pressable>
         ) : (
-          <Text
-            className={titleClass}
-            style={titleStyle}
-            accessibilityRole="header"
-            accessibilityLabel={title}
-          >
-            {title}
-          </Text>
+          <>
+            <Text
+              className={titleClass}
+              style={titleStyle}
+              accessibilityRole="header"
+              accessibilityLabel={headerAccessibilityLabel}
+            >
+              {title}
+            </Text>
+            {subtitle ? (
+              <Text className={subtitleClass} style={subtitleStyle} numberOfLines={1}>
+                {subtitle}
+              </Text>
+            ) : null}
+          </>
         )}
       </View>
       <View className="min-w-[44px] items-end">{rightSlot ?? null}</View>

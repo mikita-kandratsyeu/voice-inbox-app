@@ -87,6 +87,7 @@ export const notesGraphLayoutVersionTable = sqliteTable(
     versionNumber: integer('versionNumber').notNull(),
     payload: text('payload').notNull(),
     createdAt: text('createdAt').notNull(),
+    name: text('name'),
   },
   (t) => [
     index('idx_notes_graph_layout_key').on(t.layoutKey),

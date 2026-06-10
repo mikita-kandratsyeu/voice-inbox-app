@@ -222,6 +222,16 @@
       "save": "Сохранить",
       "discard": "Отменить"
     },
+    "saveLayoutSheet": {
+      "title": "Сохранить раскладку",
+      "namePlaceholder": "Название (необязательно)",
+      "nameInputHint": "Введите название или оставьте пустым.",
+      "autoName": "Раскладка",
+      "movedNodes_one": "{{count}} узел перемещён",
+      "movedNodes_few": "{{count}} узла перемещено",
+      "movedNodes_many": "{{count}} узлов перемещено",
+      "movedNodes_other": "{{count}} узлов перемещено"
+    },
     "export": {
       "title": "Поделиться",
       "subtitle": "Снимается вся карта — перетащите рамку или потяните угол, чтобы обрезать перед отправкой.",
@@ -243,13 +253,15 @@
     "history": {
       "openA11y": "История изменений",
       "title": "История изменений",
-      "subtitle": "Все сохранения — выберите, чтобы посмотреть фильтры",
+      "subtitle": "Все сохранения — выберите, чтобы посмотреть детали",
       "apply": "Применить",
-      "filtersSelectHint": "Выберите сохранение, чтобы увидеть фильтры",
+      "detailsTitle": "Детали",
+      "detailsSelectHint": "Выберите сохранение, чтобы увидеть детали",
+      "detailsExpandA11y": "Показать детали",
+      "detailsCollapseA11y": "Скрыть детали",
+      "detailsSavedOn": "Сохранено",
+      "detailsNodes": "Узлов",
       "listMeta": "Версия {{version}} · {{count}} узлов",
-      "filtersTitle": "Применённые фильтры",
-      "filtersExpandA11y": "Показать применённые фильтры",
-      "filtersCollapseA11y": "Скрыть применённые фильтры",
       "filters": {
         "folder": "Папка",
         "tags": "Теги",
@@ -265,6 +277,7 @@
       },
       "empty": "Пока нет сохранений. Перетащите узлы на карте и нажмите «Сохранить».",
       "versionLabel": "Версия {{version}}",
+      "appliedOnMapA11y": "Применена раскладка {{name}}, сохранена {{date}}",
       "nodeCount_one": "{{count}} узел",
       "nodeCount_few": "{{count}} узла",
       "nodeCount_many": "{{count}} узлов",

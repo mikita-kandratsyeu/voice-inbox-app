@@ -108,6 +108,8 @@ CREATE INDEX IF NOT EXISTS \`idx_notes_graph_layout_key\` ON \`notes_graph_layou
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS \`idx_notes_graph_layout_created\` ON \`notes_graph_layout_version\` (\`createdAt\`);`;
 
+const migration0021 = `ALTER TABLE \`notes_graph_layout_version\` ADD \`name\` text;`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -139,5 +141,6 @@ export const migrationsConfig = {
     m0018: migration0018,
     m0019: migration0019,
     m0020: migration0020,
+    m0021: migration0021,
   } as Record<string, string>,
 };

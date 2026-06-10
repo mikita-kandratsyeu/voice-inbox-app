@@ -143,6 +143,7 @@ const NotesGraphLayoutVersionSchema = z.looseObject({
   versionNumber: z.number().int().min(1),
   createdAt: safeString,
   payload: safeString,
+  name: safeString.optional(),
 });
 
 const ExportPayloadV4Schema = BasePayloadSchema.extend({
