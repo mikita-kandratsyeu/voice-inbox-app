@@ -57,4 +57,5 @@ export type SettingsStackParamList = {
     graphLayouts?: import('@/features/sync-data').BackupGraphLayoutVersion[];
   };
   DiagnosticLogs: undefined;
+  GithubSync: undefined;
 };

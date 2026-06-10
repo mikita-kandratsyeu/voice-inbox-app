@@ -32,6 +32,13 @@ import { clearGithubSyncState, getGithubSyncLastSyncedAt } from '../lib/githubSy
 import { pushGithubCommit } from '../lib/pushGithubCommit';
 import { restoreGithubSyncVersion } from '../lib/restoreGithubSyncVersion';
 
+function getGithubApiErrorStatus(err: unknown): number | undefined {
+  if (err instanceof Error && 'status' in err && typeof err.status === 'number') {
+    return err.status;
+  }
+  return undefined;
+}
+
 export function useGithubSync() {
   const { isProActive } = useProEntitlement();
   const records = useRecordStore((s) => s.records);
@@ -104,12 +111,23 @@ export function useGithubSync() {
 
   const loadRepos = useCallback(async () => {
     const current = await getGithubSyncSecrets();
-    if (!current?.accessToken) return [];
+    if (!current?.accessToken) {
+      return { ok: false as const, code: 'not_connected' };
+    }
     setIsLoadingRepos(true);
     try {
       const listed = await listGithubRepos(current.accessToken);
       setRepos(listed);
-      return listed;
+      return { ok: true as const, repos: listed };
+    } catch (err) {
+      if (getGithubApiErrorStatus(err) === 401) {
+        await clearGithubSyncSecrets();
+        setSecrets(null);
+        setConnected(false);
+        setRepos([]);
+        return { ok: false as const, code: 'unauthorized' };
+      }
+      return { ok: false as const, code: 'failed' };
     } finally {
       setIsLoadingRepos(false);
     }
@@ -181,12 +199,23 @@ export function useGithubSync() {
 
   const loadHistory = useCallback(async () => {
     const current = await getGithubSyncSecrets();
-    if (!current) return [];
+    if (!current) {
+      return { ok: false as const, code: 'not_connected' };
+    }
     setIsLoadingHistory(true);
     try {
       const commits = await fetchGithubSyncHistory(current);
       setHistory(commits);
-      return commits;
+      return { ok: true as const, commits };
+    } catch (err) {
+      if (getGithubApiErrorStatus(err) === 401) {
+        await clearGithubSyncSecrets();
+        setSecrets(null);
+        setConnected(false);
+        setHistory([]);
+        return { ok: false as const, code: 'unauthorized' };
+      }
+      return { ok: false as const, code: 'failed' };
     } finally {
       setIsLoadingHistory(false);
     }

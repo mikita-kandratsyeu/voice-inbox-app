@@ -1,5 +1,6 @@
-export const GITHUB_SYNC_DEFAULT_BRANCH = 'voice-inbox-ai';
-export const GITHUB_SYNC_DEFAULT_BASE_PATH = 'voice-inbox-ai';
+export const GITHUB_SYNC_DEFAULT_BRANCH = 'voice-inbox-ai-sync';
+export const GITHUB_SYNC_DEFAULT_REPO_NAME = 'voice-inbox-ai';
+export const GITHUB_SYNC_DEFAULT_BASE_PATH = GITHUB_SYNC_DEFAULT_REPO_NAME;
 export const GITHUB_SYNC_MANIFEST_FILE = 'manifest.json';
 export const GITHUB_SYNC_HEAD_FILE = '.voice-inbox-ai/HEAD.json';
 export const GITHUB_SYNC_NOTES_DIR = 'notes';
