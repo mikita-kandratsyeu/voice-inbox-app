@@ -41,7 +41,6 @@ import { fetchProAccountPortalUrl } from '@/shared/lib/ai-api/proLicenseApi';
 import { isProResetEligible } from '@/shared/lib/aiUsageProReset';
 import { subscribeAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
-import { diagWarn } from '@/shared/lib/appLogger';
 import { isEmbeddingAvailable } from '@/shared/lib/embeddings';
 import {
   checkMicPermission,
