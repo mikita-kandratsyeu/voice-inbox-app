@@ -23,4 +23,6 @@ declare module '@env' {
   export const REVENUECAT_ENTITLEMENT_ID: string | undefined;
   export const REVENUECAT_PACKAGE_TYPE_PREFERRED: string | undefined;
   export const REVENUECAT_AI_RESET_PRODUCT_ID: string | undefined;
+  /** GitHub OAuth App client id (Device Flow) for Pro note sync. */
+  export const GITHUB_OAUTH_CLIENT_ID: string | undefined;
 }

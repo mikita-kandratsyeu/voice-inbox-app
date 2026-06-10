@@ -9,7 +9,7 @@ import type { MonetizationMode } from '@/features/app-storefront';
 import { NotesGraphIcon } from '@/screens/notes-graph/ui/NotesGraphIcon';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
-import { PlanPaywallProChip } from '@/shared/ui';
+import { ProCrownBadge } from '@/shared/ui';
 
 import type { TabletInboxSidebarTarget } from './tabletInboxNavBridge';
 import { requestTabletOpenEditFolder } from './tabletInboxNavBridge';
@@ -209,7 +209,7 @@ export function TabletSidebarBody({
         appearance="secondary"
         badgeCount={isProActive ? notesGraphNodeCount : 0}
         onPress={openNotesGraph}
-        trailingAccessory={!isProActive ? <PlanPaywallProChip /> : undefined}
+        trailingAccessory={!isProActive ? <ProCrownBadge /> : undefined}
         icon={
           <TabletSidebarNavIcon
             isActive={false}

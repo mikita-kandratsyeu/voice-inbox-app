@@ -1,0 +1,11 @@
+export const GITHUB_SYNC_DEFAULT_BRANCH = 'voice-inbox-ai';
+export const GITHUB_SYNC_DEFAULT_BASE_PATH = 'voice-inbox-ai';
+export const GITHUB_SYNC_MANIFEST_FILE = 'manifest.json';
+export const GITHUB_SYNC_HEAD_FILE = '.voice-inbox-ai/HEAD.json';
+export const GITHUB_SYNC_NOTES_DIR = 'notes';
+export const GITHUB_SYNC_README_FILE = 'README.md';
+export const GITHUB_OAUTH_SCOPE = 'repo';
+export const GITHUB_API_BASE = 'https://api.github.com';
+export const GITHUB_DEVICE_CODE_URL = 'https://github.com/login/device/code';
+export const GITHUB_ACCESS_TOKEN_URL = 'https://github.com/login/oauth/access_token';
+export const GITHUB_HEAD_FORMAT_VERSION = 1;

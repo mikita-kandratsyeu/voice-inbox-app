@@ -3,12 +3,14 @@ import { Download, LockKeyhole, UploadCloud } from 'lucide-react-native';
 import React from 'react';
 import { Switch } from 'react-native';
 
+import { SettingsGithubSyncRows } from '@/features/github-sync';
 import type { Colors } from '@/shared/config';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
 type Props = {
   color: Colors;
   t: TFunction;
+  language: string;
   recordsCount: number;
   encryptBackup: boolean;
   onEncryptBackupChange: (value: boolean) => void;
@@ -21,6 +23,7 @@ type Props = {
 export const SettingsBackupSection = ({
   color,
   t,
+  language,
   recordsCount,
   encryptBackup,
   onEncryptBackupChange,
@@ -59,7 +62,7 @@ export const SettingsBackupSection = ({
       label={isImporting ? t('settings.importing') : t('settings.import')}
       leftIcon={<Download size={20} color={color.accent.primary} strokeWidth={1.8} />}
       onPress={onImport}
-      isLast
     />
+    <SettingsGithubSyncRows color={color} t={t} language={language} />
   </SettingsSection>
 );

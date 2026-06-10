@@ -178,6 +178,7 @@ export const SettingsScreen = () => {
           <SettingsBackupSection
             color={settings.color}
             t={settings.t}
+            language={settings.appLanguage}
             recordsCount={settings.recordsCount}
             encryptBackup={settings.backupEncryptEnabled}
             onEncryptBackupChange={settings.handleEncryptBackupChange}

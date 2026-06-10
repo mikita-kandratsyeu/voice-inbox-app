@@ -5,6 +5,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 
+import { ProCrownBadge } from './ProCrownBadge';
 import { SettingsSurfaceColorContext } from './SettingsSurfaceColorContext';
 
 type SettingsRowProps = {
@@ -19,6 +20,8 @@ type SettingsRowProps = {
   isLast?: boolean;
   dangerous?: boolean;
   labelClassName?: string;
+  /** Crown + Pro label beside the row title (locked Pro features for free users). */
+  showProBadge?: boolean;
 };
 
 type SettingsRowInnerProps = SettingsRowProps & {
@@ -37,6 +40,7 @@ const SettingsRowInner = ({
   isLast = false,
   dangerous = false,
   labelClassName,
+  showProBadge = false,
   color,
 }: SettingsRowInnerProps) => {
   const borderStyle = !isLast
@@ -69,15 +73,18 @@ const SettingsRowInner = ({
         <View className="mr-3 h-6 w-6 shrink-0 items-center justify-center">{leftIcon}</View>
       )}
       <View className="min-w-0 flex-1">
-        <Text
-          className={`text-[16px] ${labelClassName ?? ''}`}
-          style={{
-            color: dangerous ? color.accent.delete : color.text.primary,
-            lineHeight: 21,
-          }}
-        >
-          {label}
-        </Text>
+        <View className="flex-row flex-wrap items-center gap-1.5">
+          <Text
+            className={`text-[16px] ${labelClassName ?? ''}`}
+            style={{
+              color: dangerous ? color.accent.delete : color.text.primary,
+              lineHeight: 21,
+            }}
+          >
+            {label}
+          </Text>
+          {showProBadge ? <ProCrownBadge /> : null}
+        </View>
         {subtitle ? (
           <Text className="mt-0.5 text-[13px] leading-[18px]" style={{ color: color.text.muted }}>
             {subtitle}

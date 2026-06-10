@@ -42,7 +42,7 @@ export const SettingsAutomationSection = ({
   const showArchiveDelayRow = !automationLocked && autoArchiveEnabled;
 
   return (
-    <SettingsSection title={t('settings.automation')}>
+    <SettingsSection title={t('settings.automation')} showTitleProBadge={automationLocked}>
       <SettingsRow
         label={t('settings.autoTranscribeOnSave')}
         subtitle={t('settings.autoTranscribeOnSaveHint')}

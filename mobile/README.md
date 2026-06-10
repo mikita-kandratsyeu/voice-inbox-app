@@ -16,7 +16,7 @@ cp mobile/.env.example mobile/.env
 
 - **iOS:** Xcode, CocoaPods (`pod install` in `ios/` when needed). `GoogleService-Info.plist` is in the project.
 - **Android:** Add `android/app/google-services.json` from Firebase (required for Google Services / Crashlytics Gradle plugins).
-- **Env:** `WEB_API_URL` for cloud AI; Firebase App Check for API auth (`FIREBASE_APP_CHECK_DEBUG_TOKEN` in debug); Yandex ad unit IDs optional; RevenueCat keys when subscriptions are enabled.
+- **Env:** `WEB_API_URL` for cloud AI; Firebase App Check for API auth (`FIREBASE_APP_CHECK_DEBUG_TOKEN` in debug); Yandex ad unit IDs optional; RevenueCat keys when subscriptions are enabled; `GITHUB_OAUTH_CLIENT_ID` optional embedded default for Pro GitHub sync (release: override via Firebase Remote Config — see below).
 
 ```bash
 yarn workspace voice-inbox-app start
@@ -26,7 +26,7 @@ yarn workspace voice-inbox-app android
 
 From `mobile/` you can still run `yarn start`, `yarn ios`, etc. after a root install.
 
-Release builds: `yarn ios:release` / `yarn android:release` (`APP_ENV=production`).
+Release builds: `yarn ios:release` / `yarn android:release` (`APP_ENV=production`). Babel reads **`mobile/.env.production`** (not `.env`) when `NODE_ENV=production` for embedded `@env` defaults. **`GITHUB_OAUTH_CLIENT_ID`** for GitHub sync is typically set in **Firebase Remote Config** (key `GITHUB_OAUTH_CLIENT_ID`); optional fallback in `.env` / `.env.production` for dev or first launch before fetch.
 
 ---
 
@@ -69,6 +69,8 @@ Banner (note detail), **rewarded** (bonus AI quota in Settings), and **interstit
 
 Push: `@react-native-firebase/messaging`. Crashlytics, Analytics, Remote Config, App Check ship in release builds with Firebase config files.
 
+**Remote Config (release):** after `initRuntimeConfig()` on cold start, parameters such as `WEB_API_URL`, RevenueCat keys, Yandex ad unit IDs, and **`GITHUB_OAUTH_CLIENT_ID`** override embedded `@env` defaults when non-empty. In `__DEV__`, only embedded `.env` is used (no RC fetch).
+
 **Crashlytics in debug:** set `CRASHLYTICS_DEBUG=1` in `.env` and keep `mobile/firebase.json` (`crashlytics_debug_enabled`). Restart Metro with a clean cache and rebuild native.
 
 **Test crash (iOS):** Settings → Debug → Test Crashlytics (`__DEV__` only). Do not keep the Xcode debugger attached when forcing a crash. Relaunch the app after crash so the report uploads. See [Firebase: test Crashlytics on iOS](https://firebase.google.com/docs/crashlytics/ios/test-implementation).
@@ -98,6 +100,7 @@ Cold start: `src/features/app-lifecycle/model/useAppBootstrap.ts` — Firebase A
 ### Import & export
 
 - **Full backup (ZIP)** — `metadata.json` v**3**, `audio/`, folders + records (`src/features/sync-data/`). Restore via document picker / import review screen. Records include AI fields (`meetingDialogue`, `meetingSpeakerLabels`, etc.).
+- **GitHub sync (Pro)** — Settings → Backup & restore. Optional push of **markdown + metadata** (folders, graph layout) to **your** GitHub repository; **no audio**. Manual sync; each push creates a Git commit; browse history and restore a version from GitHub. OAuth **Device Flow** (`scope: repo`); access token in Keychain; requests go **directly to GitHub** (not through Voice Inbox servers). Default branch `voice-inbox`, files under `voice-inbox/` (`manifest.json`, `notes/{id}.md`). Public **Client ID** via embedded `GITHUB_OAUTH_CLIENT_ID` and/or **Firebase Remote Config** (`GITHUB_OAUTH_CLIENT_ID`); GitHub OAuth App must have Device Flow enabled; no client secret in the app. `src/features/github-sync/`.
 - **Import audio** — Document picker → copy, optional WAV conversion, duration limits, optional transcription (`src/features/import-audio-file/`).
 - **Per-note share** — Markdown briefs, plain share, email helpers (`src/features/share-record/`).
 - **Batch export** — Inbox multi-select: Markdown or ZIP (`src/features/batch-select/`).

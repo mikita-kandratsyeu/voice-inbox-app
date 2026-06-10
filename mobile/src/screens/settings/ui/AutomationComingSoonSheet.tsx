@@ -17,7 +17,8 @@ export type AutomationFeatureKind =
   | 'batchExport'
   | 'premiumAiModel'
   | 'privateCustomServer'
-  | 'notesGraph';
+  | 'notesGraph'
+  | 'githubSync';
 
 type AutomationComingSoonSheetProps = {
   visible: boolean;
@@ -56,7 +57,9 @@ export function AutomationComingSoonSheet({
                       ? 'private_custom_server'
                       : feature === 'notesGraph'
                         ? 'notes_graph'
-                        : 'accent_color',
+                        : feature === 'githubSync'
+                          ? 'github_sync'
+                          : 'accent_color',
     });
     if (feature === 'autoTranscribe') {
       void logAnalyticsEvent('premium_feature_tapped_auto_whisper', {
@@ -88,6 +91,10 @@ export function AutomationComingSoonSheet({
       void logAnalyticsEvent('premium_feature_tapped_notes_graph', {
         surface: 'inbox_menu',
       });
+    } else if (feature === 'githubSync') {
+      void logAnalyticsEvent('premium_feature_tapped_github_sync', {
+        surface: 'settings_backup',
+      });
     } else {
       void logAnalyticsEvent('premium_feature_tapped_accent_color', {
         surface: 'appearance_sheet',
@@ -112,7 +119,9 @@ export function AutomationComingSoonSheet({
                   ? t('aiSettings.privateProvider.proTitle')
                   : feature === 'notesGraph'
                     ? t('notesGraph.proTitle')
-                    : t('appearance.accentColor.proTitle');
+                    : feature === 'githubSync'
+                      ? t('settings.githubSync.proTitle')
+                      : t('appearance.accentColor.proTitle');
   const body =
     feature === 'autoTranscribe'
       ? t('settings.automationSoon.autoTranscribeBody')
@@ -130,7 +139,9 @@ export function AutomationComingSoonSheet({
                   ? t('aiSettings.privateProvider.proBody')
                   : feature === 'notesGraph'
                     ? t('notesGraph.proBody')
-                    : t('appearance.accentColor.proBody');
+                    : feature === 'githubSync'
+                      ? t('settings.githubSync.proBody')
+                      : t('appearance.accentColor.proBody');
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>

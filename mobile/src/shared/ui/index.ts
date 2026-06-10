@@ -36,6 +36,7 @@ export { PLAN_PAYWALL_FEATURE_LINE_HEIGHT, PlanPaywallProChip } from './PlanPayw
 export { PrivateExecutionBadge, PrivateModeBadge } from './PrivateModeBadge';
 export { ProcessingArcSpinner } from './ProcessingArcSpinner';
 export { ProcessingStatusTitle } from './ProcessingStatusTitle';
+export { ProCrownBadge } from './ProCrownBadge';
 export { ProgressStatusCard } from './ProgressStatusCard';
 export { RecordVoiceIcon } from './RecordVoiceIcon';
 export { RetryErrorState, type RetryErrorStateProps } from './RetryErrorState';
