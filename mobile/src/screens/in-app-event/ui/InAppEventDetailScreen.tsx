@@ -143,11 +143,13 @@ export const InAppEventDetailScreen = () => {
           {loadState.kind === 'ready' ? (
             <WebView
               style={{ flex: 1, backgroundColor: eventSurfaceColor }}
+              containerStyle={{ backgroundColor: eventSurfaceColor }}
               source={{
                 html: loadState.page.documentHtml,
                 baseUrl: webViewBaseUrl,
               }}
               contentInsetAdjustmentBehavior="never"
+              automaticallyAdjustsScrollIndicatorInsets={false}
               originWhitelist={['*']}
               javaScriptEnabled={false}
               domStorageEnabled={false}

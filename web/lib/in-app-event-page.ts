@@ -52,9 +52,9 @@ const EVENT_DOCUMENT_STYLES = `
     --text-secondary: #6b7280;
     --accent: #6366f1;
     --accent-soft: rgba(99, 102, 241, 0.12);
-    --card: #f9fafb;
-    --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
-    --border: rgba(15, 23, 42, 0.08);
+    --card: #f3f4f6;
+    --card-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    --border: rgba(15, 23, 42, 0.14);
     --pro-bg: rgba(99, 102, 241, 0.14);
     --pro-text: #4f46e5;
   }
@@ -79,9 +79,9 @@ const EVENT_DOCUMENT_STYLES = `
     --text-secondary: #6b7280;
     --accent: #6366f1;
     --accent-soft: rgba(99, 102, 241, 0.12);
-    --card: #f9fafb;
-    --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
-    --border: rgba(15, 23, 42, 0.08);
+    --card: #f3f4f6;
+    --card-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    --border: rgba(15, 23, 42, 0.14);
     --pro-bg: rgba(99, 102, 241, 0.14);
     --pro-text: #4f46e5;
   }
@@ -102,9 +102,13 @@ const EVENT_DOCUMENT_STYLES = `
   html {
     background: var(--bg);
     min-height: 100%;
+    min-height: 100vh;
+    height: 100%;
   }
   body {
     margin: 0;
+    min-height: 100%;
+    min-height: 100vh;
     padding: ${IN_APP_EVENT_CONTENT_PADDING.top}px ${IN_APP_EVENT_CONTENT_PADDING.horizontal}px ${IN_APP_EVENT_CONTENT_PADDING.bottom}px;
     background: var(--bg);
     color: var(--text);
