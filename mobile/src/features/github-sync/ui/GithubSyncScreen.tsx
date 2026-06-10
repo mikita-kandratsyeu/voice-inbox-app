@@ -1,7 +1,7 @@
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { GitBranch, History, RefreshCw, Unplug } from 'lucide-react-native';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,6 +21,12 @@ import { GithubSyncHistorySheet } from './GithubSyncHistorySheet';
 
 export function GithubSyncScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+  const isFocused = useIsFocused();
+  const isFocusedRef = useRef(isFocused);
+
+  useEffect(() => {
+    isFocusedRef.current = isFocused;
+  }, [isFocused]);
   const { t, i18n } = useTranslation();
   const color = useColors();
   const insets = useSafeAreaInsets();
@@ -91,6 +97,9 @@ export function GithubSyncScreen() {
 
   const handleSync = useCallback(async () => {
     const result = await syncNow();
+    if (!isFocusedRef.current) {
+      return;
+    }
     if (!result.ok) {
       if (result.code === 'sync_in_progress' || result.code === 'sync_cooldown') {
         return;
@@ -196,7 +205,7 @@ export function GithubSyncScreen() {
             subtitle={syncSubtitle}
             leftIcon={<RefreshCw size={20} color={color.accent.primary} strokeWidth={1.8} />}
             loading={isSyncing}
-            onPress={() => void handleSync()}
+            onPress={isSyncing ? undefined : () => void handleSync()}
           />
           <SettingsRow
             label={t('settings.githubSync.history')}

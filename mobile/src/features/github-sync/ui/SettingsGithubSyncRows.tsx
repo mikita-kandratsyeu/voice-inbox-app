@@ -38,6 +38,7 @@ export function SettingsGithubSyncRows({ color, t, language }: Props) {
     isLoadingRepos,
     connectGithub,
     cancelConnect,
+    isSyncing,
     selectRepository,
     createAndSelectRepository,
     refreshSecrets,
@@ -121,8 +122,9 @@ export function SettingsGithubSyncRows({ color, t, language }: Props) {
     ? `${secrets.owner}/${secrets.repo}`
     : t('settings.githubSync.notConnected');
 
-  const syncSubtitle =
-    lastSyncedAt != null
+  const syncSubtitle = isSyncing
+    ? t('settings.githubSync.syncing')
+    : lastSyncedAt != null
       ? t('settings.githubSync.lastSynced', {
           time: formatRelativeTime(lastSyncedAt, language),
         })
@@ -160,6 +162,7 @@ export function SettingsGithubSyncRows({ color, t, language }: Props) {
         label={repoLabel}
         subtitle={syncSubtitle}
         leftIcon={<GitBranch size={20} color={color.accent.primary} strokeWidth={1.8} />}
+        loading={isSyncing}
         onPress={() => navigation.navigate('GithubSync')}
         isLast
       />

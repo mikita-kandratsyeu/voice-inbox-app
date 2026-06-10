@@ -28,6 +28,11 @@ import {
   setGithubSyncRepository,
 } from '../lib/githubSecrets';
 import { registerGithubConnectSession } from '../lib/githubSyncConnectSession';
+import {
+  isGithubSyncSessionActive,
+  setGithubSyncSessionActive,
+  subscribeGithubSyncSession,
+} from '../lib/githubSyncSession';
 import { clearGithubSyncState, getGithubSyncLastSyncedAt } from '../lib/githubSyncState';
 import { pushGithubCommit } from '../lib/pushGithubCommit';
 import { restoreGithubSyncVersion } from '../lib/restoreGithubSyncVersion';
@@ -51,7 +56,7 @@ export function useGithubSync() {
   const [connected, setConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectChallenge, setConnectChallenge] = useState<GithubDeviceFlowChallenge | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(isGithubSyncSessionActive());
   const [isRestoring, setIsRestoring] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(getGithubSyncLastSyncedAt());
   const [repos, setRepos] = useState<GithubRepoSummary[]>([]);
@@ -70,6 +75,16 @@ export function useGithubSync() {
   useEffect(() => {
     void refreshSecrets();
   }, [refreshSecrets]);
+
+  useEffect(() => {
+    return subscribeGithubSyncSession(() => {
+      const active = isGithubSyncSessionActive();
+      setIsSyncing(active);
+      if (!active) {
+        setLastSyncedAt(getGithubSyncLastSyncedAt());
+      }
+    });
+  }, []);
 
   const cancelConnect = useCallback(() => {
     cancelGithubDeviceFlow();
@@ -197,7 +212,7 @@ export function useGithubSync() {
     }
     githubSyncInFlight = true;
     githubSyncLastAttemptAt = Date.now();
-    setIsSyncing(true);
+    setGithubSyncSessionActive(true);
     try {
       const result = await pushGithubCommit({
         secrets: current,
@@ -214,7 +229,7 @@ export function useGithubSync() {
       return result;
     } finally {
       githubSyncInFlight = false;
-      setIsSyncing(false);
+      setGithubSyncSessionActive(false);
     }
   }, [folders, isProActive, records]);
 
