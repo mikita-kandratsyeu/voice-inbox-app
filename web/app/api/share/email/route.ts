@@ -2,6 +2,7 @@ import { apiError, checkSupportRateLimit, HttpStatus, parseJsonBody } from '@/li
 import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import { isSmtpConfigured, sendTransactionalMail } from '@/lib/mailer';
 import { buildShareNoteEmailHtml } from '@/lib/shareNoteMarkdownEmailHtml';
+import { stripShareNoteSectionMarkers } from '@/lib/shareNoteSectionMarkers';
 import { NextResponse } from 'next/server';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -221,16 +222,17 @@ export async function POST(request: Request): Promise<NextResponse> {
     `Voice Inbox AI note: ${title}`.slice(0, SUBJECT_MAX);
 
   try {
+    const markdownForDelivery = stripShareNoteSectionMarkers(markdown);
     const html = await buildShareNoteEmailHtml(markdown, title);
     await sendTransactionalMail({
       to,
       subject,
-      text: markdown,
+      text: markdownForDelivery,
       html,
       attachments: [
         {
           filename: safeMarkdownAttachmentFilename(title),
-          content: Buffer.from(markdown, 'utf8'),
+          content: Buffer.from(markdownForDelivery, 'utf8'),
           contentType: 'text/markdown; charset=utf-8',
         },
       ],

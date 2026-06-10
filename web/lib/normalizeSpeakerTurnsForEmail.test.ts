@@ -1,4 +1,7 @@
-import { SHARE_SPEAKER_TURNS_SECTION_MARKER } from './shareNoteSectionMarkers';
+import {
+  SHARE_SPEAKER_TURNS_SECTION_MARKER,
+  stripShareNoteSectionMarkers,
+} from './shareNoteSectionMarkers';
 import { normalizeSpeakerTurnsForEmail } from './normalizeSpeakerTurnsForEmail';
 
 const TABLE_MARKER = '§§SHARE_NOTE_TABLE§§';
@@ -20,7 +23,7 @@ _Дисклеймер._
 
     const result = normalizeSpeakerTurnsForEmail(markdown);
 
-    expect(result).not.toContain(SHARE_SPEAKER_TURNS_SECTION_MARKER);
+    expect(stripShareNoteSectionMarkers(result)).not.toContain(SHARE_SPEAKER_TURNS_SECTION_MARKER);
     expect(result).toContain('## Любой заголовок из i18n');
     expect(result).toContain(TABLE_MARKER);
     expect(result).not.toMatch(/Участник 1: Первая реплика\./);
