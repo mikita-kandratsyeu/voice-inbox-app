@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
@@ -62,27 +62,50 @@ const WaveformBar = memo(({ index, isAnimating, color, audioLevel }: WaveformBar
   const opacity = useSharedValue(0.6);
   const scale = useSharedValue(1);
 
+  // Smoothing for voice-reactive mode
+  const smoothedLevel = useRef(0);
+  const SMOOTHING_FACTOR = 0.3; // Lower = smoother but slower, Higher = more responsive
+
   useEffect(() => {
     if (isAnimating) {
       // If audioLevel is provided, use voice-reactive mode
       if (audioLevel !== undefined) {
-        // Voice-reactive animation - smooth transition based on real audio
-        const targetIntensity = 0.4 + audioLevel * 0.8; // 0.4-1.2 range
+        // Apply exponential smoothing
+        smoothedLevel.current = smoothedLevel.current * (1 - SMOOTHING_FACTOR) + audioLevel * SMOOTHING_FACTOR;
 
-        height.value = withTiming(getWaveHeight(index, targetIntensity), {
-          duration: 50,
-          easing: Easing.linear,
-        });
+        // Wave delay from center - creates ripple effect
+        const center = BAR_COUNT / 2;
+        const distanceFromCenter = Math.abs(index - center);
+        const waveDelay = distanceFromCenter * 8; // milliseconds per bar distance
 
-        opacity.value = withTiming(0.6 + audioLevel * 0.4, {
-          duration: 50,
-          easing: Easing.linear,
-        });
+        // More dramatic intensity range with boosted response
+        const boostedLevel = Math.pow(smoothedLevel.current, 0.7); // Power curve for better perception
+        const targetIntensity = 0.3 + boostedLevel * 1.0; // 0.3-1.3 range
 
-        scale.value = withTiming(1 + audioLevel * 0.08, {
-          duration: 50,
-          easing: Easing.linear,
-        });
+        height.value = withDelay(
+          waveDelay,
+          withSpring(getWaveHeight(index, targetIntensity), {
+            damping: 15,
+            stiffness: 180,
+            mass: 0.5,
+          })
+        );
+
+        opacity.value = withDelay(
+          waveDelay,
+          withTiming(0.5 + boostedLevel * 0.5, {
+            duration: 30,
+            easing: Easing.out(Easing.quad),
+          })
+        );
+
+        scale.value = withDelay(
+          waveDelay,
+          withTiming(1 + boostedLevel * 0.12, {
+            duration: 30,
+            easing: Easing.out(Easing.quad),
+          })
+        );
       } else {
         // Fallback: animated mode when no audio data available
         const delay = getBarDelay(index);
@@ -93,19 +116,19 @@ const WaveformBar = memo(({ index, isAnimating, color, audioLevel }: WaveformBar
             withSequence(
               withTiming(getWaveHeight(index, 1.2), {
                 duration: 350,
-                easing: Easing.out(Easing.sine),
+                easing: Easing.out(Easing.sin),
               }),
               withTiming(getWaveHeight(index, 0.6), {
                 duration: 400,
-                easing: Easing.inOut(Easing.sine),
+                easing: Easing.inOut(Easing.sin),
               }),
               withTiming(getWaveHeight(index, 0.95), {
                 duration: 380,
-                easing: Easing.inOut(Easing.sine),
+                easing: Easing.inOut(Easing.sin),
               }),
               withTiming(getWaveHeight(index, 0.4), {
                 duration: 420,
-                easing: Easing.in(Easing.sine),
+                easing: Easing.in(Easing.sin),
               }),
             ),
             -1,
@@ -142,6 +165,9 @@ const WaveformBar = memo(({ index, isAnimating, color, audioLevel }: WaveformBar
         );
       }
     } else {
+      // Reset smoothing on stop
+      smoothedLevel.current = 0;
+
       height.value = withTiming(getWaveHeight(index, 0.3), {
         duration: 400,
         easing: Easing.out(Easing.cubic),
