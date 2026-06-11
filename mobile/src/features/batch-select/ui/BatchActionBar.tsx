@@ -1,8 +1,7 @@
 import { Archive, ArchiveRestore, FolderInput, Share, Trash2, X } from 'lucide-react-native';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -12,11 +11,9 @@ import {
   FLOAT_TAB_IOS_SHADOW_OFFSET_Y,
   FLOAT_TAB_IOS_SHADOW_RADIUS,
   floatingTabBarShadowOpacity,
-  getBatchActionBarHeight,
   getFloatingTabBarScrollPaddingBottom,
 } from '@/app/navigation/config';
 import type { Colors } from '@/shared/config';
-import { SPRING_CONFIGS } from '@/shared/config';
 import { hapticLight, hapticMedium, useIsTablet, withAlphaHex } from '@/shared/lib';
 import { Button, FrostedChromeBackground } from '@/shared/ui';
 
@@ -99,16 +96,6 @@ export const BatchActionBar = ({
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
-  const slideDistance = dockToScreenBottom ? getBatchActionBarHeight(insets.bottom) : 120;
-  const translateY = useSharedValue(slideDistance);
-
-  useEffect(() => {
-    translateY.value = slideDistance;
-    translateY.value = withSpring(0, {
-      ...SPRING_CONFIGS.bouncy,
-      damping: 11,
-    });
-  }, [slideDistance, translateY]);
 
   const disabled = count === 0;
 
@@ -152,33 +139,26 @@ export const BatchActionBar = ({
     onMoveToFolder();
   };
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
-
   return (
-    <Animated.View
-      style={[
-        animatedStyle,
-        {
-          ...(dockToScreenBottom
-            ? {
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: 40,
-              }
-            : { position: 'relative' }),
-          backgroundColor: 'transparent',
-          overflow: 'visible',
-          shadowColor: color.shadow.color,
-          shadowOffset: { width: 0, height: -FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
-          shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
-          shadowRadius: FLOAT_TAB_IOS_SHADOW_RADIUS,
-          elevation: 8,
-        },
-      ]}
+    <View
+      style={{
+        ...(dockToScreenBottom
+          ? {
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 40,
+            }
+          : { position: 'relative' }),
+        backgroundColor: 'transparent',
+        overflow: 'visible',
+        shadowColor: color.shadow.color,
+        shadowOffset: { width: 0, height: -FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
+        shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
+        shadowRadius: FLOAT_TAB_IOS_SHADOW_RADIUS,
+        elevation: 8,
+      }}
     >
       <FrostedChromeBackground />
       <View
@@ -276,6 +256,6 @@ export const BatchActionBar = ({
           </ScrollView>
         </View>
       </View>
-    </Animated.View>
+    </View>
   );
 };
