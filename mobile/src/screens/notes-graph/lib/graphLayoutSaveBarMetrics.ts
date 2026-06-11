@@ -1,6 +1,6 @@
 import { type ViewStyle } from 'react-native';
 
-import { selectPlatform } from '@/shared/lib';
+import { selectPlatform } from '@/shared/lib/platform';
 
 export type GraphLayoutSaveBarColors = {
   background: { primary: string };

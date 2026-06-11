@@ -2,15 +2,7 @@ import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Keyboard,
-  LayoutAnimation,
-  Platform,
-  Pressable,
-  Text,
-  UIManager,
-  View,
-} from 'react-native';
+import { Keyboard, LayoutAnimation, Pressable, Text, UIManager, View } from 'react-native';
 import { TextInput } from 'react-native-gesture-handler';
 
 import {

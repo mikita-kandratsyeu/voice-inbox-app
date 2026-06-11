@@ -96,6 +96,8 @@ const SettingsRowInner = ({
               color: dangerous ? color.accent.delete : color.text.primary,
               lineHeight: 21,
             }}
+            numberOfLines={1}
+            ellipsizeMode="tail"
           >
             {label}
           </Text>

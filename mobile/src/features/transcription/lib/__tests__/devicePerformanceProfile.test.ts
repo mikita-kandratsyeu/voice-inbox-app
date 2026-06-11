@@ -1,4 +1,8 @@
-import { Platform } from 'react-native';
+const platformMock = {
+  IS_ANDROID: false,
+  IS_IOS: true,
+  getPlatformVersionString: () => '17.0',
+};
 
 jest.mock('react-native-nitro-device-info', () => ({
   DeviceInfoModule: {
@@ -6,6 +10,8 @@ jest.mock('react-native-nitro-device-info', () => ({
     isLowBatteryLevel: jest.fn(),
   },
 }));
+
+jest.mock('@/shared/lib/platform', () => platformMock);
 
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
@@ -16,39 +22,45 @@ import {
   getDevicePerformanceProfile,
 } from '../devicePerformanceProfile';
 
+const setIosVersion = (version: string) => {
+  platformMock.getPlatformVersionString = () => version;
+};
+
 describe('devicePerformanceProfile', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    platformMock.IS_IOS = true;
+    platformMock.IS_ANDROID = false;
+    setIosVersion('17.0');
     (DeviceInfoModule.getPowerState as jest.Mock).mockReturnValue({ lowPowerMode: false });
     (DeviceInfoModule.isLowBatteryLevel as jest.Mock).mockReturnValue(false);
   });
 
   describe('detectDevicePerformanceTier', () => {
     it('should return medium tier for unknown platform', () => {
-      Object.defineProperty(Platform, 'OS', { value: 'web', writable: true });
+      platformMock.IS_IOS = false;
+      platformMock.IS_ANDROID = false;
+
       const tier = detectDevicePerformanceTier();
       expect(tier).toBe('medium');
     });
 
     it('should detect iOS tier based on version as fallback', () => {
-      Object.defineProperty(Platform, 'OS', { value: 'ios', writable: true });
-      Object.defineProperty(Platform, 'Version', { value: '17.0', writable: true });
+      setIosVersion('17.0');
 
       const tier = detectDevicePerformanceTier();
       expect(tier).toBe('high');
     });
 
     it('should detect medium tier for iOS 15-16', () => {
-      Object.defineProperty(Platform, 'OS', { value: 'ios', writable: true });
-      Object.defineProperty(Platform, 'Version', { value: '15.0', writable: true });
+      setIosVersion('15.0');
 
       const tier = detectDevicePerformanceTier();
       expect(tier).toBe('medium');
     });
 
     it('should detect low tier for iOS < 15', () => {
-      Object.defineProperty(Platform, 'OS', { value: 'ios', writable: true });
-      Object.defineProperty(Platform, 'Version', { value: '14.0', writable: true });
+      setIosVersion('14.0');
 
       const tier = detectDevicePerformanceTier();
       expect(tier).toBe('low');
@@ -57,8 +69,7 @@ describe('devicePerformanceProfile', () => {
 
   describe('getDevicePerformanceProfile', () => {
     it('should return high performance profile for high tier device', () => {
-      Object.defineProperty(Platform, 'OS', { value: 'ios', writable: true });
-      Object.defineProperty(Platform, 'Version', { value: '17.0', writable: true });
+      setIosVersion('17.0');
 
       const profile = getDevicePerformanceProfile({ respectPowerMode: false });
 
@@ -69,8 +80,7 @@ describe('devicePerformanceProfile', () => {
     });
 
     it('should downgrade tier when in low power mode', () => {
-      Object.defineProperty(Platform, 'OS', { value: 'ios', writable: true });
-      Object.defineProperty(Platform, 'Version', { value: '17.0', writable: true });
+      setIosVersion('17.0');
       (DeviceInfoModule.getPowerState as jest.Mock).mockReturnValue({ lowPowerMode: true });
 
       const profile = getDevicePerformanceProfile({ respectPowerMode: true });
@@ -80,8 +90,7 @@ describe('devicePerformanceProfile', () => {
     });
 
     it('should downgrade tier when battery is low', () => {
-      Object.defineProperty(Platform, 'OS', { value: 'ios', writable: true });
-      Object.defineProperty(Platform, 'Version', { value: '17.0', writable: true });
+      setIosVersion('17.0');
       (DeviceInfoModule.isLowBatteryLevel as jest.Mock).mockReturnValue(true);
 
       const profile = getDevicePerformanceProfile({ respectPowerMode: true });
@@ -90,8 +99,7 @@ describe('devicePerformanceProfile', () => {
     });
 
     it('should not downgrade tier when respectPowerMode is false', () => {
-      Object.defineProperty(Platform, 'OS', { value: 'ios', writable: true });
-      Object.defineProperty(Platform, 'Version', { value: '17.0', writable: true });
+      setIosVersion('17.0');
       (DeviceInfoModule.getPowerState as jest.Mock).mockReturnValue({ lowPowerMode: true });
 
       const profile = getDevicePerformanceProfile({ respectPowerMode: false });
@@ -100,8 +108,7 @@ describe('devicePerformanceProfile', () => {
     });
 
     it('should handle power state detection failure gracefully', () => {
-      Object.defineProperty(Platform, 'OS', { value: 'ios', writable: true });
-      Object.defineProperty(Platform, 'Version', { value: '17.0', writable: true });
+      setIosVersion('17.0');
       (DeviceInfoModule.getPowerState as jest.Mock).mockImplementation(() => {
         throw new Error('Power state unavailable');
       });
@@ -112,8 +119,7 @@ describe('devicePerformanceProfile', () => {
     });
 
     it('should progressively downgrade from high to low', () => {
-      Object.defineProperty(Platform, 'OS', { value: 'ios', writable: true });
-      Object.defineProperty(Platform, 'Version', { value: '15.0', writable: true });
+      setIosVersion('15.0');
       (DeviceInfoModule.getPowerState as jest.Mock).mockReturnValue({ lowPowerMode: true });
 
       const profile = getDevicePerformanceProfile({ respectPowerMode: true });

@@ -1,27 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AppState, type AppStateStatus } from 'react-native';
-import { useSharedValue } from 'react-native-reanimated';
 import type { AudioSet, RecordBackType } from 'react-native-nitro-sound';
 import AudioRecorderPlayer, {
   AudioEncoderAndroidType,
   AudioSourceAndroidType,
   OutputFormatAndroidType,
 } from 'react-native-nitro-sound';
+import { useSharedValue } from 'react-native-reanimated';
 
 import { useAppLockStore } from '@/entities/app-lock';
-import { diagWarn } from '@/shared/lib/appLogger';
-import { NitroFS } from '@/shared/lib/fs';
-
-type AudioRecorderPlayerInstance = {
-  addRecordBackListener: (cb: (e: RecordBackType) => void) => void;
-  removeRecordBackListener: () => void;
-  startRecorder: (uri?: string, audioSets?: AudioSet, meteringEnabled?: boolean) => Promise<string>;
-  stopRecorder: () => Promise<string>;
-  setSubscriptionDuration: (sec: number) => void;
-  pauseRecorder: () => Promise<string>;
-  resumeRecorder: () => Promise<string>;
-};
 import {
   FREE_MAX_RECORDING_MS,
   RECORDING_FINAL_WARNING_REMAINING_MS,
@@ -39,9 +27,21 @@ import {
   IS_IOS,
   RECORDINGS_DIR,
 } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
+import { NitroFS } from '@/shared/lib/fs';
 import { checkMicPermission, requestMicPermission } from '@/shared/lib/permissions';
 
 import type { RecordingState } from '../config';
+
+type AudioRecorderPlayerInstance = {
+  addRecordBackListener: (cb: (e: RecordBackType) => void) => void;
+  removeRecordBackListener: () => void;
+  startRecorder: (uri?: string, audioSets?: AudioSet, meteringEnabled?: boolean) => Promise<string>;
+  stopRecorder: () => Promise<string>;
+  setSubscriptionDuration: (sec: number) => void;
+  pauseRecorder: () => Promise<string>;
+  resumeRecorder: () => Promise<string>;
+};
 
 const audioRecorderPlayer = AudioRecorderPlayer as unknown as AudioRecorderPlayerInstance;
 

@@ -1,7 +1,6 @@
-import { Platform } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
-import { getPlatformVersionString, IS_ANDROID, IS_IOS } from '@/shared/lib';
+import { getPlatformVersionString, IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 
 /**
  * Device performance tier based on chipset capabilities

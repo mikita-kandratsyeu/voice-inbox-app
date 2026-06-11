@@ -29,7 +29,7 @@ describe('buildAutoOrganizeSystemPrompt', () => {
     expect(prompt).toContain('Do NOT output "folders" or "assignments"');
     expect(prompt).toContain('isPinned');
     expect(prompt).toContain('openTaskCount');
-    expect(prompt).toContain('NEVER suggest archive');
+    expect(prompt).toContain('HARD EXCLUSIONS (NEVER archive if ANY apply)');
   });
 });
 

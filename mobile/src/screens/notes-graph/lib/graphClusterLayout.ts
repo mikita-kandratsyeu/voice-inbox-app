@@ -95,7 +95,7 @@ function parentRecordNodeId(node: GraphNode, edges: GraphEdge[]): string | null 
 function extractClusterMetadata(
   clusterId: string,
   nodeIds: string[],
-  nodeById: Map<string, GraphNode>,
+  _nodeById: Map<string, GraphNode>,
 ): { type: GraphClusterType; label?: string } {
   if (clusterId.startsWith('folder:')) {
     return {
@@ -376,10 +376,6 @@ function computeClusterGridColumns(
   if (clusterCount <= 1) return 1;
   if (clusterCount === 2) return 2;
   if (clusterCount === 3) return 3;
-
-  const avgClusterWidth =
-    entries.reduce((sum, entry) => sum + Math.max(entry.bounds.width, AVG_NODE_SPAN * 0.75), 0) /
-    clusterCount;
 
   const maxClusterWidth = Math.max(...entries.map((e) => e.bounds.width), AVG_NODE_SPAN * 0.75);
 

@@ -154,11 +154,14 @@ export function SettingsGithubSyncRows({ color, t }: Props) {
       />
     );
   } else {
+    const connectedLabel = secrets
+      ? `${secrets.owner}/${secrets.repo}`
+      : t('settings.githubSync.settingsRowTitle');
+
     rows = (
       <SettingsRow
-        label={t('settings.githubSync.settingsRowTitle')}
+        label={connectedLabel}
         subtitle={syncSubtitle}
-        subtitleA11y={secrets ? `${secrets.owner}/${secrets.repo}, ${syncSubtitle}` : syncSubtitle}
         leftIcon={<GithubIcon size={20} color={color.accent.primary} />}
         loading={isSyncing}
         onPress={() => navigation.navigate('GithubSync')}

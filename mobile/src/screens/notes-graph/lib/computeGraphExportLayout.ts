@@ -1,4 +1,4 @@
-import { IS_IOS } from '@/shared/lib';
+import { IS_IOS } from '@/shared/lib/platform';
 
 import { detectDeviceCapabilities } from './deviceCapabilities';
 import type { GraphNode } from './graphTypes';

@@ -383,9 +383,7 @@ export function GraphRecordNodeCardContent({
             marginTop: 4,
           }}
         >
-          {archivedLabel ? (
-            <GraphNodeArchivedChip label={archivedLabel} color={color} />
-          ) : null}
+          {archivedLabel ? <GraphNodeArchivedChip label={archivedLabel} color={color} /> : null}
           {folderName ? (
             <GraphNodeLocationChip
               label={folderName}

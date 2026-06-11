@@ -111,11 +111,7 @@ export function AiOrganizeReviewListDivider({
 }: AiOrganizeReviewListDividerProps) {
   return (
     <View
-      style={
-        isLast
-          ? undefined
-          : { borderBottomWidth: 1, borderBottomColor: color.border.default }
-      }
+      style={isLast ? undefined : { borderBottomWidth: 1, borderBottomColor: color.border.default }}
     >
       {children}
     </View>
@@ -129,13 +125,7 @@ const sectionTitleStyle = {
   letterSpacing: 1,
 };
 
-export function AiOrganizeReviewSectionHeader({
-  title,
-  color,
-}: {
-  title: string;
-  color: Colors;
-}) {
+export function AiOrganizeReviewSectionHeader({ title, color }: { title: string; color: Colors }) {
   return (
     <Text
       style={{

@@ -106,9 +106,7 @@ export function GraphNodeCard({
         <GraphRecordNodeCardContent
           title={record.title}
           folderName={chrome.locationLabel}
-          archivedLabel={
-            record.status === 'archived' ? t('inbox.filters.archived') : undefined
-          }
+          archivedLabel={record.status === 'archived' ? t('inbox.filters.archived') : undefined}
           openTasksLabel={
             openTasks > 0 ? t('notesGraph.node.openTasks', { count: openTasks }) : undefined
           }
