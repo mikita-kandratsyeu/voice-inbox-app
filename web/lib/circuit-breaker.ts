@@ -1,8 +1,18 @@
 /**
- * Circuit Breaker implementation to protect against cascading failures.
- * Prevents repeated calls to a failing service by opening the circuit
- * after a threshold of failures.
+ * Redis-based Circuit Breaker for serverless environments.
+ *
+ * NOTE: In-memory circuit breaker doesn't work in serverless because:
+ * - Each serverless instance has its own state
+ * - Instance #1 opens circuit, but Instances #2-100 don't know
+ * - Failing service continues to receive requests from other instances
+ *
+ * Redis-based solution:
+ * - All instances share the same circuit state in Redis
+ * - Atomic operations ensure consistent state transitions
+ * - TTL handles automatic circuit reset
  */
+
+import { redisPool } from '@/lib/redis-pool';
 
 export enum CircuitState {
   CLOSED = 'CLOSED',
@@ -22,6 +32,7 @@ export class CircuitBreakerError extends Error {
 }
 
 interface CircuitBreakerOptions {
+  name: string; // Circuit identifier (e.g., 'ai-api', 'database')
   failureThreshold?: number;
   successThreshold?: number;
   timeout?: number;
@@ -40,149 +51,197 @@ interface CircuitStats {
   consecutiveSuccesses: number;
 }
 
+/**
+ * Redis-based Circuit Breaker that works across serverless instances.
+ */
 export class CircuitBreaker {
-  private state: CircuitState = CircuitState.CLOSED;
-  private failureCount = 0;
-  private successCount = 0;
-  private lastFailureTime = 0;
-  private nextRetryTime = 0;
-
+  private readonly name: string;
   private readonly failureThreshold: number;
   private readonly successThreshold: number;
   private readonly timeout: number;
   private readonly resetTimeout: number;
   private readonly onStateChange?: (oldState: CircuitState, newState: CircuitState) => void;
 
-  private stats: CircuitStats = {
-    totalCalls: 0,
-    successfulCalls: 0,
-    failedCalls: 0,
-    rejectedCalls: 0,
-    state: CircuitState.CLOSED,
-    consecutiveFailures: 0,
-    consecutiveSuccesses: 0,
-  };
+  private readonly stateKey: string;
+  private readonly failureCountKey: string;
+  private readonly successCountKey: string;
+  private readonly lastFailureKey: string;
 
-  constructor(options: CircuitBreakerOptions = {}) {
+  constructor(options: CircuitBreakerOptions) {
+    this.name = options.name;
     this.failureThreshold = options.failureThreshold ?? 5;
     this.successThreshold = options.successThreshold ?? 2;
     this.timeout = options.timeout ?? 60000;
     this.resetTimeout = options.resetTimeout ?? 30000;
     this.onStateChange = options.onStateChange;
+
+    const prefix = `circuit:${this.name}`;
+    this.stateKey = `${prefix}:state`;
+    this.failureCountKey = `${prefix}:failures`;
+    this.successCountKey = `${prefix}:successes`;
+    this.lastFailureKey = `${prefix}:last_failure`;
   }
 
   async execute<T>(fn: () => Promise<T>, fallback?: () => T): Promise<T> {
-    if (this.state === CircuitState.OPEN) {
-      const now = Date.now();
-      if (now < this.nextRetryTime) {
-        this.stats.rejectedCalls++;
-        if (fallback) {
-          return fallback();
+    const redis = redisPool.getClient();
+    const state = await this.getState();
+
+    if (state === CircuitState.OPEN) {
+      // Check if reset timeout has passed
+      const lastFailure = await redis.get<string>(this.lastFailureKey);
+      if (lastFailure) {
+        const timeSinceFailure = Date.now() - parseInt(lastFailure, 10);
+        if (timeSinceFailure < this.resetTimeout) {
+          // Circuit still open
+          if (fallback) {
+            return fallback();
+          }
+          throw new CircuitBreakerError(
+            `Circuit breaker is OPEN for ${this.name}`,
+            CircuitState.OPEN,
+            parseInt(lastFailure, 10) + this.resetTimeout,
+          );
         }
-        throw new CircuitBreakerError(
-          `Circuit breaker is OPEN. Next retry at ${new Date(this.nextRetryTime).toISOString()}`,
-          CircuitState.OPEN,
-          this.nextRetryTime,
-        );
       }
-      this.transitionTo(CircuitState.HALF_OPEN);
+
+      // Reset timeout passed - try half-open
+      await this.setState(CircuitState.HALF_OPEN);
     }
 
-    this.stats.totalCalls++;
-
     try {
-      const result = await this.executeWithTimeout(fn);
-      this.onSuccess();
+      const result = await fn();
+      await this.recordSuccess();
       return result;
     } catch (error) {
-      this.onFailure();
-      if (fallback && this.state === CircuitState.OPEN) {
+      await this.recordFailure();
+
+      if (fallback) {
         return fallback();
       }
       throw error;
     }
   }
 
-  private async executeWithTimeout<T>(fn: () => Promise<T>): Promise<T> {
-    return Promise.race([
-      fn(),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Circuit breaker timeout')), this.timeout),
-      ),
-    ]);
+  private async getState(): Promise<CircuitState> {
+    const redis = redisPool.getClient();
+    const state = await redis.get<string>(this.stateKey);
+    return (state as CircuitState) || CircuitState.CLOSED;
   }
 
-  private onSuccess(): void {
-    this.stats.successfulCalls++;
-    this.failureCount = 0;
-    this.successCount++;
-    this.stats.consecutiveSuccesses++;
-    this.stats.consecutiveFailures = 0;
+  private async setState(newState: CircuitState): Promise<void> {
+    const redis = redisPool.getClient();
+    const oldState = await this.getState();
 
-    if (this.state === CircuitState.HALF_OPEN) {
-      if (this.successCount >= this.successThreshold) {
-        this.transitionTo(CircuitState.CLOSED);
-        this.successCount = 0;
+    await redis.set(this.stateKey, newState, {
+      ex: Math.ceil(this.timeout / 1000),
+    });
+
+    if (oldState !== newState && this.onStateChange) {
+      this.onStateChange(oldState, newState);
+    }
+  }
+
+  private async recordSuccess(): Promise<void> {
+    const redis = redisPool.getClient();
+    const state = await this.getState();
+
+    if (state === CircuitState.HALF_OPEN) {
+      // Increment success count in half-open state
+      const successes = await redis.incr(this.successCountKey);
+
+      if (successes >= this.successThreshold) {
+        // Enough successes - close circuit
+        await this.setState(CircuitState.CLOSED);
+        await redis.del(this.failureCountKey);
+        await redis.del(this.successCountKey);
+        await redis.del(this.lastFailureKey);
       }
+    } else if (state === CircuitState.CLOSED) {
+      // Reset failure count on success
+      await redis.del(this.failureCountKey);
     }
   }
 
-  private onFailure(): void {
-    this.stats.failedCalls++;
-    this.failureCount++;
-    this.successCount = 0;
-    this.lastFailureTime = Date.now();
-    this.stats.lastFailureTime = this.lastFailureTime;
-    this.stats.consecutiveFailures++;
-    this.stats.consecutiveSuccesses = 0;
+  private async recordFailure(): Promise<void> {
+    const redis = redisPool.getClient();
+    const state = await this.getState();
 
-    if (this.state === CircuitState.HALF_OPEN) {
-      this.transitionTo(CircuitState.OPEN);
-      this.nextRetryTime = Date.now() + this.resetTimeout;
-    } else if (this.failureCount >= this.failureThreshold) {
-      this.transitionTo(CircuitState.OPEN);
-      this.nextRetryTime = Date.now() + this.resetTimeout;
+    await redis.set(this.lastFailureKey, Date.now().toString(), {
+      ex: Math.ceil(this.resetTimeout / 1000),
+    });
+
+    if (state === CircuitState.HALF_OPEN) {
+      // Failure in half-open - reopen circuit
+      await this.setState(CircuitState.OPEN);
+      await redis.del(this.successCountKey);
+      return;
+    }
+
+    // Increment failure count
+    const failures = await redis.incr(this.failureCountKey);
+    await redis.expire(this.failureCountKey, Math.ceil(this.timeout / 1000));
+
+    if (failures >= this.failureThreshold) {
+      // Too many failures - open circuit
+      await this.setState(CircuitState.OPEN);
     }
   }
 
-  private transitionTo(newState: CircuitState): void {
-    const oldState = this.state;
-    if (oldState !== newState) {
-      this.state = newState;
-      this.stats.state = newState;
-      if (newState === CircuitState.CLOSED) {
-        this.failureCount = 0;
-        this.successCount = 0;
-      }
-      this.onStateChange?.(oldState, newState);
-    }
+  async getStats(): Promise<CircuitStats> {
+    const redis = redisPool.getClient();
+    const state = await this.getState();
+    const failures = await redis.get<string>(this.failureCountKey);
+    const successes = await redis.get<string>(this.successCountKey);
+    const lastFailure = await redis.get<string>(this.lastFailureKey);
+
+    return {
+      totalCalls: 0, // Not tracked in serverless version
+      successfulCalls: 0,
+      failedCalls: 0,
+      rejectedCalls: 0,
+      state,
+      lastFailureTime: lastFailure ? parseInt(lastFailure, 10) : undefined,
+      consecutiveFailures: failures ? parseInt(failures, 10) : 0,
+      consecutiveSuccesses: successes ? parseInt(successes, 10) : 0,
+    };
   }
 
-  getState(): CircuitState {
-    return this.state;
-  }
-
-  getStats(): Readonly<CircuitStats> {
-    return { ...this.stats };
-  }
-
-  reset(): void {
-    this.transitionTo(CircuitState.CLOSED);
-    this.failureCount = 0;
-    this.successCount = 0;
-    this.lastFailureTime = 0;
-    this.nextRetryTime = 0;
+  async reset(): Promise<void> {
+    const redis = redisPool.getClient();
+    await redis.del(this.stateKey);
+    await redis.del(this.failureCountKey);
+    await redis.del(this.successCountKey);
+    await redis.del(this.lastFailureKey);
   }
 }
 
-const aiCircuitBreaker = new CircuitBreaker({
+/**
+ * Global circuit breakers for common services.
+ */
+const circuitBreakers = new Map<string, CircuitBreaker>();
+
+function getCircuitBreaker(name: string, options?: Omit<CircuitBreakerOptions, 'name'>): CircuitBreaker {
+  if (!circuitBreakers.has(name)) {
+    circuitBreakers.set(
+      name,
+      new CircuitBreaker({
+        name,
+        ...options,
+        onStateChange: (oldState, newState) => {
+          console.log(`Circuit breaker '${name}' changed: ${oldState} -> ${newState}`);
+          options?.onStateChange?.(oldState, newState);
+        },
+      }),
+    );
+  }
+  return circuitBreakers.get(name)!;
+}
+
+export const aiCircuitBreaker = getCircuitBreaker('ai-api', {
   failureThreshold: 5,
   successThreshold: 2,
-  timeout: 180000,
-  resetTimeout: 60000,
-  onStateChange: (oldState, newState) => {
-    console.log(`Circuit breaker state changed: ${oldState} → ${newState}`);
-  },
+  timeout: 180_000, // 3 minutes
+  resetTimeout: 60_000, // 1 minute
 });
 
 export async function executeWithCircuitBreaker<T>(
@@ -192,10 +251,10 @@ export async function executeWithCircuitBreaker<T>(
   return aiCircuitBreaker.execute(fn, fallback);
 }
 
-export function getCircuitBreakerStats(): Readonly<CircuitStats> {
+export async function getCircuitBreakerStats(): Promise<CircuitStats> {
   return aiCircuitBreaker.getStats();
 }
 
-export function resetCircuitBreaker(): void {
-  aiCircuitBreaker.reset();
+export async function resetCircuitBreaker(): Promise<void> {
+  return aiCircuitBreaker.reset();
 }

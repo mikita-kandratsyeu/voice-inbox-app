@@ -1,97 +1,81 @@
 import { Redis } from '@upstash/redis';
 
 /**
- * Redis connection pool for better resource management.
- * Creates a fixed pool of Redis clients that are reused across requests.
+ * Serverless-optimized Redis client factory.
+ *
+ * NOTE: In serverless environments (like Vercel), connection pooling is ANTI-PATTERN.
+ * Each serverless instance is ephemeral and handles only one request at a time.
+ * Upstash Redis REST API is already optimized for serverless - no pooling needed.
+ *
+ * Creating a pool would result in:
+ * - 100 concurrent requests = 100 instances × 10 connections = 1000 Redis connections
+ * - Instead of: 100 instances × 1 connection = 100 Redis connections
  */
-class RedisConnectionPool {
-  private clients: Redis[] = [];
-  private readonly poolSize: number;
-  private currentIndex = 0;
-  private initialized = false;
 
-  constructor(poolSize = 10) {
-    this.poolSize = poolSize;
+let cachedClient: Redis | null = null;
+
+/**
+ * Get a singleton Redis client for this serverless instance.
+ * The client is reused across function invocations within the same instance.
+ */
+function getClient(): Redis {
+  if (cachedClient) {
+    return cachedClient;
   }
 
-  private ensureInitialized(): void {
-    if (this.initialized) return;
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-    const url = process.env.UPSTASH_REDIS_REST_URL;
-    const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-    if (!url || !token) {
-      throw new Error('Redis credentials not configured');
-    }
-
-    for (let i = 0; i < this.poolSize; i++) {
-      this.clients.push(
-        new Redis({
-          url,
-          token,
-          keepAlive: true,
-          retry: {
-            retries: 3,
-            backoff: (retryCount) => Math.min(1000 * Math.pow(2, retryCount), 3000),
-          },
-        }),
-      );
-    }
-
-    this.initialized = true;
+  if (!url || !token) {
+    throw new Error('Redis credentials not configured');
   }
 
-  /**
-   * Get a Redis client from the pool using round-robin strategy.
-   */
-  getClient(): Redis {
-    this.ensureInitialized();
-    const client = this.clients[this.currentIndex];
-    this.currentIndex = (this.currentIndex + 1) % this.poolSize;
-    return client;
-  }
+  cachedClient = new Redis({
+    url,
+    token,
+    retry: {
+      retries: 3,
+      backoff: (retryCount) => Math.min(1000 * Math.pow(2, retryCount), 3000),
+    },
+  });
 
-  /**
-   * Create a new Redis client with sync token for read-your-writes consistency.
-   */
-  getClientWithSyncToken(syncToken: string): Redis {
-    const url = process.env.UPSTASH_REDIS_REST_URL;
-    const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-    if (!url || !token) {
-      throw new Error('Redis credentials not configured');
-    }
-
-    const client = new Redis({
-      url,
-      token,
-      keepAlive: false,
-      retry: {
-        retries: 2,
-        backoff: (retryCount) => Math.min(500 * Math.pow(2, retryCount), 2000),
-      },
-    });
-
-    client.readYourWritesSyncToken = syncToken;
-    return client;
-  }
-
-  /**
-   * Get current pool size.
-   */
-  getPoolSize(): number {
-    return this.poolSize;
-  }
-
-  /**
-   * Check if pool is initialized.
-   */
-  isInitialized(): boolean {
-    return this.initialized;
-  }
+  return cachedClient;
 }
 
-export const redisPool = new RedisConnectionPool(10);
+/**
+ * Create a new Redis client with sync token for read-your-writes consistency.
+ */
+function getClientWithSyncToken(syncToken: string): Redis {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!url || !token) {
+    throw new Error('Redis credentials not configured');
+  }
+
+  const client = new Redis({
+    url,
+    token,
+    retry: {
+      retries: 2,
+      backoff: (retryCount) => Math.min(500 * Math.pow(2, retryCount), 2000),
+    },
+  });
+
+  client.readYourWritesSyncToken = syncToken;
+  return client;
+}
+
+/**
+ * Backward-compatible wrapper that mimics the old pool API.
+ * In reality, just returns a singleton client.
+ */
+export const redisPool = {
+  getClient,
+  getClientWithSyncToken,
+  getPoolSize: () => 1, // Always 1 in serverless
+  isInitialized: () => cachedClient !== null,
+};
 
 /**
  * Helper to execute Redis commands with exponential backoff retry.
