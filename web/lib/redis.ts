@@ -1,4 +1,3 @@
-import { Redis } from '@upstash/redis';
 import type { Message } from '@/types';
 import {
   GET_RETRY_ATTEMPTS,
@@ -7,6 +6,7 @@ import {
   MESSAGE_TTL_SECONDS,
 } from '@/config/constants';
 import { memoryStore } from '@/lib/memory-store';
+import { redisPool, executeWithRetry } from '@/lib/redis-pool';
 
 type KvClient = {
   set(key: string, value: string, options?: { ex?: number }): Promise<void>;
@@ -30,21 +30,16 @@ type KvClient = {
 
 const useMemoryStore = !process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN;
 
-const redisClient = useMemoryStore
-  ? null
-  : new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-    });
-
 const kv: KvClient = useMemoryStore
   ? memoryStore
   : {
       async set(key, value, options) {
-        await redisClient!.set(key, value, options?.ex ? { ex: options.ex } : undefined);
+        const client = redisPool.getClient();
+        await client.set(key, value, options?.ex ? { ex: options.ex } : undefined);
       },
       async setIfNotExists(key, value, options) {
-        const result = await redisClient!.set(
+        const client = redisPool.getClient();
+        const result = await client.set(
           key,
           value,
           options?.ex ? { nx: true, ex: options.ex } : { nx: true },
@@ -52,13 +47,16 @@ const kv: KvClient = useMemoryStore
         return result === 'OK';
       },
       async get(key) {
-        return redisClient!.get<string>(key);
+        const client = redisPool.getClient();
+        return client.get<string>(key);
       },
       async incr(key) {
-        return redisClient!.incr(key);
+        const client = redisPool.getClient();
+        return client.incr(key);
       },
       async incrWithExpireOnFirst(key, seconds) {
-        return redisClient!.eval<[string], number>(
+        const client = redisPool.getClient();
+        return client.eval<[string], number>(
           `
 local count = redis.call("INCR", KEYS[1])
 if count == 1 then
@@ -71,7 +69,8 @@ return count
         );
       },
       async incrByWithExpireOnFirst(key, amount, seconds) {
-        return redisClient!.eval<[string], number>(
+        const client = redisPool.getClient();
+        return client.eval<[string], number>(
           `
 local separator = string.find(ARGV[1], ":")
 local amount = tonumber(string.sub(ARGV[1], 1, separator - 1))
@@ -88,7 +87,8 @@ return count
         );
       },
       async incrementWithinLimit(key, amount, limit, seconds) {
-        const raw = await redisClient!.eval<[string], string>(
+        const client = redisPool.getClient();
+        const raw = await client.eval<[string], string>(
           `
 local first = string.find(ARGV[1], ":")
 local second = string.find(ARGV[1], ":", first + 1)
@@ -116,10 +116,12 @@ return tostring(count) .. ":1"
         };
       },
       async decr(key) {
-        return redisClient!.decr(key);
+        const client = redisPool.getClient();
+        return client.decr(key);
       },
       async decrBy(key, amount) {
-        return redisClient!.eval<[string], number>(
+        const client = redisPool.getClient();
+        return client.eval<[string], number>(
           `
 if redis.call("EXISTS", KEYS[1]) == 0 then
   return 0
@@ -140,7 +142,8 @@ return count
         );
       },
       async decrByWithFloor(key, amount) {
-        const raw = await redisClient!.eval<[string], string>(
+        const client = redisPool.getClient();
+        const raw = await client.eval<[string], string>(
           `
 if redis.call("EXISTS", KEYS[1]) == 0 then
   return "0:0"
@@ -169,10 +172,12 @@ return tostring(count) .. ":" .. tostring(previous - count)
         };
       },
       async expire(key, seconds) {
-        await redisClient!.expire(key, seconds);
+        const client = redisPool.getClient();
+        await client.expire(key, seconds);
       },
       async del(key) {
-        await redisClient!.del(key);
+        const client = redisPool.getClient();
+        await client.del(key);
       },
     };
 
@@ -211,12 +216,8 @@ export async function getMessage(id: string, syncToken?: string): Promise<Messag
     if (useMemoryStore) {
       return kv.get(key);
     }
-    if (syncToken && redisClient) {
-      const clientWithToken = new Redis({
-        url: process.env.UPSTASH_REDIS_REST_URL!,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-      });
-      clientWithToken.readYourWritesSyncToken = syncToken;
+    if (syncToken) {
+      const clientWithToken = redisPool.getClientWithSyncToken(syncToken);
       return clientWithToken.get<string>(key);
     }
     return kv.get(key);
@@ -225,13 +226,17 @@ export async function getMessage(id: string, syncToken?: string): Promise<Messag
   let raw: string | object | null = null;
 
   if (!useMemoryStore && !syncToken) {
-    for (let attempt = 0; attempt < GET_RETRY_ATTEMPTS; attempt++) {
-      raw = await doGet();
-      if (raw) break;
-      if (attempt < GET_RETRY_ATTEMPTS - 1) {
-        await sleep(GET_RETRY_DELAY_MS * (attempt + 1));
-      }
-    }
+    raw = await executeWithRetry(
+      async () => {
+        const result = await doGet();
+        if (result === null) {
+          return null;
+        }
+        return result;
+      },
+      GET_RETRY_ATTEMPTS,
+      GET_RETRY_DELAY_MS,
+    );
   } else {
     raw = await doGet();
   }
@@ -251,19 +256,21 @@ export async function getMessage(id: string, syncToken?: string): Promise<Messag
 }
 
 export function getSyncToken(): string | undefined {
-  if (!useMemoryStore && redisClient) {
-    return redisClient.readYourWritesSyncToken || undefined;
+  if (!useMemoryStore) {
+    const client = redisPool.getClient();
+    return client.readYourWritesSyncToken || undefined;
   }
   return undefined;
 }
 
 export async function listKeysByPrefix(prefix: string): Promise<string[]> {
-  if (redisClient) {
+  if (!useMemoryStore) {
+    const client = redisPool.getClient();
     const pattern = `${prefix}*`;
     const keys: string[] = [];
     let cursor = 0;
     do {
-      const [next, batch] = await redisClient.scan(cursor, { match: pattern, count: 100 });
+      const [next, batch] = await client.scan(cursor, { match: pattern, count: 100 });
       cursor = typeof next === 'string' ? parseInt(next, 10) : next;
       keys.push(...(batch ?? []));
     } while (cursor !== 0);
