@@ -17,10 +17,10 @@ function withAlphaHex(hex: string, alpha: number): string {
   return `#${normalized}${a}`;
 }
 
-export const GRAPH_LAYOUT_SAVE_BUTTON_SIZE = 34;
-export const GRAPH_LAYOUT_SAVE_ICON_SIZE = 14;
+export const GRAPH_LAYOUT_SAVE_BUTTON_SIZE = 36;
+export const GRAPH_LAYOUT_SAVE_ICON_SIZE = 16;
 export const GRAPH_LAYOUT_SAVE_SIDE_GUTTER = 16;
-export const GRAPH_LAYOUT_SAVE_GRAPH_CONTROL_SIZE = 40;
+export const GRAPH_LAYOUT_SAVE_GRAPH_CONTROL_SIZE = 44;
 export const GRAPH_LAYOUT_SAVE_DOCK_PADDING_H = 5;
 export const GRAPH_LAYOUT_SAVE_DOCK_PADDING_V = 4;
 /** Info / zoom columns — keeps the dock in the bottom center gap. */
@@ -38,11 +38,11 @@ export function getGraphLayoutSaveDockShadowStyle(color: GraphLayoutSaveBarColor
     Platform.select({
       ios: {
         shadowColor: color.shadow.color,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: color.shadow.opacity * 1.6,
-        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: color.shadow.opacity * 2.2,
+        shadowRadius: 10,
       },
-      android: { elevation: 4 },
+      android: { elevation: 6 },
       default: {},
     }) ?? {}
   );

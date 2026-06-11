@@ -73,33 +73,33 @@ function baseGraphEdgeStrokeStyle(kind: GraphEdgeKind, color: Colors): GraphEdge
     case 'similar':
       return {
         stroke: color.accent.primary,
-        strokeWidth: 2,
+        strokeWidth: 2.2,
         strokeLinecap: 'round',
-        opacity: 0.68,
+        opacity: 0.75,
       };
     case 'sharedTag':
       return {
         stroke: color.text.secondary,
-        strokeWidth: 1.35,
-        strokeDasharray: '6 5',
+        strokeWidth: 1.5,
+        strokeDasharray: '6 4',
         strokeLinecap: 'round',
-        opacity: 0.42,
+        opacity: 0.52,
       };
     case 'sameFolder':
       return {
         stroke: color.border.default,
-        strokeWidth: 1.1,
-        strokeDasharray: '2 8',
+        strokeWidth: 1.3,
+        strokeDasharray: '2 7',
         strokeLinecap: 'round',
-        opacity: 0.32,
+        opacity: 0.42,
       };
     case 'contains':
     default:
       return {
         stroke: color.text.muted,
-        strokeWidth: 1.25,
+        strokeWidth: 1.4,
         strokeLinecap: 'round',
-        opacity: 0.48,
+        opacity: 0.56,
       };
   }
 }
@@ -112,16 +112,16 @@ export function getGraphEdgeStrokeStyle(
   const base = baseGraphEdgeStrokeStyle(kind, color);
 
   if (emphasis === 'dimmed') {
-    return { ...base, opacity: base.opacity * 0.2 };
+    return { ...base, opacity: base.opacity * 0.25 };
   }
 
   if (emphasis === 'highlighted') {
     return {
       ...base,
       stroke: kind === 'similar' ? color.accent.primary : base.stroke,
-      strokeWidth: base.strokeWidth + (kind === 'similar' ? 1.25 : 0.75),
-      opacity: Math.min(1, base.opacity + 0.34),
-      strokeDasharray: kind === 'sharedTag' ? '7 4' : base.strokeDasharray,
+      strokeWidth: base.strokeWidth + (kind === 'similar' ? 1.4 : 0.9),
+      opacity: Math.min(1, base.opacity + 0.38),
+      strokeDasharray: kind === 'sharedTag' ? '7 3' : base.strokeDasharray,
     };
   }
 
@@ -136,8 +136,8 @@ export function getGraphEdgeGlowStyle(
 
   return {
     stroke: color.accent.primary,
-    strokeWidth: 6,
+    strokeWidth: 7,
     strokeLinecap: 'round',
-    opacity: 0.16,
+    opacity: 0.22,
   };
 }

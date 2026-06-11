@@ -229,9 +229,14 @@ export function GraphFilterBar({
       pointerEvents={disabled ? 'none' : 'auto'}
       style={{
         backgroundColor: color.background.primary,
-        borderBottomWidth: 1,
+        borderBottomWidth: 1.5,
         borderBottomColor: color.border.default,
         opacity: disabled ? 0.55 : 1,
+        shadowColor: color.shadow.color,
+        shadowOpacity: color.shadow.opacity * 0.3,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 2,
       }}
     >
       <ScrollView

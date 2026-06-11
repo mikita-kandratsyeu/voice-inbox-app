@@ -62,10 +62,10 @@ export function isGraphLayoutMode(value: string): value is GraphLayoutMode {
   return (GRAPH_LAYOUT_MODES as readonly string[]).includes(value);
 }
 
-export const RECORD_NODE_WIDTH = 158;
-export const RECORD_NODE_HEIGHT = 82;
-export const TASK_NODE_WIDTH = 136;
-export const TASK_NODE_HEIGHT = 42;
+export const RECORD_NODE_WIDTH = 164;
+export const RECORD_NODE_HEIGHT = 86;
+export const TASK_NODE_WIDTH = 142;
+export const TASK_NODE_HEIGHT = 44;
 
 export function recordNodeId(recordId: string): string {
   return `record:${recordId}`;

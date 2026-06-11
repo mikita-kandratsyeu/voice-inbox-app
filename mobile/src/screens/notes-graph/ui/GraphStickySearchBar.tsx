@@ -81,19 +81,24 @@ export function GraphStickySearchBar({
             flex: 1,
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 8,
+            gap: 9,
             backgroundColor: color.background.tertiary,
-            borderRadius: 12,
-            paddingHorizontal: 12,
-            paddingVertical: IS_IOS ? 10 : 8,
-            borderWidth: 1,
+            borderRadius: 14,
+            paddingHorizontal: 14,
+            paddingVertical: IS_IOS ? 11 : 9,
+            borderWidth: focused ? 2 : 1.5,
             borderColor: focused ? color.accent.primary : color.border.default,
+            shadowColor: color.shadow.color,
+            shadowOpacity: focused ? color.shadow.opacity * 0.4 : 0,
+            shadowRadius: 6,
+            shadowOffset: { width: 0, height: 2 },
+            elevation: focused ? 2 : 0,
           }}
         >
           <Search
-            size={16}
+            size={17}
             color={focused || query ? color.accent.primary : color.icon.muted}
-            strokeWidth={2}
+            strokeWidth={2.2}
           />
           <TextInput
             ref={inputRef}
@@ -175,7 +180,9 @@ export function GraphStickySearchBar({
         }}
       >
         {currentMatchLabel ? (
-          <Text style={{ color: color.text.secondary, fontSize: 12 }}>{currentMatchLabel}</Text>
+          <Text style={{ color: color.text.secondary, fontSize: 12, fontWeight: '600' }}>
+            {currentMatchLabel}
+          </Text>
         ) : null}
       </View>
     </FrostedBottomChrome>
