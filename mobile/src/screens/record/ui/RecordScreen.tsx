@@ -334,10 +334,19 @@ export const RecordScreen = () => {
           <RecordLimitBar elapsedMs={elapsedMs} maxRecordingMs={maxRecordingMs} />
         </View>
         <View className="w-full px-2">
-          <Waveform
-            isAnimating={state === 'recording' && appState === 'active'}
-            color="rgba(255,255,255,0.58)"
-          />
+          <View
+            style={{
+              shadowColor: '#ffffff',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: state === 'recording' ? 0.3 : 0,
+              shadowRadius: 12,
+            }}
+          >
+            <Waveform
+              isAnimating={state === 'recording' && appState === 'active'}
+              color="rgba(255,255,255,0.65)"
+            />
+          </View>
         </View>
         <View
           className="w-full items-center px-2"
