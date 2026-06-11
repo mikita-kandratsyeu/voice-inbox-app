@@ -1,8 +1,7 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Archive, FolderInput, FolderSync, FolderTree } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -13,10 +12,12 @@ import {
 import { type Colors, useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib/haptics';
 import {
+  AppBottomSheetContent,
   AppBottomSheetModal,
   ProCrownBadge,
+  SheetActionOptionRow,
   SheetFooterButtons,
-  useBottomSheetContentPadding,
+  SheetHeader,
 } from '@/shared/ui';
 
 import {
@@ -35,55 +36,6 @@ type AiOrganizeActionSheetProps = {
 };
 
 const ICON_SIZE = 18;
-
-type SheetOptionRowProps = {
-  label: string;
-  hint: string;
-  icon: React.ReactNode;
-  showProBadge: boolean;
-  onPress: () => void;
-  isLast?: boolean;
-};
-
-function SheetOptionRow({
-  label,
-  hint,
-  icon,
-  showProBadge,
-  onPress,
-  isLast = false,
-}: SheetOptionRowProps) {
-  const color = useColors();
-
-  return (
-    <TouchableOpacity
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityHint={hint}
-      onPress={onPress}
-      activeOpacity={0.7}
-      style={{
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        borderBottomWidth: isLast ? 0 : 1,
-        borderBottomColor: color.border.default,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-      }}
-    >
-      {icon}
-      <View
-        style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}
-      >
-        <Text style={{ fontSize: 16, color: color.text.primary, flexShrink: 1 }} numberOfLines={2}>
-          {label}
-        </Text>
-        {showProBadge ? <ProCrownBadge /> : null}
-      </View>
-    </TouchableOpacity>
-  );
-}
 
 function ActionIconBadge({ children, tint }: { children: React.ReactNode; tint: string }) {
   return (
@@ -167,7 +119,6 @@ export function AiOrganizeActionSheet({
   const { t } = useTranslation();
   const color = useColors();
   const insets = useSafeAreaInsets();
-  const contentPadding = useBottomSheetContentPadding(AI_ORGANIZE_SHEET_MIN_BOTTOM_PADDING);
 
   const actions = useMemo(() => buildActionRows(color, t), [color, t]);
   const snapPoints = useMemo(
@@ -187,31 +138,16 @@ export function AiOrganizeActionSheet({
       snapPoints={snapPoints}
       enableContentPanningGesture={false}
     >
-      <BottomSheetView style={{ flexGrow: 0, paddingHorizontal: 20, ...contentPadding }}>
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 17,
-            fontWeight: '600',
-            marginBottom: 4,
-            marginTop: 4,
-            textAlign: 'center',
-          }}
-        >
-          {t('folders.aiOrganizeSheet.title')}
-        </Text>
-        <Text
-          style={{
-            color: color.text.secondary,
-            fontSize: 14,
-            lineHeight: 20,
-            marginBottom: 10,
-            textAlign: 'center',
-            paddingHorizontal: 4,
-          }}
-        >
-          {subtitle}
-        </Text>
+      <AppBottomSheetContent
+        style={{ flexGrow: 0 }}
+        bottomPadding={AI_ORGANIZE_SHEET_MIN_BOTTOM_PADDING}
+      >
+        <SheetHeader
+          title={t('folders.aiOrganizeSheet.title')}
+          subtitle={subtitle}
+          color={color}
+          marginBottom={10}
+        />
 
         <View
           style={{
@@ -226,12 +162,12 @@ export function AiOrganizeActionSheet({
             const locked = isProAutoOrganizeMode(action.mode) && !isProActive;
 
             return (
-              <SheetOptionRow
+              <SheetActionOptionRow
                 key={action.mode}
                 label={action.label}
                 hint={action.hint}
                 icon={action.icon}
-                showProBadge={locked}
+                trailing={locked ? <ProCrownBadge /> : undefined}
                 isLast={index === actions.length - 1}
                 onPress={() => {
                   hapticSelection();
@@ -253,7 +189,7 @@ export function AiOrganizeActionSheet({
           onPrimaryPress={onClose}
           singleVariant="secondary"
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

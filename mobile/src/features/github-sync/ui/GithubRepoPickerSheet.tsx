@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
-import { hapticSelection, IS_IOS } from '@/shared/lib';
+import { hapticSelection, IS_IOS, matchesSearchQuery, normalizeSearchQuery } from '@/shared/lib';
 import {
   AppBottomSheetModal,
   getInputFieldInputStyle,
@@ -32,15 +32,6 @@ type Props = {
   onCreateRepo: (name: string) => void | Promise<void>;
   onLoadRepos: () => void | Promise<void>;
 };
-
-function normalizeSearchQuery(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-function matchesSearchQuery(value: string, query: string): boolean {
-  if (!query) return true;
-  return value.toLowerCase().includes(query);
-}
 
 type RepoPickerRowProps = {
   item: GithubRepoSummary;

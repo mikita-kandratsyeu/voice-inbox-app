@@ -1,16 +1,21 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import dayjs from 'dayjs';
 import { CheckCircle2, Clock3, FileText, Sun } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { View } from 'react-native';
 
 import { useColors } from '@/shared/config';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import { hapticSelection, hapticSuccess } from '@/shared/lib/haptics';
 import { parseTaskDeadline } from '@/shared/lib/parseTaskDeadline';
 import { formatTaskDeadlineTimeForDisplay } from '@/shared/lib/taskDeadlineTimeDisplay';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  AppBottomSheetContent,
+  AppBottomSheetModal,
+  SheetActionOptionRow,
+  SheetFooterButtons,
+  SheetHeader,
+} from '@/shared/ui';
 
 import {
   markTaskDeadlineNotificationDone,
@@ -23,38 +28,6 @@ type SheetMode = 'actions' | 'snooze';
 
 const SNOOZE_PRESETS: TaskDeadlineSnoozePreset[] = ['15m', '1h', 'tomorrow'];
 
-type SheetOptionRowProps = {
-  label: string;
-  icon: React.ReactNode;
-  onPress: () => void;
-  isLast?: boolean;
-};
-
-function SheetOptionRow({ label, icon, onPress, isLast = false }: SheetOptionRowProps) {
-  const color = useColors();
-
-  return (
-    <TouchableOpacity
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      activeOpacity={0.7}
-      style={{
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        borderBottomWidth: isLast ? 0 : 1,
-        borderBottomColor: color.border.default,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
-      }}
-    >
-      {icon}
-      <Text style={{ fontSize: 16, color: color.text.primary, flex: 1 }}>{label}</Text>
-    </TouchableOpacity>
-  );
-}
-
 export function TaskDeadlineActionSheet({
   onOpenNote,
 }: {
@@ -62,7 +35,6 @@ export function TaskDeadlineActionSheet({
 }) {
   const { t, i18n } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(12);
   const { visible, payload, hide } = useTaskDeadlineActionSheet();
   const [mode, setMode] = useState<SheetMode>('actions');
 
@@ -202,33 +174,13 @@ export function TaskDeadlineActionSheet({
 
   return (
     <AppBottomSheetModal visible={visible} onClose={closeSheet}>
-      <BottomSheetView style={{ paddingHorizontal: 20, paddingTop: 8, ...contentPadding }}>
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 17,
-            fontWeight: '600',
-            marginBottom: subtitle ? 4 : 10,
-            marginTop: 4,
-            textAlign: 'center',
-          }}
-        >
-          {title}
-        </Text>
-        {subtitle ? (
-          <Text
-            style={{
-              color: color.text.secondary,
-              fontSize: 14,
-              lineHeight: 20,
-              marginBottom: 10,
-              textAlign: 'center',
-              paddingHorizontal: 4,
-            }}
-          >
-            {subtitle}
-          </Text>
-        ) : null}
+      <AppBottomSheetContent bottomPadding={12}>
+        <SheetHeader
+          title={title}
+          subtitle={subtitle ?? undefined}
+          color={color}
+          marginBottom={10}
+        />
 
         <View
           style={{
@@ -240,7 +192,7 @@ export function TaskDeadlineActionSheet({
           }}
         >
           {actionRows.map((row, index) => (
-            <SheetOptionRow
+            <SheetActionOptionRow
               key={row.key}
               label={row.label}
               icon={row.icon}
@@ -257,7 +209,7 @@ export function TaskDeadlineActionSheet({
           onPrimaryPress={handleFooterPress}
           singleVariant="secondary"
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

@@ -8,7 +8,7 @@ import { Pressable, Text, View } from 'react-native';
 import type { Folder } from '@/entities/folder/model/types';
 import type { RecordListItem } from '@/entities/record';
 import { useColors } from '@/shared/config';
-import { IS_IOS } from '@/shared/lib';
+import { IS_IOS, normalizeSearchQuery } from '@/shared/lib';
 import {
   AppBottomSheetModal,
   getInputFieldInputStyle,
@@ -27,10 +27,6 @@ type AllTasksNotePickerSheetProps = {
   onClose: () => void;
   onSelect: (recordId: string) => void;
 };
-
-function normalizeSearchQuery(value: string): string {
-  return value.trim().toLowerCase();
-}
 
 function recordMatchesQuery(record: RecordListItem, query: string): boolean {
   if (!query) return true;

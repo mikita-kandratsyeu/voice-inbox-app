@@ -1,5 +1,4 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { Eye, EyeOff } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,12 +7,7 @@ import { Pressable, Text, View } from 'react-native';
 import { BACKUP_PASSWORD_MIN_LENGTH, validateBackupPassword } from '@/features/sync-data';
 import { type Colors, useColors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib';
-import {
-  APP_BOTTOM_SHEET_BACKDROP_SNAP,
-  AppBottomSheetModal,
-  SheetFooterButtons,
-  useBottomSheetContentPadding,
-} from '@/shared/ui';
+import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
 import { BackupEncryptionWarningBanner } from './BackupEncryptionWarningBanner';
 
@@ -147,18 +141,6 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
     password.trim().length >= BACKUP_PASSWORD_MIN_LENGTH &&
     (!isExport || confirm.trim().length >= BACKUP_PASSWORD_MIN_LENGTH);
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        {...APP_BOTTOM_SHEET_BACKDROP_SNAP}
-        pressBehavior={busy ? 'none' : 'close'}
-        opacity={0.45}
-      />
-    ),
-    [busy],
-  );
-
   const primaryLabel = t(isExport ? 'settings.export' : 'settings.import');
 
   return (
@@ -166,7 +148,7 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
       visible={visible}
       onClose={handleClose}
       enablePanDownToClose={!busy}
-      backdropComponent={renderBackdrop}
+      backdropPressBehavior={busy ? 'none' : 'close'}
     >
       <BottomSheetView
         style={{

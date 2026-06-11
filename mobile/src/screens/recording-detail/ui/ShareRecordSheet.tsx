@@ -2,7 +2,7 @@ import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@g
 import { ClipboardList, FileText, ListChecks, Mail, Music, UsersRound } from 'lucide-react-native';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Keyboard, Text, TouchableOpacity, View } from 'react-native';
 
 import {
   getLastShareRecipientEmail,
@@ -11,49 +11,13 @@ import {
   type ShareRecordExportFormat,
 } from '@/features/share-record';
 import { EmailBodyFormatPicker } from '@/features/share-record/ui/EmailBodyFormatPicker';
-import { type Colors, useColors } from '@/shared/config';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
-
-function ShareExportFormatChip({
-  format,
-  selectedFormat,
-  label,
-  onSelect,
-  color,
-  disabled = false,
-}: {
-  format: ShareRecordExportFormat;
-  selectedFormat: ShareRecordExportFormat;
-  label: string;
-  onSelect: (format: ShareRecordExportFormat) => void;
-  color: Colors;
-  disabled?: boolean;
-}) {
-  const selected = selectedFormat === format;
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected, disabled }}
-      accessibilityLabel={label}
-      disabled={disabled}
-      onPress={() => onSelect(format)}
-      className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
-      style={{
-        borderColor: selected ? color.accent.primary : color.border.default,
-        backgroundColor: color.background.tertiary,
-        opacity: disabled ? 0.55 : 1,
-      }}
-    >
-      <Text
-        className="text-center text-[15px] font-semibold leading-5"
-        style={{ color: selected ? color.accent.primary : color.text.primary }}
-        numberOfLines={2}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
+import { useColors } from '@/shared/config';
+import {
+  AppBottomSheetModal,
+  SheetFooterButtons,
+  SheetSelectionChip,
+  useBottomSheetContentPadding,
+} from '@/shared/ui';
 
 function shareExportFormatHintKey(format: ShareRecordExportFormat): string {
   return format === 'pdf' ? 'share.exportPackagingHintPdf' : 'share.exportPackagingHintMarkdown';
@@ -333,17 +297,17 @@ export const ShareRecordSheet = ({
             {t('batch.exportPackagingLabel')}
           </Text>
           <View className="flex-row gap-3">
-            <ShareExportFormatChip
-              format="markdown"
-              selectedFormat={exportFormat}
+            <SheetSelectionChip
+              value="markdown"
+              selectedValue={exportFormat}
               label={t('batch.exportPackagingSingle')}
               onSelect={handleSelectExportFormat}
               color={color}
               disabled={isSharing}
             />
-            <ShareExportFormatChip
-              format="pdf"
-              selectedFormat={exportFormat}
+            <SheetSelectionChip
+              value="pdf"
+              selectedValue={exportFormat}
               label={t('batch.exportPackagingPdf')}
               onSelect={handleSelectExportFormat}
               color={color}
@@ -432,17 +396,17 @@ export const ShareRecordSheet = ({
             {t('batch.exportPackagingLabel')}
           </Text>
           <View className="flex-row gap-3">
-            <ShareExportFormatChip
-              format="markdown"
-              selectedFormat={exportFormat}
+            <SheetSelectionChip
+              value="markdown"
+              selectedValue={exportFormat}
               label={t('batch.exportPackagingSingle')}
               onSelect={handleSelectExportFormat}
               color={color}
               disabled={isSharing}
             />
-            <ShareExportFormatChip
-              format="pdf"
-              selectedFormat={exportFormat}
+            <SheetSelectionChip
+              value="pdf"
+              selectedValue={exportFormat}
               label={t('batch.exportPackagingPdf')}
               onSelect={handleSelectExportFormat}
               color={color}

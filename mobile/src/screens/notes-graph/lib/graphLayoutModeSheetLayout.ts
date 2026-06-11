@@ -1,3 +1,5 @@
+import { getFixedSnapSheetBottomPadding } from '@/shared/lib/bottom-sheet/fixedSnapSheetLayout';
+
 /** Gorhom handle indicator area above sheet content. */
 export const GRAPH_LAYOUT_MODE_SHEET_HANDLE_HEIGHT = 16;
 
@@ -22,10 +24,11 @@ export const GRAPH_LAYOUT_MODE_SHEET_BODY_HEIGHT =
   GRAPH_LAYOUT_MODE_SHEET_FOOTER_HEIGHT;
 
 export function getGraphLayoutModeSheetBottomPadding(bottomInset: number): number {
-  return (
-    Math.max(bottomInset, GRAPH_LAYOUT_MODE_SHEET_MIN_BOTTOM_PADDING) +
-    GRAPH_LAYOUT_MODE_SHEET_BOTTOM_PADDING_EXTRA
-  );
+  return getFixedSnapSheetBottomPadding({
+    bottomInset,
+    minBottomPadding: GRAPH_LAYOUT_MODE_SHEET_MIN_BOTTOM_PADDING,
+    extraBottomPadding: GRAPH_LAYOUT_MODE_SHEET_BOTTOM_PADDING_EXTRA,
+  });
 }
 
 export function getGraphLayoutModeSheetSnapHeight(bottomInset: number): number {

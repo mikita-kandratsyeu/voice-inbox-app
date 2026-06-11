@@ -6,6 +6,8 @@ export { AiTabLoadingState } from './AiTabLoadingState';
 export type { BlockingProgressModalProps } from './BlockingProgressModal';
 export { BlockingProgressModal } from './BlockingProgressModal';
 export {
+  type AiHintPreset,
+  AiHintSheet,
   APP_BOTTOM_SHEET_BACKDROP_SNAP,
   APP_BOTTOM_SHEET_HANDLE,
   type AppBottomSheetBackdropPreset,
@@ -15,9 +17,15 @@ export {
   type AppBottomSheetModalProps,
   getAppBottomSheetBackgroundStyle,
   getAppBottomSheetHandleStyle,
+  SheetActionOptionRow,
+  type SheetEnumOption,
+  SheetEnumOptionList,
+  SheetEnumPickerSheet,
   SheetFooterButtons,
   type SheetFooterButtonsProps,
   SheetHeader,
+  SheetPickerRow,
+  SheetSelectionChip,
   useAppBottomSheetBackdrop,
   useAppBottomSheetChrome,
   useBottomSheetContentPadding,

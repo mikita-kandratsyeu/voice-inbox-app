@@ -7,7 +7,12 @@ import { Pressable, Text, View } from 'react-native';
 
 import { useProEntitlement } from '@/features/pro-license';
 import { useAppTheme, useColors } from '@/shared/config';
-import { IS_IOS, resolveFolderListTintHex } from '@/shared/lib';
+import {
+  IS_IOS,
+  matchesSearchQuery,
+  normalizeSearchQuery,
+  resolveFolderListTintHex,
+} from '@/shared/lib';
 import {
   AppBottomSheetModal,
   getInputFieldInputStyle,
@@ -33,15 +38,6 @@ type FolderPickerSheetProps = {
   onClose: () => void;
   onSelect: (folderId: string | null) => void;
 };
-
-function normalizeSearchQuery(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-function matchesSearchQuery(value: string, query: string): boolean {
-  if (!query) return true;
-  return value.toLowerCase().includes(query);
-}
 
 export const FolderPickerSheet = ({
   visible,

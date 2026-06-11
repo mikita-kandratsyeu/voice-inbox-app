@@ -2,49 +2,17 @@ import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@g
 import { FileText, Mail } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Keyboard, Text, TouchableOpacity, View } from 'react-native';
 
 import { getLastShareRecipientEmail } from '@/features/share-record';
 import type { ShareRecordExportFormat } from '@/features/share-record/model/shareRecordExportFormat';
-import { type Colors, useColors } from '@/shared/config';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
-
-function ShareExportFormatChip({
-  format,
-  selectedFormat,
-  label,
-  onSelect,
-  color,
-}: {
-  format: ShareRecordExportFormat;
-  selectedFormat: ShareRecordExportFormat;
-  label: string;
-  onSelect: (format: ShareRecordExportFormat) => void;
-  color: Colors;
-}) {
-  const selected = selectedFormat === format;
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      accessibilityLabel={label}
-      onPress={() => onSelect(format)}
-      className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
-      style={{
-        borderColor: selected ? color.accent.primary : color.border.default,
-        backgroundColor: color.background.tertiary,
-      }}
-    >
-      <Text
-        className="text-center text-[15px] font-semibold leading-5"
-        style={{ color: selected ? color.accent.primary : color.text.primary }}
-        numberOfLines={2}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
+import { useColors } from '@/shared/config';
+import {
+  AppBottomSheetModal,
+  SheetFooterButtons,
+  SheetSelectionChip,
+  useBottomSheetContentPadding,
+} from '@/shared/ui';
 
 function shareExportFormatHintKey(format: ShareRecordExportFormat): string {
   return format === 'pdf'
@@ -136,16 +104,16 @@ export const DigestShareSheet = ({
         {t('batch.exportPackagingLabel')}
       </Text>
       <View className="flex-row gap-3">
-        <ShareExportFormatChip
-          format="markdown"
-          selectedFormat={exportFormat}
+        <SheetSelectionChip
+          value="markdown"
+          selectedValue={exportFormat}
           label={t('batch.exportPackagingSingle')}
           onSelect={handleSelectExportFormat}
           color={color}
         />
-        <ShareExportFormatChip
-          format="pdf"
-          selectedFormat={exportFormat}
+        <SheetSelectionChip
+          value="pdf"
+          selectedValue={exportFormat}
           label={t('batch.exportPackagingPdf')}
           onSelect={handleSelectExportFormat}
           color={color}

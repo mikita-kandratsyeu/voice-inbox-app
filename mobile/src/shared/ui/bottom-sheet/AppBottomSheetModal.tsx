@@ -21,6 +21,7 @@ export type AppBottomSheetModalProps = {
   presentRequestKey?: number;
   surface?: AppBottomSheetChromeOptions['surface'];
   backdrop?: AppBottomSheetBackdropPreset;
+  backdropPressBehavior?: AppBottomSheetChromeOptions['backdropPressBehavior'];
   keyboardBlurBehavior?: AppBottomSheetChromeOptions['keyboardBlurBehavior'];
   /** Custom backdrop; overrides `backdrop` preset. */
   backdropComponent?: React.FC<BottomSheetBackdropProps>;
@@ -44,6 +45,7 @@ export const AppBottomSheetModal = forwardRef<BottomSheetModal, AppBottomSheetMo
       presentRequestKey = 0,
       surface,
       backdrop,
+      backdropPressBehavior,
       keyboardBlurBehavior,
       backdropComponent: backdropComponentOverride,
       snapPoints,
@@ -69,6 +71,7 @@ export const AppBottomSheetModal = forwardRef<BottomSheetModal, AppBottomSheetMo
     const chrome = useAppBottomSheetChrome({
       surface,
       backdrop,
+      backdropPressBehavior,
       keyboardBlurBehavior,
       snapPoints: snapPoints as (string | number)[] | undefined,
       enablePanDownToClose,

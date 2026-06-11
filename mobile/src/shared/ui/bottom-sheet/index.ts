@@ -1,3 +1,4 @@
+export { type AiHintPreset, AiHintSheet } from './AiHintSheet';
 export {
   APP_BOTTOM_SHEET_BACKDROP_SNAP,
   APP_BOTTOM_SHEET_HANDLE,
@@ -10,6 +11,9 @@ export {
 } from './appBottomSheetChrome';
 export { AppBottomSheetContent } from './AppBottomSheetContent';
 export { AppBottomSheetModal, type AppBottomSheetModalProps } from './AppBottomSheetModal';
+export { SheetActionOptionRow } from './SheetActionOptionRow';
+export { type SheetEnumOption, SheetEnumOptionList } from './SheetEnumOptionList';
+export { SheetEnumPickerSheet } from './SheetEnumPickerSheet';
 export {
   SHEET_FOOTER_BUTTON_RADIUS,
   sheetFooterButtonContainerStyle,
@@ -18,4 +22,6 @@ export {
   sheetFooterPrimaryButtonContainerStyle,
 } from './SheetFooterButtons';
 export { SheetHeader } from './SheetHeader';
+export { SheetPickerRow } from './SheetPickerRow';
+export { SheetSelectionChip } from './SheetSelectionChip';
 export { useBottomSheetContentPadding } from './useBottomSheetContentPadding';

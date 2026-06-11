@@ -13,6 +13,10 @@ export {
 export type { AudioChunk } from './audio';
 export { splitAudioIntoChunks } from './audio';
 export {
+  getFixedSnapSheetBottomPadding,
+  getFixedSnapSheetHeight,
+} from './bottom-sheet/fixedSnapSheetLayout';
+export {
   bottomSheetModalStackBehavior,
   useBottomSheetModalVisibility,
 } from './bottom-sheet/useBottomSheetModalVisibility';
@@ -77,6 +81,7 @@ export {
   RECORDINGS_DIR,
   resolveAudioPath,
 } from './recordings';
+export { matchesSearchQuery, normalizeSearchQuery } from './sheetSearchQuery';
 export {
   formatLocalizedLongDateWithTime,
   formatLocalTimeOfDay,

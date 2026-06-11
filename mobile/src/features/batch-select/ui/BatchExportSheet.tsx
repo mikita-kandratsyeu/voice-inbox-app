@@ -2,7 +2,7 @@ import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@g
 import { ClipboardList, FileText, ListChecks, Mail, UsersRound } from 'lucide-react-native';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Keyboard, Text, TouchableOpacity, View } from 'react-native';
 
 import {
   getLastShareRecipientEmail,
@@ -10,9 +10,13 @@ import {
   type ShareBriefTemplate,
 } from '@/features/share-record';
 import { EmailBodyFormatPicker } from '@/features/share-record/ui/EmailBodyFormatPicker';
-import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  AppBottomSheetModal,
+  SheetFooterButtons,
+  SheetSelectionChip,
+  useBottomSheetContentPadding,
+} from '@/shared/ui';
 
 import type { BatchExportPackaging } from '../model/batchExportPackaging';
 
@@ -26,47 +30,6 @@ function exportEmailLimitReminderKey(packaging: BatchExportPackaging): string {
   if (packaging === 'pdf') return 'batch.emailPdfLimitReminder';
   if (packaging === 'zip') return 'batch.emailZipLimitReminder';
   return 'batch.emailLimitReminder';
-}
-
-function ExportPackagingChip({
-  packaging,
-  selectedPackaging,
-  label,
-  onSelect,
-  color,
-  disabled = false,
-}: {
-  packaging: BatchExportPackaging;
-  selectedPackaging: BatchExportPackaging;
-  label: string;
-  onSelect: (p: BatchExportPackaging) => void;
-  color: Colors;
-  disabled?: boolean;
-}) {
-  const selected = selectedPackaging === packaging;
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected, disabled }}
-      accessibilityLabel={label}
-      disabled={disabled}
-      onPress={() => onSelect(packaging)}
-      className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
-      style={{
-        borderColor: selected ? color.accent.primary : color.border.default,
-        backgroundColor: color.background.tertiary,
-        opacity: disabled ? 0.55 : 1,
-      }}
-    >
-      <Text
-        className="text-center text-[15px] font-semibold leading-5"
-        style={{ color: selected ? color.accent.primary : color.text.primary }}
-        numberOfLines={2}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
 }
 
 type BatchExportSheetProps = {
@@ -336,25 +299,25 @@ export const BatchExportSheet = ({
             {t('batch.exportPackagingLabel')}
           </Text>
           <View className="flex-row flex-wrap gap-3">
-            <ExportPackagingChip
-              packaging="single"
-              selectedPackaging={exportPackaging}
+            <SheetSelectionChip
+              value="single"
+              selectedValue={exportPackaging}
               label={t('batch.exportPackagingSingle')}
               onSelect={handleSelectExportPackaging}
               color={color}
               disabled={isExporting}
             />
-            <ExportPackagingChip
-              packaging="zip"
-              selectedPackaging={exportPackaging}
+            <SheetSelectionChip
+              value="zip"
+              selectedValue={exportPackaging}
               label={t('batch.exportPackagingZip')}
               onSelect={handleSelectExportPackaging}
               color={color}
               disabled={isExporting}
             />
-            <ExportPackagingChip
-              packaging="pdf"
-              selectedPackaging={exportPackaging}
+            <SheetSelectionChip
+              value="pdf"
+              selectedValue={exportPackaging}
               label={t('batch.exportPackagingPdf')}
               onSelect={handleSelectExportPackaging}
               color={color}
@@ -462,25 +425,25 @@ export const BatchExportSheet = ({
             {t('batch.exportPackagingLabel')}
           </Text>
           <View className="flex-row flex-wrap gap-3">
-            <ExportPackagingChip
-              packaging="single"
-              selectedPackaging={exportPackaging}
+            <SheetSelectionChip
+              value="single"
+              selectedValue={exportPackaging}
               label={t('batch.exportPackagingSingle')}
               onSelect={handleSelectExportPackaging}
               color={color}
               disabled={isExporting}
             />
-            <ExportPackagingChip
-              packaging="zip"
-              selectedPackaging={exportPackaging}
+            <SheetSelectionChip
+              value="zip"
+              selectedValue={exportPackaging}
               label={t('batch.exportPackagingZip')}
               onSelect={handleSelectExportPackaging}
               color={color}
               disabled={isExporting}
             />
-            <ExportPackagingChip
-              packaging="pdf"
-              selectedPackaging={exportPackaging}
+            <SheetSelectionChip
+              value="pdf"
+              selectedValue={exportPackaging}
               label={t('batch.exportPackagingPdf')}
               onSelect={handleSelectExportPackaging}
               color={color}

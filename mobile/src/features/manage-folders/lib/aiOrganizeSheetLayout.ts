@@ -1,3 +1,8 @@
+import {
+  getFixedSnapSheetBottomPadding,
+  getFixedSnapSheetHeight,
+} from '@/shared/lib/bottom-sheet/fixedSnapSheetLayout';
+
 /** Gorhom handle indicator area above sheet content. */
 export const AI_ORGANIZE_SHEET_HANDLE_HEIGHT = 16;
 
@@ -30,35 +35,32 @@ export const AI_ORGANIZE_TEMPLATE_SHEET_BODY_HEIGHT =
   AI_ORGANIZE_SHEET_DUAL_FOOTER_HEIGHT;
 
 export function getAiOrganizeSheetBottomPadding(bottomInset: number): number {
-  return Math.max(bottomInset, AI_ORGANIZE_SHEET_MIN_BOTTOM_PADDING);
-}
-
-function getAiOrganizeSheetSnapHeight(
-  bodyHeight: number,
-  optionsHeight: number,
-  bottomInset: number,
-) {
-  return bodyHeight + optionsHeight + getAiOrganizeSheetBottomPadding(bottomInset);
+  return getFixedSnapSheetBottomPadding({
+    bottomInset,
+    minBottomPadding: AI_ORGANIZE_SHEET_MIN_BOTTOM_PADDING,
+  });
 }
 
 export function getAiOrganizeTemplateSheetSnapHeight(
   bottomInset: number,
   templateCount: number,
 ): number {
-  return getAiOrganizeSheetSnapHeight(
-    AI_ORGANIZE_TEMPLATE_SHEET_BODY_HEIGHT,
-    templateCount * AI_ORGANIZE_TEMPLATE_SHEET_ROW_HEIGHT,
+  return getFixedSnapSheetHeight({
+    bodyHeight: AI_ORGANIZE_TEMPLATE_SHEET_BODY_HEIGHT,
+    optionsHeight: templateCount * AI_ORGANIZE_TEMPLATE_SHEET_ROW_HEIGHT,
     bottomInset,
-  );
+    minBottomPadding: AI_ORGANIZE_SHEET_MIN_BOTTOM_PADDING,
+  });
 }
 
 export function getAiOrganizeActionSheetSnapHeight(
   bottomInset: number,
   actionCount: number,
 ): number {
-  return getAiOrganizeSheetSnapHeight(
-    AI_ORGANIZE_ACTION_SHEET_BODY_HEIGHT,
-    actionCount * AI_ORGANIZE_ACTION_SHEET_ROW_HEIGHT,
+  return getFixedSnapSheetHeight({
+    bodyHeight: AI_ORGANIZE_ACTION_SHEET_BODY_HEIGHT,
+    optionsHeight: actionCount * AI_ORGANIZE_ACTION_SHEET_ROW_HEIGHT,
     bottomInset,
-  );
+    minBottomPadding: AI_ORGANIZE_SHEET_MIN_BOTTOM_PADDING,
+  });
 }

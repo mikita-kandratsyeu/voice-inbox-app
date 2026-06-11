@@ -7,7 +7,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { hapticSelection, IS_IOS } from '@/shared/lib';
+import { hapticSelection, IS_IOS, matchesSearchQuery, normalizeSearchQuery } from '@/shared/lib';
 import {
   AppBottomSheetModal,
   getInputFieldInputStyle,
@@ -26,15 +26,6 @@ type TagPickerSheetProps = {
   onClose: () => void;
   onApply: (tags: string[]) => void;
 };
-
-function normalizeSearchQuery(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-function matchesSearchQuery(value: string, query: string): boolean {
-  if (!query) return true;
-  return value.toLowerCase().includes(query);
-}
 
 function normalizeTag(tag: string): string {
   return tag.toLowerCase().trim();

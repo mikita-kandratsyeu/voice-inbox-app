@@ -35,6 +35,8 @@ export const APP_BOTTOM_SHEET_BACKDROP_SNAP = {
 export type AppBottomSheetChromeOptions = {
   surface?: 'primary' | 'card';
   backdrop?: AppBottomSheetBackdropPreset;
+  /** Overrides preset press behavior (e.g. block backdrop tap while busy). */
+  backdropPressBehavior?: 'close' | 'none';
   keyboardBlurBehavior?: 'restore' | 'none';
   snapPoints?: (string | number)[];
   enablePanDownToClose?: boolean;
@@ -67,6 +69,7 @@ export function getAppBottomSheetHandleStyle(color: Colors, extra?: ViewStyle): 
 export function useAppBottomSheetBackdrop(
   preset: AppBottomSheetBackdropPreset = 'dismissible',
   custom?: ComponentType<BottomSheetBackdropProps>,
+  pressBehaviorOverride?: 'close' | 'none',
 ) {
   return useCallback(
     (props: BottomSheetBackdropProps) => {
@@ -78,12 +81,12 @@ export function useAppBottomSheetBackdrop(
         <BottomSheetBackdrop
           {...props}
           {...APP_BOTTOM_SHEET_BACKDROP_SNAP}
-          pressBehavior={pressBehavior}
+          pressBehavior={pressBehaviorOverride ?? pressBehavior}
           opacity={opacity}
         />
       );
     },
-    [custom, preset],
+    [custom, preset, pressBehaviorOverride],
   );
 }
 
@@ -93,6 +96,7 @@ export function useAppBottomSheetChrome(options: AppBottomSheetChromeOptions = {
   const {
     surface = 'primary',
     backdrop = 'dismissible',
+    backdropPressBehavior,
     keyboardBlurBehavior = 'restore',
     snapPoints,
     enablePanDownToClose = true,
@@ -103,7 +107,7 @@ export function useAppBottomSheetChrome(options: AppBottomSheetChromeOptions = {
     handleIndicatorStyle: handleIndicatorStyleOverride,
   } = options;
 
-  const renderBackdrop = useAppBottomSheetBackdrop(backdrop);
+  const renderBackdrop = useAppBottomSheetBackdrop(backdrop, undefined, backdropPressBehavior);
 
   const backgroundStyle = useMemo(
     () => backgroundStyleOverride ?? getAppBottomSheetBackgroundStyle(color, surface),
