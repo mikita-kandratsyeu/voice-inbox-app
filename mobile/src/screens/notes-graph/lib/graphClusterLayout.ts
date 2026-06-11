@@ -98,11 +98,8 @@ function extractClusterMetadata(
   nodeById: Map<string, GraphNode>,
 ): { type: GraphClusterType; label?: string } {
   if (clusterId.startsWith('folder:')) {
-    const firstNode = nodeIds[0] ? nodeById.get(nodeIds[0]) : null;
-    const folderId = clusterId.replace('folder:', '');
     return {
       type: 'folder',
-      label: firstNode?.record?.folderId ? `Folder ${folderId.slice(0, 8)}` : undefined,
     };
   }
 

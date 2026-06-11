@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import Svg, { Defs, LinearGradient, Rect, Stop, Text as SvgText } from 'react-native-svg';
 
+import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
 
 import type { GraphCluster } from '../lib/graphClusterLayout';
@@ -22,11 +24,28 @@ type ClusterBounds = {
 type GraphClusterBoundariesProps = {
   nodes: GraphNode[];
   clusters: GraphCluster[];
+  foldersById: Map<string, Folder>;
   color: Colors;
   width: number;
   height: number;
   visible: boolean;
 };
+
+function getClusterDisplayLabel(
+  cluster: GraphCluster,
+  foldersById: Map<string, Folder>,
+  folderRemovedLabel: string,
+): string | undefined {
+  if (cluster.type === 'folder') {
+    const folderId = cluster.id.startsWith('folder:') ? cluster.id.slice('folder:'.length) : '';
+    if (!folderId) return undefined;
+
+    const folderName = foldersById.get(folderId)?.name.trim();
+    return folderName || folderRemovedLabel;
+  }
+
+  return cluster.label;
+}
 
 function computeClusterBounds(
   cluster: GraphCluster,
@@ -81,17 +100,19 @@ function getClusterGradientId(cluster: GraphCluster): string {
 export const GraphClusterBoundaries = React.memo(function GraphClusterBoundaries({
   nodes,
   clusters,
+  foldersById,
   color,
   width,
   height,
   visible,
 }: GraphClusterBoundariesProps) {
+  const { t } = useTranslation();
   const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
 
   const clusterBounds = useMemo(() => {
     if (!visible) return [];
     return clusters
-      .filter((c) => c.nodeIds.length > 1 || c.type !== 'solo')
+      .filter((c) => c.type !== 'tag' && (c.nodeIds.length > 1 || c.type !== 'solo'))
       .map((cluster) => computeClusterBounds(cluster, nodeById))
       .filter((b): b is ClusterBounds => b !== null)
       .sort((a, b) => {
@@ -128,7 +149,12 @@ export const GraphClusterBoundaries = React.memo(function GraphClusterBoundaries
       {clusterBounds.map(({ cluster, minX, minY, width: rectWidth, height: rectHeight }) => {
         const clusterColor = getClusterColor(cluster, color);
         const gradientId = getClusterGradientId(cluster);
-        const showLabel = !!cluster.label && cluster.nodeIds.length >= 3;
+        const displayLabel = getClusterDisplayLabel(
+          cluster,
+          foldersById,
+          t('folders.detailFolderRemoved'),
+        );
+        const showLabel = !!displayLabel && cluster.nodeIds.length >= 3;
 
         return (
           <React.Fragment key={cluster.id}>
@@ -157,7 +183,7 @@ export const GraphClusterBoundaries = React.memo(function GraphClusterBoundaries
                 fontWeight="600"
                 opacity={0.85}
               >
-                {cluster.label}
+                {displayLabel}
               </SvgText>
             )}
           </React.Fragment>
