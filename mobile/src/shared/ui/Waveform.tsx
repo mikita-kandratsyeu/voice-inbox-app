@@ -19,6 +19,7 @@ const BAR_GAP = 4;
 
 // Create unique sensitivity for each bar (seeded by index for consistency)
 const getBarSensitivity = (index: number) => {
+  'worklet';
   const seed = Math.sin(index * 12.9898 + index * 78.233) * 43758.5453;
   const random = seed - Math.floor(seed);
   // Range from 0.7 to 1.3 - some bars more sensitive than others
@@ -27,6 +28,7 @@ const getBarSensitivity = (index: number) => {
 
 // Create wave pattern: center bars are tallest, edges are shorter
 const getWaveHeight = (index: number, intensity: number = 1) => {
+  'worklet';
   const center = BAR_COUNT / 2;
   const distanceFromCenter = Math.abs(index - center);
   const normalizedDistance = distanceFromCenter / center;
