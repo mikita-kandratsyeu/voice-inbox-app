@@ -11,6 +11,7 @@ import {
   AppBottomSheetModal,
   SheetFooterButtons,
   SheetHeader,
+  SheetRowIconLeading,
 } from '@/shared/ui';
 
 import type { GraphEdgeVisibility } from '../lib/graphTypes';
@@ -37,9 +38,47 @@ type GraphConnectionsFilterSheetProps = {
   }) => void;
 };
 
+function getConnectionFilterAccent(key: ConnectionFilterKey, color: Colors): string {
+  switch (key) {
+    case 'showTasks':
+      return color.accent.success;
+    case 'similar':
+      return color.accent.primary;
+    case 'sharedTag':
+      return color.accent.unpin;
+    case 'sameFolder':
+      return color.accent.models;
+  }
+}
+
+function ConnectionFilterIcon({
+  filterKey,
+  accentHex,
+}: {
+  filterKey: ConnectionFilterKey;
+  accentHex: string;
+}) {
+  const iconProps = {
+    size: 18,
+    color: accentHex,
+    strokeWidth: 2,
+  } as const;
+
+  switch (filterKey) {
+    case 'showTasks':
+      return <ListChecks {...iconProps} />;
+    case 'similar':
+      return <Waypoints {...iconProps} />;
+    case 'sharedTag':
+      return <Tag {...iconProps} />;
+    case 'sameFolder':
+      return <Folder {...iconProps} />;
+  }
+}
+
 type ConnectionFilterRowProps = {
   label: string;
-  icon: React.ReactNode;
+  filterKey: ConnectionFilterKey;
   selected: boolean;
   color: Colors;
   isLast: boolean;
@@ -48,12 +87,13 @@ type ConnectionFilterRowProps = {
 
 function ConnectionFilterRow({
   label,
-  icon,
+  filterKey,
   selected,
   color,
   isLast,
   onPress,
 }: ConnectionFilterRowProps) {
+  const accentHex = getConnectionFilterAccent(filterKey, color);
   return (
     <Pressable
       onPress={() => {
@@ -72,7 +112,7 @@ function ConnectionFilterRow({
     >
       <View
         style={{
-          alignItems: 'center',
+          alignItems: 'stretch',
           flexDirection: 'row',
           gap: 12,
           minHeight: CONNECTION_FILTER_ROW_HEIGHT,
@@ -81,22 +121,15 @@ function ConnectionFilterRow({
           width: '100%',
         }}
       >
-        <View
-          style={{
-            alignItems: 'center',
-            backgroundColor: color.background.tertiary,
-            borderRadius: 10,
-            flexShrink: 0,
-            height: 36,
-            justifyContent: 'center',
-            width: 36,
-          }}
-        >
-          {icon}
-        </View>
+        <SheetRowIconLeading
+          color={color}
+          accentHex={accentHex}
+          icon={<ConnectionFilterIcon filterKey={filterKey} accentHex={accentHex} />}
+        />
         <Text
           style={{
             color: color.text.primary,
+            alignSelf: 'center',
             flex: 1,
             fontSize: 16,
             fontWeight: '600',
@@ -107,9 +140,11 @@ function ConnectionFilterRow({
           {label}
         </Text>
         {selected ? (
-          <Check size={20} color={color.accent.primary} strokeWidth={2.5} />
+          <View style={{ alignSelf: 'center' }}>
+            <Check size={20} color={color.accent.primary} strokeWidth={2.5} />
+          </View>
         ) : (
-          <View style={{ width: 20 }} />
+          <View style={{ alignSelf: 'center', width: 20 }} />
         )}
       </View>
     </Pressable>
@@ -134,7 +169,9 @@ export function GraphConnectionsFilterSheet({
 }: GraphConnectionsFilterSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const [draft, setDraft] = useState<ConnectionFilterDraft>(() => toDraft(showTasks, edgeVisibility));
+  const [draft, setDraft] = useState<ConnectionFilterDraft>(() =>
+    toDraft(showTasks, edgeVisibility),
+  );
 
   useEffect(() => {
     if (!visible) return;
@@ -144,32 +181,12 @@ export function GraphConnectionsFilterSheet({
   const options = useMemo(
     () =>
       [
-        {
-          key: 'showTasks' as const,
-          label: t('notesGraph.filters.showTasks'),
-          icon: <ListChecks size={18} color={color.text.secondary} strokeWidth={2} />,
-        },
-        {
-          key: 'similar' as const,
-          label: t('notesGraph.filters.similar'),
-          icon: <Waypoints size={18} color={color.text.secondary} strokeWidth={2} />,
-        },
-        {
-          key: 'sharedTag' as const,
-          label: t('notesGraph.filters.tags'),
-          icon: <Tag size={18} color={color.text.secondary} strokeWidth={2} />,
-        },
-        {
-          key: 'sameFolder' as const,
-          label: t('notesGraph.filters.folders'),
-          icon: <Folder size={18} color={color.text.secondary} strokeWidth={2} />,
-        },
-      ] satisfies Array<{
-        key: ConnectionFilterKey;
-        label: string;
-        icon: React.ReactNode;
-      }>,
-    [color.text.secondary, t],
+        { key: 'showTasks' as const, label: t('notesGraph.filters.showTasks') },
+        { key: 'similar' as const, label: t('notesGraph.filters.similar') },
+        { key: 'sharedTag' as const, label: t('notesGraph.filters.tags') },
+        { key: 'sameFolder' as const, label: t('notesGraph.filters.folders') },
+      ] satisfies Array<{ key: ConnectionFilterKey; label: string }>,
+    [t],
   );
 
   const handleClose = useCallback(() => {
@@ -233,7 +250,7 @@ export function GraphConnectionsFilterSheet({
             <ConnectionFilterRow
               key={option.key}
               label={option.label}
-              icon={option.icon}
+              filterKey={option.key}
               selected={draft[option.key]}
               color={color}
               isLast={index === options.length - 1}

@@ -4,10 +4,18 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 
+import { SheetRowIconLeading } from './SheetRowIconLeading';
+
+export type SheetEnumOptionIconTone = {
+  accentHex: string;
+};
+
 export type SheetEnumOption<T extends string | number> = {
   value: T;
   label: string;
   hint?: string;
+  icon?: React.ReactNode;
+  iconTone?: SheetEnumOptionIconTone;
 };
 
 type SheetEnumOptionListProps<T extends string | number> = {
@@ -51,15 +59,30 @@ export function SheetEnumOptionList<T extends string | number>({
             onPress={() => onSelect(option.value)}
             activeOpacity={0.7}
             style={{
-              paddingHorizontal: 16,
+              paddingHorizontal: option.icon ? 14 : 16,
               paddingVertical: 14,
               borderBottomWidth: isLast ? 0 : 1,
               borderBottomColor: color.border.default,
               flexDirection: 'row',
-              alignItems: 'center',
+              alignItems: option.icon ? 'stretch' : 'center',
+              gap: option.icon ? 12 : 0,
+              minHeight: option.icon ? 52 : undefined,
             }}
           >
-            <View style={{ flex: 1, paddingRight: option.hint ? 12 : 0 }}>
+            {option.icon && option.iconTone ? (
+              <SheetRowIconLeading
+                icon={option.icon}
+                color={color}
+                accentHex={option.iconTone.accentHex}
+              />
+            ) : null}
+            <View
+              style={{
+                flex: 1,
+                justifyContent: option.icon ? 'center' : undefined,
+                paddingRight: option.hint ? 12 : 0,
+              }}
+            >
               <Text style={{ fontSize: 16, color: color.text.primary }}>{option.label}</Text>
               {option.hint ? (
                 <Text
@@ -74,7 +97,11 @@ export function SheetEnumOptionList<T extends string | number>({
                 </Text>
               ) : null}
             </View>
-            {isSelected ? <Check size={18} color={color.accent.primary} strokeWidth={2.6} /> : null}
+            {isSelected ? (
+              <View style={{ alignSelf: 'center' }}>
+                <Check size={18} color={color.accent.primary} strokeWidth={2.6} />
+              </View>
+            ) : null}
           </TouchableOpacity>
         );
       })}

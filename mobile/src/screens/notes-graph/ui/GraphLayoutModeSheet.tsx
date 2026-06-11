@@ -1,12 +1,14 @@
+import { CircleDashed, LayoutGrid, Waypoints } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useColors } from '@/shared/config';
+import { type Colors, useColors } from '@/shared/config';
 import { useIsTablet } from '@/shared/lib';
 import {
   AppBottomSheetContent,
   AppBottomSheetModal,
+  type SheetEnumOptionIconTone,
   SheetEnumOptionList,
   SheetFooterButtons,
   SheetHeader,
@@ -24,6 +26,34 @@ type GraphLayoutModeSheetProps = {
   onSelect: (mode: GraphLayoutMode) => void;
   onClose: () => void;
 };
+
+function getLayoutModeIconAccent(mode: GraphLayoutMode, color: Colors): string {
+  switch (mode) {
+    case 'cluster':
+      return color.accent.primary;
+    case 'force':
+      return color.accent.transcript;
+    case 'circular':
+      return color.accent.aiData;
+  }
+}
+
+function LayoutModeIcon({ mode, accentHex }: { mode: GraphLayoutMode; accentHex: string }) {
+  const iconProps = {
+    size: 18,
+    color: accentHex,
+    strokeWidth: 2,
+  } as const;
+
+  switch (mode) {
+    case 'cluster':
+      return <LayoutGrid {...iconProps} />;
+    case 'force':
+      return <Waypoints {...iconProps} />;
+    case 'circular':
+      return <CircleDashed {...iconProps} />;
+  }
+}
 
 export function GraphLayoutModeSheet({
   visible,
@@ -47,12 +77,18 @@ export function GraphLayoutModeSheet({
   );
   const options = useMemo(
     () =>
-      GRAPH_LAYOUT_MODES.map((mode) => ({
-        value: mode,
-        label: t(`notesGraph.filters.layoutMode.${mode}`),
-        hint: t(`notesGraph.filters.layoutModeHint.${mode}`),
-      })),
-    [t],
+      GRAPH_LAYOUT_MODES.map((mode) => {
+        const accentHex = getLayoutModeIconAccent(mode, color);
+        const iconTone: SheetEnumOptionIconTone = { accentHex };
+        return {
+          value: mode,
+          label: t(`notesGraph.filters.layoutMode.${mode}`),
+          hint: t(`notesGraph.filters.layoutModeHint.${mode}`),
+          iconTone,
+          icon: <LayoutModeIcon mode={mode} accentHex={accentHex} />,
+        };
+      }),
+    [color, t],
   );
 
   return (

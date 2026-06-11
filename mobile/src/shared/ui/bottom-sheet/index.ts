@@ -12,7 +12,11 @@ export {
 export { AppBottomSheetContent } from './AppBottomSheetContent';
 export { AppBottomSheetModal, type AppBottomSheetModalProps } from './AppBottomSheetModal';
 export { SheetActionOptionRow } from './SheetActionOptionRow';
-export { type SheetEnumOption, SheetEnumOptionList } from './SheetEnumOptionList';
+export {
+  type SheetEnumOption,
+  type SheetEnumOptionIconTone,
+  SheetEnumOptionList,
+} from './SheetEnumOptionList';
 export { SheetEnumPickerSheet } from './SheetEnumPickerSheet';
 export {
   SHEET_FOOTER_BUTTON_RADIUS,
@@ -23,5 +27,6 @@ export {
 } from './SheetFooterButtons';
 export { SheetHeader } from './SheetHeader';
 export { SheetPickerRow } from './SheetPickerRow';
+export { SheetRowIconLeading } from './SheetRowIconLeading';
 export { SheetSelectionChip } from './SheetSelectionChip';
 export { useBottomSheetContentPadding } from './useBottomSheetContentPadding';

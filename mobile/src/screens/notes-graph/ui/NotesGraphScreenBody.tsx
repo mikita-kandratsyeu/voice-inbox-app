@@ -24,6 +24,10 @@ import { EmptyState, HeaderIconButton, ScreenHeader } from '@/shared/ui';
 import { collectUniqueTags, countFilteredGraphRecords } from '../lib/buildGraphModel';
 import { buildNotesGraphPersistKey } from '../lib/buildNotesGraphPersistKey';
 import { formatGraphAppliedLayoutHeaderSubtitle } from '../lib/formatGraphAppliedLayoutHeaderSubtitle';
+import {
+  getGraphFolderHighlightsVisible,
+  setGraphFolderHighlightsVisible,
+} from '../lib/graphFolderHighlightsPreferences';
 import { getGraphMinimapVisible, setGraphMinimapVisible } from '../lib/graphMinimapPreferences';
 import { findGraphSearchMatchIds, type GraphSearchIndexEntry } from '../lib/graphSearch';
 import { getSessionNodePositions, replaceSessionNodePositions } from '../lib/graphSessionLayout';
@@ -124,7 +128,9 @@ export const NotesGraphScreenBody = () => {
   } | null>(null);
   const [isCapturingExport, setIsCapturingExport] = useState(false);
   const [isExportCaptureMount, setIsExportCaptureMount] = useState(false);
-  const [folderHighlightsVisible, setFolderHighlightsVisible] = useState(true);
+  const [folderHighlightsVisible, setFolderHighlightsVisible] = useState(() =>
+    getGraphFolderHighlightsVisible(),
+  );
   const [minimapVisible, setMinimapVisible] = useState(() => getGraphMinimapVisible());
   const exportCaptureTokenRef = useRef(0);
   const [activeSavedVersion, setActiveSavedVersion] = useState<NotesGraphLayoutVersionEntry | null>(
@@ -817,7 +823,11 @@ export const NotesGraphScreenBody = () => {
             }
             if (nativeEvent.event === 'toggleFolderHighlights') {
               hapticSelection();
-              setFolderHighlightsVisible((value) => !value);
+              setFolderHighlightsVisible((value) => {
+                const next = !value;
+                setGraphFolderHighlightsVisible(next);
+                return next;
+              });
               return;
             }
             if (nativeEvent.event === 'toggleMinimap') {

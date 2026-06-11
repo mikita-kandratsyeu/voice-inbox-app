@@ -3,7 +3,9 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
-import { hapticSelection, withAlphaHex } from '@/shared/lib';
+import { hapticSelection } from '@/shared/lib';
+
+import { SheetRowIconLeading } from './SheetRowIconLeading';
 
 type SheetPickerRowProps = {
   label: string;
@@ -36,8 +38,6 @@ export function SheetPickerRow({
   labelNumberOfLines = 1,
   tintedSubtitle = false,
 }: SheetPickerRowProps) {
-  const stripeColor = accentHex ?? color.border.default;
-
   const selectionTrailing =
     showSelectionCheck && selected ? (
       <Check size={20} color={color.accent.primary} strokeWidth={2.5} />
@@ -72,28 +72,7 @@ export function SheetPickerRow({
           width: '100%',
         }}
       >
-        <View
-          style={{
-            alignSelf: 'stretch',
-            backgroundColor: stripeColor,
-            borderRadius: 2,
-            flexShrink: 0,
-            width: 3,
-          }}
-        />
-        <View
-          style={{
-            alignItems: 'center',
-            backgroundColor: accentHex ? withAlphaHex(accentHex, 0.1) : color.background.tertiary,
-            borderRadius: 10,
-            flexShrink: 0,
-            height: 36,
-            justifyContent: 'center',
-            width: 36,
-          }}
-        >
-          {icon}
-        </View>
+        <SheetRowIconLeading icon={icon} color={color} accentHex={accentHex} />
         <View style={{ flex: 1, flexShrink: 1, justifyContent: 'center', minWidth: 0 }}>
           <Text
             style={{ color: color.text.primary, fontSize: 16, fontWeight: '600', lineHeight: 21 }}
