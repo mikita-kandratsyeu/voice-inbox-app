@@ -322,6 +322,10 @@
       "tagPickerTitle": "Filter by tags",
       "tagPickerSearchPlaceholder": "Search tags",
       "tagPickerSearchEmpty": "No tags match your search",
+      "pickConnections": "Connections",
+      "connectionsCount": "{{count}} connections",
+      "connectionsPickerTitle": "Map connections",
+      "connectionsPickerSubtitle": "Choose what to show on the map — tasks and connection lines.",
       "layoutModePickerTitle": "Map layout",
       "layoutModePickerSubtitle": "Choose how notes are arranged on the map.",
       "layoutMode": {

@@ -1,5 +1,12 @@
 import dayjs from 'dayjs';
-import { CalendarDays, Flag, Inbox, ListChecks, Tag as TagIcon } from 'lucide-react-native';
+import {
+  Archive,
+  CalendarDays,
+  Flag,
+  Inbox,
+  ListChecks,
+  Tag as TagIcon,
+} from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
@@ -83,6 +90,31 @@ function GraphNodeLocationChip({
           fontSize: GRAPH_CHIP_FONT_SIZE,
           fontWeight: '600',
         }}
+      >
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+function GraphNodeArchivedChip({ label, color }: { label: string; color: Colors }) {
+  return (
+    <View
+      style={{
+        alignItems: 'center',
+        backgroundColor: color.accent.archive,
+        borderRadius: 999,
+        flexDirection: 'row',
+        flexShrink: 0,
+        gap: 3,
+        paddingHorizontal: GRAPH_CHIP_PAD_X,
+        paddingVertical: GRAPH_CHIP_PAD_Y,
+      }}
+    >
+      <Archive size={GRAPH_CHIP_ICON_SIZE} color={color.icon.onAccent} strokeWidth={2.2} />
+      <Text
+        numberOfLines={1}
+        style={{ color: color.icon.onAccent, fontSize: GRAPH_CHIP_FONT_SIZE, fontWeight: '600' }}
       >
         {label}
       </Text>
@@ -303,6 +335,7 @@ function AnimatedNodeCardShell({
 export function GraphRecordNodeCardContent({
   title,
   folderName,
+  archivedLabel,
   openTasksLabel,
   tags,
   accentColor,
@@ -313,6 +346,7 @@ export function GraphRecordNodeCardContent({
 }: {
   title: string;
   folderName?: string;
+  archivedLabel?: string;
   openTasksLabel?: string;
   tags: string[];
   accentColor: string;
@@ -321,7 +355,7 @@ export function GraphRecordNodeCardContent({
   showInboxIcon?: boolean;
   leadingFolderIconId?: string | null;
 }) {
-  const hasMetaChips = Boolean(folderName || openTasksLabel);
+  const hasMetaChips = Boolean(folderName || archivedLabel || openTasksLabel);
   const hasTags = tags.length > 0;
   const locationAccent = folderTintHex ?? accentColor;
 
@@ -349,6 +383,9 @@ export function GraphRecordNodeCardContent({
             marginTop: 4,
           }}
         >
+          {archivedLabel ? (
+            <GraphNodeArchivedChip label={archivedLabel} color={color} />
+          ) : null}
           {folderName ? (
             <GraphNodeLocationChip
               label={folderName}

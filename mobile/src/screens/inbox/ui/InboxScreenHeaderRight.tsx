@@ -88,7 +88,7 @@ function InboxScreenHeaderRightInner({
         title: t('inbox.menuAutoOrganize'),
         titleColor,
         image: 'folder.badge.plus',
-        imageColor: color.accent.aiData,
+        imageColor: titleColor,
         attributes: isAutoOrganizing ? { disabled: true } : undefined,
       });
     }
@@ -134,14 +134,7 @@ function InboxScreenHeaderRightInner({
     }
 
     return actions;
-  }, [
-    color.accent.aiData,
-    color.text.primary,
-    foldersEnabled,
-    isAutoOrganizing,
-    t,
-    useTabletShell,
-  ]);
+  }, [color.text.primary, foldersEnabled, isAutoOrganizing, t, useTabletShell]);
 
   if (!isLoaded) return null;
 

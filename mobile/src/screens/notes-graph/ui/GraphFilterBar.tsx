@@ -1,4 +1,4 @@
-import { Folder as FolderIcon, LayoutGrid, Tag as TagIcon } from 'lucide-react-native';
+import { Folder as FolderIcon, LayoutGrid, Tag as TagIcon, Waypoints } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -20,9 +20,21 @@ import {
   filterChipRowStyle,
 } from '@/shared/ui/filterChipMetrics';
 
-import type { GraphEdgeVisibility, GraphFilters } from '../lib/graphTypes';
+import type { GraphFilters } from '../lib/graphTypes';
+import { GraphConnectionsFilterSheet } from './GraphConnectionsFilterSheet';
 import { GraphLayoutModeSheet } from './GraphLayoutModeSheet';
 import { TagPickerSheet } from './TagPickerSheet';
+
+const CONNECTION_FILTER_COUNT = 4;
+
+function countActiveConnectionFilters(filters: GraphFilters): number {
+  return (
+    Number(filters.showTasks) +
+    Number(filters.edgeVisibility.similar) +
+    Number(filters.edgeVisibility.sharedTag) +
+    Number(filters.edgeVisibility.sameFolder)
+  );
+}
 
 type GraphFilterBarProps = {
   color: Colors;
@@ -56,24 +68,6 @@ function pickerChipTone(color: Colors, emphasized: boolean, isDark: boolean): Ch
     backgroundColor: color.background.card,
     borderColor: color.border.default,
     foregroundColor: color.text.primary,
-  };
-}
-
-function toggleChipTone(color: Colors, active: boolean, isDark: boolean): ChipTone {
-  if (active) {
-    const fillAlpha = isDark ? 0.22 : 0.14;
-    const borderAlpha = isDark ? 0.46 : 0.32;
-    return {
-      backgroundColor: withAlphaHex(color.accent.primary, fillAlpha),
-      borderColor: withAlphaHex(color.accent.primary, borderAlpha),
-      foregroundColor: color.accent.primary,
-    };
-  }
-
-  return {
-    backgroundColor: color.background.tertiary,
-    borderColor: color.background.tertiary,
-    foregroundColor: color.text.secondary,
   };
 }
 
@@ -125,48 +119,6 @@ function SelectorChip({
   );
 }
 
-type ToggleChipProps = {
-  label: string;
-  active: boolean;
-  color: Colors;
-  isDark: boolean;
-  disabled?: boolean;
-  onPress: () => void;
-};
-
-function ToggleChip({ label, active, color, isDark, disabled = false, onPress }: ToggleChipProps) {
-  const tone = toggleChipTone(color, active, isDark);
-
-  return (
-    <TouchableOpacity
-      onPress={() => {
-        if (disabled) return;
-        hapticSelection();
-        onPress();
-      }}
-      disabled={disabled}
-      activeOpacity={0.7}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ selected: active, disabled }}
-      style={[
-        filterChipRowStyle(tone.backgroundColor, tone.borderColor),
-        disabled ? { opacity: 0.45 } : null,
-      ]}
-    >
-      <Text
-        style={{
-          ...FILTER_CHIP_LABEL_STYLE,
-          color: tone.foregroundColor,
-        }}
-        numberOfLines={1}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
 export function GraphFilterBar({
   color,
   filters,
@@ -181,6 +133,7 @@ export function GraphFilterBar({
   const isDark = useAppTheme() === 'dark';
   const [folderPickerVisible, setFolderPickerVisible] = useState(false);
   const [tagPickerVisible, setTagPickerVisible] = useState(false);
+  const [connectionsPickerVisible, setConnectionsPickerVisible] = useState(false);
   const [layoutModePickerVisible, setLayoutModePickerVisible] = useState(false);
 
   const activeFolder = useMemo(
@@ -200,8 +153,15 @@ export function GraphFilterBar({
     ? t('notesGraph.filters.tagsCount', { count: filters.tags.length })
     : t('notesGraph.filters.pickTags');
 
+  const activeConnectionCount = countActiveConnectionFilters(filters);
+  const connectionsCustomized = activeConnectionCount < CONNECTION_FILTER_COUNT;
+  const connectionsChipLabel = connectionsCustomized
+    ? t('notesGraph.filters.connectionsCount', { count: activeConnectionCount })
+    : t('notesGraph.filters.pickConnections');
+
   const layoutChipTone = pickerChipTone(color, false, isDark);
   const tagsChipTone = pickerChipTone(color, tagsSelected, isDark);
+  const connectionsChipTone = pickerChipTone(color, connectionsCustomized, isDark);
 
   const folderChipTone: ChipTone = activeFolder
     ? {
@@ -213,16 +173,6 @@ export function GraphFilterBar({
 
   const pickerIconColor = (tone: ChipTone) =>
     tone.foregroundColor === color.text.primary ? color.text.secondary : tone.foregroundColor;
-
-  const toggleEdge = (key: keyof GraphEdgeVisibility) => {
-    if (disabled) return;
-    onFiltersChange({
-      edgeVisibility: {
-        ...filters.edgeVisibility,
-        [key]: !filters.edgeVisibility[key],
-      },
-    });
-  };
 
   return (
     <View
@@ -253,6 +203,21 @@ export function GraphFilterBar({
             <LayoutGrid
               size={FILTER_CHIP_ICON_SIZE}
               color={pickerIconColor(layoutChipTone)}
+              strokeWidth={2}
+            />
+          }
+        />
+
+        <SelectorChip
+          label={connectionsChipLabel}
+          tone={connectionsChipTone}
+          disabled={disabled}
+          selected={connectionsCustomized}
+          onPress={() => setConnectionsPickerVisible(true)}
+          icon={
+            <Waypoints
+              size={FILTER_CHIP_ICON_SIZE}
+              color={pickerIconColor(connectionsChipTone)}
               strokeWidth={2}
             />
           }
@@ -300,42 +265,6 @@ export function GraphFilterBar({
             }
           />
         ) : null}
-
-        <ToggleChip
-          label={t('notesGraph.filters.showTasks')}
-          active={filters.showTasks}
-          color={color}
-          isDark={isDark}
-          disabled={disabled}
-          onPress={() => onFiltersChange({ showTasks: !filters.showTasks })}
-        />
-
-        <ToggleChip
-          label={t('notesGraph.filters.similar')}
-          active={filters.edgeVisibility.similar}
-          color={color}
-          isDark={isDark}
-          disabled={disabled}
-          onPress={() => toggleEdge('similar')}
-        />
-
-        <ToggleChip
-          label={t('notesGraph.filters.tags')}
-          active={filters.edgeVisibility.sharedTag}
-          color={color}
-          isDark={isDark}
-          disabled={disabled}
-          onPress={() => toggleEdge('sharedTag')}
-        />
-
-        <ToggleChip
-          label={t('notesGraph.filters.folders')}
-          active={filters.edgeVisibility.sameFolder}
-          color={color}
-          isDark={isDark}
-          disabled={disabled}
-          onPress={() => toggleEdge('sameFolder')}
-        />
       </ScrollView>
 
       <GraphLayoutModeSheet
@@ -355,6 +284,22 @@ export function GraphFilterBar({
         selectedTags={filters.tags}
         onClose={() => setTagPickerVisible(false)}
         onApply={(tags) => onFiltersChange({ tags })}
+      />
+
+      <GraphConnectionsFilterSheet
+        visible={connectionsPickerVisible}
+        showTasks={filters.showTasks}
+        edgeVisibility={filters.edgeVisibility}
+        onClose={() => setConnectionsPickerVisible(false)}
+        onApply={({ showTasks, edgeVisibility }) =>
+          onFiltersChange({
+            showTasks,
+            edgeVisibility: {
+              ...filters.edgeVisibility,
+              ...edgeVisibility,
+            },
+          })
+        }
       />
 
       {foldersEnabled ? (

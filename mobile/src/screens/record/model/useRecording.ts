@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AppState, type AppStateStatus } from 'react-native';
+import { useSharedValue } from 'react-native-reanimated';
 import type { AudioSet, RecordBackType } from 'react-native-nitro-sound';
 import AudioRecorderPlayer, {
   AudioEncoderAndroidType,
@@ -44,10 +45,19 @@ import type { RecordingState } from '../config';
 
 const audioRecorderPlayer = AudioRecorderPlayer as unknown as AudioRecorderPlayerInstance;
 
-const SUBSCRIPTION_DURATION_MS = 200;
+const SUBSCRIPTION_DURATION_MS = 50;
 const MAX_JUMP_FORWARD_MS = 400;
 const MAX_JUMP_BACKWARD_MS = 500;
 const IOS_START_POSITION_SUPPRESS_MS = 2800;
+const METERING_DB_MIN = -52;
+const METERING_DB_MAX = -12;
+
+/** Map voice metering dB to 0–1 with more usable dynamic range than full -60…0 scale. */
+function normalizeMeteringDb(db: number): number {
+  const clamped = Math.max(METERING_DB_MIN, Math.min(METERING_DB_MAX, db));
+  const linear = (clamped - METERING_DB_MIN) / (METERING_DB_MAX - METERING_DB_MIN);
+  return Math.min(1, Math.max(0, linear ** 0.58));
+}
 
 /**
  * iOS may report erratic recorder positions when the audio route changes.
@@ -86,7 +96,7 @@ export const useRecording = ({
   const [state, setState] = useState<RecordingState>('idle');
   const [elapsed, setElapsed] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
-  const [audioLevel, setAudioLevel] = useState<number | undefined>(undefined);
+  const audioLevelShared = useSharedValue(0);
 
   const audioPathRef = useRef<string | null>(null);
   const elapsedRef = useRef(0);
@@ -129,13 +139,9 @@ export const useRecording = ({
       // Update audio level from metering data
       // currentMetering is typically in dB range (e.g., -160 to 0), normalize to 0-1
       if (e.currentMetering !== undefined) {
-        const dbValue = e.currentMetering;
-        // Normalize from typical dB range (-60 to 0) to 0-1 range
-        const normalized = Math.max(0, Math.min(1, (dbValue + 60) / 60));
-        setAudioLevel(normalized);
+        audioLevelShared.value = normalizeMeteringDb(e.currentMetering);
       } else {
-        // Fallback if metering is not available
-        setAudioLevel(undefined);
+        audioLevelShared.value = 0;
       }
 
       const now = Date.now();
@@ -220,6 +226,7 @@ export const useRecording = ({
 
       startPositionSuppressedUntilRef.current = Date.now() + IOS_START_POSITION_SUPPRESS_MS;
       addRecordBackListener();
+      audioLevelShared.value = 0;
       setState('recording');
       hapticLight();
 
@@ -237,7 +244,7 @@ export const useRecording = ({
 
       const secs = elapsedRef.current;
       setState('paused');
-      setAudioLevel(undefined); // Reset audio level on pause
+      audioLevelShared.value = 0;
 
       updateRecordingLiveActivity(secs, undefined, false).catch(() => {});
     } catch (err) {
@@ -252,6 +259,7 @@ export const useRecording = ({
 
       startPositionSuppressedUntilRef.current = Date.now() + IOS_START_POSITION_SUPPRESS_MS;
       addRecordBackListener();
+      audioLevelShared.value = 0;
       setState('recording');
 
       lastLiveActivityDriftSyncRef.current = Date.now();
@@ -312,7 +320,7 @@ export const useRecording = ({
     elapsedMsRef.current = 0;
     setElapsed(0);
     setElapsedMs(0);
-    setAudioLevel(undefined); // Reset audio level on discard
+    audioLevelShared.value = 0;
     setState('idle');
   }, []);
 
@@ -362,7 +370,7 @@ export const useRecording = ({
     state,
     elapsed,
     elapsedMs,
-    audioLevel,
+    audioLevelShared,
     audioPathRef,
     startRecording,
     pauseRecording,

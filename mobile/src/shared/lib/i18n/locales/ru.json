@@ -335,6 +335,10 @@
       "tagPickerTitle": "Фильтр по тегам",
       "tagPickerSearchPlaceholder": "Поиск тегов",
       "tagPickerSearchEmpty": "Нет тегов по вашему запросу",
+      "pickConnections": "Связи",
+      "connectionsCount": "{{count}} связей",
+      "connectionsPickerTitle": "Связи на карте",
+      "connectionsPickerSubtitle": "Выберите, что показывать на карте — задачи и линии связей.",
       "layoutModePickerTitle": "Построение карты",
       "layoutModePickerSubtitle": "Выберите, как расположить заметки на карте.",
       "layoutMode": {
