@@ -412,8 +412,15 @@ export const DigestScreen = () => {
     [digest, digestFormat],
   );
   const aiLoading = useDigestGenerating(digestCacheKey);
+  const lastSyncCachedDigestRef = useRef<number>(0);
+  const SYNC_CACHED_DIGEST_THROTTLE_MS = 1000;
 
   const syncCachedDigest = useCallback(() => {
+    const now = Date.now();
+    if (now - lastSyncCachedDigestRef.current < SYNC_CACHED_DIGEST_THROTTLE_MS) {
+      return;
+    }
+    lastSyncCachedDigestRef.current = now;
     const cached = loadCachedDigest(digestCacheKey);
     setAiResult(cached?.result ?? null);
     setAiCreatedAt(cached?.createdAt ?? null);

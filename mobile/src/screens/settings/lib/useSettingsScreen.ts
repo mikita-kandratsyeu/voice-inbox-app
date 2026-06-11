@@ -125,17 +125,37 @@ export function useSettingsScreen() {
     }, []),
   );
 
-  const fetchAiUsage = useCallback(async () => {
+  const fetchAiUsageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastFetchAiUsageRef = useRef<number>(0);
+  const FETCH_AI_USAGE_DEBOUNCE_MS = 500;
+
+  const fetchAiUsage = useCallback(async (force = false) => {
+    if (fetchAiUsageTimerRef.current) {
+      clearTimeout(fetchAiUsageTimerRef.current);
+    }
+
+    const now = Date.now();
+    if (!force && now - lastFetchAiUsageRef.current < FETCH_AI_USAGE_DEBOUNCE_MS) {
+      return new Promise<Awaited<ReturnType<typeof getAiUsage>>>((resolve) => {
+        fetchAiUsageTimerRef.current = setTimeout(() => {
+          void getAiUsage().then((data) => {
+            setAiUsage(data ?? null);
+            lastFetchAiUsageRef.current = Date.now();
+            resolve(data);
+          });
+        }, FETCH_AI_USAGE_DEBOUNCE_MS);
+      });
+    }
+
+    lastFetchAiUsageRef.current = now;
     const data = await getAiUsage();
-
     setAiUsage(data ?? null);
-
     return data;
   }, []);
 
   const onBonusSuccess = useCallback(
     (usageAfterClaim: NonNullable<Awaited<ReturnType<typeof getAiUsage>>>) => {
-      void fetchAiUsage();
+      void fetchAiUsage(true);
       const count = usageAfterClaim.bonusAmount ?? 5;
       Alert.alert(
         t('settings.aiUsage.claimBonusSuccessTitle'),
@@ -154,7 +174,7 @@ export function useSettingsScreen() {
 
   const onResetProLimitSuccess = useCallback(
     (result: ProLimitResetSuccess) => {
-      void fetchAiUsage();
+      void fetchAiUsage(true);
       setResetProLimitSuccessSheet(result);
     },
     [fetchAiUsage],
@@ -191,6 +211,9 @@ export function useSettingsScreen() {
     return () => {
       cancelled = true;
       clearTimeout(timer);
+      if (fetchAiUsageTimerRef.current) {
+        clearTimeout(fetchAiUsageTimerRef.current);
+      }
     };
   }, [fetchAiUsage]);
 
@@ -244,7 +267,7 @@ export function useSettingsScreen() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Promise.all([fetchAiUsage(), refreshProEntitlement({ force: true })]);
+      await Promise.all([fetchAiUsage(true), refreshProEntitlement({ force: true })]);
     } finally {
       setRefreshing(false);
     }

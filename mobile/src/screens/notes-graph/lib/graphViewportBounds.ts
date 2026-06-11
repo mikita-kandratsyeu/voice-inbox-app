@@ -13,6 +13,14 @@ export type GraphContentBounds = {
   maxY: number;
 };
 
+/**
+ * Maximum visual extent of edge effects beyond the edge path:
+ * - Highlighted edge glow: strokeWidth 9
+ * - Edge curvature can extend perpendicular to the direct line
+ * We add extra margin to account for curved paths and stroke effects
+ */
+const EDGE_VISUAL_MARGIN = 24;
+
 export function measureGraphContentBounds(nodes: GraphNode[]): GraphContentBounds | null {
   if (nodes.length === 0) return null;
 
@@ -28,6 +36,12 @@ export function measureGraphContentBounds(nodes: GraphNode[]): GraphContentBound
     maxX = Math.max(maxX, bounds.right);
     maxY = Math.max(maxY, bounds.bottom);
   }
+
+  // Add margin for edge effects (curvature, stroke width, glow)
+  minX -= EDGE_VISUAL_MARGIN;
+  minY -= EDGE_VISUAL_MARGIN;
+  maxX += EDGE_VISUAL_MARGIN;
+  maxY += EDGE_VISUAL_MARGIN;
 
   return { minX, minY, maxX, maxY };
 }
