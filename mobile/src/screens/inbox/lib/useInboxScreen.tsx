@@ -135,6 +135,7 @@ export function useInboxScreen() {
     handleDelete: handleFolderDelete,
   } = useManageFolders();
   const [aiOrganizeSheetVisible, setAiOrganizeSheetVisible] = useState(false);
+  const [aiOrganizePresentKey, setAiOrganizePresentKey] = useState(0);
   const [aiOrganizeTemplateSheetVisible, setAiOrganizeTemplateSheetVisible] = useState(false);
   const [pendingAutoOrganizeTemplate, setPendingAutoOrganizeTemplate] =
     useState<AutoOrganizeTemplate>('general');
@@ -172,6 +173,7 @@ export function useInboxScreen() {
   });
 
   const openAiOrganizeSheet = useCallback(() => {
+    setAiOrganizePresentKey((key) => key + 1);
     setAiOrganizeSheetVisible(true);
   }, []);
 
@@ -1085,6 +1087,7 @@ export function useInboxScreen() {
     openAiOrganizeSheet,
     closeAiOrganizeSheet,
     aiOrganizeSheetVisible,
+    aiOrganizePresentKey,
     aiOrganizeTemplateSheetVisible,
     closeAiOrganizeTemplateSheet,
     pendingAutoOrganizeTemplate,

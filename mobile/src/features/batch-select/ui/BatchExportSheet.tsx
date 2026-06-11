@@ -311,20 +311,26 @@ export const BatchExportSheet = ({
             gap: 12,
           }}
         >
-          <Text
-            style={{
-              fontSize: 17,
-              fontWeight: '600',
-              color: color.text.primary,
-              textAlign: 'center',
-              marginBottom: 8,
-            }}
-          >
-            {t('share.emailNote')}
-          </Text>
-          <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
-            {t('batch.emailBatchDescription')}
-          </Text>
+          <View style={{ marginBottom: 4 }}>
+            <Text
+              style={{
+                fontSize: 17,
+                fontWeight: '600',
+                color: color.text.primary,
+                textAlign: 'center',
+                marginTop: 4,
+                marginBottom: 4,
+              }}
+            >
+              {t('share.emailNote')}
+            </Text>
+            <Text
+              className="text-[14px] leading-5"
+              style={{ color: color.text.secondary, textAlign: 'center', paddingHorizontal: 4 }}
+            >
+              {t('batch.emailBatchDescription')}
+            </Text>
+          </View>
 
           <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
             {t('batch.exportPackagingLabel')}
@@ -421,33 +427,36 @@ export const BatchExportSheet = ({
         <BottomSheetView
           style={{
             paddingHorizontal: 20,
-            paddingTop: 4,
+            paddingTop: 8,
             gap: 10,
             ...listContentPadding,
           }}
         >
-          <Text
-            style={{
-              fontSize: 17,
-              fontWeight: '600',
-              color: color.text.primary,
-              textAlign: 'center',
-              marginBottom: 8,
-            }}
-          >
-            {t('batch.exportAsTitle', { count })}
-          </Text>
-
-          <Text
-            style={{
-              fontSize: 13,
-              color: color.text.muted,
-              lineHeight: 18,
-              textAlign: 'center',
-            }}
-          >
-            {t('batch.sheetLimitsHint')}
-          </Text>
+          <View style={{ marginBottom: 2 }}>
+            <Text
+              style={{
+                fontSize: 17,
+                fontWeight: '600',
+                color: color.text.primary,
+                textAlign: 'center',
+                marginTop: 4,
+                marginBottom: 4,
+              }}
+            >
+              {t('batch.exportAsTitle', { count })}
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: color.text.secondary,
+                lineHeight: 20,
+                textAlign: 'center',
+                paddingHorizontal: 4,
+              }}
+            >
+              {t('batch.sheetLimitsHint')}
+            </Text>
+          </View>
 
           <Text style={{ fontSize: 13, fontWeight: '600', color: color.text.secondary }}>
             {t('batch.exportPackagingLabel')}

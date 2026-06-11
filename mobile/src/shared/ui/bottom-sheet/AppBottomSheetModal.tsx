@@ -17,6 +17,8 @@ export type AppBottomSheetModalProps = {
   children: React.ReactNode;
   /** @default true */
   presentOnVisible?: boolean;
+  /** Bumped while `visible` stays true to force another `present()` (e.g. header re-tap). */
+  presentRequestKey?: number;
   surface?: AppBottomSheetChromeOptions['surface'];
   backdrop?: AppBottomSheetBackdropPreset;
   keyboardBlurBehavior?: AppBottomSheetChromeOptions['keyboardBlurBehavior'];
@@ -39,6 +41,7 @@ export const AppBottomSheetModal = forwardRef<BottomSheetModal, AppBottomSheetMo
       onClose,
       children,
       presentOnVisible = true,
+      presentRequestKey = 0,
       surface,
       backdrop,
       keyboardBlurBehavior,
@@ -63,10 +66,6 @@ export const AppBottomSheetModal = forwardRef<BottomSheetModal, AppBottomSheetMo
     const useTabletDetached =
       isTablet && tabletMaxWidth != null && Number.isFinite(tabletMaxWidth) && tabletMaxWidth > 0;
 
-    const { handleDismiss, sheetKey } = useBottomSheetModalVisibility(modalRef, visible, onClose, {
-      presentOnVisible,
-    });
-
     const chrome = useAppBottomSheetChrome({
       surface,
       backdrop,
@@ -79,6 +78,12 @@ export const AppBottomSheetModal = forwardRef<BottomSheetModal, AppBottomSheetMo
       backgroundStyle: backgroundStyle as AppBottomSheetChromeOptions['backgroundStyle'],
       handleIndicatorStyle:
         handleIndicatorStyle as AppBottomSheetChromeOptions['handleIndicatorStyle'],
+    });
+
+    const { handleDismiss, sheetKey } = useBottomSheetModalVisibility(modalRef, visible, onClose, {
+      presentOnVisible,
+      presentRequestKey,
+      enableDynamicSizing: chrome.enableDynamicSizing,
     });
 
     const Backdrop = backdropComponentOverride ?? chrome.backdropComponent;

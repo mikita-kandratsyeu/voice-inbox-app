@@ -11,6 +11,7 @@ import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding }
 
 type AiOrganizeActionSheetProps = {
   visible: boolean;
+  presentRequestKey?: number;
   eligibleCount: number;
   onClose: () => void;
   onSelect: (mode: AutoOrganizeMode) => void;
@@ -54,13 +55,7 @@ function SheetOptionRow({ label, hint, icon, onPress, isLast = false }: SheetOpt
   );
 }
 
-function ActionIconBadge({
-  children,
-  tint,
-}: {
-  children: React.ReactNode;
-  tint: string;
-}) {
+function ActionIconBadge({ children, tint }: { children: React.ReactNode; tint: string }) {
   return (
     <View
       style={{
@@ -132,6 +127,7 @@ function buildActionRows(
 
 export function AiOrganizeActionSheet({
   visible,
+  presentRequestKey = 0,
   eligibleCount,
   onClose,
   onSelect,
@@ -147,7 +143,7 @@ export function AiOrganizeActionSheet({
   });
 
   return (
-    <AppBottomSheetModal visible={visible} onClose={onClose}>
+    <AppBottomSheetModal visible={visible} presentRequestKey={presentRequestKey} onClose={onClose}>
       <BottomSheetView style={{ paddingHorizontal: 20, paddingTop: 8, ...contentPadding }}>
         <Text
           style={{

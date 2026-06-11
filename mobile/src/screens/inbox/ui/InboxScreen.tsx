@@ -60,6 +60,7 @@ export const InboxScreen = () => {
     openAiOrganizeSheet,
     closeAiOrganizeSheet,
     aiOrganizeSheetVisible,
+    aiOrganizePresentKey,
     aiOrganizeTemplateSheetVisible,
     closeAiOrganizeTemplateSheet,
     pendingAutoOrganizeTemplate,
@@ -322,6 +323,7 @@ export const InboxScreen = () => {
         <>
           <AiOrganizeActionSheet
             visible={aiOrganizeSheetVisible}
+            presentRequestKey={aiOrganizePresentKey}
             eligibleCount={autoOrganizeEligibleCount}
             onClose={closeAiOrganizeSheet}
             onSelect={handleAiOrganizeActionSelect}
