@@ -2,8 +2,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { runOnJS, useSharedValue } from 'react-native-reanimated';
-import Svg, { Rect } from 'react-native-svg';
+import Animated, {
+  Easing,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import Svg, { Circle, Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
@@ -54,18 +60,19 @@ function MinimapResizeHandle({ color, label }: { color: Colors; label: string })
         height: RESIZE_HANDLE_SIZE,
         alignItems: 'flex-start',
         justifyContent: 'flex-end',
-        paddingLeft: 4,
-        paddingBottom: 4,
+        paddingLeft: 6,
+        paddingBottom: 6,
       }}
     >
       <View
         style={{
-          width: 10,
-          height: 10,
-          borderLeftWidth: 2,
-          borderBottomWidth: 2,
-          borderColor: color.text.muted,
-          opacity: 0.9,
+          width: 12,
+          height: 12,
+          borderLeftWidth: 2.5,
+          borderBottomWidth: 2.5,
+          borderColor: color.accent.primary,
+          opacity: 0.8,
+          borderRadius: 2,
         }}
       />
     </View>
@@ -193,76 +200,129 @@ export function GraphMinimap({
     ],
   );
 
+  const scaleAnimation = useSharedValue(1);
+  const [isPressed, setIsPressed] = useState(false);
+
+  const animatedContainerStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleAnimation.value }],
+  }));
+
+  const handlePressIn = useCallback(() => {
+    setIsPressed(true);
+    scaleAnimation.value = withTiming(0.98, {
+      duration: 100,
+      easing: Easing.out(Easing.ease),
+    });
+  }, [scaleAnimation]);
+
+  const handlePressOut = useCallback(() => {
+    setIsPressed(false);
+    scaleAnimation.value = withTiming(1, {
+      duration: 150,
+      easing: Easing.out(Easing.ease),
+    });
+  }, [scaleAnimation]);
+
   if (nodes.length < 12) return null;
 
   return (
-    <View
+    <Animated.View
       pointerEvents={disabled ? 'none' : 'box-none'}
-      style={{
-        position: 'absolute',
-        top: 16,
-        right: 16,
-        width: minimapWidth,
-        height: minimapHeight,
-        opacity: disabled ? 0.55 : 1,
-      }}
+      style={[
+        {
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          width: minimapWidth,
+          height: minimapHeight,
+          opacity: disabled ? 0.55 : 1,
+        },
+        animatedContainerStyle,
+      ]}
     >
       <Pressable
         onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         disabled={disabled}
         accessibilityRole="button"
         style={{
           flex: 1,
-          borderRadius: 12,
+          borderRadius: 16,
           overflow: 'hidden',
           backgroundColor: color.background.primary,
-          borderWidth: 1.5,
-          borderColor: color.border.default,
+          borderWidth: 2,
+          borderColor: isPressed ? color.accent.primary : color.border.default,
           shadowColor: color.shadow.color,
-          shadowOpacity: color.shadow.opacity * 0.8,
-          shadowRadius: 10,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: 5,
+          shadowOpacity: isPressed ? color.shadow.opacity * 1.2 : color.shadow.opacity * 0.9,
+          shadowRadius: isPressed ? 14 : 12,
+          shadowOffset: { width: 0, height: isPressed ? 6 : 4 },
+          elevation: isPressed ? 8 : 6,
         }}
       >
         <Svg width={canvasWidth} height={canvasHeight}>
-          <Rect
-            x={0}
-            y={0}
-            width={canvasWidth}
-            height={canvasHeight}
-            fill={color.background.secondary}
-            opacity={0.65}
-          />
+          <Defs>
+            <LinearGradient id="minimap-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+              <Stop offset="0%" stopColor={color.background.secondary} stopOpacity={0.85} />
+              <Stop offset="100%" stopColor={color.background.tertiary} stopOpacity={0.75} />
+            </LinearGradient>
+            <LinearGradient id="node-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor={color.accent.primary} stopOpacity={0.9} />
+              <Stop offset="100%" stopColor={color.accent.primary} stopOpacity={0.6} />
+            </LinearGradient>
+          </Defs>
+          <Rect x={0} y={0} width={canvasWidth} height={canvasHeight} fill="url(#minimap-bg)" />
           {nodes.map((node) => {
             const bounds = nodeBounds(node);
             const topLeft = worldToMinimapPoint(bounds.left, bounds.top, minimapFrame);
-            const nodeWidth = Math.max(2.5, (bounds.right - bounds.left) * minimapFrame.scale);
-            const nodeHeight = Math.max(2.5, (bounds.bottom - bounds.top) * minimapFrame.scale);
+            const nodeWidth = Math.max(3, (bounds.right - bounds.left) * minimapFrame.scale);
+            const nodeHeight = Math.max(3, (bounds.bottom - bounds.top) * minimapFrame.scale);
+            const isLarge = nodeWidth > 5 && nodeHeight > 5;
             return (
-              <Rect
-                key={node.id}
-                x={topLeft.x}
-                y={topLeft.y}
-                width={nodeWidth}
-                height={nodeHeight}
-                fill={color.accent.primary}
-                opacity={0.75}
-                rx={1.5}
-              />
+              <React.Fragment key={node.id}>
+                {isLarge && (
+                  <Circle
+                    cx={topLeft.x + nodeWidth / 2}
+                    cy={topLeft.y + nodeHeight / 2}
+                    r={Math.max(nodeWidth, nodeHeight) * 0.8}
+                    fill={color.accent.primary}
+                    opacity={0.15}
+                  />
+                )}
+                <Rect
+                  x={topLeft.x}
+                  y={topLeft.y}
+                  width={nodeWidth}
+                  height={nodeHeight}
+                  fill="url(#node-gradient)"
+                  rx={2}
+                />
+              </React.Fragment>
             );
           })}
           {viewportMinimap.width > 0 && viewportMinimap.height > 0 ? (
-            <Rect
-              x={viewportMinimap.x}
-              y={viewportMinimap.y}
-              width={viewportMinimap.width}
-              height={viewportMinimap.height}
-              stroke={color.accent.primary}
-              strokeWidth={GRAPH_MINIMAP_VIEWPORT_STROKE * 1.2}
-              fill="transparent"
-              opacity={0.9}
-            />
+            <>
+              <Rect
+                x={viewportMinimap.x}
+                y={viewportMinimap.y}
+                width={viewportMinimap.width}
+                height={viewportMinimap.height}
+                fill={color.accent.primary}
+                opacity={0.12}
+                rx={2}
+              />
+              <Rect
+                x={viewportMinimap.x}
+                y={viewportMinimap.y}
+                width={viewportMinimap.width}
+                height={viewportMinimap.height}
+                stroke={color.accent.primary}
+                strokeWidth={GRAPH_MINIMAP_VIEWPORT_STROKE * 1.4}
+                fill="transparent"
+                opacity={1}
+                rx={2}
+              />
+            </>
           ) : null}
         </Svg>
       </Pressable>
@@ -272,6 +332,6 @@ export function GraphMinimap({
           <MinimapResizeHandle color={color} label={t('notesGraph.minimap.resizeA11y')} />
         </View>
       </GestureDetector>
-    </View>
+    </Animated.View>
   );
 }

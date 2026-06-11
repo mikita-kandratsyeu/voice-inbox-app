@@ -12,7 +12,6 @@ import type { Colors } from '@/shared/config';
 
 import {
   buildParallelEdgeBendLayout,
-  computeArrowhead,
   computeCubicEdgePath,
   computeEdgeCurvature,
   computeQuadraticEdgePath,
@@ -54,7 +53,6 @@ type GraphEdgeLayerProps = {
 type RenderedEdge = {
   edge: GraphEdge;
   path: string;
-  arrowPath?: string;
   emphasis: GraphEdgeEmphasis;
   shouldAnimate: boolean;
 };
@@ -93,11 +91,10 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
         : computeQuadraticEdgePath(from, to, curvature);
 
       const emphasis = resolveGraphEdgeEmphasis(edge, matchedNodeIds, activeNodeId);
-      const shouldAnimate = emphasis === 'highlighted' && (edge.kind === 'similar' || edge.kind === 'contains');
+      const shouldAnimate =
+        emphasis === 'highlighted' && (edge.kind === 'similar' || edge.kind === 'contains');
 
-      const arrowPath = edge.kind === 'contains' ? computeArrowhead(to, from, 7) : undefined;
-
-      items.push({ edge, path, arrowPath, emphasis, shouldAnimate });
+      items.push({ edge, path, emphasis, shouldAnimate });
     }
 
     items.sort((a, b) => {
@@ -145,7 +142,7 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
           return null;
         })}
       </Defs>
-      {renderedEdges.map(({ edge, path, arrowPath, emphasis, shouldAnimate }) => {
+      {renderedEdges.map(({ edge, path, emphasis, shouldAnimate }) => {
         const style = getGraphEdgeStrokeStyle(edge.kind, color, emphasis);
         const glow = emphasis === 'highlighted' ? getGraphEdgeGlowStyle(edge.kind, color) : null;
         const useGradient = style.strokeGradient && emphasis !== 'dimmed';
@@ -176,9 +173,7 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
             {shouldAnimate ? (
               <AnimatedEdgePath
                 path={path}
-                stroke={
-                  useGradient ? `url(#${style.strokeGradient!.id}-${edge.id})` : style.stroke
-                }
+                stroke={useGradient ? `url(#${style.strokeGradient!.id}-${edge.id})` : style.stroke}
                 strokeWidth={style.strokeWidth}
                 strokeDasharray={style.strokeDasharray}
                 strokeLinecap={style.strokeLinecap ?? 'round'}
@@ -188,23 +183,10 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
             ) : (
               <Path
                 d={path}
-                stroke={
-                  useGradient ? `url(#${style.strokeGradient!.id}-${edge.id})` : style.stroke
-                }
+                stroke={useGradient ? `url(#${style.strokeGradient!.id}-${edge.id})` : style.stroke}
                 strokeWidth={style.strokeWidth}
                 strokeDasharray={style.strokeDasharray}
                 strokeLinecap={style.strokeLinecap ?? 'round'}
-                opacity={style.opacity}
-                fill="none"
-              />
-            )}
-            {arrowPath && (
-              <Path
-                d={arrowPath}
-                stroke={style.stroke}
-                strokeWidth={style.strokeWidth}
-                strokeLinecap="round"
-                strokeLinejoin="round"
                 opacity={style.opacity}
                 fill="none"
               />

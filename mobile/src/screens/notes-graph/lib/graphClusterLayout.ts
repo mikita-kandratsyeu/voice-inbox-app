@@ -6,12 +6,18 @@ import type { GraphEdge, GraphNode } from './graphTypes';
 import { recordNodeId } from './graphTypes';
 
 const NODE_LAYOUT_PADDING = 24;
-const CLUSTER_GRID_GAP = 140;
+const CLUSTER_GRID_GAP = 180;
+const CLUSTER_PADDING = 32;
 const AVG_NODE_SPAN = 188;
+
+export type GraphClusterType = 'folder' | 'tag' | 'group' | 'solo';
 
 export type GraphCluster = {
   id: string;
   nodeIds: string[];
+  type: GraphClusterType;
+  label?: string;
+  color?: string;
 };
 
 function normalizeClusterTag(tag: string): string {
@@ -86,6 +92,40 @@ function parentRecordNodeId(node: GraphNode, edges: GraphEdge[]): string | null 
   return containsEdge?.sourceId ?? null;
 }
 
+function extractClusterMetadata(
+  clusterId: string,
+  nodeIds: string[],
+  nodeById: Map<string, GraphNode>,
+): { type: GraphClusterType; label?: string } {
+  if (clusterId.startsWith('folder:')) {
+    const firstNode = nodeIds[0] ? nodeById.get(nodeIds[0]) : null;
+    const folderId = clusterId.replace('folder:', '');
+    return {
+      type: 'folder',
+      label: firstNode?.record?.folderId ? `Folder ${folderId.slice(0, 8)}` : undefined,
+    };
+  }
+
+  if (clusterId.startsWith('tag:')) {
+    const tag = clusterId.replace('tag:', '');
+    return {
+      type: 'tag',
+      label: `#${tag}`,
+    };
+  }
+
+  if (clusterId.startsWith('group:')) {
+    return {
+      type: 'group',
+      label: nodeIds.length > 3 ? `Connected (${nodeIds.length})` : undefined,
+    };
+  }
+
+  return {
+    type: 'solo',
+  };
+}
+
 export function buildGraphClusters(nodes: GraphNode[], edges: GraphEdge[]): GraphCluster[] {
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
   const clusterByNode = new Map<string, string>();
@@ -141,28 +181,53 @@ export function buildGraphClusters(nodes: GraphNode[], edges: GraphEdge[]): Grap
   }
 
   return [...grouped.entries()]
-    .map(([id, nodeIds]) => ({ id, nodeIds }))
-    .sort((a, b) => b.nodeIds.length - a.nodeIds.length);
+    .map(([id, nodeIds]) => {
+      const metadata = extractClusterMetadata(id, nodeIds, nodeById);
+      return {
+        id,
+        nodeIds,
+        type: metadata.type,
+        label: metadata.label,
+      };
+    })
+    .sort((a, b) => {
+      const typePriority: Record<GraphClusterType, number> = {
+        folder: 0,
+        tag: 1,
+        group: 2,
+        solo: 3,
+      };
+      const priorityDiff = typePriority[a.type] - typePriority[b.type];
+      if (priorityDiff !== 0) return priorityDiff;
+      return b.nodeIds.length - a.nodeIds.length;
+    });
 }
 
 function clusterForceIterations(nodeCount: number): number {
   if (nodeCount <= 1) return 0;
-  if (nodeCount > 48) return Math.min(360, 80 + nodeCount * 4);
-  return Math.min(520, 100 + nodeCount * 10);
+  if (nodeCount <= 5) return 180;
+  if (nodeCount <= 15) return 280;
+  if (nodeCount > 48) return Math.min(420, 100 + nodeCount * 5);
+  return Math.min(600, 150 + nodeCount * 12);
 }
 
-function buildClusterForceAtlasSettings(nodeCount: number) {
+function buildClusterForceAtlasSettings(nodeCount: number, clusterType?: GraphClusterType) {
   const inferred = forceAtlas2.inferSettings(nodeCount);
+
+  const isSmall = nodeCount <= 8;
+  const isTightCluster = clusterType === 'folder' || clusterType === 'tag';
 
   return {
     ...inferred,
     adjustSizes: true,
-    barnesHutOptimize: nodeCount > 36,
-    edgeWeightInfluence: 0.62,
-    gravity: nodeCount > 16 ? 0.1 : 0.16,
-    linLogMode: true,
-    scalingRatio: Math.max(inferred.scalingRatio ?? 8, 10 + Math.sqrt(nodeCount) * 5.5),
-    slowDown: nodeCount > 32 ? 4 : 6,
+    barnesHutOptimize: nodeCount > 28,
+    barnesHutTheta: 0.4,
+    edgeWeightInfluence: isTightCluster ? 0.75 : 0.62,
+    gravity: isSmall ? 0.22 : nodeCount > 16 ? 0.12 : 0.18,
+    linLogMode: !isTightCluster,
+    scalingRatio: Math.max(inferred.scalingRatio ?? 8, 12 + Math.sqrt(nodeCount) * 6),
+    slowDown: nodeCount > 32 ? 5 : 7,
+    strongGravityMode: isTightCluster && nodeCount <= 12,
     weighted: true,
   };
 }
@@ -243,7 +308,7 @@ function layoutClusterSubgraph(
 
   forceAtlas2.assign(graph, {
     iterations: clusterForceIterations(cluster.nodeIds.length),
-    settings: buildClusterForceAtlasSettings(cluster.nodeIds.length),
+    settings: buildClusterForceAtlasSettings(cluster.nodeIds.length, cluster.type),
   });
 
   for (const nodeId of cluster.nodeIds) {
@@ -312,17 +377,31 @@ function computeClusterGridColumns(
   entries: ClusterLayoutEntry[],
 ): number {
   if (clusterCount <= 1) return 1;
+  if (clusterCount === 2) return 2;
+  if (clusterCount === 3) return 3;
 
   const avgClusterWidth =
     entries.reduce((sum, entry) => sum + Math.max(entry.bounds.width, AVG_NODE_SPAN * 0.75), 0) /
     clusterCount;
+
+  const maxClusterWidth = Math.max(...entries.map((e) => e.bounds.width), AVG_NODE_SPAN * 0.75);
+
   const widthBasedCols = Math.floor(
-    (layoutWidth + CLUSTER_GRID_GAP) / (avgClusterWidth + CLUSTER_GRID_GAP),
+    (layoutWidth + CLUSTER_GRID_GAP) / (maxClusterWidth + CLUSTER_GRID_GAP),
   );
+
   const aspect = layoutWidth / Math.max(layoutHeight, 320);
   const aspectCols = Math.ceil(Math.sqrt(clusterCount * aspect));
 
-  return Math.min(clusterCount, Math.max(2, widthBasedCols, aspectCols));
+  let columns = Math.min(clusterCount, Math.max(2, widthBasedCols, aspectCols));
+
+  if (clusterCount >= 4 && clusterCount <= 6) {
+    columns = Math.min(3, columns);
+  } else if (clusterCount > 6 && clusterCount <= 9) {
+    columns = Math.min(3, columns);
+  }
+
+  return columns;
 }
 
 function placeClustersOnViewportGrid(
@@ -334,17 +413,33 @@ function placeClustersOnViewportGrid(
   if (entries.length === 0) return mergedPositions;
 
   const columns = computeClusterGridColumns(entries.length, layoutWidth, layoutHeight, entries);
-  const columnWidth = (layoutWidth - (columns - 1) * CLUSTER_GRID_GAP) / columns;
   const rowCount = Math.ceil(entries.length / columns);
-  const rowHeights = Array.from({ length: rowCount }, () => 0);
 
+  const columnWidths = Array.from({ length: columns }, (_, col) => {
+    let maxWidth = AVG_NODE_SPAN * 0.55;
+    for (let i = col; i < entries.length; i += columns) {
+      const entry = entries[i];
+      if (entry) {
+        maxWidth = Math.max(maxWidth, entry.bounds.width + CLUSTER_PADDING * 2);
+      }
+    }
+    return maxWidth;
+  });
+
+  const rowHeights = Array.from({ length: rowCount }, () => 0);
   entries.forEach((entry, index) => {
     const row = Math.floor(index / columns);
     rowHeights[row] = Math.max(
       rowHeights[row]!,
-      Math.max(entry.bounds.height, AVG_NODE_SPAN * 0.55),
+      entry.bounds.height + CLUSTER_PADDING * 2,
+      AVG_NODE_SPAN * 0.55,
     );
   });
+
+  const columnOffsets = Array.from({ length: columns }, () => 0);
+  for (let col = 1; col < columns; col++) {
+    columnOffsets[col] = columnOffsets[col - 1]! + columnWidths[col - 1]! + CLUSTER_GRID_GAP;
+  }
 
   const rowOffsets = Array.from({ length: rowCount }, () => 0);
   for (let row = 1; row < rowCount; row++) {
@@ -354,10 +449,24 @@ function placeClustersOnViewportGrid(
   entries.forEach((entry, index) => {
     const column = index % columns;
     const row = Math.floor(index / columns);
-    const clusterWidth = Math.max(entry.bounds.width, AVG_NODE_SPAN * 0.55);
-    const cellLeft = column * (columnWidth + CLUSTER_GRID_GAP);
-    const offsetX = cellLeft + Math.max(0, (columnWidth - clusterWidth) / 2) - entry.bounds.minX;
-    const offsetY = rowOffsets[row]! - entry.bounds.minY;
+    const cellWidth = columnWidths[column]!;
+    const cellHeight = rowHeights[row]!;
+    const clusterWidth = entry.bounds.width;
+    const clusterHeight = entry.bounds.height;
+
+    const cellLeft = columnOffsets[column]!;
+    const cellTop = rowOffsets[row]!;
+
+    const offsetX =
+      cellLeft +
+      CLUSTER_PADDING +
+      Math.max(0, (cellWidth - CLUSTER_PADDING * 2 - clusterWidth) / 2) -
+      entry.bounds.minX;
+    const offsetY =
+      cellTop +
+      CLUSTER_PADDING +
+      Math.max(0, (cellHeight - CLUSTER_PADDING * 2 - clusterHeight) / 2) -
+      entry.bounds.minY;
 
     for (const [nodeId, position] of entry.positions) {
       mergedPositions.set(nodeId, {

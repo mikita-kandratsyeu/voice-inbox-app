@@ -33,6 +33,7 @@ import {
   computeMapPanTransform,
   computeMapPinchTransform,
 } from '../lib/graphCanvasGestures';
+import { buildGraphClusters } from '../lib/graphClusterLayout';
 import { GRAPH_DRAG_RECONCILE_MIN_MS } from '../lib/graphDragReconcile';
 import { getSessionNodePositions, setSessionNodePosition } from '../lib/graphSessionLayout';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
@@ -48,6 +49,7 @@ import {
 import type { GraphViewportInsets } from '../lib/graphViewportInsets';
 import { computeFitTransform, computeFocusTransform } from '../lib/runForceLayout';
 import { DottedBackground } from './DottedBackground';
+import { GraphClusterBoundaries } from './GraphClusterBoundaries';
 import { GraphControls } from './GraphControls';
 import { GraphEdgeLayer } from './GraphEdgeLayer';
 import { GraphFullExportCapture } from './GraphFullExportCapture';
@@ -631,6 +633,9 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   }));
 
   const [legendVisible, setLegendVisible] = React.useState(false);
+  const [clusterBoundariesVisible] = React.useState(true);
+
+  const clusters = useMemo(() => buildGraphClusters(displayNodes, edges), [displayNodes, edges]);
 
   return (
     <View
@@ -650,6 +655,14 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               animatedStyle,
             ]}
           >
+            <GraphClusterBoundaries
+              nodes={displayNodes}
+              clusters={clusters}
+              color={color}
+              width={worldWidth}
+              height={worldHeight}
+              visible={clusterBoundariesVisible && !exportCaptureActive}
+            />
             <GraphEdgeLayer
               nodes={displayNodes}
               edges={edges}
