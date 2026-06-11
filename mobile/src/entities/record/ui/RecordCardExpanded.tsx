@@ -43,6 +43,7 @@ type RecordCardExpandedProps = {
   onUnarchive?: () => void;
   onSelect?: () => void;
   onShare?: () => void;
+  onRename?: () => void;
   onOpenAllTasks?: () => void;
   a11yHint?: string | null;
   hideAccessibilitySubtree?: boolean;
@@ -71,6 +72,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
   onUnarchive,
   onSelect,
   onShare,
+  onRename,
   onOpenAllTasks,
   a11yHint,
   hideAccessibilitySubtree = false,
@@ -163,19 +165,31 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
   const menuActions = useMemo(() => {
     const titleColor = color.text.primary;
     const showAllTasks = Boolean(onOpenAllTasks);
-    const primary: NativeMenuAction[] = [];
 
-    if (onPin) {
-      primary.push({
-        id: 'togglePin',
-        title: item.isPinned ? t('recordActions.unpin') : t('recordActions.pin'),
-        titleColor,
-        image: 'pin',
-        imageColor: item.isPinned ? color.accent.pin : titleColor,
-      });
-    }
+    const pinAction: NativeMenuAction | null = onPin
+      ? {
+          id: 'togglePin',
+          title: item.isPinned ? t('recordActions.unpin') : t('recordActions.pin'),
+          titleColor,
+          image: 'pin',
+          imageColor: item.isPinned ? color.accent.pin : titleColor,
+        }
+      : null;
+
+    const renameAction: NativeMenuAction | null = onRename
+      ? {
+          id: 'rename',
+          title: t('recordActions.rename'),
+          titleColor,
+          image: 'pencil',
+          imageColor: titleColor,
+        }
+      : null;
+
+    const restPrimary: NativeMenuAction[] = [];
+
     if (isArchivedView && onUnarchive) {
-      primary.push({
+      restPrimary.push({
         id: 'unarchive',
         title: t('recordActions.unarchive'),
         titleColor,
@@ -183,7 +197,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
         imageColor: titleColor,
       });
     } else if (!isArchivedView && onArchive) {
-      primary.push({
+      restPrimary.push({
         id: 'archive',
         title: t('recordActions.archive'),
         titleColor,
@@ -192,7 +206,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
       });
     }
     if (onShare) {
-      primary.push({
+      restPrimary.push({
         id: 'share',
         title: t('share.share'),
         titleColor,
@@ -201,7 +215,15 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
       });
     }
 
-    if (primary.length === 0 && !onSelect && !showAllTasks) {
+    const pinRenameActions: NativeMenuAction[] = [];
+    if (pinAction) {
+      pinRenameActions.push(pinAction);
+    }
+    if (renameAction) {
+      pinRenameActions.push(renameAction);
+    }
+
+    if (!pinAction && !renameAction && restPrimary.length === 0 && !onSelect && !showAllTasks) {
       return [];
     }
 
@@ -215,28 +237,42 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
         image: 'checklist',
         imageColor: titleColor,
       });
+
+      if (pinRenameActions.length > 0) {
+        actions.push(inlineNativeMenuSection('pinRenameSection', titleColor, pinRenameActions));
+      }
+    } else {
+      if (pinAction) {
+        actions.push(pinAction);
+      }
+
+      if (renameAction) {
+        actions.push(renameAction);
+      }
     }
 
-    if (primary.length > 0) {
-      if (showAllTasks) {
-        actions.push(inlineNativeMenuSection('primarySection', titleColor, primary));
+    if (restPrimary.length > 0) {
+      if (showAllTasks || pinAction || renameAction) {
+        actions.push(inlineNativeMenuSection('restPrimarySection', titleColor, restPrimary));
       } else {
-        actions.push(...primary);
+        actions.push(...restPrimary);
       }
     }
 
     if (onSelect) {
-      actions.push(
-        inlineNativeMenuSection('selectSection', titleColor, [
-          {
-            id: 'select',
-            title: t('inbox.menuSelectNotes'),
-            titleColor,
-            image: 'checkmark.circle',
-            imageColor: titleColor,
-          },
-        ]),
-      );
+      const selectAction: NativeMenuAction = {
+        id: 'select',
+        title: t('inbox.menuSelectNotes'),
+        titleColor,
+        image: 'checkmark.circle',
+        imageColor: titleColor,
+      };
+
+      if (showAllTasks || pinAction || renameAction || restPrimary.length > 0) {
+        actions.push(inlineNativeMenuSection('selectSection', titleColor, [selectAction]));
+      } else {
+        actions.push(selectAction);
+      }
     }
 
     return actions;
@@ -248,6 +284,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
     onArchive,
     onOpenAllTasks,
     onPin,
+    onRename,
     onSelect,
     onShare,
     onUnarchive,
@@ -321,6 +358,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
                 if (id === 'allTasksForNote') onOpenAllTasks?.();
                 if (id === 'select') onSelect?.();
                 if (id === 'togglePin') onPin?.();
+                if (id === 'rename') onRename?.();
                 if (id === 'archive') onArchive?.();
                 if (id === 'unarchive') onUnarchive?.();
                 if (id === 'share') onShare?.();
@@ -333,6 +371,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
                 color={color}
                 icon={<MoreHorizontal size={18} color={color.icon.muted} strokeWidth={2.2} />}
                 onPress={() => {}}
+                containerStyle={{ backgroundColor: 'transparent' }}
                 accessibilityLabel={t('inbox.cardLayout.noteMenu')}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               />

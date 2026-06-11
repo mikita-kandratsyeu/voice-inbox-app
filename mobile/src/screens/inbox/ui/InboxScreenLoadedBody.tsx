@@ -261,8 +261,10 @@ function InboxScreenLoadedBodyInner({
     };
   }, [listContentStyle, filterScrollTopPad]);
 
+  const showSwipeHintForLayout = showSwipeHint && cardLayout !== 'expanded';
+
   const swipeListHeader = useMemo(() => {
-    if (!showSwipeHint || batchSelect.isSelectMode) {
+    if (!showSwipeHintForLayout || batchSelect.isSelectMode) {
       return undefined;
     }
     return (
@@ -270,7 +272,12 @@ function InboxScreenLoadedBodyInner({
         <SwipeHintBanner onDismiss={onDismissSwipeHint} />
       </View>
     );
-  }, [batchSelect.isSelectMode, onDismissSwipeHint, showInboxSearchBar, showSwipeHint]);
+  }, [
+    batchSelect.isSelectMode,
+    onDismissSwipeHint,
+    showInboxSearchBar,
+    showSwipeHintForLayout,
+  ]);
 
   const stickyClosedOffset = insetsBottom;
 
@@ -328,7 +335,7 @@ function InboxScreenLoadedBodyInner({
             </View>
           ) : filteredLength === 0 ? (
             <View style={{ flex: 1, paddingTop: filterScrollTopPad }}>
-              {showSwipeHint && !batchSelect.isSelectMode && (
+              {showSwipeHintForLayout && !batchSelect.isSelectMode && (
                 <View style={{ marginTop: showInboxSearchBar ? 4 : 0 }}>
                   <SwipeHintBanner onDismiss={onDismissSwipeHint} />
                 </View>

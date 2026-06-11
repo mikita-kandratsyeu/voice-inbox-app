@@ -39,6 +39,7 @@ export type InboxScreenListItemProps = {
   onStatusPress: (item: VoiceRecord) => void;
   onRecordLongPress: (item: VoiceRecord) => void;
   onRecordShare: (item: VoiceRecord) => void;
+  onRecordRename: (item: VoiceRecord) => void;
   onOpenAllTasksForNote: (recordId: string) => void;
 };
 
@@ -64,6 +65,7 @@ function InboxScreenListItemInner({
   onStatusPress,
   onRecordLongPress,
   onRecordShare,
+  onRecordRename,
   onOpenAllTasksForNote,
 }: InboxScreenListItemProps) {
   const { t } = useTranslation();
@@ -118,6 +120,7 @@ function InboxScreenListItemInner({
           onStatusPress={onStatusPress}
           onLongPress={onLongPress}
           onPin={() => togglePin(item.item.id)}
+          onRename={() => onRecordRename(item.item)}
           onArchive={isArchivedView ? undefined : () => archiveRecord(item.item.id)}
           onUnarchive={isArchivedView ? () => unarchiveRecord(item.item.id) : undefined}
           onSelect={() => onRecordLongPress(item.item)}
@@ -181,11 +184,24 @@ function InboxScreenListItemInner({
     );
   }
 
+  const cardPressHandlers = {
+    onPress: () => onRecordPress(item.item),
+    onStatusPress: () => onStatusPress(item.item),
+    onLongPress: () => onRecordLongPress(item.item),
+  };
+
+  if (isExpandedLayout) {
+    return (
+      <View style={{ marginHorizontal: 16, marginBottom: 16, maxHeight: EXPANDED_CARD_MAX_HEIGHT }}>
+        {renderRecordCard(cardPressHandlers)}
+      </View>
+    );
+  }
+
   return (
     <SwipeableCard
       isPinned={item.item.isPinned}
       leftAction={isArchivedView ? 'unarchive' : 'archive'}
-      maxHeight={isExpandedLayout ? EXPANDED_CARD_MAX_HEIGHT : undefined}
       onLeftAction={() => {
         dismissSwipeHint();
         listRef.current?.prepareForLayoutAnimationRender();
@@ -197,11 +213,7 @@ function InboxScreenListItemInner({
         togglePin(item.item.id);
       }}
     >
-      {renderRecordCard({
-        onPress: () => onRecordPress(item.item),
-        onStatusPress: () => onStatusPress(item.item),
-        onLongPress: () => onRecordLongPress(item.item),
-      })}
+      {renderRecordCard(cardPressHandlers)}
     </SwipeableCard>
   );
 }

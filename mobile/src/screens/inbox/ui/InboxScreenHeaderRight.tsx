@@ -65,64 +65,73 @@ function InboxScreenHeaderRightInner({
   const isDark = theme === 'dark';
 
   const moreMenuActions = useMemo(() => {
-    const items: NativeMenuAction[] = [];
-
-    const push = (item: NativeMenuAction) => {
-      items.push(item);
-    };
+    const titleColor = color.text.primary;
+    const actions: NativeMenuAction[] = [];
 
     if (!useTabletShell) {
-      push({
+      actions.push({
         id: 'allTasks',
         title: t('allTasks.title'),
-        titleColor: color.text.primary,
+        titleColor,
         image: 'checklist',
-        imageColor: color.text.primary,
+        imageColor: titleColor,
       });
     }
 
+    const navigationItems: NativeMenuAction[] = [];
+
     if (foldersEnabled && !useTabletShell) {
-      push({
+      navigationItems.push({
         id: 'autoOrganize',
         title: t('inbox.menuAutoOrganize'),
-        titleColor: color.text.primary,
+        titleColor,
         image: 'folder.badge.plus',
-        imageColor: color.text.primary,
+        imageColor: titleColor,
         attributes: isAutoOrganizing ? { disabled: true } : undefined,
       });
     }
 
     if (!useTabletShell) {
-      push({
+      navigationItems.push({
         id: 'notesGraph',
         title: t('notesGraph.title'),
-        titleColor: color.text.primary,
+        titleColor,
         image: 'point.3.connected.trianglepath.dotted',
-        imageColor: color.text.primary,
+        imageColor: titleColor,
       });
     }
 
-    push({
+    navigationItems.push({
       id: 'importFile',
       title: t('inbox.menuImportFile'),
-      titleColor: color.text.primary,
+      titleColor,
       image: 'doc.badge.plus',
-      imageColor: color.text.primary,
+      imageColor: titleColor,
     });
 
-    push(
-      inlineNativeMenuSection('selectNotesSection', color.text.primary, [
-        {
-          id: 'selectNotes',
-          title: t('inbox.menuSelectNotes'),
-          titleColor: color.text.primary,
-          image: 'checkmark.circle',
-          imageColor: color.text.primary,
-        },
-      ]),
-    );
+    if (navigationItems.length > 0) {
+      if (!useTabletShell) {
+        actions.push(inlineNativeMenuSection('navigationSection', titleColor, navigationItems));
+      } else {
+        actions.push(...navigationItems);
+      }
+    }
 
-    return items;
+    const selectNotesAction: NativeMenuAction = {
+      id: 'selectNotes',
+      title: t('inbox.menuSelectNotes'),
+      titleColor,
+      image: 'checkmark.circle',
+      imageColor: titleColor,
+    };
+
+    if (!useTabletShell) {
+      actions.push(inlineNativeMenuSection('selectNotesSection', titleColor, [selectNotesAction]));
+    } else {
+      actions.push(selectNotesAction);
+    }
+
+    return actions;
   }, [color.text.primary, foldersEnabled, isAutoOrganizing, t, useTabletShell]);
 
   if (!isLoaded) return null;

@@ -48,6 +48,7 @@ import {
   type ShareRecordExportFormat,
   useShareRecord,
 } from '@/features/share-record';
+import { TaskEditSheet } from '@/screens/recording-detail/ui/TaskEditSheet';
 import { useColors } from '@/shared/config';
 import {
   flashListJumpToTop,
@@ -84,15 +85,17 @@ export function useInboxScreen() {
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const navigation = useNavigation<InboxNavigationProp>();
   const isInboxTabFocused = useIsFocused();
-  const { records, isLoaded, archiveRecord, unarchiveRecord, togglePin } = useRecordStore(
-    useShallow((s) => ({
-      records: s.records,
-      isLoaded: s.isLoaded,
-      archiveRecord: s.archiveRecord,
-      unarchiveRecord: s.unarchiveRecord,
-      togglePin: s.togglePin,
-    })),
-  );
+  const { records, isLoaded, archiveRecord, unarchiveRecord, togglePin, renameRecord } =
+    useRecordStore(
+      useShallow((s) => ({
+        records: s.records,
+        isLoaded: s.isLoaded,
+        archiveRecord: s.archiveRecord,
+        unarchiveRecord: s.unarchiveRecord,
+        togglePin: s.togglePin,
+        renameRecord: s.renameRecord,
+      })),
+    );
 
   const { folders, activeFolderId, setActiveFolder, reorderFolders } = useFolderStore(
     useShallow((s) => ({
@@ -368,6 +371,7 @@ export function useInboxScreen() {
   const [batchEmailSending, setBatchEmailSending] = useState(false);
   const [shareSheetVisible, setShareSheetVisible] = useState(false);
   const [shareTargetRecordId, setShareTargetRecordId] = useState<string | null>(null);
+  const [renameTarget, setRenameTarget] = useState<{ id: string; title: string } | null>(null);
   const [shareEmailSending, setShareEmailSending] = useState(false);
   const {
     shareRecord,
@@ -704,6 +708,32 @@ export function useInboxScreen() {
     [isProActive, shareRecord, t],
   );
 
+  const handleRecordRename = useCallback((item: VoiceRecord) => {
+    setRenameTarget({ id: item.id, title: item.title });
+  }, []);
+
+  const renameRecordSheet = useMemo(
+    () => (
+      <TaskEditSheet
+        visible={renameTarget !== null}
+        initialText={renameTarget?.title ?? ''}
+        sheetTitleKey="recordActions.renameTitle"
+        placeholderKey="recordActions.renamePrompt"
+        onClose={() => setRenameTarget(null)}
+        onSave={({ text }) => {
+          const trimmed = text.trim();
+          if (!renameTarget) return false;
+          if (trimmed === renameTarget.title) return true;
+
+          void renameRecord(renameTarget.id, trimmed);
+
+          return true;
+        }}
+      />
+    ),
+    [renameRecord, renameTarget],
+  );
+
   const handleShareRecordText = useCallback(
     (template: ShareBriefTemplate, format: ShareRecordExportFormat) => {
       if (!shareTargetRecord) return Promise.resolve();
@@ -783,6 +813,7 @@ export function useInboxScreen() {
         onStatusPress={handleStatusPress}
         onRecordLongPress={handleRecordLongPress}
         onRecordShare={handleRecordShare}
+        onRecordRename={handleRecordRename}
         onOpenAllTasksForNote={handleOpenAllTasksForNote}
       />
     ),
@@ -805,6 +836,7 @@ export function useInboxScreen() {
       handleStatusPress,
       handleRecordLongPress,
       handleRecordShare,
+      handleRecordRename,
       handleOpenAllTasksForNote,
       batchSelect,
     ],
@@ -1037,5 +1069,6 @@ export function useInboxScreen() {
     handleShareRecordText,
     handleShareRecordAudio,
     handleEmailShareRecord,
+    renameRecordSheet,
   };
 }

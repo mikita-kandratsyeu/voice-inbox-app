@@ -128,6 +128,7 @@ export const InboxScreen = () => {
     handleShareRecordText,
     handleShareRecordAudio,
     handleEmailShareRecord,
+    renameRecordSheet,
     isProActive,
   } = inbox;
 
@@ -337,6 +338,7 @@ export const InboxScreen = () => {
         onEmailRecord={handleEmailShareRecord}
         onShareAudio={handleShareRecordAudio}
       />
+      {renameRecordSheet}
     </View>
   );
 };
