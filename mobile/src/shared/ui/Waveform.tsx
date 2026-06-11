@@ -1,5 +1,15 @@
-import React, { memo, useEffect, useRef } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import React, { memo, useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withSpring,
+} from 'react-native-reanimated';
+
+import { SPRING_CONFIGS } from '@/shared/config';
 
 const BAR_COUNT = 32;
 const BAR_MIN_HEIGHT = 6;
@@ -14,69 +24,66 @@ type WaveformProps = {
   color?: string;
 };
 
-export const Waveform = memo(({ isAnimating, color = 'rgba(255,255,255,0.7)' }: WaveformProps) => {
-  const bars = useRef<Animated.Value[]>(
-    Array.from({ length: BAR_COUNT }, () => new Animated.Value(randomHeight())),
-  ).current;
+type WaveformBarProps = {
+  index: number;
+  isAnimating: boolean;
+  color: string;
+};
 
-  const loops = useRef<Animated.CompositeAnimation[]>([]);
+const WaveformBar = memo(({ index, isAnimating, color }: WaveformBarProps) => {
+  const height = useSharedValue(randomHeight());
 
   useEffect(() => {
     if (isAnimating) {
-      loops.current = bars.map((bar, i) => {
-        const loop = Animated.loop(
-          Animated.sequence([
-            Animated.delay(i * 30),
-            Animated.spring(bar, {
-              toValue: randomHeight(),
-              useNativeDriver: false,
-              speed: 2 + Math.random() * 3,
-              bounciness: 4,
+      height.value = withDelay(
+        index * 30,
+        withRepeat(
+          withSequence(
+            withSpring(randomHeight(), {
+              ...SPRING_CONFIGS.bouncy,
+              velocity: 2 + Math.random() * 3,
             }),
-            Animated.spring(bar, {
-              toValue: randomHeight(),
-              useNativeDriver: false,
-              speed: 2 + Math.random() * 3,
-              bounciness: 4,
+            withSpring(randomHeight(), {
+              ...SPRING_CONFIGS.bouncy,
+              velocity: 2 + Math.random() * 3,
             }),
-          ]),
-        );
-        loop.start();
-
-        return loop;
-      });
-    } else {
-      loops.current.forEach((l) => l.stop());
-      bars.forEach((bar) =>
-        Animated.spring(bar, {
-          toValue: BAR_MIN_HEIGHT + 4,
-          useNativeDriver: false,
-          speed: 10,
-          bounciness: 2,
-        }).start(),
+          ),
+          -1,
+          false,
+        ),
       );
+    } else {
+      height.value = withSpring(BAR_MIN_HEIGHT + 4, {
+        damping: 10,
+        stiffness: 200,
+      });
     }
+  }, [isAnimating, height, index]);
 
-    return () => {
-      loops.current.forEach((l) => l.stop());
-    };
-  }, [isAnimating, bars]);
+  const animatedStyle = useAnimatedStyle(() => ({
+    height: height.value,
+  }));
 
   return (
+    <Animated.View
+      style={[
+        styles.bar,
+        {
+          backgroundColor: color,
+          marginHorizontal: BAR_GAP / 2,
+          width: BAR_WIDTH,
+        },
+        animatedStyle,
+      ]}
+    />
+  );
+});
+
+export const Waveform = memo(({ isAnimating, color = 'rgba(255,255,255,0.7)' }: WaveformProps) => {
+  return (
     <View style={styles.container}>
-      {bars.map((height, i) => (
-        <Animated.View
-          key={i}
-          style={[
-            styles.bar,
-            {
-              height,
-              backgroundColor: color,
-              marginHorizontal: BAR_GAP / 2,
-              width: BAR_WIDTH,
-            },
-          ]}
-        />
+      {Array.from({ length: BAR_COUNT }).map((_, i) => (
+        <WaveformBar key={i} index={i} isAnimating={isAnimating} color={color} />
       ))}
     </View>
   );

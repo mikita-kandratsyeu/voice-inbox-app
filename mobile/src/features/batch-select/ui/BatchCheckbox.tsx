@@ -1,7 +1,15 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated } from 'react-native';
+import React, { useEffect } from 'react';
+import Animated, {
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
+import { ANIMATION_DURATIONS, SCALE_VALUES, SPRING_CONFIGS } from '@/shared/config';
 
 type BatchCheckboxProps = {
   isSelected: boolean;
@@ -10,32 +18,42 @@ type BatchCheckboxProps = {
 };
 
 export const BatchCheckbox = ({ isSelected, color, size = 22 }: BatchCheckboxProps) => {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const scale = useSharedValue(SCALE_VALUES.normal);
 
   useEffect(() => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, { toValue: 0.82, duration: 60, useNativeDriver: true }),
-      Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, tension: 280, friction: 12 }),
-    ]).start();
-  }, [isSelected, scaleAnim]);
+    cancelAnimation(scale);
+    scale.value = withSequence(
+      withTiming(SCALE_VALUES.checkboxPressed, { duration: ANIMATION_DURATIONS.pressIn }),
+      withSpring(SCALE_VALUES.normal, {
+        ...SPRING_CONFIGS.snappy,
+        damping: 12,
+      }),
+    );
+  }, [isSelected, scale]);
 
   const borderColor = isSelected ? color.accent.primary : color.border.default;
   const bgColor = isSelected ? color.accent.primary : 'transparent';
   const checkColor = color.icon.onAccent;
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
     <Animated.View
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        borderWidth: 2,
-        borderColor,
-        backgroundColor: bgColor,
-        alignItems: 'center',
-        justifyContent: 'center',
-        transform: [{ scale: scaleAnim }],
-      }}
+      style={[
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          borderWidth: 2,
+          borderColor,
+          backgroundColor: bgColor,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        animatedStyle,
+      ]}
     >
       {isSelected && (
         <Animated.View

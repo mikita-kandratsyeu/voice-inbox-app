@@ -1,3 +1,14 @@
+export {
+  ANIMATION_DURATIONS,
+  GESTURE_THRESHOLDS,
+  getAnimationDuration,
+  initReduceMotionCheck,
+  SCALE_VALUES,
+  shouldReduceMotion,
+  SPRING_CONFIGS,
+  TIMING_CONFIGS,
+  withReduceMotion,
+} from './animations';
 export { BootSplashVisibleProvider, useBootSplashVisible } from './bootSplashThemeContext';
 export type { AccentColorId, Colors, ColorScheme } from './colors';
 export {

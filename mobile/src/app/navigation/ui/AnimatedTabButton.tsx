@@ -4,6 +4,8 @@ import type { TouchableOpacityProps } from 'react-native';
 import { TouchableOpacity } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
+import { SCALE_VALUES, SPRING_CONFIGS } from '@/shared/config';
+
 function tabBarButtonRestToTouchable(
   rest: Omit<
     BottomTabBarButtonProps,
@@ -23,14 +25,14 @@ export const AnimatedTabButton = ({
   onPressOut,
   ...rest
 }: BottomTabBarButtonProps) => {
-  const scale = useSharedValue(1);
+  const scale = useSharedValue(SCALE_VALUES.normal);
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.9, { damping: 22, stiffness: 380 });
+    scale.value = withSpring(SCALE_VALUES.pressed, SPRING_CONFIGS.snappy);
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 20, stiffness: 280 });
+    scale.value = withSpring(SCALE_VALUES.normal, SPRING_CONFIGS.soft);
   };
 
   const animatedStyle = useAnimatedStyle(() => ({

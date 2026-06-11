@@ -3,6 +3,7 @@ import React, { memo, useState } from 'react';
 import type { PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  cancelAnimation,
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
@@ -12,13 +13,12 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { useColors } from '@/shared/config';
+import { ANIMATION_DURATIONS, GESTURE_THRESHOLDS, SPRING_CONFIGS } from '@/shared/config';
 import { hapticMedium } from '@/shared/lib';
 
 export const SwipeableCardContext = React.createContext({ isSwiping: false });
 
-const SWIPE_THRESHOLD = 80;
 const CARD_FLY_DISTANCE = 400;
-const COLLAPSE_DURATION = 280;
 const DEFAULT_MAX_HEIGHT = 300;
 const MARGIN_BOTTOM = 16;
 
@@ -56,9 +56,13 @@ export const SwipeableCard = memo(function SwipeableCard({
   const collapseOpacity = useSharedValue(1);
 
   const collapseAndExecute = () => {
-    collapseOpacity.value = withTiming(0, { duration: COLLAPSE_DURATION }, (finished) => {
-      if (finished) scheduleOnRN(onLeftAction);
-    });
+    collapseOpacity.value = withTiming(
+      0,
+      { duration: ANIMATION_DURATIONS.collapse },
+      (finished) => {
+        if (finished) scheduleOnRN(onLeftAction);
+      },
+    );
   };
 
   useAnimatedReaction(
@@ -71,7 +75,8 @@ export const SwipeableCard = memo(function SwipeableCard({
       if (current === 'archive' || current === 'unarchive') {
         scheduleOnRN(collapseAndExecute);
       } else if (current === 'pin') {
-        translateX.value = withSpring(0, { damping: 14, stiffness: 300, mass: 0.6 }, () => {
+        cancelAnimation(translateX);
+        translateX.value = withSpring(0, SPRING_CONFIGS.bouncy, () => {
           if (onPin) scheduleOnRN(onPin);
         });
         action.value = 'none';
@@ -80,27 +85,28 @@ export const SwipeableCard = memo(function SwipeableCard({
   );
 
   const pan = Gesture.Pan()
-    .activeOffsetX([-10, 10])
-    .failOffsetY([-15, 15])
+    .activeOffsetX([-GESTURE_THRESHOLDS.activeOffset, GESTURE_THRESHOLDS.activeOffset])
+    .failOffsetY([-GESTURE_THRESHOLDS.failOffset, GESTURE_THRESHOLDS.failOffset])
     .onStart(() => {
+      cancelAnimation(translateX);
       scheduleOnRN(setIsSwiping, true);
     })
     .onUpdate((e: PanGestureHandlerEventPayload) => {
       translateX.value = pinEnabled ? e.translationX : Math.min(0, e.translationX);
     })
     .onEnd((e: PanGestureHandlerEventPayload) => {
-      if (e.translationX < -SWIPE_THRESHOLD) {
+      if (e.translationX < -GESTURE_THRESHOLDS.swipe) {
         scheduleOnRN(hapticMedium);
         translateX.value = withTiming(-CARD_FLY_DISTANCE, { duration: 220 }, () => {
           action.value = leftAction;
         });
-      } else if (pinEnabled && e.translationX > SWIPE_THRESHOLD) {
+      } else if (pinEnabled && e.translationX > GESTURE_THRESHOLDS.swipe) {
         scheduleOnRN(hapticMedium);
-        translateX.value = withTiming(SWIPE_THRESHOLD * 1.3, { duration: 80 }, () => {
+        translateX.value = withTiming(GESTURE_THRESHOLDS.swipeExtended, { duration: 80 }, () => {
           action.value = 'pin';
         });
       } else {
-        translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+        translateX.value = withSpring(0, SPRING_CONFIGS.gentle);
       }
       scheduleOnRN(setIsSwiping, false);
     })
@@ -113,13 +119,13 @@ export const SwipeableCard = memo(function SwipeableCard({
   }));
 
   const leftReveal = useAnimatedStyle(() => {
-    const progress = Math.min(Math.max(-translateX.value / SWIPE_THRESHOLD, 0), 1);
+    const progress = Math.min(Math.max(-translateX.value / GESTURE_THRESHOLDS.swipe, 0), 1);
 
     return { opacity: progress };
   });
 
   const pinReveal = useAnimatedStyle(() => {
-    const progress = Math.min(Math.max(translateX.value / SWIPE_THRESHOLD, 0), 1);
+    const progress = Math.min(Math.max(translateX.value / GESTURE_THRESHOLDS.swipe, 0), 1);
 
     return { opacity: progress };
   });

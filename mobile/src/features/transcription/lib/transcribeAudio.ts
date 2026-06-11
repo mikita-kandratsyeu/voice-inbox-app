@@ -26,7 +26,6 @@ const DEFAULT_CHUNK_PROFILE: TranscriptionChunkProfile = {
 };
 
 const PROMPT_TAIL_LENGTH = 200;
-const LONG_TRANSCRIPTION_CONTEXT_RECYCLE_CHUNKS = 12;
 
 export type TranscribeAudioOptions = {
   context: WhisperContext;
@@ -35,6 +34,7 @@ export type TranscribeAudioOptions = {
   durationMs: number;
   language?: string;
   chunkProfile?: TranscriptionChunkProfile;
+  contextRecycleChunks?: number;
   onProgress?: (current: number, total: number) => void;
   resume?: {
     startChunkIndex: number;
@@ -152,6 +152,7 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
     durationMs,
     language = 'auto',
     chunkProfile = DEFAULT_CHUNK_PROFILE,
+    contextRecycleChunks = 12,
     onProgress,
     resume,
     onChunkCompleted,
@@ -211,6 +212,7 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
         language,
         totalDurationSec: durationMs / 1000,
         chunkProfile,
+        contextRecycleChunks,
         onProgress,
         resume,
         onChunkCompleted,
@@ -289,6 +291,7 @@ type LongOptions = {
   language: string;
   totalDurationSec: number;
   chunkProfile: TranscriptionChunkProfile;
+  contextRecycleChunks: number;
   onProgress?: (current: number, total: number) => void;
   resume?: {
     startChunkIndex: number;
@@ -312,6 +315,7 @@ const transcribeLong = async ({
   language,
   totalDurationSec,
   chunkProfile,
+  contextRecycleChunks,
   onProgress,
   resume,
   onChunkCompleted,
@@ -420,7 +424,7 @@ const transcribeLong = async ({
     if (
       recycleContext &&
       i + 1 < chunks.length &&
-      (i + 1 - startChunkIndex) % LONG_TRANSCRIPTION_CONTEXT_RECYCLE_CHUNKS === 0
+      (i + 1 - startChunkIndex) % contextRecycleChunks === 0
     ) {
       await recycleContext();
     }

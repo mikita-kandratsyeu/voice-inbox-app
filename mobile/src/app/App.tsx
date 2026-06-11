@@ -35,6 +35,7 @@ import { TaskDeadlineActionSheet } from '@/features/task-deadline-notifications/
 import { TranscriptionResumePrompt } from '@/features/transcription';
 import {
   BootSplashVisibleProvider,
+  initReduceMotionCheck,
   useAppTheme,
   useBootSplashVisible,
   useColors,
@@ -114,6 +115,8 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
 
   useEffect(() => {
     setupAppLogger();
+    void initReduceMotionCheck();
+
     logInfo('App startup');
   }, []);
 

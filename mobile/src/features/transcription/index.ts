@@ -1,3 +1,10 @@
+export {
+  detectDevicePerformanceTier,
+  type DevicePerformanceProfile,
+  type DevicePerformanceTier,
+  getAdaptiveCheckpointInterval,
+  getDevicePerformanceProfile,
+} from './lib/devicePerformanceProfile';
 export { getWhisperContext, releaseWhisperContext } from './lib/initWhisper';
 export { transcribeAudio } from './lib/transcribeAudio';
 export {

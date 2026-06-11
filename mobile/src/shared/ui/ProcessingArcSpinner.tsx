@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 
+import { ANIMATION_DURATIONS, getAnimationDuration } from '@/shared/config';
 import { withAlphaHex } from '@/shared/lib';
 
 const SPINNER_SIZES = {
@@ -37,11 +38,13 @@ export function ProcessingArcSpinner({ color, size = 'md' }: ProcessingArcSpinne
   const rotation = useSharedValue(0);
 
   useEffect(() => {
-    rotation.value = withRepeat(
-      withTiming(360, { duration: 900, easing: Easing.linear }),
-      -1,
-      false,
-    );
+    const duration = getAnimationDuration(ANIMATION_DURATIONS.spinner);
+
+    if (duration === 0) {
+      rotation.value = 0;
+    } else {
+      rotation.value = withRepeat(withTiming(360, { duration, easing: Easing.linear }), -1, false);
+    }
   }, [rotation]);
 
   const spinStyle = useAnimatedStyle(() => ({
@@ -53,6 +56,8 @@ export function ProcessingArcSpinner({ color, size = 'md' }: ProcessingArcSpinne
       style={{ width: box, height: box }}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
+      accessibilityLabel="Processing"
+      accessibilityRole="progressbar"
     >
       <Animated.View style={[{ width: box, height: box }, spinStyle]}>
         <Svg width={box} height={box}>

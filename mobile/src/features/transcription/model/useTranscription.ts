@@ -13,6 +13,10 @@ import { diagWarn } from '@/shared/lib/appLogger';
 import { convertToWav } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
 
+import {
+  getAdaptiveCheckpointInterval,
+  getDevicePerformanceProfile,
+} from '../lib/devicePerformanceProfile';
 import { getWhisperContext, resetWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
 import { resolveTranscriptionChunkProfile } from '../lib/resolveTranscriptionChunkProfile';
 import { transcribeAudio } from '../lib/transcribeAudio';
@@ -62,7 +66,6 @@ import {
 } from './transcriptionRuntimeRegistry';
 
 const PROGRESS_THROTTLE_MS = 500;
-const CHECKPOINT_MIN_INTERVAL_MS = 4_000;
 const DISCARD_RESET_UI_TIMEOUT_MS = 3_000;
 const pendingWhisperResetRecordIds = new Set<string>();
 
@@ -261,6 +264,11 @@ export const useTranscription = () => {
 
         const throttledProgress = createThrottledProgress(record.id, jobGen, updateAiStatus);
         const chunkProfile = resolveTranscriptionChunkProfile();
+        const performanceProfile = getDevicePerformanceProfile({ respectPowerMode: true });
+        const checkpointInterval = getAdaptiveCheckpointInterval(
+          record.durationMs ?? 0,
+          performanceProfile,
+        );
         let lastCheckpointPersistAt = 0;
         let transcribeInputPath = audioPath;
         if (!normalizedAudioPath.toLowerCase().endsWith('.wav')) {
@@ -328,6 +336,7 @@ export const useTranscription = () => {
             durationMs: record.durationMs ?? 0,
             language,
             chunkProfile,
+            contextRecycleChunks: performanceProfile.contextRecycleChunks,
             onProgress: throttledProgress,
             resume: resumePayload,
             onChunkCompleted: ({ chunkIndex, totalChunks, fullText, segments }) => {
@@ -351,7 +360,7 @@ export const useTranscription = () => {
 
               const now = Date.now();
               const shouldPersist =
-                now - lastCheckpointPersistAt >= CHECKPOINT_MIN_INTERVAL_MS ||
+                now - lastCheckpointPersistAt >= checkpointInterval ||
                 chunkIndex + 1 >= totalChunks;
               if (!shouldPersist) {
                 return;
