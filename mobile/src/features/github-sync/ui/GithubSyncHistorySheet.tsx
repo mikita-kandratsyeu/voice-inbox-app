@@ -1,7 +1,7 @@
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
 import { ExternalLink, History, RotateCcw } from 'lucide-react-native';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
@@ -12,7 +12,17 @@ import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding }
 
 import type { GithubCommitSummary } from '../lib/githubApi';
 
-const HISTORY_ROW_HEIGHT = 72;
+const HISTORY_ROW_PADDING_V = 12;
+const HISTORY_ROW_ICON_SIZE = 36;
+const HISTORY_ROW_TITLE_LINE = 21;
+const HISTORY_ROW_META_GAP = 3;
+const HISTORY_ROW_META_LINE = 18;
+const HISTORY_ROW_HEIGHT =
+  HISTORY_ROW_PADDING_V * 2 +
+  Math.max(
+    HISTORY_ROW_ICON_SIZE,
+    HISTORY_ROW_TITLE_LINE + HISTORY_ROW_META_GAP + HISTORY_ROW_META_LINE,
+  );
 const HISTORY_LIST_MAX_HEIGHT = 420;
 const HISTORY_ACTION_BUTTON_SIZE = 36;
 const HISTORY_ACTION_ICON_SIZE = 18;
@@ -208,6 +218,7 @@ export function GithubSyncHistorySheet({
   const contentPadding = useBottomSheetContentPadding(12);
   const onLoadRef = useRef(onLoad);
   onLoadRef.current = onLoad;
+  const [contentHeight, setContentHeight] = useState<number | null>(null);
 
   useEffect(() => {
     if (visible) {
@@ -215,10 +226,14 @@ export function GithubSyncHistorySheet({
     }
   }, [visible]);
 
-  const listHeight = useMemo(
-    () => Math.min(commits.length * HISTORY_ROW_HEIGHT, HISTORY_LIST_MAX_HEIGHT),
-    [commits.length],
-  );
+  useEffect(() => {
+    setContentHeight(null);
+  }, [commits]);
+
+  const estimatedListHeight = commits.length * HISTORY_ROW_HEIGHT;
+  const naturalListHeight = contentHeight ?? estimatedListHeight;
+  const listHeight = Math.min(naturalListHeight, HISTORY_LIST_MAX_HEIGHT);
+  const listScrollEnabled = naturalListHeight > HISTORY_LIST_MAX_HEIGHT;
 
   const renderItem = useCallback(
     ({ item, index }: { item: GithubCommitSummary; index: number }) => (
@@ -255,6 +270,7 @@ export function GithubSyncHistorySheet({
     </Text>
   ) : (
     <View
+      className="w-full"
       style={{
         backgroundColor: color.background.card,
         borderColor: color.border.default,
@@ -262,6 +278,7 @@ export function GithubSyncHistorySheet({
         borderWidth: 1,
         overflow: 'hidden',
         height: listHeight,
+        width: '100%',
       }}
     >
       <FlashList
@@ -269,6 +286,12 @@ export function GithubSyncHistorySheet({
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={listScrollEnabled}
+        onContentSizeChange={(_, height) => {
+          if (height > 0) {
+            setContentHeight(height);
+          }
+        }}
       />
     </View>
   );

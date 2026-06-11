@@ -2228,10 +2228,6 @@
     "fallbackTitle": "Срок задачи",
     "body": "Задача из «{{recordTitle}}»",
     "bodyWithTime": "Срок в {{time}} · «{{recordTitle}}»",
-    "actions": {
-      "markDone": "Готово",
-      "snooze1h": "Через 1 ч"
-    },
     "sheet": {
       "subtitle": "«{{recordTitle}}» · {{date}}",
       "subtitleWithTime": "«{{recordTitle}}» · {{date}}, {{time}}",

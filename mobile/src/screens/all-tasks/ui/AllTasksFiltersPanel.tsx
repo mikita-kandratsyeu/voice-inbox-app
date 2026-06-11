@@ -1,4 +1,11 @@
-import { Folder as FolderIcon, SlidersHorizontal, X } from 'lucide-react-native';
+import {
+  CalendarOff,
+  CheckCircle2,
+  Flag,
+  Folder as FolderIcon,
+  SlidersHorizontal,
+  X,
+} from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView as HorizontalScroll, Text, TouchableOpacity, View } from 'react-native';
@@ -24,6 +31,21 @@ import { AllTasksMoreFiltersSheet } from './AllTasksMoreFiltersSheet';
 
 const PRIMARY_FILTERS: AllTasksQuickFilter[] = ['all', 'overdue', 'today'];
 const SECONDARY_FILTERS: AllTasksQuickFilter[] = ['highPriority', 'noDate', 'done'];
+
+function renderSecondaryFilterChipIcon(filter: AllTasksQuickFilter, color: Colors, active: boolean) {
+  const foreground = active ? color.icon.onAccent : color.text.primary;
+
+  switch (filter) {
+    case 'highPriority':
+      return <Flag size={FILTER_CHIP_ICON_SIZE} color={foreground} strokeWidth={2.2} />;
+    case 'noDate':
+      return <CalendarOff size={FILTER_CHIP_ICON_SIZE} color={foreground} strokeWidth={2.2} />;
+    case 'done':
+      return <CheckCircle2 size={FILTER_CHIP_ICON_SIZE} color={foreground} strokeWidth={2.2} />;
+    default:
+      return null;
+  }
+}
 
 type AllTasksFiltersPanelProps = {
   color: Colors;
@@ -182,13 +204,15 @@ export function AllTasksFiltersPanel({
             isActive={isSecondaryFilterActive}
             color={color}
             icon={
-              !isSecondaryFilterActive ? (
+              isSecondaryFilterActive ? (
+                renderSecondaryFilterChipIcon(activeFilter, color, true)
+              ) : (
                 <SlidersHorizontal
                   size={FILTER_CHIP_ICON_SIZE}
-                  color={isSecondaryFilterActive ? color.icon.onAccent : color.text.primary}
+                  color={color.text.primary}
                   strokeWidth={2.2}
                 />
-              ) : undefined
+              )
             }
             onPress={() => {
               hapticSelection();

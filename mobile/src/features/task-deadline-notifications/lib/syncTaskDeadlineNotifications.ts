@@ -3,7 +3,6 @@ import notifee, { TriggerType } from '@notifee/react-native';
 import type { TaskItem } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { diagWarn } from '@/shared/lib/appLogger';
-import { i18n } from '@/shared/lib/i18n';
 
 import { buildTaskDeadlineNotificationCopy } from './buildTaskDeadlineNotificationCopy';
 import { collectSchedulableTaskDeadlines } from './collectSchedulableTaskDeadlines';
@@ -11,10 +10,7 @@ import {
   getTaskDeadlineNotificationId,
   isTaskDeadlineNotificationId,
   MAX_TASK_DEADLINE_NOTIFICATIONS,
-  TASK_DEADLINE_ACTION_MARK_DONE,
-  TASK_DEADLINE_ACTION_SNOOZE_1H,
   TASK_DEADLINE_NOTIFICATION_CHANNEL_ID,
-  TASK_DEADLINE_NOTIFICATION_IOS_CATEGORY_ID,
   TASK_DEADLINE_NOTIFICATION_TYPE,
   TASK_DEADLINE_PRESS_OPEN,
 } from './constants';
@@ -58,21 +54,10 @@ async function scheduleTaskDeadlineNotification(input: {
       android: {
         channelId: TASK_DEADLINE_NOTIFICATION_CHANNEL_ID,
         pressAction: { id: TASK_DEADLINE_PRESS_OPEN },
-        actions: [
-          {
-            title: i18n.t('taskDeadlineNotifications.actions.markDone'),
-            pressAction: { id: TASK_DEADLINE_ACTION_MARK_DONE },
-          },
-          {
-            title: i18n.t('taskDeadlineNotifications.actions.snooze1h'),
-            pressAction: { id: TASK_DEADLINE_ACTION_SNOOZE_1H },
-          },
-        ],
         sound: 'default',
       },
       ios: {
         sound: 'default',
-        categoryId: TASK_DEADLINE_NOTIFICATION_IOS_CATEGORY_ID,
       },
     },
     {

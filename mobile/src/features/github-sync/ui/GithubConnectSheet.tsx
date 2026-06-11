@@ -310,15 +310,17 @@ export function GithubConnectSheet({
         ) : null}
 
         <View className="mt-4 w-full flex-row gap-3">
-          <Button
-            variant="secondary"
-            label={t('common.cancel')}
-            onPress={handleCancel}
-            activeOpacity={0.8}
-            className={ROW_BUTTON_CLASS}
-            color={color}
-            containerStyle={sheetFooterButtonContainerStyle(color, 'secondary')}
-          />
+          <View className={ROW_BUTTON_CLASS}>
+            <Button
+              variant="secondary"
+              fullWidth
+              label={t('common.cancel')}
+              onPress={handleCancel}
+              activeOpacity={0.8}
+              color={color}
+              containerStyle={sheetFooterButtonContainerStyle(color, 'secondary')}
+            />
+          </View>
           <View
             className={ROW_BUTTON_CLASS}
             style={{ borderRadius: BUTTON_BORDER_RADIUS, overflow: 'hidden' }}

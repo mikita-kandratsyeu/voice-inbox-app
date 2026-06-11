@@ -3,8 +3,6 @@ import { EventType } from '@notifee/react-native';
 
 import { useRecordStore } from '@/entities/record';
 
-import { TASK_DEADLINE_PRESS_OPEN } from './constants';
-import { executeTaskDeadlineNotificationAction } from './executeTaskDeadlineNotificationAction';
 import {
   extractTaskDeadlineNotificationIds,
   resolveTaskDeadlineSheetPayload,
@@ -41,15 +39,7 @@ export function handleTaskDeadlineNotificationPress(
 ): void {
   if (event.type !== EventType.PRESS && event.type !== EventType.ACTION_PRESS) return;
 
-  const data = event.detail.notification?.data;
-  const actionId = event.detail.pressAction?.id;
-
-  if (event.type === EventType.ACTION_PRESS && actionId && actionId !== TASK_DEADLINE_PRESS_OPEN) {
-    void executeTaskDeadlineNotificationAction(actionId, data, deps);
-    return;
-  }
-
-  handleTaskDeadlineNotificationData(data, deps);
+  handleTaskDeadlineNotificationData(event.detail.notification?.data, deps);
 }
 
 export function createTaskDeadlineNotificationPressHandler(

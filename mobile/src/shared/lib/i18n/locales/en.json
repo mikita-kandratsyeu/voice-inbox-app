@@ -2182,10 +2182,6 @@
     "fallbackTitle": "Task due",
     "body": "From {{recordTitle}}",
     "bodyWithTime": "Due at {{time}} · {{recordTitle}}",
-    "actions": {
-      "markDone": "Done",
-      "snooze1h": "Snooze 1h"
-    },
     "sheet": {
       "subtitle": "{{recordTitle}} · {{date}}",
       "subtitleWithTime": "{{recordTitle}} · {{date}}, {{time}}",

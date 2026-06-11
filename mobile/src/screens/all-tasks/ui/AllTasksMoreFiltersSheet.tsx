@@ -1,10 +1,17 @@
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { Check, ChevronRight, SlidersHorizontal } from 'lucide-react-native';
+import {
+  CalendarOff,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  Flag,
+  type LucideIcon,
+} from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
-import { useColors } from '@/shared/config';
+import { type Colors, useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import { AppBottomSheetModal, useBottomSheetContentPadding } from '@/shared/ui';
 
@@ -12,8 +19,26 @@ import type { AllTasksQuickFilter } from '../types';
 
 const SECONDARY_FILTERS: AllTasksQuickFilter[] = ['highPriority', 'noDate', 'done'];
 
+function getSecondaryFilterIcon(
+  filter: AllTasksQuickFilter,
+  color: Colors,
+): { Icon: LucideIcon; iconColor: string } {
+  switch (filter) {
+    case 'highPriority':
+      return { Icon: Flag, iconColor: color.accent.delete };
+    case 'noDate':
+      return { Icon: CalendarOff, iconColor: color.text.secondary };
+    case 'done':
+      return { Icon: CheckCircle2, iconColor: color.accent.success };
+    default:
+      return { Icon: Flag, iconColor: color.text.secondary };
+  }
+}
+
 type FilterPickerRowProps = {
   label: string;
+  icon: LucideIcon;
+  iconColor: string;
   selected: boolean;
   isLast: boolean;
   onPress: () => void;
@@ -36,7 +61,7 @@ export function AllTasksMoreFiltersSheet({
   const color = useColors();
   const contentPadding = useBottomSheetContentPadding(20);
 
-  const renderRow = ({ label, selected, isLast, onPress }: FilterPickerRowProps) => (
+  const renderRow = ({ label, icon: Icon, iconColor, selected, isLast, onPress }: FilterPickerRowProps) => (
     <Pressable
       onPress={() => {
         hapticSelection();
@@ -66,7 +91,7 @@ export function AllTasksMoreFiltersSheet({
         <View
           style={{
             alignSelf: 'stretch',
-            backgroundColor: selected ? color.accent.primary : color.border.default,
+            backgroundColor: iconColor,
             borderRadius: 2,
             flexShrink: 0,
             width: 3,
@@ -83,7 +108,7 @@ export function AllTasksMoreFiltersSheet({
             width: 36,
           }}
         >
-          <SlidersHorizontal size={18} color={color.text.secondary} strokeWidth={2} />
+          <Icon size={18} color={iconColor} strokeWidth={2} />
         </View>
         <View style={{ flex: 1, flexShrink: 1, justifyContent: 'center', minWidth: 0 }}>
           <Text
@@ -100,7 +125,7 @@ export function AllTasksMoreFiltersSheet({
         </View>
         <View style={{ flexShrink: 0, marginLeft: 2 }}>
           {selected ? (
-            <Check size={20} color={color.accent.primary} strokeWidth={2.5} />
+            <Check size={20} color={iconColor} strokeWidth={2.5} />
           ) : (
             <ChevronRight size={18} color={color.text.muted} strokeWidth={2.2} />
           )}
@@ -154,11 +179,14 @@ export function AllTasksMoreFiltersSheet({
           {SECONDARY_FILTERS.map((filter, index) => {
             const isActive = activeFilter === filter;
             const isLast = index === SECONDARY_FILTERS.length - 1;
+            const { Icon, iconColor } = getSecondaryFilterIcon(filter, color);
 
             return (
               <React.Fragment key={filter}>
                 {renderRow({
                   label: t(`allTasks.quickFilters.${filter}`),
+                  icon: Icon,
+                  iconColor,
                   selected: isActive,
                   isLast,
                   onPress: () => {
