@@ -103,3 +103,45 @@ export function computeQuadraticEdgePath(
 
   return `M ${from.x} ${from.y} Q ${controlX} ${controlY} ${to.x} ${to.y}`;
 }
+
+export function computeCubicEdgePath(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  curvature: number,
+): string {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const distance = Math.hypot(dx, dy);
+
+  if (distance < 1) {
+    return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
+  }
+
+  const normalX = -dy / distance;
+  const normalY = dx / distance;
+
+  const control1X = from.x + dx * 0.33 + normalX * curvature * 0.6;
+  const control1Y = from.y + dy * 0.33 + normalY * curvature * 0.6;
+  const control2X = from.x + dx * 0.67 + normalX * curvature * 0.6;
+  const control2Y = from.y + dy * 0.67 + normalY * curvature * 0.6;
+
+  return `M ${from.x} ${from.y} C ${control1X} ${control1Y}, ${control2X} ${control2Y}, ${to.x} ${to.y}`;
+}
+
+export function computeArrowhead(
+  to: { x: number; y: number },
+  from: { x: number; y: number },
+  size: number = 8,
+): string {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const angle = Math.atan2(dy, dx);
+
+  const arrowAngle = Math.PI / 6;
+  const x1 = to.x - size * Math.cos(angle - arrowAngle);
+  const y1 = to.y - size * Math.sin(angle - arrowAngle);
+  const x2 = to.x - size * Math.cos(angle + arrowAngle);
+  const y2 = to.y - size * Math.sin(angle + arrowAngle);
+
+  return `M ${x1} ${y1} L ${to.x} ${to.y} L ${x2} ${y2}`;
+}
