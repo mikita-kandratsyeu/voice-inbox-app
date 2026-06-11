@@ -1,12 +1,17 @@
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Check } from 'lucide-react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/shared/config';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import { AppBottomSheetModal, SheetFooterButtons } from '@/shared/ui';
 
+import {
+  getGraphLayoutModeSheetBottomPadding,
+  getGraphLayoutModeSheetSnapHeight,
+} from '../lib/graphLayoutModeSheetLayout';
 import { GRAPH_LAYOUT_MODES, type GraphLayoutMode } from '../lib/graphTypes';
 
 type GraphLayoutModeSheetProps = {
@@ -24,12 +29,24 @@ export function GraphLayoutModeSheet({
 }: GraphLayoutModeSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(12);
+  const insets = useSafeAreaInsets();
   const subtitle = t('notesGraph.filters.layoutModePickerSubtitle');
+  const bottomPadding = useMemo(
+    () => getGraphLayoutModeSheetBottomPadding(insets.bottom),
+    [insets.bottom],
+  );
+  const snapPoints = useMemo(() => [getGraphLayoutModeSheetSnapHeight(insets.bottom)], [insets.bottom]);
 
   return (
-    <AppBottomSheetModal visible={visible} onClose={onClose}>
-      <BottomSheetView style={{ paddingHorizontal: 20, ...contentPadding }}>
+    <AppBottomSheetModal
+      visible={visible}
+      onClose={onClose}
+      snapPoints={snapPoints}
+      enableContentPanningGesture={false}
+    >
+      <BottomSheetView
+        style={{ flexGrow: 0, paddingBottom: bottomPadding, paddingHorizontal: 20 }}
+      >
         <Text
           style={{
             color: color.text.primary,
