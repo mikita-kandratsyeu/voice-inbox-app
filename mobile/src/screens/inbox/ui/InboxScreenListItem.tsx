@@ -38,6 +38,7 @@ export type InboxScreenListItemProps = {
   onRecordPress: (item: VoiceRecord) => void;
   onStatusPress: (item: VoiceRecord) => void;
   onRecordLongPress: (item: VoiceRecord) => void;
+  onRecordShare: (item: VoiceRecord) => void;
 };
 
 function InboxScreenListItemInner({
@@ -61,6 +62,7 @@ function InboxScreenListItemInner({
   onRecordPress,
   onStatusPress,
   onRecordLongPress,
+  onRecordShare,
 }: InboxScreenListItemProps) {
   const { t } = useTranslation();
 
@@ -117,6 +119,7 @@ function InboxScreenListItemInner({
           onArchive={isArchivedView ? undefined : () => archiveRecord(item.item.id)}
           onUnarchive={isArchivedView ? () => unarchiveRecord(item.item.id) : undefined}
           onSelect={() => onRecordLongPress(item.item)}
+          onShare={() => onRecordShare(item.item)}
           a11yHint={a11yHint}
           hideAccessibilitySubtree={hideAccessibilitySubtree}
         />

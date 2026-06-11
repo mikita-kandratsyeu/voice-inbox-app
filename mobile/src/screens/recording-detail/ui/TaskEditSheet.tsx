@@ -229,6 +229,23 @@ export function TaskEditSheet({
     setTimePickerOpen(false);
   }, [visible, initialText, initialDeadline, initialDeadlineTime, initialPriority]);
 
+  useEffect(() => {
+    if (!datePickerOpen || deadlineDraft.length > 0) return;
+    setDeadlineDraft(formatTaskDeadline(new Date()));
+  }, [datePickerOpen, deadlineDraft]);
+
+  const toggleTimePicker = useCallback(() => {
+    if (!deadlineDraft) return;
+    const opening = !timePickerOpen;
+    if (opening && deadlineTimeDraft.trim().length === 0) {
+      setDeadlineTimeDraft(
+        formatTaskDeadlineTime(getTimePickerValue('', deadlineDraft)),
+      );
+    }
+    setTimePickerOpen(opening);
+    setDatePickerOpen(false);
+  }, [deadlineDraft, deadlineTimeDraft, timePickerOpen]);
+
   const handleFooterSecondary = useCallback(() => {
     setDatePickerOpen(false);
     setTimePickerOpen(false);
@@ -440,11 +457,7 @@ export function TaskEditSheet({
                     )}
                     {!isTablet && (
                       <Pressable
-                        onPress={() => {
-                          if (!deadlineDraft) return;
-                          setTimePickerOpen((prev) => !prev);
-                          setDatePickerOpen(false);
-                        }}
+                        onPress={toggleTimePicker}
                         disabled={!deadlineDraft}
                         accessibilityRole="button"
                         accessibilityLabel={`${t('tasks.deadlineTimeLabel')}, ${deadlineTimeLabelText || t('tasks.noDeadlineTime')}`}
@@ -518,11 +531,7 @@ export function TaskEditSheet({
                       }}
                     >
                       <Pressable
-                        onPress={() => {
-                          if (!deadlineDraft) return;
-                          setTimePickerOpen((prev) => !prev);
-                          setDatePickerOpen(false);
-                        }}
+                        onPress={toggleTimePicker}
                         disabled={!deadlineDraft}
                         accessibilityRole="button"
                         accessibilityLabel={`${t('tasks.deadlineTimeLabel')}, ${deadlineTimeLabelText || t('tasks.noDeadlineTime')}`}

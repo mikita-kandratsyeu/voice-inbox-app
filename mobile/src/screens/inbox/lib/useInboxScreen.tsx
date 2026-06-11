@@ -42,7 +42,12 @@ import { useAutoOrganizeFolders, useManageFolders } from '@/features/manage-fold
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useProEntitlement } from '@/features/pro-license';
 import { useSearchRecords } from '@/features/search-records';
-import { saveLastShareRecipientEmail, type ShareBriefTemplate } from '@/features/share-record';
+import {
+  saveLastShareRecipientEmail,
+  type ShareBriefTemplate,
+  type ShareRecordExportFormat,
+  useShareRecord,
+} from '@/features/share-record';
 import { useColors } from '@/shared/config';
 import {
   flashListJumpToTop,
@@ -361,6 +366,15 @@ export function useInboxScreen() {
   const [batchExportProSheetVisible, setBatchExportProSheetVisible] = useState(false);
   const [notesGraphProSheetVisible, setNotesGraphProSheetVisible] = useState(false);
   const [batchEmailSending, setBatchEmailSending] = useState(false);
+  const [shareSheetVisible, setShareSheetVisible] = useState(false);
+  const [shareTargetRecordId, setShareTargetRecordId] = useState<string | null>(null);
+  const [shareEmailSending, setShareEmailSending] = useState(false);
+  const {
+    shareRecord,
+    shareAudio,
+    emailRecord,
+    isGeneratingSharePdf: isGeneratingSingleSharePdf,
+  } = useShareRecord();
 
   const handleOpenBatchFolderPicker = useCallback(() => {
     setFolderPickerVisible(true);
@@ -662,6 +676,82 @@ export function useInboxScreen() {
     [batchSelect.isSelectMode, enterBatchMode],
   );
 
+  const shareTargetRecord = useMemo(
+    () =>
+      shareTargetRecordId ? (records.find((r) => r.id === shareTargetRecordId) ?? null) : null,
+    [records, shareTargetRecordId],
+  );
+
+  const handleCloseShareSheet = useCallback(() => {
+    setShareSheetVisible(false);
+    setShareTargetRecordId(null);
+  }, []);
+
+  const handleRecordShare = useCallback(
+    (item: VoiceRecord) => {
+      if (isProActive) {
+        setShareTargetRecordId(item.id);
+        setShareSheetVisible(true);
+        return;
+      }
+      shareRecord(item, 'noteBrief', 'markdown').catch((err: unknown) => {
+        Alert.alert(
+          t('recordingDetail.shareFailed'),
+          err instanceof Error ? toUserFacingFetchErrorFromUnknown(err) : t('batch.exportFailed'),
+        );
+      });
+    },
+    [isProActive, shareRecord, t],
+  );
+
+  const handleShareRecordText = useCallback(
+    (template: ShareBriefTemplate, format: ShareRecordExportFormat) => {
+      if (!shareTargetRecord) return Promise.resolve();
+      return shareRecord(shareTargetRecord, template, format).catch((err: unknown) => {
+        Alert.alert(
+          t('recordingDetail.shareFailed'),
+          err instanceof Error ? toUserFacingFetchErrorFromUnknown(err) : t('batch.exportFailed'),
+        );
+      });
+    },
+    [shareRecord, shareTargetRecord, t],
+  );
+
+  const handleShareRecordAudio = useCallback(() => {
+    if (!shareTargetRecord) return;
+    shareAudio(shareTargetRecord).catch((err: unknown) => {
+      Alert.alert(
+        t('recordingDetail.shareFailed'),
+        err instanceof Error ? toUserFacingFetchErrorFromUnknown(err) : t('batch.exportFailed'),
+      );
+    });
+  }, [shareAudio, shareTargetRecord, t]);
+
+  const handleEmailShareRecord = useCallback(
+    (email: string, template: ShareBriefTemplate, format: ShareRecordExportFormat) => {
+      if (!shareTargetRecord) return;
+      setShareEmailSending(true);
+      emailRecord(shareTargetRecord, email, template, format)
+        .then(() => {
+          saveLastShareRecipientEmail(email);
+          hapticSuccess();
+          handleCloseShareSheet();
+          Alert.alert(t('share.emailSentTitle'), t('share.emailSentMessage', { email }));
+        })
+        .catch((err: unknown) => {
+          hapticError();
+          Alert.alert(
+            t('share.emailFailedTitle'),
+            err instanceof Error ? toUserFacingFetchErrorFromUnknown(err) : t('batch.exportFailed'),
+          );
+        })
+        .finally(() => {
+          setShareEmailSending(false);
+        });
+    },
+    [emailRecord, handleCloseShareSheet, shareTargetRecord, t],
+  );
+
   const renderItem = useCallback(
     ({ item }: { item: FlattenedItem }) => (
       <InboxScreenListItem
@@ -685,6 +775,7 @@ export function useInboxScreen() {
         onRecordPress={handleRecordPress}
         onStatusPress={handleStatusPress}
         onRecordLongPress={handleRecordLongPress}
+        onRecordShare={handleRecordShare}
       />
     ),
     [
@@ -705,6 +796,7 @@ export function useInboxScreen() {
       handleRecordPress,
       handleStatusPress,
       handleRecordLongPress,
+      handleRecordShare,
       batchSelect,
     ],
   );
@@ -925,9 +1017,16 @@ export function useInboxScreen() {
     showInboxScrollResetSkeleton,
     onInboxListScroll: handleInboxListScroll,
     batchProgressModal,
-    isGeneratingSharePdf,
+    isGeneratingSharePdf: isGeneratingSharePdf || isGeneratingSingleSharePdf,
     isProActive,
     inboxCardLayout,
     setInboxCardLayout,
+    shareSheetVisible,
+    shareTargetRecord,
+    shareEmailSending,
+    handleCloseShareSheet,
+    handleShareRecordText,
+    handleShareRecordAudio,
+    handleEmailShareRecord,
   };
 }

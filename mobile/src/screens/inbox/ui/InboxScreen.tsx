@@ -10,6 +10,7 @@ import {
 import { BatchActionBar, BatchExportSheet } from '@/features/batch-select';
 import { useImportFileAction } from '@/features/import-audio-file';
 import { AutoOrganizeProgressOverlay } from '@/features/manage-folders';
+import { ShareRecordSheet } from '@/screens/recording-detail/ui/ShareRecordSheet';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { BlockingProgressModal } from '@/shared/ui';
 
@@ -120,6 +121,14 @@ export const InboxScreen = () => {
     isGeneratingSharePdf,
     inboxCardLayout,
     setInboxCardLayout,
+    shareSheetVisible,
+    shareTargetRecord,
+    shareEmailSending,
+    handleCloseShareSheet,
+    handleShareRecordText,
+    handleShareRecordAudio,
+    handleEmailShareRecord,
+    isProActive,
   } = inbox;
 
   return (
@@ -308,10 +317,25 @@ export const InboxScreen = () => {
         progressLabel={batchProgressModal?.progressLabel}
       />
       <BlockingProgressModal
-        visible={isGeneratingSharePdf && !batchExportSheetVisible}
+        visible={isGeneratingSharePdf && !batchExportSheetVisible && !shareSheetVisible}
         title={t('share.generatingPdfTitle')}
         description={t('share.generatingPdfDescription')}
         total={0}
+      />
+      <ShareRecordSheet
+        visible={shareSheetVisible}
+        hasAudio={Boolean(shareTargetRecord?.audioPath?.trim())}
+        isMeeting={shareTargetRecord?.classification === 'meeting'}
+        showSpeakerTurnsExport={
+          isProActive &&
+          shareTargetRecord?.classification === 'meeting' &&
+          Boolean(shareTargetRecord.meetingDialogue?.trim())
+        }
+        isSendingEmail={shareEmailSending}
+        onClose={handleCloseShareSheet}
+        onShareText={handleShareRecordText}
+        onEmailRecord={handleEmailShareRecord}
+        onShareAudio={handleShareRecordAudio}
       />
     </View>
   );

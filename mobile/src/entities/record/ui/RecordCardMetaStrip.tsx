@@ -1,4 +1,4 @@
-import { Check, Clock, FileText, ListChecks } from 'lucide-react-native';
+import { Check, Clock, FileText, ListChecks, UsersRound } from 'lucide-react-native';
 import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
@@ -19,9 +19,10 @@ type RecordCardMetaStripProps = {
   color: Colors;
   textFragmentCount?: number;
   tasks?: TaskItem[];
+  meetingParticipantCount?: number;
 };
 
-type IconBadgeTone = 'info' | 'success' | 'neutral';
+type IconBadgeTone = 'info' | 'success' | 'neutral' | 'transcript';
 type LayoutDensity = 'regular' | 'compact' | 'dense';
 
 function MetaStripDivider({ color, dense }: { color: Colors; dense: boolean }) {
@@ -53,7 +54,9 @@ function MetaIconBadge({
       ? color.status.processing.bg
       : tone === 'success'
         ? withAlphaHex(color.accent.success, 0.16)
-        : color.background.tertiary;
+        : tone === 'transcript'
+          ? withAlphaHex(color.accent.transcript, 0.16)
+          : color.background.tertiary;
 
   return (
     <View
@@ -79,6 +82,7 @@ function MetaStat({
   label,
   accessibilityLabel,
   density,
+  iconBadgeTone = 'info',
 }: {
   color: Colors;
   icon: React.ReactNode;
@@ -86,6 +90,7 @@ function MetaStat({
   label?: string;
   accessibilityLabel: string;
   density: LayoutDensity;
+  iconBadgeTone?: IconBadgeTone;
 }) {
   const dense = density === 'dense';
   const compact = density !== 'regular';
@@ -102,7 +107,7 @@ function MetaStat({
       accessibilityRole="text"
       accessibilityLabel={accessibilityLabel}
     >
-      <MetaIconBadge color={color} tone="info" size={iconSize}>
+      <MetaIconBadge color={color} tone={iconBadgeTone} size={iconSize}>
         {icon}
       </MetaIconBadge>
       <View style={{ flexShrink: 0 }}>
@@ -213,6 +218,7 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
   color,
   textFragmentCount = 0,
   tasks = [],
+  meetingParticipantCount = 0,
 }: RecordCardMetaStripProps) {
   const { t } = useTranslation();
   const { width: windowWidth } = useWindowDimensions();
@@ -222,8 +228,9 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
   const allTasksDone = hasTasks && doneCount === tasks.length;
   const showDuration = noteKind !== 'text';
   const showTextFragments = noteKind === 'text' && textFragmentCount > 0;
+  const showMeetingParticipants = meetingParticipantCount > 0;
 
-  if (!showDuration && !showTextFragments && !hasTasks) {
+  if (!showDuration && !showTextFragments && !hasTasks && !showMeetingParticipants) {
     return null;
   }
 
@@ -246,6 +253,11 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
     : compact
       ? t('inbox.cardLayout.tasksCompletedShort')
       : t('inbox.cardLayout.tasksCompletedLabel');
+  const meetingParticipantsLabel = dense
+    ? undefined
+    : compact
+      ? t('inbox.cardLayout.meetingParticipantsShort')
+      : t('inbox.cardLayout.meetingParticipantsLabel');
 
   const statSegments: Array<{ key: string; node: React.ReactNode }> = [];
 
@@ -312,6 +324,31 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
     });
   }
 
+  if (showMeetingParticipants) {
+    statSegments.push({
+      key: 'participants',
+      node: (
+        <MetaStat
+          color={color}
+          density={density}
+          iconBadgeTone="transcript"
+          icon={
+            <UsersRound
+              size={dense ? 13 : compact ? 14 : 15}
+              color={color.accent.transcript}
+              strokeWidth={2}
+            />
+          }
+          value={String(meetingParticipantCount)}
+          label={meetingParticipantsLabel}
+          accessibilityLabel={t('inbox.cardLayout.meetingParticipants', {
+            count: meetingParticipantCount,
+          })}
+        />
+      ),
+    });
+  }
+
   return (
     <View
       style={{
@@ -320,7 +357,8 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
         alignItems: 'center',
         gap: dense ? 8 : compact ? 10 : 12,
         marginTop: 14,
-        paddingHorizontal: dense ? 10 : compact ? 12 : 14,
+        paddingLeft: 0,
+        paddingRight: dense ? 10 : compact ? 12 : 14,
         paddingVertical: dense ? 8 : compact ? 10 : 12,
         borderRadius: 12,
         backgroundColor: color.background.card,

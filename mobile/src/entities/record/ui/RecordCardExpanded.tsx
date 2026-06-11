@@ -2,11 +2,12 @@ import { MenuView } from '@react-native-menu/menu';
 import { CalendarDays, MoreHorizontal, Pin } from 'lucide-react-native';
 import React, { memo, useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, useWindowDimensions, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 
 import type { VoiceRecord } from '@/entities/record';
 import { getRecordCardChromeStyle } from '@/entities/record/lib/recordCardChrome';
+import { countMeetingParticipants } from '@/entities/record/lib/countMeetingParticipants';
 import {
   countRecordCardTextFragments,
   formatExpandedCardDate,
@@ -41,6 +42,7 @@ type RecordCardExpandedProps = {
   onArchive?: () => void;
   onUnarchive?: () => void;
   onSelect?: () => void;
+  onShare?: () => void;
   a11yHint?: string | null;
   hideAccessibilitySubtree?: boolean;
 };
@@ -51,8 +53,6 @@ const sectionTitleStyle = {
   letterSpacing: 0.8,
   textTransform: 'uppercase' as const,
 };
-
-const COMPACT_CARD_LAYOUT_MAX_WIDTH = 420;
 
 export const RecordCardExpanded = memo(function RecordCardExpanded({
   item,
@@ -69,14 +69,13 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
   onArchive,
   onUnarchive,
   onSelect,
+  onShare,
   a11yHint,
   hideAccessibilitySubtree = false,
 }: RecordCardExpandedProps) {
   const { i18n, t } = useTranslation();
   const theme = useAppTheme();
   const isDark = theme === 'dark';
-  const { width: windowWidth } = useWindowDimensions();
-  const compactLayout = windowWidth < COMPACT_CARD_LAYOUT_MAX_WIDTH;
   const { isSwiping } = useContext(SwipeableCardContext);
 
   const textPrimaryStyle = { color: color.text.primary };
@@ -153,7 +152,18 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
       : hasTranscriptPreview
         ? t('inbox.cardLayout.sourceText')
         : t('inbox.cardLayout.hasSummary');
-  const showMetaStrip = hasAudio || noteKind === 'text' || (item.tasks?.length ?? 0) > 0;
+  const meetingParticipantCount = useMemo(
+    () =>
+      noteKind === 'meeting'
+        ? countMeetingParticipants(item.meetingDialogue, item.meetingSpeakerLabels)
+        : 0,
+    [item.meetingDialogue, item.meetingSpeakerLabels, noteKind],
+  );
+  const showMetaStrip =
+    hasAudio ||
+    noteKind === 'text' ||
+    (item.tasks?.length ?? 0) > 0 ||
+    meetingParticipantCount > 0;
   const showFooter = hasTags || categoryLabel != null || showSourceChip;
 
   const menuActions = useMemo(() => {
@@ -186,6 +196,15 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
         imageColor: titleColor,
       });
     }
+    if (onShare) {
+      primary.push({
+        id: 'share',
+        title: t('share.share'),
+        titleColor,
+        image: 'square.and.arrow.up',
+        imageColor: titleColor,
+      });
+    }
 
     if (primary.length === 0 && !onSelect) {
       return [];
@@ -215,6 +234,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
     onArchive,
     onPin,
     onSelect,
+    onShare,
     onUnarchive,
     t,
   ]);
@@ -286,6 +306,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
                 if (id === 'togglePin') onPin?.();
                 if (id === 'archive') onArchive?.();
                 if (id === 'unarchive') onUnarchive?.();
+                if (id === 'share') onShare?.();
               }}
             >
               <HeaderIconButton
@@ -380,6 +401,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
             color={color}
             textFragmentCount={textFragmentCount}
             tasks={item.tasks}
+            meetingParticipantCount={meetingParticipantCount}
           />
         ) : null}
 
@@ -395,47 +417,24 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
                 marginBottom: 12,
               }}
             />
-            <View
-              style={
-                compactLayout && hasTags && (categoryLabel != null || showSourceChip)
-                  ? { gap: 10 }
-                  : {
-                      flexDirection: 'row',
-                      alignItems: 'flex-start',
-                      justifyContent: 'space-between',
-                      gap: 12,
-                    }
-              }
-            >
+            <View style={{ gap: 10 }}>
               {hasTags ? (
-                <View
-                  style={{
-                    flex:
-                      compactLayout && (categoryLabel != null || showSourceChip) ? undefined : 1,
-                    minWidth: 0,
-                  }}
-                >
+                <View style={{ minWidth: 0 }}>
                   <Text style={[sectionTitleStyle, { color: color.text.muted, marginBottom: 8 }]}>
                     {t('inbox.cardLayout.tagsSectionTitle')}
                   </Text>
                   <RecordCardTagsRow tags={tags} color={color} variant="full" />
                 </View>
-              ) : compactLayout && (categoryLabel != null || showSourceChip) ? null : (
-                <View style={{ flex: 1 }} />
-              )}
+              ) : null}
               {showSourceChip || categoryLabel ? (
                 <View
-                  style={[
-                    {
-                      flexDirection: 'row',
-                      flexWrap: 'wrap',
-                      alignItems: 'center',
-                      justifyContent: 'flex-end',
-                      gap: 6,
-                      flexShrink: 0,
-                    },
-                    compactLayout && hasTags ? { alignSelf: 'flex-start' } : null,
-                  ]}
+                  style={{
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                    gap: 6,
+                  }}
                 >
                   {categoryLabel ? (
                     <RecordCardLocationChip
