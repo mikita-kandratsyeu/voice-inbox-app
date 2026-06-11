@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronUp, Search, X } from 'lucide-react-native';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -26,7 +26,7 @@ type GraphStickySearchBarProps = {
   onClose: () => void;
 };
 
-export function GraphStickySearchBar({
+export const GraphStickySearchBar = memo(function GraphStickySearchBar({
   query,
   debouncedQuery,
   onChangeQuery,
@@ -43,15 +43,41 @@ export function GraphStickySearchBar({
   const { t } = useTranslation();
   const inputRef = useRef<TextInput>(null);
   const [focused, setFocused] = useState(false);
+
   const hasMatches = matchCount > 0 && matchIndex != null;
   const isSearchPending = query !== debouncedQuery;
-  const currentMatchLabel = hasMatches
-    ? t('notesGraph.searchResultCount', { current: matchIndex + 1, total: matchCount })
-    : isSearchPending
-      ? null
-      : debouncedQuery.trim()
-        ? t('notesGraph.searchNoResults')
-        : null;
+
+  const currentMatchLabel = useMemo(() => {
+    if (hasMatches) {
+      return t('notesGraph.searchResultCount', { current: matchIndex + 1, total: matchCount });
+    }
+    if (isSearchPending) {
+      return null;
+    }
+    if (debouncedQuery.trim()) {
+      return t('notesGraph.searchNoResults');
+    }
+    return null;
+  }, [hasMatches, isSearchPending, debouncedQuery, matchIndex, matchCount, t]);
+
+  const contentStyle = useMemo(
+    () => ({
+      paddingHorizontal: 16,
+      paddingTop: 14,
+      paddingBottom: 14,
+      gap: 8,
+    }),
+    [],
+  );
+
+  const rowStyle = useMemo(
+    () => ({
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: 10,
+    }),
+    [],
+  );
 
   useEffect(() => {
     if (focusSignal <= 0) return;
@@ -60,23 +86,14 @@ export function GraphStickySearchBar({
     return () => cancelAnimationFrame(id);
   }, [focusSignal]);
 
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
     onChangeQuery('');
     inputRef.current?.focus();
-  };
+  }, [onChangeQuery]);
 
   return (
-    <FrostedBottomChrome
-      color={color}
-      insetsBottom={insetsBottom}
-      contentStyle={{
-        paddingHorizontal: 16,
-        paddingTop: 14,
-        paddingBottom: 14,
-        gap: 8,
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+    <FrostedBottomChrome color={color} insetsBottom={insetsBottom} contentStyle={contentStyle}>
+      <View style={rowStyle}>
         <View
           style={{
             flex: 1,
@@ -207,4 +224,4 @@ export function GraphStickySearchBar({
       </View>
     </FrostedBottomChrome>
   );
-}
+});

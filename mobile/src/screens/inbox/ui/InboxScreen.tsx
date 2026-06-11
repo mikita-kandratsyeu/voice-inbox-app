@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View } from 'react-native';
 
 import { openPlanPaywall } from '@/app/navigation/openPlanPaywall';
@@ -149,6 +149,15 @@ export const InboxScreen = () => {
     isProActive,
   } = inbox;
 
+  const handleEnterBatchModeNoHaptic = useCallback(
+    () => enterBatchMode(undefined, { haptic: false }),
+    [enterBatchMode],
+  );
+
+  const handleImportFile = useCallback(() => void importFile(), [importFile]);
+
+  const handleSearchClear = useCallback(() => setSearchBarExplicitOpen(false), []);
+
   return (
     <View style={[screenStyle, { flex: 1 }]}>
       <InboxHeader
@@ -176,13 +185,11 @@ export const InboxScreen = () => {
             onSearchHeaderPress={handleSearchHeaderPress}
             onSelectAll={handleSelectAll}
             onOpenAiOrganizeSheet={openAiOrganizeSheet}
-            onEnterBatchMode={() => enterBatchMode(undefined, { haptic: false })}
+            onEnterBatchMode={handleEnterBatchModeNoHaptic}
             onOpenAllTasks={() => navigation.navigate('AllTasks')}
             onOpenNotesGraph={handleOpenNotesGraph}
             onCreateTextNote={handleCreateTextNote}
-            onImportFile={() => {
-              void importFile();
-            }}
+            onImportFile={handleImportFile}
             useTabletShell={useTabletShell}
             hideCreateTextNote={useTabletShell}
             t={t}
@@ -225,7 +232,7 @@ export const InboxScreen = () => {
           query={query}
           onChangeQuery={setQuery}
           searchFocusSignal={searchFocusSignal}
-          onSearchCleared={() => setSearchBarExplicitOpen(false)}
+          onSearchCleared={handleSearchClear}
           batchSelect={batchSelect}
           filterStatus={filterStatus}
           menuFilterStatus={menuFilterStatus}

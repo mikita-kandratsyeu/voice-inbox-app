@@ -516,12 +516,16 @@ export function useInboxScreen() {
     openPlanPaywall();
   }, []);
 
+  const selectedRecords = useMemo(
+    () => filtered.filter((r) => batchSelect.selectedIds.has(r.id)),
+    [filtered, batchSelect.selectedIds],
+  );
+
   const handleBatchExportTemplate = useCallback(
     (template: ShareBriefTemplate, packaging: BatchExportPackaging) => {
-      const selectedRecords = filtered.filter((r) => batchSelect.selectedIds.has(r.id));
       return batchExport(selectedRecords, template, packaging);
     },
-    [batchExport, filtered, batchSelect.selectedIds],
+    [batchExport, selectedRecords],
   );
 
   const handleBatchEmail = useCallback(
