@@ -21,8 +21,8 @@ export const AI_ORGANIZE_SHEET_SINGLE_FOOTER_HEIGHT = 56;
 /** Dual footer row (`mt-3` + 44pt buttons). */
 export const AI_ORGANIZE_SHEET_DUAL_FOOTER_HEIGHT = 56;
 
-/** Matches `useBottomSheetContentPadding(24)` on the batch email export sheet. */
-export const AI_ORGANIZE_SHEET_MIN_BOTTOM_PADDING = 24;
+/** Standard bottom padding used by other sheets (e.g., TaskDeadlineActionSheet, GithubSync sheets). */
+export const AI_ORGANIZE_SHEET_MIN_BOTTOM_PADDING = 12;
 
 export const AI_ORGANIZE_ACTION_SHEET_BODY_HEIGHT =
   AI_ORGANIZE_SHEET_HANDLE_HEIGHT +

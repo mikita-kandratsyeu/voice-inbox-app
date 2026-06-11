@@ -20,10 +20,7 @@ import {
   SheetHeader,
 } from '@/shared/ui';
 
-import {
-  AI_ORGANIZE_SHEET_MIN_BOTTOM_PADDING,
-  getAiOrganizeActionSheetSnapHeight,
-} from '../lib/aiOrganizeSheetLayout';
+import { getAiOrganizeActionSheetSnapHeight } from '../lib/aiOrganizeSheetLayout';
 
 type AiOrganizeActionSheetProps = {
   visible: boolean;
@@ -138,10 +135,7 @@ export function AiOrganizeActionSheet({
       snapPoints={snapPoints}
       enableContentPanningGesture={false}
     >
-      <AppBottomSheetContent
-        style={{ flexGrow: 0 }}
-        bottomPadding={AI_ORGANIZE_SHEET_MIN_BOTTOM_PADDING}
-      >
+      <AppBottomSheetContent style={{ flexGrow: 0 }} bottomPadding={12}>
         <SheetHeader
           title={t('folders.aiOrganizeSheet.title')}
           subtitle={subtitle}

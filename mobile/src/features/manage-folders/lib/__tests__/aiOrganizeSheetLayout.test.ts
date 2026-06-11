@@ -10,9 +10,10 @@ import {
 } from '../aiOrganizeSheetLayout';
 
 describe('aiOrganizeSheetLayout', () => {
-  it('uses the same bottom padding as useBottomSheetContentPadding(24)', () => {
+  it('uses standard bottom padding matching other sheets', () => {
     expect(getAiOrganizeSheetBottomPadding(34)).toBe(34);
     expect(getAiOrganizeSheetBottomPadding(0)).toBe(AI_ORGANIZE_SHEET_MIN_BOTTOM_PADDING);
+    expect(AI_ORGANIZE_SHEET_MIN_BOTTOM_PADDING).toBe(12);
   });
 
   it('computes template sheet height from template count', () => {
