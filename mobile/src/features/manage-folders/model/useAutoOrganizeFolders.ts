@@ -133,6 +133,7 @@ export function useAutoOrganizeFolders(
   const [activeMode, setActiveMode] = useState<AutoOrganizeMode | null>(null);
   const cancelledRef = useRef(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inFlightRef = useRef(false);
 
   const usePrivateRemoteOrganize = useMemo(
     () => isPrivateCustomServerMode(aiExecutionMode, privateAiProvider),
@@ -241,7 +242,7 @@ export function useAutoOrganizeFolders(
 
   const runAutoOrganize = useCallback(
     async (params: AutoOrganizeRunParams) => {
-      if (isRunning) {
+      if (isRunning || inFlightRef.current) {
         return;
       }
 
@@ -258,6 +259,7 @@ export function useAutoOrganizeFolders(
       }
 
       cancelledRef.current = false;
+      inFlightRef.current = true;
       setIsRunning(true);
       setActiveMode(mode);
 
@@ -351,6 +353,7 @@ export function useAutoOrganizeFolders(
         if (!usePrivateRemoteOrganize) {
           requestAiUsageRefresh();
         }
+        inFlightRef.current = false;
         if (!cancelledRef.current) {
           setIsRunning(false);
           setActiveMode(null);

@@ -1,5 +1,5 @@
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { Archive, FolderInput, FolderSync, Sparkles } from 'lucide-react-native';
+import { Archive, FolderInput, FolderSync, FolderTree } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -93,7 +93,7 @@ function buildActionRows(
       hint: t('folders.aiOrganizeSheet.actions.fullHint'),
       icon: (
         <ActionIconBadge tint={color.accent.primary}>
-          <Sparkles size={ICON_SIZE} color={color.accent.primary} strokeWidth={2.1} />
+          <FolderTree size={ICON_SIZE} color={color.accent.primary} strokeWidth={2.1} />
         </ActionIconBadge>
       ),
     },
