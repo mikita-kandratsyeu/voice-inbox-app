@@ -67,8 +67,8 @@ export function PrivateRemoteLanDiscoverySheet({
   const { t } = useTranslation();
 
   const subtitle = (() => {
-    if (unavailableReason === 'not_on_local_network') {
-      return t('aiSettings.privateProvider.lanDiscovery.unavailable.not_on_local_network');
+    if (unavailableReason != null || (servers.length === 0 && !isScanning)) {
+      return undefined;
     }
     if (limitedToLocalhost) {
       return t('aiSettings.privateProvider.lanDiscovery.limitedToLocalhost');
@@ -79,9 +79,6 @@ export function PrivateRemoteLanDiscoverySheet({
         total: progress.total,
       });
     }
-    if (servers.length === 0 && !isScanning) {
-      return t('aiSettings.privateProvider.lanDiscovery.empty');
-    }
     return t('aiSettings.privateProvider.lanDiscovery.subtitle');
   })();
 
@@ -89,7 +86,6 @@ export function PrivateRemoteLanDiscoverySheet({
     if (unavailableReason != null) {
       return (
         <RetryErrorState
-          title={t('aiSettings.privateProvider.lanDiscovery.title')}
           message={t(`aiSettings.privateProvider.lanDiscovery.unavailable.${unavailableReason}`)}
           onRetry={onRetry}
           retryLabel={t('common.retry')}
@@ -109,7 +105,6 @@ export function PrivateRemoteLanDiscoverySheet({
     if (servers.length === 0) {
       return (
         <RetryErrorState
-          title={t('aiSettings.privateProvider.lanDiscovery.title')}
           message={t('aiSettings.privateProvider.lanDiscovery.empty')}
           onRetry={onRetry}
           retryLabel={t('aiSettings.privateProvider.lanDiscovery.scanAgain')}

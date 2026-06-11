@@ -8,7 +8,7 @@ import { Button } from './Button';
 
 export type RetryErrorStateProps = {
   color: Colors;
-  title: string;
+  title?: string;
   message: string;
   retryLabel: string;
   onRetry: () => void;
@@ -26,9 +26,11 @@ export function RetryErrorState({
   return (
     <View className="w-full items-center gap-4 px-1 py-4">
       <AlertCircle size={40} color={color.accent.delete} strokeWidth={1.8} />
-      <Text className="text-center text-base font-semibold" style={{ color: color.text.primary }}>
-        {title}
-      </Text>
+      {title ? (
+        <Text className="text-center text-base font-semibold" style={{ color: color.text.primary }}>
+          {title}
+        </Text>
+      ) : null}
       <Text className="text-center text-[15px] leading-6" style={{ color: color.text.secondary }}>
         {message}
       </Text>
