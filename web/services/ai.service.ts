@@ -8,6 +8,7 @@ import { extractDeepSeekReasoning } from '@/lib/deepseek-reasoning';
 import { withSequentialModelFallback } from '@/lib/ai-model-fallback';
 import { extractOpenRouterReasoning } from '@/lib/openrouter-reasoning';
 import { extractOpenRouterTokenUsage } from '@/lib/openrouter-token-usage';
+import { withTimeout, TIMEOUTS } from '@/lib/timeout';
 import {
   AUTO_ORGANIZE_MAX_SUMMARY_CHARS,
   AUTO_ORGANIZE_MAX_TITLE_CHARS,
@@ -162,18 +163,22 @@ async function callSummaryModel(
   clientUserAgent?: string | null,
   deviceId?: string | null,
 ): Promise<AiResult> {
-  const { content, message, raw } = await sendAiChatCompletion({
-    model,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: transcript },
-    ],
-    jsonObject: true,
-    withReasoning: true,
-    temperature: isDeepSeekOpenRouterModel(model) ? undefined : 0.3,
-    clientUserAgent,
-    userId: deviceId,
-  });
+  const { content, message, raw } = await withTimeout(
+    sendAiChatCompletion({
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: transcript },
+      ],
+      jsonObject: true,
+      withReasoning: true,
+      temperature: isDeepSeekOpenRouterModel(model) ? undefined : 0.3,
+      clientUserAgent,
+      userId: deviceId,
+    }),
+    TIMEOUTS.AI_PROCESSING,
+    'AI summary processing timeout',
+  );
 
   const extractReasoningFn = isDeepSeekOpenRouterModel(model)
     ? extractDeepSeekReasoning
@@ -355,30 +360,34 @@ export async function processMeetingDialogueMarkdown(
 ): Promise<Pick<AiResult, 'meetingDialogueMarkdown' | 'tokenUsage'>> {
   const models = filterModelsForAiChat([...MEETING_DIALOGUE_MODEL_FALLBACK_CHAIN]);
 
-  return withSequentialModelFallback(
-    models,
-    async (m) => {
-      const { content, raw } = await sendAiChatCompletion({
-        model: m,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userContent },
-        ],
-        jsonObject: true,
-        temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.3,
-        clientUserAgent,
-        userId: deviceId,
-      });
+  return withTimeout(
+    withSequentialModelFallback(
+      models,
+      async (m) => {
+        const { content, raw } = await sendAiChatCompletion({
+          model: m,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userContent },
+          ],
+          jsonObject: true,
+          temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.3,
+          clientUserAgent,
+          userId: deviceId,
+        });
 
-      const tokenUsage = extractOpenRouterTokenUsage(raw);
-      return {
-        ...parseMeetingDialogueOpenRouterContent(content),
-        ...(tokenUsage ? { tokenUsage } : {}),
-      };
-    },
-    (err) =>
-      isRetryableAiChatTransportError(err) ||
-      (err instanceof Error && err.message.startsWith('Invalid AI response')),
+        const tokenUsage = extractOpenRouterTokenUsage(raw);
+        return {
+          ...parseMeetingDialogueOpenRouterContent(content),
+          ...(tokenUsage ? { tokenUsage } : {}),
+        };
+      },
+      (err) =>
+        isRetryableAiChatTransportError(err) ||
+        (err instanceof Error && err.message.startsWith('Invalid AI response')),
+    ),
+    TIMEOUTS.AI_PROCESSING,
+    'Meeting dialogue processing timeout',
   );
 }
 
@@ -403,17 +412,21 @@ export async function processAskQuestion(
   );
 
   const callAsk = async (m: string): Promise<AskAnswerResult> => {
-    const { content } = await sendAiChatCompletion({
-      model: m,
-      messages: [
-        { role: 'system', content: ASK_QUESTION_SYSTEM_PROMPT },
-        { role: 'user', content: userContent },
-      ],
-      jsonObject: true,
-      temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.3,
-      clientUserAgent,
-      userId: deviceId,
-    });
+    const { content } = await withTimeout(
+      sendAiChatCompletion({
+        model: m,
+        messages: [
+          { role: 'system', content: ASK_QUESTION_SYSTEM_PROMPT },
+          { role: 'user', content: userContent },
+        ],
+        jsonObject: true,
+        temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.3,
+        clientUserAgent,
+        userId: deviceId,
+      }),
+      TIMEOUTS.AI_CHAT,
+      'AI ask processing timeout',
+    );
 
     return extractAnswerFromResponse(content);
   };

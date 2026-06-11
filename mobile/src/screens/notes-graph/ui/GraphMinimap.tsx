@@ -213,11 +213,16 @@ export function GraphMinimap({
         accessibilityRole="button"
         style={{
           flex: 1,
-          borderRadius: 10,
+          borderRadius: 12,
           overflow: 'hidden',
           backgroundColor: color.background.primary,
-          borderWidth: 1,
+          borderWidth: 1.5,
           borderColor: color.border.default,
+          shadowColor: color.shadow.color,
+          shadowOpacity: color.shadow.opacity * 0.8,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 5,
         }}
       >
         <Svg width={canvasWidth} height={canvasHeight}>
@@ -227,21 +232,23 @@ export function GraphMinimap({
             width={canvasWidth}
             height={canvasHeight}
             fill={color.background.secondary}
-            opacity={0.55}
+            opacity={0.65}
           />
           {nodes.map((node) => {
             const bounds = nodeBounds(node);
             const topLeft = worldToMinimapPoint(bounds.left, bounds.top, minimapFrame);
+            const nodeWidth = Math.max(2.5, (bounds.right - bounds.left) * minimapFrame.scale);
+            const nodeHeight = Math.max(2.5, (bounds.bottom - bounds.top) * minimapFrame.scale);
             return (
               <Rect
                 key={node.id}
                 x={topLeft.x}
                 y={topLeft.y}
-                width={Math.max(2, (bounds.right - bounds.left) * minimapFrame.scale)}
-                height={Math.max(2, (bounds.bottom - bounds.top) * minimapFrame.scale)}
+                width={nodeWidth}
+                height={nodeHeight}
                 fill={color.accent.primary}
-                opacity={0.55}
-                rx={1}
+                opacity={0.75}
+                rx={1.5}
               />
             );
           })}
@@ -252,8 +259,9 @@ export function GraphMinimap({
               width={viewportMinimap.width}
               height={viewportMinimap.height}
               stroke={color.accent.primary}
-              strokeWidth={GRAPH_MINIMAP_VIEWPORT_STROKE}
+              strokeWidth={GRAPH_MINIMAP_VIEWPORT_STROKE * 1.2}
               fill="transparent"
+              opacity={0.9}
             />
           ) : null}
         </Svg>

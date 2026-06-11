@@ -195,8 +195,8 @@ function AnimatedNodeCardShell({
   children,
   taskStyle = false,
 }: AnimatedNodeCardShellProps) {
-  const idleBorderWidth = active ? 2 : highlighted ? 1.5 : 1;
-  const idleOpacity = dimmed ? 0.28 : 1;
+  const idleBorderWidth = active ? 2.5 : highlighted ? 2 : 1;
+  const idleOpacity = dimmed ? 0.32 : 1;
   const hasStripe = accentStripeColor != null;
 
   const animatedShellStyle = useAnimatedStyle(() => {
@@ -208,18 +208,20 @@ function AnimatedNodeCardShell({
 
     const opacity = dimmed ? interpolate(phase, [0, 1, 2], [idleOpacity, 0.5, 1]) : idleOpacity;
 
-    const borderWidth = dragging > 0 ? 2 : pressing > 0 ? 1.5 : idleBorderWidth;
+    const borderWidth = dragging > 0 ? 2.5 : pressing > 0 ? 2 : idleBorderWidth;
 
     const shadowOpacity = dragging
-      ? color.shadow.opacity * 2.5
+      ? color.shadow.opacity * 3.2
       : pressing
-        ? color.shadow.opacity * 0.75
+        ? color.shadow.opacity * 1.2
         : taskStyle
-          ? color.shadow.opacity * 0.6
-          : color.shadow.opacity;
+          ? color.shadow.opacity * 0.8
+          : color.shadow.opacity * 1.1;
 
-    const shadowRadius = dragging > 0 ? 10 : pressing > 0 ? 5 : 7;
-    const elevation = dragging > 0 ? 6 : pressing > 0 ? 2 : 3;
+    const shadowRadius = dragging > 0 ? 14 : pressing > 0 ? 8 : taskStyle ? 6 : 9;
+    const elevation = dragging > 0 ? 8 : pressing > 0 ? 4 : taskStyle ? 2 : 4;
+
+    const scale = dragging > 0 ? 1.05 : pressing > 0 ? 0.98 : 1;
 
     return {
       opacity,
@@ -232,8 +234,9 @@ function AnimatedNodeCardShell({
       shadowColor: color.shadow.color,
       shadowOpacity,
       shadowRadius,
-      shadowOffset: { width: 0, height: dragging > 0 ? 5 : 2 },
+      shadowOffset: { width: 0, height: dragging > 0 ? 6 : pressing > 0 ? 1 : 3 },
       elevation,
+      transform: [{ scale }],
     };
   }, [
     active,
@@ -267,8 +270,8 @@ function AnimatedNodeCardShell({
           overflow: 'hidden',
           flexDirection: hasStripe ? 'row' : undefined,
           alignItems: hasStripe ? 'stretch' : undefined,
-          paddingHorizontal: hasStripe ? 0 : taskStyle ? 8 : 0,
-          paddingVertical: hasStripe ? 0 : taskStyle ? 7 : 0,
+          paddingHorizontal: hasStripe ? 0 : taskStyle ? 10 : 0,
+          paddingVertical: hasStripe ? 0 : taskStyle ? 8 : 0,
         },
         animatedShellStyle,
       ]}
@@ -283,7 +286,7 @@ function AnimatedNodeCardShell({
         />
       ) : null}
       {hasStripe ? (
-        <View style={{ flex: 1, paddingHorizontal: 8, paddingVertical: 7 }}>{content}</View>
+        <View style={{ flex: 1, paddingHorizontal: 10, paddingVertical: 9 }}>{content}</View>
       ) : (
         content
       )}
@@ -323,8 +326,9 @@ export function GraphRecordNodeCardContent({
         style={{
           color: color.text.primary,
           fontSize: 12,
-          fontWeight: '600',
-          lineHeight: 15,
+          fontWeight: '700',
+          lineHeight: 15.6,
+          letterSpacing: -0.1,
         }}
       >
         {title}
@@ -429,8 +433,9 @@ export function GraphTaskNodeCardContent({
         style={{
           color: color.text.primary,
           fontSize: 11,
-          fontWeight: '500',
-          lineHeight: 14,
+          fontWeight: '600',
+          lineHeight: 14.3,
+          letterSpacing: -0.08,
         }}
       >
         {text}
@@ -507,7 +512,7 @@ export function GraphAnimatedNodeCard({
       width={width}
       minHeight={minHeight}
       borderRadius={isTask ? 10 : 13}
-      backgroundColor={isTask ? withAlphaHex(color.background.card, 0.95) : color.background.card}
+      backgroundColor={isTask ? withAlphaHex(color.background.card, 0.97) : color.background.card}
       accentStripeColor={isTask ? undefined : accentStripeColor}
       onPress={onPress}
       taskStyle={isTask}

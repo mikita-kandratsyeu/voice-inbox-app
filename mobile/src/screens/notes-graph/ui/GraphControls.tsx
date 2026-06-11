@@ -74,15 +74,20 @@ function ControlButton({
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled }}
       style={{
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: color.background.primary,
         borderWidth: 1,
         borderColor: color.border.default,
         opacity: disabled ? 0.45 : 1,
+        shadowColor: color.shadow.color,
+        shadowOpacity: color.shadow.opacity * 0.6,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 3,
       }}
     >
       {children}
@@ -127,12 +132,17 @@ export function GraphControls({
               backgroundColor: color.background.primary,
               borderColor: color.border.default,
               borderWidth: 1,
-              borderRadius: 12,
-              paddingHorizontal: 12,
-              paddingVertical: 11,
-              gap: 9,
+              borderRadius: 14,
+              paddingHorizontal: 14,
+              paddingVertical: 12,
+              gap: 10,
               minWidth: 196,
               maxWidth: 240,
+              shadowColor: color.shadow.color,
+              shadowOpacity: color.shadow.opacity * 0.7,
+              shadowRadius: 8,
+              shadowOffset: { width: 0, height: 3 },
+              elevation: 4,
             }}
           >
             <LegendRow color={color} edgeKind="similar" label={t('notesGraph.legend.similar')} />
@@ -157,14 +167,19 @@ export function GraphControls({
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 8,
-              height: 40,
-              paddingHorizontal: 12,
-              borderRadius: 20,
+              gap: 9,
+              height: 44,
+              paddingHorizontal: 14,
+              borderRadius: 22,
               backgroundColor: color.background.primary,
               borderWidth: 1,
               borderColor: color.border.default,
               maxWidth: 240,
+              shadowColor: color.shadow.color,
+              shadowOpacity: color.shadow.opacity * 0.6,
+              shadowRadius: 6,
+              shadowOffset: { width: 0, height: 2 },
+              elevation: 3,
             }}
           >
             <ActivityIndicator size="small" color={color.accent.primary} />
@@ -172,7 +187,7 @@ export function GraphControls({
               style={{
                 color: color.text.primary,
                 fontSize: 13,
-                fontWeight: '500',
+                fontWeight: '600',
                 lineHeight: 17,
                 flexShrink: 1,
               }}
@@ -189,9 +204,9 @@ export function GraphControls({
             accessibilityLabel={t('notesGraph.legend.toggle')}
           >
             <Info
-              size={18}
+              size={20}
               color={legendVisible ? color.accent.primary : color.text.secondary}
-              strokeWidth={2.2}
+              strokeWidth={2.4}
             />
           </ControlButton>
         )}
@@ -207,14 +222,14 @@ export function GraphControls({
           alignItems: 'flex-end',
         }}
       >
-        <View style={{ gap: 8 }}>
+        <View style={{ gap: 10 }}>
           <ControlButton
             color={color}
             disabled={disabled}
             onPress={onZoomIn}
             accessibilityLabel={t('notesGraph.controls.zoomIn')}
           >
-            <Plus size={18} color={color.text.primary} strokeWidth={2.2} />
+            <Plus size={20} color={color.text.primary} strokeWidth={2.4} />
           </ControlButton>
           <ControlButton
             color={color}
@@ -222,7 +237,7 @@ export function GraphControls({
             onPress={onZoomOut}
             accessibilityLabel={t('notesGraph.controls.zoomOut')}
           >
-            <Minus size={18} color={color.text.primary} strokeWidth={2.2} />
+            <Minus size={20} color={color.text.primary} strokeWidth={2.4} />
           </ControlButton>
           <ControlButton
             color={color}
@@ -230,7 +245,7 @@ export function GraphControls({
             onPress={onFit}
             accessibilityLabel={t('notesGraph.controls.fit')}
           >
-            <Maximize2 size={18} color={color.text.primary} strokeWidth={2.2} />
+            <Maximize2 size={20} color={color.text.primary} strokeWidth={2.4} />
           </ControlButton>
           <ControlButton
             color={color}
@@ -244,7 +259,7 @@ export function GraphControls({
                 : undefined
             }
           >
-            <RotateCcw size={18} color={color.text.primary} strokeWidth={2.2} />
+            <RotateCcw size={20} color={color.text.primary} strokeWidth={2.4} />
           </ControlButton>
         </View>
       </View>

@@ -18,10 +18,10 @@ import {
 
 const compactButtonClassName = 'min-h-0 min-w-0 py-0';
 const saveLabelStyle = {
-  fontSize: 12,
+  fontSize: 13,
   fontWeight: '700' as const,
-  letterSpacing: 0.1,
-  lineHeight: GRAPH_LAYOUT_SAVE_ICON_SIZE,
+  letterSpacing: 0.15,
+  lineHeight: GRAPH_LAYOUT_SAVE_ICON_SIZE + 2,
   includeFontPadding: false,
   textAlignVertical: 'center' as const,
 };
