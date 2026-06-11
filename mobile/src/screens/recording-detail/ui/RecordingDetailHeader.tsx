@@ -62,6 +62,8 @@ export const RecordingDetailHeader = ({
     const titleColor = color.text.primary;
     const showAllTasks = Boolean(onOpenAllTasksForNote && !isArchived);
 
+    const showPin = !isArchived;
+
     const togglePinAction: NativeMenuAction = {
       id: 'togglePin',
       title: record.isPinned ? t('recordActions.unpin') : t('recordActions.pin'),
@@ -112,11 +114,12 @@ export const RecordingDetailHeader = ({
         imageColor: titleColor,
         titleColor,
       });
-      actions.push(
-        inlineNativeMenuSection('pinAndRenameSection', titleColor, [togglePinAction, renameAction]),
-      );
-    } else {
+      const pinRenameSection = showPin ? [togglePinAction, renameAction] : [renameAction];
+      actions.push(inlineNativeMenuSection('pinAndRenameSection', titleColor, pinRenameSection));
+    } else if (showPin) {
       actions.push(togglePinAction, renameAction);
+    } else {
+      actions.push(renameAction);
     }
 
     actions.push(

@@ -128,7 +128,7 @@ function InboxScreenListItemInner({
           onPress={onPress}
           onStatusPress={onStatusPress}
           onLongPress={onLongPress}
-          onPin={() => togglePin(item.item.id)}
+          onPin={isArchivedView ? undefined : () => togglePin(item.item.id)}
           onRename={() => onRecordRename(item.item)}
           onArchive={isArchivedView ? undefined : () => archiveRecord(item.item.id)}
           onUnarchive={isArchivedView ? () => unarchiveRecord(item.item.id) : undefined}
@@ -214,6 +214,7 @@ function InboxScreenListItemInner({
       ) : (
         <SwipeableCard
           embedded
+          pinEnabled={!isArchivedView}
           isPinned={item.item.isPinned}
           leftAction={isArchivedView ? 'unarchive' : 'archive'}
           onLeftAction={() => {
@@ -222,10 +223,7 @@ function InboxScreenListItemInner({
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             isArchivedView ? unarchiveRecord(item.item.id) : archiveRecord(item.item.id);
           }}
-          onPin={() => {
-            dismissSwipeHint();
-            togglePin(item.item.id);
-          }}
+          onPin={isArchivedView ? undefined : () => togglePin(item.item.id)}
         >
           {renderRecordCard(cardPressHandlers)}
         </SwipeableCard>

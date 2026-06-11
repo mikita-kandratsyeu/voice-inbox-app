@@ -30,8 +30,10 @@ type SwipeableCardProps = {
   isPinned?: boolean;
   leftAction: LeftSwipeAction;
   onLeftAction: () => void;
-  onPin: () => void;
+  onPin?: () => void;
   maxHeight?: number;
+  /** When false, right-swipe pin is disabled (e.g. archived inbox). Default true. */
+  pinEnabled?: boolean;
   /** Parent supplies list margins — skip outer spacing (inbox layout toggle shell). */
   embedded?: boolean;
 };
@@ -44,6 +46,7 @@ export const SwipeableCard = memo(function SwipeableCard({
   onPin,
   maxHeight = DEFAULT_MAX_HEIGHT,
   embedded = false,
+  pinEnabled = true,
 }: SwipeableCardProps) {
   const color = useColors();
   const translateX = useSharedValue(0);
@@ -69,7 +72,7 @@ export const SwipeableCard = memo(function SwipeableCard({
         scheduleOnRN(collapseAndExecute);
       } else if (current === 'pin') {
         translateX.value = withSpring(0, { damping: 14, stiffness: 300, mass: 0.6 }, () => {
-          scheduleOnRN(onPin);
+          if (onPin) scheduleOnRN(onPin);
         });
         action.value = 'none';
       }
@@ -83,7 +86,7 @@ export const SwipeableCard = memo(function SwipeableCard({
       scheduleOnRN(setIsSwiping, true);
     })
     .onUpdate((e: PanGestureHandlerEventPayload) => {
-      translateX.value = e.translationX;
+      translateX.value = pinEnabled ? e.translationX : Math.min(0, e.translationX);
     })
     .onEnd((e: PanGestureHandlerEventPayload) => {
       if (e.translationX < -SWIPE_THRESHOLD) {
@@ -91,7 +94,7 @@ export const SwipeableCard = memo(function SwipeableCard({
         translateX.value = withTiming(-CARD_FLY_DISTANCE, { duration: 220 }, () => {
           action.value = leftAction;
         });
-      } else if (e.translationX > SWIPE_THRESHOLD) {
+      } else if (pinEnabled && e.translationX > SWIPE_THRESHOLD) {
         scheduleOnRN(hapticMedium);
         translateX.value = withTiming(SWIPE_THRESHOLD * 1.3, { duration: 80 }, () => {
           action.value = 'pin';
@@ -156,29 +159,32 @@ export const SwipeableCard = memo(function SwipeableCard({
         >
           <LeftIcon size={22} color={color.icon.onAccent} strokeWidth={2} />
         </Animated.View>
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              left: 0,
-              width: '100%',
-              alignItems: 'flex-start',
-              justifyContent: 'center',
-              borderRadius: 16,
-              paddingLeft: 24,
-              backgroundColor: pinBgColor,
-            },
-            pinReveal,
-          ]}
-        >
-          {isPinned ? (
-            <PinOff size={22} color={color.icon.onAccent} strokeWidth={2} />
-          ) : (
-            <Pin size={22} color={color.icon.onAccent} strokeWidth={2} />
-          )}
-        </Animated.View>
+        {pinEnabled ? (
+          <Animated.View
+            style={[
+              {
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: 0,
+                width: '100%',
+                alignItems: 'flex-start',
+                justifyContent: 'center',
+                borderRadius: 16,
+                paddingLeft: 24,
+                backgroundColor: pinBgColor,
+              },
+              pinReveal,
+            ]}
+            pointerEvents="none"
+          >
+            {isPinned ? (
+              <PinOff size={22} color={color.icon.onAccent} strokeWidth={2} />
+            ) : (
+              <Pin size={22} color={color.icon.onAccent} strokeWidth={2} />
+            )}
+          </Animated.View>
+        ) : null}
         <GestureDetector gesture={pan}>
           <Animated.View style={[cardStyle, embedded && { width: '100%' }]}>{children}</Animated.View>
         </GestureDetector>
