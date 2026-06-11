@@ -275,7 +275,11 @@
       "nodeCount_other": "{{count}} nodes moved",
       "deleteA11y": "Delete version {{version}}",
       "deleteTitle": "Delete layout version?",
-      "deleteMessage": "Version {{version}} will be removed from history. This cannot be undone."
+      "deleteMessage": "Version {{version}} will be removed from history. This cannot be undone.",
+      "deleteAll": "Delete all changes",
+      "deleteAllTitle": "Delete all saved layouts?",
+      "deleteAllMessage": "All {{count}} saved layouts will be removed from history. This cannot be undone.",
+      "deleteAllConfirm": "Delete all"
     },
     "loadingTips": {
       "pinchPan": "Pinch to zoom and drag with one finger to move around the map.",

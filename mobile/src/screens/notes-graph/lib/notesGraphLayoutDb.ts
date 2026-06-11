@@ -241,6 +241,15 @@ export async function saveNotesGraphLayoutVersion(
   };
 }
 
+export async function deleteAllNotesGraphLayoutHistory(): Promise<number> {
+  const db = await waitForDb();
+  const rows = await db.select({ id: notesGraphLayoutVersionTable.id }).from(notesGraphLayoutVersionTable);
+  if (rows.length === 0) return 0;
+
+  await db.delete(notesGraphLayoutVersionTable);
+  return rows.length;
+}
+
 export async function deleteNotesGraphLayoutVersionById(versionId: string): Promise<boolean> {
   const db = await waitForDb();
   const rows = await db

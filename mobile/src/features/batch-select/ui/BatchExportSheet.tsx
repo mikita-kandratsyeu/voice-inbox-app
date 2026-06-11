@@ -438,7 +438,14 @@ export const BatchExportSheet = ({
             {t('batch.exportAsTitle', { count })}
           </Text>
 
-          <Text style={{ fontSize: 13, color: color.text.muted, lineHeight: 18 }}>
+          <Text
+            style={{
+              fontSize: 13,
+              color: color.text.muted,
+              lineHeight: 18,
+              textAlign: 'center',
+            }}
+          >
             {t('batch.sheetLimitsHint')}
           </Text>
 

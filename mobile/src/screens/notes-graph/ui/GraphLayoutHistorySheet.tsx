@@ -43,6 +43,7 @@ type GraphLayoutHistorySheetProps = {
   onClose: () => void;
   onApply: (entry: NotesGraphLayoutVersionEntry) => void | Promise<void>;
   onDelete: (versionId: string) => void | Promise<void>;
+  onDeleteAll: () => void | Promise<void>;
 };
 
 type LayoutDetailsCardProps = {
@@ -350,6 +351,7 @@ export function GraphLayoutHistorySheet({
   onClose,
   onApply,
   onDelete,
+  onDeleteAll,
 }: GraphLayoutHistorySheetProps) {
   const { t, i18n } = useTranslation();
   const color = useColors();
@@ -358,6 +360,7 @@ export function GraphLayoutHistorySheet({
   const [entries, setEntries] = useState<NotesGraphLayoutVersionEntry[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
   const [deletingVersionId, setDeletingVersionId] = useState<string | null>(null);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
 
   const loadHistory = useCallback(async () => {
@@ -385,6 +388,7 @@ export function GraphLayoutHistorySheet({
   useEffect(() => {
     if (!visible) {
       setDeletingVersionId(null);
+      setIsDeletingAll(false);
       setIsApplying(false);
     }
   }, [visible]);
@@ -458,6 +462,34 @@ export function GraphLayoutHistorySheet({
     },
     [onDelete, t],
   );
+
+  const confirmDeleteAll = useCallback(() => {
+    if (entries.length === 0 || isDeletingAll) return;
+
+    Alert.alert(
+      t('notesGraph.history.deleteAllTitle'),
+      t('notesGraph.history.deleteAllMessage', { count: entries.length }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('notesGraph.history.deleteAllConfirm'),
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              setIsDeletingAll(true);
+              try {
+                await onDeleteAll();
+                setEntries([]);
+                setSelectedVersionId(null);
+              } finally {
+                setIsDeletingAll(false);
+              }
+            })();
+          },
+        },
+      ],
+    );
+  }, [entries.length, isDeletingAll, onDeleteAll, t]);
 
   const listHeight = useMemo(
     () => Math.min(entries.length * HISTORY_ROW_HEIGHT, HISTORY_LIST_MAX_HEIGHT),
@@ -594,8 +626,17 @@ export function GraphLayoutHistorySheet({
           color={color}
           onPrimaryPress={handleApply}
           primaryLabel={t('notesGraph.history.apply')}
-          primaryDisabled={!selectedEntry || isApplying}
+          primaryDisabled={!selectedEntry || isApplying || isDeletingAll}
           primaryLoading={isApplying}
+          bottomAction={
+            entries.length > 0
+              ? {
+                  label: t('notesGraph.history.deleteAll'),
+                  onPress: confirmDeleteAll,
+                  disabled: loading || isApplying || isDeletingAll || deletingVersionId != null,
+                }
+              : undefined
+          }
         />
       </BottomSheetView>
     </AppBottomSheetModal>

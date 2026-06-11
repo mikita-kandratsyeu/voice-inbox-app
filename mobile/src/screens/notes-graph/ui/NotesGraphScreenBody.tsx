@@ -40,6 +40,7 @@ import {
   getCachedNotesGraphLayout,
 } from '../lib/notesGraphLayoutCache';
 import {
+  deleteAllNotesGraphLayoutHistory,
   deleteNotesGraphLayoutVersionById,
   deserializeNotesGraphPositions,
   getLatestNotesGraphLayoutVersion,
@@ -635,6 +636,18 @@ export const NotesGraphScreenBody = () => {
     [activeSavedVersion?.id, persistKey, syncUnsavedLayoutState],
   );
 
+  const handleDeleteAllLayoutHistory = useCallback(async () => {
+    const deletedCount = await deleteAllNotesGraphLayoutHistory();
+    if (deletedCount === 0) return;
+
+    replaceSessionNodePositions({});
+    setActiveSavedVersion(null);
+    savedLayoutSnapshotRef.current = serializeNotesGraphPositions(new Map());
+    setLayoutRestoreToken((token) => token + 1);
+    syncUnsavedLayoutState();
+    setHistoryRefreshToken((token) => token + 1);
+  }, [syncUnsavedLayoutState]);
+
   const headerControlsDisabled = isGraphReconciling || isSavingLayout || isCapturingExport;
 
   const appliedLayoutHeaderSubtitle = useMemo(() => {
@@ -883,6 +896,9 @@ export const NotesGraphScreenBody = () => {
         }}
         onDelete={(versionId) => {
           void handleDeleteLayoutVersion(versionId);
+        }}
+        onDeleteAll={() => {
+          void handleDeleteAllLayoutHistory();
         }}
       />
 
