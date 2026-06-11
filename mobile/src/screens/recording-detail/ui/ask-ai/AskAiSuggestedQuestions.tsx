@@ -1,8 +1,8 @@
 import React from 'react';
-import { Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
-import { hapticSelection } from '@/shared/lib';
+import { hapticSelection, IS_ANDROID } from '@/shared/lib';
 
 import type { AskAiSuggestion } from './askAiSuggestions';
 
@@ -62,7 +62,7 @@ export const AskAiSuggestedQuestions = ({
               style={{ color: color.text.primary }}
               numberOfLines={4}
               ellipsizeMode="tail"
-              {...(Platform.OS === 'android' ? { includeFontPadding: false } : {})}
+              {...(IS_ANDROID ? { includeFontPadding: false } : {})}
             >
               {suggestion.label}
             </Text>

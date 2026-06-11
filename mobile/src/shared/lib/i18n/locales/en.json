@@ -245,7 +245,9 @@
       "cropTemplatePortrait": "4:5",
       "cropTemplateLandscape": "16:9",
       "cropTemplateStory": "9:16",
-      "failed": "Could not export the map image. Try again."
+      "failed": "Could not export the map image. Try again.",
+      "scaledDownTitle": "Export Adjusted",
+      "scaledDownMessage": "The export was scaled to {{width}}×{{height}}px to fit your device's {{tier}} memory. The image quality remains high."
     },
     "history": {
       "openA11y": "Layout history",

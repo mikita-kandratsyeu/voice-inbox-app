@@ -28,6 +28,7 @@ import {
   hapticLight,
   hapticSelection,
   hapticSuccess,
+  IS_ANDROID,
   IS_IOS,
   isDarkSurfaceColor,
 } from '@/shared/lib';
@@ -42,7 +43,7 @@ const MARK_PICKER_ROWS: RecordingMarkKind[][] = [
   RECORDING_MARK_PICKER_KINDS.slice(3, 6),
 ];
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+if (IS_ANDROID && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 

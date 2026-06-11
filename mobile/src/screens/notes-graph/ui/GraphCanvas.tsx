@@ -67,6 +67,8 @@ export type GraphCaptureResult = {
   uri: string;
   width: number;
   height: number;
+  wasScaledDown?: boolean;
+  deviceMemoryTier?: string;
 };
 
 export type GraphCanvasHandle = {
@@ -364,7 +366,13 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     if (!uri || !layout) {
       throw new Error('Graph capture failed');
     }
-    return { uri, width: layout.exportWidth, height: layout.exportHeight };
+    return {
+      uri,
+      width: layout.exportWidth,
+      height: layout.exportHeight,
+      wasScaledDown: layout.wasScaledDown,
+      deviceMemoryTier: layout.deviceMemoryTier,
+    };
   }, [displayNodes, graphHeight, graphWidth]);
 
   useImperativeHandle(

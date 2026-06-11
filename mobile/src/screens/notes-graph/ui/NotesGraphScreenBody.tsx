@@ -682,6 +682,20 @@ export const NotesGraphScreenBody = () => {
       if (!captured?.uri) {
         throw new Error('capture returned empty uri');
       }
+
+      // Warn user if export was scaled down due to device limitations
+      if (captured.wasScaledDown) {
+        const tierLabel = captured.deviceMemoryTier === 'low' ? 'limited' : 'available';
+        Alert.alert(
+          t('notesGraph.export.scaledDownTitle'),
+          t('notesGraph.export.scaledDownMessage', {
+            width: captured.width,
+            height: captured.height,
+            tier: tierLabel,
+          }),
+        );
+      }
+
       setExportPreviewUri(captured.uri);
       setExportPreviewSize({ width: captured.width, height: captured.height });
       setExportSheetVisible(true);
