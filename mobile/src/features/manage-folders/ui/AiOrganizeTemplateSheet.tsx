@@ -12,10 +12,15 @@ import {
 } from '@/entities/folder/lib/autoOrganizeTypes';
 import { useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib/haptics';
-import { AppBottomSheetModal, ProCrownBadge, SheetFooterButtons } from '@/shared/ui';
+import {
+  AppBottomSheetModal,
+  ProCrownBadge,
+  SheetFooterButtons,
+  useBottomSheetContentPadding,
+} from '@/shared/ui';
 
 import {
-  getAiOrganizeSheetBottomPadding,
+  AI_ORGANIZE_SHEET_MIN_BOTTOM_PADDING,
   getAiOrganizeTemplateSheetSnapHeight,
 } from '../lib/aiOrganizeSheetLayout';
 
@@ -43,11 +48,8 @@ export function AiOrganizeTemplateSheet({
   const { t } = useTranslation();
   const color = useColors();
   const insets = useSafeAreaInsets();
+  const contentPadding = useBottomSheetContentPadding(AI_ORGANIZE_SHEET_MIN_BOTTOM_PADDING);
 
-  const bottomPadding = useMemo(
-    () => getAiOrganizeSheetBottomPadding(insets.bottom),
-    [insets.bottom],
-  );
   const snapPoints = useMemo(
     () => [getAiOrganizeTemplateSheetSnapHeight(insets.bottom, AUTO_ORGANIZE_TEMPLATES.length)],
     [insets.bottom],
@@ -60,7 +62,7 @@ export function AiOrganizeTemplateSheet({
       snapPoints={snapPoints}
       enableContentPanningGesture={false}
     >
-      <BottomSheetView style={{ flexGrow: 0, paddingBottom: bottomPadding, paddingHorizontal: 20 }}>
+      <BottomSheetView style={{ flexGrow: 0, paddingHorizontal: 20, ...contentPadding }}>
         <Text
           style={{
             color: color.text.primary,
