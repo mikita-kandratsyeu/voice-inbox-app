@@ -74,17 +74,37 @@ describe('parseAutoOrganizeResult', () => {
 });
 
 describe('assertAutoOrganizeComplete', () => {
+  const assignExistingPayload = {
+    folders: [],
+    assignments: [{ recordId: 'rec-1', folderName: 'Work' }],
+  };
+
   it('passes when all expected ids are assigned', () => {
-    const result = parseAutoOrganizeResult(JSON.stringify(validPayload));
-    expect(() => assertAutoOrganizeComplete(result, ['rec-1'])).not.toThrow();
+    const result = parseAutoOrganizeResult(
+      JSON.stringify(assignExistingPayload),
+      'assign_existing',
+    );
+    expect(() => assertAutoOrganizeComplete(result, ['rec-1'], 'assign_existing')).not.toThrow();
   });
 
   it('throws on count or id mismatch', () => {
-    const result = parseAutoOrganizeResult(JSON.stringify(validPayload));
-    expect(() => assertAutoOrganizeComplete(result, ['rec-1', 'rec-2'])).toThrow(
+    const result = parseAutoOrganizeResult(
+      JSON.stringify(assignExistingPayload),
+      'assign_existing',
+    );
+    expect(() => assertAutoOrganizeComplete(result, ['rec-1', 'rec-2'], 'assign_existing')).toThrow(
       'assignment count mismatch',
     );
-    expect(() => assertAutoOrganizeComplete(result, ['rec-2'])).toThrow('unexpected recordId');
+    expect(() => assertAutoOrganizeComplete(result, ['rec-2'], 'assign_existing')).toThrow(
+      'unexpected recordId',
+    );
+  });
+
+  it('requires 3-8 folders in full mode', () => {
+    const result = parseAutoOrganizeResult(JSON.stringify(validPayload));
+    expect(() => assertAutoOrganizeComplete(result, ['rec-1'], 'full')).toThrow(
+      'folders must be 3-8',
+    );
   });
 });
 

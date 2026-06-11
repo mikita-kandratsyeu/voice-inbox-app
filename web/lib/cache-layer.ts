@@ -20,11 +20,7 @@ interface CachedData<T> {
 export class CacheLayer {
   private revalidationQueue = new Map<string, Promise<void>>();
 
-  async get<T>(
-    key: string,
-    fetcher: () => Promise<T>,
-    strategy: CacheStrategy,
-  ): Promise<T> {
+  async get<T>(key: string, fetcher: () => Promise<T>, strategy: CacheStrategy): Promise<T> {
     try {
       const cached = await redis.get(key);
 

@@ -1,6 +1,6 @@
 import type { VoiceRecord } from '@/entities/record';
 
-import { nodeDimensions } from '../graphNodeMetrics';
+import { nodeCenter, nodeDimensions } from '../graphNodeMetrics';
 import { graphNodeSearchText } from '../graphNodeSearchText';
 import type { GraphNode } from '../graphTypes';
 import { recordNodeId } from '../graphTypes';
@@ -26,10 +26,6 @@ function makeRecordNode(record: VoiceRecord): GraphNode {
     searchText: graphNodeSearchText({ kind: 'record', record }),
     record,
   };
-}
-
-function nodeCenter(node: GraphNode): { x: number; y: number } {
-  return { x: node.x + 79, y: node.y + 41 };
 }
 
 describe('layoutNodesInCircle', () => {
@@ -83,9 +79,10 @@ describe('layoutNodesInCircle', () => {
     const height = 700;
 
     const [laidOut] = layoutNodesInCircle([node], width, height);
+    const { width: nodeWidth, height: nodeHeight } = nodeDimensions(node.kind);
 
-    expect(laidOut?.x).toBe(width / 2 - 79);
-    expect(laidOut?.y).toBe(height / 2 - 41);
+    expect(laidOut?.x).toBe(width / 2 - nodeWidth / 2);
+    expect(laidOut?.y).toBe(height / 2 - nodeHeight / 2);
   });
 
   it('keeps pinned node coordinates', () => {
