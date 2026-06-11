@@ -119,7 +119,7 @@ export function AiOrganizeActionSheet({
 
   const actions = useMemo(() => buildActionRows(color, t), [color, t]);
   const snapPoints = useMemo(
-    () => [getAiOrganizeActionSheetSnapHeight(insets.bottom, AUTO_ORGANIZE_MODES.length)],
+    () => [getAiOrganizeActionSheetSnapHeight(insets.bottom, AUTO_ORGANIZE_MODES.length + 0.45)],
     [insets.bottom],
   );
 
@@ -140,7 +140,7 @@ export function AiOrganizeActionSheet({
           title={t('folders.aiOrganizeSheet.title')}
           subtitle={subtitle}
           color={color}
-          marginBottom={10}
+          marginBottom={14}
         />
 
         <View

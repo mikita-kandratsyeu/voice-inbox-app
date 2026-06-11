@@ -2406,7 +2406,7 @@
     "autoOrganizeReviewUnnamedFolder": "Untitled",
     "aiOrganizeSheet": {
       "title": "AI organization",
-      "subtitle": "{{count}} active notes",
+      "subtitle": "{{count}} active notes.",
       "proRequired": "Pro modes require an active Pro subscription.",
       "consolidateMinTitle": "Not enough folders",
       "consolidateMinDescription": "Add at least two folders before merging or cleaning them up.",

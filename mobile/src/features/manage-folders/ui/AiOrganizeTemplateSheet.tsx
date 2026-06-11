@@ -46,7 +46,9 @@ export function AiOrganizeTemplateSheet({
   const color = useColors();
   const insets = useSafeAreaInsets();
   const snapPoints = useMemo(
-    () => [getAiOrganizeTemplateSheetSnapHeight(insets.bottom, AUTO_ORGANIZE_TEMPLATES.length)],
+    () => [
+      getAiOrganizeTemplateSheetSnapHeight(insets.bottom, AUTO_ORGANIZE_TEMPLATES.length + 0.4),
+    ],
     [insets.bottom],
   );
 
@@ -62,7 +64,7 @@ export function AiOrganizeTemplateSheet({
           title={t('folders.aiOrganizeTemplates.title')}
           subtitle={t('folders.aiOrganizeTemplates.subtitle')}
           color={color}
-          marginBottom={10}
+          marginBottom={14}
         />
 
         <View
@@ -101,7 +103,7 @@ export function AiOrganizeTemplateSheet({
                   borderBottomColor: color.border.default,
                 }}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View style={{ flex: 1, paddingRight: 12 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <Text style={{ fontSize: 16, color: color.text.primary }}>

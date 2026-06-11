@@ -56,7 +56,7 @@ export function SheetEnumOptionList<T extends string | number>({
               borderBottomWidth: isLast ? 0 : 1,
               borderBottomColor: color.border.default,
               flexDirection: 'row',
-              alignItems: option.hint ? 'flex-start' : 'center',
+              alignItems: 'center',
             }}
           >
             <View style={{ flex: 1, paddingRight: option.hint ? 12 : 0 }}>

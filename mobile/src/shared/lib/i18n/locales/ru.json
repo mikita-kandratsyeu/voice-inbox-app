@@ -2474,7 +2474,7 @@
     "autoOrganizeReviewUnnamedFolder": "Без названия",
     "aiOrganizeSheet": {
       "title": "ИИ-организация",
-      "subtitle": "{{count}} активных заметок",
+      "subtitle": "{{count}} активных заметок.",
       "proRequired": "Эти режимы доступны с активной подпиской Pro.",
       "consolidateMinTitle": "Мало папок",
       "consolidateMinDescription": "Нужно минимум две папки, чтобы объединять или чистить структуру.",
