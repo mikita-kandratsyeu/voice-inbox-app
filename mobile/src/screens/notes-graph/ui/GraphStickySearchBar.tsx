@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Loader, Search, X } from 'lucide-react-native';
+import { ChevronDown, ChevronUp, Search, X } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'react-native';

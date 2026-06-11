@@ -2,6 +2,7 @@ import React, { memo, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
+  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -45,11 +46,12 @@ const getWaveHeight = (index: number, intensity: number = 1) => {
 };
 
 const getBarDelay = (index: number) => {
-  // Minimal delay for instant feel
+  // Very minimal delay for wave propagation effect
   const center = BAR_COUNT / 2;
   const distanceFromCenter = Math.abs(index - center);
 
-  return distanceFromCenter * 3;
+  // Reduced to 1-2ms per bar for near-instant feel
+  return distanceFromCenter * 1.5;
 };
 
 type WaveformProps = {
@@ -70,57 +72,81 @@ const WaveformBar = memo(({ index, isAnimating, color, audioLevel }: WaveformBar
   const opacity = useSharedValue(0.6);
   const scale = useSharedValue(1);
 
-  // Smoothing with faster attack, slower decay (like real audio)
-  const smoothedLevel = useRef(0);
+  // Use shared values for smoothing to avoid re-renders
+  const smoothedLevel = useSharedValue(0);
+  const inputLevel = useSharedValue(audioLevel ?? 0);
   const barSensitivity = useRef(getBarSensitivity(index));
+  const barDelay = useRef(getBarDelay(index));
+  const isActive = useSharedValue(isAnimating);
+  const hasAudioData = useSharedValue(audioLevel !== undefined);
+  const frameCounter = useSharedValue(0);
+
+  // Update input level on audioLevel change
+  useEffect(() => {
+    if (audioLevel !== undefined) {
+      inputLevel.value = audioLevel;
+      hasAudioData.value = true;
+    } else {
+      hasAudioData.value = false;
+    }
+  }, [audioLevel, inputLevel, hasAudioData]);
 
   useEffect(() => {
-    if (isAnimating) {
-      // If audioLevel is provided, use voice-reactive mode
-      if (audioLevel !== undefined) {
-        // Attack/Decay smoothing - fast rise, slow fall
-        const ATTACK = 0.6; // Fast attack (60%)
-        const DECAY = 0.15;  // Slow decay (15%)
+    isActive.value = isAnimating;
+  }, [isAnimating, isActive]);
 
-        const targetLevel = audioLevel * barSensitivity.current;
+  // Use animated reaction for smooth UI thread updates
+  useAnimatedReaction(
+    () => {
+      return { level: inputLevel.value, active: isActive.value, hasAudio: hasAudioData.value };
+    },
+    (current, previous) => {
+      if (current.active && current.hasAudio) {
+        frameCounter.value++;
 
-        if (targetLevel > smoothedLevel.current) {
-          // Attack - fast rise
-          smoothedLevel.current = smoothedLevel.current * (1 - ATTACK) + targetLevel * ATTACK;
+        // Attack/Decay smoothing - fast rise, slow fall (like real audio envelope)
+        const ATTACK = 0.85; // Very fast attack (85%)
+        const DECAY = 0.3;   // Moderate decay (30%)
+
+        const targetLevel = current.level * barSensitivity.current;
+
+        if (targetLevel > smoothedLevel.value) {
+          // Attack - very fast rise for instant response
+          smoothedLevel.value = smoothedLevel.value * (1 - ATTACK) + targetLevel * ATTACK;
         } else {
-          // Decay - slow fall for natural look
-          smoothedLevel.current = smoothedLevel.current * (1 - DECAY) + targetLevel * DECAY;
+          // Decay - slower fall for natural look and smoothness
+          smoothedLevel.value = smoothedLevel.value * (1 - DECAY) + targetLevel * DECAY;
         }
-
-        const waveDelay = getBarDelay(index);
 
         // Enhanced dynamic range with perceptual curve
         // Quieter sounds get boosted more for visibility
-        const perceptualLevel = Math.pow(smoothedLevel.current, 0.6);
-        const targetIntensity = Math.max(0.25, 0.2 + perceptualLevel * 1.5); // 0.2-1.7 range
+        const perceptualLevel = Math.pow(smoothedLevel.value, 0.5);
+        const targetIntensity = Math.max(0.35, 0.3 + perceptualLevel * 1.3); // 0.3-1.6 range
 
-        // Very responsive spring
-        height.value = withDelay(
-          waveDelay,
-          withSpring(getWaveHeight(index, targetIntensity), {
-            damping: 12,
-            stiffness: 300,
-            mass: 0.3,
-          })
-        );
+        // Add slight micro-variations for more organic feel
+        const microVariation = Math.sin(frameCounter.value * 0.1 + index) * 0.03;
+        const finalIntensity = targetIntensity * (1 + microVariation);
+
+        // Direct value assignment for instant response
+        const targetHeight = getWaveHeight(index, finalIntensity);
+
+        // Instant height update - no animation delay
+        height.value = targetHeight;
 
         // Subtle opacity for depth
-        opacity.value = withTiming(0.55 + perceptualLevel * 0.45, {
-          duration: 40,
-          easing: Easing.out(Easing.ease),
-        });
+        opacity.value = 0.65 + perceptualLevel * 0.35;
 
         // Slight scale for emphasis on loud sounds
-        scale.value = withTiming(1 + perceptualLevel * 0.1, {
-          duration: 40,
-          easing: Easing.out(Easing.ease),
-        });
-      } else {
+        scale.value = 1 + perceptualLevel * 0.06;
+      }
+    },
+    [inputLevel, isActive, hasAudioData]
+  );
+
+  useEffect(() => {
+    if (isAnimating) {
+      // If audioLevel is NOT provided, use fallback animated mode
+      if (audioLevel === undefined) {
         // Fallback: animated mode when no audio data available
         const delay = getBarDelay(index);
 
@@ -180,7 +206,7 @@ const WaveformBar = memo(({ index, isAnimating, color, audioLevel }: WaveformBar
       }
     } else {
       // Reset smoothing on stop
-      smoothedLevel.current = 0;
+      smoothedLevel.value = 0;
 
       height.value = withTiming(getWaveHeight(index, 0.3), {
         duration: 400,
