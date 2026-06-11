@@ -222,7 +222,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         meetingDialogueAux,
         aiLimitContext,
       ),
-    10000,
+    60000,
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
