@@ -44,6 +44,7 @@ type RecordCardExpandedProps = {
   onSelect?: () => void;
   onShare?: () => void;
   onRename?: () => void;
+  onDelete?: () => void;
   onOpenAllTasks?: () => void;
   a11yHint?: string | null;
   hideAccessibilitySubtree?: boolean;
@@ -73,6 +74,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
   onSelect,
   onShare,
   onRename,
+  onDelete,
   onOpenAllTasks,
   a11yHint,
   hideAccessibilitySubtree = false,
@@ -223,7 +225,14 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
       pinRenameActions.push(renameAction);
     }
 
-    if (!pinAction && !renameAction && restPrimary.length === 0 && !onSelect && !showAllTasks) {
+    if (
+      !pinAction &&
+      !renameAction &&
+      restPrimary.length === 0 &&
+      !onSelect &&
+      !showAllTasks &&
+      !onDelete
+    ) {
       return [];
     }
 
@@ -251,37 +260,50 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
       }
     }
 
-    if (restPrimary.length > 0) {
-      if (showAllTasks || pinAction || renameAction) {
-        actions.push(inlineNativeMenuSection('restPrimarySection', titleColor, restPrimary));
-      } else {
-        actions.push(...restPrimary);
-      }
-    }
-
+    const tailActions: NativeMenuAction[] = [...restPrimary];
     if (onSelect) {
-      const selectAction: NativeMenuAction = {
+      tailActions.push({
         id: 'select',
         title: t('inbox.menuSelectNotes'),
         titleColor,
         image: 'checkmark.circle',
         imageColor: titleColor,
-      };
+      });
+    }
 
-      if (showAllTasks || pinAction || renameAction || restPrimary.length > 0) {
-        actions.push(inlineNativeMenuSection('selectSection', titleColor, [selectAction]));
+    if (tailActions.length > 0) {
+      const needsSectionBeforeTail = showAllTasks || pinAction || renameAction;
+      if (needsSectionBeforeTail) {
+        actions.push(inlineNativeMenuSection('tailSection', titleColor, tailActions));
       } else {
-        actions.push(selectAction);
+        actions.push(...tailActions);
       }
+    }
+
+    if (onDelete) {
+      actions.push(
+        inlineNativeMenuSection('deleteSection', titleColor, [
+          {
+            id: 'delete',
+            title: t('recordActions.delete'),
+            titleColor: color.accent.delete,
+            image: 'trash',
+            imageColor: color.accent.delete,
+            attributes: { destructive: true },
+          },
+        ]),
+      );
     }
 
     return actions;
   }, [
+    color.accent.delete,
     color.accent.pin,
     color.text.primary,
     isArchivedView,
     item.isPinned,
     onArchive,
+    onDelete,
     onOpenAllTasks,
     onPin,
     onRename,
@@ -363,6 +385,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
                 if (id === 'archive') onArchive?.();
                 if (id === 'unarchive') onUnarchive?.();
                 if (id === 'share') onShare?.();
+                if (id === 'delete') onDelete?.();
               }}
             >
               <HeaderIconButton

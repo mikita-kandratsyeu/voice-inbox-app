@@ -49,6 +49,7 @@ export type InboxScreenListItemProps = {
   onRecordLongPress: (item: VoiceRecord) => void;
   onRecordShare: (item: VoiceRecord) => void;
   onRecordRename: (item: VoiceRecord) => void;
+  onRecordDelete: (item: VoiceRecord) => void;
   onOpenAllTasksForNote: (recordId: string) => void;
 };
 
@@ -75,6 +76,7 @@ function InboxScreenListItemInner({
   onRecordLongPress,
   onRecordShare,
   onRecordRename,
+  onRecordDelete,
   onOpenAllTasksForNote,
 }: InboxScreenListItemProps) {
   const { t } = useTranslation();
@@ -130,6 +132,7 @@ function InboxScreenListItemInner({
           onLongPress={onLongPress}
           onPin={isArchivedView ? undefined : () => togglePin(item.item.id)}
           onRename={() => onRecordRename(item.item)}
+          onDelete={() => onRecordDelete(item.item)}
           onArchive={isArchivedView ? undefined : () => archiveRecord(item.item.id)}
           onUnarchive={isArchivedView ? () => unarchiveRecord(item.item.id) : undefined}
           onSelect={() => onRecordLongPress(item.item)}

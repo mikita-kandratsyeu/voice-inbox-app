@@ -41,6 +41,7 @@ import { useInboxFiltersReset } from '@/features/inbox-filters';
 import { useAutoOrganizeFolders, useManageFolders } from '@/features/manage-folders';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useProEntitlement } from '@/features/pro-license';
+import { useRecordActions } from '@/features/record-actions';
 import { useSearchRecords } from '@/features/search-records';
 import {
   saveLastShareRecipientEmail,
@@ -724,6 +725,15 @@ export function useInboxScreen() {
     setRenameTarget({ id: item.id, title: item.title });
   }, []);
 
+  const { promptDelete } = useRecordActions();
+
+  const handleRecordDelete = useCallback(
+    (item: VoiceRecord) => {
+      promptDelete(item);
+    },
+    [promptDelete],
+  );
+
   const renameRecordSheet = useMemo(
     () => (
       <TaskEditSheet
@@ -826,6 +836,7 @@ export function useInboxScreen() {
         onRecordLongPress={handleRecordLongPress}
         onRecordShare={handleRecordShare}
         onRecordRename={handleRecordRename}
+        onRecordDelete={handleRecordDelete}
         onOpenAllTasksForNote={handleOpenAllTasksForNote}
       />
     ),
@@ -849,6 +860,7 @@ export function useInboxScreen() {
       handleRecordLongPress,
       handleRecordShare,
       handleRecordRename,
+      handleRecordDelete,
       handleOpenAllTasksForNote,
       batchSelect,
     ],
