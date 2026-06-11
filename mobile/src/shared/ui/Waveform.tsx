@@ -8,11 +8,8 @@ import Animated, {
   withDelay,
   withRepeat,
   withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
-
-import { SPRING_CONFIGS } from '@/shared/config';
 
 const BAR_COUNT = 32;
 const BAR_MIN_HEIGHT = 6;
@@ -57,7 +54,7 @@ const getBarDelay = (index: number) => {
 type WaveformProps = {
   isAnimating: boolean;
   color?: string;
-  audioLevel?: number; // 0-1, если undefined - fallback на обычную анимацию
+  audioLevel?: number; // 0-1, if undefined - fallback to normal animation
 };
 
 type WaveformBarProps = {
@@ -76,7 +73,6 @@ const WaveformBar = memo(({ index, isAnimating, color, audioLevel }: WaveformBar
   const smoothedLevel = useSharedValue(0);
   const inputLevel = useSharedValue(audioLevel ?? 0);
   const barSensitivity = useRef(getBarSensitivity(index));
-  const barDelay = useRef(getBarDelay(index));
   const isActive = useSharedValue(isAnimating);
   const hasAudioData = useSharedValue(audioLevel !== undefined);
   const frameCounter = useSharedValue(0);
@@ -100,13 +96,13 @@ const WaveformBar = memo(({ index, isAnimating, color, audioLevel }: WaveformBar
     () => {
       return { level: inputLevel.value, active: isActive.value, hasAudio: hasAudioData.value };
     },
-    (current, previous) => {
+    (current) => {
       if (current.active && current.hasAudio) {
         frameCounter.value++;
 
         // Attack/Decay smoothing - fast rise, slow fall (like real audio envelope)
         const ATTACK = 0.85; // Very fast attack (85%)
-        const DECAY = 0.3;   // Moderate decay (30%)
+        const DECAY = 0.3; // Moderate decay (30%)
 
         const targetLevel = current.level * barSensitivity.current;
 
@@ -140,7 +136,7 @@ const WaveformBar = memo(({ index, isAnimating, color, audioLevel }: WaveformBar
         scale.value = 1 + perceptualLevel * 0.06;
       }
     },
-    [inputLevel, isActive, hasAudioData]
+    [inputLevel, isActive, hasAudioData, smoothedLevel, frameCounter],
   );
 
   useEffect(() => {
