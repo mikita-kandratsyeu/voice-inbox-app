@@ -43,11 +43,33 @@ export function useAiOrganizeArchiveReview({
     }
   }, [archiveRecord, isApplying, selectedIds]);
 
+  const applyAll = useCallback(async (): Promise<boolean> => {
+    if (isApplying) return false;
+    setIsApplying(true);
+
+    try {
+      for (const { recordId } of result.archiveSuggestions) {
+        await archiveRecord(recordId);
+      }
+      return true;
+    } catch {
+      return false;
+    } finally {
+      setIsApplying(false);
+    }
+  }, [archiveRecord, isApplying, result.archiveSuggestions]);
+
+  const selectAll = useCallback(() => {
+    setSelectedIds(new Set(result.archiveSuggestions.map((s) => s.recordId)));
+  }, [result.archiveSuggestions]);
+
   return {
     suggestions,
     selectedIds,
     toggle,
+    selectAll,
     isApplying,
     apply,
+    applyAll,
   };
 }

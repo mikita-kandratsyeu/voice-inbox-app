@@ -2420,7 +2420,7 @@
         "consolidate": "Merge and clean folders",
         "consolidateHint": "Combine similar folders and remove empty ones",
         "suggestArchive": "Suggest archive",
-        "suggestArchiveHint": "Find notes that may be safe to archive"
+        "suggestArchiveHint": "Find completed or outdated notes to archive (not folders)"
       }
     },
     "aiOrganizeTemplates": {
@@ -2468,8 +2468,10 @@
     },
     "aiOrganizeArchiveReview": {
       "title": "Archive suggestions",
-      "subtitle": "Select notes to archive.",
-      "empty": "AI found no notes to archive."
+      "subtitle": "Uncheck notes you want to keep, or use the button below.",
+      "empty": "AI found no notes to archive.",
+      "archiveAll": "Archive all ({{count}})",
+      "archiveAllA11y": "Archive all {{count}} suggested notes"
     }
   },
   "inAppEvent": {

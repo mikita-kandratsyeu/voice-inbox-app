@@ -14,7 +14,7 @@ import { AutoOrganizeProgressOverlay } from '@/features/manage-folders';
 import { useAiOrganizeArchiveReview } from '@/features/manage-folders/model/useAiOrganizeArchiveReview';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
-import { HeaderIconButton, ScreenHeader } from '@/shared/ui';
+import { Button, HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 type Route = RouteProp<InboxStackParamList, 'AiOrganizeArchiveReview'>;
 
@@ -43,30 +43,38 @@ export function AiOrganizeArchiveReviewScreen() {
     return m;
   }, [records, t]);
 
-  const { suggestions, selectedIds, toggle, isApplying, apply } = useAiOrganizeArchiveReview({
-    result: route.params.result,
-    archiveRecord,
-  });
+  const { suggestions, selectedIds, toggle, isApplying, apply, applyAll } =
+    useAiOrganizeArchiveReview({
+      result: route.params.result,
+      archiveRecord,
+    });
 
   const goBack = useCallback(() => {
     if (navigation.canGoBack()) navigation.goBack();
     else navigation.navigate('InboxHome');
   }, [navigation]);
 
-  const confirmApply = useCallback(async () => {
-    if (isApplying || applyOverlayVisible) return;
-    setApplyOverlayVisible(true);
-    setApplyOverlayMode('loading');
-    const ok = await apply();
-    if (!ok) {
+  const runApply = useCallback(
+    async (archiveFn: () => Promise<boolean>) => {
+      if (isApplying || applyOverlayVisible) return;
+      setApplyOverlayVisible(true);
+      setApplyOverlayMode('loading');
+      const ok = await archiveFn();
+      if (!ok) {
+        setApplyOverlayVisible(false);
+        return;
+      }
+      setApplyOverlayMode('success');
+      await new Promise<void>((resolve) => setTimeout(resolve, APPLY_SUCCESS_OVERLAY_MS));
       setApplyOverlayVisible(false);
-      return;
-    }
-    setApplyOverlayMode('success');
-    await new Promise<void>((resolve) => setTimeout(resolve, APPLY_SUCCESS_OVERLAY_MS));
-    setApplyOverlayVisible(false);
-    goBack();
-  }, [apply, applyOverlayVisible, goBack, isApplying]);
+      goBack();
+    },
+    [applyOverlayVisible, goBack, isApplying],
+  );
+
+  const confirmApplySelected = useCallback(() => void runApply(apply), [apply, runApply]);
+
+  const confirmApplyAll = useCallback(() => void runApply(applyAll), [applyAll, runApply]);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -85,7 +93,7 @@ export function AiOrganizeArchiveReviewScreen() {
             accessibilityLabel={t('folders.autoOrganizeApplyA11y')}
             icon={<Check size={22} color={color.accent.primary} strokeWidth={2.5} />}
             color={color}
-            onPress={() => void confirmApply()}
+            onPress={confirmApplySelected}
             disabled={isApplying || applyOverlayVisible || selectedIds.size === 0}
           />
         }
@@ -95,7 +103,10 @@ export function AiOrganizeArchiveReviewScreen() {
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 12,
-            paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
+            paddingBottom:
+              suggestions.length > 0
+                ? 16
+                : getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
           }}
         >
           <Text style={{ fontSize: 13, color: color.text.secondary, marginBottom: 12 }}>
@@ -115,15 +126,37 @@ export function AiOrganizeArchiveReviewScreen() {
                   backgroundColor: color.background.card,
                   padding: 14,
                   marginBottom: 10,
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  gap: 12,
                 }}
               >
-                <Text style={{ fontSize: 16, color: color.text.primary, fontWeight: '500' }}>
-                  {recordTitleById.get(suggestion.recordId) ??
-                    t('folders.autoOrganizeReviewUnknownNote')}
-                </Text>
-                <Text style={{ fontSize: 13, color: color.text.muted, marginTop: 4 }}>
-                  {suggestion.reason}
-                </Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 16, color: color.text.primary, fontWeight: '500' }}>
+                    {recordTitleById.get(suggestion.recordId) ??
+                      t('folders.autoOrganizeReviewUnknownNote')}
+                  </Text>
+                  <Text style={{ fontSize: 13, color: color.text.muted, marginTop: 4 }}>
+                    {suggestion.reason}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 6,
+                    borderWidth: 2,
+                    borderColor: selected ? color.accent.primary : color.border.default,
+                    backgroundColor: selected ? color.accent.primary : 'transparent',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: 2,
+                  }}
+                >
+                  {selected ? (
+                    <Check size={14} color={color.icon.onAccent} strokeWidth={3} />
+                  ) : null}
+                </View>
               </Pressable>
             );
           })}
@@ -134,6 +167,33 @@ export function AiOrganizeArchiveReviewScreen() {
             </Text>
           ) : null}
         </ScrollView>
+
+        {suggestions.length > 0 ? (
+          <View
+            style={{
+              paddingHorizontal: 16,
+              paddingTop: 12,
+              paddingBottom: Math.max(insets.bottom, 12),
+              borderTopWidth: 1,
+              borderTopColor: color.border.default,
+              backgroundColor: color.background.secondary,
+            }}
+          >
+            <Button
+              label={t('folders.aiOrganizeArchiveReview.archiveAll', { count: suggestions.length })}
+              variant="primary"
+              size="lg"
+              fullWidth
+              color={color}
+              disabled={isApplying || applyOverlayVisible}
+              loading={isApplying || applyOverlayVisible}
+              onPress={confirmApplyAll}
+              accessibilityLabel={t('folders.aiOrganizeArchiveReview.archiveAllA11y', {
+                count: suggestions.length,
+              })}
+            />
+          </View>
+        ) : null}
       </View>
       <AutoOrganizeProgressOverlay
         visible={applyOverlayVisible}

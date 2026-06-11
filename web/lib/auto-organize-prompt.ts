@@ -191,10 +191,39 @@ Rules:
 - deleteEmptyFolderNames must use exact names from existingFolders.
 - merges and deleteEmptyFolderNames may be empty arrays when nothing should change.`;
 
+const AUTO_ORGANIZE_ARCHIVE_LANGUAGE_RULE = `Language rule:
+- If input includes "appLanguage":
+  - "ru" -> every "reason" must be in Russian
+  - "en" -> every "reason" must be in English
+- Otherwise, use the dominant language of the notes.`;
+
 const SUGGEST_ARCHIVE_MODE = `Mode: suggest notes to archive.
-- Review notes and identify ones that look completed, outdated, low-value, or superseded.
-- Be conservative: only suggest archive when there is reasonable evidence in title, summary, or transcript.
-- Do not suggest archiving notes that look active or recently important.
+This mode does NOT organize folders. Do NOT output "folders" or "assignments".
+
+Task:
+- Help the user declutter their inbox by identifying notes that are safe to archive.
+- Archiving hides notes from the active inbox but keeps them recoverable.
+
+Strong archive candidates (suggest when supported by evidence):
+- Completed one-off errands, tasks, or todos (especially when content sounds finished)
+- Past meetings or calls where outcomes were captured and no open follow-ups remain
+- Time-bound notes about events or deadlines that already passed
+- Superseded notes replaced by a newer note on the same topic
+- Low-value fragments, stale drafts, or notes with no clear future use
+- Older notes that were already read/processed and are unlikely to need quick access
+
+Use metadata when present:
+- "isPinned": true -> never suggest archive
+- "ageDays" or "createdAt": older notes are more likely candidates, but age alone is not enough
+- "taskCount" > 0: be cautious unless tasks look completed or obsolete
+- "isRead": true is a weak positive signal for archive when content also looks inactive
+- "folderName" is context only
+
+Safety rules:
+- Do not suggest archiving notes that look active, urgent, pinned, or recently important
+- When uncertain, omit the note instead of archiving it
+- Aim to suggest a useful shortlist when the inbox looks cluttered (often 10-40% of notes)
+- Return an empty array only when truly no note qualifies
 
 Output schema:
 {
@@ -205,9 +234,9 @@ Output schema:
 
 Rules:
 - recordId must exactly match an input note id.
-- reason must be a short user-facing sentence (one line).
-- archiveSuggestions may be an empty array when nothing should be archived.
-- Do not include the same recordId twice.`;
+- reason must be one short user-facing sentence explaining why archive makes sense.
+- Do not include the same recordId twice.
+- Each input note may appear at most once in archiveSuggestions.`;
 
 function buildAutoOrganizeFolderColorsSection(): string {
   return `Allowed folder colors:
@@ -254,7 +283,8 @@ export function buildAutoOrganizeSystemPrompt(
       `You help users archive old or low-value voice notes.`,
       LLM_JSON_SINGLE_OBJECT_DISCIPLINE,
       SUGGEST_ARCHIVE_MODE,
-      AUTO_ORGANIZE_LANGUAGE_RULE,
+      AUTO_ORGANIZE_ARCHIVE_LANGUAGE_RULE,
+      AUTO_ORGANIZE_EVIDENCE_PRIORITY,
     ].join('\n\n');
   }
 

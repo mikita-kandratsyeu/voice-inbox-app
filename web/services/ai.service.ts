@@ -597,6 +597,30 @@ function compactAutoOrganizeInput(notesJsonPayload: string): string {
           next.classification = n.classification.trim();
         }
 
+        if (typeof n.createdAt === 'string' && n.createdAt.trim()) {
+          next.createdAt = n.createdAt.trim().slice(0, 10);
+        }
+
+        if (typeof n.ageDays === 'number' && Number.isFinite(n.ageDays) && n.ageDays >= 0) {
+          next.ageDays = Math.floor(n.ageDays);
+        }
+
+        if (typeof n.folderName === 'string' && n.folderName.trim()) {
+          next.folderName = n.folderName.trim();
+        }
+
+        if (n.isPinned === true) {
+          next.isPinned = true;
+        }
+
+        if (n.isRead === true) {
+          next.isRead = true;
+        }
+
+        if (typeof n.taskCount === 'number' && Number.isFinite(n.taskCount) && n.taskCount > 0) {
+          next.taskCount = Math.floor(n.taskCount);
+        }
+
         return next;
       })
       .filter(Boolean);

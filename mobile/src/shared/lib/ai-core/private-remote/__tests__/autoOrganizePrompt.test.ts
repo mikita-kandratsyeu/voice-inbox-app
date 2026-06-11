@@ -22,6 +22,13 @@ describe('buildAutoOrganizeSystemPrompt', () => {
     expect(prompt).toContain('"merges"');
     expect(prompt).toContain('"deleteEmptyFolderNames"');
   });
+
+  it('uses archive schema and avoids folder output', () => {
+    const prompt = buildAutoOrganizeSystemPrompt('suggest_archive', 'general');
+    expect(prompt).toContain('"archiveSuggestions"');
+    expect(prompt).toContain('Do NOT output "folders" or "assignments"');
+    expect(prompt).toContain('isPinned');
+  });
 });
 
 describe('parseAutoOrganizeResult modes', () => {

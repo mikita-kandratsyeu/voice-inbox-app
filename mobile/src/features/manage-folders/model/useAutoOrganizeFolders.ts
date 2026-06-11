@@ -120,6 +120,12 @@ function countNotesInFolder(records: VoiceRecord[], folderId: string): number {
   return records.filter((r) => r.status !== 'archived' && r.folderId === folderId).length;
 }
 
+function computeNoteAgeDays(createdAt: string): number | undefined {
+  const createdMs = Date.parse(createdAt);
+  if (Number.isNaN(createdMs)) return undefined;
+  return Math.max(0, Math.floor((Date.now() - createdMs) / 86_400_000));
+}
+
 export function useAutoOrganizeFolders(
   records: VoiceRecord[],
   options?: UseAutoOrganizeFoldersOptions,
@@ -152,6 +158,14 @@ export function useAutoOrganizeFolders(
     };
   }, []);
 
+  const folderNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const folder of folders) {
+      map.set(folder.id, folder.name);
+    }
+    return map;
+  }, [folders]);
+
   const eligibleNotes = useMemo(
     () =>
       records
@@ -160,6 +174,10 @@ export function useAutoOrganizeFolders(
         .map((r) => {
           const titleTrimmed = r.title.trim();
           const hasSummary = Boolean(r.summary?.trim());
+          const folderName = r.folderId ? folderNameById.get(r.folderId) : undefined;
+          const ageDays = r.createdAt ? computeNoteAgeDays(r.createdAt) : undefined;
+          const taskCount = r.tasks?.length ?? 0;
+
           return {
             id: r.id,
             ...(titleTrimmed
@@ -173,9 +191,15 @@ export function useAutoOrganizeFolders(
             ),
             summary: truncateText(r.summary, MAX_SUMMARY_CHARS_FOR_AUTO_ORGANIZE),
             classification: r.classification,
+            ...(r.createdAt ? { createdAt: r.createdAt.slice(0, 10) } : {}),
+            ...(ageDays != null ? { ageDays } : {}),
+            ...(folderName ? { folderName } : {}),
+            ...(r.isPinned ? { isPinned: true } : {}),
+            ...(r.readAt ? { isRead: true } : {}),
+            ...(taskCount > 0 ? { taskCount } : {}),
           };
         }),
-    [records],
+    [folderNameById, records],
   );
 
   const existingFoldersPayload = useMemo(

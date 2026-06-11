@@ -60,6 +60,7 @@ import { mapPrivateRemoteUserFacingError } from './private-remote/privateRemoteE
 import {
   buildPrivateRemoteJsonSchemaResponseFormat,
   type PrivateRemoteStructuredSchemaKind,
+  resolveAutoOrganizeSchemaKind,
 } from './private-remote/privateRemoteResponseFormat';
 import {
   buildWebParityAiProcessingPrompt,
@@ -1183,6 +1184,12 @@ export type PrivateRemoteAutoOrganizeInput = {
     transcript?: string;
     summary?: string;
     classification?: string;
+    createdAt?: string;
+    ageDays?: number;
+    folderName?: string;
+    isPinned?: boolean;
+    isRead?: boolean;
+    taskCount?: number;
   }>;
 };
 
@@ -1226,7 +1233,7 @@ export async function runPrivateRemoteAutoOrganizeFolders(
       maxTokens,
       0.12,
       options?.abortSignal,
-      { jsonObject: true, schemaKind: 'auto_organize' },
+      { jsonObject: true, schemaKind: resolveAutoOrganizeSchemaKind(mode) },
     );
     const parsed = parseAutoOrganizeResultForMode(remote.content, mode);
     if (mode === 'suggest_archive') {
