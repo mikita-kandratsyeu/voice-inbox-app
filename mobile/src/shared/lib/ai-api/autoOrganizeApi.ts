@@ -1,3 +1,8 @@
+import type {
+  AutoOrganizeMode,
+  AutoOrganizeRunResult,
+  AutoOrganizeTemplate,
+} from '@/entities/folder/lib/autoOrganizeTypes';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { i18n } from '@/shared/lib';
 import { requestAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
@@ -20,9 +25,15 @@ type NoteForOrganize = {
 type RequestBody = {
   id: string;
   appLanguage?: string;
-  existingFolders?: Array<{ name: string; icon?: string; color?: string }>;
+  mode: AutoOrganizeMode;
+  template: AutoOrganizeTemplate;
+  existingFolders?: Array<{
+    name: string;
+    icon?: string;
+    color?: string;
+    noteCount?: number;
+  }>;
   notes: NoteForOrganize[];
-  /** Server clamps to 300–3600; omit for API default (1 hour). */
   messageTtlSeconds?: number;
 };
 
@@ -38,10 +49,8 @@ type PollResponse =
   | {
       id: string;
       status: 'done';
-      result: {
-        folders: Array<{ name: string; icon: string; color: string }>;
-        assignments: Array<{ recordId: string; folderName: string }>;
-      };
+      mode?: AutoOrganizeMode;
+      result: AutoOrganizeRunResult['data'];
     }
   | { id: string; status: 'error'; error: string };
 
@@ -56,7 +65,7 @@ export type AutoOrganizeApiResult =
   | { ok: false; limitExceeded?: false; error: string };
 
 export type AutoOrganizePollResult =
-  | { ok: true; result: NonNullable<Extract<PollResponse, { status: 'done' }>['result']> }
+  | { ok: true; result: AutoOrganizeRunResult }
   | { ok: false; error: string };
 
 const POLL_INTERVAL_MS = 4000;
@@ -99,6 +108,7 @@ export async function postAutoOrganizeFolders(body: RequestBody): Promise<AutoOr
 
 export async function pollAutoOrganizeFolders(
   id: string,
+  expected: { mode: AutoOrganizeMode; template: AutoOrganizeTemplate },
   syncToken?: string,
   options?: { isCancelled?: () => boolean },
 ): Promise<AutoOrganizePollResult> {
@@ -127,7 +137,33 @@ export async function pollAutoOrganizeFolders(
     const msg = (await response.json()) as PollResponse;
     if (msg.status === 'done') {
       requestAiUsageRefresh();
-      return { ok: true, result: msg.result };
+      const mode = msg.mode ?? expected.mode;
+      if (mode === 'full' || mode === 'assign_existing') {
+        const data = msg.result as Extract<AutoOrganizeRunResult, { mode: 'full' }>['data'];
+        return {
+          ok: true,
+          result: { mode, template: expected.template, data },
+        };
+      }
+      if (mode === 'consolidate_folders') {
+        return {
+          ok: true,
+          result: {
+            mode,
+            data: msg.result as Extract<
+              AutoOrganizeRunResult,
+              { mode: 'consolidate_folders' }
+            >['data'],
+          },
+        };
+      }
+      return {
+        ok: true,
+        result: {
+          mode: 'suggest_archive',
+          data: msg.result as Extract<AutoOrganizeRunResult, { mode: 'suggest_archive' }>['data'],
+        },
+      };
     }
     if (msg.status === 'error') {
       requestAiUsageRefresh();

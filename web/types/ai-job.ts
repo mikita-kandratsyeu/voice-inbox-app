@@ -46,6 +46,8 @@ export type AskJobPayload = {
   recordingMarks?: RecordingMarkForPrompt[];
 };
 
+import type { AutoOrganizeMode, AutoOrganizeTemplate } from '@/lib/auto-organize-types';
+
 export type AutoOrganizeJobPayload = {
   operation: 'folder_auto_organize';
   jobId: string;
@@ -53,6 +55,8 @@ export type AutoOrganizeJobPayload = {
   messageTtlSeconds: number;
   notesPayload: string;
   clientUserAgent?: string | null;
+  mode: AutoOrganizeMode;
+  template: AutoOrganizeTemplate;
 };
 
 /** Second QStash worker: pseudo-diarization after main summarize `done`. */

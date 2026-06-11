@@ -22,7 +22,13 @@ const MODAL_STATUS = {
 type UseBottomSheetModalVisibilityOptions = {
   /** Set false when `present()` is invoked elsewhere (e.g. async gate). Default true. */
   presentOnVisible?: boolean;
+  /** Bumped while `visible` stays true to force another `present()` (e.g. header re-tap). */
+  presentRequestKey?: number;
+  /** When true, skip `snapToIndex(0)` fallback — invalid for dynamic-sizing sheets. */
+  enableDynamicSizing?: boolean;
 };
+
+const MAX_PRESENT_ATTEMPTS = 4;
 
 export type UseBottomSheetModalVisibilityResult = {
   handleDismiss: () => void;
@@ -36,14 +42,32 @@ function readModalStatus(ref: RefObject<BottomSheetModal | null>): number | null
   return typeof status === 'number' ? status : null;
 }
 
-function presentBottomSheetModal(ref: RefObject<BottomSheetModal | null>) {
+function presentBottomSheetModal(
+  ref: RefObject<BottomSheetModal | null>,
+  meta?: {
+    sheetKey: number;
+    isReopen: boolean;
+    enableDynamicSizing?: boolean;
+    attempt?: number;
+  },
+) {
+  const attempt = meta?.attempt ?? 0;
   ref.current?.present();
   requestAnimationFrame(() => {
     const status = readModalStatus(ref);
-    if (status === MODAL_STATUS.PRESENTED || status === MODAL_STATUS.ANIMATING) {
+    const presented = status === MODAL_STATUS.PRESENTED || status === MODAL_STATUS.ANIMATING;
+    if (presented) {
       return;
     }
-    ref.current?.snapToIndex(0);
+    if (attempt < MAX_PRESENT_ATTEMPTS && meta != null) {
+      requestAnimationFrame(() => {
+        presentBottomSheetModal(ref, { ...meta, attempt: attempt + 1 });
+      });
+      return;
+    }
+    if (!meta?.enableDynamicSizing) {
+      ref.current?.snapToIndex(0);
+    }
   });
 }
 
@@ -54,6 +78,8 @@ export function useBottomSheetModalVisibility(
   options?: UseBottomSheetModalVisibilityOptions,
 ): UseBottomSheetModalVisibilityResult {
   const presentOnVisible = options?.presentOnVisible !== false;
+  const presentRequestKey = options?.presentRequestKey ?? 0;
+  const enableDynamicSizing = options?.enableDynamicSizing === true;
   const [sheetKey, setSheetKey] = useState(0);
   const wasVisibleRef = useRef(false);
   const dismissedFromModalRef = useRef(false);
@@ -61,6 +87,7 @@ export function useBottomSheetModalVisibility(
   const isInstanceSwapRef = useRef(false);
   const presentationGenerationRef = useRef(0);
   const pendingDismissGenerationRef = useRef<number | null>(null);
+  const lastReopenRef = useRef(false);
 
   visibleRef.current = visible;
 
@@ -93,6 +120,7 @@ export function useBottomSheetModalVisibility(
       wasVisibleRef.current = true;
       dismissedFromModalRef.current = false;
       presentationGenerationRef.current += 1;
+      lastReopenRef.current = isReopen;
       if (isReopen) {
         isInstanceSwapRef.current = true;
         setSheetKey((key) => key + 1);
@@ -120,11 +148,15 @@ export function useBottomSheetModalVisibility(
       return undefined;
     }
     const frame = requestAnimationFrame(() => {
-      presentBottomSheetModal(ref);
+      presentBottomSheetModal(ref, {
+        sheetKey,
+        isReopen: lastReopenRef.current,
+        enableDynamicSizing,
+      });
       isInstanceSwapRef.current = false;
     });
     return () => cancelAnimationFrame(frame);
-  }, [visible, sheetKey, presentOnVisible, ref]);
+  }, [enableDynamicSizing, presentOnVisible, presentRequestKey, ref, sheetKey, visible]);
 
   return { handleDismiss, sheetKey };
 }

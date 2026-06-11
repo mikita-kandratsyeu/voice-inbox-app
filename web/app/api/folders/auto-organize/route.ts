@@ -3,6 +3,7 @@ import { apiError, HttpStatus, parseJsonBody, validateRequiredStrings } from '@/
 import { logAiRequest } from '@/lib/ai-operation';
 import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
+import { isAutoOrganizeMode, isAutoOrganizeTemplate } from '@/lib/auto-organize-types';
 import { createAutoOrganizeRequest } from '@/services/folder-organize.service';
 import { NextResponse } from 'next/server';
 
@@ -26,6 +27,8 @@ type RequestBody = {
   existingFolders?: unknown;
   notes?: unknown;
   messageTtlSeconds?: unknown;
+  mode?: unknown;
+  template?: unknown;
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
@@ -100,20 +103,33 @@ export const POST = async (request: Request): Promise<NextResponse> => {
           const obj = f as Record<string, unknown>;
           const name = typeof obj.name === 'string' ? obj.name.trim() : '';
           if (!name) return null;
+          const noteCount =
+            typeof obj.noteCount === 'number' && Number.isFinite(obj.noteCount)
+              ? Math.max(0, Math.floor(obj.noteCount))
+              : undefined;
           return {
             name,
             ...(typeof obj.icon === 'string' && obj.icon.trim() ? { icon: obj.icon.trim() } : {}),
             ...(typeof obj.color === 'string' && obj.color.trim()
               ? { color: obj.color.trim() }
               : {}),
+            ...(noteCount !== undefined ? { noteCount } : {}),
           };
         })
         .filter(Boolean)
     : [];
+
+  const modeRaw = typeof body.mode === 'string' ? body.mode.trim() : 'full';
+  const mode = isAutoOrganizeMode(modeRaw) ? modeRaw : 'full';
+  const templateRaw = typeof body.template === 'string' ? body.template.trim() : 'general';
+  const template = isAutoOrganizeTemplate(templateRaw) ? templateRaw : 'general';
+
   const payload = JSON.stringify({
     ...(appLanguage ? { appLanguage } : {}),
     ...(existingFolders.length > 0 ? { existingFolders } : {}),
     notes: sanitizedNotes,
+    mode,
+    template,
   });
 
   const messageTtlSeconds = clampMessageTtlSeconds(body.messageTtlSeconds);
@@ -126,6 +142,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     deviceIdTrimmed,
     request.headers.get('user-agent'),
     messageTtlSeconds,
+    mode,
+    template,
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {

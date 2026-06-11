@@ -9,7 +9,7 @@ const STORE_BADGE_W = 180;
 const STORE_BADGE_H = 54;
 
 const storeLinkClasses =
-  'inline-flex shrink-0 rounded-xl hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 my-1.5';
+  'inline-flex shrink-0 rounded-xl hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 my-1';
 
 export function StoreButtons(): React.ReactElement {
   const t = useTranslations('hero');

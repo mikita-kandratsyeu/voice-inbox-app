@@ -566,6 +566,7 @@ export function SettingsPlanPaywallSheet({
             {proFeaturesExpanded ? (
               <View style={{ gap: PLAN_PAYWALL_FEATURE_LIST_GAP }}>
                 <FeatureRow text={t('settings.planPaywall.features.extendedShareAndBatchExport')} />
+                <FeatureRow text={t('settings.planPaywall.features.aiFolderOrganize')} />
                 <FeatureRow text={t('settings.planPaywall.features.notesGraph')} />
                 <FeatureRow text={t('settings.planPaywall.features.accentCustomization')} />
                 <FeatureRow text={t('settings.planPaywall.features.folderColors')} />

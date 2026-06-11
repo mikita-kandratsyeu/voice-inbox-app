@@ -4,6 +4,16 @@ import { Alert } from 'react-native';
 
 import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import { useFolderStore } from '@/entities/folder';
+import type {
+  AutoOrganizeMode,
+  AutoOrganizeRunParams,
+  AutoOrganizeRunResult,
+} from '@/entities/folder/lib/autoOrganizeTypes';
+import {
+  isProAutoOrganizeMode,
+  isProAutoOrganizeTemplate,
+  normalizeAutoOrganizeTemplate,
+} from '@/entities/folder/lib/autoOrganizeTypes';
 import type { VoiceRecord } from '@/entities/record';
 import {
   DEFAULT_LOCAL_AI_MODEL_ID,
@@ -23,13 +33,8 @@ import { runPrivateRemoteAutoOrganizeFolders } from '@/shared/lib/ai-core/privat
 import type { AiExecutionContext } from '@/shared/lib/ai-core/types';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 
-type AutoOrganizeResult = {
-  folders: Array<{ name: string; icon: string; color: string }>;
-  assignments: Array<{ recordId: string; folderName: string }>;
-};
-
 type UseAutoOrganizeFoldersOptions = {
-  onResult?: (result: AutoOrganizeResult) => void | Promise<void>;
+  onResult?: (result: AutoOrganizeRunResult) => void | Promise<void>;
 };
 
 const MIN_NOTES_TO_AUTO_ORGANIZE = 5;
@@ -111,6 +116,10 @@ function buildAiExecutionContextFromSettings(): AiExecutionContext {
   };
 }
 
+function countNotesInFolder(records: VoiceRecord[], folderId: string): number {
+  return records.filter((r) => r.status !== 'archived' && r.folderId === folderId).length;
+}
+
 export function useAutoOrganizeFolders(
   records: VoiceRecord[],
   options?: UseAutoOrganizeFoldersOptions,
@@ -122,8 +131,10 @@ export function useAutoOrganizeFolders(
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const [isRunning, setIsRunning] = useState(false);
+  const [activeMode, setActiveMode] = useState<AutoOrganizeMode | null>(null);
   const cancelledRef = useRef(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inFlightRef = useRef(false);
 
   const usePrivateRemoteOrganize = useMemo(
     () => isPrivateCustomServerMode(aiExecutionMode, privateAiProvider),
@@ -167,149 +178,215 @@ export function useAutoOrganizeFolders(
     [records],
   );
 
+  const existingFoldersPayload = useMemo(
+    () =>
+      folders.map((f) => ({
+        name: f.name,
+        icon: f.icon,
+        color: f.color,
+        noteCount: countNotesInFolder(records, f.id),
+      })),
+    [folders, records],
+  );
+
   const cancelAutoOrganize = useCallback(() => {
     cancelledRef.current = true;
     setIsRunning(false);
+    setActiveMode(null);
   }, []);
 
-  const runAutoOrganize = useCallback(async () => {
-    if (isRunning) {
-      return;
-    }
+  const validateBeforeRun = useCallback(
+    (params: AutoOrganizeRunParams): boolean => {
+      const template = normalizeAutoOrganizeTemplate(params.template);
 
-    if (eligibleNotes.length < MIN_NOTES_TO_AUTO_ORGANIZE) {
-      Alert.alert(
-        t('folders.autoOrganizeMinTitle'),
-        t('folders.autoOrganizeMinDescription', {
-          min: MIN_NOTES_TO_AUTO_ORGANIZE,
-          count: eligibleNotes.length,
-        }),
-      );
+      if (isProAutoOrganizeTemplate(template) && !isProActiveFromStorageSync()) {
+        alertAiLimitExceeded(t('folders.aiOrganizeTemplates.proRequired'));
+        return false;
+      }
 
-      return;
-    }
+      if (isProAutoOrganizeMode(params.mode) && !isProActiveFromStorageSync()) {
+        alertAiLimitExceeded(t('folders.aiOrganizeSheet.proRequired'));
+        return false;
+      }
 
-    if (isConnected === false && !usePrivateRemoteOrganize) {
-      Alert.alert(t('common.error'), t('folders.autoOrganizeFailedDescription'));
-      return;
-    }
+      if (params.mode === 'consolidate_folders') {
+        if (folders.length < 2) {
+          Alert.alert(
+            t('folders.aiOrganizeSheet.consolidateMinTitle'),
+            t('folders.aiOrganizeSheet.consolidateMinDescription'),
+          );
+          return false;
+        }
+        return true;
+      }
 
-    cancelledRef.current = false;
-    setIsRunning(true);
+      if (params.mode === 'assign_existing') {
+        if (folders.length === 0) {
+          Alert.alert(
+            t('folders.aiOrganizeSheet.assignMinTitle'),
+            t('folders.aiOrganizeSheet.assignMinDescription'),
+          );
+          return false;
+        }
+      }
 
-    try {
-      if (usePrivateRemoteOrganize) {
-        const remoteResult = await runPrivateRemoteAutoOrganizeFolders(
-          {
-            appLanguage: i18n.language,
-            existingFolders: folders.map((f) => ({
-              name: f.name,
-              icon: f.icon,
-              color: f.color,
-            })),
-            notes: eligibleNotes,
-          },
-          buildAiExecutionContextFromSettings(),
-          { isCancelled: () => cancelledRef.current },
+      if (eligibleNotes.length < MIN_NOTES_TO_AUTO_ORGANIZE) {
+        Alert.alert(
+          t('folders.autoOrganizeMinTitle'),
+          t('folders.autoOrganizeMinDescription', {
+            min: MIN_NOTES_TO_AUTO_ORGANIZE,
+            count: eligibleNotes.length,
+          }),
         );
+        return false;
+      }
 
-        if (cancelledRef.current) return;
+      return true;
+    },
+    [eligibleNotes.length, folders.length, t],
+  );
 
-        if (!remoteResult.ok) {
-          if (remoteResult.error === AI_REQUEST_CANCELLED) return;
-          const safeMsg = isLikelyNetworkError(remoteResult.error)
-            ? t('folders.autoOrganizeFailedDescription')
-            : remoteResult.error;
-          Alert.alert(t('common.error'), safeMsg);
+  const runAutoOrganize = useCallback(
+    async (params: AutoOrganizeRunParams) => {
+      if (isRunning || inFlightRef.current) {
+        return;
+      }
+
+      if (!validateBeforeRun(params)) {
+        return;
+      }
+
+      const mode = params.mode;
+      const template = normalizeAutoOrganizeTemplate(params.template);
+
+      if (isConnected === false && !usePrivateRemoteOrganize) {
+        Alert.alert(t('common.error'), t('folders.autoOrganizeFailedDescription'));
+        return;
+      }
+
+      cancelledRef.current = false;
+      inFlightRef.current = true;
+      setIsRunning(true);
+      setActiveMode(mode);
+
+      try {
+        if (usePrivateRemoteOrganize) {
+          const remoteResult = await runPrivateRemoteAutoOrganizeFolders(
+            {
+              appLanguage: i18n.language,
+              mode,
+              template,
+              existingFolders: existingFoldersPayload,
+              notes: eligibleNotes,
+            },
+            buildAiExecutionContextFromSettings(),
+            { isCancelled: () => cancelledRef.current },
+          );
+
+          if (cancelledRef.current) return;
+
+          if (!remoteResult.ok) {
+            if (remoteResult.error === AI_REQUEST_CANCELLED) return;
+            const safeMsg = isLikelyNetworkError(remoteResult.error)
+              ? t('folders.autoOrganizeFailedDescription')
+              : remoteResult.error;
+            Alert.alert(t('common.error'), safeMsg);
+            return;
+          }
+
+          await options?.onResult?.(remoteResult.result);
           return;
         }
 
-        await options?.onResult?.(remoteResult.result);
-        return;
-      }
+        const consentOk = await ensureCloudAiThirdPartyConsent();
 
-      const consentOk = await ensureCloudAiThirdPartyConsent();
-
-      if (!consentOk) {
-        return;
-      }
-
-      const requestId = `auto-organize-${Date.now()}`;
-      const postResult = await postAutoOrganizeFolders({
-        id: requestId,
-        appLanguage: i18n.language,
-        existingFolders: folders.map((f) => ({
-          name: f.name,
-          icon: f.icon,
-          color: f.color,
-        })),
-        notes: eligibleNotes,
-        messageTtlSeconds: cloudAiKvTtlSeconds,
-      });
-      if (!postResult.ok) {
-        const isLimitExceeded = 'limitExceeded' in postResult && postResult.limitExceeded;
-        const msg = isLimitExceeded
-          ? postResult.reason === 'auto_organize_free_limit'
-            ? getAutoOrganizeWeeklyLimitExceededMessage()
-            : getAiWeeklyLimitExceededMessage()
-          : postResult.error;
-        const safeMsg =
-          isString(msg) && isLikelyNetworkError(msg)
-            ? t('folders.autoOrganizeFailedDescription')
-            : msg;
-        if (isLimitExceeded && isString(safeMsg)) {
-          alertAiLimitExceeded(safeMsg);
-        } else {
-          Alert.alert(t('common.error'), safeMsg);
+        if (!consentOk) {
+          return;
         }
-        return;
-      }
 
-      if (cancelledRef.current) return;
+        const requestId = `auto-organize-${Date.now()}`;
+        const postResult = await postAutoOrganizeFolders({
+          id: requestId,
+          appLanguage: i18n.language,
+          mode,
+          template,
+          existingFolders: existingFoldersPayload,
+          notes: eligibleNotes,
+          messageTtlSeconds: cloudAiKvTtlSeconds,
+        });
+        if (!postResult.ok) {
+          const isLimitExceeded = 'limitExceeded' in postResult && postResult.limitExceeded;
+          const msg = isLimitExceeded
+            ? postResult.reason === 'auto_organize_free_limit'
+              ? getAutoOrganizeWeeklyLimitExceededMessage()
+              : getAiWeeklyLimitExceededMessage()
+            : postResult.error;
+          const safeMsg =
+            isString(msg) && isLikelyNetworkError(msg)
+              ? t('folders.autoOrganizeFailedDescription')
+              : msg;
+          if (isLimitExceeded && isString(safeMsg)) {
+            alertAiLimitExceeded(safeMsg);
+          } else {
+            Alert.alert(t('common.error'), safeMsg);
+          }
+          return;
+        }
 
-      const pollResult = await pollAutoOrganizeFolders(requestId, postResult.data.syncToken, {
-        isCancelled: () => cancelledRef.current,
-      });
-      if (cancelledRef.current) return;
-      if (!pollResult.ok) {
-        if (pollResult.error === 'cancelled') return;
-        Alert.alert(t('common.error'), t('folders.autoOrganizeFailedDescription'));
-        return;
-      }
+        if (cancelledRef.current) return;
 
-      await options?.onResult?.(pollResult.result);
-    } catch {
-      if (!cancelledRef.current) {
-        Alert.alert(t('common.error'), t('folders.autoOrganizeFailedDescription'));
-      }
-    } finally {
-      if (!usePrivateRemoteOrganize) {
-        requestAiUsageRefresh();
-      }
-      if (!cancelledRef.current) {
-        setIsRunning(false);
-      }
-    }
-  }, [
-    eligibleNotes,
-    folders,
-    isConnected,
-    isRunning,
-    i18n.language,
-    options,
-    t,
-    cloudAiKvTtlSeconds,
-    usePrivateRemoteOrganize,
-  ]);
+        const pollResult = await pollAutoOrganizeFolders(
+          requestId,
+          { mode, template },
+          postResult.data.syncToken,
+          {
+            isCancelled: () => cancelledRef.current,
+          },
+        );
+        if (cancelledRef.current) return;
+        if (!pollResult.ok) {
+          if (pollResult.error === 'cancelled') return;
+          Alert.alert(t('common.error'), t('folders.autoOrganizeFailedDescription'));
+          return;
+        }
 
-  const overlayMode: 'loading' | 'success' = isRunning ? 'loading' : 'success';
+        await options?.onResult?.(pollResult.result);
+      } catch {
+        if (!cancelledRef.current) {
+          Alert.alert(t('common.error'), t('folders.autoOrganizeFailedDescription'));
+        }
+      } finally {
+        if (!usePrivateRemoteOrganize) {
+          requestAiUsageRefresh();
+        }
+        inFlightRef.current = false;
+        if (!cancelledRef.current) {
+          setIsRunning(false);
+          setActiveMode(null);
+        }
+      }
+    },
+    [
+      eligibleNotes,
+      existingFoldersPayload,
+      isConnected,
+      isRunning,
+      i18n.language,
+      options,
+      t,
+      cloudAiKvTtlSeconds,
+      usePrivateRemoteOrganize,
+      validateBeforeRun,
+    ],
+  );
 
   return {
     runAutoOrganize,
     cancelAutoOrganize,
     isRunning,
+    activeMode,
     overlayVisible: isRunning,
-    overlayMode,
+    overlayMode: isRunning ? ('loading' as const) : ('success' as const),
     eligibleCount: eligibleNotes.length,
     minRequired: MIN_NOTES_TO_AUTO_ORGANIZE,
   };

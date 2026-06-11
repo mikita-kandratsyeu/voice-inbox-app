@@ -60,8 +60,8 @@ export default async function LandingPage({ params }: Props) {
 
   return (
     <MarketingPageShell>
-      <Header />
-      <main className="flex-1 pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:pb-0">
+      <Header hideOnMobile />
+      <main className="flex-1">
         <Hero socialProof={socialProof} />
         <DifferentiationSection />
         <PrivateModeSection />
@@ -72,7 +72,7 @@ export default async function LandingPage({ params }: Props) {
         <FAQSection />
         <CTASection />
       </main>
-      <Footer />
+      <Footer mobileStickyCtaClearance />
       <MobileStickyCTA socialProof={socialProof} />
     </MarketingPageShell>
   );

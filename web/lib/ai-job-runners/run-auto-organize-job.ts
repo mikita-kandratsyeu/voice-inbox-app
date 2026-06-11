@@ -34,15 +34,16 @@ export async function runAutoOrganizeJob(payload: AutoOrganizeJobPayload): Promi
     saveMessage(msgId, data as unknown as Message, ttl);
 
   try {
-    const result = await processAutoOrganizeFolders(
-      notesPayload,
-      SYSTEM_MICRO_TASK_MODEL,
+    const result = await processAutoOrganizeFolders(notesPayload, SYSTEM_MICRO_TASK_MODEL, {
       clientUserAgent,
-    );
+      mode: payload.mode ?? 'full',
+      template: payload.template ?? 'general',
+    });
     await saveAutoOrganizeMessage(id, {
       id,
       status: 'done',
       result,
+      mode: payload.mode ?? 'full',
     });
   } catch (err) {
     if (!isRetryableAiJobError(err)) {

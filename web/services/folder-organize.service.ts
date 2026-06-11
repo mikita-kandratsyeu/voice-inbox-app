@@ -5,6 +5,8 @@ import { saveJobPayload } from '@/lib/ai-job-payload';
 import { isProDevice } from '@/lib/pro-entitlement';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import { redis } from '@/lib/redis';
+import type { AutoOrganizeMode, AutoOrganizeTemplate } from '@/lib/auto-organize-types';
+import { normalizeAutoOrganizeTemplate } from '@/lib/auto-organize-types';
 import type { AutoOrganizeJobPayload } from '@/types/ai-job';
 import type { AutoOrganizeMessage, AutoOrganizeResult, Message } from '@/types';
 import { MESSAGE_TTL_SECONDS, SYSTEM_MICRO_TASK_MODEL, WEEK_TTL_SECONDS } from '@/config/constants';
@@ -70,6 +72,8 @@ export const createAutoOrganizeRequest = async (
   deviceId: string,
   clientUserAgent?: string | null,
   messageTtlSeconds: number = MESSAGE_TTL_SECONDS,
+  mode: AutoOrganizeMode = 'full',
+  template: AutoOrganizeTemplate = 'general',
 ): Promise<CreateAutoOrganizeResult> => {
   const ttl = messageTtlSeconds;
   const saveAutoOrganizeMessage = (msgId: string, data: AutoOrganizeMessage) =>
@@ -133,6 +137,8 @@ export const createAutoOrganizeRequest = async (
     messageTtlSeconds: ttl,
     notesPayload,
     clientUserAgent,
+    mode,
+    template: normalizeAutoOrganizeTemplate(template),
   };
 
   await saveJobPayload(jobPayload);
@@ -153,6 +159,7 @@ export const getAutoOrganizeById = async (
     status?: string;
     result?: AutoOrganizeResult;
     error?: string;
+    mode?: AutoOrganizeMode;
   };
 
   if (!msg?.id || !msg?.status) return null;
@@ -161,7 +168,12 @@ export const getAutoOrganizeById = async (
     return { id: msg.id, status: 'error', error: msg.error };
   }
   if (msg.status === 'done' && msg.result && typeof msg.result === 'object') {
-    return { id: msg.id, status: 'done', result: msg.result };
+    return {
+      id: msg.id,
+      status: 'done',
+      result: msg.result,
+      mode: msg.mode ?? 'full',
+    };
   }
 
   return null;

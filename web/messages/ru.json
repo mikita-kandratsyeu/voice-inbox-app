@@ -89,7 +89,9 @@
     "primary": "Скачать приложение",
     "androidWaitlistAria": "Лист ожидания Android",
     "androidSoonLabel": "Скоро",
-    "androidWaitlistLink": "Лист ожидания для Android"
+    "androidWaitlistLink": "Лист ожидания для Android",
+    "qrCaption": "Сканируйте для установки",
+    "qrAria": "QR-код для скачивания приложения"
   },
   "faq": {
     "title": "Что важно знать перед установкой",

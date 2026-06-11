@@ -2,6 +2,7 @@ import { useTranslations } from 'next-intl';
 import { marketingContentClass, marketingGutterClass } from '@/components/landing/marketing-layout';
 import { AnimateOnScroll } from '@/components/ui/AnimateOnScroll';
 import { CtaAndroidWaitlist } from './CtaAndroidWaitlist';
+import { CtaStoreQr } from './CtaStoreQr';
 import { StoreButtons } from './StoreButtons';
 
 export function CTASection(): React.ReactElement {
@@ -9,7 +10,7 @@ export function CTASection(): React.ReactElement {
 
   return (
     <section
-      className={`scroll-mt-24 py-15 sm:scroll-mt-28 sm:py-20 ${marketingGutterClass}`}
+      className={`scroll-mt-24 pt-15 pb-4 sm:scroll-mt-28 sm:py-20 ${marketingGutterClass}`}
       id="download"
     >
       <div className={marketingContentClass}>
@@ -27,13 +28,18 @@ export function CTASection(): React.ReactElement {
               <h2 className="mb-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
                 {t('title')}
               </h2>
-              <p className="mx-auto mb-4 max-w-2xl text-base text-white/85 sm:text-lg">
+              <p className="mx-auto mb-6 max-w-2xl text-base text-white/85 sm:mb-7 sm:text-lg">
                 {t('subtitle')}
               </p>
-              <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <StoreButtons />
+              <div className="flex justify-center">
+                <div className="flex w-fit max-w-full flex-col items-center md:flex-row md:items-center md:gap-7 lg:gap-8">
+                  <div className="flex w-fit flex-col items-center">
+                    <StoreButtons />
+                    <CtaAndroidWaitlist />
+                  </div>
+                  <CtaStoreQr />
+                </div>
               </div>
-              <CtaAndroidWaitlist />
             </div>
           </div>
         </AnimateOnScroll>

@@ -1,3 +1,9 @@
+import type {
+  AutoOrganizeMode,
+  AutoOrganizeRunResult,
+  AutoOrganizeTemplate,
+} from '@/entities/folder/lib/autoOrganizeTypes';
+import { normalizeAutoOrganizeTemplate } from '@/entities/folder/lib/autoOrganizeTypes';
 import { i18n } from '@/shared/lib';
 import { nitroFetch } from '@/shared/lib/fetch';
 import { isRecord, isString } from '@/shared/lib/type-guards';
@@ -30,15 +36,16 @@ import {
   prepareTranscriptForLocalLlm,
 } from './local-provider/localAiTranscript';
 import {
-  AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT,
   buildAutoOrganizeRepairUserSuffix,
+  buildAutoOrganizeSystemPrompt,
 } from './private-remote/autoOrganizePrompt';
 import { DIGEST_SYSTEM_PROMPT } from './private-remote/digestPrompt';
 import {
+  assertAutoOrganizeArchiveComplete,
   assertAutoOrganizeComplete,
   type AutoOrganizeFoldersResult,
   isAutoOrganizeParseFailure,
-  parseAutoOrganizeResult,
+  parseAutoOrganizeResultForMode,
 } from './private-remote/parseAutoOrganizeResult';
 import { parseDigestResult } from './private-remote/parseDigestResult';
 import {
@@ -1162,7 +1169,14 @@ export type { AutoOrganizeFoldersResult };
 
 export type PrivateRemoteAutoOrganizeInput = {
   appLanguage: string;
-  existingFolders: Array<{ name: string; icon: string; color: string }>;
+  mode: AutoOrganizeMode;
+  template?: AutoOrganizeTemplate;
+  existingFolders: Array<{
+    name: string;
+    icon: string;
+    color: string;
+    noteCount?: number;
+  }>;
   notes: Array<{
     id: string;
     title?: string;
@@ -1173,7 +1187,7 @@ export type PrivateRemoteAutoOrganizeInput = {
 };
 
 export type PrivateRemoteAutoOrganizeResult =
-  | { ok: true; result: AutoOrganizeFoldersResult }
+  | { ok: true; result: AutoOrganizeRunResult }
   | { ok: false; error: string };
 
 export async function runPrivateRemoteAutoOrganizeFolders(
@@ -1181,8 +1195,10 @@ export async function runPrivateRemoteAutoOrganizeFolders(
   ctx: AiExecutionContext,
   options?: { abortSignal?: AbortSignal; isCancelled?: () => boolean },
 ): Promise<PrivateRemoteAutoOrganizeResult> {
+  const mode = input.mode;
+  const template = normalizeAutoOrganizeTemplate(input.template);
   const expectedIds = input.notes.map((n) => n.id).filter((id) => id.trim().length > 0);
-  if (expectedIds.length === 0) {
+  if (expectedIds.length === 0 && mode !== 'consolidate_folders') {
     return { ok: false, error: i18n.t('folders.autoOrganizeFailedDescription') };
   }
 
@@ -1190,18 +1206,21 @@ export async function runPrivateRemoteAutoOrganizeFolders(
     appLanguage: input.appLanguage.trim().slice(0, 2) || undefined,
     existingFolders: input.existingFolders,
     notes: input.notes,
+    mode,
+    template,
   });
 
   const maxTokens = resolvePrivateRemoteSummaryMaxTokens(ctx.privateRemoteOutputBudget) ?? 8192;
+  const systemPrompt = buildAutoOrganizeSystemPrompt(mode, template);
 
-  const sendOrganize = async (userContent: string): Promise<AutoOrganizeFoldersResult> => {
+  const sendOrganize = async (userContent: string): Promise<AutoOrganizeRunResult> => {
     if (options?.isCancelled?.()) {
       throw new Error(AI_REQUEST_CANCELLED);
     }
     const remote = await callRemoteCompletion(
       ctx,
       [
-        { role: 'system', content: AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: userContent },
       ],
       maxTokens,
@@ -1209,9 +1228,26 @@ export async function runPrivateRemoteAutoOrganizeFolders(
       options?.abortSignal,
       { jsonObject: true, schemaKind: 'auto_organize' },
     );
-    const result = parseAutoOrganizeResult(remote.content);
-    assertAutoOrganizeComplete(result, expectedIds);
-    return result;
+    const parsed = parseAutoOrganizeResultForMode(remote.content, mode);
+    if (mode === 'suggest_archive') {
+      assertAutoOrganizeArchiveComplete(
+        parsed as import('@/entities/folder/lib/autoOrganizeTypes').AutoOrganizeArchiveResult,
+        expectedIds,
+      );
+      return {
+        mode,
+        data: parsed as import('@/entities/folder/lib/autoOrganizeTypes').AutoOrganizeArchiveResult,
+      };
+    }
+    if (mode === 'consolidate_folders') {
+      return {
+        mode,
+        data: parsed as import('@/entities/folder/lib/autoOrganizeTypes').AutoOrganizeConsolidateResult,
+      };
+    }
+    const foldersResult = parsed as AutoOrganizeFoldersResult;
+    assertAutoOrganizeComplete(foldersResult, expectedIds, mode);
+    return { mode, template, data: foldersResult };
   };
 
   try {
@@ -1227,7 +1263,7 @@ export async function runPrivateRemoteAutoOrganizeFolders(
         throw e;
       }
       const repaired = await sendOrganize(
-        userPayload + buildAutoOrganizeRepairUserSuffix(expectedIds),
+        userPayload + buildAutoOrganizeRepairUserSuffix(mode, expectedIds),
       );
       return { ok: true, result: repaired };
     }

@@ -15,11 +15,23 @@ import {
   AUTO_ORGANIZE_TRANSCRIPT_HINT_MAX_CHARS,
   smartTranscriptExcerpt,
 } from '@/lib/auto-organize-input-limits';
-import { normalizeAutoOrganizeFolderColor } from '@/lib/folder-accent-colors';
+import {
+  assertAutoOrganizeArchiveComplete,
+  assertAutoOrganizeFoldersComplete,
+  isAutoOrganizeParseFailure,
+  parseAutoOrganizeResultForMode,
+  type AutoOrganizeParsedResult,
+} from '@/lib/auto-organize-parse';
+import {
+  buildAutoOrganizeRepairUserSuffix,
+  buildAutoOrganizeSystemPrompt,
+} from '@/lib/auto-organize-prompt';
+import type { AutoOrganizeMode, AutoOrganizeTemplate } from '@/lib/auto-organize-types';
+import { normalizeAutoOrganizeTemplate } from '@/lib/auto-organize-types';
 import { buildAskUserMessageContent } from '@/lib/ask-user-message';
 import { parseOpenRouterJsonContent } from '@/lib/parse-openrouter-json';
 import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
-import { ASK_QUESTION_SYSTEM_PROMPT, AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT } from '@/lib/prompts';
+import { ASK_QUESTION_SYSTEM_PROMPT } from '@/lib/prompts';
 import type { AiResult, AutoOrganizeResult, RecordClassification } from '@/types';
 
 import {
@@ -506,109 +518,6 @@ export async function processDigest(
   );
 }
 
-const ALLOWED_FOLDER_ICONS = new Set([
-  'briefcase',
-  'home',
-  'lightbulb',
-  'music',
-  'star',
-  'heart',
-  'plane',
-  'rocket',
-  'palette',
-  'flame',
-  'globe',
-  'graduation',
-]);
-
-const DEFAULT_AUTO_FOLDER_ICON = 'briefcase';
-
-function parseAutoOrganizeResult(rawContent: string): AutoOrganizeResult {
-  const trimmed = rawContent.trim();
-  const withoutFences = trimmed.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-  const objectSlice = (() => {
-    const start = withoutFences.indexOf('{');
-    const end = withoutFences.lastIndexOf('}');
-    if (start === -1 || end === -1 || end <= start) return withoutFences;
-    return withoutFences.slice(start, end + 1);
-  })();
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(objectSlice);
-  } catch {
-    throw new Error('Invalid AI response: malformed JSON');
-  }
-
-  if (!parsed || typeof parsed !== 'object') {
-    throw new Error('Invalid AI response: expected object');
-  }
-
-  const obj = parsed as {
-    folders?: Array<{ name?: unknown; icon?: unknown; color?: unknown }>;
-    assignments?: Array<{ recordId?: unknown; folderName?: unknown }>;
-  };
-
-  if (!Array.isArray(obj.folders) || !Array.isArray(obj.assignments)) {
-    throw new Error('Invalid AI response: missing folders or assignments');
-  }
-
-  const folderRows = obj.folders
-    .map((f) => ({
-      name: typeof f?.name === 'string' ? f.name.trim() : '',
-      icon:
-        typeof f?.icon === 'string' && ALLOWED_FOLDER_ICONS.has(f.icon.trim())
-          ? f.icon.trim()
-          : DEFAULT_AUTO_FOLDER_ICON,
-      color: normalizeAutoOrganizeFolderColor(
-        typeof f?.color === 'string' ? f.color : '',
-      ).toLowerCase(),
-    }))
-    .filter((f) => Boolean(f.name));
-
-  if (folderRows.length === 0) {
-    throw new Error('Invalid AI response: no valid folders');
-  }
-
-  const canonicalByLower = new Map<string, (typeof folderRows)[0]>();
-  for (const f of folderRows) {
-    const k = f.name.toLowerCase();
-    if (!canonicalByLower.has(k)) {
-      canonicalByLower.set(k, f);
-    }
-  }
-  const folders = [...canonicalByLower.values()];
-
-  const seenRecordIds = new Set<string>();
-  const assignments: AutoOrganizeResult['assignments'] = [];
-
-  for (const raw of obj.assignments) {
-    const recordId = typeof raw?.recordId === 'string' ? raw.recordId.trim() : '';
-    const folderName = typeof raw?.folderName === 'string' ? raw.folderName.trim() : '';
-    if (!recordId) {
-      throw new Error('Invalid AI response: assignment with empty recordId');
-    }
-    if (seenRecordIds.has(recordId)) {
-      throw new Error('Invalid AI response: duplicate recordId in assignments');
-    }
-    seenRecordIds.add(recordId);
-    if (!folderName) {
-      throw new Error('Invalid AI response: assignment with empty folderName');
-    }
-    const canon = canonicalByLower.get(folderName.toLowerCase());
-    if (!canon) {
-      throw new Error(`Invalid AI response: unknown folder in assignment: ${folderName}`);
-    }
-    assignments.push({ recordId, folderName: canon.name });
-  }
-
-  if (assignments.length === 0) {
-    throw new Error('Invalid AI response: no valid assignments');
-  }
-
-  return { folders, assignments };
-}
-
 function extractExpectedNoteIdsFromCompactPayload(compactPayload: string): string[] {
   try {
     const p = JSON.parse(compactPayload) as { notes?: unknown };
@@ -623,58 +532,6 @@ function extractExpectedNoteIdsFromCompactPayload(compactPayload: string): strin
   } catch {
     return [];
   }
-}
-
-function assertAutoOrganizeComplete(result: AutoOrganizeResult, expectedIds: string[]): void {
-  if (expectedIds.length === 0) {
-    return;
-  }
-
-  if (result.folders.length < 3 || result.folders.length > 8) {
-    throw new Error(`Invalid AI response: folders must be 3-8, got ${result.folders.length}`);
-  }
-
-  const expected = new Set(expectedIds);
-  const got = new Set(result.assignments.map((a) => a.recordId));
-
-  if (got.size !== result.assignments.length) {
-    throw new Error('Invalid AI response: duplicate recordId in assignments');
-  }
-
-  if (got.size !== expected.size) {
-    throw new Error(`Invalid AI response: expected ${expected.size} assignments, got ${got.size}`);
-  }
-
-  for (const id of expected) {
-    if (!got.has(id)) {
-      throw new Error(`Invalid AI response: missing assignment for note id`);
-    }
-  }
-
-  for (const id of got) {
-    if (!expected.has(id)) {
-      throw new Error('Invalid AI response: unexpected recordId in assignments');
-    }
-  }
-}
-
-function buildAutoOrganizeRepairUserSuffix(expectedIds: string[]): string {
-  return `\n\n---\nYour previous JSON failed validation. Output one new valid JSON object only.
-
-Fix all issues:
-- "folders": 3 to 8 items; each "name" unique; icons and colors must be allowed values.
-- "assignments": exactly ${expectedIds.length} objects — one per input note, no duplicates.
-- Every "recordId" must be exactly one of these strings (copy verbatim, including case and punctuation):
-${JSON.stringify(expectedIds)}
-- Every "folderName" in assignments must exactly match a "name" in "folders" (same spelling and casing as in "folders").
-- Re-read classifications, summaries, titles, and transcripts; fix any inconsistent or missing assignments.`;
-}
-
-function isAutoOrganizeParseFailure(err: unknown): boolean {
-  return (
-    err instanceof Error &&
-    (err.message.includes('Invalid AI response') || err.message.includes('malformed JSON'))
-  );
 }
 
 function compactAutoOrganizeInput(notesJsonPayload: string): string {
@@ -742,28 +599,69 @@ function compactAutoOrganizeInput(notesJsonPayload: string): string {
       out.existingFolders = src.existingFolders;
     }
 
+    if (typeof src.mode === 'string' && src.mode.trim()) {
+      out.mode = src.mode.trim();
+    }
+
+    if (typeof src.template === 'string' && src.template.trim()) {
+      out.template = src.template.trim();
+    }
+
     return JSON.stringify(out);
   } catch {
     return notesJsonPayload;
   }
 }
 
+function assertAutoOrganizeParsedComplete(
+  result: AutoOrganizeParsedResult,
+  mode: AutoOrganizeMode,
+  expectedIds: string[],
+): void {
+  if (mode === 'suggest_archive') {
+    assertAutoOrganizeArchiveComplete(
+      result as import('@/lib/auto-organize-types').AutoOrganizeArchiveResult,
+      expectedIds,
+    );
+    return;
+  }
+
+  if (mode === 'consolidate_folders') {
+    return;
+  }
+
+  assertAutoOrganizeFoldersComplete(
+    result as import('@/lib/auto-organize-types').AutoOrganizeFoldersResult,
+    expectedIds,
+    mode,
+  );
+}
+
 export async function processAutoOrganizeFolders(
   notesJsonPayload: string,
   model: string,
-  clientUserAgent?: string | null,
+  options?: {
+    clientUserAgent?: string | null;
+    mode?: AutoOrganizeMode;
+    template?: AutoOrganizeTemplate;
+  },
 ): Promise<AutoOrganizeResult> {
+  const mode = options?.mode ?? 'full';
+  const template = normalizeAutoOrganizeTemplate(options?.template);
+  const clientUserAgent = options?.clientUserAgent;
   const compactPayload = compactAutoOrganizeInput(notesJsonPayload);
   let expectedIds = extractExpectedNoteIdsFromCompactPayload(compactPayload);
   if (expectedIds.length === 0) {
     expectedIds = extractExpectedNoteIdsFromCompactPayload(notesJsonPayload);
   }
 
+  const systemPrompt = buildAutoOrganizeSystemPrompt(mode, template);
+
   const sendOrganize = async (m: string, userContent: string): Promise<AutoOrganizeResult> => {
     const { content } = await sendAiChatCompletion({
       model: m,
       messages: [
-        { role: 'system', content: AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: userContent },
       ],
       jsonObject: true,
@@ -771,8 +669,8 @@ export async function processAutoOrganizeFolders(
       clientUserAgent,
     });
 
-    const result = parseAutoOrganizeResult(content);
-    assertAutoOrganizeComplete(result, expectedIds);
+    const result = parseAutoOrganizeResultForMode(content, mode);
+    assertAutoOrganizeParsedComplete(result, mode, expectedIds);
     return result;
   };
 
@@ -784,7 +682,10 @@ export async function processAutoOrganizeFolders(
       if (!msg.startsWith('Invalid AI response')) {
         throw e;
       }
-      return await sendOrganize(m, compactPayload + buildAutoOrganizeRepairUserSuffix(expectedIds));
+      return await sendOrganize(
+        m,
+        compactPayload + buildAutoOrganizeRepairUserSuffix(mode, expectedIds),
+      );
     }
   };
 

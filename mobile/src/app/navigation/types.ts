@@ -9,13 +9,25 @@ export type BottomTabParamList = {
   SettingsRoot: NavigatorScreenParams<SettingsStackParamList> | undefined;
 };
 
+import type {
+  AutoOrganizeArchiveResult,
+  AutoOrganizeConsolidateResult,
+  AutoOrganizeFoldersResult,
+  AutoOrganizeTemplate,
+} from '@/entities/folder/lib/autoOrganizeTypes';
+
 export type InboxStackParamList = {
   InboxHome: undefined;
   AutoOrganizeReview: {
-    result: {
-      folders: Array<{ name: string; icon: string; color: string }>;
-      assignments: Array<{ recordId: string; folderName: string }>;
-    };
+    result: AutoOrganizeFoldersResult;
+    mode: 'full' | 'assign_existing';
+    template: AutoOrganizeTemplate;
+  };
+  AiOrganizeFoldersCleanupReview: {
+    result: AutoOrganizeConsolidateResult;
+  };
+  AiOrganizeArchiveReview: {
+    result: AutoOrganizeArchiveResult;
   };
 };
 

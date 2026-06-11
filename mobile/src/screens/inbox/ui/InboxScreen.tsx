@@ -1,6 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 
+import { openPlanPaywall } from '@/app/navigation/openPlanPaywall';
 import {
   FolderChipBar,
   FolderFormModal,
@@ -9,7 +10,11 @@ import {
 } from '@/entities/folder';
 import { BatchActionBar, BatchExportSheet } from '@/features/batch-select';
 import { useImportFileAction } from '@/features/import-audio-file';
-import { AutoOrganizeProgressOverlay } from '@/features/manage-folders';
+import {
+  AiOrganizeActionSheet,
+  AiOrganizeTemplateSheet,
+  AutoOrganizeProgressOverlay,
+} from '@/features/manage-folders';
 import { ShareRecordSheet } from '@/screens/recording-detail/ui/ShareRecordSheet';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { BlockingProgressModal } from '@/shared/ui';
@@ -52,11 +57,22 @@ export const InboxScreen = () => {
     closeFolderModal,
     handleFolderSave,
     handleFolderDelete,
-    runAutoOrganize,
+    openAiOrganizeSheet,
+    closeAiOrganizeSheet,
+    aiOrganizeSheetVisible,
+    aiOrganizePresentKey,
+    aiOrganizeTemplateSheetVisible,
+    closeAiOrganizeTemplateSheet,
+    pendingAutoOrganizeTemplate,
+    setPendingAutoOrganizeTemplate,
+    handleAiOrganizeActionSelect,
+    handleAiOrganizeTemplateSelect,
     cancelAutoOrganize,
     isAutoOrganizing,
+    autoOrganizeActiveMode,
     autoOrganizeOverlayVisible,
     autoOrganizeOverlayMode,
+    autoOrganizeEligibleCount,
     query,
     setQuery,
     filtered,
@@ -158,9 +174,7 @@ export const InboxScreen = () => {
             isAutoOrganizing={isAutoOrganizing}
             onSearchHeaderPress={handleSearchHeaderPress}
             onSelectAll={handleSelectAll}
-            onAutoOrganize={() => {
-              void runAutoOrganize();
-            }}
+            onOpenAiOrganizeSheet={openAiOrganizeSheet}
             onEnterBatchMode={() => enterBatchMode(undefined, { haptic: false })}
             onOpenAllTasks={() => navigation.navigate('AllTasks')}
             onOpenNotesGraph={handleOpenNotesGraph}
@@ -305,9 +319,40 @@ export const InboxScreen = () => {
           onClose={closeFolderModal}
         />
       )}
+      {foldersEnabled ? (
+        <>
+          <AiOrganizeActionSheet
+            visible={aiOrganizeSheetVisible}
+            presentRequestKey={aiOrganizePresentKey}
+            eligibleCount={autoOrganizeEligibleCount}
+            isProActive={isProActive}
+            onClose={closeAiOrganizeSheet}
+            onSelect={handleAiOrganizeActionSelect}
+            onProRequired={() => {
+              closeAiOrganizeSheet();
+              openPlanPaywall();
+            }}
+          />
+          <AiOrganizeTemplateSheet
+            visible={aiOrganizeTemplateSheetVisible}
+            selectedTemplate={pendingAutoOrganizeTemplate}
+            isProActive={isProActive}
+            onClose={closeAiOrganizeTemplateSheet}
+            onSelect={(template) => {
+              setPendingAutoOrganizeTemplate(template);
+              handleAiOrganizeTemplateSelect(template);
+            }}
+            onProRequired={() => {
+              closeAiOrganizeTemplateSheet();
+              openPlanPaywall();
+            }}
+          />
+        </>
+      ) : null}
       <AutoOrganizeProgressOverlay
         visible={autoOrganizeOverlayVisible}
         mode={autoOrganizeOverlayMode}
+        organizeMode={autoOrganizeActiveMode}
         onCancel={cancelAutoOrganize}
       />
       <BlockingProgressModal

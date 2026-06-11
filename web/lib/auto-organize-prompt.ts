@@ -1,10 +1,6 @@
-import { formatAutoOrganizeFolderColorsPromptBlock } from '@/entities/folder/lib/autoOrganizeFolderColors';
-import type {
-  AutoOrganizeMode,
-  AutoOrganizeTemplate,
-} from '@/entities/folder/lib/autoOrganizeTypes';
+import type { AutoOrganizeMode, AutoOrganizeTemplate } from '@/lib/auto-organize-types';
+import { formatAutoOrganizeFolderColorsPromptBlock } from '@/lib/folder-accent-colors';
 
-/** Mirrored from `web/lib/auto-organize-prompt.ts`. */
 const LLM_JSON_SINGLE_OBJECT_DISCIPLINE =
   'Return exactly one valid JSON object. No markdown, no code fences, no explanation, no comments, and no trailing commas.';
 
@@ -236,7 +232,6 @@ const FULL_PROMPT_BLOCKS = [
   AUTO_ORGANIZE_DECISION_STRATEGY,
 ];
 
-/** @deprecated Use buildAutoOrganizeSystemPrompt('full', 'general') */
 export const AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT = FULL_PROMPT_BLOCKS.join('\n\n');
 
 export function buildAutoOrganizeSystemPrompt(

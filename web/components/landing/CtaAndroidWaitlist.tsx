@@ -14,13 +14,13 @@ export function CtaAndroidWaitlist(): React.ReactElement | null {
   }
 
   return (
-    <div className="mt-5 border-t border-white/10 pt-5 sm:mt-5 sm:pt-5 -mx-8 px-8 sm:-mx-12 sm:px-12">
+    <div className="mt-4 w-full border-t border-white/10 pt-4">
       <section
-        className="mx-auto flex max-w-md flex-col items-center gap-0.5"
+        className="mx-auto flex flex-col items-center gap-0.5"
         role="region"
         aria-label={t('androidWaitlistAria')}
       >
-        <p className="text-center text-base font-semibold tracking-tight text-white/88">
+        <p className="text-center text-sm font-semibold tracking-tight text-white/88">
           {t('androidSoonLabel')}
         </p>
         <a

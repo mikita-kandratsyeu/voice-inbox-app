@@ -1,3 +1,10 @@
+import type {
+  AutoOrganizeArchiveResult,
+  AutoOrganizeConsolidateResult,
+  AutoOrganizeFoldersResult,
+  AutoOrganizeMode,
+} from '@/lib/auto-organize-types';
+
 export type MessageStatus = 'processing' | 'done' | 'error';
 
 /** Async meeting-dialogue pass (Pro meeting notes); set when `status` is already `done`. */
@@ -66,19 +73,20 @@ export type AskMessage =
     }
   | { id: string; status: 'error'; error: string; model?: string; modelLabel?: string };
 
-export type AutoOrganizeResult = {
-  folders: Array<{
-    name: string;
-    icon: string;
-    color: string;
-  }>;
-  assignments: Array<{
-    recordId: string;
-    folderName: string;
-  }>;
-};
+export type {
+  AutoOrganizeArchiveResult,
+  AutoOrganizeConsolidateResult,
+  AutoOrganizeFoldersResult,
+  AutoOrganizeMode,
+  AutoOrganizeTemplate,
+} from '@/lib/auto-organize-types';
+
+export type AutoOrganizeResult =
+  | AutoOrganizeFoldersResult
+  | AutoOrganizeConsolidateResult
+  | AutoOrganizeArchiveResult;
 
 export type AutoOrganizeMessage =
   | { id: string; status: 'processing' }
-  | { id: string; status: 'done'; result: AutoOrganizeResult }
+  | { id: string; status: 'done'; result: AutoOrganizeResult; mode: AutoOrganizeMode }
   | { id: string; status: 'error'; error: string };

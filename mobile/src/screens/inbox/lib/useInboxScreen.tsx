@@ -25,9 +25,18 @@ import {
 import { useTabletInboxSidebarStore } from '@/app/navigation/tablet/tabletInboxSidebarStore';
 import type { BottomTabParamList } from '@/app/navigation/types';
 import { useFolderStore } from '@/entities/folder';
+import type {
+  AutoOrganizeMode,
+  AutoOrganizeRunResult,
+  AutoOrganizeTemplate,
+} from '@/entities/folder/lib/autoOrganizeTypes';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { areFoldersEnabledInAiMode, useSettingsStore } from '@/entities/settings';
+import {
+  areFoldersEnabledInAiMode,
+  isPrivateCustomServerMode,
+  useSettingsStore,
+} from '@/entities/settings';
 import { useAdsAllowed } from '@/features/app-storefront';
 import { useAutoArchiveReadNotes } from '@/features/auto-archive';
 import {
@@ -125,17 +134,76 @@ export function useInboxScreen() {
     handleSave: handleFolderSave,
     handleDelete: handleFolderDelete,
   } = useManageFolders();
+  const [aiOrganizeSheetVisible, setAiOrganizeSheetVisible] = useState(false);
+  const [aiOrganizePresentKey, setAiOrganizePresentKey] = useState(0);
+  const [aiOrganizeTemplateSheetVisible, setAiOrganizeTemplateSheetVisible] = useState(false);
+  const [pendingAutoOrganizeTemplate, setPendingAutoOrganizeTemplate] =
+    useState<AutoOrganizeTemplate>('general');
+
+  const handleAutoOrganizeResult = useCallback(
+    (result: AutoOrganizeRunResult) => {
+      if (result.mode === 'consolidate_folders') {
+        navigation.navigate('AiOrganizeFoldersCleanupReview', { result: result.data });
+        return;
+      }
+      if (result.mode === 'suggest_archive') {
+        navigation.navigate('AiOrganizeArchiveReview', { result: result.data });
+        return;
+      }
+      navigation.navigate('AutoOrganizeReview', {
+        result: result.data,
+        mode: result.mode,
+        template: result.template,
+      });
+    },
+    [navigation],
+  );
+
   const {
     runAutoOrganize,
     cancelAutoOrganize,
     isRunning: isAutoOrganizing,
+    activeMode: autoOrganizeActiveMode,
     overlayVisible: autoOrganizeOverlayVisible,
     overlayMode: autoOrganizeOverlayMode,
+    eligibleCount: autoOrganizeEligibleCount,
+    minRequired: autoOrganizeMinRequired,
   } = useAutoOrganizeFolders(records, {
-    onResult: (result) => {
-      navigation.navigate('AutoOrganizeReview', { result });
-    },
+    onResult: handleAutoOrganizeResult,
   });
+
+  const openAiOrganizeSheet = useCallback(() => {
+    setAiOrganizePresentKey((key) => key + 1);
+    setAiOrganizeSheetVisible(true);
+  }, []);
+
+  const closeAiOrganizeSheet = useCallback(() => {
+    setAiOrganizeSheetVisible(false);
+  }, []);
+
+  const closeAiOrganizeTemplateSheet = useCallback(() => {
+    setAiOrganizeTemplateSheetVisible(false);
+  }, []);
+
+  const handleAiOrganizeActionSelect = useCallback(
+    (mode: AutoOrganizeMode) => {
+      setAiOrganizeSheetVisible(false);
+      if (mode === 'full') {
+        setAiOrganizeTemplateSheetVisible(true);
+        return;
+      }
+      void runAutoOrganize({ mode });
+    },
+    [runAutoOrganize],
+  );
+
+  const handleAiOrganizeTemplateSelect = useCallback(
+    (template: AutoOrganizeTemplate) => {
+      setAiOrganizeTemplateSheetVisible(false);
+      void runAutoOrganize({ mode: 'full', template });
+    },
+    [runAutoOrganize],
+  );
 
   const effectiveActiveFolderId = foldersEnabled ? activeFolderId : null;
 
@@ -1016,11 +1084,24 @@ export function useInboxScreen() {
     closeFolderModal,
     handleFolderSave,
     handleFolderDelete,
-    runAutoOrganize,
+    openAiOrganizeSheet,
+    closeAiOrganizeSheet,
+    aiOrganizeSheetVisible,
+    aiOrganizePresentKey,
+    aiOrganizeTemplateSheetVisible,
+    closeAiOrganizeTemplateSheet,
+    pendingAutoOrganizeTemplate,
+    setPendingAutoOrganizeTemplate,
+    handleAiOrganizeActionSelect,
+    handleAiOrganizeTemplateSelect,
     cancelAutoOrganize,
     isAutoOrganizing,
+    autoOrganizeActiveMode,
     autoOrganizeOverlayVisible,
     autoOrganizeOverlayMode,
+    autoOrganizeEligibleCount,
+    autoOrganizeMinRequired,
+    isPrivateCustomServerMode: isPrivateCustomServerMode(aiExecutionMode, privateAiProvider),
     query,
     setQuery,
     filtered,
