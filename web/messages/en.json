@@ -89,7 +89,9 @@
     "primary": "Download App",
     "androidWaitlistAria": "Join Android waitlist",
     "androidSoonLabel": "Coming soon",
-    "androidWaitlistLink": "Join Android waitlist"
+    "androidWaitlistLink": "Join Android waitlist",
+    "qrCaption": "Scan to install",
+    "qrAria": "QR code to download the app"
   },
   "faq": {
     "title": "Questions people ask before installing",

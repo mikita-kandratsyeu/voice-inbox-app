@@ -28,12 +28,23 @@ function getFooterNav(): FooterNavItem[] {
 const footerLinkClass =
   'font-medium text-black/65 transition-colors hover:text-black dark:text-white/75 dark:hover:text-white';
 
-export function Footer(): React.ReactElement {
+type FooterProps = {
+  /** Extra bottom padding on mobile so the landing sticky CTA does not cover footer links. */
+  mobileStickyCtaClearance?: boolean;
+};
+
+export function Footer({ mobileStickyCtaClearance = false }: FooterProps): React.ReactElement {
   const t = useTranslations('footer');
 
   return (
-    <footer className="mt-16 border-t border-black/10 bg-slate-100/90 text-black dark:border-white/10 dark:bg-slate-950 dark:text-white">
-      <div className={`${marketingGutterClass} py-12 sm:py-14`}>
+    <footer className="mt-6 border-t border-black/10 bg-slate-100/90 text-black sm:mt-16 dark:border-white/10 dark:bg-slate-950 dark:text-white">
+      <div
+        className={`${marketingGutterClass} py-12 sm:py-14 ${
+          mobileStickyCtaClearance
+            ? 'pb-[calc(7.5rem+env(safe-area-inset-bottom)+3rem)] sm:pb-14'
+            : ''
+        }`}
+      >
         <div className={marketingContentClass}>
           <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
             <div className="max-w-md">
