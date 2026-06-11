@@ -8,7 +8,7 @@ import {
   List,
   Pin,
 } from 'lucide-react-native';
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type LayoutChangeEvent, TouchableOpacity, View, type ViewStyle } from 'react-native';
 
@@ -122,7 +122,7 @@ type InboxFilterBarProps = {
   hidePrimaryFilters?: boolean;
 };
 
-export const InboxFilterBar = ({
+export const InboxFilterBar = memo(function InboxFilterBar({
   filterStatus,
   menuFilterStatus,
   sortOption,
@@ -134,20 +134,45 @@ export const InboxFilterBar = ({
   color,
   onLayout,
   hidePrimaryFilters = false,
-}: InboxFilterBarProps) => {
+}: InboxFilterBarProps) {
   const { t } = useTranslation();
   const theme = useAppTheme();
   const isDark = theme === 'dark';
   const hasMenuFilterActive = menuFilterStatus != null;
 
-  const buttonStyle = {
-    minHeight: IOS_MIN_TOUCH_TARGET,
-    minWidth: IOS_MIN_TOUCH_TARGET,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-  };
+  const buttonStyle = useMemo(
+    () => ({
+      minHeight: IOS_MIN_TOUCH_TARGET,
+      minWidth: IOS_MIN_TOUCH_TARGET,
+      paddingVertical: 10,
+      borderRadius: 8,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+    }),
+    [],
+  );
+
+  const menuActions = useMemo(
+    () =>
+      MENU_FILTERS.map((opt) => ({
+        id: opt,
+        title: t(`inbox.filters.${opt}`),
+        titleColor: color.text.primary,
+        state: menuFilterStatus === opt ? ('on' as const) : ('off' as const),
+      })),
+    [menuFilterStatus, t, color.text.primary],
+  );
+
+  const sortActions = useMemo(
+    () =>
+      SORT_OPTIONS.map((opt) => ({
+        id: opt,
+        title: t(`inbox.sort.${opt}`),
+        titleColor: color.text.primary,
+        state: sortOption === opt ? ('on' as const) : ('off' as const),
+      })),
+    [sortOption, t, color.text.primary],
+  );
 
   return (
     <View
@@ -205,12 +230,7 @@ export const InboxFilterBar = ({
                 onMenuFilterChange(menuFilterStatus === opt ? null : opt);
               }
             }}
-            actions={MENU_FILTERS.map((opt) => ({
-              id: opt,
-              title: t(`inbox.filters.${opt}`),
-              titleColor: color.text.primary,
-              state: menuFilterStatus === opt ? 'on' : 'off',
-            }))}
+            actions={menuActions}
           >
             <TouchableOpacity
               accessibilityRole="button"
@@ -241,12 +261,7 @@ export const InboxFilterBar = ({
                 onSortChange(opt);
               }
             }}
-            actions={SORT_OPTIONS.map((opt) => ({
-              id: opt,
-              title: t(`inbox.sort.${opt}`),
-              titleColor: color.text.primary,
-              state: sortOption === opt ? 'on' : 'off',
-            }))}
+            actions={sortActions}
           >
             <TouchableOpacity
               accessibilityRole="button"
@@ -306,4 +321,4 @@ export const InboxFilterBar = ({
       </FrostedFilterSurface>
     </View>
   );
-};
+});
