@@ -42,6 +42,8 @@ export function SettingsGithubSyncRows({ color, t }: Props) {
     isSyncing,
     selectRepository,
     createAndSelectRepository,
+    pinnedRepoFullNames,
+    togglePinnedRepo,
     refreshSecrets,
   } = useGithubSync();
 
@@ -188,10 +190,13 @@ export function SettingsGithubSyncRows({ color, t }: Props) {
         repos={repos}
         loading={isLoadingRepos}
         creating={isCreatingRepo}
+        currentRepoFullName={secrets ? `${secrets.owner}/${secrets.repo}` : null}
+        pinnedRepoFullNames={pinnedRepoFullNames}
         onClose={() => setRepoPickerVisible(false)}
         onSelect={handleSelectRepo}
         onCreateRepo={handleCreateRepo}
         onLoadRepos={handleLoadRepos}
+        onTogglePinnedRepo={togglePinnedRepo}
       />
       <AutomationComingSoonSheet
         visible={proSheetVisible}

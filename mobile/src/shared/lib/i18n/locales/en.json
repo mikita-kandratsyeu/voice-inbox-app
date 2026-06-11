@@ -1256,7 +1256,13 @@
       "repoSearchPlaceholder": "Search repositories",
       "repoSearchEmpty": "No repositories match your search \"{{query}}\"",
       "repoPrivate": "Private",
-      "repoPublic": "Public"
+      "repoPublic": "Public",
+      "currentRepoSection": "Current",
+      "pinnedReposSection": "Pinned for backup",
+      "allReposSection": "All repositories",
+      "pinnedReposMax": "You can pin up to 3 repositories for backup.",
+      "pinRepoA11y": "Pin {{repo}} for backup",
+      "unpinRepoA11y": "Unpin {{repo}}"
     },
     "automation": "Automation",
     "aiProcessing": "Generations",

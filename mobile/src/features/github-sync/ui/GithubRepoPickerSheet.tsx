@@ -1,12 +1,12 @@
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
-import { ChevronRight, Plus, Search, X } from 'lucide-react-native';
+import { Check, ChevronRight, Pin, Plus, Search, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, Text, ToastAndroid, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
-import { hapticSelection, IS_IOS, matchesSearchQuery, normalizeSearchQuery } from '@/shared/lib';
+import { hapticSelection, IS_ANDROID, IS_IOS, normalizeSearchQuery } from '@/shared/lib';
 import {
   AppBottomSheetContent,
   AppBottomSheetModal,
@@ -14,13 +14,15 @@ import {
   SheetHeader,
 } from '@/shared/ui';
 
+import {
+  buildGithubRepoPickerRows,
+  githubRepoPickerListHeight,
+  type GithubRepoPickerRow,
+} from '../lib/buildGithubRepoPickerRows';
 import { GITHUB_SYNC_DEFAULT_BRANCH, GITHUB_SYNC_DEFAULT_REPO_NAME } from '../lib/constants';
 import type { GithubRepoSummary } from '../lib/githubApi';
 import { GithubIcon } from './GithubIcon';
 import { GithubSyncBranchText } from './GithubSyncBranchText';
-
-const REPO_ROW_HEIGHT = 72;
-const REPO_LIST_MAX_HEIGHT = 420;
 
 type Props = {
   visible: boolean;
@@ -28,10 +30,13 @@ type Props = {
   repos: GithubRepoSummary[];
   loading: boolean;
   creating?: boolean;
+  currentRepoFullName?: string | null;
+  pinnedRepoFullNames?: string[];
   onClose: () => void;
   onSelect: (repo: GithubRepoSummary) => void | Promise<void>;
   onCreateRepo: (name: string) => void | Promise<void>;
   onLoadRepos: () => void | Promise<void>;
+  onTogglePinnedRepo?: (fullName: string) => 'max' | 'ok';
 };
 
 type RepoPickerRowProps = {
@@ -39,10 +44,26 @@ type RepoPickerRowProps = {
   color: Colors;
   isLast: boolean;
   visibilityLabel: string;
+  pinned: boolean;
+  isCurrent: boolean;
+  showPinButton: boolean;
+  pinA11yLabel: string;
   onPress: () => void;
+  onTogglePin?: () => void;
 };
 
-function RepoPickerRow({ item, color, isLast, visibilityLabel, onPress }: RepoPickerRowProps) {
+function RepoPickerRow({
+  item,
+  color,
+  isLast,
+  visibilityLabel,
+  pinned,
+  isCurrent,
+  showPinButton,
+  pinA11yLabel,
+  onPress,
+  onTogglePin,
+}: RepoPickerRowProps) {
   return (
     <Pressable
       onPress={() => {
@@ -101,7 +122,35 @@ function RepoPickerRow({ item, color, isLast, visibilityLabel, onPress }: RepoPi
             {visibilityLabel}
           </Text>
         </View>
-        <ChevronRight size={18} color={color.text.muted} strokeWidth={2.2} />
+        {showPinButton && onTogglePin ? (
+          <Pressable
+            onPress={() => {
+              hapticSelection();
+              onTogglePin();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={pinA11yLabel}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={({ pressed }) => ({
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: pressed ? 0.7 : 1,
+              padding: 4,
+            })}
+          >
+            <Pin
+              size={18}
+              color={pinned ? color.accent.primary : color.text.muted}
+              fill={pinned ? color.accent.primary : 'transparent'}
+              strokeWidth={2}
+            />
+          </Pressable>
+        ) : null}
+        {isCurrent ? (
+          <Check size={18} color={color.accent.success} strokeWidth={2.4} />
+        ) : (
+          <ChevronRight size={18} color={color.text.muted} strokeWidth={2.2} />
+        )}
       </View>
     </Pressable>
   );
@@ -113,10 +162,13 @@ export function GithubRepoPickerSheet({
   repos,
   loading,
   creating = false,
+  currentRepoFullName = null,
+  pinnedRepoFullNames = [],
   onClose,
   onSelect,
   onCreateRepo,
   onLoadRepos,
+  onTogglePinnedRepo,
 }: Props) {
   const { t } = useTranslation();
   const onLoadReposRef = useRef(onLoadRepos);
@@ -142,6 +194,7 @@ export function GithubRepoPickerSheet({
   }, [onCreateRepo]);
 
   const normalizedQuery = useMemo(() => normalizeSearchQuery(query), [query]);
+  const pinnedSet = useMemo(() => new Set(pinnedRepoFullNames), [pinnedRepoFullNames]);
 
   const canCreateDefaultRepo = useMemo(() => {
     if (loading) return false;
@@ -153,40 +206,117 @@ export function GithubRepoPickerSheet({
     );
   }, [loading, repos]);
 
-  const filteredRepos = useMemo(() => {
-    const sorted = [...repos].sort((a, b) =>
-      a.fullName.localeCompare(b.fullName, undefined, { sensitivity: 'base' }),
-    );
-    if (!normalizedQuery) return sorted;
-    return sorted.filter(
-      (repo) =>
-        matchesSearchQuery(repo.fullName, normalizedQuery) ||
-        matchesSearchQuery(repo.name, normalizedQuery) ||
-        matchesSearchQuery(repo.owner, normalizedQuery),
-    );
-  }, [normalizedQuery, repos]);
+  const pickerRows = useMemo(
+    () =>
+      buildGithubRepoPickerRows({
+        repos,
+        pinnedFullNames: pinnedRepoFullNames,
+        currentFullName: currentRepoFullName,
+        normalizedQuery,
+      }),
+    [repos, pinnedRepoFullNames, currentRepoFullName, normalizedQuery],
+  );
 
-  const listHeight = useMemo(
-    () => Math.min(filteredRepos.length * REPO_ROW_HEIGHT, REPO_LIST_MAX_HEIGHT),
-    [filteredRepos.length],
+  const listHeight = useMemo(() => githubRepoPickerListHeight(pickerRows), [pickerRows]);
+
+  const showPinnedMaxFeedback = useCallback(() => {
+    if (IS_ANDROID) {
+      ToastAndroid.show(t('settings.githubSync.pinnedReposMax'), ToastAndroid.SHORT);
+      return;
+    }
+    Alert.alert(
+      t('settings.githubSync.pinnedReposSection'),
+      t('settings.githubSync.pinnedReposMax'),
+    );
+  }, [t]);
+
+  const handleTogglePin = useCallback(
+    (fullName: string) => {
+      if (!onTogglePinnedRepo) return;
+      const result = onTogglePinnedRepo(fullName);
+      if (result === 'max') {
+        showPinnedMaxFeedback();
+      }
+    },
+    [onTogglePinnedRepo, showPinnedMaxFeedback],
   );
 
   const renderItem = useCallback(
-    ({ item, index }: { item: GithubRepoSummary; index: number }) => (
-      <RepoPickerRow
-        item={item}
-        color={color}
-        isLast={index === filteredRepos.length - 1}
-        visibilityLabel={
-          item.private ? t('settings.githubSync.repoPrivate') : t('settings.githubSync.repoPublic')
-        }
-        onPress={() => void onSelect(item)}
-      />
-    ),
-    [color, filteredRepos.length, onSelect, t],
+    ({ item, index }: { item: GithubRepoPickerRow; index: number }) => {
+      if (item.type === 'header') {
+        return (
+          <View
+            style={{
+              paddingHorizontal: 14,
+              paddingTop:
+                item.titleKey === 'settings.githubSync.currentRepoSection'
+                  ? 12
+                  : index === 0
+                    ? 8
+                    : 10,
+              paddingBottom: 6,
+            }}
+          >
+            <Text
+              style={{
+                color: color.text.muted,
+                fontSize: 12,
+                fontWeight: '600',
+                letterSpacing: 0.2,
+                lineHeight: 16,
+                textTransform: 'uppercase',
+              }}
+            >
+              {t(item.titleKey)}
+            </Text>
+          </View>
+        );
+      }
+
+      const isLast = !pickerRows.slice(index + 1).some((row) => row.type === 'repo');
+      const pinned = pinnedSet.has(item.repo.fullName);
+      const isCurrent = item.repo.fullName === currentRepoFullName;
+
+      return (
+        <RepoPickerRow
+          item={item.repo}
+          color={color}
+          isLast={isLast}
+          visibilityLabel={
+            item.repo.private
+              ? t('settings.githubSync.repoPrivate')
+              : t('settings.githubSync.repoPublic')
+          }
+          pinned={pinned}
+          isCurrent={isCurrent}
+          showPinButton={onTogglePinnedRepo != null}
+          pinA11yLabel={
+            pinned
+              ? t('settings.githubSync.unpinRepoA11y', { repo: item.repo.fullName })
+              : t('settings.githubSync.pinRepoA11y', { repo: item.repo.fullName })
+          }
+          onPress={() => void onSelect(item.repo)}
+          onTogglePin={() => handleTogglePin(item.repo.fullName)}
+        />
+      );
+    },
+    [
+      color,
+      currentRepoFullName,
+      handleTogglePin,
+      onSelect,
+      onTogglePinnedRepo,
+      pickerRows,
+      pinnedSet,
+      t,
+    ],
   );
 
-  const keyExtractor = useCallback((item: GithubRepoSummary) => String(item.id), []);
+  const keyExtractor = useCallback((item: GithubRepoPickerRow) => item.id, []);
+
+  const repoSearchEmpty = normalizedQuery
+    ? t('settings.githubSync.repoSearchEmpty', { query: normalizedQuery })
+    : t('settings.githubSync.noRepos');
 
   const listBody = loading ? (
     <View className="items-center py-10">
@@ -204,7 +334,7 @@ export function GithubRepoPickerSheet({
     >
       {t('settings.githubSync.noRepos')}
     </Text>
-  ) : filteredRepos.length === 0 ? (
+  ) : pickerRows.length === 0 ? (
     <Text
       style={{
         color: color.text.secondary,
@@ -214,7 +344,7 @@ export function GithubRepoPickerSheet({
         textAlign: 'center',
       }}
     >
-      {t('settings.githubSync.repoSearchEmpty', { query: normalizedQuery })}
+      {repoSearchEmpty}
     </Text>
   ) : (
     <View
@@ -228,7 +358,7 @@ export function GithubRepoPickerSheet({
       }}
     >
       <FlashList
-        data={filteredRepos}
+        data={pickerRows}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         keyboardShouldPersistTaps="handled"

@@ -68,6 +68,8 @@ export function GithubSyncScreen() {
     isLoadingHistory,
     selectRepository,
     createAndSelectRepository,
+    pinnedRepoFullNames,
+    togglePinnedRepo,
     disconnect,
     syncNow,
     restoreVersion,
@@ -429,10 +431,13 @@ export function GithubSyncScreen() {
         repos={repos}
         loading={isLoadingRepos}
         creating={isCreatingRepo}
+        currentRepoFullName={secrets ? `${secrets.owner}/${secrets.repo}` : null}
+        pinnedRepoFullNames={pinnedRepoFullNames}
         onClose={() => setRepoPickerVisible(false)}
         onSelect={handleSelectRepo}
         onCreateRepo={handleCreateRepo}
         onLoadRepos={handleLoadRepos}
+        onTogglePinnedRepo={togglePinnedRepo}
       />
       <GithubSyncHistorySheet
         visible={historyVisible}

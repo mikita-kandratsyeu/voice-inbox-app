@@ -1292,7 +1292,13 @@
       "repoSearchPlaceholder": "Поиск репозиториев",
       "repoSearchEmpty": "По запросу «{{query}}» репозиториев не найдено.",
       "repoPrivate": "Приватный",
-      "repoPublic": "Публичный"
+      "repoPublic": "Публичный",
+      "currentRepoSection": "Текущий",
+      "pinnedReposSection": "Закреплённые для бэкапа",
+      "allReposSection": "Все репозитории",
+      "pinnedReposMax": "Можно закрепить не больше 3 репозиториев для бэкапа.",
+      "pinRepoA11y": "Закрепить {{repo}} для бэкапа",
+      "unpinRepoA11y": "Открепить {{repo}}"
     },
     "automation": "Автоматизация",
     "aiProcessing": "Генерации",

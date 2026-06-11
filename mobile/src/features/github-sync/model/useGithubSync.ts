@@ -38,6 +38,12 @@ import {
 } from '../lib/githubSyncBranch';
 import { registerGithubConnectSession } from '../lib/githubSyncConnectSession';
 import { runGithubSyncNow } from '../lib/githubSyncNow';
+import {
+  getGithubSyncPinnedRepos,
+  setGithubSyncPinnedRepos,
+  syncGithubSyncPinnedRepos,
+} from '../lib/githubSyncPinnedRepos';
+import { toggleGithubSyncPinnedRepo } from '../lib/githubSyncPinnedReposPolicy';
 import { beginGithubSyncProgress, endGithubSyncProgress } from '../lib/githubSyncProgress';
 import { isGithubSyncSessionActive, subscribeGithubSyncSession } from '../lib/githubSyncSession';
 import {
@@ -90,6 +96,10 @@ export function useGithubSync() {
   const [history, setHistory] = useState<GithubCommitSummary[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [githubLogin, setGithubLogin] = useState<string | null>(getGithubSyncLogin());
+  const [pinnedRepoFullNames, setPinnedRepoFullNames] = useState<string[]>(() => {
+    const login = getGithubSyncLogin();
+    return login ? getGithubSyncPinnedRepos(login) : [];
+  });
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(getGithubSyncAutoEnabled());
   const [autoSyncIntervalHours, setAutoSyncIntervalHours] = useState(
     getGithubSyncAutoIntervalHours(),
@@ -116,7 +126,9 @@ export function useGithubSync() {
     setSecrets(next);
     setConnected(await isGithubSyncConnected());
     setLastSyncedAt(getGithubSyncLastSyncedAt());
-    setGithubLogin(getGithubSyncLogin());
+    const login = getGithubSyncLogin();
+    setGithubLogin(login);
+    setPinnedRepoFullNames(login ? getGithubSyncPinnedRepos(login) : []);
     setAutoSyncEnabled(getGithubSyncAutoEnabled());
     setAutoSyncIntervalHours(getGithubSyncAutoIntervalHours());
     if (next?.accessToken && !getGithubSyncLogin()) {
@@ -192,6 +204,15 @@ export function useGithubSync() {
     try {
       const listed = await listGithubRepos(current.accessToken);
       setRepos(listed);
+      const login = getGithubSyncLogin();
+      if (login) {
+        setPinnedRepoFullNames(
+          syncGithubSyncPinnedRepos(
+            login,
+            listed.map((repo) => repo.fullName),
+          ),
+        );
+      }
       return { ok: true as const, repos: listed };
     } catch (err) {
       if (getGithubApiErrorStatus(err) === 401) {
@@ -249,7 +270,25 @@ export function useGithubSync() {
     setHistory([]);
     setLastSyncedAt(null);
     setGithubLogin(null);
+    setPinnedRepoFullNames([]);
   }, []);
+
+  const togglePinnedRepo = useCallback(
+    (fullName: string): 'max' | 'ok' => {
+      const login = githubLogin ?? getGithubSyncLogin();
+      if (!login) {
+        return 'ok';
+      }
+      const result = toggleGithubSyncPinnedRepo(getGithubSyncPinnedRepos(login), fullName);
+      if (!result.ok) {
+        return 'max';
+      }
+      setGithubSyncPinnedRepos(login, result.pinned);
+      setPinnedRepoFullNames(result.pinned);
+      return 'ok';
+    },
+    [githubLogin],
+  );
 
   const resolveBranchList = useCallback(
     (
@@ -546,6 +585,7 @@ export function useGithubSync() {
     isRestoring,
     lastSyncedAt,
     githubLogin,
+    pinnedRepoFullNames,
     autoSyncEnabled,
     autoSyncIntervalHours,
     repos,
@@ -571,5 +611,6 @@ export function useGithubSync() {
     restoreVersion,
     resolveDefaultOwner,
     refreshSecrets,
+    togglePinnedRepo,
   };
 }
