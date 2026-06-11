@@ -74,10 +74,8 @@ export function AppBottomSheetContent(
   };
 
   if ('scrollable' in props && props.scrollable) {
-    const {
-      keyboardShouldPersistTaps = 'handled',
-      showsVerticalScrollIndicator = false,
-    } = props as AppBottomSheetScrollableContentProps;
+    const { keyboardShouldPersistTaps = 'handled', showsVerticalScrollIndicator = false } =
+      props as AppBottomSheetScrollableContentProps;
 
     return (
       <BottomSheetScrollView
