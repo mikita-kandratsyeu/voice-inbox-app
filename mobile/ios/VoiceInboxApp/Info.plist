@@ -57,6 +57,8 @@
 	<string>Adding tasks from notes to Calendar</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Use Face ID to quickly unlock the app.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Voice Inbox AI searches your local network for a compatible AI server (for example Ollama or LM Studio) when you choose Find on network in AI server settings.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Voice Inbox AI uses the microphone to record voice notes—for example when you tap record to capture a meeting reminder or a quick idea. Audio is saved as a note on your device so you can transcribe and organize it.</string>
 	<key>NSRemindersFullAccessUsageDescription</key>

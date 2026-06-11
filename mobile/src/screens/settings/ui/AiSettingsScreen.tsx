@@ -208,8 +208,8 @@ export const AiSettingsScreen = () => {
               : t('aiSettings.privateProvider.connectionStatus.invalidResponse');
   const remoteConnectionStatusColor = connectionCheckInProgress
     ? color.text.muted
-    : lastConnectionCheckOk === true
-      ? color.accent.primary
+    : lastConnectionCheckOk === true || (lastConnectionCheckOk == null && hasSavedRemoteConfig)
+      ? color.accent.success
       : color.accent.delete;
   const openPrivateRemoteServerScreen = React.useCallback(() => {
     if (!isProActive) {

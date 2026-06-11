@@ -1,9 +1,17 @@
+import NetInfo from '@react-native-community/netinfo';
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Share } from 'react-native';
 
 import { useSettingsStore } from '@/entities/settings';
+import {
+  type DiscoveredPrivateRemoteServer,
+  discoverPrivateRemoteServersOnLan,
+  type PrivateRemoteLanDiscoveryUnavailableReason,
+  readDeviceLanIpv4,
+  resolvePrivateRemoteLanDiscoveryUnavailableReason,
+} from '@/shared/lib/ai-core/private-remote/privateRemoteLanDiscovery';
 import {
   type PrivateRemoteConnectionFailureReason,
   testPrivateRemoteConnection,
@@ -60,11 +68,26 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
   const [isTestingConnection, setIsTestingConnection] = React.useState(false);
   const [isExportingProfiles, setIsExportingProfiles] = React.useState(false);
   const [isImportingProfiles, setIsImportingProfiles] = React.useState(false);
+  const [isReplacingApiKey, setIsReplacingApiKey] = React.useState(false);
+  const [apiKeyDraft, setApiKeyDraft] = React.useState('');
   const didTouchRemoteConfigRef = React.useRef(false);
   const didInitializeRef = React.useRef(false);
   const [previousProfileBeforeCreateId, setPreviousProfileBeforeCreateId] = React.useState<
     string | null
   >(null);
+  const lanDiscoveryAbortRef = React.useRef<AbortController | null>(null);
+  const [lanDiscoveryVisible, setLanDiscoveryVisible] = React.useState(false);
+  const [isDiscoveringLan, setIsDiscoveringLan] = React.useState(false);
+  const [lanDiscoveryProgress, setLanDiscoveryProgress] = React.useState<{
+    scanned: number;
+    total: number;
+  } | null>(null);
+  const [discoveredLanServers, setDiscoveredLanServers] = React.useState<
+    DiscoveredPrivateRemoteServer[]
+  >([]);
+  const [lanDiscoveryUnavailable, setLanDiscoveryUnavailable] =
+    React.useState<PrivateRemoteLanDiscoveryUnavailableReason | null>(null);
+  const [lanDiscoveryLimitedToLocalhost, setLanDiscoveryLimitedToLocalhost] = React.useState(false);
 
   React.useEffect(() => {
     if (didInitializeRef.current) return;
@@ -137,6 +160,14 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
     baseUrlValidationError == null && isRemoteModelFilled && !isTestingConnection;
   const isCreatingNewConnection = privateRemoteActiveProfileId == null;
   const hasSavedProfiles = privateRemoteProfiles.length > 0;
+  const hasSavedApiKey = privateRemoteApiKey.trim().length > 0;
+  const showMaskedSavedApiKey = hasSavedApiKey && !isReplacingApiKey;
+  const effectiveApiKey = isReplacingApiKey ? apiKeyDraft : privateRemoteApiKey;
+
+  React.useEffect(() => {
+    setIsReplacingApiKey(false);
+    setApiKeyDraft('');
+  }, [privateRemoteActiveProfileId, isCreatingNewConnection]);
 
   const buildRemoteProfileName = React.useCallback(
     (baseUrl: string, model: string) => {
@@ -190,6 +221,8 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
 
   const switchToCreateConnectionMode = React.useCallback(() => {
     didTouchRemoteConfigRef.current = false;
+    setIsReplacingApiKey(false);
+    setApiKeyDraft('');
     setPreviousProfileBeforeCreateId(privateRemoteActiveProfileId);
     setPrivateRemoteActiveProfile(null);
     setPrivateRemoteBaseUrl('');
@@ -218,22 +251,25 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
     try {
       const result = await testPrivateRemoteConnection({
         privateRemoteBaseUrl,
-        privateRemoteApiKey,
+        privateRemoteApiKey: effectiveApiKey,
         privateRemoteModel,
       });
       if (result.ok) {
         const profileId = privateRemoteActiveProfileId ?? `remote-${Date.now()}`;
         const profileName = buildRemoteProfileName(privateRemoteBaseUrl, privateRemoteModel);
+        setPrivateRemoteApiKey(effectiveApiKey);
+        setIsReplacingApiKey(false);
+        setApiKeyDraft('');
         setPrivateRemoteLastSuccessfulConfig({
           baseUrl: privateRemoteBaseUrl,
-          apiKey: privateRemoteApiKey,
+          apiKey: effectiveApiKey,
           model: privateRemoteModel,
         });
         upsertPrivateRemoteProfile({
           id: profileId,
           name: profileName,
           baseUrl: privateRemoteBaseUrl,
-          apiKey: privateRemoteApiKey,
+          apiKey: effectiveApiKey,
           model: privateRemoteModel,
           updatedAt: Date.now(),
         });
@@ -273,10 +309,11 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
     navigation,
     options,
     privateRemoteActiveProfileId,
-    privateRemoteApiKey,
+    effectiveApiKey,
     privateRemoteBaseUrl,
     privateRemoteModel,
     setPrivateAiProvider,
+    setPrivateRemoteApiKey,
     setPrivateRemoteLastSuccessfulConfig,
     t,
     upsertPrivateRemoteProfile,
@@ -432,6 +469,84 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
     [setPrivateRemoteBaseUrl, setPrivateRemoteModel],
   );
 
+  React.useEffect(
+    () => () => {
+      lanDiscoveryAbortRef.current?.abort();
+    },
+    [],
+  );
+
+  const runLanDiscovery = React.useCallback(async () => {
+    lanDiscoveryAbortRef.current?.abort();
+    const controller = new AbortController();
+    lanDiscoveryAbortRef.current = controller;
+
+    setLanDiscoveryVisible(true);
+    setIsDiscoveringLan(true);
+    setDiscoveredLanServers([]);
+    setLanDiscoveryProgress(null);
+    setLanDiscoveryUnavailable(null);
+    setLanDiscoveryLimitedToLocalhost(false);
+
+    const net = await NetInfo.fetch();
+    const unavailable = resolvePrivateRemoteLanDiscoveryUnavailableReason(net);
+    if (unavailable) {
+      setLanDiscoveryUnavailable(unavailable);
+      setIsDiscoveringLan(false);
+      return;
+    }
+
+    const deviceIp = readDeviceLanIpv4(net);
+    if (!deviceIp) {
+      setLanDiscoveryLimitedToLocalhost(true);
+    }
+
+    try {
+      const servers = await discoverPrivateRemoteServersOnLan({
+        deviceIp,
+        apiKey: privateRemoteApiKey,
+        signal: controller.signal,
+        onProgress: (scanned, total) => {
+          setLanDiscoveryProgress({ scanned, total });
+        },
+      });
+      if (!controller.signal.aborted) {
+        setDiscoveredLanServers(servers);
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        setIsDiscoveringLan(false);
+      }
+    }
+  }, [privateRemoteApiKey]);
+
+  const closeLanDiscovery = React.useCallback(() => {
+    setLanDiscoveryVisible(false);
+    setLanDiscoveryUnavailable(null);
+    setLanDiscoveryProgress(null);
+    setDiscoveredLanServers([]);
+  }, []);
+
+  const cancelLanDiscovery = React.useCallback(() => {
+    lanDiscoveryAbortRef.current?.abort();
+    lanDiscoveryAbortRef.current = null;
+    setIsDiscoveringLan(false);
+    closeLanDiscovery();
+  }, [closeLanDiscovery]);
+
+  const selectDiscoveredLanServer = React.useCallback(
+    (server: DiscoveredPrivateRemoteServer) => {
+      didTouchRemoteConfigRef.current = true;
+      setPrivateRemoteBaseUrl(server.baseUrl);
+      if (server.sampleModels[0]) {
+        setPrivateRemoteModel(server.sampleModels[0]);
+      }
+      setRemoteModelListNonce((n) => n + 1);
+      closeLanDiscovery();
+    },
+    [closeLanDiscovery, setPrivateRemoteBaseUrl, setPrivateRemoteModel],
+  );
+
   const onBaseUrlChange = React.useCallback(
     (value: string) => {
       didTouchRemoteConfigRef.current = true;
@@ -449,6 +564,23 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
     [setPrivateRemoteModel],
   );
 
+  const onApiKeyChange = React.useCallback(
+    (value: string) => {
+      if (showMaskedSavedApiKey) return;
+      if (isReplacingApiKey) {
+        setApiKeyDraft(value);
+        return;
+      }
+      setPrivateRemoteApiKey(value);
+    },
+    [isReplacingApiKey, setPrivateRemoteApiKey, showMaskedSavedApiKey],
+  );
+
+  const startReplacingApiKey = React.useCallback(() => {
+    setIsReplacingApiKey(true);
+    setApiKeyDraft('');
+  }, []);
+
   const connectAccessibilityLabel = isCreatingNewConnection
     ? t('aiSettings.privateProvider.testAndSaveConnection')
     : t('aiSettings.privateProvider.testAndUpdateConnection');
@@ -457,12 +589,18 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
     quickTemplates: PRIVATE_QUICK_TEMPLATES,
     privateRemoteBaseUrl,
     privateRemoteApiKey,
+    effectiveApiKey,
+    apiKeyDraft,
     privateRemoteModel,
+    showMaskedSavedApiKey,
+    isReplacingApiKey,
     privateRemoteProfiles,
     privateRemoteActiveProfileId,
     setPrivateRemoteActiveProfile,
     removePrivateRemoteProfile,
     setPrivateRemoteApiKey,
+    onApiKeyChange,
+    startReplacingApiKey,
     remoteModelListNonce,
     baseUrlValidationError,
     canTestConnection,
@@ -480,5 +618,15 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
     onBaseUrlChange,
     onModelChange,
     connectAccessibilityLabel,
+    lanDiscoveryVisible,
+    isDiscoveringLan,
+    lanDiscoveryProgress,
+    discoveredLanServers,
+    lanDiscoveryUnavailable,
+    lanDiscoveryLimitedToLocalhost,
+    runLanDiscovery,
+    closeLanDiscovery,
+    cancelLanDiscovery,
+    selectDiscoveredLanServer,
   };
 }

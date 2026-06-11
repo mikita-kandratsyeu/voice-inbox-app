@@ -38,12 +38,11 @@ export function SheetPickerRow({
   labelNumberOfLines = 1,
   tintedSubtitle = false,
 }: SheetPickerRowProps) {
-  const selectionTrailing =
-    showSelectionCheck && selected ? (
-      <Check size={20} color={color.accent.primary} strokeWidth={2.5} />
-    ) : (
-      <ChevronRight size={18} color={color.text.muted} strokeWidth={2.2} />
-    );
+  const selectionTrailing = !showSelectionCheck ? null : selected ? (
+    <Check size={20} color={color.accent.primary} strokeWidth={2.5} />
+  ) : (
+    <ChevronRight size={18} color={color.text.muted} strokeWidth={2.2} />
+  );
 
   return (
     <Pressable

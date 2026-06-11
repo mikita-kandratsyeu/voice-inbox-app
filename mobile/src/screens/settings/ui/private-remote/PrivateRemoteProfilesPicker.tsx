@@ -1,4 +1,4 @@
-import { Server, Trash2 } from 'lucide-react-native';
+import { Check, Server, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, Text, View } from 'react-native';
@@ -118,18 +118,24 @@ export function PrivateRemoteProfilesPicker({
               color={color}
               icon={Server}
               selected={isActive}
+              showSelectionCheck={false}
               isLast={isLast}
               onPress={() => pickProfile(profile.id)}
               trailing={
-                <Pressable
-                  onPress={() => confirmDelete(profile.id)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('aiSettings.privateProvider.deleteConnection')}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  className="rounded-lg p-1.5"
-                >
-                  <Trash2 size={18} color={color.accent.delete} strokeWidth={2} />
-                </Pressable>
+                <View className="flex-row items-center gap-2">
+                  {isActive ? (
+                    <Check size={20} color={color.accent.primary} strokeWidth={2.5} />
+                  ) : null}
+                  <Pressable
+                    onPress={() => confirmDelete(profile.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('aiSettings.privateProvider.deleteConnection')}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    className="rounded-lg p-1.5"
+                  >
+                    <Trash2 size={18} color={color.accent.delete} strokeWidth={2} />
+                  </Pressable>
+                </View>
               }
             />
           );

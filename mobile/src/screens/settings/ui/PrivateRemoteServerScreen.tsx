@@ -1,6 +1,6 @@
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation } from '@react-navigation/native';
-import { Check, Copy } from 'lucide-react-native';
+import { Check, Copy, RefreshCw, ShieldCheck, Wifi } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -26,10 +26,12 @@ import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import { type Colors, useColors } from '@/shared/config';
-import { hapticLight, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
+import { hapticLight, IS_IOS, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
+import { formatMaskedApiKey } from '../lib/formatMaskedApiKey';
 import { usePrivateRemoteServerScreen } from '../lib/usePrivateRemoteServerScreen';
+import { PrivateRemoteLanDiscoverySheet } from './private-remote/PrivateRemoteLanDiscoverySheet';
 import { PrivateRemoteModelsPicker } from './private-remote/PrivateRemoteModelsPicker';
 import { PrivateRemoteProfilesPicker } from './private-remote/PrivateRemoteProfilesPicker';
 
@@ -37,6 +39,9 @@ const COPY_PRESS_IN_MS = 70;
 const COPY_SPRING_DAMPING = 14;
 const COPY_SPRING_STIFFNESS = 280;
 const COPY_OK_ICON_MS = 900;
+
+/** Stops iOS from pairing URL + secure field as a website login and offering Keychain save. */
+const API_KEY_TEXT_CONTENT_TYPE = IS_IOS ? 'oneTimeCode' : 'none';
 
 type BaseUrlCopyButtonProps = {
   value: string;
@@ -96,6 +101,31 @@ function BaseUrlCopyButton({ value, color, disabled }: BaseUrlCopyButtonProps) {
           <Copy size={18} color={iconColor} strokeWidth={2} />
         )}
       </Animated.View>
+    </TouchableOpacity>
+  );
+}
+
+type ApiKeyReplaceButtonProps = {
+  color: Colors;
+  onPress: () => void;
+};
+
+function ApiKeyReplaceButton({ color, onPress }: ApiKeyReplaceButtonProps) {
+  const { t } = useTranslation();
+
+  return (
+    <TouchableOpacity
+      onPress={() => {
+        hapticLight();
+        onPress();
+      }}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={t('aiSettings.privateProvider.replaceApiKey')}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      className="h-10 w-10 items-center justify-center rounded-lg"
+    >
+      <RefreshCw size={18} color={color.text.secondary} strokeWidth={2} />
     </TouchableOpacity>
   );
 }
@@ -330,12 +360,34 @@ export const PrivateRemoteServerScreen = () => {
           </View>
 
           <View className="mb-6">
-            <Text
-              className="mb-2 text-[13px] font-semibold"
-              style={{ color: color.text.secondary }}
-            >
-              {t('aiSettings.privateProvider.baseUrl')}
-            </Text>
+            <View className="mb-2 flex-row items-center justify-between gap-3">
+              <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+                {t('aiSettings.privateProvider.baseUrl')}
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  void screen.runLanDiscovery();
+                }}
+                disabled={screen.isDiscoveringLan}
+                className="min-h-[36px] flex-row items-center gap-2 rounded-lg border px-3 py-2"
+                style={{
+                  borderColor: color.border.default,
+                  opacity: screen.isDiscoveringLan ? 0.55 : 1,
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t('aiSettings.privateProvider.lanDiscovery.findOnNetwork')}
+                accessibilityState={{ disabled: screen.isDiscoveringLan }}
+              >
+                {screen.isDiscoveringLan ? (
+                  <ActivityIndicator size="small" color={color.accent.primary} />
+                ) : (
+                  <Wifi size={16} color={color.accent.primary} strokeWidth={2.2} />
+                )}
+                <Text className="text-[13px] font-semibold" style={{ color: color.accent.primary }}>
+                  {t('aiSettings.privateProvider.lanDiscovery.findOnNetwork')}
+                </Text>
+              </TouchableOpacity>
+            </View>
             <View
               className="min-h-[48px] flex-row items-center rounded-xl border pr-1"
               style={{
@@ -348,6 +400,9 @@ export const PrivateRemoteServerScreen = () => {
                 onChangeText={screen.onBaseUrlChange}
                 autoCapitalize="none"
                 autoCorrect={false}
+                autoComplete="off"
+                textContentType="URL"
+                importantForAutofill="no"
                 keyboardType="url"
                 placeholder={t('aiSettings.privateProvider.baseUrlPlaceholder')}
                 placeholderTextColor={color.text.muted}
@@ -374,30 +429,67 @@ export const PrivateRemoteServerScreen = () => {
             >
               {t('aiSettings.privateProvider.apiKey')}
             </Text>
-            <TextInput
-              value={screen.privateRemoteApiKey}
-              onChangeText={screen.setPrivateRemoteApiKey}
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="off"
-              textContentType="none"
-              importantForAutofill="no"
-              secureTextEntry
-              placeholder={t('aiSettings.privateProvider.apiKeyPlaceholder')}
-              placeholderTextColor={color.text.muted}
-              className="min-h-[48px] rounded-xl border px-4 py-3 text-[15px]"
-              style={{
-                borderColor: color.border.default,
-                color: color.text.primary,
-                backgroundColor: color.background.card,
-              }}
-            />
+            {screen.showMaskedSavedApiKey ? (
+              <>
+                <View
+                  className="min-h-[48px] flex-row items-center rounded-xl border pr-1"
+                  style={{
+                    borderColor: color.border.default,
+                    backgroundColor: color.background.tertiary,
+                    opacity: 0.85,
+                  }}
+                >
+                  <TextInput
+                    value={formatMaskedApiKey(screen.privateRemoteApiKey)}
+                    editable={false}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="off"
+                    textContentType="none"
+                    importantForAutofill="no"
+                    className="min-h-[48px] flex-1 px-4 py-3 text-[15px]"
+                    style={{ color: color.text.secondary }}
+                    accessibilityLabel={t('aiSettings.privateProvider.apiKeySavedA11y')}
+                  />
+                  <ApiKeyReplaceButton color={color} onPress={screen.startReplacingApiKey} />
+                </View>
+                <View className="mt-2 flex-row items-center gap-1.5">
+                  <ShieldCheck size={14} color={color.text.muted} strokeWidth={2} />
+                  <Text
+                    className="flex-1 text-[13px] leading-5"
+                    style={{ color: color.text.muted }}
+                  >
+                    {t('aiSettings.privateProvider.apiKeySavedHint')}
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <TextInput
+                value={screen.isReplacingApiKey ? screen.apiKeyDraft : screen.privateRemoteApiKey}
+                onChangeText={screen.onApiKeyChange}
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="off"
+                textContentType={API_KEY_TEXT_CONTENT_TYPE}
+                importantForAutofill="no"
+                passwordRules=""
+                secureTextEntry
+                placeholder={t('aiSettings.privateProvider.apiKeyPlaceholder')}
+                placeholderTextColor={color.text.muted}
+                className="min-h-[48px] rounded-xl border px-4 py-3 text-[15px]"
+                style={{
+                  borderColor: color.border.default,
+                  color: color.text.primary,
+                  backgroundColor: color.background.card,
+                }}
+              />
+            )}
           </View>
 
           <View className="mb-4">
             <PrivateRemoteModelsPicker
               baseUrl={screen.privateRemoteBaseUrl}
-              apiKey={screen.privateRemoteApiKey}
+              apiKey={screen.effectiveApiKey}
               selectedModel={screen.privateRemoteModel}
               onModelChange={screen.onModelChange}
               color={color}
@@ -408,6 +500,22 @@ export const PrivateRemoteServerScreen = () => {
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </KeyboardAwareScrollView>
       </View>
+
+      <PrivateRemoteLanDiscoverySheet
+        visible={screen.lanDiscoveryVisible}
+        color={color}
+        isScanning={screen.isDiscoveringLan}
+        progress={screen.lanDiscoveryProgress}
+        unavailableReason={screen.lanDiscoveryUnavailable}
+        limitedToLocalhost={screen.lanDiscoveryLimitedToLocalhost}
+        servers={screen.discoveredLanServers}
+        onClose={screen.closeLanDiscovery}
+        onCancelScan={screen.cancelLanDiscovery}
+        onSelectServer={screen.selectDiscoveredLanServer}
+        onRetry={() => {
+          void screen.runLanDiscovery();
+        }}
+      />
     </View>
   );
 };

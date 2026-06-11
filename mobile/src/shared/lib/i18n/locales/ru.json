@@ -1797,6 +1797,19 @@
         "google": "Google AI"
       },
       "baseUrl": "Адрес сервера",
+      "lanDiscovery": {
+        "findOnNetwork": "Найти в сети",
+        "title": "Серверы в вашей сети",
+        "subtitle": "Нажмите на сервер — подставим адрес и первую доступную модель.",
+        "progress": "Проверено {{scanned}} из {{total}}",
+        "empty": "Совместимые серверы не найдены. Убедитесь, что Ollama или LM Studio запущены, слушают сеть и не блокируются файрволом.",
+        "scanAgain": "Сканировать снова",
+        "limitedToLocalhost": "Не удалось определить IP в Wi‑Fi — ищем только на этом устройстве (127.0.0.1).",
+        "serverSubtitle": "{{kind}} · {{count}} моделей · {{models}}",
+        "unavailable": {
+          "not_on_local_network": "Подключитесь к Wi‑Fi или Ethernet в той же сети, что и ИИ-сервер."
+        }
+      },
       "copyBaseUrl": "Скопировать адрес сервера",
       "baseUrlPlaceholder": "http://192.168.0.10:11434",
       "baseUrlError": {
@@ -1808,6 +1821,9 @@
       "modelPlaceholder": "qwen2.5:7b-instruct",
       "apiKey": "API-ключ (необязательно)",
       "apiKeyPlaceholder": "sk-...",
+      "apiKeySavedHint": "Ключ надёжно сохранён на этом устройстве.",
+      "apiKeySavedA11y": "Сохранённый API-ключ",
+      "replaceApiKey": "Заменить ключ",
       "testConnection": "Проверить",
       "testingConnection": "Проверяем...",
       "connectionOkTitle": "Подключение успешно",

@@ -641,8 +641,13 @@ export type PrivateRemoteServerConfig = Pick<
   'privateRemoteBaseUrl' | 'privateRemoteApiKey'
 >;
 
+export type ListPrivateRemoteModelsOptions = {
+  timeoutMs?: number;
+};
+
 export async function listPrivateRemoteModels(
   config: PrivateRemoteServerConfig,
+  options?: ListPrivateRemoteModelsOptions,
 ): Promise<{ ok: true; models: string[] } | { ok: false; error: string }> {
   const modelsEndpoint = resolveRemoteModelsUrl(config.privateRemoteBaseUrl);
   if (!modelsEndpoint) {
@@ -653,7 +658,7 @@ export async function listPrivateRemoteModels(
     const modelsResponse = await nitroFetch(modelsEndpoint, {
       method: 'GET',
       headers: createRemoteHeaders(config.privateRemoteApiKey),
-      timeoutMs: PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
+      timeoutMs: options?.timeoutMs ?? PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
     });
     if (isAuthFailureStatus(modelsResponse.status)) {
       return { ok: false, error: i18n.t('aiSettings.privateProvider.healthCheck.authFailed') };
