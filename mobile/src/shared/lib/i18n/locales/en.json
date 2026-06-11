@@ -993,33 +993,38 @@
       "features": {
         "transcription": {
           "title": "Transcription",
-          "subtitle": "Runs on device with downloaded Whisper models and does not spend cloud AI credits."
+          "subtitle": "On your device with Whisper — never uses cloud credits."
         },
         "summary": {
           "title": "Summaries and tasks",
-          "subtitle": "Uses cloud AI in online mode, or local generation when private local AI is enabled."
+          "subtitle": "1 cloud credit per note in Smart. In Private, on your device or your server (Pro) — no cloud credits."
+        },
+        "meetingMode": {
+          "title": "Meeting mode",
+          "subtitle": "Meeting recap plus replies by participant: 2 cloud credits per run in Smart. In Private, on your device or your server (Pro) — no cloud credits."
         },
         "ask": {
           "title": "Questions about notes",
-          "subtitle": "Uses cloud AI in Smart mode, or on-device generation when Private local AI is enabled."
+          "subtitle": "1 cloud credit per question in Smart. In Private, on your device or your server (Pro) — no cloud credits."
         },
         "translate": {
           "title": "Translate",
-          "subtitle": "Cloud translation spends AI credits when Smart mode is selected."
+          "subtitle": "1 cloud credit per translation in Smart."
         },
         "digest": {
           "title": "AI digest",
-          "subtitle": "Your day, week, or month at a glance — with an optional AI recap."
+          "subtitle": "Optional AI recap: 1 cloud credit in Smart, or your server in Private (Pro) — no cloud credits."
         },
         "autoOrganize": {
           "title": "Auto-organize",
-          "subtitle": "Folder suggestions and automatic organization use cloud AI credits."
+          "subtitle": "2 cloud credits per run in Smart, or your server in Private (Pro) — no cloud credits."
         }
       },
       "savingTips": {
-        "localTranscription": "Transcribe first and generate only for notes that need a summary or tasks.",
-        "batchAsk": "Ask one focused question instead of several follow-ups when possible.",
-        "privateMode": "Use local/private AI for eligible workflows when you want to avoid spending cloud AI credits."
+        "localTranscription": "Transcribe first, then generate summaries only for notes that need them.",
+        "batchAsk": "Ask one focused question instead of several follow-ups when you can.",
+        "privateMode": "Private AI handles summaries, Q&A, and organization without spending cloud credits.",
+        "meetingMode": "Use a regular summary when you do not need replies split by participant — it costs 1 credit instead of 2."
       }
     },
     "digest": {
@@ -2406,7 +2411,7 @@
     "autoOrganizeReviewUnnamedFolder": "Untitled",
     "aiOrganizeSheet": {
       "title": "AI organization",
-      "subtitle": "{{count}} active notes.",
+      "subtitle": "{{count}} active notes — 2 cloud credits per run in Smart.",
       "proRequired": "Pro modes require an active Pro subscription.",
       "consolidateMinTitle": "Not enough folders",
       "consolidateMinDescription": "Add at least two folders before merging or cleaning them up.",

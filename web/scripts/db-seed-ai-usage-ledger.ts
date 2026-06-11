@@ -95,6 +95,7 @@ function buildMetadata(params: {
       return {
         ...base,
         notesCount: 8 + (params.seed % 24),
+        chargedUsageUnits: 2,
       };
     case 'meeting_dialogue':
       return {

@@ -1,4 +1,5 @@
-import { checkAndIncrement, decrement, getResetAt } from '@/lib/ai-rate-limit';
+import { AUTO_ORGANIZE_CHARGED_USAGE_UNITS } from '@/lib/auto-organize-types';
+import { checkAndIncrement, decrementBy, getResetAt } from '@/lib/ai-rate-limit';
 import { aiModelResponseFields } from '@/lib/ai-model-display';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
@@ -89,11 +90,19 @@ export const createAutoOrganizeRequest = async (
   );
   if (!created) return { created: false };
 
-  const generationLimitResult = await checkAndIncrement(deviceId, undefined, 1, {
-    operation: 'auto_organize',
-    jobId: id,
-    metadata: aiModelResponseFields(SYSTEM_MICRO_TASK_MODEL),
-  });
+  const generationLimitResult = await checkAndIncrement(
+    deviceId,
+    undefined,
+    AUTO_ORGANIZE_CHARGED_USAGE_UNITS,
+    {
+      operation: 'auto_organize',
+      jobId: id,
+      metadata: {
+        ...aiModelResponseFields(SYSTEM_MICRO_TASK_MODEL),
+        chargedUsageUnits: AUTO_ORGANIZE_CHARGED_USAGE_UNITS,
+      },
+    },
+  );
   if (!generationLimitResult.allowed) {
     await saveAutoOrganizeMessage(id, {
       id,
@@ -110,10 +119,11 @@ export const createAutoOrganizeRequest = async (
 
   const limitResult = await checkAndIncrementAutoOrganize(deviceId);
   if (!limitResult.allowed) {
-    await decrement(deviceId, {
+    await decrementBy(deviceId, AUTO_ORGANIZE_CHARGED_USAGE_UNITS, {
       operation: 'auto_organize',
       jobId: id,
       description: 'Auto-organize free weekly limit reached',
+      metadata: { chargedUsageUnits: AUTO_ORGANIZE_CHARGED_USAGE_UNITS },
     });
     await saveAutoOrganizeMessage(id, {
       id,
@@ -139,6 +149,7 @@ export const createAutoOrganizeRequest = async (
     clientUserAgent,
     mode,
     template: normalizeAutoOrganizeTemplate(template),
+    chargedUsageUnits: AUTO_ORGANIZE_CHARGED_USAGE_UNITS,
   };
 
   await saveJobPayload(jobPayload);

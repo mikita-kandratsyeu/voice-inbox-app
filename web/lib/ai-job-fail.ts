@@ -1,3 +1,4 @@
+import { AUTO_ORGANIZE_CHARGED_USAGE_UNITS } from '@/lib/auto-organize-types';
 import { decrement, decrementBy } from '@/lib/ai-rate-limit';
 import { decrementAutoOrganizeWeekly } from '@/lib/ai-job-runners/run-auto-organize-job';
 import { deleteJobPayload, getJobPayload } from '@/lib/ai-job-payload';
@@ -74,9 +75,19 @@ export async function markAiJobFailed(envelope: AiJobEnvelope, error: string): P
       ttl,
     );
   } else {
-    await decrement(deviceId, {
+    const payload = await getJobPayload(jobId);
+    const refundUnits =
+      operation === 'folder_auto_organize'
+        ? payload?.operation === 'folder_auto_organize'
+          ? (payload.chargedUsageUnits ?? AUTO_ORGANIZE_CHARGED_USAGE_UNITS)
+          : AUTO_ORGANIZE_CHARGED_USAGE_UNITS
+        : 1;
+    await decrementBy(deviceId, refundUnits, {
       operation: toLedgerOperation(operation),
       jobId,
+      ...(operation === 'folder_auto_organize'
+        ? { metadata: { chargedUsageUnits: refundUnits } }
+        : {}),
     });
     await decrementAutoOrganizeWeekly(deviceId);
     await saveMessage(

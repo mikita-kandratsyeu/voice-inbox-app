@@ -30,6 +30,9 @@ export const PRO_AUTO_ORGANIZE_MODES: ReadonlySet<AutoOrganizeMode> = new Set([
 
 export const AUTO_ORGANIZE_INBOX_FOLDER_NAME = '__inbox__';
 
+/** Weekly AI credits reserved per cloud auto-organize run (keep in sync with web). */
+export const AUTO_ORGANIZE_CHARGED_USAGE_UNITS = 2;
+
 export type AutoOrganizeFoldersResult = {
   folders: Array<{ name: string; icon: string; color: string }>;
   assignments: Array<{ recordId: string; folderName: string }>;

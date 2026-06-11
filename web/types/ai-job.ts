@@ -57,6 +57,8 @@ export type AutoOrganizeJobPayload = {
   clientUserAgent?: string | null;
   mode: AutoOrganizeMode;
   template: AutoOrganizeTemplate;
+  /** Weekly AI credits reserved for this auto-organize run. */
+  chargedUsageUnits?: number;
 };
 
 /** Second QStash worker: pseudo-diarization after main summarize `done`. */

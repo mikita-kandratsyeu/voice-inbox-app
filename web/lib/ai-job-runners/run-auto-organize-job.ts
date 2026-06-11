@@ -1,4 +1,5 @@
-import { decrement } from '@/lib/ai-rate-limit';
+import { AUTO_ORGANIZE_CHARGED_USAGE_UNITS } from '@/lib/auto-organize-types';
+import { decrementBy } from '@/lib/ai-rate-limit';
 import { isRetryableAiJobError } from '@/lib/ai-job-retry';
 import { saveMessage } from '@/lib/redis';
 import { redis } from '@/lib/redis';
@@ -47,9 +48,11 @@ export async function runAutoOrganizeJob(payload: AutoOrganizeJobPayload): Promi
     });
   } catch (err) {
     if (!isRetryableAiJobError(err)) {
-      await decrement(deviceId, {
+      const chargedUsageUnits = payload.chargedUsageUnits ?? AUTO_ORGANIZE_CHARGED_USAGE_UNITS;
+      await decrementBy(deviceId, chargedUsageUnits, {
         operation: 'auto_organize',
         jobId: id,
+        metadata: { chargedUsageUnits },
       });
       await decrementAutoOrganizeWeekly(deviceId);
       await saveAutoOrganizeMessage(id, {

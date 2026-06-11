@@ -18,6 +18,9 @@ export type AutoOrganizeTemplate = (typeof AUTO_ORGANIZE_TEMPLATES)[number];
 
 export const AUTO_ORGANIZE_INBOX_FOLDER_NAME = '__inbox__';
 
+/** Weekly AI credits reserved per auto-organize run (keep in sync with mobile). */
+export const AUTO_ORGANIZE_CHARGED_USAGE_UNITS = 2;
+
 export type AutoOrganizeFoldersResult = {
   folders: Array<{ name: string; icon: string; color: string }>;
   assignments: Array<{ recordId: string; folderName: string }>;

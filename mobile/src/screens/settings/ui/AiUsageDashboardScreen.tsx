@@ -10,6 +10,7 @@ import {
   Mic,
   Newspaper,
   Sparkles,
+  UsersRound,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -399,6 +400,13 @@ export const AiUsageDashboardScreen = () => {
         subtitle: t('settings.aiUsageDashboard.features.summary.subtitle'),
       },
       {
+        key: 'meetingMode',
+        icon: <UsersRound size={20} color={color.accent.models} strokeWidth={1.8} />,
+        label: t('settings.aiUsageDashboard.features.meetingMode.title'),
+        value: t('settings.aiUsageDashboard.hybridBadge'),
+        subtitle: t('settings.aiUsageDashboard.features.meetingMode.subtitle'),
+      },
+      {
         key: 'ask',
         icon: <MessageCircleQuestion size={20} color={color.accent.transcript} strokeWidth={1.8} />,
         label: t('settings.aiUsageDashboard.features.ask.title'),
@@ -414,16 +422,16 @@ export const AiUsageDashboardScreen = () => {
       },
       {
         key: 'digest',
-        icon: <Newspaper size={20} color={color.accent.transcript} strokeWidth={1.8} />,
+        icon: <Newspaper size={20} color={color.accent.archive} strokeWidth={1.8} />,
         label: t('settings.aiUsageDashboard.features.digest.title'),
-        value: t('settings.aiUsageDashboard.cloudBadge'),
+        value: t('settings.aiUsageDashboard.hybridBadge'),
         subtitle: t('settings.aiUsageDashboard.features.digest.subtitle'),
       },
       {
         key: 'autoOrganize',
         icon: <FolderTree size={20} color={color.accent.aiData} strokeWidth={1.8} />,
         label: t('settings.aiUsageDashboard.features.autoOrganize.title'),
-        value: t('settings.aiUsageDashboard.cloudBadge'),
+        value: t('settings.aiUsageDashboard.hybridBadge'),
         subtitle: t('settings.aiUsageDashboard.features.autoOrganize.subtitle'),
       },
     ],
@@ -619,6 +627,7 @@ export const AiUsageDashboardScreen = () => {
                 {[
                   t('settings.aiUsageDashboard.savingTips.localTranscription'),
                   t('settings.aiUsageDashboard.savingTips.batchAsk'),
+                  t('settings.aiUsageDashboard.savingTips.meetingMode'),
                   t('settings.aiUsageDashboard.savingTips.privateMode'),
                 ].map((tip) => (
                   <View key={tip} className="mb-2 flex-row gap-2">

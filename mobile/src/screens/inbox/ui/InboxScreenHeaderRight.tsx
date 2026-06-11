@@ -1,6 +1,6 @@
 import { MenuView } from '@react-native-menu/menu';
 import type { TFunction } from 'i18next';
-import { FolderPlus, MoreVertical, Search, SquarePen } from 'lucide-react-native';
+import { FolderTree, MoreVertical, Search, SquarePen } from 'lucide-react-native';
 import React, { memo, useMemo } from 'react';
 import { View } from 'react-native';
 
@@ -88,7 +88,7 @@ function InboxScreenHeaderRightInner({
         title: t('inbox.menuAutoOrganize'),
         titleColor,
         image: 'folder.badge.plus',
-        imageColor: titleColor,
+        imageColor: color.accent.aiData,
         attributes: isAutoOrganizing ? { disabled: true } : undefined,
       });
     }
@@ -134,7 +134,14 @@ function InboxScreenHeaderRightInner({
     }
 
     return actions;
-  }, [color.text.primary, foldersEnabled, isAutoOrganizing, t, useTabletShell]);
+  }, [
+    color.accent.aiData,
+    color.text.primary,
+    foldersEnabled,
+    isAutoOrganizing,
+    t,
+    useTabletShell,
+  ]);
 
   if (!isLoaded) return null;
 
@@ -187,7 +194,7 @@ function InboxScreenHeaderRightInner({
         color={color}
         disabled={organizeDisabled}
         icon={
-          <FolderPlus
+          <FolderTree
             size={20}
             color={organizeDisabled ? color.text.muted : color.text.primary}
             strokeWidth={2.2}
