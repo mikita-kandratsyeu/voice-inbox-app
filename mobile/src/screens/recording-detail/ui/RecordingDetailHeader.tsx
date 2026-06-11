@@ -60,33 +60,23 @@ export const RecordingDetailHeader = ({
 
   const menuActions = useMemo(() => {
     const titleColor = color.text.primary;
-    const primary: NativeMenuAction[] = [];
+    const showAllTasks = Boolean(onOpenAllTasksForNote && !isArchived);
 
-    if (onOpenAllTasksForNote && !isArchived) {
-      primary.push({
-        id: 'allTasksForNote',
-        title: t('recordingDetail.allTasksForNote'),
-        image: 'checklist',
-        imageColor: titleColor,
-        titleColor,
-      });
-    }
-
-    primary.push({
+    const togglePinAction: NativeMenuAction = {
       id: 'togglePin',
       title: record.isPinned ? t('recordActions.unpin') : t('recordActions.pin'),
       image: 'pin',
       imageColor: record.isPinned ? color.accent.pin : titleColor,
       titleColor,
-    });
+    };
 
-    primary.push({
+    const renameAction: NativeMenuAction = {
       id: 'rename',
       title: t('recordActions.rename'),
       image: 'pencil',
       imageColor: titleColor,
       titleColor,
-    });
+    };
 
     const moveToFolderAction: NativeMenuAction = {
       id: 'moveToFolder',
@@ -112,7 +102,22 @@ export const RecordingDetailHeader = ({
           titleColor,
         };
 
-    const actions: NativeMenuAction[] = [...primary];
+    const actions: NativeMenuAction[] = [];
+
+    if (showAllTasks) {
+      actions.push({
+        id: 'allTasksForNote',
+        title: t('recordingDetail.allTasksForNote'),
+        image: 'checklist',
+        imageColor: titleColor,
+        titleColor,
+      });
+      actions.push(
+        inlineNativeMenuSection('pinAndRenameSection', titleColor, [togglePinAction, renameAction]),
+      );
+    } else {
+      actions.push(togglePinAction, renameAction);
+    }
 
     actions.push(
       inlineNativeMenuSection(

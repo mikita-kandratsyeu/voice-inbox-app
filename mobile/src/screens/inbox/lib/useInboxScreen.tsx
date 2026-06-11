@@ -727,6 +727,13 @@ export function useInboxScreen() {
     });
   }, [shareAudio, shareTargetRecord, t]);
 
+  const handleOpenAllTasksForNote = useCallback(
+    (recordId: string) => {
+      navigation.navigate('AllTasks', { recordId });
+    },
+    [navigation],
+  );
+
   const handleEmailShareRecord = useCallback(
     (email: string, template: ShareBriefTemplate, format: ShareRecordExportFormat) => {
       if (!shareTargetRecord) return;
@@ -776,6 +783,7 @@ export function useInboxScreen() {
         onStatusPress={handleStatusPress}
         onRecordLongPress={handleRecordLongPress}
         onRecordShare={handleRecordShare}
+        onOpenAllTasksForNote={handleOpenAllTasksForNote}
       />
     ),
     [
@@ -797,6 +805,7 @@ export function useInboxScreen() {
       handleStatusPress,
       handleRecordLongPress,
       handleRecordShare,
+      handleOpenAllTasksForNote,
       batchSelect,
     ],
   );

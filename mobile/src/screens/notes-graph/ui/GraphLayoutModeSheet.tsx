@@ -35,7 +35,10 @@ export function GraphLayoutModeSheet({
     () => getGraphLayoutModeSheetBottomPadding(insets.bottom),
     [insets.bottom],
   );
-  const snapPoints = useMemo(() => [getGraphLayoutModeSheetSnapHeight(insets.bottom)], [insets.bottom]);
+  const snapPoints = useMemo(
+    () => [getGraphLayoutModeSheetSnapHeight(insets.bottom)],
+    [insets.bottom],
+  );
 
   return (
     <AppBottomSheetModal
@@ -44,9 +47,7 @@ export function GraphLayoutModeSheet({
       snapPoints={snapPoints}
       enableContentPanningGesture={false}
     >
-      <BottomSheetView
-        style={{ flexGrow: 0, paddingBottom: bottomPadding, paddingHorizontal: 20 }}
-      >
+      <BottomSheetView style={{ flexGrow: 0, paddingBottom: bottomPadding, paddingHorizontal: 20 }}>
         <Text
           style={{
             color: color.text.primary,

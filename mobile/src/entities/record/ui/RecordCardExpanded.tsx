@@ -6,8 +6,8 @@ import { Text, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 
 import type { VoiceRecord } from '@/entities/record';
-import { getRecordCardChromeStyle } from '@/entities/record/lib/recordCardChrome';
 import { countMeetingParticipants } from '@/entities/record/lib/countMeetingParticipants';
+import { getRecordCardChromeStyle } from '@/entities/record/lib/recordCardChrome';
 import {
   countRecordCardTextFragments,
   formatExpandedCardDate,
@@ -43,6 +43,7 @@ type RecordCardExpandedProps = {
   onUnarchive?: () => void;
   onSelect?: () => void;
   onShare?: () => void;
+  onOpenAllTasks?: () => void;
   a11yHint?: string | null;
   hideAccessibilitySubtree?: boolean;
 };
@@ -70,6 +71,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
   onUnarchive,
   onSelect,
   onShare,
+  onOpenAllTasks,
   a11yHint,
   hideAccessibilitySubtree = false,
 }: RecordCardExpandedProps) {
@@ -143,15 +145,10 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
   const showTypeBadges = noteKind !== 'voice' || marksCount > 0;
   const hasSummaryPreview = Boolean(item.summary?.trim());
   const showSourceChip =
-    noteKind === 'text'
-      ? hasTranscriptPreview || hasSummaryPreview
-      : hasTranscriptPreview || (!hasTranscriptPreview && hasSummaryPreview);
-  const sourceChipLabel =
-    noteKind === 'text'
-      ? t('inbox.cardLayout.noteTypeText')
-      : hasTranscriptPreview
-        ? t('inbox.cardLayout.sourceText')
-        : t('inbox.cardLayout.hasSummary');
+    noteKind !== 'text' && (hasTranscriptPreview || (!hasTranscriptPreview && hasSummaryPreview));
+  const sourceChipLabel = hasTranscriptPreview
+    ? t('inbox.cardLayout.sourceText')
+    : t('inbox.cardLayout.hasSummary');
   const meetingParticipantCount = useMemo(
     () =>
       noteKind === 'meeting'
@@ -160,14 +157,12 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
     [item.meetingDialogue, item.meetingSpeakerLabels, noteKind],
   );
   const showMetaStrip =
-    hasAudio ||
-    noteKind === 'text' ||
-    (item.tasks?.length ?? 0) > 0 ||
-    meetingParticipantCount > 0;
-  const showFooter = hasTags || categoryLabel != null || showSourceChip;
+    hasAudio || noteKind === 'text' || (item.tasks?.length ?? 0) > 0 || meetingParticipantCount > 0;
+  const showFooter = hasTags || categoryLabel != null;
 
   const menuActions = useMemo(() => {
     const titleColor = color.text.primary;
+    const showAllTasks = Boolean(onOpenAllTasks);
     const primary: NativeMenuAction[] = [];
 
     if (onPin) {
@@ -206,32 +201,52 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
       });
     }
 
-    if (primary.length === 0 && !onSelect) {
+    if (primary.length === 0 && !onSelect && !showAllTasks) {
       return [];
     }
 
-    if (!onSelect) {
-      return primary;
+    const actions: NativeMenuAction[] = [];
+
+    if (showAllTasks) {
+      actions.push({
+        id: 'allTasksForNote',
+        title: t('recordingDetail.allTasksForNote'),
+        titleColor,
+        image: 'checklist',
+        imageColor: titleColor,
+      });
     }
 
-    return [
-      ...primary,
-      inlineNativeMenuSection('selectSection', titleColor, [
-        {
-          id: 'select',
-          title: t('inbox.menuSelectNotes'),
-          titleColor,
-          image: 'checkmark.circle',
-          imageColor: titleColor,
-        },
-      ]),
-    ];
+    if (primary.length > 0) {
+      if (showAllTasks) {
+        actions.push(inlineNativeMenuSection('primarySection', titleColor, primary));
+      } else {
+        actions.push(...primary);
+      }
+    }
+
+    if (onSelect) {
+      actions.push(
+        inlineNativeMenuSection('selectSection', titleColor, [
+          {
+            id: 'select',
+            title: t('inbox.menuSelectNotes'),
+            titleColor,
+            image: 'checkmark.circle',
+            imageColor: titleColor,
+          },
+        ]),
+      );
+    }
+
+    return actions;
   }, [
     color.accent.pin,
     color.text.primary,
     isArchivedView,
     item.isPinned,
     onArchive,
+    onOpenAllTasks,
     onPin,
     onSelect,
     onShare,
@@ -284,6 +299,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
                 {formatExpandedCardDate(item.createdAt, i18n.language, t)}
               </Text>
             </View>
+            {showSourceChip ? <RecordCardSourceChip label={sourceChipLabel} color={color} /> : null}
             {showTypeBadges ? (
               <RecordCardTypeBadges
                 noteKind={noteKind}
@@ -302,6 +318,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
               actions={menuActions}
               onPressAction={({ nativeEvent }) => {
                 const id = nativeEvent.event;
+                if (id === 'allTasksForNote') onOpenAllTasks?.();
                 if (id === 'select') onSelect?.();
                 if (id === 'togglePin') onPin?.();
                 if (id === 'archive') onArchive?.();
@@ -426,7 +443,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
                   <RecordCardTagsRow tags={tags} color={color} variant="full" />
                 </View>
               ) : null}
-              {showSourceChip || categoryLabel ? (
+              {categoryLabel ? (
                 <View
                   style={{
                     flexDirection: 'row',
@@ -436,17 +453,12 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
                     gap: 6,
                   }}
                 >
-                  {categoryLabel ? (
-                    <RecordCardLocationChip
-                      label={categoryLabel}
-                      color={color}
-                      accentColor={locationAccentColor}
-                      folderIconId={isFolderLabel ? folderIconId : undefined}
-                    />
-                  ) : null}
-                  {showSourceChip ? (
-                    <RecordCardSourceChip label={sourceChipLabel} color={color} />
-                  ) : null}
+                  <RecordCardLocationChip
+                    label={categoryLabel}
+                    color={color}
+                    accentColor={locationAccentColor}
+                    folderIconId={isFolderLabel ? folderIconId : undefined}
+                  />
                 </View>
               ) : null}
             </View>

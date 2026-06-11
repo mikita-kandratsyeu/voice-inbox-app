@@ -21,8 +21,8 @@ export const RecordCardSourceChip = memo(function RecordCardSourceChip({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
+        alignSelf: 'flex-start',
         gap: 4,
-        flexShrink: 1,
         maxWidth: '100%',
         paddingHorizontal: 8,
         paddingVertical: 4,

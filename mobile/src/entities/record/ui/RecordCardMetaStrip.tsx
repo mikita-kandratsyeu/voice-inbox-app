@@ -258,6 +258,7 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
     : compact
       ? t('inbox.cardLayout.meetingParticipantsShort')
       : t('inbox.cardLayout.meetingParticipantsLabel');
+  const textFragmentsLabel = dense ? undefined : t('inbox.cardLayout.textFragmentsShort');
 
   const statSegments: Array<{ key: string; node: React.ReactNode }> = [];
 
@@ -298,9 +299,7 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
             />
           }
           value={String(textFragmentCount)}
-          label={
-            dense ? undefined : t('inbox.cardLayout.textFragments', { count: textFragmentCount })
-          }
+          label={textFragmentsLabel}
           accessibilityLabel={t('inbox.cardLayout.textFragments', { count: textFragmentCount })}
         />
       ),

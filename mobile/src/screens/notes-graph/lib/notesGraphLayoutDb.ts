@@ -243,7 +243,9 @@ export async function saveNotesGraphLayoutVersion(
 
 export async function deleteAllNotesGraphLayoutHistory(): Promise<number> {
   const db = await waitForDb();
-  const rows = await db.select({ id: notesGraphLayoutVersionTable.id }).from(notesGraphLayoutVersionTable);
+  const rows = await db
+    .select({ id: notesGraphLayoutVersionTable.id })
+    .from(notesGraphLayoutVersionTable);
   if (rows.length === 0) return 0;
 
   await db.delete(notesGraphLayoutVersionTable);

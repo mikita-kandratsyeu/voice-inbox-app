@@ -61,7 +61,14 @@ export function AllTasksMoreFiltersSheet({
   const color = useColors();
   const contentPadding = useBottomSheetContentPadding(20);
 
-  const renderRow = ({ label, icon: Icon, iconColor, selected, isLast, onPress }: FilterPickerRowProps) => (
+  const renderRow = ({
+    label,
+    icon: Icon,
+    iconColor,
+    selected,
+    isLast,
+    onPress,
+  }: FilterPickerRowProps) => (
     <Pressable
       onPress={() => {
         hapticSelection();

@@ -238,9 +238,7 @@ export function TaskEditSheet({
     if (!deadlineDraft) return;
     const opening = !timePickerOpen;
     if (opening && deadlineTimeDraft.trim().length === 0) {
-      setDeadlineTimeDraft(
-        formatTaskDeadlineTime(getTimePickerValue('', deadlineDraft)),
-      );
+      setDeadlineTimeDraft(formatTaskDeadlineTime(getTimePickerValue('', deadlineDraft)));
     }
     setTimePickerOpen(opening);
     setDatePickerOpen(false);

@@ -32,7 +32,11 @@ import { AllTasksMoreFiltersSheet } from './AllTasksMoreFiltersSheet';
 const PRIMARY_FILTERS: AllTasksQuickFilter[] = ['all', 'overdue', 'today'];
 const SECONDARY_FILTERS: AllTasksQuickFilter[] = ['highPriority', 'noDate', 'done'];
 
-function renderSecondaryFilterChipIcon(filter: AllTasksQuickFilter, color: Colors, active: boolean) {
+function renderSecondaryFilterChipIcon(
+  filter: AllTasksQuickFilter,
+  color: Colors,
+  active: boolean,
+) {
   const foreground = active ? color.icon.onAccent : color.text.primary;
 
   switch (filter) {

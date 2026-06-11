@@ -31,9 +31,8 @@ export type UseBottomSheetModalVisibilityResult = {
 };
 
 function readModalStatus(ref: RefObject<BottomSheetModal | null>): number | null {
-  const status = (
-    ref.current as (BottomSheetModal & { status?: { current?: number } }) | null
-  )?.status?.current;
+  const status = (ref.current as (BottomSheetModal & { status?: { current?: number } }) | null)
+    ?.status?.current;
   return typeof status === 'number' ? status : null;
 }
 
