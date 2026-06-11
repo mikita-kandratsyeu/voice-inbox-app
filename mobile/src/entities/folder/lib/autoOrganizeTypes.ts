@@ -22,6 +22,12 @@ export const PRO_AUTO_ORGANIZE_TEMPLATES: ReadonlySet<AutoOrganizeTemplate> = ne
   'meetings_tasks',
 ]);
 
+export const PRO_AUTO_ORGANIZE_MODES: ReadonlySet<AutoOrganizeMode> = new Set([
+  'assign_existing',
+  'consolidate_folders',
+  'suggest_archive',
+]);
+
 export const AUTO_ORGANIZE_INBOX_FOLDER_NAME = '__inbox__';
 
 export type AutoOrganizeFoldersResult = {
@@ -74,6 +80,10 @@ export function isAutoOrganizeTemplate(value: string): value is AutoOrganizeTemp
 
 export function isProAutoOrganizeTemplate(template: AutoOrganizeTemplate): boolean {
   return PRO_AUTO_ORGANIZE_TEMPLATES.has(template);
+}
+
+export function isProAutoOrganizeMode(mode: AutoOrganizeMode): boolean {
+  return PRO_AUTO_ORGANIZE_MODES.has(mode);
 }
 
 export function normalizeAutoOrganizeTemplate(

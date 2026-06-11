@@ -10,6 +10,7 @@ import type {
   AutoOrganizeRunResult,
 } from '@/entities/folder/lib/autoOrganizeTypes';
 import {
+  isProAutoOrganizeMode,
   isProAutoOrganizeTemplate,
   normalizeAutoOrganizeTemplate,
 } from '@/entities/folder/lib/autoOrganizeTypes';
@@ -200,6 +201,11 @@ export function useAutoOrganizeFolders(
 
       if (isProAutoOrganizeTemplate(template) && !isProActiveFromStorageSync()) {
         alertAiLimitExceeded(t('folders.aiOrganizeTemplates.proRequired'));
+        return false;
+      }
+
+      if (isProAutoOrganizeMode(params.mode) && !isProActiveFromStorageSync()) {
+        alertAiLimitExceeded(t('folders.aiOrganizeSheet.proRequired'));
         return false;
       }
 

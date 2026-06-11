@@ -82,6 +82,17 @@ function InboxScreenHeaderRightInner({
 
     const navigationItems: NativeMenuAction[] = [];
 
+    if (foldersEnabled && !useTabletShell) {
+      navigationItems.push({
+        id: 'autoOrganize',
+        title: t('inbox.menuAutoOrganize'),
+        titleColor,
+        image: 'folder.badge.plus',
+        imageColor: titleColor,
+        attributes: isAutoOrganizing ? { disabled: true } : undefined,
+      });
+    }
+
     if (!useTabletShell) {
       navigationItems.push({
         id: 'notesGraph',
@@ -123,7 +134,7 @@ function InboxScreenHeaderRightInner({
     }
 
     return actions;
-  }, [color.text.primary, t, useTabletShell]);
+  }, [color.text.primary, foldersEnabled, isAutoOrganizing, t, useTabletShell]);
 
   if (!isLoaded) return null;
 
@@ -167,35 +178,36 @@ function InboxScreenHeaderRightInner({
       />
     ) : null;
 
-  const organizeButton = foldersEnabled ? (
-    <HeaderIconButton
-      iconOnly
-      variant="icon"
-      size="md"
-      color={color}
-      disabled={organizeDisabled}
-      icon={
-        <FolderPlus
-          size={20}
-          color={organizeDisabled ? color.text.muted : color.text.primary}
-          strokeWidth={2.2}
-        />
-      }
-      accessibilityLabel={t('folders.autoOrganizeButton')}
-      accessibilityState={{ disabled: organizeDisabled }}
-      onPress={() => {
-        if (organizeDisabled) return;
-        onOpenAiOrganizeSheet();
-      }}
-      hitSlop={HEADER_ICON_HIT_SLOP}
-    />
-  ) : null;
+  const tabletOrganizeButton =
+    useTabletShell && foldersEnabled ? (
+      <HeaderIconButton
+        iconOnly
+        variant="icon"
+        size="md"
+        color={color}
+        disabled={organizeDisabled}
+        icon={
+          <FolderPlus
+            size={20}
+            color={organizeDisabled ? color.text.muted : color.text.primary}
+            strokeWidth={2.2}
+          />
+        }
+        accessibilityLabel={t('inbox.menuAutoOrganize')}
+        accessibilityState={{ disabled: organizeDisabled }}
+        onPress={() => {
+          if (organizeDisabled) return;
+          onOpenAiOrganizeSheet();
+        }}
+        hitSlop={HEADER_ICON_HIT_SLOP}
+      />
+    ) : null;
 
   if (useTabletShell) {
     return (
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         {searchButton}
-        {organizeButton}
+        {tabletOrganizeButton}
         <MenuView
           key={`inbox-tablet-more-${theme}`}
           title=""
@@ -226,7 +238,6 @@ function InboxScreenHeaderRightInner({
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
       {searchButton}
-      {organizeButton}
       {!hideCreateTextNote ? (
         <HeaderIconButton
           iconOnly
@@ -250,6 +261,9 @@ function InboxScreenHeaderRightInner({
           if (id === 'importFile') onImportFile();
           if (id === 'allTasks') onOpenAllTasks();
           if (id === 'notesGraph') onOpenNotesGraph();
+          if (id === 'autoOrganize' && !isAutoOrganizing && foldersEnabled) {
+            onOpenAiOrganizeSheet();
+          }
           if (id === 'selectNotes') onEnterBatchMode();
         }}
       >

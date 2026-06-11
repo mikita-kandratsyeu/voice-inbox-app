@@ -4,17 +4,24 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 
-import type { AutoOrganizeMode } from '@/entities/folder/lib/autoOrganizeTypes';
+import { isProAutoOrganizeMode, type AutoOrganizeMode } from '@/entities/folder/lib/autoOrganizeTypes';
 import { type Colors, useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib/haptics';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  AppBottomSheetModal,
+  ProCrownBadge,
+  SheetFooterButtons,
+  useBottomSheetContentPadding,
+} from '@/shared/ui';
 
 type AiOrganizeActionSheetProps = {
   visible: boolean;
   presentRequestKey?: number;
   eligibleCount: number;
+  isProActive: boolean;
   onClose: () => void;
   onSelect: (mode: AutoOrganizeMode) => void;
+  onProRequired: () => void;
 };
 
 const ICON_SIZE = 18;
@@ -23,11 +30,19 @@ type SheetOptionRowProps = {
   label: string;
   hint: string;
   icon: React.ReactNode;
+  showProBadge: boolean;
   onPress: () => void;
   isLast?: boolean;
 };
 
-function SheetOptionRow({ label, hint, icon, onPress, isLast = false }: SheetOptionRowProps) {
+function SheetOptionRow({
+  label,
+  hint,
+  icon,
+  showProBadge,
+  onPress,
+  isLast = false,
+}: SheetOptionRowProps) {
   const color = useColors();
 
   return (
@@ -48,9 +63,12 @@ function SheetOptionRow({ label, hint, icon, onPress, isLast = false }: SheetOpt
       }}
     >
       {icon}
-      <Text style={{ fontSize: 16, color: color.text.primary, flex: 1 }} numberOfLines={2}>
-        {label}
-      </Text>
+      <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+        <Text style={{ fontSize: 16, color: color.text.primary, flexShrink: 1 }} numberOfLines={2}>
+          {label}
+        </Text>
+        {showProBadge ? <ProCrownBadge /> : null}
+      </View>
     </TouchableOpacity>
   );
 }
@@ -129,8 +147,10 @@ export function AiOrganizeActionSheet({
   visible,
   presentRequestKey = 0,
   eligibleCount,
+  isProActive,
   onClose,
   onSelect,
+  onProRequired,
 }: AiOrganizeActionSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
@@ -179,19 +199,28 @@ export function AiOrganizeActionSheet({
             backgroundColor: color.background.card,
           }}
         >
-          {actions.map((action, index) => (
-            <SheetOptionRow
-              key={action.mode}
-              label={action.label}
-              hint={action.hint}
-              icon={action.icon}
-              isLast={index === actions.length - 1}
-              onPress={() => {
-                hapticSelection();
-                onSelect(action.mode);
-              }}
-            />
-          ))}
+          {actions.map((action, index) => {
+            const locked = isProAutoOrganizeMode(action.mode) && !isProActive;
+
+            return (
+              <SheetOptionRow
+                key={action.mode}
+                label={action.label}
+                hint={action.hint}
+                icon={action.icon}
+                showProBadge={locked}
+                isLast={index === actions.length - 1}
+                onPress={() => {
+                  hapticSelection();
+                  if (locked) {
+                    onProRequired();
+                    return;
+                  }
+                  onSelect(action.mode);
+                }}
+              />
+            );
+          })}
         </View>
 
         <SheetFooterButtons

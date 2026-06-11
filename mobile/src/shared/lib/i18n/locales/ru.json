@@ -1463,6 +1463,7 @@
         "meetingModeAndPinnedMoments": "Режим встречи и отметки моментов",
         "premiumAiModels": "Продвинутые модели и свой ИИ-сервер",
         "extendedShareAndBatchExport": "Расширенный экспорт",
+        "aiFolderOrganize": "Расширенная ИИ-организация",
         "githubSync": "Резервная копия на GitHub",
         "notesGraph": "Карта заметок",
         "noAds": "Без рекламы"
@@ -2474,6 +2475,7 @@
     "aiOrganizeSheet": {
       "title": "ИИ-организация",
       "subtitle": "{{count}} активных заметок",
+      "proRequired": "Эти режимы доступны с активной подпиской Pro.",
       "consolidateMinTitle": "Мало папок",
       "consolidateMinDescription": "Нужно минимум две папки, чтобы объединять или чистить структуру.",
       "assignMinTitle": "Папок пока нет",

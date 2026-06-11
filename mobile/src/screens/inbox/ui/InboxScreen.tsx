@@ -325,8 +325,13 @@ export const InboxScreen = () => {
             visible={aiOrganizeSheetVisible}
             presentRequestKey={aiOrganizePresentKey}
             eligibleCount={autoOrganizeEligibleCount}
+            isProActive={isProActive}
             onClose={closeAiOrganizeSheet}
             onSelect={handleAiOrganizeActionSelect}
+            onProRequired={() => {
+              closeAiOrganizeSheet();
+              openPlanPaywall();
+            }}
           />
           <AiOrganizeTemplateSheet
             visible={aiOrganizeTemplateSheetVisible}

@@ -1,5 +1,5 @@
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { Check, Crown } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -12,7 +12,7 @@ import {
 } from '@/entities/folder/lib/autoOrganizeTypes';
 import { useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib/haptics';
-import { AppBottomSheetModal, SheetFooterButtons } from '@/shared/ui';
+import { AppBottomSheetModal, ProCrownBadge, SheetFooterButtons } from '@/shared/ui';
 
 import {
   getAiOrganizeSheetBottomPadding,
@@ -123,14 +123,7 @@ export function AiOrganizeTemplateSheet({
                       <Text style={{ fontSize: 16, color: color.text.primary }}>
                         {t(`folders.aiOrganizeTemplates.items.${template}`)}
                       </Text>
-                      {locked ? (
-                        <Crown
-                          size={14}
-                          color={color.accent.primary}
-                          strokeWidth={2}
-                          accessibilityLabel={t('common.pro')}
-                        />
-                      ) : null}
+                      {locked ? <ProCrownBadge /> : null}
                     </View>
                     <Text
                       style={{

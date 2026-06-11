@@ -1423,6 +1423,7 @@
         "meetingModeAndPinnedMoments": "Meeting mode and pinned moments",
         "premiumAiModels": "Advanced models and your AI server",
         "extendedShareAndBatchExport": "Extended export",
+        "aiFolderOrganize": "Advanced AI folder organization",
         "githubSync": "GitHub backup & sync",
         "notesGraph": "Note map",
         "noAds": "No ads"
@@ -2406,6 +2407,7 @@
     "aiOrganizeSheet": {
       "title": "AI organization",
       "subtitle": "{{count}} active notes",
+      "proRequired": "Pro modes require an active Pro subscription.",
       "consolidateMinTitle": "Not enough folders",
       "consolidateMinDescription": "Add at least two folders before merging or cleaning them up.",
       "assignMinTitle": "No folders yet",
