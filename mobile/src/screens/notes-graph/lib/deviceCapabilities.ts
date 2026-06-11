@@ -1,64 +1,6 @@
-import { Dimensions } from 'react-native';
+import { type DeviceMemoryTier, resolveDeviceMemoryTier } from '@/shared/lib/deviceMemoryTier';
 
-import { IS_ANDROID, IS_IOS } from '@/shared/lib';
-
-export type DeviceMemoryTier = 'low' | 'medium' | 'high' | 'ultra';
-
-/**
- * Estimates device memory tier based on screen dimensions and platform.
- * This is a heuristic approach since React Native doesn't expose RAM info directly.
- */
-function estimateDeviceMemoryTier(): DeviceMemoryTier {
-  const { width, height } = Dimensions.get('screen');
-  const totalPixels = width * height;
-
-  // iPhone/iPad detection heuristics
-  if (IS_IOS) {
-    // Ultra tier: iPad Pro, iPhone 15 Pro Max, newer high-end devices
-    // Typically 6GB+ RAM, screen resolution 2048+ on longest side
-    if (Math.max(width, height) >= 2048) {
-      return 'ultra';
-    }
-
-    // High tier: iPhone 12+, iPad Air 4+
-    // Typically 4-6GB RAM, modern devices
-    if (totalPixels > 2_000_000) {
-      return 'high';
-    }
-
-    // Medium tier: iPhone 8-11, older iPads
-    // Typically 2-4GB RAM
-    if (totalPixels > 1_000_000) {
-      return 'medium';
-    }
-
-    // Low tier: older devices
-    return 'low';
-  }
-
-  // Android detection heuristics
-  if (IS_ANDROID) {
-    // Ultra tier: flagship devices with QHD+ screens
-    if (Math.max(width, height) >= 2560 || totalPixels > 3_000_000) {
-      return 'ultra';
-    }
-
-    // High tier: modern mid-to-high range devices
-    if (totalPixels > 2_000_000) {
-      return 'high';
-    }
-
-    // Medium tier: budget-to-mid range devices
-    if (totalPixels > 1_000_000) {
-      return 'medium';
-    }
-
-    return 'low';
-  }
-
-  // Conservative default for unknown platforms
-  return 'medium';
-}
+export type { DeviceMemoryTier };
 
 export type DeviceCapabilities = {
   memoryTier: DeviceMemoryTier;
@@ -78,7 +20,7 @@ export function detectDeviceCapabilities(): DeviceCapabilities {
     return cachedCapabilities;
   }
 
-  const memoryTier = estimateDeviceMemoryTier();
+  const memoryTier = resolveDeviceMemoryTier();
 
   let maxExportDimension: number;
   let maxSafeExportPixels: number;

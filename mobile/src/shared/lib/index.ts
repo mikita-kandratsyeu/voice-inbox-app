@@ -32,6 +32,8 @@ export {
   recordAskAiTable,
   recordsTable,
 } from './db/schema';
+export type { DeviceMemoryTier } from './deviceMemoryTier';
+export { readTotalRamMb, resolveDeviceMemoryTier } from './deviceMemoryTier';
 export {
   checkEmbeddingAvailability,
   cosineSimilarity,

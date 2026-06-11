@@ -121,6 +121,7 @@ export const NotesGraphScreenBody = () => {
     height: number;
   } | null>(null);
   const [isCapturingExport, setIsCapturingExport] = useState(false);
+  const [isExportCaptureMount, setIsExportCaptureMount] = useState(false);
   const exportCaptureTokenRef = useRef(0);
   const [activeSavedVersion, setActiveSavedVersion] = useState<NotesGraphLayoutVersionEntry | null>(
     null,
@@ -675,6 +676,11 @@ export const NotesGraphScreenBody = () => {
     setExportPreviewSize(null);
     setIsCapturingExport(true);
     await waitForNextFrame();
+    if (captureToken !== exportCaptureTokenRef.current) return;
+
+    setIsExportCaptureMount(true);
+    await waitForNextFrame();
+    if (captureToken !== exportCaptureTokenRef.current) return;
 
     try {
       const captured = await canvasRef.current?.captureImage();
@@ -701,10 +707,10 @@ export const NotesGraphScreenBody = () => {
       setExportSheetVisible(true);
     } catch {
       if (captureToken !== exportCaptureTokenRef.current) return;
-      setExportSheetVisible(false);
       Alert.alert(t('common.error'), t('notesGraph.export.failed'));
     } finally {
       if (captureToken === exportCaptureTokenRef.current) {
+        setIsExportCaptureMount(false);
         setIsCapturingExport(false);
       }
     }
@@ -874,7 +880,8 @@ export const NotesGraphScreenBody = () => {
           isSavingLayout={isSavingLayout}
           onSaveLayout={handleOpenLayoutSaveSheet}
           onDiscardLayout={handleDiscardUnsavedLayoutChanges}
-          exportCaptureActive={isCapturingExport}
+          exportCaptureActive={isExportCaptureMount}
+          isExportCapturing={isCapturingExport}
         />
       )}
 
@@ -926,6 +933,7 @@ export const NotesGraphScreenBody = () => {
           setExportSheetVisible(false);
           setExportPreviewUri(null);
           setExportPreviewSize(null);
+          setIsExportCaptureMount(false);
           setIsCapturingExport(false);
         }}
       />

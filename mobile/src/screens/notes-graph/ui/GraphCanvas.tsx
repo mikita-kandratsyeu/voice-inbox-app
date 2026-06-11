@@ -103,7 +103,10 @@ type GraphCanvasProps = {
   isSavingLayout?: boolean;
   onSaveLayout?: () => void;
   onDiscardLayout?: () => void;
+  /** Mounts off-screen ViewShot tree for capture. */
   exportCaptureActive?: boolean;
+  /** Shows export progress in controls without mounting the capture tree. */
+  isExportCapturing?: boolean;
 };
 
 function mergeNodePositions(
@@ -150,9 +153,11 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     onSaveLayout,
     onDiscardLayout,
     exportCaptureActive = false,
+    isExportCapturing = false,
   },
   ref,
 ) {
+  const exportBusy = exportCaptureActive || isExportCapturing;
   const { t } = useTranslation();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const fullExportRef = useRef<ViewShotRef>(null);
@@ -671,7 +676,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               color={color}
               width={worldWidth}
               height={worldHeight}
-              visible={clusterBoundariesVisible && !exportCaptureActive}
+              visible={clusterBoundariesVisible && !exportBusy}
             />
             <GraphEdgeLayer
               nodes={displayNodes}
@@ -691,7 +696,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               activeNodeId={activeNodeId}
               canvasScale={scale}
               layoutRestoreToken={layoutRestoreToken}
-              interactionsEnabled={!isReconciling && !exportCaptureActive}
+              interactionsEnabled={!isReconciling && !exportBusy}
               onRecordPress={onRecordPress}
               onTaskPress={onTaskPress}
               onNodeDragStart={handleNodeDragStart}
@@ -725,9 +730,9 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         translateX={viewportTransform.translateX}
         translateY={viewportTransform.translateY}
         scale={viewportTransform.scale}
-        disabled={isReconciling || exportCaptureActive}
+        disabled={isReconciling || exportBusy}
         onNavigate={(nextTranslateX, nextTranslateY) => {
-          if (isReconciling || exportCaptureActive) return;
+          if (isReconciling || exportBusy) return;
           applyTransform({
             scale: savedScale.value,
             translateX: nextTranslateX,
@@ -739,7 +744,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       <GraphControls
         color={color}
         bottomInset={bottomInset}
-        disabled={isReconciling || exportCaptureActive}
+        disabled={isReconciling || exportBusy}
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}
         onFit={() => fitToScreen(true, displayNodes)}
@@ -750,7 +755,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         onToggleLegend={() => setLegendVisible((v) => !v)}
         isReconciling={isReconciling}
         reconcilingLabel={t('notesGraph.reconciling')}
-        isExportCapturing={exportCaptureActive}
+        isExportCapturing={isExportCapturing}
         exportCapturingLabel={t('notesGraph.export.capturingPreview')}
       />
 
@@ -759,7 +764,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
           color={color}
           bottomInset={bottomInset}
           isSaving={isSavingLayout}
-          disabled={isReconciling || exportCaptureActive}
+          disabled={isReconciling || exportBusy}
           onSave={onSaveLayout}
           onDiscard={onDiscardLayout}
         />
