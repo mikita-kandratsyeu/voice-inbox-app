@@ -19,6 +19,14 @@ const BAR_MAX_HEIGHT = 56;
 const BAR_WIDTH = 3;
 const BAR_GAP = 4;
 
+// Create unique sensitivity for each bar (seeded by index for consistency)
+const getBarSensitivity = (index: number) => {
+  const seed = Math.sin(index * 12.9898 + index * 78.233) * 43758.5453;
+  const random = seed - Math.floor(seed);
+  // Range from 0.7 to 1.3 - some bars more sensitive than others
+  return 0.7 + random * 0.6;
+};
+
 // Create wave pattern: center bars are tallest, edges are shorter
 const getWaveHeight = (index: number, intensity: number = 1) => {
   const center = BAR_COUNT / 2;
@@ -28,20 +36,20 @@ const getWaveHeight = (index: number, intensity: number = 1) => {
   // Create bell curve for natural voice wave shape
   const baseHeight =
     BAR_MIN_HEIGHT +
-    (BAR_MAX_HEIGHT - BAR_MIN_HEIGHT) * Math.exp(-3 * normalizedDistance * normalizedDistance);
+    (BAR_MAX_HEIGHT - BAR_MIN_HEIGHT) * Math.exp(-2.5 * normalizedDistance * normalizedDistance);
 
-  // Add some variation
-  const variation = Math.sin(index * 0.5) * 0.15 + 0.85;
+  // Individual bar variation
+  const variation = getBarSensitivity(index);
 
   return baseHeight * variation * intensity;
 };
 
 const getBarDelay = (index: number) => {
-  // Wave emanates from center outward
+  // Minimal delay for instant feel
   const center = BAR_COUNT / 2;
   const distanceFromCenter = Math.abs(index - center);
 
-  return distanceFromCenter * 25;
+  return distanceFromCenter * 3;
 };
 
 type WaveformProps = {
@@ -62,50 +70,56 @@ const WaveformBar = memo(({ index, isAnimating, color, audioLevel }: WaveformBar
   const opacity = useSharedValue(0.6);
   const scale = useSharedValue(1);
 
-  // Smoothing for voice-reactive mode
+  // Smoothing with faster attack, slower decay (like real audio)
   const smoothedLevel = useRef(0);
-  const SMOOTHING_FACTOR = 0.3; // Lower = smoother but slower, Higher = more responsive
+  const barSensitivity = useRef(getBarSensitivity(index));
 
   useEffect(() => {
     if (isAnimating) {
       // If audioLevel is provided, use voice-reactive mode
       if (audioLevel !== undefined) {
-        // Apply exponential smoothing
-        smoothedLevel.current = smoothedLevel.current * (1 - SMOOTHING_FACTOR) + audioLevel * SMOOTHING_FACTOR;
+        // Attack/Decay smoothing - fast rise, slow fall
+        const ATTACK = 0.6; // Fast attack (60%)
+        const DECAY = 0.15;  // Slow decay (15%)
 
-        // Wave delay from center - creates ripple effect
-        const center = BAR_COUNT / 2;
-        const distanceFromCenter = Math.abs(index - center);
-        const waveDelay = distanceFromCenter * 8; // milliseconds per bar distance
+        const targetLevel = audioLevel * barSensitivity.current;
 
-        // More dramatic intensity range with boosted response
-        const boostedLevel = Math.pow(smoothedLevel.current, 0.7); // Power curve for better perception
-        const targetIntensity = 0.3 + boostedLevel * 1.0; // 0.3-1.3 range
+        if (targetLevel > smoothedLevel.current) {
+          // Attack - fast rise
+          smoothedLevel.current = smoothedLevel.current * (1 - ATTACK) + targetLevel * ATTACK;
+        } else {
+          // Decay - slow fall for natural look
+          smoothedLevel.current = smoothedLevel.current * (1 - DECAY) + targetLevel * DECAY;
+        }
 
+        const waveDelay = getBarDelay(index);
+
+        // Enhanced dynamic range with perceptual curve
+        // Quieter sounds get boosted more for visibility
+        const perceptualLevel = Math.pow(smoothedLevel.current, 0.6);
+        const targetIntensity = Math.max(0.25, 0.2 + perceptualLevel * 1.5); // 0.2-1.7 range
+
+        // Very responsive spring
         height.value = withDelay(
           waveDelay,
           withSpring(getWaveHeight(index, targetIntensity), {
-            damping: 15,
-            stiffness: 180,
-            mass: 0.5,
+            damping: 12,
+            stiffness: 300,
+            mass: 0.3,
           })
         );
 
-        opacity.value = withDelay(
-          waveDelay,
-          withTiming(0.5 + boostedLevel * 0.5, {
-            duration: 30,
-            easing: Easing.out(Easing.quad),
-          })
-        );
+        // Subtle opacity for depth
+        opacity.value = withTiming(0.55 + perceptualLevel * 0.45, {
+          duration: 40,
+          easing: Easing.out(Easing.ease),
+        });
 
-        scale.value = withDelay(
-          waveDelay,
-          withTiming(1 + boostedLevel * 0.12, {
-            duration: 30,
-            easing: Easing.out(Easing.quad),
-          })
-        );
+        // Slight scale for emphasis on loud sounds
+        scale.value = withTiming(1 + perceptualLevel * 0.1, {
+          duration: 40,
+          easing: Easing.out(Easing.ease),
+        });
       } else {
         // Fallback: animated mode when no audio data available
         const delay = getBarDelay(index);
