@@ -2,7 +2,6 @@ import type { FlashListRef } from '@shopify/flash-list';
 import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
-import Animated from 'react-native-reanimated';
 
 import type { VoiceRecord } from '@/entities/record';
 import { RecordCard, RecordCardExpanded } from '@/entities/record';
@@ -14,7 +13,6 @@ import type { Colors } from '@/shared/config';
 import { resolveDisplayFolderColor } from '@/shared/lib';
 import { SectionHeader, SwipeableCard } from '@/shared/ui';
 
-import { inboxCardLayoutReanimatedTransition } from '../lib/inboxCardLayoutTransition';
 import type { FlattenedItem } from '../lib/inboxScreenTypes';
 
 const EXPANDED_CARD_MAX_HEIGHT = 560;
@@ -184,15 +182,13 @@ function InboxScreenListItemInner({
           <BatchCheckbox isSelected={isSelected} color={color} size={22} />
         </View>
         <View style={{ flex: 1 }} pointerEvents="box-none">
-          <Animated.View layout={inboxCardLayoutReanimatedTransition}>
-            {renderRecordCard({
-              onPress: toggle,
-              onStatusPress: toggle,
-              onLongPress: toggle,
-              a11yHint: null,
-              hideAccessibilitySubtree: true,
-            })}
-          </Animated.View>
+          {renderRecordCard({
+            onPress: toggle,
+            onStatusPress: toggle,
+            onLongPress: toggle,
+            a11yHint: null,
+            hideAccessibilitySubtree: true,
+          })}
         </View>
       </Pressable>
     );
@@ -205,8 +201,7 @@ function InboxScreenListItemInner({
   };
 
   return (
-    <Animated.View
-      layout={inboxCardLayoutReanimatedTransition}
+    <View
       style={[
         RECORD_CARD_SHELL_STYLE,
         isExpandedLayout ? { maxHeight: EXPANDED_CARD_MAX_HEIGHT } : null,
@@ -230,7 +225,7 @@ function InboxScreenListItemInner({
           {renderRecordCard(cardPressHandlers)}
         </SwipeableCard>
       )}
-    </Animated.View>
+    </View>
   );
 }
 
