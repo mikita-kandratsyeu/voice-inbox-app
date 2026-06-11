@@ -1,22 +1,26 @@
 import dayjs from 'dayjs';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
   interpolateColor,
+  runOnJS,
   SlideInLeft,
   SlideInRight,
   SlideOutLeft,
   SlideOutRight,
   useAnimatedStyle,
   useSharedValue,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
-import { hapticSelection, useIsTablet, withAlphaHex } from '@/shared/lib';
+import { SPRING_CONFIGS } from '@/shared/config';
+import { hapticLight, hapticSelection, useIsTablet, withAlphaHex } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 
 import {
@@ -32,6 +36,8 @@ import { getAllTasksCalendarMetrics } from '../lib/allTasksLayoutMetrics';
 const CARD_RADIUS = 16;
 const CALENDAR_SELECTION_MS = 200;
 const CALENDAR_WEEK_SLIDE_MS = 220;
+const SWIPE_VELOCITY_THRESHOLD = 500;
+const SWIPE_TRANSLATION_THRESHOLD = 50;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -281,6 +287,9 @@ export function AllTasksCalendarPanel({
   const dayCellWidth = weekDaysWidth > 0 ? weekDaysWidth / 7 : 0;
   const selectedDayBackground = withAlphaHex(color.accent.primary, 0.14);
 
+  const translateX = useSharedValue(0);
+  const isSwipingRef = useRef(false);
+
   const selected = useMemo(() => dayjs(selectedDate).locale(locale), [locale, selectedDate]);
 
   const isToday = useMemo(() => selected.isSame(dayjs(), 'day'), [selected]);
@@ -357,6 +366,58 @@ export function AllTasksCalendarPanel({
     },
     [onDateChange],
   );
+
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .activeOffsetX([-20, 20])
+        .failOffsetY([-10, 10])
+        .onStart(() => {
+          isSwipingRef.current = true;
+        })
+        .onUpdate((event) => {
+          const maxTranslation = weekDaysWidth * 0.3;
+          const clampedX = Math.max(-maxTranslation, Math.min(maxTranslation, event.translationX));
+          translateX.value = clampedX;
+        })
+        .onEnd((event) => {
+          const shouldChangePrev =
+            event.velocityX > SWIPE_VELOCITY_THRESHOLD ||
+            event.translationX > SWIPE_TRANSLATION_THRESHOLD;
+          const shouldChangeNext =
+            event.velocityX < -SWIPE_VELOCITY_THRESHOLD ||
+            event.translationX < -SWIPE_TRANSLATION_THRESHOLD;
+
+          if (shouldChangePrev) {
+            runOnJS(hapticLight)();
+            runOnJS(setWeekSlideDirection)('prev');
+            runOnJS(onDateChange)(shiftCalendarDateByWeeks(selectedDate, -1));
+          } else if (shouldChangeNext) {
+            runOnJS(hapticLight)();
+            runOnJS(setWeekSlideDirection)('next');
+            runOnJS(onDateChange)(shiftCalendarDateByWeeks(selectedDate, 1));
+          }
+
+          translateX.value = withSpring(0, SPRING_CONFIGS.gentle);
+          isSwipingRef.current = false;
+        })
+        .onFinalize(() => {
+          isSwipingRef.current = false;
+          translateX.value = withSpring(0, SPRING_CONFIGS.gentle);
+        }),
+    [onDateChange, selectedDate, translateX, weekDaysWidth],
+  );
+
+  const weekRowAnimatedStyle = useAnimatedStyle(() => {
+    const maxTranslation = weekDaysWidth * 0.3;
+    const progress = Math.abs(translateX.value) / maxTranslation;
+    const opacity = 1 - progress * 0.15;
+
+    return {
+      transform: [{ translateX: translateX.value }],
+      opacity,
+    };
+  });
 
   const cardShadowStyle = {
     shadowColor: color.shadow.color,
@@ -475,48 +536,53 @@ export function AllTasksCalendarPanel({
           </View>
         </View>
 
-        <View
-          style={{
-            marginTop: 12,
-            width: '100%',
-            height: metrics.dayCellHeight,
-            overflow: 'hidden',
-          }}
-          onLayout={(event) => {
-            const nextWidth = Math.round(event.nativeEvent.layout.width);
-            setWeekDaysWidth((current) => (current === nextWidth ? current : nextWidth));
-          }}
-        >
-          <Animated.View
-            key={weekKey}
-            entering={weekRowEntering}
-            exiting={weekRowExiting}
-            style={{ flexDirection: 'row', width: weekDaysWidth > 0 ? weekDaysWidth : '100%' }}
+        <GestureDetector gesture={panGesture}>
+          <View
+            style={{
+              marginTop: 12,
+              width: '100%',
+              height: metrics.dayCellHeight,
+              overflow: 'hidden',
+            }}
+            onLayout={(event) => {
+              const nextWidth = Math.round(event.nativeEvent.layout.width);
+              setWeekDaysWidth((current) => (current === nextWidth ? current : nextWidth));
+            }}
           >
-            {weekDays.map((date) => {
-              const dayKey = date.format('YYYY-MM-DD');
-              const isSelected = date.isSame(selected, 'day');
-              const hasTasks = (taskCountsByDay.get(dayKey) ?? 0) > 0;
-              const dateLabel = formatCalendarHeaderDate(date.locale(locale), i18n.language);
+            <Animated.View
+              key={weekKey}
+              entering={weekRowEntering}
+              exiting={weekRowExiting}
+              style={[
+                { flexDirection: 'row', width: weekDaysWidth > 0 ? weekDaysWidth : '100%' },
+                weekRowAnimatedStyle,
+              ]}
+            >
+              {weekDays.map((date) => {
+                const dayKey = date.format('YYYY-MM-DD');
+                const isSelected = date.isSame(selected, 'day');
+                const hasTasks = (taskCountsByDay.get(dayKey) ?? 0) > 0;
+                const dateLabel = formatCalendarHeaderDate(date.locale(locale), i18n.language);
 
-              return (
-                <WeekDayCell
-                  key={dayKey}
-                  color={color}
-                  date={date}
-                  locale={locale}
-                  selected={isSelected}
-                  hasTasks={hasTasks}
-                  cellWidth={dayCellWidth > 0 ? dayCellWidth : undefined}
-                  metrics={metrics}
-                  selectedDayBackground={selectedDayBackground}
-                  a11yLabel={t('allTasks.calendarSelectDayA11y', { date: dateLabel })}
-                  onPress={() => handleSelectDay(date)}
-                />
-              );
-            })}
-          </Animated.View>
-        </View>
+                return (
+                  <WeekDayCell
+                    key={dayKey}
+                    color={color}
+                    date={date}
+                    locale={locale}
+                    selected={isSelected}
+                    hasTasks={hasTasks}
+                    cellWidth={dayCellWidth > 0 ? dayCellWidth : undefined}
+                    metrics={metrics}
+                    selectedDayBackground={selectedDayBackground}
+                    a11yLabel={t('allTasks.calendarSelectDayA11y', { date: dateLabel })}
+                    onPress={() => handleSelectDay(date)}
+                  />
+                );
+              })}
+            </Animated.View>
+          </View>
+        </GestureDetector>
       </View>
     </View>
   );

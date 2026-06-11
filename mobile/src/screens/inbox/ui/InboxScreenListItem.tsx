@@ -1,7 +1,7 @@
 import type { FlashListRef } from '@shopify/flash-list';
 import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LayoutAnimation, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -223,7 +223,6 @@ function InboxScreenListItemInner({
           onLeftAction={() => {
             dismissSwipeHint();
             listRef.current?.prepareForLayoutAnimationRender();
-            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             isArchivedView ? unarchiveRecord(item.item.id) : archiveRecord(item.item.id);
           }}
           onPin={isArchivedView ? undefined : () => togglePin(item.item.id)}

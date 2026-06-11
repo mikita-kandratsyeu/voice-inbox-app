@@ -4,7 +4,7 @@ import type { FlashListRef } from '@shopify/flash-list';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { Alert, LayoutAnimation, ScrollView, useWindowDimensions } from 'react-native';
+import { Alert, ScrollView, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -410,14 +410,12 @@ export function useInboxScreen() {
 
   const enterBatchMode = useCallback(
     (initialId?: string, options?: { haptic?: boolean }) => {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       batchSelect.enterSelectMode(initialId, options);
     },
     [batchSelect],
   );
 
   const exitBatchMode = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     batchSelect.exitSelectMode();
   }, [batchSelect]);
 
