@@ -156,8 +156,7 @@ export function AiOrganizeTemplateSheet({
           color={color}
           primaryLabel={t('folders.aiOrganizeTemplates.apply')}
           onPrimaryPress={() => {
-            const locked =
-              isProAutoOrganizeTemplate(selectedTemplate) && !isProActive;
+            const locked = isProAutoOrganizeTemplate(selectedTemplate) && !isProActive;
             if (locked) {
               onProRequired();
               return;
