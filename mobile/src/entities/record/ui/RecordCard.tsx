@@ -84,6 +84,7 @@ export const RecordCard = memo(function RecordCard({
   const baseContainerStyle = [
     cardStyle,
     {
+      width: '100%',
       borderRadius: 16,
       padding: 0,
       overflow: 'hidden' as const,

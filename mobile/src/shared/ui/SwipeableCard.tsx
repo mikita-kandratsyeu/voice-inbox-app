@@ -32,6 +32,8 @@ type SwipeableCardProps = {
   onLeftAction: () => void;
   onPin: () => void;
   maxHeight?: number;
+  /** Parent supplies list margins — skip outer spacing (inbox layout toggle shell). */
+  embedded?: boolean;
 };
 
 export const SwipeableCard = memo(function SwipeableCard({
@@ -41,6 +43,7 @@ export const SwipeableCard = memo(function SwipeableCard({
   onLeftAction,
   onPin,
   maxHeight = DEFAULT_MAX_HEIGHT,
+  embedded = false,
 }: SwipeableCardProps) {
   const color = useColors();
   const translateX = useSharedValue(0);
@@ -124,10 +127,11 @@ export const SwipeableCard = memo(function SwipeableCard({
   const LeftIcon = leftAction === 'archive' ? Archive : ArchiveRestore;
 
   const containerStyle = useAnimatedStyle(() => ({
-    maxHeight,
-    marginHorizontal: 16,
-    marginBottom: MARGIN_BOTTOM,
+    maxHeight: embedded ? undefined : maxHeight,
+    marginHorizontal: embedded ? 0 : 16,
+    marginBottom: embedded ? 0 : MARGIN_BOTTOM,
     opacity: collapseOpacity.value,
+    width: embedded ? '100%' : undefined,
   }));
 
   return (
@@ -176,7 +180,7 @@ export const SwipeableCard = memo(function SwipeableCard({
           )}
         </Animated.View>
         <GestureDetector gesture={pan}>
-          <Animated.View style={cardStyle}>{children}</Animated.View>
+          <Animated.View style={[cardStyle, embedded && { width: '100%' }]}>{children}</Animated.View>
         </GestureDetector>
       </Animated.View>
     </SwipeableCardContext.Provider>

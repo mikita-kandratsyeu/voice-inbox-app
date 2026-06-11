@@ -36,7 +36,7 @@ import {
   useBatchRecordActions,
   useBatchSelect,
 } from '@/features/batch-select';
-import { useInboxCardLayoutStore } from '@/features/inbox-card-layout';
+import { type InboxCardLayout, useInboxCardLayoutStore } from '@/features/inbox-card-layout';
 import { useInboxFiltersReset } from '@/features/inbox-filters';
 import { useAutoOrganizeFolders, useManageFolders } from '@/features/manage-folders';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
@@ -63,6 +63,7 @@ import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacing
 import { getHasSeenSwipeHint, setHasSeenSwipeHint } from '@/shared/lib/hintsStorage';
 
 import { InboxScreenListItem } from '../ui/InboxScreenListItem';
+import { prepareInboxCardLayoutAnimation } from './inboxCardLayoutTransition';
 import {
   type FlattenedItem,
   INBOX_RECORD_PAGE_SIZE,
@@ -241,6 +242,17 @@ export function useInboxScreen() {
   const folderChipScrollRef = useRef<ScrollView>(null);
   const listScrollOffsetYRef = useRef(0);
   const inboxFiltersReset = useInboxFiltersReset();
+
+  const handleInboxCardLayoutChange = useCallback(
+    (layout: InboxCardLayout) => {
+      if (layout === inboxCardLayout) return;
+      listRef.current?.prepareForLayoutAnimationRender();
+      prepareInboxCardLayoutAnimation();
+      setInboxCardLayout(layout);
+    },
+    [inboxCardLayout, setInboxCardLayout],
+  );
+
   const [showSwipeHint, setShowSwipeHint] = useState(() => !getHasSeenSwipeHint());
 
   const dismissSwipeHint = useCallback(() => {
@@ -843,8 +855,8 @@ export function useInboxScreen() {
   );
 
   const getItemType = useCallback(
-    (item: FlattenedItem) => (item.type === 'record' ? `record-${inboxCardLayout}` : item.type),
-    [inboxCardLayout],
+    (item: FlattenedItem) => (item.type === 'record' ? 'record' : item.type),
+    [],
   );
 
   const keyExtractor = useCallback((item: FlattenedItem) => {
@@ -1061,7 +1073,7 @@ export function useInboxScreen() {
     isGeneratingSharePdf: isGeneratingSharePdf || isGeneratingSingleSharePdf,
     isProActive,
     inboxCardLayout,
-    setInboxCardLayout,
+    handleInboxCardLayoutChange,
     shareSheetVisible,
     shareTargetRecord,
     shareEmailSending,

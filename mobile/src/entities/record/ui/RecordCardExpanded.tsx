@@ -299,6 +299,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
   const baseContainerStyle = [
     getRecordCardChromeStyle(color),
     {
+      width: '100%',
       borderRadius: 16,
       padding: 0,
       overflow: 'hidden' as const,
