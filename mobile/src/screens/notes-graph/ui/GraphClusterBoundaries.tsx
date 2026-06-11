@@ -31,6 +31,7 @@ type GraphClusterBoundariesProps = {
   width: number;
   height: number;
   visible: boolean;
+  showFolderClusters?: boolean;
 };
 
 function getClusterDisplayLabel(
@@ -126,6 +127,7 @@ export const GraphClusterBoundaries = React.memo(function GraphClusterBoundaries
   width,
   height,
   visible,
+  showFolderClusters = true,
 }: GraphClusterBoundariesProps) {
   const { t } = useTranslation();
   const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
@@ -133,7 +135,12 @@ export const GraphClusterBoundaries = React.memo(function GraphClusterBoundaries
   const clusterBounds = useMemo(() => {
     if (!visible) return [];
     return clusters
-      .filter((c) => c.type !== 'tag' && (c.nodeIds.length > 1 || c.type !== 'solo'))
+      .filter(
+        (c) =>
+          (showFolderClusters || c.type !== 'folder') &&
+          c.type !== 'tag' &&
+          (c.nodeIds.length > 1 || c.type !== 'solo'),
+      )
       .map((cluster) => computeClusterBounds(cluster, nodeById))
       .filter((b): b is ClusterBounds => b !== null)
       .sort((a, b) => {
@@ -141,7 +148,7 @@ export const GraphClusterBoundaries = React.memo(function GraphClusterBoundaries
         const priorityB = b.cluster.type === 'folder' ? 0 : b.cluster.type === 'tag' ? 1 : 2;
         return priorityB - priorityA;
       });
-  }, [clusters, nodeById, visible]);
+  }, [clusters, nodeById, showFolderClusters, visible]);
 
   if (!visible || clusterBounds.length === 0) {
     return null;

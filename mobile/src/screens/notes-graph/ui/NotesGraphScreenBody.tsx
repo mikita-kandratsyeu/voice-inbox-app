@@ -18,11 +18,13 @@ import { areFoldersEnabledInAiMode, useSettingsStore } from '@/entities/settings
 import { useProEntitlement } from '@/features/pro-license';
 import { TaskEditSheet } from '@/screens/recording-detail/ui/TaskEditSheet';
 import { useAppTheme, useColors } from '@/shared/config';
+import { hapticSelection, inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
 import { EmptyState, HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 import { collectUniqueTags, countFilteredGraphRecords } from '../lib/buildGraphModel';
 import { buildNotesGraphPersistKey } from '../lib/buildNotesGraphPersistKey';
 import { formatGraphAppliedLayoutHeaderSubtitle } from '../lib/formatGraphAppliedLayoutHeaderSubtitle';
+import { getGraphMinimapVisible, setGraphMinimapVisible } from '../lib/graphMinimapPreferences';
 import { findGraphSearchMatchIds, type GraphSearchIndexEntry } from '../lib/graphSearch';
 import { getSessionNodePositions, replaceSessionNodePositions } from '../lib/graphSessionLayout';
 import { shouldAutoSimplifyGraph } from '../lib/graphSimplifyMode';
@@ -122,6 +124,8 @@ export const NotesGraphScreenBody = () => {
   } | null>(null);
   const [isCapturingExport, setIsCapturingExport] = useState(false);
   const [isExportCaptureMount, setIsExportCaptureMount] = useState(false);
+  const [folderHighlightsVisible, setFolderHighlightsVisible] = useState(true);
+  const [minimapVisible, setMinimapVisible] = useState(() => getGraphMinimapVisible());
   const exportCaptureTokenRef = useRef(0);
   const [activeSavedVersion, setActiveSavedVersion] = useState<NotesGraphLayoutVersionEntry | null>(
     null,
@@ -716,25 +720,51 @@ export const NotesGraphScreenBody = () => {
     }
   }, [isCapturingExport, t]);
 
-  const notesGraphMenuActions = useMemo(
-    () => [
-      {
-        id: 'layoutHistory' as const,
-        title: t('notesGraph.history.title'),
-        image: 'clock.arrow.circlepath' as const,
-        imageColor: color.text.primary,
-        titleColor: color.text.primary,
-      },
-      {
-        id: 'exportImage' as const,
-        title: t('notesGraph.export.title'),
-        image: 'square.and.arrow.up' as const,
-        imageColor: color.text.primary,
-        titleColor: color.text.primary,
-      },
-    ],
-    [color.text.primary, t],
-  );
+  const notesGraphMenuActions = useMemo(() => {
+    const titleColor = color.text.primary;
+    const actions: NativeMenuAction[] = [];
+
+    if (foldersEnabled) {
+      actions.push({
+        id: 'toggleFolderHighlights',
+        title: t('notesGraph.controls.toggleFolderHighlights'),
+        image: 'rectangle.dashed',
+        imageColor: titleColor,
+        titleColor,
+        state: folderHighlightsVisible ? 'on' : 'off',
+      });
+    }
+
+    actions.push({
+      id: 'toggleMinimap',
+      title: t('notesGraph.controls.toggleMinimap'),
+      image: 'map',
+      imageColor: titleColor,
+      titleColor,
+      state: minimapVisible ? 'on' : 'off',
+    });
+
+    actions.push(
+      inlineNativeMenuSection('notesGraphMainSection', titleColor, [
+        {
+          id: 'layoutHistory',
+          title: t('notesGraph.history.title'),
+          image: 'clock.arrow.circlepath',
+          imageColor: titleColor,
+          titleColor,
+        },
+        {
+          id: 'exportImage',
+          title: t('notesGraph.export.title'),
+          image: 'square.and.arrow.up',
+          imageColor: titleColor,
+          titleColor,
+        },
+      ]),
+    );
+
+    return actions;
+  }, [color.text.primary, folderHighlightsVisible, foldersEnabled, minimapVisible, t]);
 
   const headerRightSlot =
     recordCount > 0 ? (
@@ -783,6 +813,20 @@ export const NotesGraphScreenBody = () => {
           onPressAction={({ nativeEvent }) => {
             if (nativeEvent.event === 'layoutHistory') {
               setHistorySheetVisible(true);
+              return;
+            }
+            if (nativeEvent.event === 'toggleFolderHighlights') {
+              hapticSelection();
+              setFolderHighlightsVisible((value) => !value);
+              return;
+            }
+            if (nativeEvent.event === 'toggleMinimap') {
+              hapticSelection();
+              setMinimapVisible((value) => {
+                const next = !value;
+                setGraphMinimapVisible(next);
+                return next;
+              });
               return;
             }
             if (nativeEvent.event === 'exportImage') {
@@ -882,6 +926,8 @@ export const NotesGraphScreenBody = () => {
           onDiscardLayout={handleDiscardUnsavedLayoutChanges}
           exportCaptureActive={isExportCaptureMount}
           isExportCapturing={isCapturingExport}
+          folderHighlightsVisible={folderHighlightsVisible}
+          minimapVisible={minimapVisible}
         />
       )}
 

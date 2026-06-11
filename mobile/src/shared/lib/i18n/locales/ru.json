@@ -359,7 +359,13 @@
       "zoomIn": "Приблизить",
       "zoomOut": "Отдалить",
       "reset": "Сбросить вид",
-      "resetLayoutLongPressHint": "Удерживайте, чтобы сбросить все несохранённые перемещения узлов"
+      "resetLayoutLongPressHint": "Удерживайте, чтобы сбросить все несохранённые перемещения узлов",
+      "toggleFolderHighlights": "Области папок",
+      "toggleFolderHighlightsHintOn": "Скрыть выделение папок на карте",
+      "toggleFolderHighlightsHintOff": "Показать выделение папок на карте",
+      "toggleMinimap": "Мини-карта",
+      "toggleMinimapHintOn": "Скрыть мини-карту на карте",
+      "toggleMinimapHintOff": "Показать мини-карту на карте"
     },
     "legend": {
       "toggle": "Что означают линии",

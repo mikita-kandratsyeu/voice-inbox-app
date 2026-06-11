@@ -346,7 +346,13 @@
       "zoomIn": "Zoom in",
       "zoomOut": "Zoom out",
       "reset": "Reset view",
-      "resetLayoutLongPressHint": "Long press to discard all unsaved node moves"
+      "resetLayoutLongPressHint": "Long press to discard all unsaved node moves",
+      "toggleFolderHighlights": "Folder areas",
+      "toggleFolderHighlightsHintOn": "Hide folder highlights on the map",
+      "toggleFolderHighlightsHintOff": "Show folder highlights on the map",
+      "toggleMinimap": "Minimap",
+      "toggleMinimapHintOn": "Hide the minimap on the map",
+      "toggleMinimapHintOff": "Show the minimap on the map"
     },
     "legend": {
       "toggle": "What the lines mean",

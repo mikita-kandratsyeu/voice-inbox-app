@@ -107,6 +107,8 @@ type GraphCanvasProps = {
   exportCaptureActive?: boolean;
   /** Shows export progress in controls without mounting the capture tree. */
   isExportCapturing?: boolean;
+  folderHighlightsVisible?: boolean;
+  minimapVisible?: boolean;
 };
 
 function mergeNodePositions(
@@ -154,6 +156,8 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     onDiscardLayout,
     exportCaptureActive = false,
     isExportCapturing = false,
+    folderHighlightsVisible = true,
+    minimapVisible = true,
   },
   ref,
 ) {
@@ -646,7 +650,6 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   }));
 
   const [legendVisible, setLegendVisible] = React.useState(false);
-  const [clusterBoundariesVisible] = React.useState(true);
 
   const clusters = useMemo(() => buildGraphClusters(displayNodes, edges), [displayNodes, edges]);
 
@@ -676,7 +679,8 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               color={color}
               width={worldWidth}
               height={worldHeight}
-              visible={clusterBoundariesVisible && !exportBusy}
+              visible={!exportBusy}
+              showFolderClusters={folderHighlightsVisible}
             />
             <GraphEdgeLayer
               nodes={displayNodes}
@@ -720,26 +724,28 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         />
       ) : null}
 
-      <GraphMinimap
-        color={color}
-        nodes={displayNodes}
-        worldWidth={worldWidth}
-        worldHeight={worldHeight}
-        viewportWidth={viewportWidth}
-        viewportHeight={viewportHeight}
-        translateX={viewportTransform.translateX}
-        translateY={viewportTransform.translateY}
-        scale={viewportTransform.scale}
-        disabled={isReconciling || exportBusy}
-        onNavigate={(nextTranslateX, nextTranslateY) => {
-          if (isReconciling || exportBusy) return;
-          applyTransform({
-            scale: savedScale.value,
-            translateX: nextTranslateX,
-            translateY: nextTranslateY,
-          });
-        }}
-      />
+      {minimapVisible ? (
+        <GraphMinimap
+          color={color}
+          nodes={displayNodes}
+          worldWidth={worldWidth}
+          worldHeight={worldHeight}
+          viewportWidth={viewportWidth}
+          viewportHeight={viewportHeight}
+          translateX={viewportTransform.translateX}
+          translateY={viewportTransform.translateY}
+          scale={viewportTransform.scale}
+          disabled={isReconciling || exportBusy}
+          onNavigate={(nextTranslateX, nextTranslateY) => {
+            if (isReconciling || exportBusy) return;
+            applyTransform({
+              scale: savedScale.value,
+              translateX: nextTranslateX,
+              translateY: nextTranslateY,
+            });
+          }}
+        />
+      ) : null}
 
       <GraphControls
         color={color}

@@ -1,6 +1,7 @@
 import {
   clampGraphMinimapSize,
   getGraphMinimapSize,
+  getGraphMinimapVisible,
   GRAPH_MINIMAP_DEFAULT_HEIGHT,
   GRAPH_MINIMAP_DEFAULT_WIDTH,
   GRAPH_MINIMAP_MAX_HEIGHT,
@@ -8,6 +9,7 @@ import {
   GRAPH_MINIMAP_MIN_HEIGHT,
   GRAPH_MINIMAP_MIN_WIDTH,
   setGraphMinimapSize,
+  setGraphMinimapVisible,
 } from '../graphMinimapPreferences';
 
 const mockStorageState = new Map<string, string>();
@@ -62,5 +64,17 @@ describe('graph minimap preferences storage', () => {
       width: GRAPH_MINIMAP_DEFAULT_WIDTH,
       height: GRAPH_MINIMAP_DEFAULT_HEIGHT,
     });
+  });
+
+  it('defaults minimap visibility to on', () => {
+    expect(getGraphMinimapVisible()).toBe(true);
+  });
+
+  it('persists minimap visibility', () => {
+    setGraphMinimapVisible(false);
+    expect(getGraphMinimapVisible()).toBe(false);
+
+    setGraphMinimapVisible(true);
+    expect(getGraphMinimapVisible()).toBe(true);
   });
 });
