@@ -12,7 +12,6 @@
  * - TTL automatically cleans up old entries
  */
 
-import { Redis } from '@upstash/redis';
 import { redisPool } from '@/lib/redis-pool';
 
 const DEDUP_KEY_PREFIX = 'dedup:';
