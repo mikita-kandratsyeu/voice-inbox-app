@@ -23,10 +23,19 @@ export function ProEntitlementProvider({ children }: { children: React.ReactNode
   const [hydrated, setHydrated] = useState(false);
   const hasLeftActiveRef = useRef(false);
   const lastForegroundRefreshAtRef = useRef(0);
+  const refreshInProgressRef = useRef(false);
 
   const refresh = useCallback(async (options?: ProEntitlementRefreshOptions) => {
-    await syncProLicenseFromServer(options?.force === true);
-    setHydrated(true);
+    if (refreshInProgressRef.current && !options?.force) {
+      return;
+    }
+    refreshInProgressRef.current = true;
+    try {
+      await syncProLicenseFromServer(options?.force === true);
+      setHydrated(true);
+    } finally {
+      refreshInProgressRef.current = false;
+    }
   }, []);
 
   useEffect(() => {
@@ -42,6 +51,9 @@ export function ProEntitlementProvider({ children }: { children: React.ReactNode
         const now = Date.now();
         const lastFg = lastForegroundRefreshAtRef.current;
         if (lastFg > 0 && now - lastFg < PRO_LICENSE_MIN_FOREGROUND_REFRESH_MS) {
+          return;
+        }
+        if (refreshInProgressRef.current) {
           return;
         }
         lastForegroundRefreshAtRef.current = now;

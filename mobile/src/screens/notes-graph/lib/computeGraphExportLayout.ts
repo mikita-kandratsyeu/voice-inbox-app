@@ -12,7 +12,7 @@ export const GRAPH_EXPORT_MAX_DIMENSION = 2800;
 /** iOS drawViewHierarchy / renderInContext is more reliable below full export resolution. */
 export const GRAPH_EXPORT_VIEW_SHOT_MAX_DIMENSION_IOS = 2048;
 export const GRAPH_EXPORT_MIN_DIMENSION = 720;
-export const GRAPH_EXPORT_FIT_PADDING = 48;
+export const GRAPH_EXPORT_FIT_PADDING = 80;
 
 export function getGraphExportViewShotMaxDimension(): number {
   return Platform.OS === 'ios'
@@ -53,19 +53,28 @@ export function computeGraphExportLayout(
   const bounds = measureGraphContentBounds(nodes);
   if (!bounds) return null;
 
-  const contentWidth = Math.max(bounds.maxX - bounds.minX, 1);
-  const contentHeight = Math.max(bounds.maxY - bounds.minY, 1);
+  // measureGraphContentBounds already includes EDGE_VISUAL_MARGIN
+  // Add additional padding for export frame
+  const paddingExtra = GRAPH_EXPORT_FIT_PADDING * 2;
+  const contentWidth = Math.max(bounds.maxX - bounds.minX + paddingExtra, 1);
+  const contentHeight = Math.max(bounds.maxY - bounds.minY + paddingExtra, 1);
   const aspect = contentWidth / contentHeight;
 
   let exportWidth: number;
   let exportHeight: number;
 
   if (aspect >= 1) {
-    exportWidth = maxDimension;
-    exportHeight = Math.max(GRAPH_EXPORT_MIN_DIMENSION, Math.round(maxDimension / aspect));
+    exportWidth = Math.min(maxDimension, contentWidth + paddingExtra);
+    exportHeight = Math.max(
+      GRAPH_EXPORT_MIN_DIMENSION,
+      Math.min(Math.round(exportWidth / aspect), maxDimension),
+    );
   } else {
-    exportHeight = maxDimension;
-    exportWidth = Math.max(GRAPH_EXPORT_MIN_DIMENSION, Math.round(maxDimension * aspect));
+    exportHeight = Math.min(maxDimension, contentHeight + paddingExtra);
+    exportWidth = Math.max(
+      GRAPH_EXPORT_MIN_DIMENSION,
+      Math.min(Math.round(exportHeight * aspect), maxDimension),
+    );
   }
 
   const { width: worldWidth, height: worldHeight } = computeWorldDimensionsForNodes(
