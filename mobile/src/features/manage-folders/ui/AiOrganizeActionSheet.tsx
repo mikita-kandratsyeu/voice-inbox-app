@@ -3,19 +3,21 @@ import { Archive, FolderInput, FolderSync, FolderTree } from 'lucide-react-nativ
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
+  AUTO_ORGANIZE_MODES,
   type AutoOrganizeMode,
   isProAutoOrganizeMode,
 } from '@/entities/folder/lib/autoOrganizeTypes';
 import { type Colors, useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib/haptics';
+import { AppBottomSheetModal, ProCrownBadge, SheetFooterButtons } from '@/shared/ui';
+
 import {
-  AppBottomSheetModal,
-  ProCrownBadge,
-  SheetFooterButtons,
-  useBottomSheetContentPadding,
-} from '@/shared/ui';
+  getAiOrganizeActionSheetSnapHeight,
+  getAiOrganizeSheetBottomPadding,
+} from '../lib/aiOrganizeSheetLayout';
 
 type AiOrganizeActionSheetProps = {
   visible: boolean;
@@ -159,17 +161,33 @@ export function AiOrganizeActionSheet({
 }: AiOrganizeActionSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(12);
+  const insets = useSafeAreaInsets();
 
   const actions = useMemo(() => buildActionRows(color, t), [color, t]);
+  const bottomPadding = useMemo(
+    () => getAiOrganizeSheetBottomPadding(insets.bottom),
+    [insets.bottom],
+  );
+  const snapPoints = useMemo(
+    () => [getAiOrganizeActionSheetSnapHeight(insets.bottom, AUTO_ORGANIZE_MODES.length)],
+    [insets.bottom],
+  );
 
   const subtitle = t('folders.aiOrganizeSheet.subtitle', {
     count: eligibleCount,
   });
 
   return (
-    <AppBottomSheetModal visible={visible} presentRequestKey={presentRequestKey} onClose={onClose}>
-      <BottomSheetView style={{ paddingHorizontal: 20, paddingTop: 8, ...contentPadding }}>
+    <AppBottomSheetModal
+      visible={visible}
+      presentRequestKey={presentRequestKey}
+      onClose={onClose}
+      snapPoints={snapPoints}
+      enableContentPanningGesture={false}
+    >
+      <BottomSheetView
+        style={{ flexGrow: 0, paddingHorizontal: 20, paddingTop: 8, paddingBottom: bottomPadding }}
+      >
         <Text
           style={{
             color: color.text.primary,

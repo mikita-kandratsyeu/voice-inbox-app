@@ -66,7 +66,8 @@ export const InboxScreen = () => {
     pendingAutoOrganizeTemplate,
     setPendingAutoOrganizeTemplate,
     handleAiOrganizeActionSelect,
-    handleAiOrganizeTemplateSelect,
+    handleAiOrganizeTemplateBack,
+    handleAiOrganizeTemplateApply,
     cancelAutoOrganize,
     isAutoOrganizing,
     autoOrganizeActiveMode,
@@ -338,10 +339,9 @@ export const InboxScreen = () => {
             selectedTemplate={pendingAutoOrganizeTemplate}
             isProActive={isProActive}
             onClose={closeAiOrganizeTemplateSheet}
-            onSelect={(template) => {
-              setPendingAutoOrganizeTemplate(template);
-              handleAiOrganizeTemplateSelect(template);
-            }}
+            onBack={handleAiOrganizeTemplateBack}
+            onSelect={setPendingAutoOrganizeTemplate}
+            onApply={handleAiOrganizeTemplateApply}
             onProRequired={() => {
               closeAiOrganizeTemplateSheet();
               openPlanPaywall();

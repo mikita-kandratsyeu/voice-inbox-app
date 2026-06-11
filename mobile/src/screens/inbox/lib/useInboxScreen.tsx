@@ -197,13 +197,16 @@ export function useInboxScreen() {
     [runAutoOrganize],
   );
 
-  const handleAiOrganizeTemplateSelect = useCallback(
-    (template: AutoOrganizeTemplate) => {
-      setAiOrganizeTemplateSheetVisible(false);
-      void runAutoOrganize({ mode: 'full', template });
-    },
-    [runAutoOrganize],
-  );
+  const handleAiOrganizeTemplateBack = useCallback(() => {
+    setAiOrganizeTemplateSheetVisible(false);
+    setAiOrganizePresentKey((key) => key + 1);
+    setAiOrganizeSheetVisible(true);
+  }, []);
+
+  const handleAiOrganizeTemplateApply = useCallback(() => {
+    setAiOrganizeTemplateSheetVisible(false);
+    void runAutoOrganize({ mode: 'full', template: pendingAutoOrganizeTemplate });
+  }, [pendingAutoOrganizeTemplate, runAutoOrganize]);
 
   const effectiveActiveFolderId = foldersEnabled ? activeFolderId : null;
 
@@ -1093,7 +1096,8 @@ export function useInboxScreen() {
     pendingAutoOrganizeTemplate,
     setPendingAutoOrganizeTemplate,
     handleAiOrganizeActionSelect,
-    handleAiOrganizeTemplateSelect,
+    handleAiOrganizeTemplateBack,
+    handleAiOrganizeTemplateApply,
     cancelAutoOrganize,
     isAutoOrganizing,
     autoOrganizeActiveMode,

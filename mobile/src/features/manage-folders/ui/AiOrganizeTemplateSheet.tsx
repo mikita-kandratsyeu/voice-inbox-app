@@ -24,7 +24,9 @@ type AiOrganizeTemplateSheetProps = {
   selectedTemplate: AutoOrganizeTemplate;
   isProActive: boolean;
   onClose: () => void;
+  onBack: () => void;
   onSelect: (template: AutoOrganizeTemplate) => void;
+  onApply: () => void;
   onProRequired: () => void;
 };
 
@@ -33,7 +35,9 @@ export function AiOrganizeTemplateSheet({
   selectedTemplate,
   isProActive,
   onClose,
+  onBack,
   onSelect,
+  onApply,
   onProRequired,
 }: AiOrganizeTemplateSheetProps) {
   const { t } = useTranslation();
@@ -148,9 +152,19 @@ export function AiOrganizeTemplateSheet({
         <SheetFooterButtons
           className="mt-3 w-full"
           color={color}
-          primaryLabel={t('common.cancel')}
-          onPrimaryPress={onClose}
-          singleVariant="secondary"
+          primaryLabel={t('folders.aiOrganizeTemplates.apply')}
+          onPrimaryPress={() => {
+            const locked =
+              isProAutoOrganizeTemplate(selectedTemplate) && !isProActive;
+            if (locked) {
+              onProRequired();
+              return;
+            }
+            onApply();
+          }}
+          primaryAccessibilityLabel={t('folders.aiOrganizeTemplates.applyA11y')}
+          secondaryLabel={t('common.goBack')}
+          onSecondaryPress={onBack}
         />
       </BottomSheetView>
     </AppBottomSheetModal>

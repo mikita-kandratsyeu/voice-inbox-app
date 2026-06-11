@@ -2426,6 +2426,8 @@
     "aiOrganizeTemplates": {
       "title": "Organization template",
       "subtitle": "Choose how AI should group your notes",
+      "apply": "Apply",
+      "applyA11y": "Start AI organization with the selected template",
       "proRequired": "Pro templates require an active Pro subscription.",
       "items": {
         "general": "General",
