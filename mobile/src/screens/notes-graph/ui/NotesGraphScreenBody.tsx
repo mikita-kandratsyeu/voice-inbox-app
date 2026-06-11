@@ -672,7 +672,7 @@ export const NotesGraphScreenBody = () => {
     exportCaptureTokenRef.current = captureToken;
 
     setExportPreviewUri(null);
-    setExportSheetVisible(true);
+    setExportPreviewSize(null);
     setIsCapturingExport(true);
     await waitForNextFrame();
 
@@ -684,6 +684,7 @@ export const NotesGraphScreenBody = () => {
       }
       setExportPreviewUri(captured.uri);
       setExportPreviewSize({ width: captured.width, height: captured.height });
+      setExportSheetVisible(true);
     } catch {
       if (captureToken !== exportCaptureTokenRef.current) return;
       setExportSheetVisible(false);
@@ -807,7 +808,7 @@ export const NotesGraphScreenBody = () => {
         foldersEnabled={foldersEnabled}
         isProActive={isProActive}
         availableTags={availableTags}
-        disabled={isGraphReconciling}
+        disabled={isGraphReconciling || isCapturingExport}
         onFiltersChange={handleFiltersChange}
       />
 
@@ -906,7 +907,6 @@ export const NotesGraphScreenBody = () => {
         visible={exportSheetVisible}
         imageUri={exportPreviewUri}
         imagePixelSize={exportPreviewSize}
-        isLoadingPreview={isCapturingExport}
         onClose={() => {
           exportCaptureTokenRef.current += 1;
           setExportSheetVisible(false);

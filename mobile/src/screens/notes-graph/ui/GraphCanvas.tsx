@@ -668,7 +668,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               activeNodeId={activeNodeId}
               canvasScale={scale}
               layoutRestoreToken={layoutRestoreToken}
-              interactionsEnabled={!isReconciling}
+              interactionsEnabled={!isReconciling && !exportCaptureActive}
               onRecordPress={onRecordPress}
               onTaskPress={onTaskPress}
               onNodeDragStart={handleNodeDragStart}
@@ -702,9 +702,9 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         translateX={viewportTransform.translateX}
         translateY={viewportTransform.translateY}
         scale={viewportTransform.scale}
-        disabled={isReconciling}
+        disabled={isReconciling || exportCaptureActive}
         onNavigate={(nextTranslateX, nextTranslateY) => {
-          if (isReconciling) return;
+          if (isReconciling || exportCaptureActive) return;
           applyTransform({
             scale: savedScale.value,
             translateX: nextTranslateX,
@@ -716,7 +716,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       <GraphControls
         color={color}
         bottomInset={bottomInset}
-        disabled={isReconciling}
+        disabled={isReconciling || exportCaptureActive}
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}
         onFit={() => fitToScreen(true, displayNodes)}
@@ -727,6 +727,8 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         onToggleLegend={() => setLegendVisible((v) => !v)}
         isReconciling={isReconciling}
         reconcilingLabel={t('notesGraph.reconciling')}
+        isExportCapturing={exportCaptureActive}
+        exportCapturingLabel={t('notesGraph.export.capturingPreview')}
       />
 
       {hasUnsavedLayoutChanges && onSaveLayout && onDiscardLayout ? (
@@ -734,7 +736,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
           color={color}
           bottomInset={bottomInset}
           isSaving={isSavingLayout}
-          disabled={isReconciling}
+          disabled={isReconciling || exportCaptureActive}
           onSave={onSaveLayout}
           onDiscard={onDiscardLayout}
         />

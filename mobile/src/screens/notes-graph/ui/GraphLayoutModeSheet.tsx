@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/shared/config';
+import { useIsTablet } from '@/shared/lib';
 import {
   AppBottomSheetContent,
   AppBottomSheetModal,
@@ -34,13 +35,15 @@ export function GraphLayoutModeSheet({
   const color = useColors();
   const insets = useSafeAreaInsets();
   const subtitle = t('notesGraph.filters.layoutModePickerSubtitle');
+  const isTablet = useIsTablet();
+
   const bottomPadding = useMemo(
     () => getGraphLayoutModeSheetBottomPadding(insets.bottom),
     [insets.bottom],
   );
   const snapPoints = useMemo(
-    () => [getGraphLayoutModeSheetSnapHeight(insets.bottom) + 20],
-    [insets.bottom],
+    () => [getGraphLayoutModeSheetSnapHeight(insets.bottom) + (isTablet ? -18 : 18)],
+    [insets.bottom, isTablet],
   );
   const options = useMemo(
     () =>
