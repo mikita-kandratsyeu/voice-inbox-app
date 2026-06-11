@@ -25,7 +25,8 @@
       "env": ["DATABASE_URL", "DIRECT_URL"]
     },
     "test": {
-      "dependsOn": ["type:check"]
+      "dependsOn": ["type:check"],
+      "outputs": ["coverage/**", "test-results.json"]
     },
     "format": {
       "cache": false
