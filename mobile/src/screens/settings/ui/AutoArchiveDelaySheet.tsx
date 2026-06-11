@@ -1,4 +1,3 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Check } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +5,12 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 import type { AutoArchiveAfterDays } from '@/entities/settings';
 import { useColors } from '@/shared/config';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  AppBottomSheetContent,
+  AppBottomSheetModal,
+  SheetFooterButtons,
+  SheetHeader,
+} from '@/shared/ui';
 
 const DELAY_OPTIONS: AutoArchiveAfterDays[] = [1, 7, 14, 30];
 
@@ -25,41 +29,16 @@ export function AutoArchiveDelaySheet({
 }: AutoArchiveDelaySheetProps) {
   const { t } = useTranslation();
   const c = useColors();
-  const contentPadding = useBottomSheetContentPadding(24);
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>
-      <BottomSheetView
-        style={{
-          paddingHorizontal: 24,
-          paddingTop: 8,
-          ...contentPadding,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 17,
-            fontWeight: '600',
-            color: c.text.primary,
-            textAlign: 'center',
-            paddingTop: 4,
-            marginBottom: 8,
-          }}
-        >
-          {t('settings.autoArchiveDelayPickerTitle')}
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            lineHeight: 20,
-            color: c.text.secondary,
-            textAlign: 'center',
-            marginBottom: 16,
-            paddingHorizontal: 4,
-          }}
-        >
-          {t('settings.autoArchiveDelayPickerMessage')}
-        </Text>
+      <AppBottomSheetContent useTabletPadding>
+        <SheetHeader
+          title={t('settings.autoArchiveDelayPickerTitle')}
+          subtitle={t('settings.autoArchiveDelayPickerMessage')}
+          color={c}
+          marginBottom={16}
+        />
         <View
           style={{
             borderRadius: 16,
@@ -102,7 +81,7 @@ export function AutoArchiveDelaySheet({
           onPrimaryPress={onClose}
           singleVariant="secondary"
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

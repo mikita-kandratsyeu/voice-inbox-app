@@ -8,7 +8,9 @@ export {
   useAppBottomSheetBackdrop,
   useAppBottomSheetChrome,
 } from './appBottomSheetChrome';
+export { AppBottomSheetContent } from './AppBottomSheetContent';
 export { AppBottomSheetModal, type AppBottomSheetModalProps } from './AppBottomSheetModal';
+export { SheetHeader } from './SheetHeader';
 export {
   SHEET_FOOTER_BUTTON_RADIUS,
   sheetFooterButtonContainerStyle,
