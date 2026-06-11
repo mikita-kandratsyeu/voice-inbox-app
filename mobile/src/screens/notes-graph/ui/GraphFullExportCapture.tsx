@@ -6,7 +6,11 @@ import ViewShot, { type ViewShotRef } from 'react-native-view-shot';
 import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
 
-import { computeGraphExportLayout } from '../lib/computeGraphExportLayout';
+import {
+  computeGraphExportLayout,
+  getGraphExportViewShotCaptureOptions,
+  getGraphExportViewShotMaxDimension,
+} from '../lib/computeGraphExportLayout';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
 import { DottedBackground } from './DottedBackground';
 import { GraphEdgeLayer } from './GraphEdgeLayer';
@@ -27,9 +31,11 @@ export const GraphFullExportCapture = forwardRef<ViewShotRef, GraphFullExportCap
     { nodes, edges, graphWidth, graphHeight, color, foldersById, isProActive },
     ref,
   ) {
+    const viewShotMaxDimension = useMemo(() => getGraphExportViewShotMaxDimension(), []);
+
     const layout = useMemo(
-      () => computeGraphExportLayout(nodes, graphWidth, graphHeight),
-      [graphHeight, graphWidth, nodes],
+      () => computeGraphExportLayout(nodes, graphWidth, graphHeight, viewShotMaxDimension),
+      [graphHeight, graphWidth, nodes, viewShotMaxDimension],
     );
     const canvasScale = useSharedValue(1);
 
@@ -40,10 +46,22 @@ export const GraphFullExportCapture = forwardRef<ViewShotRef, GraphFullExportCap
     const noop = () => {};
 
     return (
-      <View pointerEvents="none" style={{ left: -20000, position: 'absolute', top: 0 }}>
+      <View
+        collapsable={false}
+        pointerEvents="none"
+        style={{
+          height: layout.exportHeight,
+          left: 0,
+          opacity: 0,
+          position: 'absolute',
+          top: 0,
+          width: layout.exportWidth,
+          zIndex: -1,
+        }}
+      >
         <ViewShot
           ref={ref}
-          options={{ format: 'png', quality: 1, result: 'tmpfile' }}
+          options={getGraphExportViewShotCaptureOptions()}
           style={{
             backgroundColor: color.background.secondary,
             height: layout.exportHeight,

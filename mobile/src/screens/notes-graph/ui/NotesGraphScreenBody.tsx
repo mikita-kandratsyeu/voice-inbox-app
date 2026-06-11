@@ -64,6 +64,14 @@ import { GraphStickySearchBar } from './GraphStickySearchBar';
 const LARGE_GRAPH_RECORD_THRESHOLD = 150;
 const GRAPH_SEARCH_DEBOUNCE_MS = 300;
 
+function waitForNextFrame(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
+}
+
 export const NotesGraphScreenBody = () => {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -653,6 +661,7 @@ export const NotesGraphScreenBody = () => {
     setExportPreviewUri(null);
     setExportSheetVisible(true);
     setIsCapturingExport(true);
+    await waitForNextFrame();
 
     try {
       const captured = await canvasRef.current?.captureImage();
@@ -837,6 +846,7 @@ export const NotesGraphScreenBody = () => {
           isSavingLayout={isSavingLayout}
           onSaveLayout={handleOpenLayoutSaveSheet}
           onDiscardLayout={handleDiscardUnsavedLayoutChanges}
+          exportCaptureActive={isCapturingExport}
         />
       )}
 

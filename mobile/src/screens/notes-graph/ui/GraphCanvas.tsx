@@ -24,7 +24,10 @@ import type { ViewShotRef } from 'react-native-view-shot';
 import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
 
-import { computeGraphExportLayout } from '../lib/computeGraphExportLayout';
+import {
+  computeGraphExportLayout,
+  getGraphExportViewShotMaxDimension,
+} from '../lib/computeGraphExportLayout';
 import {
   computeMapDoubleTapTransform,
   computeMapPanTransform,
@@ -96,6 +99,7 @@ type GraphCanvasProps = {
   isSavingLayout?: boolean;
   onSaveLayout?: () => void;
   onDiscardLayout?: () => void;
+  exportCaptureActive?: boolean;
 };
 
 function mergeNodePositions(
@@ -141,6 +145,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     isSavingLayout = false,
     onSaveLayout,
     onDiscardLayout,
+    exportCaptureActive = false,
   },
   ref,
 ) {
@@ -347,7 +352,12 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       });
     });
 
-    const layout = computeGraphExportLayout(displayNodes, graphWidth, graphHeight);
+    const layout = computeGraphExportLayout(
+      displayNodes,
+      graphWidth,
+      graphHeight,
+      getGraphExportViewShotMaxDimension(),
+    );
     const uri = await fullExportRef.current?.capture?.();
     if (!uri || !layout) {
       throw new Error('Graph capture failed');
@@ -669,16 +679,18 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         </View>
       </GestureDetector>
 
-      <GraphFullExportCapture
-        ref={fullExportRef}
-        nodes={displayNodes}
-        edges={edges}
-        graphWidth={graphWidth}
-        graphHeight={graphHeight}
-        color={color}
-        foldersById={foldersById}
-        isProActive={isProActive}
-      />
+      {exportCaptureActive ? (
+        <GraphFullExportCapture
+          ref={fullExportRef}
+          nodes={displayNodes}
+          edges={edges}
+          graphWidth={graphWidth}
+          graphHeight={graphHeight}
+          color={color}
+          foldersById={foldersById}
+          isProActive={isProActive}
+        />
+      ) : null}
 
       <GraphMinimap
         color={color}

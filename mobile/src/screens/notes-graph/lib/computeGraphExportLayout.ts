@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 import type { GraphNode } from './graphTypes';
 import {
   computeWorldDimensionsForNodes,
@@ -7,8 +9,30 @@ import {
 import { computeFitTransform } from './runForceLayout';
 
 export const GRAPH_EXPORT_MAX_DIMENSION = 2800;
+/** iOS drawViewHierarchy / renderInContext is more reliable below full export resolution. */
+export const GRAPH_EXPORT_VIEW_SHOT_MAX_DIMENSION_IOS = 2048;
 export const GRAPH_EXPORT_MIN_DIMENSION = 720;
 export const GRAPH_EXPORT_FIT_PADDING = 48;
+
+export function getGraphExportViewShotMaxDimension(): number {
+  return Platform.OS === 'ios'
+    ? GRAPH_EXPORT_VIEW_SHOT_MAX_DIMENSION_IOS
+    : GRAPH_EXPORT_MAX_DIMENSION;
+}
+
+export function getGraphExportViewShotCaptureOptions(): {
+  format: 'png';
+  quality: number;
+  result: 'tmpfile';
+  useRenderInContext?: boolean;
+} {
+  return {
+    format: 'png',
+    quality: 1,
+    result: 'tmpfile',
+    ...(Platform.OS === 'ios' ? { useRenderInContext: true } : {}),
+  };
+}
 
 export type GraphExportLayout = {
   exportWidth: number;

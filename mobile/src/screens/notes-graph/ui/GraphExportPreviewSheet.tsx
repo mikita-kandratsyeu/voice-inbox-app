@@ -22,6 +22,7 @@ import {
   type ImageSize,
   isFullImageCrop,
 } from '../lib/graphExportCrop';
+import { getGraphExportViewShotCaptureOptions } from '../lib/computeGraphExportLayout';
 import { GraphExportCropOverlay } from './GraphExportCropOverlay';
 import { GraphExportCropTemplates } from './GraphExportCropTemplates';
 
@@ -299,10 +300,22 @@ export function GraphExportPreviewSheet({
       </BottomSheetView>
 
       {visible && imageUri && imageSize && crop && cropCaptureLayout ? (
-        <View pointerEvents="none" style={{ left: -10000, position: 'absolute', top: 0 }}>
+        <View
+          collapsable={false}
+          pointerEvents="none"
+          style={{
+            height: cropCaptureLayout.shotHeight,
+            left: 0,
+            opacity: 0,
+            position: 'absolute',
+            top: 0,
+            width: cropCaptureLayout.shotWidth,
+            zIndex: -1,
+          }}
+        >
           <ViewShot
             ref={cropCaptureRef}
-            options={{ format: 'png', quality: 1, result: 'tmpfile' }}
+            options={getGraphExportViewShotCaptureOptions()}
             style={{
               height: cropCaptureLayout.shotHeight,
               width: cropCaptureLayout.shotWidth,
