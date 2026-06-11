@@ -205,10 +205,6 @@ export async function saveMessageIfNotExists(
   });
 }
 
-async function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export async function getMessage(id: string, syncToken?: string): Promise<Message | null> {
   const key = getMessageKey(id);
 

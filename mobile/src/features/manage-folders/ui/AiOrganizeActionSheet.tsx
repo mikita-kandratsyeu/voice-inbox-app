@@ -4,7 +4,10 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 
-import { isProAutoOrganizeMode, type AutoOrganizeMode } from '@/entities/folder/lib/autoOrganizeTypes';
+import {
+  type AutoOrganizeMode,
+  isProAutoOrganizeMode,
+} from '@/entities/folder/lib/autoOrganizeTypes';
 import { type Colors, useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib/haptics';
 import {
@@ -63,7 +66,9 @@ function SheetOptionRow({
       }}
     >
       {icon}
-      <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+      <View
+        style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}
+      >
         <Text style={{ fontSize: 16, color: color.text.primary, flexShrink: 1 }} numberOfLines={2}>
           {label}
         </Text>
