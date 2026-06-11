@@ -1,6 +1,8 @@
 import { Platform } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
+import { getPlatformVersionString, IS_ANDROID, IS_IOS } from '@/shared/lib';
+
 /**
  * Device performance tier based on chipset capabilities
  */
@@ -113,7 +115,7 @@ function detectIosPerformanceTier(): DevicePerformanceTier {
     }
 
     // Fallback: use iOS version as proxy
-    const iosVersion = parseInt(String(Platform.Version).split('.')[0], 10);
+    const iosVersion = parseInt(getPlatformVersionString().split('.')[0], 10);
     if (iosVersion >= 17) return 'high';
     if (iosVersion >= 15) return 'medium';
     return 'low';
@@ -158,11 +160,11 @@ function detectAndroidPerformanceTier(): DevicePerformanceTier {
  * Detect device performance tier
  */
 export function detectDevicePerformanceTier(): DevicePerformanceTier {
-  if (Platform.OS === 'ios') {
+  if (IS_IOS) {
     return detectIosPerformanceTier();
   }
 
-  if (Platform.OS === 'android') {
+  if (IS_ANDROID) {
     return detectAndroidPerformanceTier();
   }
 

@@ -1,5 +1,7 @@
-import { LayoutAnimation, Platform } from 'react-native';
+import { LayoutAnimation } from 'react-native';
 import { LinearTransition } from 'react-native-reanimated';
+
+import { selectPlatform } from '@/shared/lib';
 
 /** Perceptual spring length — matches UIKit-style list row resize (~Mail / Reminders). */
 export const INBOX_CARD_LAYOUT_SPRING_DURATION_MS = 240;
@@ -7,7 +9,7 @@ export const INBOX_CARD_LAYOUT_SPRING_DURATION_MS = 240;
 /** FlashList sibling reflow — native LayoutAnimation on iOS, eased update on Android. */
 export function prepareInboxCardLayoutAnimation(): void {
   LayoutAnimation.configureNext(
-    Platform.select({
+    selectPlatform({
       ios: {
         duration: INBOX_CARD_LAYOUT_SPRING_DURATION_MS,
         update: {

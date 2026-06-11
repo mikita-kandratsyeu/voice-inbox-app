@@ -1,13 +1,13 @@
 import Slider from '@react-native-community/slider';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { LayoutChangeEvent, Platform, StyleSheet, Text, View } from 'react-native';
+import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 
 import {
   CLOUD_AI_KV_TTL_CHOICES,
   type CloudAiKvTtlSeconds,
 } from '@/entities/settings/lib/cloudAiKvTtl';
 import type { Colors } from '@/shared/config';
-import { hapticLight, IS_IOS, withAlphaHex } from '@/shared/lib';
+import { hapticLight, IS_IOS, selectPlatform, withAlphaHex } from '@/shared/lib';
 
 const SLIDER_MAX_INDEX = CLOUD_AI_KV_TTL_CHOICES.length - 1;
 
@@ -36,7 +36,7 @@ function indexForSeconds(seconds: number): number {
  */
 function sliderThumbGeometry(trackWidth: number): { inset: number; span: number } {
   if (trackWidth <= 0) return { inset: 0, span: 0 };
-  const inset = Platform.select({
+  const inset = selectPlatform({
     ios: Math.min(16, trackWidth * 0.078),
     android: Math.min(12, trackWidth * 0.056),
     default: 14,

@@ -1,4 +1,6 @@
-import { Platform, type ViewStyle } from 'react-native';
+import { type ViewStyle } from 'react-native';
+
+import { selectPlatform } from '@/shared/lib';
 
 export type GraphLayoutSaveBarColors = {
   background: { primary: string };
@@ -35,7 +37,7 @@ export function getGraphLayoutSaveBarBottom(bottomInset: number): number {
 
 export function getGraphLayoutSaveDockShadowStyle(color: GraphLayoutSaveBarColors): ViewStyle {
   return (
-    Platform.select({
+    selectPlatform({
       ios: {
         shadowColor: color.shadow.color,
         shadowOffset: { width: 0, height: 3 },

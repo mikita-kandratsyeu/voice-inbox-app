@@ -1,5 +1,6 @@
-import { Platform } from 'react-native';
+import { IS_IOS } from '@/shared/lib';
 
+import { detectDeviceCapabilities } from './deviceCapabilities';
 import type { GraphNode } from './graphTypes';
 import {
   computeWorldDimensionsForNodes,
@@ -8,16 +9,20 @@ import {
 } from './graphViewportBounds';
 import { computeFitTransform } from './runForceLayout';
 
-export const GRAPH_EXPORT_MAX_DIMENSION = 2800;
-/** iOS drawViewHierarchy / renderInContext is more reliable below full export resolution. */
-export const GRAPH_EXPORT_VIEW_SHOT_MAX_DIMENSION_IOS = 2048;
+/**
+ * Maximum texture size supported by most modern mobile GPUs.
+ * 8192x8192 is the typical hardware limit on iOS/Android.
+ * Note: Very large exports may fail on older devices with limited memory.
+ */
+export const GRAPH_EXPORT_MAX_DIMENSION = 8192;
+/** iOS drawViewHierarchy / renderInContext maximum safe dimension. */
+export const GRAPH_EXPORT_VIEW_SHOT_MAX_DIMENSION_IOS = 8192;
 export const GRAPH_EXPORT_MIN_DIMENSION = 720;
 export const GRAPH_EXPORT_FIT_PADDING = 80;
 
 export function getGraphExportViewShotMaxDimension(): number {
-  return Platform.OS === 'ios'
-    ? GRAPH_EXPORT_VIEW_SHOT_MAX_DIMENSION_IOS
-    : GRAPH_EXPORT_MAX_DIMENSION;
+  const capabilities = detectDeviceCapabilities();
+  return capabilities.maxExportDimension;
 }
 
 export function getGraphExportViewShotCaptureOptions(): {
@@ -30,7 +35,7 @@ export function getGraphExportViewShotCaptureOptions(): {
     format: 'png',
     quality: 1,
     result: 'tmpfile',
-    ...(Platform.OS === 'ios' ? { useRenderInContext: true } : {}),
+    ...(IS_IOS ? { useRenderInContext: true } : {}),
   };
 }
 
@@ -40,18 +45,24 @@ export type GraphExportLayout = {
   worldWidth: number;
   worldHeight: number;
   transform: { scale: number; translateX: number; translateY: number };
+  wasScaledDown?: boolean;
+  deviceMemoryTier?: string;
 };
 
 export function computeGraphExportLayout(
   nodes: GraphNode[],
   graphWidth: number,
   graphHeight: number,
-  maxDimension = GRAPH_EXPORT_MAX_DIMENSION,
+  maxDimension?: number,
 ): GraphExportLayout | null {
   if (nodes.length === 0) return null;
 
   const bounds = measureGraphContentBounds(nodes);
   if (!bounds) return null;
+
+  // Detect device capabilities dynamically
+  const capabilities = detectDeviceCapabilities();
+  const deviceMaxDimension = maxDimension ?? capabilities.maxExportDimension;
 
   // measureGraphContentBounds already includes EDGE_VISUAL_MARGIN
   // Add additional padding for export frame
@@ -64,17 +75,28 @@ export function computeGraphExportLayout(
   let exportHeight: number;
 
   if (aspect >= 1) {
-    exportWidth = Math.min(maxDimension, contentWidth + paddingExtra);
+    exportWidth = Math.min(deviceMaxDimension, contentWidth + paddingExtra);
     exportHeight = Math.max(
       GRAPH_EXPORT_MIN_DIMENSION,
-      Math.min(Math.round(exportWidth / aspect), maxDimension),
+      Math.min(Math.round(exportWidth / aspect), deviceMaxDimension),
     );
   } else {
-    exportHeight = Math.min(maxDimension, contentHeight + paddingExtra);
+    exportHeight = Math.min(deviceMaxDimension, contentHeight + paddingExtra);
     exportWidth = Math.max(
       GRAPH_EXPORT_MIN_DIMENSION,
-      Math.min(Math.round(exportHeight * aspect), maxDimension),
+      Math.min(Math.round(exportHeight * aspect), deviceMaxDimension),
     );
+  }
+
+  // Verify total pixels are within device limits
+  const totalPixels = exportWidth * exportHeight;
+  let wasScaledDown = false;
+
+  if (totalPixels > capabilities.maxSafeExportPixels) {
+    const scale = Math.sqrt(capabilities.maxSafeExportPixels / totalPixels);
+    exportWidth = Math.floor(exportWidth * scale);
+    exportHeight = Math.floor(exportHeight * scale);
+    wasScaledDown = true;
   }
 
   const { width: worldWidth, height: worldHeight } = computeWorldDimensionsForNodes(
@@ -101,5 +123,7 @@ export function computeGraphExportLayout(
     worldWidth,
     worldHeight,
     transform,
+    wasScaledDown,
+    deviceMemoryTier: capabilities.memoryTier,
   };
 }
