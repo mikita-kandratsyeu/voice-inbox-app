@@ -16,17 +16,17 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
 
       - name: Setup Node.js 24
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.2.0
         with:
           node-version: 24.x
 
       - name: Restore yarn cache
-        uses: actions/cache@v4
+        uses: actions/cache@v4.2.0
         with:
           path: |
             node_modules
@@ -90,7 +90,7 @@ jobs:
 
       - name: Upload PR metrics
         if: always() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.0
         with:
           name: ci-metrics-mobile
           path: ci-metrics/mobile.json
@@ -104,17 +104,17 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
 
       - name: Setup Node.js 24
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.2.0
         with:
           node-version: 24.x
 
       - name: Restore yarn cache
-        uses: actions/cache@v4
+        uses: actions/cache@v4.2.0
         with:
           path: |
             node_modules
@@ -168,7 +168,7 @@ jobs:
 
       - name: Upload PR metrics
         if: always() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.0
         with:
           name: ci-metrics-web
           path: ci-metrics/web.json
@@ -180,17 +180,17 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
 
       - name: Setup Node.js 24
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.2.0
         with:
           node-version: 24.x
 
       - name: Restore yarn cache
-        uses: actions/cache@v4
+        uses: actions/cache@v4.2.0
         with:
           path: |
             node_modules
@@ -254,7 +254,7 @@ jobs:
 
       - name: Upload PR metrics
         if: always() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.0
         with:
           name: ci-metrics-telegram-bot
           path: ci-metrics/telegram-bot.json
@@ -271,10 +271,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Download PR metrics
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.2.0
         with:
           path: ci-metrics
           pattern: ci-metrics-*
@@ -294,7 +294,7 @@ jobs:
         run: node scripts/ci-pr-summary.mjs > pr-summary.md
 
       - name: Post PR comment
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v2.10.0
         with:
           header: ci-summary
           path: pr-summary.md
