@@ -24,6 +24,8 @@ type GraphControlsProps = {
   onToggleLegend: () => void;
   isReconciling?: boolean;
   reconcilingLabel?: string;
+  isExportCapturing?: boolean;
+  exportCapturingLabel?: string;
 };
 
 function ControlButton({
@@ -109,9 +111,13 @@ export function GraphControls({
   onToggleLegend,
   isReconciling = false,
   reconcilingLabel,
+  isExportCapturing = false,
+  exportCapturingLabel,
 }: GraphControlsProps) {
   const { t } = useTranslation();
   const bottomOffset = bottomInset + 16;
+  const showStatusLoader = isReconciling || isExportCapturing;
+  const statusLabel = isExportCapturing ? exportCapturingLabel : reconcilingLabel;
 
   return (
     <>
@@ -126,7 +132,7 @@ export function GraphControls({
           maxWidth: 240,
         }}
       >
-        {legendVisible && !isReconciling ? (
+        {legendVisible && !showStatusLoader ? (
           <View
             style={{
               backgroundColor: color.background.primary,
@@ -160,10 +166,10 @@ export function GraphControls({
           </View>
         ) : null}
 
-        {isReconciling ? (
+        {showStatusLoader ? (
           <View
             accessibilityRole="progressbar"
-            accessibilityLabel={reconcilingLabel}
+            accessibilityLabel={statusLabel}
             style={{
               flexDirection: 'row',
               alignItems: 'center',
@@ -193,7 +199,7 @@ export function GraphControls({
               }}
               numberOfLines={1}
             >
-              {reconcilingLabel}
+              {statusLabel}
             </Text>
           </View>
         ) : (
