@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import type { Folder } from '@/entities/folder';
+import type { AutoOrganizeMode } from '@/entities/folder/lib/autoOrganizeTypes';
+import { AUTO_ORGANIZE_INBOX_FOLDER_NAME } from '@/entities/folder/lib/autoOrganizeTypes';
 import { DEFAULT_FOLDER_BRAND_HEX } from '@/shared/lib';
 
 type AutoOrganizeResult = {
@@ -29,6 +31,7 @@ export type ReviewFolderItem =
 
 type UseAutoOrganizeReviewParams = {
   result: AutoOrganizeResult;
+  mode: AutoOrganizeMode;
   folders: Folder[];
   isProActive: boolean;
   createFolder: (name: string, color: string, icon: string) => Promise<Folder>;
@@ -38,7 +41,11 @@ type UseAutoOrganizeReviewParams = {
 function buildInitialProposedFolders(
   result: AutoOrganizeResult,
   isProActive: boolean,
+  mode: AutoOrganizeMode,
 ): ProposedFolderDraft[] {
+  if (mode === 'assign_existing') {
+    return [];
+  }
   return result.folders.map((f, idx) => {
     const normalized = f.name.trim().toLowerCase() || 'folder';
     return {
@@ -72,6 +79,13 @@ function buildInitialAssignments(
   }
 
   return result.assignments.map((a) => {
+    if (a.folderName === AUTO_ORGANIZE_INBOX_FOLDER_NAME) {
+      return {
+        recordId: a.recordId,
+        destination: { kind: 'inbox' as const },
+      };
+    }
+
     const key = a.folderName.trim().toLowerCase();
     const existingId = existingIdByLower.get(key);
     if (existingId) {
@@ -91,16 +105,21 @@ function buildInitialAssignments(
 
 export function useAutoOrganizeReview({
   result,
+  mode,
   folders,
   isProActive,
   createFolder,
   setRecordFolder,
 }: UseAutoOrganizeReviewParams) {
   const [proposedFolders, setProposedFolders] = useState<ProposedFolderDraft[]>(() =>
-    buildInitialProposedFolders(result, isProActive),
+    buildInitialProposedFolders(result, isProActive, mode),
   );
   const [assignments, setAssignments] = useState<AssignmentDraft[]>(() =>
-    buildInitialAssignments(result, folders, buildInitialProposedFolders(result, isProActive)),
+    buildInitialAssignments(
+      result,
+      folders,
+      buildInitialProposedFolders(result, isProActive, mode),
+    ),
   );
   const [isApplying, setIsApplying] = useState(false);
 

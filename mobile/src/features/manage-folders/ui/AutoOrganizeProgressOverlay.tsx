@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, Easing, Modal, Text, View } from 'react-native';
 
+import type { AutoOrganizeMode } from '@/entities/folder/lib/autoOrganizeTypes';
 import { useColors } from '@/shared/config';
 import { AiProcessingCancelButton } from '@/shared/ui';
 
@@ -12,6 +13,7 @@ type AutoOrganizeProgressOverlayProps = {
   visible: boolean;
   mode: 'loading' | 'success';
   variant?: AutoOrganizeProgressVariant;
+  organizeMode?: AutoOrganizeMode | null;
   onCancel?: () => void;
 };
 
@@ -19,6 +21,7 @@ export const AutoOrganizeProgressOverlay = ({
   visible,
   mode,
   variant = 'organize',
+  organizeMode = null,
   onCancel,
 }: AutoOrganizeProgressOverlayProps) => {
   const { t } = useTranslation();
@@ -35,17 +38,41 @@ export const AutoOrganizeProgressOverlay = ({
         t('folders.autoOrganizeApplyStepDistributingNotes'),
       ];
     }
+    if (organizeMode === 'assign_existing') {
+      return [
+        t('folders.aiOrganizeProgress.assignStepAnalyzing'),
+        t('folders.aiOrganizeProgress.assignStepSorting'),
+      ];
+    }
+    if (organizeMode === 'consolidate_folders') {
+      return [
+        t('folders.aiOrganizeProgress.consolidateStepAnalyzing'),
+        t('folders.aiOrganizeProgress.consolidateStepMerging'),
+      ];
+    }
+    if (organizeMode === 'suggest_archive') {
+      return [
+        t('folders.aiOrganizeProgress.archiveStepAnalyzing'),
+        t('folders.aiOrganizeProgress.archiveStepSelecting'),
+      ];
+    }
     return [
       t('folders.autoOrganizeStepAnalyzing'),
       t('folders.autoOrganizeStepCreatingFolders'),
       t('folders.autoOrganizeStepDistributingNotes'),
     ];
-  }, [t, variant]);
+  }, [organizeMode, t, variant]);
 
   const loadingTitle =
     variant === 'apply'
       ? t('folders.autoOrganizeApplyLoadingTitle')
-      : t('folders.autoOrganizeLoadingTitle');
+      : organizeMode === 'assign_existing'
+        ? t('folders.aiOrganizeProgress.assignLoadingTitle')
+        : organizeMode === 'consolidate_folders'
+          ? t('folders.aiOrganizeProgress.consolidateLoadingTitle')
+          : organizeMode === 'suggest_archive'
+            ? t('folders.aiOrganizeProgress.archiveLoadingTitle')
+            : t('folders.autoOrganizeLoadingTitle');
   const successTitle =
     variant === 'apply'
       ? t('folders.autoOrganizeApplyDoneTitle')

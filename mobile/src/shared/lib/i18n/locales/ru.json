@@ -2470,7 +2470,71 @@
     "autoOrganizeReviewInbox": "Входящие",
     "autoOrganizeReviewFolderRemoved": "Папка недоступна",
     "autoOrganizeReviewUnknownFolder": "Папка",
-    "autoOrganizeReviewUnnamedFolder": "Без названия"
+    "autoOrganizeReviewUnnamedFolder": "Без названия",
+    "aiOrganizeSheet": {
+      "title": "ИИ-организация",
+      "subtitle": "{{count}} активных заметок",
+      "consolidateMinTitle": "Мало папок",
+      "consolidateMinDescription": "Нужно минимум две папки, чтобы объединять или чистить структуру.",
+      "assignMinTitle": "Папок пока нет",
+      "assignMinDescription": "Сначала создайте папки — затем ИИ сможет разложить заметки по ним.",
+      "actions": {
+        "full": "Полная организация",
+        "fullHint": "Создать папки и разложить заметки по шаблону",
+        "assignExisting": "Разложить по существующим папкам",
+        "assignExistingHint": "Без новых папок — только текущие",
+        "consolidate": "Объединить и почистить папки",
+        "consolidateHint": "Слить похожие папки и убрать пустые",
+        "suggestArchive": "Предложить архив",
+        "suggestArchiveHint": "Найти заметки, которые можно архивировать"
+      }
+    },
+    "aiOrganizeTemplates": {
+      "title": "Шаблон организации",
+      "subtitle": "Выберите, как ИИ должен группировать заметки",
+      "proRequired": "Pro-шаблоны доступны с активной подпиской Pro.",
+      "items": {
+        "general": "Общий",
+        "work_personal_ideas": "Работа / Личное / Идеи",
+        "projects": "Проекты и задачи",
+        "meetings_tasks": "Встречи / Задачи / Справочное"
+      },
+      "hints": {
+        "general": "Сбалансированные папки по темам заметок",
+        "work_personal_ideas": "Три широкие категории: работа, личное, идеи",
+        "projects": "Папки по проектам и отдельно задачи",
+        "meetings_tasks": "Встречи, задачи и справочные материалы"
+      }
+    },
+    "aiOrganizeProgress": {
+      "assignLoadingTitle": "Раскладываем по папкам",
+      "assignStepAnalyzing": "Читаем темы заметок...",
+      "assignStepSorting": "Подбираем папки для заметок...",
+      "consolidateLoadingTitle": "Чистим папки",
+      "consolidateStepAnalyzing": "Ищем пересечения папок...",
+      "consolidateStepMerging": "Готовим предложения по слиянию...",
+      "archiveLoadingTitle": "Ищем кандидатов в архив",
+      "archiveStepAnalyzing": "Оцениваем актуальность заметок...",
+      "archiveStepSelecting": "Отбираем заметки для архива..."
+    },
+    "aiOrganizeReview": {
+      "assignTitle": "Разложить по папкам",
+      "assignSubtitle": "Проверьте распределение и подтвердите.",
+      "subtitleWithTemplate": "Шаблон: {{template}}. Проверьте папки и распределение, затем подтвердите."
+    },
+    "aiOrganizeCleanupReview": {
+      "title": "Чистка папок",
+      "subtitle": "Выберите слияния и пустые папки для применения.",
+      "mergesSection": "Предложенные слияния",
+      "mergeSources": "Объединить: {{names}}",
+      "deleteSection": "Пустые папки",
+      "empty": "ИИ не нашёл, что можно почистить."
+    },
+    "aiOrganizeArchiveReview": {
+      "title": "Предложения архива",
+      "subtitle": "Выберите заметки для архивации.",
+      "empty": "ИИ не нашёл заметок для архива."
+    }
   },
   "inAppEvent": {
     "primaryCta": "Продолжить",

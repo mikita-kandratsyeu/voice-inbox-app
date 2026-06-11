@@ -1,7 +1,12 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 
-import { AutoOrganizeReviewScreen, InboxScreen } from '@/screens/inbox';
+import {
+  AiOrganizeArchiveReviewScreen,
+  AiOrganizeFoldersCleanupReviewScreen,
+  AutoOrganizeReviewScreen,
+  InboxScreen,
+} from '@/screens/inbox';
 
 import type { InboxStackParamList } from './types';
 
@@ -14,6 +19,24 @@ export const InboxNavigator = () => {
       <Stack.Screen
         name="AutoOrganizeReview"
         component={AutoOrganizeReviewScreen}
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="AiOrganizeFoldersCleanupReview"
+        component={AiOrganizeFoldersCleanupReviewScreen}
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="AiOrganizeArchiveReview"
+        component={AiOrganizeArchiveReviewScreen}
         options={{
           presentation: 'card',
           animation: 'slide_from_right',

@@ -2402,7 +2402,71 @@
     "autoOrganizeReviewInbox": "Inbox",
     "autoOrganizeReviewFolderRemoved": "Folder unavailable",
     "autoOrganizeReviewUnknownFolder": "Folder",
-    "autoOrganizeReviewUnnamedFolder": "Untitled"
+    "autoOrganizeReviewUnnamedFolder": "Untitled",
+    "aiOrganizeSheet": {
+      "title": "AI organization",
+      "subtitle": "{{count}} active notes",
+      "consolidateMinTitle": "Not enough folders",
+      "consolidateMinDescription": "Add at least two folders before merging or cleaning them up.",
+      "assignMinTitle": "No folders yet",
+      "assignMinDescription": "Create folders first, then AI can sort notes into them.",
+      "actions": {
+        "full": "Full organization",
+        "fullHint": "Create folders and sort notes with a template",
+        "assignExisting": "Sort into existing folders",
+        "assignExistingHint": "Assign notes to current folders without creating new ones",
+        "consolidate": "Merge and clean folders",
+        "consolidateHint": "Combine similar folders and remove empty ones",
+        "suggestArchive": "Suggest archive",
+        "suggestArchiveHint": "Find notes that may be safe to archive"
+      }
+    },
+    "aiOrganizeTemplates": {
+      "title": "Organization template",
+      "subtitle": "Choose how AI should group your notes",
+      "proRequired": "Pro templates require an active Pro subscription.",
+      "items": {
+        "general": "General",
+        "work_personal_ideas": "Work / Personal / Ideas",
+        "projects": "Projects and tasks",
+        "meetings_tasks": "Meetings / Tasks / Reference"
+      },
+      "hints": {
+        "general": "Balanced folders based on your note topics",
+        "work_personal_ideas": "Three broad life/work/ideas pillars",
+        "projects": "Project-centric folders with a tasks bucket",
+        "meetings_tasks": "Meetings, actionable tasks, and reference material"
+      }
+    },
+    "aiOrganizeProgress": {
+      "assignLoadingTitle": "Sorting into folders",
+      "assignStepAnalyzing": "Reading note topics...",
+      "assignStepSorting": "Matching notes to folders...",
+      "consolidateLoadingTitle": "Cleaning up folders",
+      "consolidateStepAnalyzing": "Reviewing folder overlap...",
+      "consolidateStepMerging": "Preparing merge suggestions...",
+      "archiveLoadingTitle": "Finding archive candidates",
+      "archiveStepAnalyzing": "Reviewing note age and relevance...",
+      "archiveStepSelecting": "Selecting low-value notes..."
+    },
+    "aiOrganizeReview": {
+      "assignTitle": "Sort into folders",
+      "assignSubtitle": "Review where each note should go, then confirm.",
+      "subtitleWithTemplate": "Template: {{template}}. Review folders and assignments, then confirm."
+    },
+    "aiOrganizeCleanupReview": {
+      "title": "Folder cleanup",
+      "subtitle": "Select merges and empty folders to apply.",
+      "mergesSection": "Suggested merges",
+      "mergeSources": "Merge: {{names}}",
+      "deleteSection": "Empty folders",
+      "empty": "AI found nothing to clean up."
+    },
+    "aiOrganizeArchiveReview": {
+      "title": "Archive suggestions",
+      "subtitle": "Select notes to archive.",
+      "empty": "AI found no notes to archive."
+    }
   },
   "inAppEvent": {
     "primaryCta": "Continue",

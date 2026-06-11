@@ -1,15 +1,11 @@
-import { normalizeAutoOrganizeFolderColor } from '@/entities/folder/lib/autoOrganizeFolderColors';
 import {
   AUTO_ORGANIZE_INBOX_FOLDER_NAME,
   type AutoOrganizeArchiveResult,
   type AutoOrganizeConsolidateResult,
+  type AutoOrganizeFoldersResult,
   type AutoOrganizeMode,
-} from '@/entities/folder/lib/autoOrganizeTypes';
-
-export type AutoOrganizeFoldersResult = {
-  folders: Array<{ name: string; icon: string; color: string }>;
-  assignments: Array<{ recordId: string; folderName: string }>;
-};
+} from '@/lib/auto-organize-types';
+import { normalizeAutoOrganizeFolderColor } from '@/lib/folder-accent-colors';
 
 const ALLOWED_FOLDER_ICONS = new Set([
   'briefcase',
@@ -55,7 +51,7 @@ function normalizeFolderColor(color: unknown): string {
   return normalizeAutoOrganizeFolderColor(typeof color === 'string' ? color : '').toLowerCase();
 }
 
-export function parseAutoOrganizeResult(
+export function parseAutoOrganizeFoldersResult(
   rawContent: string,
   mode: AutoOrganizeMode = 'full',
 ): AutoOrganizeFoldersResult {
@@ -124,10 +120,6 @@ export function parseAutoOrganizeResult(
     }
 
     if (mode === 'assign_existing') {
-      if (folderName === AUTO_ORGANIZE_INBOX_FOLDER_NAME) {
-        assignments.push({ recordId, folderName: AUTO_ORGANIZE_INBOX_FOLDER_NAME });
-        continue;
-      }
       assignments.push({ recordId, folderName });
       continue;
     }
@@ -226,36 +218,67 @@ export function parseAutoOrganizeArchiveResult(rawContent: string): AutoOrganize
   return { archiveSuggestions };
 }
 
+export type AutoOrganizeParsedResult =
+  | AutoOrganizeFoldersResult
+  | AutoOrganizeConsolidateResult
+  | AutoOrganizeArchiveResult;
+
 export function parseAutoOrganizeResultForMode(
   rawContent: string,
   mode: AutoOrganizeMode,
-): AutoOrganizeFoldersResult | AutoOrganizeConsolidateResult | AutoOrganizeArchiveResult {
+): AutoOrganizeParsedResult {
   if (mode === 'consolidate_folders') {
     return parseAutoOrganizeConsolidateResult(rawContent);
   }
   if (mode === 'suggest_archive') {
     return parseAutoOrganizeArchiveResult(rawContent);
   }
-  return parseAutoOrganizeResult(rawContent, mode);
+  return parseAutoOrganizeFoldersResult(rawContent, mode);
 }
 
-export function assertAutoOrganizeComplete(
+export function assertAutoOrganizeFoldersComplete(
   result: AutoOrganizeFoldersResult,
   expectedIds: string[],
   mode: AutoOrganizeMode = 'full',
 ): void {
-  const expected = new Set(expectedIds);
-  if (result.assignments.length !== expectedIds.length) {
-    throw new Error('Invalid AI response: assignment count mismatch');
+  if (expectedIds.length === 0) return;
+
+  if (mode === 'full' && (result.folders.length < 3 || result.folders.length > 8)) {
+    throw new Error(`Invalid AI response: folders must be 3-8, got ${result.folders.length}`);
   }
-  for (const { recordId } of result.assignments) {
-    if (!expected.has(recordId)) {
+
+  const expected = new Set(expectedIds);
+  const got = new Set(result.assignments.map((a) => a.recordId));
+
+  if (got.size !== result.assignments.length) {
+    throw new Error('Invalid AI response: duplicate recordId in assignments');
+  }
+
+  if (got.size !== expected.size) {
+    throw new Error(`Invalid AI response: expected ${expected.size} assignments, got ${got.size}`);
+  }
+
+  for (const id of expected) {
+    if (!got.has(id)) {
+      throw new Error('Invalid AI response: missing assignment for note id');
+    }
+  }
+
+  for (const id of got) {
+    if (!expected.has(id)) {
       throw new Error('Invalid AI response: unexpected recordId in assignments');
     }
   }
 
-  if (mode === 'full' && (result.folders.length < 3 || result.folders.length > 8)) {
-    throw new Error(`Invalid AI response: folders must be 3-8, got ${result.folders.length}`);
+  if (mode === 'assign_existing') {
+    for (const a of result.assignments) {
+      if (
+        a.folderName !== AUTO_ORGANIZE_INBOX_FOLDER_NAME &&
+        result.folders.some((f) => f.name === a.folderName)
+      ) {
+        continue;
+      }
+    }
   }
 }
 

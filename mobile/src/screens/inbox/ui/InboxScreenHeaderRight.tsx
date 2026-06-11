@@ -23,7 +23,7 @@ type InboxScreenHeaderRightProps = {
   isAutoOrganizing: boolean;
   onSearchHeaderPress: () => void;
   onSelectAll: () => void;
-  onAutoOrganize: () => void;
+  onOpenAiOrganizeSheet: () => void;
   onEnterBatchMode: () => void;
   onOpenAllTasks: () => void;
   onOpenNotesGraph: () => void;
@@ -51,7 +51,7 @@ function InboxScreenHeaderRightInner({
   isAutoOrganizing,
   onSearchHeaderPress,
   onSelectAll,
-  onAutoOrganize,
+  onOpenAiOrganizeSheet,
   onEnterBatchMode,
   onOpenAllTasks,
   onOpenNotesGraph,
@@ -63,6 +63,8 @@ function InboxScreenHeaderRightInner({
 }: InboxScreenHeaderRightProps) {
   const theme = useAppTheme();
   const isDark = theme === 'dark';
+
+  const organizeDisabled = isAutoOrganizing;
 
   const moreMenuActions = useMemo(() => {
     const titleColor = color.text.primary;
@@ -79,17 +81,6 @@ function InboxScreenHeaderRightInner({
     }
 
     const navigationItems: NativeMenuAction[] = [];
-
-    if (foldersEnabled && !useTabletShell) {
-      navigationItems.push({
-        id: 'autoOrganize',
-        title: t('inbox.menuAutoOrganize'),
-        titleColor,
-        image: 'folder.badge.plus',
-        imageColor: titleColor,
-        attributes: isAutoOrganizing ? { disabled: true } : undefined,
-      });
-    }
 
     if (!useTabletShell) {
       navigationItems.push({
@@ -132,7 +123,7 @@ function InboxScreenHeaderRightInner({
     }
 
     return actions;
-  }, [color.text.primary, foldersEnabled, isAutoOrganizing, t, useTabletShell]);
+  }, [color.text.primary, t, useTabletShell]);
 
   if (!isLoaded) return null;
 
@@ -176,33 +167,35 @@ function InboxScreenHeaderRightInner({
       />
     ) : null;
 
+  const organizeButton = foldersEnabled ? (
+    <HeaderIconButton
+      iconOnly
+      variant="icon"
+      size="md"
+      color={color}
+      disabled={organizeDisabled}
+      icon={
+        <FolderPlus
+          size={20}
+          color={organizeDisabled ? color.text.muted : color.text.primary}
+          strokeWidth={2.2}
+        />
+      }
+      accessibilityLabel={t('folders.autoOrganizeButton')}
+      accessibilityState={{ disabled: organizeDisabled }}
+      onPress={() => {
+        if (organizeDisabled) return;
+        onOpenAiOrganizeSheet();
+      }}
+      hitSlop={HEADER_ICON_HIT_SLOP}
+    />
+  ) : null;
+
   if (useTabletShell) {
     return (
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         {searchButton}
-        {foldersEnabled ? (
-          <HeaderIconButton
-            iconOnly
-            variant="icon"
-            size="md"
-            color={color}
-            disabled={isAutoOrganizing}
-            icon={
-              <FolderPlus
-                size={20}
-                color={isAutoOrganizing ? color.text.muted : color.text.primary}
-                strokeWidth={2.2}
-              />
-            }
-            accessibilityLabel={t('inbox.menuAutoOrganize')}
-            accessibilityState={{ disabled: isAutoOrganizing }}
-            onPress={() => {
-              if (isAutoOrganizing) return;
-              onAutoOrganize();
-            }}
-            hitSlop={HEADER_ICON_HIT_SLOP}
-          />
-        ) : null}
+        {organizeButton}
         <MenuView
           key={`inbox-tablet-more-${theme}`}
           title=""
@@ -233,6 +226,7 @@ function InboxScreenHeaderRightInner({
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
       {searchButton}
+      {organizeButton}
       {!hideCreateTextNote ? (
         <HeaderIconButton
           iconOnly
@@ -256,7 +250,6 @@ function InboxScreenHeaderRightInner({
           if (id === 'importFile') onImportFile();
           if (id === 'allTasks') onOpenAllTasks();
           if (id === 'notesGraph') onOpenNotesGraph();
-          if (id === 'autoOrganize' && !isAutoOrganizing && foldersEnabled) onAutoOrganize();
           if (id === 'selectNotes') onEnterBatchMode();
         }}
       >
