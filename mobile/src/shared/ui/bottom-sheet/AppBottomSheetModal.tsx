@@ -63,7 +63,7 @@ export const AppBottomSheetModal = forwardRef<BottomSheetModal, AppBottomSheetMo
     const useTabletDetached =
       isTablet && tabletMaxWidth != null && Number.isFinite(tabletMaxWidth) && tabletMaxWidth > 0;
 
-    const handleDismiss = useBottomSheetModalVisibility(modalRef, visible, onClose, {
+    const { handleDismiss, sheetKey } = useBottomSheetModalVisibility(modalRef, visible, onClose, {
       presentOnVisible,
     });
 
@@ -108,6 +108,7 @@ export const AppBottomSheetModal = forwardRef<BottomSheetModal, AppBottomSheetMo
 
     return (
       <BottomSheetModal
+        key={sheetKey}
         ref={modalRef}
         stackBehavior={chrome.stackBehavior}
         enableDynamicSizing={chrome.enableDynamicSizing}
