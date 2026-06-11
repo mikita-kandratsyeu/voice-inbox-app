@@ -4,6 +4,7 @@ import Svg, { Defs, LinearGradient, Rect, Stop, Text as SvgText } from 'react-na
 
 import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
+import { resolveDisplayFolderColor } from '@/shared/lib';
 
 import type { GraphCluster } from '../lib/graphClusterLayout';
 import { nodeDimensions } from '../lib/graphNodeMetrics';
@@ -25,6 +26,7 @@ type GraphClusterBoundariesProps = {
   nodes: GraphNode[];
   clusters: GraphCluster[];
   foldersById: Map<string, Folder>;
+  isProActive: boolean;
   color: Colors;
   width: number;
   height: number;
@@ -79,10 +81,28 @@ function computeClusterBounds(
   };
 }
 
-function getClusterColor(cluster: GraphCluster, color: Colors): string {
+function getFolderClusterColor(
+  cluster: GraphCluster,
+  foldersById: Map<string, Folder>,
+  isProActive: boolean,
+  fallback: string,
+): string {
+  const folderId = cluster.id.startsWith('folder:') ? cluster.id.slice('folder:'.length) : '';
+  const folder = folderId ? foldersById.get(folderId) : undefined;
+  if (!folder) return fallback;
+
+  return resolveDisplayFolderColor(folder.color, isProActive);
+}
+
+function getClusterColor(
+  cluster: GraphCluster,
+  color: Colors,
+  foldersById: Map<string, Folder>,
+  isProActive: boolean,
+): string {
   switch (cluster.type) {
     case 'folder':
-      return color.accent.primary;
+      return getFolderClusterColor(cluster, foldersById, isProActive, color.accent.primary);
     case 'tag':
       return color.text.secondary;
     case 'group':
@@ -101,6 +121,7 @@ export const GraphClusterBoundaries = React.memo(function GraphClusterBoundaries
   nodes,
   clusters,
   foldersById,
+  isProActive,
   color,
   width,
   height,
@@ -135,7 +156,7 @@ export const GraphClusterBoundaries = React.memo(function GraphClusterBoundaries
     >
       <Defs>
         {clusterBounds.map(({ cluster }) => {
-          const clusterColor = getClusterColor(cluster, color);
+          const clusterColor = getClusterColor(cluster, color, foldersById, isProActive);
           const gradientId = getClusterGradientId(cluster);
           return (
             <LinearGradient key={gradientId} id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
@@ -147,7 +168,7 @@ export const GraphClusterBoundaries = React.memo(function GraphClusterBoundaries
       </Defs>
 
       {clusterBounds.map(({ cluster, minX, minY, width: rectWidth, height: rectHeight }) => {
-        const clusterColor = getClusterColor(cluster, color);
+        const clusterColor = getClusterColor(cluster, color, foldersById, isProActive);
         const gradientId = getClusterGradientId(cluster);
         const displayLabel = getClusterDisplayLabel(
           cluster,

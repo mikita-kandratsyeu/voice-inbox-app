@@ -659,6 +659,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               nodes={displayNodes}
               clusters={clusters}
               foldersById={foldersById}
+              isProActive={isProActive}
               color={color}
               width={worldWidth}
               height={worldHeight}
