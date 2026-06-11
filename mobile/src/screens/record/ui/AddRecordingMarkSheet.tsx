@@ -1,5 +1,5 @@
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -32,7 +32,7 @@ import {
   isDarkSurfaceColor,
 } from '@/shared/lib';
 import runAfterInteractions from '@/shared/lib/runAfterInteractions';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import { AppBottomSheetContent, AppBottomSheetModal, SheetFooterButtons } from '@/shared/ui';
 
 const MARK_LABEL_MAX_CHARS = 280;
 const MARK_SHEET_KEYBOARD_BOTTOM_PADDING = 24;
@@ -66,7 +66,6 @@ export const AddRecordingMarkSheet = ({
   const c = useColors();
   const theme = useAppTheme();
   const surfaceDark = isDarkSurfaceColor(c);
-  const contentPadding = useBottomSheetContentPadding(24);
   const [step, setStep] = useState<SheetStep>('pick');
   const [pendingKind, setPendingKind] = useState<RecordingMarkKind>(DEFAULT_RECORDING_MARK_KIND);
   const [label, setLabel] = useState('');
@@ -156,11 +155,6 @@ export const AddRecordingMarkSheet = ({
 
   const timeSec = Math.max(0, Math.floor(snapshotOffsetMs / 1000));
 
-  const bottomPadding =
-    step === 'label' && keyboardVisible
-      ? { paddingBottom: MARK_SHEET_KEYBOARD_BOTTOM_PADDING }
-      : contentPadding;
-
   return (
     <AppBottomSheetModal
       ref={bottomSheetRef}
@@ -169,11 +163,11 @@ export const AddRecordingMarkSheet = ({
       surface="card"
       backdrop="subtle"
     >
-      <BottomSheetView
+      <AppBottomSheetContent
         style={{
-          paddingHorizontal: 20,
           paddingTop: 4,
-          ...bottomPadding,
+          paddingBottom:
+            step === 'label' && keyboardVisible ? MARK_SHEET_KEYBOARD_BOTTOM_PADDING : undefined,
           gap: step === 'pick' ? 20 : 16,
         }}
       >
@@ -290,7 +284,7 @@ export const AddRecordingMarkSheet = ({
             />
           </>
         )}
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 };

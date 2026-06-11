@@ -1,4 +1,3 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -7,7 +6,12 @@ import { BatchCheckbox } from '@/features/batch-select';
 import { useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import { formatFileSize } from '@/shared/lib/whisper';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  AppBottomSheetContent,
+  AppBottomSheetModal,
+  SheetFooterButtons,
+  SheetHeader,
+} from '@/shared/ui';
 
 export type DeleteStorageCategoryId = 'library' | 'whisper' | 'localLlm' | 'cache';
 
@@ -70,7 +74,6 @@ export function DeleteStorageDataSheet({
 }: DeleteStorageDataSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(20);
   const [selection, setSelection] = useState<DeleteStorageSelection>(() =>
     defaultSelection(categoryBytes),
   );
@@ -112,37 +115,13 @@ export function DeleteStorageDataSheet({
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>
-      <BottomSheetView
-        style={{
-          paddingHorizontal: 20,
-          paddingTop: 8,
-          ...contentPadding,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 17,
-            fontWeight: '600',
-            color: color.text.primary,
-            textAlign: 'center',
-            paddingTop: 4,
-            marginBottom: 6,
-          }}
-        >
-          {t('storage.deleteChooserTitle')}
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            lineHeight: 20,
-            color: color.text.secondary,
-            textAlign: 'center',
-            marginBottom: 16,
-            paddingHorizontal: 4,
-          }}
-        >
-          {t('storage.deleteChooserHint')}
-        </Text>
+      <AppBottomSheetContent>
+        <SheetHeader
+          title={t('storage.deleteChooserTitle')}
+          subtitle={t('storage.deleteChooserHint')}
+          color={color}
+          marginBottom={16}
+        />
 
         {visibleRows.length > 0 ? (
           <View
@@ -220,7 +199,7 @@ export function DeleteStorageDataSheet({
           onPrimaryPress={handlePrimaryPress}
           primaryDisabled={!canSubmit}
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

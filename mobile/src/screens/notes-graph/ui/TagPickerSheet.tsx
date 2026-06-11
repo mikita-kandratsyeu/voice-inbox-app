@@ -1,4 +1,4 @@
-import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
 import { Check, Search, Tag, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -9,10 +9,11 @@ import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { hapticSelection, IS_IOS, matchesSearchQuery, normalizeSearchQuery } from '@/shared/lib';
 import {
+  AppBottomSheetContent,
   AppBottomSheetModal,
   getInputFieldInputStyle,
   SheetFooterButtons,
-  useBottomSheetContentPadding,
+  SheetHeader,
 } from '@/shared/ui';
 
 const TAG_PICKER_LIST_MAX_HEIGHT = 420;
@@ -112,7 +113,6 @@ export function TagPickerSheet({
 }: TagPickerSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(12);
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
   const [draftTags, setDraftTags] = useState<string[]>(selectedTags);
@@ -181,19 +181,8 @@ export function TagPickerSheet({
 
   return (
     <AppBottomSheetModal visible={visible} onClose={handleClose}>
-      <BottomSheetView style={{ paddingHorizontal: 20, ...contentPadding }}>
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 17,
-            fontWeight: '600',
-            marginBottom: 10,
-            marginTop: 4,
-            textAlign: 'center',
-          }}
-        >
-          {title}
-        </Text>
+      <AppBottomSheetContent bottomPadding={12}>
+        <SheetHeader title={title} color={color} marginBottom={10} />
 
         <View
           style={{
@@ -279,7 +268,7 @@ export function TagPickerSheet({
           onSecondaryPress={handleClear}
           secondaryDisabled={draftTags.length === 0}
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

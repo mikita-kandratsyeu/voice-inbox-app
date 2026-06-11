@@ -1,4 +1,3 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Check } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,10 +12,11 @@ import {
 import { useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib/haptics';
 import {
+  AppBottomSheetContent,
   AppBottomSheetModal,
   ProCrownBadge,
   SheetFooterButtons,
-  useBottomSheetContentPadding,
+  SheetHeader,
 } from '@/shared/ui';
 
 import {
@@ -48,8 +48,6 @@ export function AiOrganizeTemplateSheet({
   const { t } = useTranslation();
   const color = useColors();
   const insets = useSafeAreaInsets();
-  const contentPadding = useBottomSheetContentPadding(AI_ORGANIZE_SHEET_MIN_BOTTOM_PADDING);
-
   const snapPoints = useMemo(
     () => [getAiOrganizeTemplateSheetSnapHeight(insets.bottom, AUTO_ORGANIZE_TEMPLATES.length)],
     [insets.bottom],
@@ -62,30 +60,16 @@ export function AiOrganizeTemplateSheet({
       snapPoints={snapPoints}
       enableContentPanningGesture={false}
     >
-      <BottomSheetView style={{ flexGrow: 0, paddingHorizontal: 20, ...contentPadding }}>
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 17,
-            fontWeight: '600',
-            marginBottom: 4,
-            marginTop: 4,
-            textAlign: 'center',
-          }}
-        >
-          {t('folders.aiOrganizeTemplates.title')}
-        </Text>
-        <Text
-          style={{
-            color: color.text.secondary,
-            fontSize: 14,
-            lineHeight: 20,
-            marginBottom: 10,
-            textAlign: 'center',
-          }}
-        >
-          {t('folders.aiOrganizeTemplates.subtitle')}
-        </Text>
+      <AppBottomSheetContent
+        style={{ flexGrow: 0 }}
+        bottomPadding={AI_ORGANIZE_SHEET_MIN_BOTTOM_PADDING}
+      >
+        <SheetHeader
+          title={t('folders.aiOrganizeTemplates.title')}
+          subtitle={t('folders.aiOrganizeTemplates.subtitle')}
+          color={color}
+          marginBottom={10}
+        />
 
         <View
           style={{
@@ -167,7 +151,7 @@ export function AiOrganizeTemplateSheet({
           secondaryLabel={t('common.goBack')}
           onSecondaryPress={onBack}
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

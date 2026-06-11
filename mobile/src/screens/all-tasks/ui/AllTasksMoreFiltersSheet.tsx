@@ -1,4 +1,3 @@
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import {
   CalendarOff,
   Check,
@@ -13,7 +12,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { type Colors, useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
-import { AppBottomSheetModal, useBottomSheetContentPadding } from '@/shared/ui';
+import { AppBottomSheetContent, AppBottomSheetModal, SheetHeader } from '@/shared/ui';
 
 import type { AllTasksQuickFilter } from '../types';
 
@@ -59,8 +58,6 @@ export function AllTasksMoreFiltersSheet({
 }: AllTasksMoreFiltersSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(20);
-
   const renderRow = ({
     label,
     icon: Icon,
@@ -143,36 +140,13 @@ export function AllTasksMoreFiltersSheet({
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>
-      <BottomSheetScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: 20,
-          ...contentPadding,
-        }}
-      >
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 17,
-            fontWeight: '600',
-            marginBottom: 4,
-            marginTop: 4,
-            textAlign: 'center',
-          }}
-        >
-          {t('allTasks.moreFiltersTitle')}
-        </Text>
-        <Text
-          style={{
-            color: color.text.secondary,
-            fontSize: 14,
-            lineHeight: 20,
-            marginBottom: 16,
-            textAlign: 'center',
-          }}
-        >
-          {t('allTasks.moreFiltersSubtitle')}
-        </Text>
+      <AppBottomSheetContent scrollable>
+        <SheetHeader
+          title={t('allTasks.moreFiltersTitle')}
+          subtitle={t('allTasks.moreFiltersSubtitle')}
+          color={color}
+          marginBottom={16}
+        />
 
         <View
           style={{
@@ -205,7 +179,7 @@ export function AllTasksMoreFiltersSheet({
             );
           })}
         </View>
-      </BottomSheetScrollView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

@@ -1,4 +1,3 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Minus } from 'lucide-react-native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +12,7 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useProEntitlement } from '@/features/pro-license';
 import { useColors } from '@/shared/config';
 import { resolveDisplayFolderColor } from '@/shared/lib';
-import { AppBottomSheetModal, useBottomSheetContentPadding } from '@/shared/ui';
+import { AppBottomSheetContent, AppBottomSheetModal } from '@/shared/ui';
 
 import { FolderLucideIcon } from '../lib/folderLucideIcons';
 import { useFolderStore } from '../model/store';
@@ -48,7 +47,6 @@ export const FolderReorderSheet = ({
 }: FolderReorderSheetProps) => {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(20);
   const { isProActive } = useProEntitlement();
   const deleteFolder = useFolderStore((s) => s.deleteFolder);
 
@@ -152,7 +150,7 @@ export const FolderReorderSheet = ({
       snapPoints={['52%']}
       enableContentPanningGesture={false}
     >
-      <BottomSheetView className="px-5 pt-1" style={contentPadding}>
+      <AppBottomSheetContent>
         <View className="mb-3 justify-center">
           <Text
             className="px-14 text-center text-[17px] font-semibold"
@@ -191,7 +189,7 @@ export const FolderReorderSheet = ({
             contentContainerStyle={{ paddingBottom: 4 }}
           />
         </View>
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 };

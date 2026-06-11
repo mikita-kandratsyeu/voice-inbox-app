@@ -1,5 +1,5 @@
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
 import { Calendar, ChevronRight, Clock } from 'lucide-react-native';
@@ -16,12 +16,13 @@ import {
   parseTaskDeadlineTime,
 } from '@/shared/lib/taskDeadlineTimeDisplay';
 import {
+  AppBottomSheetContent,
   AppBottomSheetModal,
   type LinkedNoteContext,
   LinkedNoteContextBanner,
   SheetFooterButtons,
+  SheetHeader,
   SystemInlineDatePicker,
-  useBottomSheetContentPadding,
 } from '@/shared/ui';
 
 const TASK_TEXT_MAX_CHARS = 500;
@@ -173,7 +174,6 @@ export function TaskEditSheet({
   const { t, i18n } = useTranslation();
   const color = useColors();
   const theme = useAppTheme();
-  const contentPadding = useBottomSheetContentPadding(24);
   const isTablet = useIsTablet();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [draft, setDraft] = useState('');
@@ -279,28 +279,17 @@ export function TaskEditSheet({
       enablePanDownToClose={!datePickerOpen && !timePickerOpen}
       enableContentPanningGesture={!datePickerOpen && !timePickerOpen}
     >
-      <BottomSheetScrollView
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        automaticallyAdjustKeyboardInsets={false}
-        contentContainerStyle={{
-          paddingHorizontal: isTablet ? 24 : 20,
-          width: '100%',
-          ...contentPadding,
-        }}
+      <AppBottomSheetContent
+        scrollable
+        useTabletPadding
+        bottomPadding={24}
+        style={{ width: '100%' }}
       >
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 17,
-            fontWeight: '600',
-            marginBottom: linkedNoteContext ? 12 : 20,
-            paddingTop: 4,
-            textAlign: 'center',
-          }}
-        >
-          {t(sheetTitleKey)}
-        </Text>
+        <SheetHeader
+          title={t(sheetTitleKey)}
+          color={color}
+          marginBottom={linkedNoteContext ? 12 : 20}
+        />
         {linkedNoteContext ? (
           <LinkedNoteContextBanner context={linkedNoteContext} color={color} />
         ) : null}
@@ -703,7 +692,7 @@ export function TaskEditSheet({
           secondaryLabel={t(onBack ? footerSecondaryLabelKey : 'common.cancel')}
           onSecondaryPress={handleFooterSecondary}
         />
-      </BottomSheetScrollView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

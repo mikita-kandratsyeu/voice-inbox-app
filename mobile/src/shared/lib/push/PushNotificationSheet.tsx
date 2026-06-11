@@ -1,11 +1,15 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, ScrollView, Text } from 'react-native';
+import { Dimensions, ScrollView } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 
 import { useColors } from '@/shared/config';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  AppBottomSheetContent,
+  AppBottomSheetModal,
+  SheetFooterButtons,
+  SheetHeader,
+} from '@/shared/ui';
 
 import { usePushSheet } from './usePushSheet';
 
@@ -14,7 +18,6 @@ const MAX_CONTENT_HEIGHT = Dimensions.get('window').height * 0.4;
 export const PushNotificationSheet = () => {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(24);
   const { visible, message, type, hide } = usePushSheet();
 
   const title =
@@ -85,19 +88,8 @@ export const PushNotificationSheet = () => {
       backdrop="blocking"
       enablePanDownToClose={false}
     >
-      <BottomSheetView style={{ paddingHorizontal: 20, ...contentPadding }}>
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 17,
-            fontWeight: '600',
-            lineHeight: 24,
-            paddingTop: 8,
-            marginBottom: 12,
-          }}
-        >
-          {title}
-        </Text>
+      <AppBottomSheetContent bottomPadding={24}>
+        <SheetHeader title={title} color={color} marginBottom={12} />
 
         {Boolean(message) && (
           <ScrollView
@@ -115,7 +107,7 @@ export const PushNotificationSheet = () => {
           primaryLabel={t('push.policyUpdateAck')}
           onPrimaryPress={hide}
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 };

@@ -1,4 +1,3 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { BadgeCent, Gauge } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,7 +17,7 @@ import Animated, {
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { hapticSuccess, withAlphaHex } from '@/shared/lib';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import { AppBottomSheetContent, AppBottomSheetModal, SheetFooterButtons } from '@/shared/ui';
 
 const ICON_SIZE = 76;
 
@@ -258,8 +257,6 @@ export function ProLimitResetSuccessSheet({
   alreadyApplied,
 }: ProLimitResetSuccessSheetProps) {
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(20);
-
   useEffect(() => {
     if (visible) {
       hapticSuccess();
@@ -268,7 +265,7 @@ export function ProLimitResetSuccessSheet({
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>
-      <BottomSheetView className="px-5 pt-1" style={contentPadding}>
+      <AppBottomSheetContent>
         <ProLimitResetSuccessPanel
           color={color}
           restoredAmount={restoredAmount}
@@ -276,7 +273,7 @@ export function ProLimitResetSuccessSheet({
           alreadyApplied={alreadyApplied}
           onDismiss={onClose}
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

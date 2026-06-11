@@ -1,4 +1,3 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Check, ChevronRight, History, Info, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +21,12 @@ import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  AppBottomSheetContent,
+  AppBottomSheetModal,
+  SheetFooterButtons,
+  SheetHeader,
+} from '@/shared/ui';
 
 import { buildNotesGraphLayoutDetailRows } from '../lib/buildNotesGraphLayoutDetailRows';
 import { buildNotesGraphLayoutFilterSummaryFromParsed } from '../lib/buildNotesGraphLayoutFilterSummary';
@@ -355,7 +359,6 @@ export function GraphLayoutHistorySheet({
 }: GraphLayoutHistorySheetProps) {
   const { t, i18n } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(12);
   const [loading, setLoading] = useState(false);
   const [entries, setEntries] = useState<NotesGraphLayoutVersionEntry[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
@@ -586,32 +589,13 @@ export function GraphLayoutHistorySheet({
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>
-      <BottomSheetView style={{ paddingHorizontal: 20, ...contentPadding }}>
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 17,
-            fontWeight: '600',
-            marginBottom: subtitle ? 4 : 10,
-            marginTop: 4,
-            textAlign: 'center',
-          }}
-        >
-          {t('notesGraph.history.title')}
-        </Text>
-        {subtitle ? (
-          <Text
-            style={{
-              color: color.text.secondary,
-              fontSize: 14,
-              lineHeight: 20,
-              marginBottom: 10,
-              textAlign: 'center',
-            }}
-          >
-            {subtitle}
-          </Text>
-        ) : null}
+      <AppBottomSheetContent bottomPadding={12}>
+        <SheetHeader
+          title={t('notesGraph.history.title')}
+          subtitle={subtitle ?? undefined}
+          color={color}
+          marginBottom={10}
+        />
 
         {listBody}
 
@@ -638,7 +622,7 @@ export function GraphLayoutHistorySheet({
               : undefined
           }
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

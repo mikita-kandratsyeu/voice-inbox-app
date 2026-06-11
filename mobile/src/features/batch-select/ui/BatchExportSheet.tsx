@@ -1,4 +1,4 @@
-import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { ClipboardList, FileText, ListChecks, Mail, UsersRound } from 'lucide-react-native';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,10 +12,11 @@ import {
 import { EmailBodyFormatPicker } from '@/features/share-record/ui/EmailBodyFormatPicker';
 import { useColors } from '@/shared/config';
 import {
+  AppBottomSheetContent,
   AppBottomSheetModal,
   SheetFooterButtons,
+  SheetHeader,
   SheetSelectionChip,
-  useBottomSheetContentPadding,
 } from '@/shared/ui';
 
 import type { BatchExportPackaging } from '../model/batchExportPackaging';
@@ -61,8 +62,6 @@ export const BatchExportSheet = ({
 }: BatchExportSheetProps) => {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(24);
-  const listContentPadding = useBottomSheetContentPadding(20);
   const [emailVisible, setEmailVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [emailBodyTemplate, setEmailBodyTemplate] = useState<ShareBriefTemplate | null>(null);
@@ -263,37 +262,13 @@ export const BatchExportSheet = ({
   return (
     <AppBottomSheetModal visible={visible} onClose={handleClose}>
       {emailVisible ? (
-        <BottomSheetScrollView
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingHorizontal: 20,
-            paddingTop: 4,
-            ...contentPadding,
-            gap: 12,
-          }}
-        >
-          <View style={{ marginBottom: 4 }}>
-            <Text
-              style={{
-                fontSize: 17,
-                fontWeight: '600',
-                color: color.text.primary,
-                textAlign: 'center',
-                marginTop: 4,
-                marginBottom: 4,
-              }}
-            >
-              {t('share.emailNote')}
-            </Text>
-            <Text
-              className="text-[14px] leading-5"
-              style={{ color: color.text.secondary, textAlign: 'center', paddingHorizontal: 4 }}
-            >
-              {t('batch.emailBatchDescription')}
-            </Text>
-          </View>
+        <AppBottomSheetContent scrollable style={{ paddingTop: 4, gap: 12 }}>
+          <SheetHeader
+            title={t('share.emailNote')}
+            subtitle={t('batch.emailBatchDescription')}
+            color={color}
+            marginBottom={4}
+          />
 
           <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
             {t('batch.exportPackagingLabel')}
@@ -385,41 +360,15 @@ export const BatchExportSheet = ({
             onSecondaryPressIn={handleCancelEmail}
             secondaryDisabled={isSendingEmail || isExporting}
           />
-        </BottomSheetScrollView>
+        </AppBottomSheetContent>
       ) : (
-        <BottomSheetView
-          style={{
-            paddingHorizontal: 20,
-            paddingTop: 8,
-            gap: 10,
-            ...listContentPadding,
-          }}
-        >
-          <View style={{ marginBottom: 2 }}>
-            <Text
-              style={{
-                fontSize: 17,
-                fontWeight: '600',
-                color: color.text.primary,
-                textAlign: 'center',
-                marginTop: 4,
-                marginBottom: 4,
-              }}
-            >
-              {t('batch.exportAsTitle', { count })}
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: color.text.secondary,
-                lineHeight: 20,
-                textAlign: 'center',
-                paddingHorizontal: 4,
-              }}
-            >
-              {t('batch.sheetLimitsHint')}
-            </Text>
-          </View>
+        <AppBottomSheetContent bottomPadding={20} style={{ gap: 10 }}>
+          <SheetHeader
+            title={t('batch.exportAsTitle', { count })}
+            subtitle={t('batch.sheetLimitsHint')}
+            color={color}
+            marginBottom={2}
+          />
 
           <Text style={{ fontSize: 13, fontWeight: '600', color: color.text.secondary }}>
             {t('batch.exportPackagingLabel')}
@@ -506,7 +455,7 @@ export const BatchExportSheet = ({
             onPress: handleOpenEmail,
             disabled: isExporting,
           })}
-        </BottomSheetView>
+        </AppBottomSheetContent>
       )}
     </AppBottomSheetModal>
   );

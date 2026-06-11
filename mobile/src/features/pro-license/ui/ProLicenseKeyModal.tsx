@@ -1,5 +1,5 @@
-import type { BottomSheetBackdropProps, BottomSheetModal } from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import dayjs from 'dayjs';
 import { Brain, CheckCircle2, Crown, Gift, ShieldCheck, Zap } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -21,12 +21,7 @@ import { useColors } from '@/shared/config';
 import { hapticError, hapticSuccess, IS_IOS, selectPlatform } from '@/shared/lib';
 import { redeemProLicenseKey } from '@/shared/lib/ai-api/proLicenseApi';
 import { resolveDayjsLocale } from '@/shared/lib/date';
-import {
-  APP_BOTTOM_SHEET_BACKDROP_SNAP,
-  AppBottomSheetModal,
-  SheetFooterButtons,
-  useBottomSheetContentPadding,
-} from '@/shared/ui';
+import { AppBottomSheetContent, AppBottomSheetModal, SheetFooterButtons } from '@/shared/ui';
 
 import {
   isRevenueCatStoreBillingConfigured,
@@ -347,7 +342,6 @@ function VoucherActivationSuccessPanel({ color, expiresAtIso, onDismiss }: Succe
 export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicenseKeyModalProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(20);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [offerCodeCompact, setOfferCodeCompact] = useState('');
   const [busy, setBusy] = useState(false);
@@ -442,18 +436,6 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
 
   const showActivatingOverlay = busy && phase !== 'success';
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        {...APP_BOTTOM_SHEET_BACKDROP_SNAP}
-        pressBehavior={busy ? 'none' : 'close'}
-        opacity={0.45}
-      />
-    ),
-    [busy],
-  );
-
   const canDismissByGesture = !busy;
 
   const codeFontFamily = selectPlatform({
@@ -469,9 +451,9 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
       onClose={handleClose}
       presentOnVisible={false}
       enablePanDownToClose={canDismissByGesture}
-      backdropComponent={renderBackdrop}
+      backdropPressBehavior={busy ? 'none' : 'close'}
     >
-      <BottomSheetView className="px-5 pt-1" style={contentPadding}>
+      <AppBottomSheetContent>
         {showActivatingOverlay ? (
           <View className="items-center py-4">
             <ActivityIndicator size="large" color={color.accent.primary} />
@@ -601,7 +583,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
             />
           </>
         )}
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

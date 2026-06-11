@@ -1,4 +1,4 @@
-import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
 import { Search, X } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -14,9 +14,10 @@ import {
   resolveFolderListTintHex,
 } from '@/shared/lib';
 import {
+  AppBottomSheetContent,
   AppBottomSheetModal,
   getInputFieldInputStyle,
-  useBottomSheetContentPadding,
+  SheetHeader,
 } from '@/shared/ui';
 
 import type { Folder } from '../model/types';
@@ -55,7 +56,6 @@ export const FolderPickerSheet = ({
   const color = useColors();
   const scheme = useAppTheme();
   const { isProActive } = useProEntitlement();
-  const contentPadding = useBottomSheetContentPadding(12);
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
 
@@ -171,32 +171,8 @@ export const FolderPickerSheet = ({
 
   return (
     <AppBottomSheetModal visible={visible} onClose={handleClose}>
-      <BottomSheetView style={{ paddingHorizontal: 20, ...contentPadding }}>
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 17,
-            fontWeight: '600',
-            marginBottom: subtitle ? 4 : 10,
-            marginTop: 4,
-            textAlign: 'center',
-          }}
-        >
-          {title}
-        </Text>
-        {subtitle ? (
-          <Text
-            style={{
-              color: color.text.secondary,
-              fontSize: 14,
-              lineHeight: 20,
-              marginBottom: 10,
-              textAlign: 'center',
-            }}
-          >
-            {subtitle}
-          </Text>
-        ) : null}
+      <AppBottomSheetContent bottomPadding={12}>
+        <SheetHeader title={title} subtitle={subtitle} color={color} marginBottom={10} />
 
         <View
           style={{
@@ -273,7 +249,7 @@ export const FolderPickerSheet = ({
             />
           </View>
         )}
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 };

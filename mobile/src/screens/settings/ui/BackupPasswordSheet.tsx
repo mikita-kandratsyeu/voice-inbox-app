@@ -1,4 +1,4 @@
-import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Eye, EyeOff } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +7,12 @@ import { Pressable, Text, View } from 'react-native';
 import { BACKUP_PASSWORD_MIN_LENGTH, validateBackupPassword } from '@/features/sync-data';
 import { type Colors, useColors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  AppBottomSheetContent,
+  AppBottomSheetModal,
+  SheetFooterButtons,
+  SheetHeader,
+} from '@/shared/ui';
 
 import { BackupEncryptionWarningBanner } from './BackupEncryptionWarningBanner';
 
@@ -89,7 +94,6 @@ function BackupPasswordField({
 export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSubmit }: Props) {
   const { t } = useTranslation();
   const c = useColors();
-  const contentPadding = useBottomSheetContentPadding(20);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -150,37 +154,8 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
       enablePanDownToClose={!busy}
       backdropPressBehavior={busy ? 'none' : 'close'}
     >
-      <BottomSheetView
-        style={{
-          paddingHorizontal: 20,
-          paddingTop: 8,
-          ...contentPadding,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 17,
-            fontWeight: '600',
-            color: c.text.primary,
-            textAlign: 'center',
-            paddingTop: 4,
-            marginBottom: 6,
-          }}
-        >
-          {title}
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            lineHeight: 20,
-            color: c.text.secondary,
-            textAlign: 'center',
-            marginBottom: 16,
-            paddingHorizontal: 4,
-          }}
-        >
-          {subtitle}
-        </Text>
+      <AppBottomSheetContent>
+        <SheetHeader title={title} subtitle={subtitle} color={c} marginBottom={16} />
 
         {isExport ? (
           <BackupEncryptionWarningBanner style={{ marginBottom: 16 }}>
@@ -266,7 +241,7 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
           onSecondaryPress={handleClose}
           secondaryDisabled={busy}
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

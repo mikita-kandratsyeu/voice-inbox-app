@@ -1,4 +1,4 @@
-import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
 import { ChevronRight, Plus, Search, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -8,9 +8,10 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import type { Colors } from '@/shared/config';
 import { hapticSelection, IS_IOS, matchesSearchQuery, normalizeSearchQuery } from '@/shared/lib';
 import {
+  AppBottomSheetContent,
   AppBottomSheetModal,
   getInputFieldInputStyle,
-  useBottomSheetContentPadding,
+  SheetHeader,
 } from '@/shared/ui';
 
 import { GITHUB_SYNC_DEFAULT_BRANCH, GITHUB_SYNC_DEFAULT_REPO_NAME } from '../lib/constants';
@@ -118,7 +119,6 @@ export function GithubRepoPickerSheet({
   onLoadRepos,
 }: Props) {
   const { t } = useTranslation();
-  const contentPadding = useBottomSheetContentPadding(12);
   const onLoadReposRef = useRef(onLoadRepos);
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
@@ -239,19 +239,12 @@ export function GithubRepoPickerSheet({
 
   return (
     <AppBottomSheetModal visible={visible} onClose={handleClose}>
-      <BottomSheetView style={{ paddingHorizontal: 20, paddingTop: 4, ...contentPadding }}>
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 17,
-            fontWeight: '600',
-            marginBottom: 4,
-            marginTop: 4,
-            textAlign: 'center',
-          }}
-        >
-          {t('settings.githubSync.selectRepoTitle')}
-        </Text>
+      <AppBottomSheetContent bottomPadding={12} style={{ paddingTop: 4 }}>
+        <SheetHeader
+          title={t('settings.githubSync.selectRepoTitle')}
+          color={color}
+          marginBottom={4}
+        />
         <GithubSyncBranchText
           i18nKey="settings.githubSync.selectRepoSubtitle"
           branch={GITHUB_SYNC_DEFAULT_BRANCH}
@@ -329,7 +322,7 @@ export function GithubRepoPickerSheet({
         ) : null}
 
         {listBody}
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

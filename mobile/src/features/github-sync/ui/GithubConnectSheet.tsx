@@ -1,4 +1,3 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { Check } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -25,10 +24,11 @@ import { openInAppBrowser } from '@/features/in-app-browser';
 import type { Colors } from '@/shared/config';
 import { hapticLight, hapticSelection, hapticSuccess, IS_ANDROID } from '@/shared/lib';
 import {
+  AppBottomSheetContent,
   AppBottomSheetModal,
   Button,
   BUTTON_BORDER_RADIUS,
-  useBottomSheetContentPadding,
+  SheetHeader,
 } from '@/shared/ui';
 import {
   sheetFooterButtonContainerStyle,
@@ -174,7 +174,6 @@ export function GithubConnectSheet({
   onCancel,
 }: Props) {
   const { t } = useTranslation();
-  const contentPadding = useBottomSheetContentPadding(24);
   const autoOpenedRef = useRef(false);
   const progressAnim = useRef(new Animated.Value(0)).current;
   const [secondsLeft, setSecondsLeft] = useState(AUTO_OPEN_DELAY_SEC);
@@ -258,39 +257,20 @@ export function GithubConnectSheet({
 
   return (
     <AppBottomSheetModal visible={visible} onClose={handleCancel}>
-      <BottomSheetView
-        style={{
-          paddingHorizontal: 24,
-          paddingTop: 8,
-          ...contentPadding,
-        }}
-      >
-        <View className="mb-1 items-center">
-          <View
-            className="mb-4 h-14 w-14 items-center justify-center rounded-2xl"
-            style={{ backgroundColor: color.background.tertiary }}
-          >
-            <GithubIcon size={28} color={color.accent.primary} />
-          </View>
-          <Text
-            className="mb-2 text-center text-xl font-bold"
-            style={{ color: color.text.primary }}
-          >
-            {t('settings.githubSync.connectSheetTitle')}
-          </Text>
-          <Text
-            className="mb-3 text-center text-sm leading-5"
-            style={{ color: color.text.secondary }}
-          >
-            {t('settings.githubSync.connectSheetBody')}
-          </Text>
-          <Text
-            className="mb-5 text-center text-[13px] leading-[18px]"
-            style={{ color: color.text.muted }}
-          >
-            {t('settings.githubSync.scopeHint')}
-          </Text>
-        </View>
+      <AppBottomSheetContent useTabletPadding>
+        <SheetHeader
+          title={t('settings.githubSync.connectSheetTitle')}
+          subtitle={t('settings.githubSync.connectSheetBody')}
+          icon={<GithubIcon size={28} color={color.accent.primary} />}
+          color={color}
+          marginBottom={12}
+        />
+        <Text
+          className="mb-5 text-center text-[13px] leading-[18px]"
+          style={{ color: color.text.muted }}
+        >
+          {t('settings.githubSync.scopeHint')}
+        </Text>
 
         {userCode ? (
           <GithubUserCodeCopyCard
@@ -362,7 +342,7 @@ export function GithubConnectSheet({
             ) : null}
           </View>
         </View>
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

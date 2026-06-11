@@ -1,4 +1,4 @@
-import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
 import { Search, X } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -10,9 +10,10 @@ import type { RecordListItem } from '@/entities/record';
 import { useColors } from '@/shared/config';
 import { IS_IOS, normalizeSearchQuery } from '@/shared/lib';
 import {
+  AppBottomSheetContent,
   AppBottomSheetModal,
   getInputFieldInputStyle,
-  useBottomSheetContentPadding,
+  SheetHeader,
 } from '@/shared/ui';
 
 import { AllTasksNotePickerRow } from './AllTasksNotePickerRow';
@@ -45,7 +46,6 @@ export function AllTasksNotePickerSheet({
 }: AllTasksNotePickerSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(12);
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
 
@@ -94,30 +94,13 @@ export function AllTasksNotePickerSheet({
 
   return (
     <AppBottomSheetModal visible={visible} onClose={handleClose}>
-      <BottomSheetView style={{ paddingHorizontal: 20, ...contentPadding }}>
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 17,
-            fontWeight: '600',
-            marginBottom: 4,
-            marginTop: 4,
-            textAlign: 'center',
-          }}
-        >
-          {t('allTasks.pickNoteTitle')}
-        </Text>
-        <Text
-          style={{
-            color: color.text.secondary,
-            fontSize: 14,
-            lineHeight: 20,
-            marginBottom: 10,
-            textAlign: 'center',
-          }}
-        >
-          {t('allTasks.pickNoteSubtitle')}
-        </Text>
+      <AppBottomSheetContent bottomPadding={12}>
+        <SheetHeader
+          title={t('allTasks.pickNoteTitle')}
+          subtitle={t('allTasks.pickNoteSubtitle')}
+          color={color}
+          marginBottom={10}
+        />
 
         <View
           style={{
@@ -206,7 +189,7 @@ export function AllTasksNotePickerSheet({
             />
           </View>
         )}
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

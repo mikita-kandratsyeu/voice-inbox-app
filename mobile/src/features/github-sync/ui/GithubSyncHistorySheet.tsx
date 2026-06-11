@@ -1,4 +1,3 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
 import { ExternalLink, History, RotateCcw } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -8,7 +7,12 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import type { Colors } from '@/shared/config';
 import { formatRelativeTime, hapticSelection } from '@/shared/lib';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  AppBottomSheetContent,
+  AppBottomSheetModal,
+  SheetFooterButtons,
+  SheetHeader,
+} from '@/shared/ui';
 
 import type { GithubCommitSummary } from '../lib/githubApi';
 
@@ -215,7 +219,6 @@ export function GithubSyncHistorySheet({
   onRestore,
 }: Props) {
   const { t, i18n } = useTranslation();
-  const contentPadding = useBottomSheetContentPadding(12);
   const onLoadRef = useRef(onLoad);
   onLoadRef.current = onLoad;
   const [contentHeight, setContentHeight] = useState<number | null>(null);
@@ -298,30 +301,13 @@ export function GithubSyncHistorySheet({
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>
-      <BottomSheetView style={{ paddingHorizontal: 20, paddingTop: 4, ...contentPadding }}>
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 17,
-            fontWeight: '600',
-            marginBottom: 4,
-            marginTop: 4,
-            textAlign: 'center',
-          }}
-        >
-          {t('settings.githubSync.historyTitle')}
-        </Text>
-        <Text
-          style={{
-            color: color.text.secondary,
-            fontSize: 14,
-            lineHeight: 20,
-            marginBottom: 10,
-            textAlign: 'center',
-          }}
-        >
-          {t('settings.githubSync.historySubtitle')}
-        </Text>
+      <AppBottomSheetContent bottomPadding={12} style={{ paddingTop: 4 }}>
+        <SheetHeader
+          title={t('settings.githubSync.historyTitle')}
+          subtitle={t('settings.githubSync.historySubtitle')}
+          color={color}
+          marginBottom={10}
+        />
 
         {listBody}
 
@@ -331,7 +317,7 @@ export function GithubSyncHistorySheet({
           primaryLabel={t('common.close')}
           onPrimaryPress={onClose}
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

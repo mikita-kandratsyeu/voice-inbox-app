@@ -1,5 +1,5 @@
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
 import { Check, GitBranch, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -9,10 +9,11 @@ import { ActivityIndicator, Alert, Keyboard, Pressable, Text, View } from 'react
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import {
+  AppBottomSheetContent,
   AppBottomSheetModal,
   getInputFieldInputStyle,
   SheetFooterButtons,
-  useBottomSheetContentPadding,
+  SheetHeader,
 } from '@/shared/ui';
 
 import { GITHUB_SYNC_DEFAULT_BRANCH } from '../lib/constants';
@@ -198,7 +199,6 @@ export function GithubSyncBranchSheet({
   onDelete,
 }: Props) {
   const { t } = useTranslation();
-  const contentPadding = useBottomSheetContentPadding(12);
   const onLoadBranchesRef = useRef(onLoadBranches);
   const onDeleteRef = useRef(onDelete);
   const didLoadBranchesForOpenRef = useRef(false);
@@ -382,30 +382,13 @@ export function GithubSyncBranchSheet({
 
   return (
     <AppBottomSheetModal ref={modalRef} visible={visible} onClose={onClose}>
-      <BottomSheetView style={{ paddingHorizontal: 20, paddingTop: 4, ...contentPadding }}>
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 17,
-            fontWeight: '600',
-            marginBottom: 4,
-            marginTop: 4,
-            textAlign: 'center',
-          }}
-        >
-          {t('settings.githubSync.branchSheetTitle')}
-        </Text>
-        <Text
-          style={{
-            color: color.text.secondary,
-            fontSize: 14,
-            lineHeight: 20,
-            marginBottom: 10,
-            textAlign: 'center',
-          }}
-        >
-          {t('settings.githubSync.branchSheetSubtitle')}
-        </Text>
+      <AppBottomSheetContent bottomPadding={12} style={{ paddingTop: 4 }}>
+        <SheetHeader
+          title={t('settings.githubSync.branchSheetTitle')}
+          subtitle={t('settings.githubSync.branchSheetSubtitle')}
+          color={color}
+          marginBottom={10}
+        />
 
         {branchListBody}
 
@@ -460,7 +443,7 @@ export function GithubSyncBranchSheet({
           secondaryLabel={t('common.cancel')}
           onSecondaryPress={handleClosePress}
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

@@ -1,4 +1,3 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Image, Share, StyleSheet, Text, View } from 'react-native';
@@ -8,7 +7,12 @@ import { isUserCancelledShare } from '@/features/share-record/lib/isUserCancelle
 import { type Colors, useColors } from '@/shared/config';
 import { diagWarn } from '@/shared/lib/appLogger';
 import { hapticLight, hapticSuccess } from '@/shared/lib/haptics';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  AppBottomSheetContent,
+  AppBottomSheetModal,
+  SheetFooterButtons,
+  SheetHeader,
+} from '@/shared/ui';
 
 import { getGraphExportViewShotCaptureOptions } from '../lib/computeGraphExportLayout';
 import {
@@ -70,7 +74,6 @@ export function GraphExportPreviewSheet({
 }: GraphExportPreviewSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(24);
   const cropCaptureRef = useRef<ViewShotRef>(null);
 
   const [imageSize, setImageSize] = useState<ImageSize | null>(null);
@@ -207,30 +210,13 @@ export function GraphExportPreviewSheet({
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>
-      <BottomSheetView style={{ paddingHorizontal: 20, ...contentPadding }}>
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 17,
-            fontWeight: '600',
-            marginBottom: 4,
-            marginTop: 4,
-            textAlign: 'center',
-          }}
-        >
-          {t('notesGraph.export.title')}
-        </Text>
-        <Text
-          style={{
-            color: color.text.secondary,
-            fontSize: 14,
-            lineHeight: 20,
-            marginBottom: 12,
-            textAlign: 'center',
-          }}
-        >
-          {t('notesGraph.export.subtitle')}
-        </Text>
+      <AppBottomSheetContent bottomPadding={24}>
+        <SheetHeader
+          title={t('notesGraph.export.title')}
+          subtitle={t('notesGraph.export.subtitle')}
+          color={color}
+          marginBottom={12}
+        />
 
         <View
           onLayout={(event) => {
@@ -297,7 +283,7 @@ export function GraphExportPreviewSheet({
           secondaryDisabled={isExporting}
           secondaryLabel={t('common.cancel')}
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
 
       {visible && imageUri && imageSize && crop && cropCaptureLayout ? (
         <View

@@ -1,17 +1,12 @@
-import type { BottomSheetBackdropProps, BottomSheetModal } from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Text } from 'react-native';
 
 import { useColors } from '@/shared/config';
 import { hapticSuccess, IS_IOS } from '@/shared/lib';
-import {
-  APP_BOTTOM_SHEET_BACKDROP_SNAP,
-  AppBottomSheetModal,
-  SheetFooterButtons,
-  useBottomSheetContentPadding,
-} from '@/shared/ui';
+import { AppBottomSheetContent, AppBottomSheetModal, SheetFooterButtons } from '@/shared/ui';
 
 import { getNotesGraphLayoutAutoName } from '../lib/getNotesGraphLayoutAutoName';
 import { resolveNotesGraphLayoutSaveName } from '../lib/resolveNotesGraphLayoutSaveName';
@@ -35,24 +30,11 @@ export function GraphLayoutSaveSheet({
 }: GraphLayoutSaveSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(24);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const skipNextDismissRef = useRef(false);
   const autoTitleRef = useRef('');
   const [title, setTitle] = useState('');
   const [keyboardVisible, setKeyboardVisible] = useState(false);
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        {...APP_BOTTOM_SHEET_BACKDROP_SNAP}
-        pressBehavior={isSaving ? 'none' : 'close'}
-        opacity={0.35}
-      />
-    ),
-    [isSaving],
-  );
 
   useLayoutEffect(() => {
     if (visible) {
@@ -115,16 +97,15 @@ export function GraphLayoutSaveSheet({
       onClose={handleDismiss}
       surface="card"
       enablePanDownToClose={!isSaving}
-      backdropComponent={renderBackdrop}
+      backdrop="subtle"
+      backdropPressBehavior={isSaving ? 'none' : 'close'}
       handleIndicatorStyle={{ backgroundColor: color.text.muted }}
     >
-      <BottomSheetView
+      <AppBottomSheetContent
+        useTabletPadding
         style={{
-          paddingHorizontal: 24,
           paddingTop: 4,
-          ...(keyboardVisible
-            ? { paddingBottom: SAVE_SHEET_KEYBOARD_BOTTOM_PADDING }
-            : contentPadding),
+          paddingBottom: keyboardVisible ? SAVE_SHEET_KEYBOARD_BOTTOM_PADDING : undefined,
           gap: 12,
         }}
       >
@@ -169,7 +150,7 @@ export function GraphLayoutSaveSheet({
           secondaryDisabled={isSaving}
           secondaryAccessibilityLabel={t('common.cancel')}
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }
