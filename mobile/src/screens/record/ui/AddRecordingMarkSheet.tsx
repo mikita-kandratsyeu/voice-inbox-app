@@ -167,7 +167,7 @@ export const AddRecordingMarkSheet = ({
         style={{
           paddingTop: 4,
           paddingBottom:
-            step === 'label' && keyboardVisible ? MARK_SHEET_KEYBOARD_BOTTOM_PADDING : undefined,
+            step === 'label' && keyboardVisible ? MARK_SHEET_KEYBOARD_BOTTOM_PADDING : 20,
           gap: step === 'pick' ? 20 : 16,
         }}
       >
