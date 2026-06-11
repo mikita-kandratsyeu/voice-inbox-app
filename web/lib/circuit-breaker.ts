@@ -220,7 +220,10 @@ export class CircuitBreaker {
  */
 const circuitBreakers = new Map<string, CircuitBreaker>();
 
-function getCircuitBreaker(name: string, options?: Omit<CircuitBreakerOptions, 'name'>): CircuitBreaker {
+function getCircuitBreaker(
+  name: string,
+  options?: Omit<CircuitBreakerOptions, 'name'>,
+): CircuitBreaker {
   if (!circuitBreakers.has(name)) {
     circuitBreakers.set(
       name,

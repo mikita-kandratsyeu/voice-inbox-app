@@ -161,7 +161,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   logAiRequest(aiOperation, { path: pathname, messageId: id });
 
   const result = await withDeduplication(
-    getAskDeduplicationKey(deviceIdTrimmed, id),
+    getAskDeduplicationKey(deviceIdTrimmed, id, question),
     () =>
       createAsk(
         id,

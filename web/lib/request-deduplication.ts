@@ -102,11 +102,7 @@ export function getMessageDeduplicationKey(deviceId: string, messageId: string):
 /**
  * Get deduplication key for ask queries.
  */
-export function getAskDeduplicationKey(
-  deviceId: string,
-  messageId: string,
-  query: string,
-): string {
+export function getAskDeduplicationKey(deviceId: string, messageId: string, query: string): string {
   // Hash the query to keep key size reasonable
   const queryHash = simpleHash(query);
   return `ask:${deviceId}:${messageId}:${queryHash}`;
@@ -136,16 +132,15 @@ function sleep(ms: number): Promise<void> {
 export class RequestDeduplicator {
   private readonly defaultTtlMs: number;
 
-  constructor(defaultTtlMs = 5000, _cleanupIntervalMs = 10000) {
+  constructor(defaultTtlMs = 5000) {
     this.defaultTtlMs = defaultTtlMs;
-    // cleanupIntervalMs ignored - Redis TTL handles cleanup
   }
 
   async execute<T>(key: string, fn: () => Promise<T>, ttlMs?: number): Promise<T> {
     return withDeduplication(key, fn, ttlMs ?? this.defaultTtlMs);
   }
 
-  isPending(_key: string): boolean {
+  isPending(): boolean {
     // Not supported in Redis-based version
     return false;
   }
@@ -155,7 +150,7 @@ export class RequestDeduplicator {
     return 0;
   }
 
-  clear(_key: string): void {
+  clear(): void {
     // Not needed - Redis TTL handles cleanup
   }
 
