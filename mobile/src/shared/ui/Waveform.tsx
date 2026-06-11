@@ -19,16 +19,29 @@ const BAR_MAX_HEIGHT = 56;
 const BAR_WIDTH = 3;
 const BAR_GAP = 4;
 
-const randomHeight = () => BAR_MIN_HEIGHT + Math.random() * (BAR_MAX_HEIGHT - BAR_MIN_HEIGHT);
+// Create wave pattern: center bars are tallest, edges are shorter
+const getWaveHeight = (index: number, intensity: number = 1) => {
+  const center = BAR_COUNT / 2;
+  const distanceFromCenter = Math.abs(index - center);
+  const normalizedDistance = distanceFromCenter / center;
 
-const randomVelocity = () => 1.5 + Math.random() * 2.5;
+  // Create bell curve for natural voice wave shape
+  const baseHeight =
+    BAR_MIN_HEIGHT +
+    (BAR_MAX_HEIGHT - BAR_MIN_HEIGHT) * Math.exp(-3 * normalizedDistance * normalizedDistance);
+
+  // Add some variation
+  const variation = Math.sin(index * 0.5) * 0.15 + 0.85;
+
+  return baseHeight * variation * intensity;
+};
 
 const getBarDelay = (index: number) => {
-  const groupSize = 4;
-  const group = Math.floor(index / groupSize);
-  const positionInGroup = index % groupSize;
+  // Wave emanates from center outward
+  const center = BAR_COUNT / 2;
+  const distanceFromCenter = Math.abs(index - center);
 
-  return group * 40 + positionInGroup * 10;
+  return distanceFromCenter * 25;
 };
 
 type WaveformProps = {
@@ -43,29 +56,34 @@ type WaveformBarProps = {
 };
 
 const WaveformBar = memo(({ index, isAnimating, color }: WaveformBarProps) => {
-  const height = useSharedValue(randomHeight());
-  const opacity = useSharedValue(0.7);
+  const height = useSharedValue(getWaveHeight(index, 0.3));
+  const opacity = useSharedValue(0.6);
   const scale = useSharedValue(1);
 
   useEffect(() => {
     if (isAnimating) {
       const delay = getBarDelay(index);
 
+      // Create pulsing wave effect with varying intensities
       height.value = withDelay(
         delay,
         withRepeat(
           withSequence(
-            withSpring(randomHeight(), {
-              ...SPRING_CONFIGS.bouncy,
-              velocity: randomVelocity(),
+            withTiming(getWaveHeight(index, 1.2), {
+              duration: 350,
+              easing: Easing.out(Easing.sine),
             }),
-            withSpring(randomHeight(), {
-              ...SPRING_CONFIGS.bouncy,
-              velocity: randomVelocity(),
+            withTiming(getWaveHeight(index, 0.6), {
+              duration: 400,
+              easing: Easing.inOut(Easing.sine),
             }),
-            withSpring(randomHeight(), {
-              ...SPRING_CONFIGS.bouncy,
-              velocity: randomVelocity(),
+            withTiming(getWaveHeight(index, 0.95), {
+              duration: 380,
+              easing: Easing.inOut(Easing.sine),
+            }),
+            withTiming(getWaveHeight(index, 0.4), {
+              duration: 420,
+              easing: Easing.in(Easing.sine),
             }),
           ),
           -1,
@@ -77,9 +95,10 @@ const WaveformBar = memo(({ index, isAnimating, color }: WaveformBarProps) => {
         delay,
         withRepeat(
           withSequence(
-            withTiming(1, { duration: 400, easing: Easing.inOut(Easing.ease) }),
-            withTiming(0.65, { duration: 600, easing: Easing.inOut(Easing.ease) }),
-            withTiming(0.85, { duration: 500, easing: Easing.inOut(Easing.ease) }),
+            withTiming(1, { duration: 350, easing: Easing.inOut(Easing.ease) }),
+            withTiming(0.7, { duration: 400, easing: Easing.inOut(Easing.ease) }),
+            withTiming(0.85, { duration: 380, easing: Easing.inOut(Easing.ease) }),
+            withTiming(0.6, { duration: 420, easing: Easing.inOut(Easing.ease) }),
           ),
           -1,
           false,
@@ -90,18 +109,19 @@ const WaveformBar = memo(({ index, isAnimating, color }: WaveformBarProps) => {
         delay,
         withRepeat(
           withSequence(
-            withTiming(1, { duration: 300 }),
-            withTiming(1.08, { duration: 200, easing: Easing.out(Easing.quad) }),
-            withTiming(1, { duration: 300, easing: Easing.inOut(Easing.quad) }),
+            withTiming(1.06, { duration: 350, easing: Easing.out(Easing.quad) }),
+            withTiming(0.98, { duration: 400, easing: Easing.inOut(Easing.quad) }),
+            withTiming(1.03, { duration: 380, easing: Easing.inOut(Easing.quad) }),
+            withTiming(1, { duration: 420, easing: Easing.in(Easing.quad) }),
           ),
           -1,
           false,
         ),
       );
     } else {
-      height.value = withSpring(BAR_MIN_HEIGHT + 4, {
-        damping: 10,
-        stiffness: 200,
+      height.value = withTiming(getWaveHeight(index, 0.3), {
+        duration: 400,
+        easing: Easing.out(Easing.cubic),
       });
       opacity.value = withTiming(0.5, {
         duration: 300,
