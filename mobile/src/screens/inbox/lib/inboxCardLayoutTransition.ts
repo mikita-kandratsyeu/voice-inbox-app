@@ -50,5 +50,4 @@ export function prepareInboxCardLayoutAnimation(): void {
  */
 export const inboxCardLayoutReanimatedTransition = LinearTransition.springify()
   .duration(INBOX_CARD_LAYOUT_SPRING_DURATION_MS)
-  .dampingRatio(1)
-  .overshootClamping(true);
+  .dampingRatio(1);

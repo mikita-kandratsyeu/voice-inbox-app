@@ -186,7 +186,9 @@ export const SwipeableCard = memo(function SwipeableCard({
           </Animated.View>
         ) : null}
         <GestureDetector gesture={pan}>
-          <Animated.View style={[cardStyle, embedded && { width: '100%' }]}>{children}</Animated.View>
+          <Animated.View style={[cardStyle, embedded && { width: '100%' }]}>
+            {children}
+          </Animated.View>
         </GestureDetector>
       </Animated.View>
     </SwipeableCardContext.Provider>

@@ -272,12 +272,7 @@ function InboxScreenLoadedBodyInner({
         <SwipeHintBanner onDismiss={onDismissSwipeHint} />
       </View>
     );
-  }, [
-    batchSelect.isSelectMode,
-    onDismissSwipeHint,
-    showInboxSearchBar,
-    showSwipeHintForLayout,
-  ]);
+  }, [batchSelect.isSelectMode, onDismissSwipeHint, showInboxSearchBar, showSwipeHintForLayout]);
 
   const stickyClosedOffset = insetsBottom;
 
