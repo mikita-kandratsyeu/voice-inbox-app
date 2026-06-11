@@ -4,7 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Check } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -12,9 +12,16 @@ import type { InboxStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
 import { AutoOrganizeProgressOverlay } from '@/features/manage-folders';
 import { useAiOrganizeArchiveReview } from '@/features/manage-folders/model/useAiOrganizeArchiveReview';
+import {
+  AiOrganizeReviewGroupedList,
+  AiOrganizeReviewListDivider,
+  AiOrganizeReviewListRow,
+  AiOrganizeReviewSectionHeader,
+  AiOrganizeReviewSelectToggle,
+} from '@/features/manage-folders/ui/AiOrganizeReviewListRow';
 import { useColors } from '@/shared/config';
-import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
-import { Button, HeaderIconButton, ScreenHeader } from '@/shared/ui';
+import { hapticSelection, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
+import { HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 type Route = RouteProp<InboxStackParamList, 'AiOrganizeArchiveReview'>;
 
@@ -43,11 +50,22 @@ export function AiOrganizeArchiveReviewScreen() {
     return m;
   }, [records, t]);
 
-  const { suggestions, selectedIds, toggle, isApplying, apply, applyAll } =
-    useAiOrganizeArchiveReview({
-      result: route.params.result,
-      archiveRecord,
-    });
+  const {
+    suggestions,
+    selectedIds,
+    toggle,
+    selectAll,
+    deselectAll,
+    allSelected,
+    isApplying,
+    apply,
+  } = useAiOrganizeArchiveReview({
+    result: route.params.result,
+    archiveRecord,
+  });
+
+  const footerBottomPad = getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet);
+  const noneSelected = selectedIds.size === 0;
 
   const goBack = useCallback(() => {
     if (navigation.canGoBack()) navigation.goBack();
@@ -72,9 +90,15 @@ export function AiOrganizeArchiveReviewScreen() {
     [applyOverlayVisible, goBack, isApplying],
   );
 
-  const confirmApplySelected = useCallback(() => void runApply(apply), [apply, runApply]);
+  const confirmApply = useCallback(() => void runApply(apply), [apply, runApply]);
 
-  const confirmApplyAll = useCallback(() => void runApply(applyAll), [applyAll, runApply]);
+  const handleToggle = useCallback(
+    (recordId: string) => {
+      hapticSelection();
+      toggle(recordId);
+    },
+    [toggle],
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -86,115 +110,96 @@ export function AiOrganizeArchiveReviewScreen() {
         }}
         titleAlign="center"
         rightSlot={
-          <HeaderIconButton
-            iconOnly
-            variant="icon"
-            size="md"
-            accessibilityLabel={t('folders.autoOrganizeApplyA11y')}
-            icon={<Check size={22} color={color.accent.primary} strokeWidth={2.5} />}
-            color={color}
-            onPress={confirmApplySelected}
-            disabled={isApplying || applyOverlayVisible || selectedIds.size === 0}
-          />
+          suggestions.length > 0 ? (
+            <HeaderIconButton
+              iconOnly
+              variant="icon"
+              size="md"
+              accessibilityLabel={t('folders.autoOrganizeApplyA11y')}
+              icon={<Check size={22} color={color.accent.primary} strokeWidth={2.5} />}
+              color={color}
+              onPress={confirmApply}
+              disabled={isApplying || applyOverlayVisible || noneSelected}
+            />
+          ) : null
         }
       />
+
       <View style={{ flex: 1, alignSelf: 'center', width: '100%', maxWidth: contentMaxWidth }}>
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 12,
-            paddingBottom:
-              suggestions.length > 0
-                ? 16
-                : getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
+            paddingBottom: footerBottomPad,
+            flexGrow: 1,
           }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={{ fontSize: 13, color: color.text.secondary, marginBottom: 12 }}>
-            {t('folders.aiOrganizeArchiveReview.subtitle')}
-          </Text>
-
-          {suggestions.map((suggestion) => {
-            const selected = selectedIds.has(suggestion.recordId);
-            return (
-              <Pressable
-                key={suggestion.recordId}
-                onPress={() => toggle(suggestion.recordId)}
-                style={{
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: selected ? color.accent.primary : color.border.default,
-                  backgroundColor: color.background.card,
-                  padding: 14,
-                  marginBottom: 10,
-                  flexDirection: 'row',
-                  alignItems: 'flex-start',
-                  gap: 12,
-                }}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, color: color.text.primary, fontWeight: '500' }}>
-                    {recordTitleById.get(suggestion.recordId) ??
-                      t('folders.autoOrganizeReviewUnknownNote')}
-                  </Text>
-                  <Text style={{ fontSize: 13, color: color.text.muted, marginTop: 4 }}>
-                    {suggestion.reason}
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: 6,
-                    borderWidth: 2,
-                    borderColor: selected ? color.accent.primary : color.border.default,
-                    backgroundColor: selected ? color.accent.primary : 'transparent',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginTop: 2,
-                  }}
-                >
-                  {selected ? (
-                    <Check size={14} color={color.icon.onAccent} strokeWidth={3} />
-                  ) : null}
-                </View>
-              </Pressable>
-            );
-          })}
-
-          {suggestions.length === 0 ? (
-            <Text style={{ fontSize: 14, color: color.text.secondary }}>
-              {t('folders.aiOrganizeArchiveReview.empty')}
+          {suggestions.length > 0 ? (
+            <Text
+              style={{
+                fontSize: 13,
+                color: color.text.secondary,
+                textAlign: 'center',
+                marginBottom: 16,
+                paddingHorizontal: 4,
+              }}
+            >
+              {t('folders.aiOrganizeArchiveReview.subtitle')}
             </Text>
           ) : null}
-        </ScrollView>
 
-        {suggestions.length > 0 ? (
-          <View
-            style={{
-              paddingHorizontal: 16,
-              paddingTop: 12,
-              paddingBottom: Math.max(insets.bottom, 12),
-              borderTopWidth: 1,
-              borderTopColor: color.border.default,
-              backgroundColor: color.background.secondary,
-            }}
-          >
-            <Button
-              label={t('folders.aiOrganizeArchiveReview.archiveAll', { count: suggestions.length })}
-              variant="primary"
-              size="lg"
-              fullWidth
-              color={color}
-              disabled={isApplying || applyOverlayVisible}
-              loading={isApplying || applyOverlayVisible}
-              onPress={confirmApplyAll}
-              accessibilityLabel={t('folders.aiOrganizeArchiveReview.archiveAllA11y', {
-                count: suggestions.length,
-              })}
-            />
-          </View>
-        ) : null}
+          {suggestions.length > 0 ? (
+            <View style={{ marginBottom: 24 }}>
+              <AiOrganizeReviewSectionHeader
+                title={t('folders.aiOrganizeArchiveReview.itemsSection')}
+                color={color}
+              />
+              <AiOrganizeReviewSelectToggle
+                allSelected={allSelected}
+                noneSelected={noneSelected}
+                onSelectAll={selectAll}
+                onDeselectAll={deselectAll}
+                color={color}
+              />
+              <AiOrganizeReviewGroupedList color={color}>
+                {suggestions.map((suggestion, index) => (
+                  <AiOrganizeReviewListDivider
+                    key={suggestion.recordId}
+                    isLast={index === suggestions.length - 1}
+                    color={color}
+                  >
+                    <AiOrganizeReviewListRow
+                      title={
+                        recordTitleById.get(suggestion.recordId) ??
+                        t('folders.autoOrganizeReviewUnknownNote')
+                      }
+                      subtitle={suggestion.reason}
+                      selected={selectedIds.has(suggestion.recordId)}
+                      color={color}
+                      onPress={() => handleToggle(suggestion.recordId)}
+                    />
+                  </AiOrganizeReviewListDivider>
+                ))}
+              </AiOrganizeReviewGroupedList>
+            </View>
+          ) : (
+            <Text
+              style={{
+                fontSize: 15,
+                color: color.text.secondary,
+                lineHeight: 21,
+                textAlign: 'center',
+                paddingVertical: 48,
+              }}
+            >
+              {t('folders.aiOrganizeArchiveReview.empty')}
+            </Text>
+          )}
+        </ScrollView>
       </View>
+
       <AutoOrganizeProgressOverlay
         visible={applyOverlayVisible}
         mode={applyOverlayMode}

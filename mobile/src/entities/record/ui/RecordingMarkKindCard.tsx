@@ -43,29 +43,30 @@ export function RecordingMarkKindCard({
       onPress={() => onPress(kind)}
       onLongPress={onLongPress ? () => onLongPress(kind) : undefined}
       delayLongPress={420}
-      className="h-full w-full flex-1 items-center gap-2 rounded-2xl px-1.5 py-3"
+      className="w-full items-center justify-start rounded-2xl px-2 py-3"
       style={({ pressed }) => ({
+        minHeight: 128,
         backgroundColor: c.background.tertiary,
         opacity: pressed ? 0.82 : 1,
         transform: [{ scale: pressed ? 0.98 : 1 }],
       })}
     >
       <View
-        className="h-11 w-11 shrink-0 items-center justify-center rounded-full"
+        className="mb-2 h-11 w-11 shrink-0 items-center justify-center rounded-full"
         style={{ backgroundColor: iconBackground }}
       >
         <Icon size={22} color={accent} strokeWidth={2} />
       </View>
-      <View className="w-full items-center gap-0.5">
+      <View className="w-full items-center">
         <Text
-          className="min-h-5 w-full text-center text-[14px] font-semibold leading-5"
+          className="h-5 w-full text-center text-[13px] font-semibold leading-5"
           style={{ color: c.text.primary }}
           numberOfLines={1}
         >
           {title}
         </Text>
         <Text
-          className="min-h-8 w-full text-center text-[11px] leading-4"
+          className="mt-0.5 h-8 w-full text-center text-[11px] leading-4"
           style={{ color: c.text.muted }}
           numberOfLines={2}
         >

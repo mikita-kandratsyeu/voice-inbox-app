@@ -4,7 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Check } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -13,8 +13,15 @@ import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import { AutoOrganizeProgressOverlay } from '@/features/manage-folders';
 import { useAiOrganizeCleanupReview } from '@/features/manage-folders/model/useAiOrganizeCleanupReview';
+import {
+  AiOrganizeReviewGroupedList,
+  AiOrganizeReviewListDivider,
+  AiOrganizeReviewListRow,
+  AiOrganizeReviewSectionHeader,
+  AiOrganizeReviewSelectToggle,
+} from '@/features/manage-folders/ui/AiOrganizeReviewListRow';
 import { useColors } from '@/shared/config';
-import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
+import { hapticSelection, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 type Route = RouteProp<InboxStackParamList, 'AiOrganizeFoldersCleanupReview'>;
@@ -46,6 +53,11 @@ export function AiOrganizeFoldersCleanupReviewScreen() {
     selectedDeleteNames,
     toggleMerge,
     toggleDelete,
+    selectAll,
+    deselectAll,
+    hasItems,
+    allSelected,
+    noneSelected,
     isApplying,
     apply,
   } = useAiOrganizeCleanupReview({
@@ -56,6 +68,8 @@ export function AiOrganizeFoldersCleanupReviewScreen() {
     updateFolder,
     deleteFolder,
   });
+
+  const footerBottomPad = getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet);
 
   const goBack = useCallback(() => {
     if (navigation.canGoBack()) navigation.goBack();
@@ -77,6 +91,22 @@ export function AiOrganizeFoldersCleanupReviewScreen() {
     goBack();
   }, [apply, applyOverlayVisible, goBack, isApplying]);
 
+  const handleToggleMerge = useCallback(
+    (key: string) => {
+      hapticSelection();
+      toggleMerge(key);
+    },
+    [toggleMerge],
+  );
+
+  const handleToggleDelete = useCallback(
+    (name: string) => {
+      hapticSelection();
+      toggleDelete(name);
+    },
+    [toggleDelete],
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader
@@ -87,16 +117,18 @@ export function AiOrganizeFoldersCleanupReviewScreen() {
         }}
         titleAlign="center"
         rightSlot={
-          <HeaderIconButton
-            iconOnly
-            variant="icon"
-            size="md"
-            accessibilityLabel={t('folders.autoOrganizeApplyA11y')}
-            icon={<Check size={22} color={color.accent.primary} strokeWidth={2.5} />}
-            color={color}
-            onPress={() => void confirmApply()}
-            disabled={isApplying || applyOverlayVisible}
-          />
+          hasItems ? (
+            <HeaderIconButton
+              iconOnly
+              variant="icon"
+              size="md"
+              accessibilityLabel={t('folders.autoOrganizeApplyA11y')}
+              icon={<Check size={22} color={color.accent.primary} strokeWidth={2.5} />}
+              color={color}
+              onPress={() => void confirmApply()}
+              disabled={isApplying || applyOverlayVisible || noneSelected}
+            />
+          ) : null
         }
       />
       <View style={{ flex: 1, alignSelf: 'center', width: '100%', maxWidth: contentMaxWidth }}>
@@ -104,90 +136,102 @@ export function AiOrganizeFoldersCleanupReviewScreen() {
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 12,
-            paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
+            paddingBottom: footerBottomPad,
+            flexGrow: 1,
           }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={{ fontSize: 13, color: color.text.secondary, marginBottom: 12 }}>
-            {t('folders.aiOrganizeCleanupReview.subtitle')}
-          </Text>
+          {hasItems ? (
+            <Text
+              style={{
+                fontSize: 13,
+                color: color.text.secondary,
+                textAlign: 'center',
+                marginBottom: 16,
+                paddingHorizontal: 4,
+              }}
+            >
+              {t('folders.aiOrganizeCleanupReview.subtitle')}
+            </Text>
+          ) : null}
 
-          {mergeItems.length > 0 ? (
+          {hasItems ? (
+            <>
+              <AiOrganizeReviewSelectToggle
+                allSelected={allSelected}
+                noneSelected={noneSelected}
+                onSelectAll={selectAll}
+                onDeselectAll={deselectAll}
+                color={color}
+              />
+
+              {mergeItems.length > 0 ? (
+                <View style={{ marginBottom: deleteEmptyFolderNames.length > 0 ? 24 : 0 }}>
+                  <AiOrganizeReviewSectionHeader
+                    title={t('folders.aiOrganizeCleanupReview.mergesSection')}
+                    color={color}
+                  />
+                  <AiOrganizeReviewGroupedList color={color}>
+                    {mergeItems.map(({ key, merge }, index) => (
+                      <AiOrganizeReviewListDivider
+                        key={key}
+                        isLast={index === mergeItems.length - 1}
+                        color={color}
+                      >
+                        <AiOrganizeReviewListRow
+                          title={merge.targetFolderName}
+                          subtitle={t('folders.aiOrganizeCleanupReview.mergeSources', {
+                            names: merge.sourceFolderNames.join(', '),
+                          })}
+                          selected={selectedMergeKeys.has(key)}
+                          color={color}
+                          onPress={() => handleToggleMerge(key)}
+                        />
+                      </AiOrganizeReviewListDivider>
+                    ))}
+                  </AiOrganizeReviewGroupedList>
+                </View>
+              ) : null}
+
+              {deleteEmptyFolderNames.length > 0 ? (
+                <View style={{ marginBottom: 24 }}>
+                  <AiOrganizeReviewSectionHeader
+                    title={t('folders.aiOrganizeCleanupReview.deleteSection')}
+                    color={color}
+                  />
+                  <AiOrganizeReviewGroupedList color={color}>
+                    {deleteEmptyFolderNames.map((name, index) => (
+                      <AiOrganizeReviewListDivider
+                        key={name}
+                        isLast={index === deleteEmptyFolderNames.length - 1}
+                        color={color}
+                      >
+                        <AiOrganizeReviewListRow
+                          title={name}
+                          selected={selectedDeleteNames.has(name)}
+                          color={color}
+                          onPress={() => handleToggleDelete(name)}
+                        />
+                      </AiOrganizeReviewListDivider>
+                    ))}
+                  </AiOrganizeReviewGroupedList>
+                </View>
+              ) : null}
+            </>
+          ) : (
             <Text
               style={{
                 fontSize: 15,
-                fontWeight: '600',
-                color: color.text.primary,
-                marginBottom: 8,
+                color: color.text.secondary,
+                lineHeight: 21,
+                textAlign: 'center',
+                paddingVertical: 48,
               }}
             >
-              {t('folders.aiOrganizeCleanupReview.mergesSection')}
-            </Text>
-          ) : null}
-          {mergeItems.map(({ key, merge }) => {
-            const selected = selectedMergeKeys.has(key);
-            return (
-              <Pressable
-                key={key}
-                onPress={() => toggleMerge(key)}
-                style={{
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: selected ? color.accent.primary : color.border.default,
-                  backgroundColor: color.background.card,
-                  padding: 14,
-                  marginBottom: 10,
-                }}
-              >
-                <Text style={{ fontSize: 16, color: color.text.primary, fontWeight: '500' }}>
-                  {merge.targetFolderName}
-                </Text>
-                <Text style={{ fontSize: 13, color: color.text.muted, marginTop: 4 }}>
-                  {t('folders.aiOrganizeCleanupReview.mergeSources', {
-                    names: merge.sourceFolderNames.join(', '),
-                  })}
-                </Text>
-              </Pressable>
-            );
-          })}
-
-          {deleteEmptyFolderNames.length > 0 ? (
-            <Text
-              style={{
-                fontSize: 15,
-                fontWeight: '600',
-                color: color.text.primary,
-                marginTop: 12,
-                marginBottom: 8,
-              }}
-            >
-              {t('folders.aiOrganizeCleanupReview.deleteSection')}
-            </Text>
-          ) : null}
-          {deleteEmptyFolderNames.map((name) => {
-            const selected = selectedDeleteNames.has(name);
-            return (
-              <Pressable
-                key={name}
-                onPress={() => toggleDelete(name)}
-                style={{
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: selected ? color.accent.primary : color.border.default,
-                  backgroundColor: color.background.card,
-                  padding: 14,
-                  marginBottom: 10,
-                }}
-              >
-                <Text style={{ fontSize: 16, color: color.text.primary }}>{name}</Text>
-              </Pressable>
-            );
-          })}
-
-          {mergeItems.length === 0 && deleteEmptyFolderNames.length === 0 ? (
-            <Text style={{ fontSize: 14, color: color.text.secondary }}>
               {t('folders.aiOrganizeCleanupReview.empty')}
             </Text>
-          ) : null}
+          )}
         </ScrollView>
       </View>
       <AutoOrganizeProgressOverlay

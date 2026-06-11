@@ -621,6 +621,27 @@ function compactAutoOrganizeInput(notesJsonPayload: string): string {
           next.taskCount = Math.floor(n.taskCount);
         }
 
+        if (
+          typeof n.openTaskCount === 'number' &&
+          Number.isFinite(n.openTaskCount) &&
+          n.openTaskCount > 0
+        ) {
+          next.openTaskCount = Math.floor(n.openTaskCount);
+        }
+
+        if (Array.isArray(n.openTasks)) {
+          const openTasks = n.openTasks
+            .filter((task): task is string => typeof task === 'string' && task.trim().length > 0)
+            .map((task) => task.trim().slice(0, 72));
+          if (openTasks.length > 0) {
+            next.openTasks = openTasks.slice(0, 5);
+          }
+        }
+
+        if (n.allTasksDone === true) {
+          next.allTasksDone = true;
+        }
+
         return next;
       })
       .filter(Boolean);

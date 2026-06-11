@@ -67,6 +67,24 @@ export function useAiOrganizeCleanupReview({
     });
   }, []);
 
+  const deleteEmptyFolderNames = result.deleteEmptyFolderNames;
+
+  const totalSelectableCount = mergeItems.length + deleteEmptyFolderNames.length;
+  const selectedCount = selectedMergeKeys.size + selectedDeleteNames.size;
+  const hasItems = totalSelectableCount > 0;
+  const allSelected = hasItems && selectedCount === totalSelectableCount;
+  const noneSelected = selectedCount === 0;
+
+  const selectAll = useCallback(() => {
+    setSelectedMergeKeys(new Set(mergeItems.map((item) => item.key)));
+    setSelectedDeleteNames(new Set(deleteEmptyFolderNames));
+  }, [deleteEmptyFolderNames, mergeItems]);
+
+  const deselectAll = useCallback(() => {
+    setSelectedMergeKeys(new Set());
+    setSelectedDeleteNames(new Set());
+  }, []);
+
   const apply = useCallback(async (): Promise<boolean> => {
     if (isApplying) return false;
     setIsApplying(true);
@@ -107,11 +125,17 @@ export function useAiOrganizeCleanupReview({
 
   return {
     mergeItems,
-    deleteEmptyFolderNames: result.deleteEmptyFolderNames,
+    deleteEmptyFolderNames,
     selectedMergeKeys,
     selectedDeleteNames,
     toggleMerge,
     toggleDelete,
+    selectAll,
+    deselectAll,
+    hasItems,
+    allSelected,
+    noneSelected,
+    selectedCount,
     isApplying,
     apply,
   };

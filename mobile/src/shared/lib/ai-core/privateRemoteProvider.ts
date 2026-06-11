@@ -1190,6 +1190,9 @@ export type PrivateRemoteAutoOrganizeInput = {
     isPinned?: boolean;
     isRead?: boolean;
     taskCount?: number;
+    openTaskCount?: number;
+    openTasks?: string[];
+    allTasksDone?: boolean;
   }>;
 };
 

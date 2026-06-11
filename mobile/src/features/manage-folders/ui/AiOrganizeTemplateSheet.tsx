@@ -46,9 +46,7 @@ export function AiOrganizeTemplateSheet({
   const color = useColors();
   const insets = useSafeAreaInsets();
   const snapPoints = useMemo(
-    () => [
-      getAiOrganizeTemplateSheetSnapHeight(insets.bottom, AUTO_ORGANIZE_TEMPLATES.length + 0.4),
-    ],
+    () => [getAiOrganizeTemplateSheetSnapHeight(insets.bottom, AUTO_ORGANIZE_TEMPLATES.length)],
     [insets.bottom],
   );
 

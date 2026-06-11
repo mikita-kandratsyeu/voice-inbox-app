@@ -63,11 +63,19 @@ export function useAiOrganizeArchiveReview({
     setSelectedIds(new Set(result.archiveSuggestions.map((s) => s.recordId)));
   }, [result.archiveSuggestions]);
 
+  const deselectAll = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const allSelected = suggestions.length > 0 && selectedIds.size === suggestions.length;
+
   return {
     suggestions,
     selectedIds,
     toggle,
     selectAll,
+    deselectAll,
+    allSelected,
     isApplying,
     apply,
     applyAll,

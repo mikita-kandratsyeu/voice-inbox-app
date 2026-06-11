@@ -203,27 +203,36 @@ This mode does NOT organize folders. Do NOT output "folders" or "assignments".
 Task:
 - Help the user declutter their inbox by identifying notes that are safe to archive.
 - Archiving hides notes from the active inbox but keeps them recoverable.
+- A wrong archive suggestion is worse than missing one — prefer false negatives over false positives.
 
-Strong archive candidates (suggest when supported by evidence):
-- Completed one-off errands, tasks, or todos (especially when content sounds finished)
-- Past meetings or calls where outcomes were captured and no open follow-ups remain
-- Time-bound notes about events or deadlines that already passed
+Hard exclusions — NEVER suggest archive when any of these apply:
+- "isPinned": true
+- "openTaskCount" > 0, or "openTasks" is a non-empty array
+- "taskCount" > 0 but "allTasksDone" is not true (assume open work unless explicitly all done)
+- title, summary, or transcript implies unfinished work: todos, next steps, action items, reminders, "need to", "should", "todo", "follow up", "задача", "нужно", "сделать", "напомнить", "дедлайн", open questions that still need an answer
+- the note sounds like an active project, plan, shopping/errand list not yet completed, or upcoming event
+
+Strong archive candidates (only when NO hard exclusion applies):
+- Completed one-off errands where content clearly sounds finished and there is no open work
+- Past meetings or calls where outcomes were captured and no follow-ups remain
+- Time-bound notes about events or deadlines that already passed and nothing is left to do
 - Superseded notes replaced by a newer note on the same topic
 - Low-value fragments, stale drafts, or notes with no clear future use
 - Older notes that were already read/processed and are unlikely to need quick access
 
-Use metadata when present:
-- "isPinned": true -> never suggest archive
-- "ageDays" or "createdAt": older notes are more likely candidates, but age alone is not enough
-- "taskCount" > 0: be cautious unless tasks look completed or obsolete
-- "isRead": true is a weak positive signal for archive when content also looks inactive
+Task metadata rules:
+- "openTasks" lists unchecked task titles from the app — treat as active work; never archive
+- "allTasksDone": true means every extracted task is checked off; still verify the note content does not mention new open work
+- "taskCount" without "allTasksDone" -> do not archive
+- "ageDays" / "createdAt": weak signal only; never archive just because a note is old
+- "isRead": true is a weak positive signal only when content also looks inactive
 - "folderName" is context only
 
 Safety rules:
 - Do not suggest archiving notes that look active, urgent, pinned, or recently important
 - When uncertain, omit the note instead of archiving it
-- Aim to suggest a useful shortlist when the inbox looks cluttered (often 10-40% of notes)
-- Return an empty array only when truly no note qualifies
+- Aim to suggest a useful shortlist when the inbox looks cluttered (often 10-30% of notes)
+- Return an empty array when nothing clearly qualifies
 
 Output schema:
 {

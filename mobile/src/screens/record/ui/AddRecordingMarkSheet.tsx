@@ -184,9 +184,9 @@ export const AddRecordingMarkSheet = ({
 
             <View className="gap-2">
               {MARK_PICKER_ROWS.map((row, rowIndex) => (
-                <View key={rowIndex} className="flex-row items-stretch gap-2">
+                <View key={rowIndex} className="flex-row gap-2">
                   {row.map((kind) => (
-                    <View key={kind} className="min-w-0 flex-1">
+                    <View key={kind} className="min-w-0 flex-1 basis-0">
                       <RecordingMarkKindCard
                         kind={kind}
                         color={c}

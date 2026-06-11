@@ -14,7 +14,7 @@ import {
   isProAutoOrganizeTemplate,
   normalizeAutoOrganizeTemplate,
 } from '@/entities/folder/lib/autoOrganizeTypes';
-import type { VoiceRecord } from '@/entities/record';
+import type { TaskItem, VoiceRecord } from '@/entities/record';
 import {
   DEFAULT_LOCAL_AI_MODEL_ID,
   isPrivateCustomServerMode,
@@ -44,6 +44,8 @@ const MAX_TRANSCRIPT_CHARS_FOR_AUTO_ORGANIZE = 900;
 const MAX_TRANSCRIPT_HINT_CHARS_FOR_AUTO_ORGANIZE = 280;
 const MAX_SUMMARY_CHARS_FOR_AUTO_ORGANIZE = 360;
 const MAX_TITLE_CHARS_FOR_AUTO_ORGANIZE = 100;
+const MAX_OPEN_TASK_TITLES_FOR_AUTO_ORGANIZE = 5;
+const MAX_OPEN_TASK_CHARS_FOR_AUTO_ORGANIZE = 72;
 
 const TRANSCRIPT_EXCERPT_GAP = '\n…\n';
 
@@ -126,6 +128,35 @@ function computeNoteAgeDays(createdAt: string): number | undefined {
   return Math.max(0, Math.floor((Date.now() - createdMs) / 86_400_000));
 }
 
+function buildAutoOrganizeTaskPayload(tasks: TaskItem[] | undefined): {
+  taskCount?: number;
+  openTaskCount?: number;
+  openTasks?: string[];
+  allTasksDone?: boolean;
+} {
+  const list = tasks ?? [];
+  if (list.length === 0) return {};
+
+  const openTaskItems = list.filter((task) => !task.isDone);
+  const openTasks = openTaskItems
+    .map((task) => truncateText(task.text, MAX_OPEN_TASK_CHARS_FOR_AUTO_ORGANIZE))
+    .filter((text): text is string => Boolean(text))
+    .slice(0, MAX_OPEN_TASK_TITLES_FOR_AUTO_ORGANIZE);
+
+  if (openTaskItems.length > 0) {
+    return {
+      taskCount: list.length,
+      openTaskCount: openTaskItems.length,
+      openTasks,
+    };
+  }
+
+  return {
+    taskCount: list.length,
+    allTasksDone: true,
+  };
+}
+
 export function useAutoOrganizeFolders(
   records: VoiceRecord[],
   options?: UseAutoOrganizeFoldersOptions,
@@ -176,7 +207,7 @@ export function useAutoOrganizeFolders(
           const hasSummary = Boolean(r.summary?.trim());
           const folderName = r.folderId ? folderNameById.get(r.folderId) : undefined;
           const ageDays = r.createdAt ? computeNoteAgeDays(r.createdAt) : undefined;
-          const taskCount = r.tasks?.length ?? 0;
+          const taskPayload = buildAutoOrganizeTaskPayload(r.tasks);
 
           return {
             id: r.id,
@@ -196,7 +227,7 @@ export function useAutoOrganizeFolders(
             ...(folderName ? { folderName } : {}),
             ...(r.isPinned ? { isPinned: true } : {}),
             ...(r.readAt ? { isRead: true } : {}),
-            ...(taskCount > 0 ? { taskCount } : {}),
+            ...taskPayload,
           };
         }),
     [folderNameById, records],

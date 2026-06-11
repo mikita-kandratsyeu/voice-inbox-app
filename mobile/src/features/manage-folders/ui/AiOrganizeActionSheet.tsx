@@ -119,7 +119,7 @@ export function AiOrganizeActionSheet({
 
   const actions = useMemo(() => buildActionRows(color, t), [color, t]);
   const snapPoints = useMemo(
-    () => [getAiOrganizeActionSheetSnapHeight(insets.bottom, AUTO_ORGANIZE_MODES.length + 0.45)],
+    () => [getAiOrganizeActionSheetSnapHeight(insets.bottom, AUTO_ORGANIZE_MODES.length + 0.4)],
     [insets.bottom],
   );
 

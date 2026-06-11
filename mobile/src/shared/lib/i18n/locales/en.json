@@ -2425,7 +2425,7 @@
     },
     "aiOrganizeTemplates": {
       "title": "Organization template",
-      "subtitle": "Choose how AI should group your notes",
+      "subtitle": "Choose how AI should group your notes.",
       "apply": "Apply",
       "applyA11y": "Start AI organization with the selected template",
       "proRequired": "Pro templates require an active Pro subscription.",
@@ -2460,7 +2460,7 @@
     },
     "aiOrganizeCleanupReview": {
       "title": "Folder cleanup",
-      "subtitle": "Select merges and empty folders to apply.",
+      "subtitle": "Select actions, then confirm with the checkmark.",
       "mergesSection": "Suggested merges",
       "mergeSources": "Merge: {{names}}",
       "deleteSection": "Empty folders",
@@ -2468,10 +2468,13 @@
     },
     "aiOrganizeArchiveReview": {
       "title": "Archive suggestions",
-      "subtitle": "Uncheck notes you want to keep, or use the button below.",
+      "subtitle": "Select notes, then confirm archiving.",
+      "itemsSection": "Notes",
       "empty": "AI found no notes to archive.",
       "archiveAll": "Archive all ({{count}})",
-      "archiveAllA11y": "Archive all {{count}} suggested notes"
+      "archiveAllA11y": "Archive all {{count}} suggested notes",
+      "archiveSelected": "Archive ({{count}})",
+      "archiveSelectedA11y": "Archive {{count}} selected notes"
     }
   },
   "inAppEvent": {

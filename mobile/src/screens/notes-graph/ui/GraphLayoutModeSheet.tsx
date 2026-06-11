@@ -39,7 +39,7 @@ export function GraphLayoutModeSheet({
     [insets.bottom],
   );
   const snapPoints = useMemo(
-    () => [getGraphLayoutModeSheetSnapHeight(insets.bottom)],
+    () => [getGraphLayoutModeSheetSnapHeight(insets.bottom) + 20],
     [insets.bottom],
   );
   const options = useMemo(
