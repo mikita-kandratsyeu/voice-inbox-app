@@ -1,7 +1,8 @@
-import { ChevronDown, ChevronUp, Search, X } from 'lucide-react-native';
+import { ChevronDown, ChevronUp, Loader, Search, X } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib';
@@ -115,26 +116,45 @@ export function GraphStickySearchBar({
             autoCapitalize="none"
           />
           {query.length > 0 && (
-            <TouchableOpacity
-              onPress={handleClear}
-              hitSlop={iosHitSlopForVisualSize(16, 16)}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.clear')}
-            >
-              <View
-                style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: 8,
-                  backgroundColor: color.icon.muted,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <X size={10} color={color.background.primary} strokeWidth={2.5} />
-              </View>
-            </TouchableOpacity>
+            <>
+              {isSearchPending ? (
+                <Animated.View
+                  entering={FadeIn.duration(150)}
+                  exiting={FadeOut.duration(150)}
+                  style={{
+                    width: 16,
+                    height: 16,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <ActivityIndicator size="small" color={color.accent.primary} />
+                </Animated.View>
+              ) : (
+                <Animated.View entering={FadeIn.duration(150)} exiting={FadeOut.duration(150)}>
+                  <TouchableOpacity
+                    onPress={handleClear}
+                    hitSlop={iosHitSlopForVisualSize(16, 16)}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.clear')}
+                  >
+                    <View
+                      style={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: 8,
+                        backgroundColor: color.icon.muted,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <X size={10} color={color.background.primary} strokeWidth={2.5} />
+                    </View>
+                  </TouchableOpacity>
+                </Animated.View>
+              )}
+            </>
           )}
         </View>
 

@@ -206,7 +206,13 @@ function AnimatedNodeCardShell({
       phase >= GRAPH_NODE_INTERACTION_PRESSING && phase < GRAPH_NODE_INTERACTION_DRAGGING ? 1 : 0;
     const interactive = dragging > 0 || pressing > 0;
 
-    const opacity = dimmed ? interpolate(phase, [0, 1, 2], [idleOpacity, 0.5, 1]) : idleOpacity;
+    // When active or highlighted, always show full opacity even if dimmed
+    const shouldOverrideDimming = active || highlighted;
+    const opacity = shouldOverrideDimming
+      ? 1
+      : dimmed
+        ? interpolate(phase, [0, 1, 2], [idleOpacity, 0.5, 1])
+        : idleOpacity;
 
     const borderWidth = dragging > 0 ? 2.5 : pressing > 0 ? 2 : idleBorderWidth;
 
@@ -240,12 +246,12 @@ function AnimatedNodeCardShell({
     };
   }, [
     active,
+    highlighted,
     color.accent.primary,
     color.border.default,
     color.shadow.color,
     color.shadow.opacity,
     dimmed,
-    highlighted,
     idleBorderWidth,
     idleOpacity,
     taskStyle,
