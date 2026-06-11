@@ -13,6 +13,7 @@ import { logAiRequest } from '@/lib/ai-operation';
 import { estimateAskRoutingChars, parseAskPriorTurns } from '@/lib/ask-user-message';
 import { sanitizeRecordingMarksForPrompt } from '@/lib/recording-marks-prompt';
 import { aiModelResponseFields } from '@/lib/ai-model-display';
+import { withDeduplication, getAskDeduplicationKey } from '@/lib/request-deduplication';
 import {
   estimateSummaryTasksRoutingChars,
   resolveAutoAiModel,
@@ -159,19 +160,24 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   logAiRequest(aiOperation, { path: pathname, messageId: id });
 
-  const result = await createAsk(
-    id,
-    transcript,
-    question,
-    resolvedModel,
-    deviceIdTrimmed,
-    summaryStr,
-    tasksList,
-    priorTurnsList,
-    req.headers.get('user-agent'),
-    messageTtlSeconds,
-    recordingMarksList,
-    aiLimitContext,
+  const result = await withDeduplication(
+    getAskDeduplicationKey(deviceIdTrimmed, id),
+    () =>
+      createAsk(
+        id,
+        transcript,
+        question,
+        resolvedModel,
+        deviceIdTrimmed,
+        summaryStr,
+        tasksList,
+        priorTurnsList,
+        req.headers.get('user-agent'),
+        messageTtlSeconds,
+        recordingMarksList,
+        aiLimitContext,
+      ),
+    10000,
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {

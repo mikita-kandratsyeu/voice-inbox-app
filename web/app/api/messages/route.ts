@@ -11,6 +11,7 @@ import { HEADER_SYNC_TOKEN } from '@/config/constants';
 import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { logAiRequest } from '@/lib/ai-operation';
 import { aiModelResponseFields } from '@/lib/ai-model-display';
+import { withDeduplication, getMessageDeduplicationKey } from '@/lib/request-deduplication';
 import {
   estimateSummaryTasksRoutingChars,
   resolveAutoAiModel,
@@ -205,18 +206,23 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   logAiRequest(aiOperation, { path: pathname, messageId: id });
 
-  const result = await createMessage(
-    id,
-    transcript,
-    resolvedModel,
-    resolvedSystemPrompt,
-    deviceIdTrimmed,
-    req.headers.get('user-agent'),
-    messageTtlSeconds,
-    pseudoDiarizationEligible,
-    meetingDialogueSystemPrompt,
-    meetingDialogueAux,
-    aiLimitContext,
+  const result = await withDeduplication(
+    getMessageDeduplicationKey(deviceIdTrimmed, id),
+    () =>
+      createMessage(
+        id,
+        transcript,
+        resolvedModel,
+        resolvedSystemPrompt,
+        deviceIdTrimmed,
+        req.headers.get('user-agent'),
+        messageTtlSeconds,
+        pseudoDiarizationEligible,
+        meetingDialogueSystemPrompt,
+        meetingDialogueAux,
+        aiLimitContext,
+      ),
+    10000,
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
