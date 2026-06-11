@@ -47,77 +47,100 @@ const getBarDelay = (index: number) => {
 type WaveformProps = {
   isAnimating: boolean;
   color?: string;
+  audioLevel?: number; // 0-1, если undefined - fallback на обычную анимацию
 };
 
 type WaveformBarProps = {
   index: number;
   isAnimating: boolean;
   color: string;
+  audioLevel?: number;
 };
 
-const WaveformBar = memo(({ index, isAnimating, color }: WaveformBarProps) => {
+const WaveformBar = memo(({ index, isAnimating, color, audioLevel }: WaveformBarProps) => {
   const height = useSharedValue(getWaveHeight(index, 0.3));
   const opacity = useSharedValue(0.6);
   const scale = useSharedValue(1);
 
   useEffect(() => {
     if (isAnimating) {
-      const delay = getBarDelay(index);
+      // If audioLevel is provided, use voice-reactive mode
+      if (audioLevel !== undefined) {
+        // Voice-reactive animation - smooth transition based on real audio
+        const targetIntensity = 0.4 + audioLevel * 0.8; // 0.4-1.2 range
 
-      // Create pulsing wave effect with varying intensities
-      height.value = withDelay(
-        delay,
-        withRepeat(
-          withSequence(
-            withTiming(getWaveHeight(index, 1.2), {
-              duration: 350,
-              easing: Easing.out(Easing.sine),
-            }),
-            withTiming(getWaveHeight(index, 0.6), {
-              duration: 400,
-              easing: Easing.inOut(Easing.sine),
-            }),
-            withTiming(getWaveHeight(index, 0.95), {
-              duration: 380,
-              easing: Easing.inOut(Easing.sine),
-            }),
-            withTiming(getWaveHeight(index, 0.4), {
-              duration: 420,
-              easing: Easing.in(Easing.sine),
-            }),
-          ),
-          -1,
-          false,
-        ),
-      );
+        height.value = withTiming(getWaveHeight(index, targetIntensity), {
+          duration: 50,
+          easing: Easing.linear,
+        });
 
-      opacity.value = withDelay(
-        delay,
-        withRepeat(
-          withSequence(
-            withTiming(1, { duration: 350, easing: Easing.inOut(Easing.ease) }),
-            withTiming(0.7, { duration: 400, easing: Easing.inOut(Easing.ease) }),
-            withTiming(0.85, { duration: 380, easing: Easing.inOut(Easing.ease) }),
-            withTiming(0.6, { duration: 420, easing: Easing.inOut(Easing.ease) }),
-          ),
-          -1,
-          false,
-        ),
-      );
+        opacity.value = withTiming(0.6 + audioLevel * 0.4, {
+          duration: 50,
+          easing: Easing.linear,
+        });
 
-      scale.value = withDelay(
-        delay,
-        withRepeat(
-          withSequence(
-            withTiming(1.06, { duration: 350, easing: Easing.out(Easing.quad) }),
-            withTiming(0.98, { duration: 400, easing: Easing.inOut(Easing.quad) }),
-            withTiming(1.03, { duration: 380, easing: Easing.inOut(Easing.quad) }),
-            withTiming(1, { duration: 420, easing: Easing.in(Easing.quad) }),
+        scale.value = withTiming(1 + audioLevel * 0.08, {
+          duration: 50,
+          easing: Easing.linear,
+        });
+      } else {
+        // Fallback: animated mode when no audio data available
+        const delay = getBarDelay(index);
+
+        height.value = withDelay(
+          delay,
+          withRepeat(
+            withSequence(
+              withTiming(getWaveHeight(index, 1.2), {
+                duration: 350,
+                easing: Easing.out(Easing.sine),
+              }),
+              withTiming(getWaveHeight(index, 0.6), {
+                duration: 400,
+                easing: Easing.inOut(Easing.sine),
+              }),
+              withTiming(getWaveHeight(index, 0.95), {
+                duration: 380,
+                easing: Easing.inOut(Easing.sine),
+              }),
+              withTiming(getWaveHeight(index, 0.4), {
+                duration: 420,
+                easing: Easing.in(Easing.sine),
+              }),
+            ),
+            -1,
+            false,
           ),
-          -1,
-          false,
-        ),
-      );
+        );
+
+        opacity.value = withDelay(
+          delay,
+          withRepeat(
+            withSequence(
+              withTiming(1, { duration: 350, easing: Easing.inOut(Easing.ease) }),
+              withTiming(0.7, { duration: 400, easing: Easing.inOut(Easing.ease) }),
+              withTiming(0.85, { duration: 380, easing: Easing.inOut(Easing.ease) }),
+              withTiming(0.6, { duration: 420, easing: Easing.inOut(Easing.ease) }),
+            ),
+            -1,
+            false,
+          ),
+        );
+
+        scale.value = withDelay(
+          delay,
+          withRepeat(
+            withSequence(
+              withTiming(1.06, { duration: 350, easing: Easing.out(Easing.quad) }),
+              withTiming(0.98, { duration: 400, easing: Easing.inOut(Easing.quad) }),
+              withTiming(1.03, { duration: 380, easing: Easing.inOut(Easing.quad) }),
+              withTiming(1, { duration: 420, easing: Easing.in(Easing.quad) }),
+            ),
+            -1,
+            false,
+          ),
+        );
+      }
     } else {
       height.value = withTiming(getWaveHeight(index, 0.3), {
         duration: 400,
@@ -131,7 +154,7 @@ const WaveformBar = memo(({ index, isAnimating, color }: WaveformBarProps) => {
         duration: 200,
       });
     }
-  }, [isAnimating, height, opacity, scale, index]);
+  }, [isAnimating, audioLevel, height, opacity, scale, index]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     height: height.value,
@@ -154,15 +177,23 @@ const WaveformBar = memo(({ index, isAnimating, color }: WaveformBarProps) => {
   );
 });
 
-export const Waveform = memo(({ isAnimating, color = 'rgba(255,255,255,0.7)' }: WaveformProps) => {
-  return (
-    <View style={styles.container}>
-      {Array.from({ length: BAR_COUNT }).map((_, i) => (
-        <WaveformBar key={i} index={i} isAnimating={isAnimating} color={color} />
-      ))}
-    </View>
-  );
-});
+export const Waveform = memo(
+  ({ isAnimating, color = 'rgba(255,255,255,0.7)', audioLevel }: WaveformProps) => {
+    return (
+      <View style={styles.container}>
+        {Array.from({ length: BAR_COUNT }).map((_, i) => (
+          <WaveformBar
+            key={i}
+            index={i}
+            isAnimating={isAnimating}
+            color={color}
+            audioLevel={audioLevel}
+          />
+        ))}
+      </View>
+    );
+  },
+);
 
 const styles = StyleSheet.create({
   container: {

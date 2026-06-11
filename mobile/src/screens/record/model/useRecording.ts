@@ -86,6 +86,7 @@ export const useRecording = ({
   const [state, setState] = useState<RecordingState>('idle');
   const [elapsed, setElapsed] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
+  const [audioLevel, setAudioLevel] = useState<number | undefined>(undefined);
 
   const audioPathRef = useRef<string | null>(null);
   const elapsedRef = useRef(0);
@@ -124,6 +125,18 @@ export const useRecording = ({
 
       setElapsed(secs);
       setElapsedMs(ms);
+
+      // Update audio level from metering data
+      // currentMetering is typically in dB range (e.g., -160 to 0), normalize to 0-1
+      if (e.currentMetering !== undefined) {
+        const dbValue = e.currentMetering;
+        // Normalize from typical dB range (-60 to 0) to 0-1 range
+        const normalized = Math.max(0, Math.min(1, (dbValue + 60) / 60));
+        setAudioLevel(normalized);
+      } else {
+        // Fallback if metering is not available
+        setAudioLevel(undefined);
+      }
 
       const now = Date.now();
       if (IS_IOS && now - lastLiveActivityDriftSyncRef.current >= LIVE_ACTIVITY_DRIFT_SYNC_MS) {
@@ -224,6 +237,7 @@ export const useRecording = ({
 
       const secs = elapsedRef.current;
       setState('paused');
+      setAudioLevel(undefined); // Reset audio level on pause
 
       updateRecordingLiveActivity(secs, undefined, false).catch(() => {});
     } catch (err) {
@@ -298,6 +312,7 @@ export const useRecording = ({
     elapsedMsRef.current = 0;
     setElapsed(0);
     setElapsedMs(0);
+    setAudioLevel(undefined); // Reset audio level on discard
     setState('idle');
   }, []);
 
@@ -347,6 +362,7 @@ export const useRecording = ({
     state,
     elapsed,
     elapsedMs,
+    audioLevel,
     audioPathRef,
     startRecording,
     pauseRecording,

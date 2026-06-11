@@ -89,6 +89,7 @@ export const RecordScreen = () => {
     state,
     elapsed,
     elapsedMs,
+    audioLevel,
     audioPathRef,
     startRecording,
     pauseRecording,
@@ -345,6 +346,7 @@ export const RecordScreen = () => {
             <Waveform
               isAnimating={state === 'recording' && appState === 'active'}
               color="rgba(255,255,255,0.65)"
+              audioLevel={audioLevel}
             />
           </View>
         </View>
