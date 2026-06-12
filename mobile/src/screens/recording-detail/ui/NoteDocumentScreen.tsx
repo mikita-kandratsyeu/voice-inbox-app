@@ -2,7 +2,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BookOpen, Check, FileCode, X } from 'lucide-react-native';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
@@ -33,7 +33,7 @@ export const NoteDocumentScreen = () => {
 
   const scrollPaddingBottom = insets.bottom + 24;
 
-  const { record } = route.params;
+  const { record, initialMode } = route.params;
   const {
     documentMarkdown,
     setDocumentMarkdown,
@@ -47,7 +47,11 @@ export const NoteDocumentScreen = () => {
     readingTasks,
     toggleTaskInReading,
     finishSaving,
-  } = useNoteDocument({ recordId: record.id, fallbackRecord: record });
+  } = useNoteDocument({
+    recordId: record.id,
+    fallbackRecord: record,
+    initialMode,
+  });
 
   const canSave = hasUnsavedChanges && !isSaving && !isPreparing;
   const controlsDisabled = isSaving || isPreparing;
@@ -130,6 +134,13 @@ export const NoteDocumentScreen = () => {
     KeyboardController.dismiss({ animated: false });
     setMode('reading');
   }, [mode, setMode]);
+
+  useEffect(() => {
+    if (initialMode !== 'source' || isPreparing) {
+      return;
+    }
+    requestAnimationFrame(() => sourceInputRef.current?.focus());
+  }, [initialMode, isPreparing]);
 
   useFocusEffect(
     useCallback(() => {

@@ -39,7 +39,7 @@ export type RootStackParamList = {
   RecordingAskAI: { record: VoiceRecord };
   WhisperModelPickerRoot: undefined;
   EditTranscript: { record: VoiceRecord };
-  NoteDocument: { record: VoiceRecord };
+  NoteDocument: { record: VoiceRecord; initialMode?: 'reading' | 'source' };
   AllTasks: { recordId?: string } | undefined;
   NotesGraph: { folderId?: string; tag?: string } | undefined;
   InAppEventDetail: { eventId: string };

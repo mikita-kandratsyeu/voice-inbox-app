@@ -5,7 +5,10 @@ export {
   RECORDING_MARK_KIND_UI,
   RECORDING_MARK_PICKER_KINDS,
 } from './lib/recordingMarkKindUi';
-export { shouldUseTranscriptSegmentView } from './lib/transcriptDisplay';
+export {
+  shouldOpenSegmentTranscriptEditor,
+  shouldUseTranscriptSegmentView,
+} from './lib/transcriptDisplay';
 export {
   estimatePlainTextInputHeight,
   PLAIN_TEXT_LINE_HEIGHT,

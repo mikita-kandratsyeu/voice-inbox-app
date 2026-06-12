@@ -23,9 +23,14 @@ export type NoteDocumentMode = 'reading' | 'source';
 type UseNoteDocumentOptions = {
   recordId: string;
   fallbackRecord: VoiceRecord;
+  initialMode?: NoteDocumentMode;
 };
 
-export function useNoteDocument({ recordId, fallbackRecord }: UseNoteDocumentOptions) {
+export function useNoteDocument({
+  recordId,
+  fallbackRecord,
+  initialMode = 'reading',
+}: UseNoteDocumentOptions) {
   const { i18n } = useTranslation();
   const records = useRecordStore((s) => s.records);
   const renameRecord = useRecordStore((s) => s.renameRecord);
@@ -41,7 +46,7 @@ export function useNoteDocument({ recordId, fallbackRecord }: UseNoteDocumentOpt
   const [savedMarkdown, setSavedMarkdown] = useState('');
   const [documentMarkdown, setDocumentMarkdown] = useState('');
   const [isPreparing, setIsPreparing] = useState(true);
-  const [mode, setMode] = useState<NoteDocumentMode>('reading');
+  const [mode, setMode] = useState<NoteDocumentMode>(initialMode);
   const [isSaving, setIsSaving] = useState(false);
   const savedMarkdownRef = useRef(savedMarkdown);
   const liveRecordRef = useRef(liveRecord);

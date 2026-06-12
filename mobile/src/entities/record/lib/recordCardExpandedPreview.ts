@@ -1,7 +1,9 @@
 import dayjs from 'dayjs';
 import type { TFunction } from 'i18next';
 
-import type { TaskItem, TranscriptSegment, VoiceRecord } from '@/entities/record';
+import type { TaskItem, VoiceRecord } from '@/entities/record';
+
+import { countRecordCardTextFragments } from './textNoteFragments';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import { parseTaskDeadline } from '@/shared/lib/parseTaskDeadline';
 import {
@@ -88,35 +90,7 @@ export function formatExpandedCardDate(isoDate: string, language: string, t: TFu
   return `${datePart}, ${time}`;
 }
 
-export function countRecordCardTextFragments(
-  text: string | undefined,
-  segments?: TranscriptSegment[],
-): number {
-  if (segments && segments.length > 0) {
-    return segments.length;
-  }
-
-  const normalized = text?.replace(/\r\n/g, '\n').trim();
-  if (!normalized) {
-    return 0;
-  }
-
-  const paragraphs = normalized
-    .split(/\n\s*\n/)
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  if (paragraphs.length > 1) {
-    return paragraphs.length;
-  }
-
-  const lines = normalized
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  return Math.max(1, lines.length);
-}
+export { countRecordCardTextFragments } from './textNoteFragments';
 
 export function formatRecordCardTaskDeadline(
   task: TaskItem,
