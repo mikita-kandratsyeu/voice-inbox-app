@@ -41,7 +41,6 @@ export type { ButtonProps, ButtonShape, ButtonSize, ButtonVariant } from './Butt
 export { Button, BUTTON_BORDER_RADIUS } from './Button';
 export {
   getDocumentSectionHeadingStyle,
-  getNoteDocumentMarkdownStyles,
   NOTE_DOCUMENT_BODY_FONT_SIZE,
   NOTE_DOCUMENT_BODY_LINE_HEIGHT,
 } from './documentMarkdownTheme';

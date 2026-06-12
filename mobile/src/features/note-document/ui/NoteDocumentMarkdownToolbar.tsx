@@ -49,8 +49,10 @@ const TOOLBAR_ICONS = {
   link: Link,
 } as const;
 
+const TOOLBAR_DIVIDER_HEIGHT = 1;
+
 export const NOTE_DOCUMENT_TOOLBAR_FALLBACK_HEIGHT =
-  TOOLBAR_FLOAT_TOP_PAD + TOOLBAR_FLOAT_BOTTOM_PAD + TOOLBAR_ROW_INNER_HEIGHT;
+  TOOLBAR_FLOAT_TOP_PAD + TOOLBAR_FLOAT_BOTTOM_PAD + TOOLBAR_ROW_INNER_HEIGHT + TOOLBAR_DIVIDER_HEIGHT;
 
 type NoteDocumentMarkdownToolbarProps = {
   color: Colors;
@@ -145,34 +147,46 @@ export function NoteDocumentMarkdownToolbar({
     <View
       pointerEvents="box-none"
       style={{
-        paddingHorizontal: horizontalPadding,
-        paddingTop: TOOLBAR_FLOAT_TOP_PAD,
-        paddingBottom: TOOLBAR_FLOAT_BOTTOM_PAD,
-        borderBottomWidth: 1,
-        borderBottomColor: color.border.default,
+        width: '100%',
+        alignSelf: 'stretch',
         backgroundColor: color.background.primary,
-        ...(isTablet && { alignItems: 'center' }),
       }}
     >
       <View
         style={{
-          width: '100%',
-          maxWidth: isTablet ? NOTE_DOCUMENT_CONTENT_MAX_WIDTH : undefined,
-          alignSelf: isTablet ? undefined : 'flex-start',
+          paddingHorizontal: horizontalPadding,
+          paddingTop: TOOLBAR_FLOAT_TOP_PAD,
+          paddingBottom: TOOLBAR_FLOAT_BOTTOM_PAD,
+          ...(isTablet && { alignItems: 'center' }),
         }}
       >
-        {isTablet ? (
-          buttonRow
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            {buttonRow}
-          </ScrollView>
-        )}
+        <View
+          style={{
+            width: '100%',
+            maxWidth: isTablet ? NOTE_DOCUMENT_CONTENT_MAX_WIDTH : undefined,
+            alignSelf: isTablet ? undefined : 'flex-start',
+          }}
+        >
+          {isTablet ? (
+            buttonRow
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {buttonRow}
+            </ScrollView>
+          )}
+        </View>
       </View>
+      <View
+        style={{
+          height: TOOLBAR_DIVIDER_HEIGHT,
+          width: '100%',
+          backgroundColor: color.border.default,
+        }}
+      />
     </View>
   );
 }

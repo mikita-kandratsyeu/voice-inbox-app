@@ -23,7 +23,6 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import Markdown from 'react-native-markdown-display';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -45,7 +44,7 @@ import {
   formatLocalTimeOfDay,
   formatTaskDeadlineTimeForDisplay,
 } from '@/shared/lib/taskDeadlineTimeDisplay';
-import { Button, HeaderIconButton, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
+import { Button, HeaderIconButton, NoteMarkdown, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
 
 import { buildDigestAiExecutionContext } from '../lib/buildDigestAiExecutionContext';
 import {
@@ -556,84 +555,6 @@ export const DigestScreen = () => {
         date: `${dayjs(aiCreatedAt).locale(dayjsLocale).format('D MMM')} ${formatLocalTimeOfDay(dayjs(aiCreatedAt).toDate())}`,
       })
     : t('settings.digest.aiManualHint');
-  const markdownStyles = useMemo(
-    () => ({
-      body: {
-        color: color.text.primary,
-        fontSize: 14,
-        lineHeight: 22,
-        marginBottom: 0,
-      },
-      text: {
-        color: color.text.primary,
-        fontSize: 14,
-        lineHeight: 22,
-      },
-      paragraph: {
-        color: color.text.primary,
-        fontSize: 14,
-        lineHeight: 22,
-        marginTop: 0,
-        marginBottom: 6,
-      },
-      heading1: {
-        color: color.text.primary,
-        fontSize: 16,
-        lineHeight: 22,
-        fontWeight: '600' as const,
-        marginTop: 0,
-        marginBottom: 6,
-      },
-      heading2: {
-        color: color.text.primary,
-        fontSize: 15,
-        lineHeight: 21,
-        fontWeight: '600' as const,
-        marginTop: 6,
-        marginBottom: 4,
-      },
-      strong: {
-        color: color.text.primary,
-        fontWeight: '600' as const,
-      },
-      bullet_list: {
-        marginTop: 4,
-        marginBottom: 0,
-      },
-      ordered_list: {
-        marginTop: 4,
-        marginBottom: 0,
-      },
-      list_item: {
-        color: color.text.primary,
-        fontSize: 14,
-        lineHeight: 22,
-        marginBottom: 2,
-      },
-      bullet_list_icon: {
-        color: color.accent.primary,
-        fontSize: 14,
-        lineHeight: 22,
-      },
-      bullet_list_content: {
-        color: color.text.primary,
-        fontSize: 14,
-        lineHeight: 22,
-      },
-      ordered_list_icon: {
-        color: color.accent.primary,
-        fontSize: 14,
-        lineHeight: 22,
-      },
-      ordered_list_content: {
-        color: color.text.primary,
-        fontSize: 14,
-        lineHeight: 22,
-      },
-    }),
-    [color],
-  );
-
   const aiDescriptionKey = usePrivateRemoteDigest
     ? 'settings.digest.aiDescriptionPrivateRemote'
     : useCloudDigest
@@ -862,7 +783,9 @@ export const DigestScreen = () => {
             ) : null}
             {aiResult ? (
               <View className="mb-4">
-                <Markdown style={markdownStyles}>{aiResult.markdown}</Markdown>
+                <NoteMarkdown color={color} variant="digest">
+                  {aiResult.markdown}
+                </NoteMarkdown>
               </View>
             ) : aiLoading ? (
               <DigestAiLoadingState viaPrivateRemote={usePrivateRemoteDigest} />

@@ -2,7 +2,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BookOpen, Check, FileCode, X } from 'lucide-react-native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import type { EnrichedMarkdownTextInputInstance } from 'react-native-enriched-markdown';
@@ -37,6 +37,7 @@ export const NoteDocumentScreen = () => {
 
   const { record, initialMode } = route.params;
   const {
+    liveRecord,
     documentMarkdown,
     setDocumentMarkdown,
     mode,
@@ -60,7 +61,7 @@ export const NoteDocumentScreen = () => {
   const canSave = hasUnsavedChanges && !isSaving && !isPreparing;
   const controlsDisabled = isSaving || isPreparing;
 
-  const screenTitle = useMemo(() => t('recordingDetail.document.screenTitle'), [t]);
+  const screenTitle = liveRecord.title;
 
   const flushEditorMarkdown = useCallback(async () => {
     if (mode !== 'source') {
@@ -144,7 +145,6 @@ export const NoteDocumentScreen = () => {
       clearEditorDirty();
       setSourceEditorKey((current) => current + 1);
       setMode('source');
-      requestAnimationFrame(() => sourceInputRef.current?.focus());
       return;
     }
 
@@ -156,13 +156,6 @@ export const NoteDocumentScreen = () => {
       setMode('reading');
     })();
   }, [clearEditorDirty, flushEditorMarkdown, mode, setDocumentMarkdown, setMode]);
-
-  useEffect(() => {
-    if (initialMode !== 'source' || isPreparing) {
-      return;
-    }
-    requestAnimationFrame(() => sourceInputRef.current?.focus());
-  }, [initialMode, isPreparing]);
 
   useFocusEffect(
     useCallback(() => {
@@ -201,7 +194,7 @@ export const NoteDocumentScreen = () => {
       }}
     >
       <View
-        className="flex-row items-center justify-between px-4 pb-3"
+        className="flex-row items-center px-4 pb-3"
         style={{
           backgroundColor: color.background.primary,
           borderBottomWidth: 1,
@@ -209,7 +202,7 @@ export const NoteDocumentScreen = () => {
           paddingTop: insets.top + 12,
         }}
       >
-        <View className="min-w-[96px] shrink-0 items-start">
+        <View className="shrink-0">
           <HeaderIconButton
             iconOnly
             variant="icon"
@@ -222,21 +215,21 @@ export const NoteDocumentScreen = () => {
           />
         </View>
         <Pressable
-          className="min-w-0 flex-1 px-2"
+          className="min-w-0 flex-1 pl-3 pr-2"
           accessibilityRole="header"
           accessibilityLabel={screenTitle}
           onPress={() => KeyboardController.dismiss()}
           hitSlop={{ top: 8, bottom: 8 }}
         >
           <Text
-            className="text-center text-[18px] font-semibold"
+            className="text-left text-[15px] font-semibold"
             style={{ color: color.text.primary }}
             numberOfLines={1}
           >
             {screenTitle}
           </Text>
         </Pressable>
-        <View className="min-w-[96px] shrink-0 flex-row items-center justify-end gap-2">
+        <View className="shrink-0 flex-row items-center gap-2">
           <HeaderIconButton
             iconOnly
             variant="icon"
@@ -274,7 +267,7 @@ export const NoteDocumentScreen = () => {
       {isPreparing ? (
         <NoteDocumentPreparingState />
       ) : (
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, backgroundColor: color.background.primary }}>
           {mode === 'reading' ? (
             <ScrollView
               style={{ flex: 1, backgroundColor: color.background.primary }}
@@ -302,7 +295,6 @@ export const NoteDocumentScreen = () => {
               scrollPaddingBottom={scrollPaddingBottom}
               isTablet={isTablet}
               inputRef={sourceInputRef}
-              autoFocus={initialMode === 'source'}
             />
           )}
           {isSaving ? <NoteDocumentSavingOverlay /> : null}

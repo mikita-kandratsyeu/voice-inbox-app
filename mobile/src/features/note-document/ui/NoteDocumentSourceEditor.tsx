@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, View } from 'react-native';
 import {
@@ -19,6 +19,7 @@ import { NOTE_DOCUMENT_CONTENT_MAX_WIDTH } from '../lib/noteDocumentLayout';
 import { NoteDocumentLinkUrlPrompt } from './NoteDocumentLinkUrlPrompt';
 import {
   type EnrichedMarkdownToolbarAction,
+  NOTE_DOCUMENT_TOOLBAR_FALLBACK_HEIGHT,
   NoteDocumentMarkdownToolbar,
 } from './NoteDocumentMarkdownToolbar';
 
@@ -32,7 +33,6 @@ type NoteDocumentSourceEditorProps = {
   scrollPaddingBottom: number;
   isTablet: boolean;
   inputRef: React.RefObject<EnrichedMarkdownTextInputInstance | null>;
-  autoFocus?: boolean;
 };
 
 export function NoteDocumentSourceEditor({
@@ -45,11 +45,11 @@ export function NoteDocumentSourceEditor({
   scrollPaddingBottom,
   isTablet,
   inputRef,
-  autoFocus = false,
 }: NoteDocumentSourceEditorProps) {
   const { t } = useTranslation();
   const [styleState, setStyleState] = useState<StyleState | null>(null);
   const [linkPromptVisible, setLinkPromptVisible] = useState(false);
+  const [toolbarHeight, setToolbarHeight] = useState(NOTE_DOCUMENT_TOOLBAR_FALLBACK_HEIGHT);
   const selectionRef = useRef({ start: 0, end: 0 });
 
   const inputMarkdownStyle = useMemo(() => buildNoteDocumentEnrichedInputStyle(color), [color]);
@@ -61,15 +61,23 @@ export function NoteDocumentSourceEditor({
     }),
     [isTablet],
   );
-  const editorPaddingStyle = useMemo(
+  const editorAreaStyle = useMemo(
     () => ({
       flex: 1,
-      paddingHorizontal: horizontalPadding,
-      paddingTop: 16,
-      paddingBottom: scrollPaddingBottom,
+      backgroundColor: color.background.primary,
       ...(isTablet && { alignItems: 'center' as const }),
     }),
-    [horizontalPadding, isTablet, scrollPaddingBottom],
+    [color.background.primary, isTablet],
+  );
+  const toolbarOverlayStyle = useMemo(
+    () => ({
+      position: 'absolute' as const,
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 1,
+    }),
+    [],
   );
   const inputStyle = useMemo(
     () => ({
@@ -79,8 +87,19 @@ export function NoteDocumentSourceEditor({
       fontSize: NOTE_DOCUMENT_BODY_FONT_SIZE,
       lineHeight: NOTE_DOCUMENT_BODY_LINE_HEIGHT,
       textAlignVertical: 'top' as const,
+      backgroundColor: color.background.primary,
+      paddingHorizontal: horizontalPadding,
+      // Scrolls with content so text can move flush under the overlaid toolbar.
+      paddingTop: toolbarHeight,
+      paddingBottom: scrollPaddingBottom,
     }),
-    [color.text.primary],
+    [
+      color.background.primary,
+      color.text.primary,
+      horizontalPadding,
+      scrollPaddingBottom,
+      toolbarHeight,
+    ],
   );
 
   const handleChangeText = useCallback(() => {
@@ -90,6 +109,13 @@ export function NoteDocumentSourceEditor({
   const handleChangeSelection = useCallback((selection: { start: number; end: number }) => {
     selectionRef.current = selection;
   }, []);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      void inputRef.current?.setSelection(0, 0);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [documentKey, inputRef]);
 
   const handleToolbarAction = useCallback(
     (action: EnrichedMarkdownToolbarAction) => {
@@ -153,23 +179,14 @@ export function NoteDocumentSourceEditor({
   );
 
   return (
-    <View style={{ flex: 1 }}>
-      <NoteDocumentMarkdownToolbar
-        color={color}
-        isTablet={isTablet}
-        horizontalPadding={horizontalPadding}
-        styleState={styleState}
-        onAction={handleToolbarAction}
-        disabled={!editable}
-      />
-      <View style={editorPaddingStyle}>
+    <View style={{ flex: 1, backgroundColor: color.background.primary }}>
+      <View style={editorAreaStyle}>
         <View style={editorColumnStyle}>
           <EnrichedMarkdownTextInput
             key={documentKey}
             ref={inputRef}
             defaultValue={initialMarkdown}
             editable={editable}
-            autoFocus={autoFocus}
             scrollEnabled
             multiline
             autoCapitalize="sentences"
@@ -182,6 +199,25 @@ export function NoteDocumentSourceEditor({
             onChangeState={setStyleState}
             onChangeSelection={handleChangeSelection}
             style={inputStyle}
+          />
+        </View>
+        <View
+          pointerEvents="box-none"
+          style={toolbarOverlayStyle}
+          onLayout={(event) => {
+            const nextHeight = Math.ceil(event.nativeEvent.layout.height);
+            if (nextHeight > 0) {
+              setToolbarHeight((current) => (current === nextHeight ? current : nextHeight));
+            }
+          }}
+        >
+          <NoteDocumentMarkdownToolbar
+            color={color}
+            isTablet={isTablet}
+            horizontalPadding={horizontalPadding}
+            styleState={styleState}
+            onAction={handleToolbarAction}
+            disabled={!editable}
           />
         </View>
       </View>

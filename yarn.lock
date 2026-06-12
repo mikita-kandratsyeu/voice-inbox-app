@@ -7076,13 +7076,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"camelize@npm:^1.0.0":
-  version: 1.0.1
-  resolution: "camelize@npm:1.0.1"
-  checksum: 10c0/4c9ac55efd356d37ac483bad3093758236ab686192751d1c9daa43188cc5a07b09bd431eb7458a4efd9ca22424bba23253e7b353feb35d7c749ba040de2385fb
-  languageName: node
-  linkType: hard
-
 "caniuse-lite@npm:^1.0.30001579, caniuse-lite@npm:^1.0.30001782":
   version: 1.0.30001797
   resolution: "caniuse-lite@npm:1.0.30001797"
@@ -7632,13 +7625,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"css-color-keywords@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "css-color-keywords@npm:1.0.0"
-  checksum: 10c0/af205a86c68e0051846ed91eb3e30b4517e1904aac040013ff1d742019b3f9369ba5658ba40901dbbc121186fc4bf0e75a814321cc3e3182fbb2feb81c6d9cb7
-  languageName: node
-  linkType: hard
-
 "css-line-break@npm:^2.1.0":
   version: 2.1.0
   resolution: "css-line-break@npm:2.1.0"
@@ -7658,17 +7644,6 @@ __metadata:
     domutils: "npm:^3.0.1"
     nth-check: "npm:^2.0.1"
   checksum: 10c0/d79fffa97106007f2802589f3ed17b8c903f1c961c0fc28aa8a051eee0cbad394d8446223862efd4c1b40445a6034f626bb639cf2035b0bfc468544177593c99
-  languageName: node
-  linkType: hard
-
-"css-to-react-native@npm:^3.0.0":
-  version: 3.2.0
-  resolution: "css-to-react-native@npm:3.2.0"
-  dependencies:
-    camelize: "npm:^1.0.0"
-    css-color-keywords: "npm:^1.0.0"
-    postcss-value-parser: "npm:^4.0.2"
-  checksum: 10c0/fde850a511d5d3d7c55a1e9b8ed26b69a8ad4868b3487e36ebfbfc0b96fc34bc977d9cd1d61a289d0c74d3f9a662d8cee297da53d4433bf2e27d6acdff8e1003
   languageName: node
   linkType: hard
 
@@ -14791,7 +14766,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss-value-parser@npm:^4.0.0, postcss-value-parser@npm:^4.0.2":
+"postcss-value-parser@npm:^4.0.0":
   version: 4.2.0
   resolution: "postcss-value-parser@npm:4.2.0"
   checksum: 10c0/f4142a4f56565f77c1831168e04e3effd9ffcc5aebaf0f538eee4b2d465adfd4b85a44257bb48418202a63806a7da7fe9f56c330aebb3cac898e46b4cbf49161
@@ -15008,7 +14983,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.5.10, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
+"prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -15386,15 +15361,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-fit-image@npm:^1.5.5":
-  version: 1.5.5
-  resolution: "react-native-fit-image@npm:1.5.5"
-  dependencies:
-    prop-types: "npm:^15.5.10"
-  checksum: 10c0/04d1cb35f2acacda593c80f2d9845f7dc0ed5e0e1fb62043ba5351f914162dcd92f1ae98e80ebf9752f6b4131b1634f6a9ac90e9c649f30b5591f3187d99811f
-  languageName: node
-  linkType: hard
-
 "react-native-gesture-handler@npm:^2.30.1":
   version: 2.31.2
   resolution: "react-native-gesture-handler@npm:2.31.2"
@@ -15502,21 +15468,6 @@ __metadata:
     react-native-macos:
       optional: true
   checksum: 10c0/a65814e95473ed25924d68fc05c8d924d3891a9c939e5f799f727f366e1feee1421b0b7b74f1032edc3c215fd5113d5bef7243757bd7a2de9f4c02a57e522a59
-  languageName: node
-  linkType: hard
-
-"react-native-markdown-display@npm:^7.0.2":
-  version: 7.0.2
-  resolution: "react-native-markdown-display@npm:7.0.2"
-  dependencies:
-    css-to-react-native: "npm:^3.0.0"
-    markdown-it: "npm:^10.0.0"
-    prop-types: "npm:^15.7.2"
-    react-native-fit-image: "npm:^1.5.5"
-  peerDependencies:
-    react: ">=16.2.0"
-    react-native: ">=0.50.4"
-  checksum: 10c0/b90b75401340cd79c42e07e6e8961551e8b98acfbc53bc0b651174aea2a86b92430be767da7c813e54b08e7bbd8af6c09dbeb4f9369d925984979cc28b6ba8fb
   languageName: node
   linkType: hard
 
@@ -18410,7 +18361,6 @@ __metadata:
     react-native-keyboard-controller: "npm:^1.21.4"
     react-native-keychain: "npm:^10.0.0"
     react-native-localize: "npm:^3.7.0"
-    react-native-markdown-display: "npm:^7.0.2"
     react-native-mmkv: "npm:^4.3.1"
     react-native-nitro-device-info: "npm:^1.7.1"
     react-native-nitro-fetch: "npm:^1.3.2"

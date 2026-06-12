@@ -1,12 +1,12 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dimensions, ScrollView } from 'react-native';
-import Markdown from 'react-native-markdown-display';
 
 import { useColors } from '@/shared/config';
 import {
   AppBottomSheetContent,
   AppBottomSheetModal,
+  NoteMarkdown,
   SheetFooterButtons,
   SheetHeader,
 } from '@/shared/ui';
@@ -22,63 +22,6 @@ export const PushNotificationSheet = () => {
 
   const title =
     type === 'limit_exceeded' ? t('push.limitExceededTitle') : t('push.policyUpdateTitle');
-
-  const markdownStyles = useMemo(
-    () => ({
-      body: {
-        color: color.text.secondary,
-        fontSize: 14,
-        lineHeight: 22,
-      },
-      strong: {
-        color: color.text.primary,
-        fontWeight: '600' as const,
-      },
-      link: {
-        color: color.accent.primary,
-        textDecorationLine: 'underline' as const,
-      },
-      heading1: {
-        color: color.text.primary,
-        fontSize: 17,
-        fontWeight: '700' as const,
-        marginBottom: 4,
-      },
-      heading2: {
-        color: color.text.primary,
-        fontSize: 15,
-        fontWeight: '600' as const,
-        marginBottom: 4,
-      },
-      bullet_list: { marginVertical: 4 },
-      ordered_list: { marginVertical: 4 },
-      list_item: {
-        color: color.text.secondary,
-        fontSize: 14,
-        lineHeight: 22,
-      },
-      code_inline: {
-        backgroundColor: color.background.tertiary,
-        color: color.text.primary,
-        borderRadius: 4,
-        fontSize: 13,
-      },
-      fence: {
-        backgroundColor: color.background.tertiary,
-        borderRadius: 8,
-        padding: 12,
-      },
-      blockquote: {
-        backgroundColor: color.background.tertiary,
-        borderLeftColor: color.accent.primary,
-        borderLeftWidth: 3,
-        paddingHorizontal: 12,
-        paddingVertical: 4,
-        borderRadius: 4,
-      },
-    }),
-    [color],
-  );
 
   return (
     <AppBottomSheetModal
@@ -97,7 +40,9 @@ export const PushNotificationSheet = () => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 4 }}
           >
-            <Markdown style={markdownStyles}>{message}</Markdown>
+            <NoteMarkdown color={color} variant="push">
+              {message}
+            </NoteMarkdown>
           </ScrollView>
         )}
 
