@@ -121,9 +121,8 @@ export function NoteDocumentSourceEditor({
         }}
         keyboardDismissMode={IS_IOS ? 'interactive' : 'on-drag'}
         keyboardShouldPersistTaps="handled"
-        disableScrollOnKeyboardHide
         showsVerticalScrollIndicator
-        bottomOffset={16}
+        bottomOffset={0}
       >
         <View
           style={{
