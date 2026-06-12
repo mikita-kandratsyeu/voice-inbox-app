@@ -23,6 +23,43 @@ jest.mock('@/features/share-record', () => ({
   buildShareText: jest.fn(() => '# Meeting note'),
 }));
 
+jest.mock('@/entities/settings', () => ({
+  useSettingsStore: {
+    getState: jest.fn(() => ({
+      transcriptionLanguage: 'auto',
+      selectedWhisperModel: 'whisper-base',
+      whisperModelWeightsFormat: 'q5_1',
+      selectedWhisperModelFormat: 'q5_1',
+      summaryStyle: 'standard',
+      taskStrictness: 'balanced',
+      aiOutputLanguage: 'same',
+      aiExecutionMode: 'smart_hybrid',
+      selectedAIModel: 'google/gemini-3.1-flash-lite',
+      aiModelRoutingMode: 'auto',
+      selectedLocalAiModel: null,
+      privateLocalLlmBudget: 'balanced',
+      privateRemoteOutputBudget: 'balanced',
+      privateRemotePreferJsonObject: false,
+      privateCapabilityTier: 'full',
+      privateAiProvider: 'local',
+      privateRemoteBaseUrl: '',
+      privateRemoteModel: '',
+      privateRemoteActiveProfileId: null,
+      privateRemoteProfiles: [],
+      showSummaryReasoningInNotes: true,
+      autoRefreshMeetingSpeakersOnRegen: false,
+      autoTranscribeOnSave: false,
+      autoAiAfterTranscription: false,
+      autoArchiveEnabled: false,
+      autoArchiveAfterDays: 14,
+      taskDeadlineNotificationsEnabled: true,
+      backupReminderNotificationsEnabled: false,
+      backupReminderPeriodDays: 14,
+      aiProcessingAlertsEnabled: true,
+    })),
+  },
+}));
+
 jest.mock('@/shared/lib/device-id', () => ({
   getOrCreateDeviceId: jest.fn(async () => 'device-uuid'),
 }));
@@ -79,10 +116,16 @@ describe('buildGitlabSnapshot', () => {
       '"version": 4',
     );
     expect(snapshot.files.get('voice-inbox-ai/.voice-inbox-ai/index.json')).toContain(
-      '"structureVersion": 2',
+      '"structureVersion": 3',
     );
+    expect(snapshot.files.get('voice-inbox-ai/.voice-inbox-ai/ai-settings.json')).toContain(
+      '"transcriptionLanguage": "auto"',
+    );
+    expect(
+      snapshot.files.get('voice-inbox-ai/.voice-inbox-ai/private-remote-profiles.json'),
+    ).toContain('"profiles": []');
     expect(snapshot.files.get(`voice-inbox-ai/${GITLAB_SYNC_HEAD_FILE}`)).toContain(
-      '"formatVersion": 2',
+      '"formatVersion": 3',
     );
     expect(snapshot.manifest.syncMeta.appVersion).toBe('1.2.3');
     expect(snapshot.manifest.syncMeta.contentHashes).toEqual({
