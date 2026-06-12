@@ -99,6 +99,7 @@ const KEYS = {
   PRIVATE_PREVIOUS_AUTO_TRANSCRIBE: 'settings.private.previousAutoTranscribeOnSave',
   PRIVATE_PREVIOUS_AUTO_AI: 'settings.private.previousAutoAiAfterTranscription',
   PRIVATE_PREVIOUS_AUTO_ARCHIVE: 'settings.private.previousAutoArchiveEnabled',
+  PRIVATE_AUTO_AI_AFTER_TRANSCRIPTION: 'settings.private.autoAiAfterTranscription',
   LOCAL_LLM_STATUSES: 'settings.localLlmStatuses',
 } as const;
 
@@ -254,6 +255,14 @@ const getStoredAutoTranscribeOnSave = (): boolean => {
 };
 
 const getStoredAutoAiAfterTranscription = (): boolean => {
+  const mode = storage.getString(KEYS.AI_EXECUTION_MODE);
+  if (mode === 'private_experimental') {
+    const privateVal = storage.getString(KEYS.PRIVATE_AUTO_AI_AFTER_TRANSCRIPTION);
+    if (privateVal != null) {
+      return privateVal === 'true';
+    }
+  }
+
   const val = storage.getString(KEYS.AUTO_AI_AFTER_TRANSCRIPTION);
 
   return val === 'true';
@@ -644,12 +653,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       storage.set(KEYS.PRIVATE_PREVIOUS_AUTO_AI, String(currentState.autoAiAfterTranscription));
       storage.set(KEYS.PRIVATE_PREVIOUS_AUTO_ARCHIVE, String(currentState.autoArchiveEnabled));
 
-      // Private mode keeps local auto-transcribe; cloud-like automations are disabled.
-      storage.set(KEYS.AUTO_AI_AFTER_TRANSCRIPTION, 'false');
+      const privateAutoAiRaw = storage.getString(KEYS.PRIVATE_AUTO_AI_AFTER_TRANSCRIPTION);
+      const restoredPrivateAutoAi = privateAutoAiRaw == null ? false : privateAutoAiRaw === 'true';
+
+      // Private mode keeps local auto-transcribe; auto-archive stays off until smart mode.
+      storage.set(KEYS.AUTO_AI_AFTER_TRANSCRIPTION, String(restoredPrivateAutoAi));
       storage.set(KEYS.AUTO_ARCHIVE_ENABLED, 'false');
       set({
         aiExecutionMode: value,
-        autoAiAfterTranscription: false,
+        autoAiAfterTranscription: restoredPrivateAutoAi,
         autoArchiveEnabled: false,
       });
       storage.set(KEYS.AI_EXECUTION_MODE, value);
@@ -658,6 +670,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
     if (wasPrivate && value !== 'private_experimental') {
       void releaseLocalLlmSession();
+      storage.set(
+        KEYS.PRIVATE_AUTO_AI_AFTER_TRANSCRIPTION,
+        String(currentState.autoAiAfterTranscription),
+      );
       const prevTheme = storage.getString(KEYS.PRIVATE_PREVIOUS_THEME) as AppTheme | undefined;
       const prevAutoTranscribe = storage.getString(KEYS.PRIVATE_PREVIOUS_AUTO_TRANSCRIBE);
       const prevAutoAi = storage.getString(KEYS.PRIVATE_PREVIOUS_AUTO_AI);
@@ -854,6 +870,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setAutoAiAfterTranscription: (value: boolean) => {
     storage.set(KEYS.AUTO_AI_AFTER_TRANSCRIPTION, String(value));
+    if (get().aiExecutionMode === 'private_experimental') {
+      storage.set(KEYS.PRIVATE_AUTO_AI_AFTER_TRANSCRIPTION, String(value));
+    }
     set({ autoAiAfterTranscription: value });
   },
 

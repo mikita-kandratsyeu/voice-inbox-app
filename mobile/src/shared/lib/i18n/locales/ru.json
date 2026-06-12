@@ -1059,6 +1059,25 @@
         "loadFailedHint": "Проверьте подключение и потяните экран вниз, чтобы обновить.",
         "loadMore": "Показать более ранние операции",
         "loadMoreFailed": "Не удалось показать более ранние операции",
+        "exportCsv": "Экспорт CSV",
+        "exportCsvTitle": "Движение ИИ-кредитов",
+        "exportCsvA11y": "Экспортировать расходы в CSV",
+        "exportCsvFailed": "Не удалось экспортировать расходы. Проверьте подключение и попробуйте снова.",
+        "exportCsvEmpty": "Пока нет операций для экспорта.",
+        "exportCsvColumns": {
+          "date": "Дата",
+          "kind": "Тип",
+          "operation": "Операция",
+          "amount": "Сумма",
+          "model": "Модель",
+          "description": "Описание",
+          "jobId": "ID задачи"
+        },
+        "kinds": {
+          "debit": "Списание",
+          "credit": "Начисление",
+          "refund": "Возврат"
+        },
         "operations": {
           "transcript_summarize": "Умная сводка",
           "transcript_summarize_meeting": "Сводка в режиме встреч",

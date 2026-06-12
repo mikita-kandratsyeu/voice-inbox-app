@@ -1029,6 +1029,25 @@
         "loadFailedHint": "Check your connection and pull down to refresh.",
         "loadMore": "Show earlier activity",
         "loadMoreFailed": "Earlier activity is unavailable",
+        "exportCsv": "Export CSV",
+        "exportCsvTitle": "AI credit activity",
+        "exportCsvA11y": "Export credit activity as CSV",
+        "exportCsvFailed": "Could not export credit activity. Check your connection and try again.",
+        "exportCsvEmpty": "There is no credit activity to export yet.",
+        "exportCsvColumns": {
+          "date": "Date",
+          "kind": "Type",
+          "operation": "Operation",
+          "amount": "Amount",
+          "model": "Model",
+          "description": "Description",
+          "jobId": "Job ID"
+        },
+        "kinds": {
+          "debit": "Spend",
+          "credit": "Credit",
+          "refund": "Refund"
+        },
         "operations": {
           "transcript_summarize": "Smart summary",
           "transcript_summarize_meeting": "Meeting mode summary",

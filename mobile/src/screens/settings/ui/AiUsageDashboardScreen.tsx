@@ -2,6 +2,7 @@ import {
   AlertCircle,
   ArrowLeftRight,
   Cloud,
+  Download,
   FolderTree,
   Gauge,
   History,
@@ -15,6 +16,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Alert,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -28,9 +30,10 @@ import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { useSettingsStackBack } from '@/app/navigation/useSettingsStackBack';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
+import { isUserCancelledShare } from '@/features/share-record/lib/isUserCancelledShare';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
+import { hapticError, hapticSuccess, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import {
   type AiUsage,
   type AiUsageHistoryEntry,
@@ -39,12 +42,15 @@ import {
 } from '@/shared/lib/ai-api';
 import { formatLocalizedLongDateWithTime } from '@/shared/lib/taskDeadlineTimeDisplay';
 import {
+  HeaderIconButton,
   SCREEN_PADDING,
   ScreenHeader,
   SettingsRow,
   SettingsSection,
   SkeletonPulse,
 } from '@/shared/ui';
+
+import { AiUsageHistoryExportError, exportAiUsageHistoryCsv } from '../lib/exportAiUsageHistoryCsv';
 
 type UsageMetricCardProps = {
   label: string;
@@ -308,6 +314,7 @@ export const AiUsageDashboardScreen = () => {
   const [historyLoadingMore, setHistoryLoadingMore] = useState(false);
   const [historyLoadFailed, setHistoryLoadFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [exportingCsv, setExportingCsv] = useState(false);
 
   const loadUsage = useCallback(async (isPull = false) => {
     if (isPull) {
@@ -383,6 +390,51 @@ export const AiUsageDashboardScreen = () => {
     [i18n.language],
   );
 
+  const handleExportCsv = useCallback(async () => {
+    if (exportingCsv || loading) return;
+
+    setExportingCsv(true);
+    try {
+      await exportAiUsageHistoryCsv({ t, language: i18n.language });
+      hapticSuccess();
+    } catch (err) {
+      if (isUserCancelledShare(err)) return;
+
+      if (err instanceof AiUsageHistoryExportError) {
+        if (err.reason === 'empty') {
+          Alert.alert(
+            t('settings.aiUsageDashboard.history.exportCsv'),
+            t('settings.aiUsageDashboard.history.exportCsvEmpty'),
+          );
+          return;
+        }
+      }
+
+      hapticError();
+      Alert.alert(t('common.error'), t('settings.aiUsageDashboard.history.exportCsvFailed'));
+    } finally {
+      setExportingCsv(false);
+    }
+  }, [exportingCsv, i18n.language, loading, t]);
+
+  const headerRightSlot = useMemo(
+    () => (
+      <HeaderIconButton
+        iconOnly
+        variant="icon"
+        size="md"
+        icon={<Download size={20} color={color.text.primary} strokeWidth={2} />}
+        color={color}
+        onPress={handleExportCsv}
+        loading={exportingCsv}
+        disabled={loading || exportingCsv}
+        accessibilityLabel={t('settings.aiUsageDashboard.history.exportCsvA11y')}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      />
+    ),
+    [color, exportingCsv, handleExportCsv, loading, t],
+  );
+
   const featureRows = useMemo(
     () => [
       {
@@ -440,7 +492,11 @@ export const AiUsageDashboardScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader title={t('settings.aiUsageDashboard.title')} onBack={handleBack} />
+      <ScreenHeader
+        title={t('settings.aiUsageDashboard.title')}
+        onBack={handleBack}
+        rightSlot={headerRightSlot}
+      />
       <View
         style={{
           flex: 1,
