@@ -3,6 +3,7 @@ import {
   createGitlabCommitWithFiles,
   fetchGitlabUserLogin,
   listGitlabRepos,
+  listTreePathsAtCommit,
 } from '../gitlabApi';
 
 const mockNitroFetch = jest.fn();
@@ -93,6 +94,39 @@ describe('gitlabApi', () => {
           defaultBranch: 'main',
         },
       ]);
+    });
+  });
+
+  describe('listTreePathsAtCommit', () => {
+    it('falls back to listing the full tree when the base path filter returns 404', async () => {
+      mockNitroFetch
+        .mockResolvedValueOnce(
+          jsonResponse({ message: '404 invalid revision or path Not Found' }, false, 404),
+        )
+        .mockResolvedValueOnce(
+          jsonResponse([
+            { type: 'blob', path: 'notes/2026/06/note.md' },
+            { type: 'blob', path: '.voice-inbox-ai/manifest.json' },
+          ]),
+        );
+
+      await expect(
+        listTreePathsAtCommit('token', 42, 'commit-sha', 'voice-inbox-ai'),
+      ).resolves.toEqual(['notes/2026/06/note.md', '.voice-inbox-ai/manifest.json']);
+
+      expect(mockNitroFetch).toHaveBeenCalledTimes(2);
+      expect(String(mockNitroFetch.mock.calls[0]?.[0])).toContain('path=voice-inbox-ai');
+      expect(String(mockNitroFetch.mock.calls[1]?.[0])).not.toContain('path=');
+    });
+
+    it('does not double-prefix paths already rooted at the base path', async () => {
+      mockNitroFetch.mockResolvedValueOnce(
+        jsonResponse([{ type: 'blob', path: 'voice-inbox-ai/notes/a.md' }]),
+      );
+
+      await expect(
+        listTreePathsAtCommit('token', 42, 'commit-sha', 'voice-inbox-ai'),
+      ).resolves.toEqual(['voice-inbox-ai/notes/a.md']);
     });
   });
 

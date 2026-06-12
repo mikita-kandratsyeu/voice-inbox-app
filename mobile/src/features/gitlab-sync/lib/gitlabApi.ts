@@ -358,13 +358,22 @@ export async function getFileContentAtRef(
   return response.text();
 }
 
-export async function listTreePathsAtCommit(
+function toFullRepoTreePath(itemPath: string, pathFilter: string | undefined): string {
+  const normalized = pathFilter?.replace(/^\/+|\/+$/g, '') ?? '';
+  if (!normalized) return itemPath.replace(/^\/+/, '');
+  if (itemPath === normalized || itemPath.startsWith(`${normalized}/`)) {
+    return itemPath;
+  }
+  return `${normalized}/${itemPath}`;
+}
+
+async function listTreePathsAtCommitInternal(
   accessToken: string,
   projectId: number,
   commitSha: string,
-  basePath: string,
+  pathFilter: string | undefined,
 ): Promise<string[]> {
-  const normalizedBase = basePath.replace(/^\/+|\/+$/g, '');
+  const normalizedFilter = pathFilter?.replace(/^\/+|\/+$/g, '') || undefined;
   const paths: string[] = [];
   let page = 1;
 
@@ -375,8 +384,8 @@ export async function listTreePathsAtCommit(
       per_page: '100',
       page: String(page),
     });
-    if (normalizedBase) {
-      query.set('path', normalizedBase);
+    if (normalizedFilter) {
+      query.set('path', normalizedFilter);
     }
     const response = await gitlabFetch(
       accessToken,
@@ -390,7 +399,7 @@ export async function listTreePathsAtCommit(
 
     for (const item of data) {
       if (!isRecord(item) || item.type !== 'blob' || !isString(item.path)) continue;
-      const fullPath = normalizedBase ? `${normalizedBase}/${item.path}` : item.path;
+      const fullPath = toFullRepoTreePath(item.path, normalizedFilter);
       paths.push(fullPath);
     }
 
@@ -399,6 +408,32 @@ export async function listTreePathsAtCommit(
   }
 
   return paths;
+}
+
+export async function listTreePathsAtCommit(
+  accessToken: string,
+  projectId: number,
+  commitSha: string,
+  basePath: string,
+): Promise<string[]> {
+  const normalizedBase = basePath.replace(/^\/+|\/+$/g, '');
+  if (!normalizedBase) {
+    return listTreePathsAtCommitInternal(accessToken, projectId, commitSha, undefined);
+  }
+
+  try {
+    return await listTreePathsAtCommitInternal(
+      accessToken,
+      projectId,
+      commitSha,
+      normalizedBase,
+    );
+  } catch (err) {
+    if (isGitlabApiError(err) && err.status === 404) {
+      return listTreePathsAtCommitInternal(accessToken, projectId, commitSha, undefined);
+    }
+    throw err;
+  }
 }
 
 type CommitAction =
