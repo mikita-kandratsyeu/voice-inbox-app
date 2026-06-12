@@ -54,6 +54,7 @@ export function NoteDocumentSourceEditor({
     inputRef,
     minHeight: MIN_INPUT_HEIGHT,
     estimateHeight: () => estimateNoteDocumentInputHeight(value, MIN_INPUT_HEIGHT, isTablet),
+    heightQuantum: NOTE_DOCUMENT_BODY_LINE_HEIGHT,
   });
   const [linkPromptVisible, setLinkPromptVisible] = useState(false);
 

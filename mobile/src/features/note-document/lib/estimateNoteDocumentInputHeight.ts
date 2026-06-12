@@ -1,7 +1,8 @@
 /** Keep in sync with `NOTE_DOCUMENT_BODY_LINE_HEIGHT` in `documentMarkdownTheme`. */
 const NOTE_DOCUMENT_BODY_LINE_HEIGHT = 28;
 
-const INPUT_VERTICAL_PADDING = 16;
+/** Matches multiline `paddingVertical` in `getInputFieldInputStyle` (8 + 8). */
+export const NOTE_DOCUMENT_INPUT_VERTICAL_PADDING = 16;
 const CHARS_PER_LINE_PHONE = 42;
 const CHARS_PER_LINE_TABLET = 91;
 
@@ -19,5 +20,8 @@ export function estimateNoteDocumentInputHeight(
     return total + Math.max(1, Math.ceil(line.length / charsPerLine));
   }, 0);
 
-  return Math.max(minHeight, lineCount * NOTE_DOCUMENT_BODY_LINE_HEIGHT + INPUT_VERTICAL_PADDING);
+  return Math.max(
+    minHeight,
+    lineCount * NOTE_DOCUMENT_BODY_LINE_HEIGHT + NOTE_DOCUMENT_INPUT_VERTICAL_PADDING,
+  );
 }

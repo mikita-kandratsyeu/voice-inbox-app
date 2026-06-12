@@ -18,28 +18,39 @@ export function quantizeMultilineInputHeight(
 type UseMultilineInputAutoHeightOptions = {
   inputRef: React.RefObject<TextInput | null>;
   minHeight: number;
+  /** Used once before the first native `onContentSizeChange`. */
   estimateHeight: () => number;
+  /** Rounds height to reduce `setNativeProps` calls (e.g. line height). */
+  heightQuantum?: number;
 };
 
-/** Keeps multiline TextInput height in sync via native props — no React state updates on measure. */
+/**
+ * Syncs multiline TextInput height from native `contentSize` via `setNativeProps`
+ * — no React state updates while typing.
+ */
 export function useMultilineInputAutoHeight({
   inputRef,
   minHeight,
   estimateHeight,
+  heightQuantum = DEFAULT_HEIGHT_QUANTUM,
 }: UseMultilineInputAutoHeightOptions) {
   const heightRef = useRef<number | null>(null);
   if (heightRef.current === null) {
-    heightRef.current = quantizeMultilineInputHeight(estimateHeight(), minHeight);
+    heightRef.current = quantizeMultilineInputHeight(estimateHeight(), minHeight, heightQuantum);
   }
 
   const handleContentSizeChange = useCallback(
     (event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
-      const next = quantizeMultilineInputHeight(event.nativeEvent.contentSize.height, minHeight);
+      const next = quantizeMultilineInputHeight(
+        event.nativeEvent.contentSize.height,
+        minHeight,
+        heightQuantum,
+      );
       if (next === heightRef.current) return;
       heightRef.current = next;
       inputRef.current?.setNativeProps({ style: { height: next } });
     },
-    [inputRef, minHeight],
+    [inputRef, minHeight, heightQuantum],
   );
 
   return {
