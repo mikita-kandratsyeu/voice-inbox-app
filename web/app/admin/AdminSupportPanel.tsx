@@ -1,11 +1,21 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import {
+  BarChart3,
+  CheckCircle2,
+  Clock,
+  Mail,
+  MessageSquare,
+  TrendingUp,
+  XCircle,
+} from 'lucide-react';
 
 import {
   AdminAlert,
   AdminCard,
   AdminEmptyState,
+  AdminMetricCard,
   AdminStatusBadge,
   AdminSubNav,
   adminBtnGhostClass,
@@ -85,6 +95,35 @@ type ListResponse = {
   nextCursor?: string | null;
   error?: string;
 };
+
+type SupportStats = {
+  total: number;
+  open: number;
+  closed: number;
+  avgResponseTime: number | null;
+};
+
+function calculateStats(items: SupportItem[]): SupportStats {
+  const total = items.length;
+  const open = items.filter((i) => i.status === 'open').length;
+  const closed = items.filter((i) => i.status === 'closed').length;
+
+  // Calculate average response time for closed tickets (in hours)
+  const closedWithTime = items.filter(
+    (i) => i.status === 'closed' && i.createdAt && i.updatedAt,
+  );
+  let avgResponseTime: number | null = null;
+  if (closedWithTime.length > 0) {
+    const totalTime = closedWithTime.reduce((sum, item) => {
+      const created = new Date(item.createdAt).getTime();
+      const updated = new Date(item.updatedAt).getTime();
+      return sum + (updated - created);
+    }, 0);
+    avgResponseTime = totalTime / closedWithTime.length / (1000 * 60 * 60); // Convert to hours
+  }
+
+  return { total, open, closed, avgResponseTime };
+}
 
 export function AdminSupportPanel() {
   const [items, setItems] = useState<SupportItem[]>([]);
@@ -395,9 +434,62 @@ export function AdminSupportPanel() {
   };
 
   const formatDate = (iso: string) => new Date(iso).toLocaleString();
+  const formatRelativeTime = (iso: string) => {
+    const date = new Date(iso);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays > 0) return `${diffDays}d ago`;
+    if (diffHours > 0) return `${diffHours}h ago`;
+    return 'Just now';
+  };
+
+  const stats = calculateStats(items);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Statistics Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <AdminMetricCard title="Total Tickets" icon={BarChart3}>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+              {stats.total}
+            </span>
+            <span className="text-sm text-zinc-500">requests</span>
+          </div>
+        </AdminMetricCard>
+
+        <AdminMetricCard title="Open Issues" icon={MessageSquare}>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+              {stats.open}
+            </span>
+            <span className="text-sm text-zinc-500">active</span>
+          </div>
+        </AdminMetricCard>
+
+        <AdminMetricCard title="Resolved" icon={CheckCircle2}>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+              {stats.closed}
+            </span>
+            <span className="text-sm text-zinc-500">completed</span>
+          </div>
+        </AdminMetricCard>
+
+        <AdminMetricCard title="Avg Response Time" icon={Clock}>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-violet-600 dark:text-violet-400">
+              {stats.avgResponseTime ? Math.round(stats.avgResponseTime) : '—'}
+            </span>
+            <span className="text-sm text-zinc-500">hours</span>
+          </div>
+        </AdminMetricCard>
+      </div>
+
+      {/* Filters and Search */}
       <AdminCard>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <AdminSubNav
@@ -416,7 +508,7 @@ export function AdminSupportPanel() {
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search…"
+              placeholder="Search tickets by reference, email, or message..."
               autoComplete="off"
               className={`min-w-0 flex-1 ${adminInputClass}`}
             />
@@ -436,15 +528,21 @@ export function AdminSupportPanel() {
       {error ? <AdminAlert tone="error">{error}</AdminAlert> : null}
 
       {loading && items.length === 0 ? (
-        <p className="text-sm text-zinc-500">Loading…</p>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>
+            <p className="mt-2 text-sm text-zinc-500">Loading tickets...</p>
+          </div>
+        </div>
       ) : items.length === 0 ? (
         <AdminEmptyState
           title={
-            debouncedSearch ? 'No requests match this search.' : 'No requests for this filter.'
+            debouncedSearch ? 'No tickets match this search.' : 'No tickets for this filter.'
           }
+          hint="Tickets will appear here when users submit support requests."
         />
       ) : (
-        <ul className="space-y-3">
+        <div className="space-y-3">
           {items.map((row) => {
             const isOpen = expanded === row.id;
             const isProKey = isSupportProKeyRequestSubject(row.subject);
@@ -453,44 +551,79 @@ export function AdminSupportPanel() {
               row.deviceId.length > 12 ? `${row.deviceId.slice(0, 8)}…` : row.deviceId;
 
             return (
-              <li
+              <article
                 key={row.id}
-                className="overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80"
+                className="overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900/80"
               >
+                {/* Ticket Header */}
+                <div className="border-b border-zinc-100 bg-zinc-50/50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/40">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-md bg-zinc-200/80 px-2 py-1 font-mono text-xs font-bold text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200">
+                      #{row.reference}
+                    </span>
+                    {row.status === 'open' ? (
+                      <AdminStatusBadge tone="success">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400"></span>
+                        Open
+                      </AdminStatusBadge>
+                    ) : (
+                      <AdminStatusBadge tone="neutral">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Closed
+                      </AdminStatusBadge>
+                    )}
+                    {isProKey ? (
+                      <AdminStatusBadge tone="info">
+                        <TrendingUp className="h-3 w-3" />
+                        Pro Key Request
+                      </AdminStatusBadge>
+                    ) : null}
+                    <span className="ml-auto text-xs text-zinc-500">
+                      {formatRelativeTime(row.createdAt)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Ticket Body */}
                 <div className="p-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-xs font-medium text-zinc-500">
-                          {row.reference}
-                        </span>
-                        {row.status === 'open' ? (
-                          <AdminStatusBadge tone="success">Open</AdminStatusBadge>
-                        ) : (
-                          <AdminStatusBadge tone="neutral">Closed</AdminStatusBadge>
-                        )}
-                        {isProKey ? <AdminStatusBadge tone="info">Pro key</AdminStatusBadge> : null}
-                      </div>
-                      <p className="text-xs text-zinc-500">
-                        {formatDate(row.createdAt)}
-                        {row.email ? ` · ${row.email}` : ''}
-                        <span className="text-zinc-400"> · </span>
-                        <span className="font-mono">{deviceShort}</span>
-                      </p>
+                  <div className="flex flex-col gap-4">
+                    {/* Subject and Metadata */}
+                    <div className="space-y-2">
                       {row.subject ? (
-                        <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                        <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
                           {row.subject}
-                        </p>
+                        </h3>
                       ) : null}
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                        <span className="inline-flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {formatDate(row.createdAt)}
+                        </span>
+                        {row.email ? (
+                          <span className="inline-flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
+                            {row.email}
+                          </span>
+                        ) : null}
+                        <span className="font-mono text-zinc-400">{deviceShort}</span>
+                      </div>
+                    </div>
+
+                    {/* Message */}
+                    <div>
                       <p
                         className={`text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 ${
-                          isOpen || showReply ? 'whitespace-pre-wrap' : 'line-clamp-2'
+                          isOpen || showReply ? 'whitespace-pre-wrap' : 'line-clamp-3'
                         }`}
                       >
                         {row.message}
                       </p>
-                      {isProKey && row.proLicenseEmailSentAt ? (
-                        <p className="text-xs text-teal-700 dark:text-teal-300">
+                    </div>
+
+                    {/* Pro Key Sent Notice */}
+                    {isProKey && row.proLicenseEmailSentAt ? (
+                      <div className="rounded-lg border border-emerald-200/80 bg-emerald-50/60 px-3 py-2 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+                        <p className="text-xs font-medium text-emerald-800 dark:text-emerald-200">
                           Pro key sent (
                           {formatSupportProKeySentLabel(
                             row.proLicenseDurationMonths,
@@ -498,9 +631,11 @@ export function AdminSupportPanel() {
                           )}
                           ) · {formatDate(row.proLicenseEmailSentAt)}
                         </p>
-                      ) : null}
-                    </div>
-                    <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                      </div>
+                    ) : null}
+
+                    {/* Actions */}
+                    <div className="flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
                       <label className="sr-only" htmlFor={`status-${row.id}`}>
                         Status
                       </label>
@@ -511,7 +646,7 @@ export function AdminSupportPanel() {
                         onChange={(e) =>
                           void handlePatch(row.id, e.target.value as 'open' | 'closed')
                         }
-                        className={`${adminSelectClass} w-[6.5rem]`}
+                        className={`${adminSelectClass} w-auto`}
                       >
                         <option value="open">Open</option>
                         <option value="closed">Closed</option>
@@ -521,66 +656,75 @@ export function AdminSupportPanel() {
                         onClick={() => toggleIssueLogs(row.id, isOpen)}
                         className={adminBtnGhostClass}
                       >
-                        {isOpen ? 'Hide logs' : 'Logs'}
+                        {isOpen ? 'Hide details' : 'View details'}
                       </button>
                       <button
                         type="button"
                         onClick={() => setReplyOpenId(showReply ? null : row.id)}
                         className={
                           showReply
-                            ? `${adminBtnSecondaryClass} ring-2 ring-violet-500/30`
+                            ? `${adminBtnPrimaryClass}`
                             : adminBtnSecondaryClass
                         }
                       >
                         {showReply ? 'Hide reply' : 'Reply'}
                       </button>
                     </div>
-                  </div>
 
-                  {isProKey && !row.proLicenseEmailSentAt ? (
-                    <div className="mt-3 rounded-lg border border-teal-200/80 bg-teal-50/60 px-3 py-2.5 dark:border-teal-900/40 dark:bg-teal-950/20">
-                      {!row.email ? (
-                        <p className="text-xs text-amber-800 dark:text-amber-200">
-                          No email — ask the user to resubmit with an address.
-                        </p>
-                      ) : (
-                        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                          <p className="min-w-0 flex-1 text-xs text-teal-900 dark:text-teal-200">
-                            Email Pro key to {row.email}
+                    {/* Pro Key Send Section */}
+                    {isProKey && !row.proLicenseEmailSentAt ? (
+                      <div className="rounded-lg border border-teal-200/80 bg-teal-50/60 px-3 py-3 dark:border-teal-900/40 dark:bg-teal-950/20">
+                        {!row.email ? (
+                          <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
+                            No email — ask the user to resubmit with an address.
                           </p>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <select
-                              value={supportProKeyDuration[row.id] ?? 'm:12'}
-                              onChange={(e) =>
-                                setSupportProKeyDuration((prev) => ({
-                                  ...prev,
-                                  [row.id]: e.target.value,
-                                }))
-                              }
-                              className={adminSelectClass}
-                            >
-                              {PRO_LICENSE_DURATION_OPTIONS.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                  {opt.label}
-                                </option>
-                              ))}
-                            </select>
-                            <button
-                              type="button"
-                              disabled={supportProKeySendingId === row.id}
-                              onClick={() => void handleSendProKeyEmail(row)}
-                              className={adminBtnPrimaryClass}
-                            >
-                              {supportProKeySendingId === row.id ? 'Sending…' : 'Send key'}
-                            </button>
+                        ) : (
+                          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                            <p className="min-w-0 flex-1 text-xs font-medium text-teal-900 dark:text-teal-200">
+                              Send Pro key to {row.email}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <select
+                                value={supportProKeyDuration[row.id] ?? 'm:12'}
+                                onChange={(e) =>
+                                  setSupportProKeyDuration((prev) => ({
+                                    ...prev,
+                                    [row.id]: e.target.value,
+                                  }))
+                                }
+                                className={`${adminSelectClass} w-auto`}
+                              >
+                                {PRO_LICENSE_DURATION_OPTIONS.map((opt) => (
+                                  <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                type="button"
+                                disabled={supportProKeySendingId === row.id}
+                                onClick={() => void handleSendProKeyEmail(row)}
+                                className={adminBtnPrimaryClass}
+                              >
+                                {supportProKeySendingId === row.id ? 'Sending…' : 'Send key'}
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : null}
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
+
+                {/* Reply Section */}
                 {showReply && (
-                  <div className="space-y-3 border-t border-violet-100 bg-violet-50/40 p-4 dark:border-violet-900/40 dark:bg-violet-950/15">
+                  <div className="space-y-4 border-t border-violet-100 bg-violet-50/40 p-4 dark:border-violet-900/40 dark:bg-violet-950/15">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                      <h4 className="text-sm font-semibold text-violet-900 dark:text-violet-100">
+                        Compose Reply
+                      </h4>
+                    </div>
                     <p className="text-xs text-zinc-600 dark:text-zinc-400">
                       Push delivers in-app Markdown; email sends the same text to{' '}
                       {row.email ?? 'the user'} (SMTP required).
@@ -588,7 +732,7 @@ export function AdminSupportPanel() {
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="sm:col-span-2">
                         <label
-                          className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400"
+                          className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300"
                           htmlFor={`hint-${row.id}`}
                         >
                           Resolution notes (optional, for AI only)
@@ -606,7 +750,7 @@ export function AdminSupportPanel() {
                       </div>
                       <div>
                         <label
-                          className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400"
+                          className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300"
                           htmlFor={`locale-${row.id}`}
                         >
                           Reply language hint (AI)
@@ -635,12 +779,12 @@ export function AdminSupportPanel() {
                           onClick={() => void handleGenerateDraft(row)}
                           className={`${adminBtnSecondaryClass} w-full`}
                         >
-                          {aiLoadingId === row.id ? 'Generating…' : 'AI draft'}
+                          {aiLoadingId === row.id ? 'Generating…' : 'Generate AI draft'}
                         </button>
                       </div>
                       <div className="sm:col-span-2">
                         <label
-                          className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400"
+                          className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300"
                           htmlFor={`md-${row.id}`}
                         >
                           Reply message (Markdown, max {PUSH_MESSAGE_MAX})
@@ -659,14 +803,18 @@ export function AdminSupportPanel() {
                       </div>
                     </div>
                     {inlineSuccessId === row.id && (
-                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                        Push sent to this device.
-                      </p>
+                      <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+                        <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                          Push notification sent successfully.
+                        </p>
+                      </div>
                     )}
                     {inlineEmailSuccessId === row.id && (
-                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                        Email sent to {row.email}.
-                      </p>
+                      <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+                        <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                          Email sent to {row.email}.
+                        </p>
+                      </div>
                     )}
                     <div className="flex flex-wrap gap-2">
                       <button
@@ -675,7 +823,7 @@ export function AdminSupportPanel() {
                         onClick={() => void handleSendPush(row)}
                         className={adminBtnPrimaryClass}
                       >
-                        {pushLoadingId === row.id ? 'Sending…' : 'Send push'}
+                        {pushLoadingId === row.id ? 'Sending…' : 'Send push notification'}
                       </button>
                       <button
                         type="button"
@@ -683,27 +831,38 @@ export function AdminSupportPanel() {
                         onClick={() => void handleSendReplyEmail(row)}
                         className={adminBtnSecondaryClass}
                       >
-                        {emailLoadingId === row.id ? 'Sending…' : 'Send email'}
+                        {emailLoadingId === row.id ? 'Sending…' : 'Send email reply'}
                       </button>
                     </div>
                   </div>
                 )}
+
+                {/* Details Section (Logs & Diagnostics) */}
                 {isOpen && (
-                  <div className="space-y-3 border-t border-zinc-100 bg-zinc-50/80 p-4 dark:border-zinc-700/80 dark:bg-zinc-900/40">
+                  <div className="space-y-4 border-t border-zinc-100 bg-zinc-50/80 p-4 dark:border-zinc-700/80 dark:bg-zinc-900/40">
                     <div>
-                      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                        Diagnostics (JSON)
-                      </p>
+                      <div className="mb-2 flex items-center gap-2">
+                        <div className="h-1 w-1 rounded-full bg-indigo-500"></div>
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                          Diagnostics (JSON)
+                        </h4>
+                      </div>
                       <pre className="max-h-64 overflow-auto rounded-lg border border-zinc-200 bg-white p-3 text-xs leading-relaxed text-zinc-800 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-200">
                         {JSON.stringify(row.diagnostics, null, 2)}
                       </pre>
                     </div>
                     <div>
-                      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                        Extra logs from user
-                      </p>
+                      <div className="mb-2 flex items-center gap-2">
+                        <div className="h-1 w-1 rounded-full bg-violet-500"></div>
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                          Application Logs
+                        </h4>
+                      </div>
                       {appLogsLoadingId === row.id ? (
-                        <p className="text-xs text-zinc-500">Loading logs…</p>
+                        <div className="flex items-center gap-2 text-xs text-zinc-500">
+                          <div className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-solid border-indigo-600 border-r-transparent"></div>
+                          Loading logs…
+                        </div>
                       ) : appLogsById[row.id] ? (
                         <pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded-lg border border-zinc-200 bg-white p-3 text-xs text-zinc-800 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-200">
                           {appLogsById[row.id]}
@@ -714,21 +873,21 @@ export function AdminSupportPanel() {
                     </div>
                   </div>
                 )}
-              </li>
+              </article>
             );
           })}
-        </ul>
+        </div>
       )}
 
       {nextCursor && (
-        <div className="flex justify-center pt-2">
+        <div className="flex justify-center pt-4">
           <button
             type="button"
             disabled={loading}
             onClick={() => void fetchPage(true, nextCursor)}
-            className={adminBtnSecondaryClass}
+            className={`${adminBtnSecondaryClass} px-6`}
           >
-            {loading ? 'Loading…' : 'Load more'}
+            {loading ? 'Loading…' : 'Load more tickets'}
           </button>
         </div>
       )}

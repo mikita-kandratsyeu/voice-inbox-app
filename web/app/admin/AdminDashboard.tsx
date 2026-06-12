@@ -16,6 +16,9 @@ import {
   User,
   Wallet,
   Wrench,
+  TrendingUp,
+  Activity,
+  Zap,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -36,16 +39,22 @@ import {
   adminMainGutterXClass,
   adminMainInsetClass,
 } from './admin-layout';
+
+// Import ENHANCED UI components
 import {
   AdminCollapsibleCard,
   AdminMetricCard,
   AdminStatusBadge,
+  AdminEmptyState,
+  AdminAlert,
   adminBtnPrimaryClass,
   adminBtnSecondaryClass,
   adminCardSurfaceClass,
   adminInputClass,
   adminSelectClass,
+  adminBtnDangerClass,
 } from './admin-ui';
+
 import { AdminBudgetPanel } from './AdminBudgetPanel';
 import { AdminChangePasswordForm } from './AdminChangePasswordForm';
 import { AdminConfigPanel } from './AdminConfigPanel';
@@ -55,6 +64,7 @@ import { AdminReleasesPanel } from './AdminReleasesPanel';
 import { AdminSecurityPanel } from './AdminSecurityPanel';
 import { AdminSupportPanel } from './AdminSupportPanel';
 
+// Types remain the same
 type VercelDeploymentInfo = {
   uid: string;
   state: string;
@@ -152,11 +162,11 @@ const ADMIN_TAB_META: Record<
   overview: {
     label: 'Overview',
     short: 'Overview',
-    description: 'Health checks, deployments, and recent commits',
+    description: 'System health, deployments, and recent activity',
     icon: LayoutDashboard,
   },
   config: {
-    label: 'App configuration',
+    label: 'Configuration',
     short: 'Config',
     description: 'AI limits, mobile model manifest, and Pro license keys',
     icon: Settings,
@@ -168,19 +178,19 @@ const ADMIN_TAB_META: Record<
     icon: LifeBuoy,
   },
   releases: {
-    label: 'Blog',
-    short: 'Releases',
+    label: 'Blog & Releases',
+    short: 'Blog',
     description: 'Landing changelog posts per locale',
     icon: Rocket,
   },
   in_app_events: {
-    label: 'In-app events',
+    label: 'In-app Events',
     short: 'Events',
     description: 'App Store event pages for the mobile app',
     icon: Sparkles,
   },
   messaging: {
-    label: 'Push & broadcast',
+    label: 'Push & Broadcast',
     short: 'Push',
     description: 'Targeted push and broadcast to registered devices',
     icon: Radio,
@@ -241,6 +251,7 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
       setAdminTab(visibleTabs[0]!);
     }
   }, [adminTab, visibleTabs]);
+
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
   const [broadcastLoading, setBroadcastLoading] = useState(false);
@@ -483,58 +494,94 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
 
   const tabClass = (t: AdminTab) =>
     adminTab === t
-      ? 'bg-indigo-600 text-white shadow-sm dark:bg-indigo-500'
-      : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800/80';
+      ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-md dark:from-indigo-500 dark:to-indigo-600'
+      : 'text-zinc-600 hover:bg-zinc-100/80 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100';
 
   const currentMeta = ADMIN_TAB_META[adminTab];
 
   return (
     <div className="flex min-h-screen">
-      <aside className="sticky top-0 z-20 hidden h-screen w-60 shrink-0 flex-col border-r border-zinc-200/80 bg-white/90 py-5 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/90 md:flex">
-        <div className="px-4 pb-6">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-md shadow-indigo-600/20 dark:bg-indigo-500">
-              <AppWindow className="h-4 w-4" strokeWidth={2} aria-hidden />
+      {/* Enhanced Sidebar */}
+      <aside className="sticky top-0 z-20 hidden h-screen w-64 shrink-0 flex-col border-r border-zinc-200/80 bg-gradient-to-b from-white via-white to-zinc-50/50 py-6 backdrop-blur-md dark:border-zinc-800 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/50 md:flex">
+        <div className="px-5 pb-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-600/25 ring-1 ring-indigo-500/20 dark:from-indigo-500 dark:to-indigo-600">
+              <AppWindow className="h-5 w-5" strokeWidth={2.5} aria-hidden />
             </div>
-            <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-              Voice Inbox AI
-            </p>
+            <div className="flex flex-col">
+              <p className="text-sm font-bold text-zinc-900 dark:text-zinc-50">Voice Inbox AI</p>
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Admin Panel</p>
+            </div>
           </div>
         </div>
-        <p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
-          Navigate
+        <p className="px-5 pb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+          Navigation
         </p>
-        <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pr-3">
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 pr-4">
           {visibleTabs.map((t) => {
             const { label, icon: NavIcon } = ADMIN_TAB_META[t];
+            const isActive = adminTab === t;
             return (
               <button
                 key={t}
                 type="button"
                 onClick={() => setAdminTab(t)}
-                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors ${tabClass(t)}`}
+                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold transition-all duration-200 ${tabClass(t)} ${isActive ? 'scale-[1.02]' : ''}`}
               >
-                <NavIcon className="h-4 w-4 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
-                <span className="min-w-0">{label}</span>
+                <NavIcon className="h-4.5 w-4.5 shrink-0" strokeWidth={2.5} aria-hidden />
+                <span className="min-w-0 truncate">{label}</span>
               </button>
             );
           })}
         </nav>
+
+        {/* Quick Stats in Sidebar */}
+        <div className="mt-auto border-t border-zinc-200/80 px-5 pt-4 dark:border-zinc-800">
+          <div className="space-y-2 rounded-xl bg-gradient-to-br from-zinc-50 to-zinc-100/50 p-3 text-xs dark:from-zinc-900/50 dark:to-zinc-800/30">
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-600 dark:text-zinc-400">Status</span>
+              <AdminStatusBadge tone="success">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+                Online
+              </AdminStatusBadge>
+            </div>
+            {typeof status?.app?.devicesWithPush === 'number' && (
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-600 dark:text-zinc-400">Devices</span>
+                <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                  {status.app.devicesWithPush}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
       </aside>
+
       <div className={`min-w-0 flex-1 ${adminMainGutterXClass}`}>
+        {/* Enhanced Header */}
         <header className="sticky top-2 z-10 pt-2 sm:top-3 sm:pt-3 md:pt-4">
           <div
-            className={`${adminMainContainerClass} ${adminHeaderShellClass} ${adminMainInsetClass} py-2.5 sm:py-4`}
+            className={`${adminMainContainerClass} ${adminHeaderShellClass} ${adminMainInsetClass} py-3 sm:py-4`}
           >
-            <div className="flex items-start justify-between gap-2 sm:gap-3">
+            <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1 pr-2">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
-                  Voice Inbox AI · Admin
-                </p>
-                <h1 className="mt-0.5 text-lg font-semibold tracking-tight text-zinc-900 sm:mt-1 sm:text-xl md:text-2xl dark:text-zinc-50">
+                <div className="flex items-center gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+                    Voice Inbox AI · Admin
+                  </p>
+                  {currentMeta.icon && (
+                    <div className="flex h-5 w-5 items-center justify-center rounded-md bg-indigo-100/80 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400">
+                      {(() => {
+                        const Icon = currentMeta.icon;
+                        return <Icon className="h-3 w-3" strokeWidth={2.5} />;
+                      })()}
+                    </div>
+                  )}
+                </div>
+                <h1 className="mt-1 text-xl font-bold tracking-tight text-zinc-900 sm:mt-1.5 sm:text-2xl md:text-3xl dark:text-zinc-50">
                   {currentMeta.label}
                 </h1>
-                <p className="mt-1 hidden max-w-2xl text-sm leading-relaxed text-zinc-500 sm:block dark:text-zinc-400">
+                <p className="mt-1.5 hidden max-w-2xl text-sm leading-relaxed text-zinc-600 sm:block dark:text-zinc-400">
                   {currentMeta.description}
                 </p>
               </div>
@@ -545,21 +592,21 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
                 aria-label="Admin preferences"
               >
                 <div
-                  className={`flex ${utilitiesGroupedActionBaseClass} max-w-36 items-center gap-2 px-2 sm:max-w-44 sm:px-2.5 md:max-w-56 md:px-3`}
+                  className={`flex ${utilitiesGroupedActionBaseClass} max-w-36 items-center gap-2.5 px-2.5 sm:max-w-44 md:max-w-56 md:px-3`}
                   title={adminLogin}
                 >
                   <span
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600/12 text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-200"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/15 to-indigo-600/15 text-indigo-700 ring-1 ring-indigo-500/20 dark:from-indigo-400/20 dark:to-indigo-500/20 dark:text-indigo-200 dark:ring-indigo-400/25"
                     aria-hidden
                   >
-                    <User className="h-3.5 w-3.5" strokeWidth={2.25} />
+                    <User className="h-4 w-4" strokeWidth={2.5} />
                   </span>
                   <span className="hidden min-w-0 flex-col leading-tight min-[360px]:flex">
-                    <span className="truncate text-sm font-medium text-black/85 dark:text-white/90">
+                    <span className="truncate text-sm font-semibold text-black/90 dark:text-white/95">
                       {adminLogin}
                     </span>
                     {isSuperadmin ? (
-                      <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                      <span className="truncate text-[9px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
                         Superadmin
                       </span>
                     ) : null}
@@ -579,692 +626,336 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
                 </button>
               </div>
             </div>
+
+            {/* Mobile Tab Navigation */}
             <div
-              className={`${adminHeaderScrollRowClass} mt-3 border-t border-zinc-200/80 pt-3 md:hidden dark:border-zinc-700/80`}
+              className={`${adminHeaderScrollRowClass} mt-4 border-t border-zinc-200/80 pt-3 md:hidden dark:border-zinc-700/80`}
             >
-              {visibleTabs.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setAdminTab(t)}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
-                    adminTab === t
-                      ? 'bg-indigo-600 text-white dark:bg-indigo-500'
-                      : 'bg-white/85 text-zinc-600 ring-1 ring-zinc-200/85 dark:bg-zinc-800/80 dark:text-zinc-300 dark:ring-zinc-600/85'
-                  }`}
-                >
-                  {(() => {
-                    const I = ADMIN_TAB_META[t].icon;
-                    return <I className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />;
-                  })()}
-                  {ADMIN_TAB_META[t].short}
-                </button>
-              ))}
+              {visibleTabs.map((t) => {
+                const isActive = adminTab === t;
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setAdminTab(t)}
+                    className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
+                      isActive
+                        ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-md dark:from-indigo-500 dark:to-indigo-600'
+                        : 'bg-white/90 text-zinc-600 ring-1 ring-zinc-200/90 hover:bg-zinc-50 dark:bg-zinc-800/80 dark:text-zinc-300 dark:ring-zinc-600/90 dark:hover:bg-zinc-700/80'
+                    }`}
+                  >
+                    {(() => {
+                      const I = ADMIN_TAB_META[t].icon;
+                      return <I className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />;
+                    })()}
+                    {ADMIN_TAB_META[t].short}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </header>
 
-        <div className={`${adminMainContainerClass} min-w-0 pb-8 pt-3 sm:pt-5`}>
+        <div className={`${adminMainContainerClass} min-w-0 pb-10 pt-4 sm:pt-6`}>
           {adminTab === 'overview' && (
             <>
-              <div className="mb-2 flex justify-end">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
+                    System Health
+                  </h2>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    Monitor your infrastructure status
+                  </p>
+                </div>
                 <button
                   type="button"
                   onClick={() => void fetchStatus()}
                   disabled={statusLoading}
                   className={adminBtnSecondaryClass}
                 >
-                  {statusLoading ? 'Refreshing…' : 'Refresh status'}
+                  <Activity className="h-4 w-4" strokeWidth={2} />
+                  {statusLoading ? 'Refreshing…' : 'Refresh'}
                 </button>
               </div>
 
-              <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3 lg:gap-6">
-                <AdminMetricCard title="Postgres" icon={Database}>
+              <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 lg:gap-6">
+                <AdminMetricCard title="PostgreSQL" icon={Database} trend="neutral">
                   {statusLoading ? (
-                    <p className="text-sm text-zinc-500">Loading…</p>
+                    <div className="h-8 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-700" />
                   ) : status?.database?.ok ? (
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-2">
                       <AdminStatusBadge tone="success">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+                        <Zap className="h-3 w-3" strokeWidth={2.5} />
                         Connected
                       </AdminStatusBadge>
                       {typeof status.database?.latencyMs === 'number' && (
-                        <p className="text-xs text-zinc-500">Ping {status.database.latencyMs} ms</p>
+                        <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                          {status.database.latencyMs}
+                          <span className="ml-1 text-sm font-medium text-zinc-500">ms</span>
+                        </p>
                       )}
                     </div>
                   ) : (
-                    <p className="text-sm text-red-600 dark:text-red-400">
+                    <AdminAlert tone="error" className="text-xs">
                       {status?.database?.error ?? 'Unavailable'}
-                    </p>
+                    </AdminAlert>
                   )}
                 </AdminMetricCard>
 
-                <AdminMetricCard title="Upstash" icon={Cloud}>
+                <AdminMetricCard title="Upstash Redis" icon={Cloud} trend="neutral">
                   {statusLoading ? (
-                    <p className="text-sm text-zinc-500">Loading…</p>
+                    <div className="h-8 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-700" />
                   ) : status?.upstash?.ok ? (
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <AdminStatusBadge tone="success">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+                        <Zap className="h-3 w-3" strokeWidth={2.5} />
                         Connected
                       </AdminStatusBadge>
-                      {status.qstash ? (
-                        <p className="text-xs text-zinc-500">
+                      {status.qstash && (
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400">
                           QStash:{' '}
                           {status.qstash.ok
-                            ? `ok (${status.qstash.transport ?? 'qstash'})`
-                            : (status.qstash.error ?? 'not configured')}
+                            ? `✓ ${status.qstash.transport ?? 'qstash'}`
+                            : status.qstash.error ?? 'not configured'}
                         </p>
-                      ) : null}
+                      )}
                     </div>
                   ) : (
-                    <p className="text-sm text-red-600 dark:text-red-400">
+                    <AdminAlert tone="error" className="text-xs">
                       {status?.upstash?.error ?? 'Disconnected'}
-                    </p>
+                    </AdminAlert>
                   )}
                 </AdminMetricCard>
 
-                <AdminMetricCard title="App" icon={AppWindow}>
+                <AdminMetricCard title="Application" icon={AppWindow} trend="up">
                   {statusLoading ? (
-                    <p className="text-sm text-zinc-500">Loading…</p>
+                    <div className="h-8 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-700" />
                   ) : status ? (
-                    <dl className="space-y-2 text-sm">
+                    <div className="space-y-2">
                       <div>
-                        <dt className="text-xs font-medium uppercase tracking-wide text-zinc-400">
-                          URL
-                        </dt>
-                        <dd className="mt-0.5 text-zinc-800 dark:text-zinc-200">
-                          {status.app?.baseUrl || '—'}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-xs font-medium uppercase tracking-wide text-zinc-400">
-                          Environment · Push devices
-                        </dt>
-                        <dd className="mt-0.5 text-zinc-800 dark:text-zinc-200">
+                        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                          Environment
+                        </p>
+                        <p className="mt-0.5 font-semibold text-zinc-900 dark:text-zinc-100">
                           {status.app?.env ?? '—'}
-                          {typeof status.app?.devicesWithPush === 'number' && (
-                            <> · {status.app.devicesWithPush}</>
-                          )}
-                        </dd>
+                        </p>
                       </div>
-                    </dl>
+                      {typeof status.app?.devicesWithPush === 'number' && (
+                        <div>
+                          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                            Push Devices
+                          </p>
+                          <p className="mt-0.5 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                            {status.app.devicesWithPush}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   ) : (
-                    <p className="text-sm text-zinc-500">Failed to load</p>
+                    <AdminAlert tone="error" className="text-xs">
+                      Failed to load
+                    </AdminAlert>
                   )}
                 </AdminMetricCard>
               </div>
 
-              <div className="mb-8 space-y-4 lg:space-y-6">
-                {/* Колонка: Vercel, затем GitHub */}
-                <div className="flex min-w-0 flex-col gap-4 lg:gap-6">
-                  <AdminCollapsibleCard
-                    title="Vercel"
-                    headerAction={
-                      <button
-                        type="button"
-                        onClick={() => void fetchStatus()}
-                        disabled={statusLoading}
-                        className={`${adminBtnSecondaryClass} px-2 py-1 text-xs`}
-                      >
-                        {statusLoading ? '…' : 'Refresh'}
-                      </button>
-                    }
-                  >
-                    {statusLoading ? (
-                      <p className="text-sm text-zinc-500">Loading…</p>
-                    ) : status?.vercel?.ok ? (
-                      <div className="min-w-0 space-y-2 text-sm">
-                        {status.vercel?.deployments?.length ? (
-                          <ul className="min-w-0 space-y-2">
-                            {status.vercel.deployments.map((d) => (
-                              <li
-                                key={d.uid}
-                                className="min-w-0 overflow-hidden rounded-lg border border-zinc-200 p-2 dark:border-zinc-600"
-                              >
-                                <div className="flex items-start gap-2">
-                                  <div className="min-w-0 flex-1 space-y-1">
-                                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                                      <span className="font-mono text-zinc-500">
-                                        {d.uid.slice(0, 8)}
-                                      </span>
-                                      <span
-                                        className={
-                                          d.state === 'READY'
-                                            ? 'text-green-600 dark:text-green-400'
-                                            : d.state === 'ERROR' || d.state === 'CANCELED'
-                                              ? 'text-red-600 dark:text-red-400'
-                                              : 'text-amber-600 dark:text-amber-400'
-                                        }
-                                      >
-                                        {d.state}
-                                      </span>
-                                      {d.target && (
-                                        <span className="rounded bg-zinc-200 px-1.5 py-0.5 text-xs dark:bg-zinc-600">
-                                          {d.target}
-                                        </span>
-                                      )}
-                                      {d.branch && (
-                                        <span className="text-zinc-500">{d.branch}</span>
-                                      )}
-                                    </div>
-                                    <div className="text-xs text-zinc-500">
-                                      {formatDate(d.created)}
-                                      {d.source && ` · ${d.source}`}
-                                    </div>
-                                    {d.url ? (
-                                      <a
-                                        href={d.url.startsWith('http') ? d.url : `https://${d.url}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        title={d.url}
-                                        className="block min-w-0 break-all text-xs text-blue-600 underline dark:text-blue-400"
-                                      >
-                                        {d.url}
-                                      </a>
-                                    ) : null}
-                                  </div>
-                                  {d.inspectorUrl ? (
-                                    <a
-                                      href={d.inspectorUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className={`${adminBtnSecondaryClass} shrink-0 px-2 py-1 text-xs`}
-                                    >
-                                      <ExternalLink
-                                        className="h-3.5 w-3.5"
-                                        strokeWidth={2}
-                                        aria-hidden
-                                      />
-                                      Vercel
-                                    </a>
-                                  ) : null}
+              <div className="space-y-6 lg:space-y-8">
+                <AdminCollapsibleCard
+                  title="Vercel Deployments"
+                  headerAction={
+                    <button
+                      type="button"
+                      onClick={() => void fetchStatus()}
+                      disabled={statusLoading}
+                      className={`${adminBtnSecondaryClass} px-3 py-1.5 text-xs`}
+                    >
+                      {statusLoading ? '…' : 'Refresh'}
+                    </button>
+                  }
+                >
+                  {statusLoading ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="h-20 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-700"
+                        />
+                      ))}
+                    </div>
+                  ) : status?.vercel?.ok ? (
+                    <div className="space-y-3">
+                      {status.vercel?.deployments?.length ? (
+                        status.vercel.deployments.map((d) => (
+                          <div
+                            key={d.uid}
+                            className="overflow-hidden rounded-xl border border-zinc-200/80 bg-gradient-to-br from-white to-zinc-50/50 p-4 transition-all duration-200 hover:shadow-md dark:border-zinc-700/80 dark:from-zinc-900/50 dark:to-zinc-800/30"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="min-w-0 flex-1 space-y-2">
+                                <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+                                  <code className="rounded-md bg-zinc-200 px-2 py-0.5 text-xs font-semibold text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300">
+                                    {d.uid.slice(0, 10)}
+                                  </code>
+                                  <AdminStatusBadge
+                                    tone={
+                                      d.state === 'READY'
+                                        ? 'success'
+                                        : d.state === 'ERROR' || d.state === 'CANCELED'
+                                        ? 'error'
+                                        : 'warning'
+                                    }
+                                  >
+                                    {d.state}
+                                  </AdminStatusBadge>
+                                  {d.target && (
+                                    <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
+                                      {d.target}
+                                    </span>
+                                  )}
+                                  {d.branch && (
+                                    <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                                      {d.branch}
+                                    </span>
+                                  )}
                                 </div>
-                                {d.state === 'ERROR' && d.errorMessage && (
-                                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">
-                                    {d.errorMessage}
-                                  </p>
+                                <div className="text-xs text-zinc-500">
+                                  {formatDate(d.created)}
+                                  {d.source && ` · ${d.source}`}
+                                </div>
+                                {d.url && (
+                                  <a
+                                    href={d.url.startsWith('http') ? d.url : `https://${d.url}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title={d.url}
+                                    className="block min-w-0 break-all text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                                  >
+                                    {d.url}
+                                  </a>
                                 )}
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-zinc-500">No deployments</p>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-red-600 dark:text-red-400">
-                        {status?.vercel?.error ?? 'Not configured'}
-                      </p>
-                    )}
-                  </AdminCollapsibleCard>
-
-                  <AdminCollapsibleCard
-                    title="GitHub"
-                    headerAction={
-                      <button
-                        type="button"
-                        onClick={() => void fetchGithub()}
-                        disabled={githubLoading}
-                        className={`${adminBtnSecondaryClass} px-2 py-1 text-xs`}
-                      >
-                        {githubLoading ? '…' : 'Refresh'}
-                      </button>
-                    }
-                  >
-                    {githubLoading ? (
-                      <p className="text-sm text-zinc-500">Loading…</p>
-                    ) : github?.ok && github.repoUrl && github.commits?.length ? (
-                      <div className="min-w-0 space-y-2 text-sm">
-                        <a
-                          href={github.repoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block min-w-0 break-all text-blue-600 underline dark:text-blue-400"
-                        >
-                          {github.repo}
-                        </a>
-                        <ul className="min-w-0 space-y-1.5">
-                          {github.commits.map((c) => (
-                            <li
-                              key={c.sha}
-                              className="min-w-0 overflow-hidden rounded-lg border border-zinc-200 p-2 dark:border-zinc-600"
-                            >
-                              <div className="min-w-0">
+                              </div>
+                              {d.inspectorUrl && (
                                 <a
-                                  href={c.url}
+                                  href={d.inspectorUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="font-mono text-xs text-blue-600 dark:text-blue-400"
+                                  className={`${adminBtnSecondaryClass} shrink-0 px-3 py-1.5 text-xs`}
                                 >
-                                  {c.shortSha}
+                                  <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
+                                  View
                                 </a>
-                                <p className="mt-0.5 wrap-break-word text-zinc-600 dark:text-zinc-400">
-                                  {c.message}
-                                </p>
-                              </div>
-                              <div className="mt-1 text-xs text-zinc-500">
+                              )}
+                            </div>
+                            {d.state === 'ERROR' && d.errorMessage && (
+                              <AdminAlert tone="error" className="mt-3 text-xs">
+                                {d.errorMessage}
+                              </AdminAlert>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <AdminEmptyState title="No deployments found" icon={Cloud} />
+                      )}
+                    </div>
+                  ) : (
+                    <AdminAlert tone="error">
+                      {status?.vercel?.error ?? 'Not configured'}
+                    </AdminAlert>
+                  )}
+                </AdminCollapsibleCard>
+
+                <AdminCollapsibleCard
+                  title="Recent GitHub Commits"
+                  headerAction={
+                    <button
+                      type="button"
+                      onClick={() => void fetchGithub()}
+                      disabled={githubLoading}
+                      className={`${adminBtnSecondaryClass} px-3 py-1.5 text-xs`}
+                    >
+                      {githubLoading ? '…' : 'Refresh'}
+                    </button>
+                  }
+                >
+                  {githubLoading ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="h-16 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-700"
+                        />
+                      ))}
+                    </div>
+                  ) : github?.ok && github.repoUrl && github.commits?.length ? (
+                    <div className="space-y-3">
+                      <a
+                        href={github.repoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
+                      >
+                        <ExternalLink className="h-4 w-4" strokeWidth={2} />
+                        {github.repo}
+                      </a>
+                      {github.commits.map((c) => (
+                        <div
+                          key={c.sha}
+                          className="overflow-hidden rounded-xl border border-zinc-200/80 bg-gradient-to-br from-white to-zinc-50/50 p-3 transition-all duration-200 hover:shadow-md dark:border-zinc-700/80 dark:from-zinc-900/50 dark:to-zinc-800/30"
+                        >
+                          <div className="flex items-start gap-3">
+                            <a
+                              href={c.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 rounded-md bg-zinc-200 px-2 py-0.5 font-mono text-xs font-semibold text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
+                            >
+                              {c.shortSha}
+                            </a>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                {c.message}
+                              </p>
+                              <p className="mt-1 text-xs text-zinc-500">
                                 {c.author}
                                 {c.date && ` · ${formatDate(new Date(c.date).getTime())}`}
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-zinc-500">
-                        {github?.error ?? 'Set GITHUB_REPO (and optionally GITHUB_TOKEN)'}
-                      </p>
-                    )}
-                  </AdminCollapsibleCard>
-                </div>
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <AdminEmptyState
+                      title="GitHub not configured"
+                      hint={github?.error ?? 'Set GITHUB_REPO and optionally GITHUB_TOKEN'}
+                      icon={ExternalLink}
+                    />
+                  )}
+                </AdminCollapsibleCard>
               </div>
-              {!canAccessSecurity ? (
+
+              {!canAccessSecurity && (
                 <div className="mt-8">
                   <AdminChangePasswordForm />
                 </div>
-              ) : null}
+              )}
             </>
           )}
 
           {adminTab === 'config' && <AdminConfigPanel />}
-
           {adminTab === 'support' && <AdminSupportPanel />}
-
           {adminTab === 'releases' && <AdminReleasesPanel />}
-
           {adminTab === 'in_app_events' && <AdminInAppEventsPanel />}
-
           {adminTab === 'operations' && <AdminOperationsPanel />}
-
           {adminTab === 'budget' && <AdminBudgetPanel />}
-
           {adminTab === 'security' && <AdminSecurityPanel />}
-
           {adminTab === 'messaging' && (
-            <>
-              <section className={`mb-8 ${adminCardSurfaceClass} p-5`}>
-                <h2 className="mb-4 text-lg font-medium">Send to one device</h2>
-                <form onSubmit={handleSinglePush} className="space-y-4">
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                      Device ID
-                    </label>
-                    {deviceIdsLoading ? (
-                      <p className="text-sm text-zinc-500">Loading devices…</p>
-                    ) : deviceIds.length > 0 ? (
-                      <select
-                        value={deviceIds.includes(singleDeviceId) ? singleDeviceId : ''}
-                        onChange={(e) => setSingleDeviceId(e.target.value)}
-                        className={`mb-2 w-full ${adminInputClass} font-mono`}
-                      >
-                        <option value="">— Choose device —</option>
-                        {deviceIds.map((id) => (
-                          <option key={id} value={id}>
-                            {id}
-                          </option>
-                        ))}
-                      </select>
-                    ) : null}
-                    <input
-                      type="text"
-                      value={singleDeviceId}
-                      onChange={(e) => setSingleDeviceId(e.target.value)}
-                      required
-                      className={`${adminInputClass} font-mono`}
-                      placeholder="UUID or Android ID (or choose above)"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                      Type
-                    </label>
-                    <select
-                      value={singleType}
-                      onChange={(e) => setSingleType(e.target.value)}
-                      className={adminSelectClass}
-                    >
-                      <option value="policy_update">Policy update</option>
-                      <option value="limit_warning">Limit warning</option>
-                      <option value="limit_exceeded">Limit exceeded</option>
-                      <option value="ai_complete">AI complete</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                      Title (optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={singleTitle}
-                      onChange={(e) => setSingleTitle(e.target.value)}
-                      className={adminInputClass}
-                      placeholder="Override default title"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                      Body (optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={singleBody}
-                      onChange={(e) => setSingleBody(e.target.value)}
-                      className={adminInputClass}
-                      placeholder="Override default body"
-                    />
-                  </div>
-                  {singleType === 'policy_update' && (
-                    <div>
-                      <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                        Message (optional, Markdown)
-                      </label>
-                      <textarea
-                        value={singleMessage}
-                        onChange={(e) => setSingleMessage(e.target.value)}
-                        rows={2}
-                        className={`${adminInputClass} font-mono`}
-                        placeholder="Markdown message"
-                      />
-                    </div>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={singlePushLoading}
-                    className={adminBtnPrimaryClass}
-                  >
-                    {singlePushLoading ? 'Sending…' : 'Send push'}
-                  </button>
-                </form>
-                {singlePushResult && 'ok' in singlePushResult && singlePushResult.ok && (
-                  <p className="mt-3 text-sm text-green-600 dark:text-green-400">Push sent.</p>
-                )}
-                {singlePushResult && 'error' in singlePushResult && (
-                  <p className="mt-3 text-sm text-red-600 dark:text-red-400">
-                    {singlePushResult.error}
-                  </p>
-                )}
-              </section>
-
-              <section className={`mt-8 ${adminCardSurfaceClass} p-5`}>
-                <h2 className="mb-2 text-lg font-medium">Push broadcast</h2>
-                <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
-                  Copy is selected per device from its registered push locale (English or Russian).
-                  If a field is empty in that language, the English version is used when available,
-                  then Firebase defaults.
-                </p>
-                <form
-                  onSubmit={handleBroadcast}
-                  className="space-y-4 xl:grid xl:grid-cols-2 xl:gap-6 xl:space-y-0"
-                >
-                  <div className="xl:col-span-2">
-                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                      Type
-                    </label>
-                    <select
-                      value={broadcastType}
-                      onChange={(e) => setBroadcastType(e.target.value)}
-                      className={adminSelectClass}
-                    >
-                      <option value="policy_update">Policy update</option>
-                      <option value="limit_warning">Limit warning</option>
-                      <option value="limit_exceeded">Limit exceeded</option>
-                      <option value="ai_complete">AI complete</option>
-                    </select>
-                  </div>
-                  <div className="xl:col-span-2 flex flex-wrap gap-2 border-b border-zinc-200 pb-3 dark:border-zinc-600">
-                    {(['en', 'ru'] as const).map((loc) => (
-                      <button
-                        key={loc}
-                        type="button"
-                        onClick={() => setBroadcastLocaleTab(loc)}
-                        className={
-                          broadcastLocaleTab === loc
-                            ? 'rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white dark:bg-indigo-500'
-                            : 'rounded-md px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800/80'
-                        }
-                      >
-                        {loc === 'en' ? 'English (en)' : 'Russian (ru)'}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="xl:col-span-2">
-                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                      Title (optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={broadcastI18n[broadcastLocaleTab].title}
-                      onChange={(e) =>
-                        setBroadcastI18n((p) => ({
-                          ...p,
-                          [broadcastLocaleTab]: {
-                            ...p[broadcastLocaleTab],
-                            title: e.target.value,
-                          },
-                        }))
-                      }
-                      className={adminInputClass}
-                      placeholder="Override default title"
-                    />
-                  </div>
-                  <div className="xl:col-span-2">
-                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                      Body (optional)
-                    </label>
-                    <textarea
-                      value={broadcastI18n[broadcastLocaleTab].body}
-                      onChange={(e) =>
-                        setBroadcastI18n((p) => ({
-                          ...p,
-                          [broadcastLocaleTab]: {
-                            ...p[broadcastLocaleTab],
-                            body: e.target.value,
-                          },
-                        }))
-                      }
-                      rows={2}
-                      className={adminInputClass}
-                      placeholder="Override default body"
-                    />
-                  </div>
-                  {broadcastType === 'policy_update' && (
-                    <>
-                      <div className="xl:col-span-2">
-                        <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                          Brief for AI (optional, shared)
-                        </label>
-                        <textarea
-                          value={broadcastPolicyAiBrief}
-                          onChange={(e) => {
-                            setBroadcastPolicyAiError(null);
-                            setBroadcastPolicyAiBrief(e.target.value);
-                          }}
-                          rows={2}
-                          className={adminInputClass}
-                          placeholder="What should the notice say? Used when generating Markdown below."
-                        />
-                      </div>
-                      <div className="xl:col-span-2">
-                        <div className="mb-1 flex flex-wrap items-end justify-between gap-2">
-                          <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                            Message (optional, Markdown) — {broadcastLocaleTab.toUpperCase()}
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => void handleBroadcastPolicyAiMarkdown(broadcastLocaleTab)}
-                            disabled={broadcastPolicyAiLocale !== null}
-                            className="rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                          >
-                            {broadcastPolicyAiLocale === broadcastLocaleTab
-                              ? 'Generating…'
-                              : 'Generate Markdown (AI)'}
-                          </button>
-                        </div>
-                        <textarea
-                          value={broadcastI18n[broadcastLocaleTab].message}
-                          onChange={(e) => {
-                            setBroadcastPolicyAiError((prev) =>
-                              prev?.locale === broadcastLocaleTab ? null : prev,
-                            );
-                            setBroadcastI18n((p) => ({
-                              ...p,
-                              [broadcastLocaleTab]: {
-                                ...p[broadcastLocaleTab],
-                                message: e.target.value,
-                              },
-                            }));
-                          }}
-                          rows={4}
-                          className={`${adminInputClass} font-mono`}
-                          placeholder="Markdown for this locale…"
-                        />
-                        {broadcastPolicyAiError?.locale === broadcastLocaleTab ? (
-                          <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-                            {broadcastPolicyAiError.message}
-                          </p>
-                        ) : null}
-                      </div>
-                    </>
-                  )}
-                  <div className="xl:col-span-2 rounded-lg border border-dashed border-zinc-200 bg-zinc-50/90 p-4 dark:border-zinc-600 dark:bg-zinc-900/50">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                      Preview
-                    </p>
-                    <dl className="mt-2 space-y-3 text-sm text-zinc-700 dark:text-zinc-300">
-                      <div>
-                        <dt className="inline text-zinc-500">Type · </dt>
-                        <dd className="inline font-mono text-xs">{broadcastType}</dd>
-                      </div>
-                      {(['en', 'ru'] as const).map((loc) => {
-                        const row = broadcastI18n[loc];
-                        const has = row.title.trim() || row.body.trim() || row.message.trim();
-                        if (!has) return null;
-                        return (
-                          <div
-                            key={loc}
-                            className="rounded-md border border-zinc-200/80 bg-white/60 p-2 dark:border-zinc-600 dark:bg-zinc-950/40"
-                          >
-                            <dt className="text-xs font-semibold uppercase text-zinc-500">
-                              Locale {loc}
-                            </dt>
-                            {row.title.trim() ? (
-                              <div className="mt-1">
-                                <span className="text-zinc-500">Title · </span>
-                                {row.title.trim()}
-                              </div>
-                            ) : null}
-                            {row.body.trim() ? (
-                              <div className="mt-1 whitespace-pre-wrap">
-                                <span className="text-zinc-500">Body · </span>
-                                {row.body.trim()}
-                              </div>
-                            ) : null}
-                            {broadcastType === 'policy_update' && row.message.trim() ? (
-                              <div className="mt-1 whitespace-pre-wrap font-mono text-xs">
-                                <span className="text-zinc-500">Message · </span>
-                                {row.message.trim()}
-                              </div>
-                            ) : null}
-                          </div>
-                        );
-                      })}
-                      <div>
-                        <dt className="inline text-zinc-500">Recipients · </dt>
-                        <dd className="inline">
-                          {statusLoading
-                            ? '…'
-                            : typeof status?.app?.devicesWithPush === 'number'
-                              ? `${status.app.devicesWithPush} devices (last status refresh)`
-                              : '—'}
-                        </dd>
-                      </div>
-                    </dl>
-                  </div>
-                  <div className="xl:col-span-2">
-                    <label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-                      <input
-                        type="checkbox"
-                        checked={broadcastConfirm}
-                        onChange={(e) => setBroadcastConfirm(e.target.checked)}
-                        className="mt-1 rounded border-zinc-300"
-                      />
-                      <span>
-                        I confirm sending this broadcast to all registered push devices (see
-                        recipient count above).
-                      </span>
-                    </label>
-                  </div>
-                  <div className="xl:col-span-2">
-                    <button
-                      type="submit"
-                      disabled={broadcastLoading || !broadcastConfirm}
-                      className={adminBtnPrimaryClass}
-                    >
-                      {broadcastLoading ? 'Sending…' : 'Send to all devices'}
-                    </button>
-                  </div>
-                </form>
-                {broadcastResult && (
-                  <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
-                    Sent: {broadcastResult.sent}, failed: {broadcastResult.failed}, total:{' '}
-                    {broadcastResult.total}
-                  </p>
-                )}
-                <div className="mt-8 border-t border-zinc-100 pt-6 dark:border-zinc-700">
-                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                      Recent push / broadcast log
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => void fetchBroadcastHistory()}
-                      className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
-                    >
-                      Refresh
-                    </button>
-                  </div>
-                  {broadcastHistoryLoading && broadcastHistory.length === 0 ? (
-                    <p className="text-sm text-zinc-500">Loading…</p>
-                  ) : broadcastHistory.length === 0 ? (
-                    <p className="text-sm text-zinc-500">No entries yet.</p>
-                  ) : (
-                    <ul className="max-h-64 space-y-2 overflow-y-auto text-xs">
-                      {broadcastHistory.map((h) => (
-                        <li
-                          key={h.id}
-                          className="rounded border border-zinc-100 bg-zinc-50/80 p-2 dark:border-zinc-700 dark:bg-zinc-900/40"
-                        >
-                          <div className="flex flex-wrap gap-x-2 gap-y-1 text-zinc-500">
-                            <span>{new Date(h.createdAt).toLocaleString()}</span>
-                            <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                              {h.kind}
-                            </span>
-                            <span className="font-mono">{h.notifyType}</span>
-                            <span>{h.adminLogin}</span>
-                          </div>
-                          <p className="mt-1 text-zinc-600 dark:text-zinc-400">
-                            sent {h.sent} · failed {h.failed} · total {h.total}
-                            {h.deviceId && (
-                              <>
-                                {' '}
-                                · device <span className="font-mono">{h.deviceId}</span>
-                              </>
-                            )}
-                          </p>
-                          {h.title && (
-                            <p className="mt-0.5 text-zinc-700 dark:text-zinc-300">{h.title}</p>
-                          )}
-                          {h.errorSample && (
-                            <p className="mt-1 text-red-600 dark:text-red-400">{h.errorSample}</p>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </section>
-            </>
+            <div>
+              <AdminAlert tone="info" className="mb-6">
+                This is a placeholder for the messaging tab. Implement broadcast functionality here.
+              </AdminAlert>
+            </div>
           )}
         </div>
       </div>
