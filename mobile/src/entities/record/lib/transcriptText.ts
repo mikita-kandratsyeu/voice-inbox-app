@@ -12,8 +12,10 @@ export function stripDocumentTranscriptMarkup(text: string): string {
     .trim();
 }
 
-const PLAIN_TEXT_LINE_HEIGHT = 20;
-const PLAIN_TEXT_VERTICAL_PADDING = 20;
+/** Keep in sync with `text-sm` line height in `mobile/tailwind.config.js`. */
+export const PLAIN_TEXT_LINE_HEIGHT = 22;
+/** Matches multiline `paddingVertical` in `getInputFieldInputStyle` (8 + 8). */
+const PLAIN_TEXT_VERTICAL_PADDING = 16;
 
 /** Estimates multiline TextInput height when `onContentSizeChange` has not fired yet. */
 export function estimatePlainTextInputHeight(text: string, minHeight: number): number {

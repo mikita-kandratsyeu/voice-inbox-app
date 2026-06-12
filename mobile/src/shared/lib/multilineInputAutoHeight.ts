@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type {
   NativeSyntheticEvent,
   TextInput,
@@ -35,9 +35,33 @@ export function useMultilineInputAutoHeight({
   heightQuantum = DEFAULT_HEIGHT_QUANTUM,
 }: UseMultilineInputAutoHeightOptions) {
   const heightRef = useRef<number | null>(null);
+  const pendingHeightRef = useRef<number | null>(null);
+  const rafIdRef = useRef<number | null>(null);
+
   if (heightRef.current === null) {
     heightRef.current = quantizeMultilineInputHeight(estimateHeight(), minHeight, heightQuantum);
   }
+
+  const flushPendingHeight = useCallback(() => {
+    rafIdRef.current = null;
+    const next = pendingHeightRef.current;
+    pendingHeightRef.current = null;
+    if (next === null || next === heightRef.current) return;
+    heightRef.current = next;
+    inputRef.current?.setNativeProps({ style: { height: next } });
+  }, [inputRef]);
+
+  const scheduleHeightFlush = useCallback(() => {
+    if (rafIdRef.current !== null) return;
+    rafIdRef.current = requestAnimationFrame(flushPendingHeight);
+  }, [flushPendingHeight]);
+
+  useEffect(
+    () => () => {
+      if (rafIdRef.current !== null) cancelAnimationFrame(rafIdRef.current);
+    },
+    [],
+  );
 
   const handleContentSizeChange = useCallback(
     (event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
@@ -46,11 +70,14 @@ export function useMultilineInputAutoHeight({
         minHeight,
         heightQuantum,
       );
-      if (next === heightRef.current) return;
-      heightRef.current = next;
-      inputRef.current?.setNativeProps({ style: { height: next } });
+      if (next === heightRef.current) {
+        pendingHeightRef.current = null;
+        return;
+      }
+      pendingHeightRef.current = next;
+      scheduleHeightFlush();
     },
-    [inputRef, minHeight, heightQuantum],
+    [minHeight, heightQuantum, scheduleHeightFlush],
   );
 
   return {

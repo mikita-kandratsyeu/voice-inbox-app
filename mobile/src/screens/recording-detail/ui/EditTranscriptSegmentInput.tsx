@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { TextInput, View } from 'react-native';
 
-import { estimatePlainTextInputHeight } from '@/entities/record';
+import { estimatePlainTextInputHeight, PLAIN_TEXT_LINE_HEIGHT } from '@/entities/record';
 import type { Colors } from '@/shared/config';
 import { useMultilineInputAutoHeight } from '@/shared/lib/multilineInputAutoHeight';
 import { getInputFieldInputStyle } from '@/shared/ui';
@@ -28,19 +28,21 @@ export function EditTranscriptSegmentInput({
     inputRef,
     minHeight: MIN_SEGMENT_INPUT_HEIGHT,
     estimateHeight: () => estimatePlainTextInputHeight(value, MIN_SEGMENT_INPUT_HEIGHT),
+    heightQuantum: PLAIN_TEXT_LINE_HEIGHT,
   });
 
   return (
     <View className="flex-1">
       <TextInput
         ref={inputRef}
-        className="rounded-xl border-2 px-3 py-2.5 text-sm"
+        className="rounded-xl border-2 px-3 text-sm"
         style={[
           getInputFieldInputStyle(color, true),
           {
             flex: 0,
             width: '100%',
             color: color.text.primary,
+            lineHeight: PLAIN_TEXT_LINE_HEIGHT,
             minHeight: MIN_SEGMENT_INPUT_HEIGHT,
             height: inputHeight,
             borderColor: color.border.default,
