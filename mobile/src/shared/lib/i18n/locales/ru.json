@@ -472,7 +472,7 @@
     "nothingFoundFor": "По запросу «{{query}}» записей не найдено",
     "typeMoreChars": "Введите больше символов",
     "typeMoreCharsHint": "Введите минимум {{count}} символа для поиска"
-  }, 
+  },
   "audioPlayer": {
     "skipBack": "Назад",
     "skipForward": "Вперёд",
