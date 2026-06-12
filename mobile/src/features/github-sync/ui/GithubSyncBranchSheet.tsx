@@ -390,8 +390,6 @@ export function GithubSyncBranchSheet({
           marginBottom={10}
         />
 
-        {branchListBody}
-
         <Text
           style={{
             color: color.text.secondary,
@@ -399,7 +397,6 @@ export function GithubSyncBranchSheet({
             fontWeight: '600',
             letterSpacing: 0.6,
             marginBottom: 8,
-            marginTop: 16,
             textTransform: 'uppercase',
           }}
         >
@@ -433,9 +430,11 @@ export function GithubSyncBranchSheet({
           {t('settings.githubSync.branchWhyHint')}
         </Text>
 
+        {branchListBody}
+
         <SheetFooterButtons
           color={color}
-          className="mt-2 w-full"
+          className="mt-4 w-full"
           primaryLabel={t('common.save')}
           onPrimaryPress={() => void onSave(trimmed)}
           primaryDisabled={!canSave}

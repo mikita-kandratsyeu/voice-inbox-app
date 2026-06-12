@@ -1,4 +1,5 @@
 import type { Components } from 'react-markdown';
+import { BASE_URL_OR_FALLBACK, SUPPORT_EMAIL } from '@/config/constants';
 import { prepareShareNoteEmailMarkdown } from '@/lib/prepareShareNoteEmailMarkdown';
 import { splitShareNoteEmailTableBlocks } from '@/lib/shareNoteEmailMarkdownTables';
 import ReactMarkdown from 'react-markdown';
@@ -9,6 +10,8 @@ import remarkGfm from 'remark-gfm';
 const bodyFont = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 const monoFont =
   "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace";
+const siteUrl = BASE_URL_OR_FALLBACK;
+const supportEmail = SUPPORT_EMAIL.trim() || 'hello@voice-inbox.online';
 
 const tableCellBaseStyle = {
   border: '1px solid #e5e7eb',
@@ -33,7 +36,9 @@ const emailMarkdownComponents: Components = {
   h2: ({ children }) => (
     <h2
       style={{
-        margin: '22px 0 8px',
+        margin: '24px 0 10px',
+        paddingTop: '16px',
+        borderTop: '1px solid #e5e7eb',
         fontSize: '18px',
         lineHeight: 1.35,
         fontWeight: 700,
@@ -147,7 +152,19 @@ const emailMarkdownComponents: Components = {
       {children}
     </ol>
   ),
-  li: ({ children }) => <li style={{ marginBottom: '4px' }}>{children}</li>,
+  li: ({ className, children }) => {
+    const isTask = className?.includes('task-list-item');
+    return (
+      <li
+        style={{
+          marginBottom: '4px',
+          ...(isTask ? { listStyleType: 'none', marginLeft: '-22px' } : {}),
+        }}
+      >
+        {children}
+      </li>
+    );
+  },
   blockquote: ({ children }) => (
     <blockquote
       style={{
@@ -253,7 +270,45 @@ const emailMarkdownComponents: Components = {
   del: ({ children }) => (
     <del style={{ color: '#6b7280', textDecoration: 'line-through' }}>{children}</del>
   ),
+  input: ({ checked, type }) => {
+    if (type !== 'checkbox') {
+      return null;
+    }
+
+    return (
+      <span
+        aria-hidden="true"
+        style={{
+          display: 'inline-block',
+          minWidth: '28px',
+          marginRight: '4px',
+          color: checked ? '#047857' : '#94a3b8',
+          fontWeight: 700,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {checked ? '[x]' : '[ ]'}
+      </span>
+    );
+  },
 };
+
+export type ShareNoteEmailShellOptions = {
+  title: string;
+  bodyInnerHtml: string;
+  preheader?: string;
+  intro?: string;
+  attachmentLabel?: string;
+};
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 /**
  * Renders user note markdown to an HTML fragment for transactional email.
@@ -292,25 +347,68 @@ export async function renderShareNoteMarkdownEmailInnerHtml(markdown: string): P
   );
 }
 
-function buildSimpleShareNoteEmailHtml(title: string, bodyInnerHtml: string): string {
-  const escapedTitle = title
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+export function buildShareNoteEmailShellHtml(options: ShareNoteEmailShellOptions): string {
+  const escapedTitle = escapeHtml(options.title);
+  const preheader =
+    options.preheader?.trim() || `Shared from Voice Inbox AI: ${options.title}`.slice(0, 160);
+  const intro = options.intro?.trim() || 'A Voice Inbox AI user shared this note with you.';
+  const attachmentLabel = options.attachmentLabel?.trim();
 
   return `<!doctype html>
 <html>
-  <body style="margin:0;padding:24px;background:#f6f7fb;color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-    <main style="max-width:720px;margin:0 auto;background:#ffffff;border-radius:16px;padding:24px;border:1px solid #e5e7eb;">
-      <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;">${escapedTitle}</h1>
-      ${bodyInnerHtml}
-    </main>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>${escapedTitle}</title>
+  </head>
+  <body style="margin:0;padding:0;background:#eef2f7;color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${escapeHtml(preheader)}</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f7;margin:0;padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:720px;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;">
+            <tr>
+              <td style="padding:24px 24px 18px;border-bottom:1px solid #eef2f7;background:#fbfcff;">
+                <div style="margin:0 0 8px;font-size:12px;line-height:1.4;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#64748b;">Voice Inbox AI</div>
+                <h1 style="margin:0;font-size:24px;line-height:1.28;font-weight:750;color:#0f172a;">${escapedTitle}</h1>
+                <p style="margin:12px 0 0;font-size:15px;line-height:1.55;color:#475569;">${escapeHtml(intro)}</p>
+                ${
+                  attachmentLabel
+                    ? `<p style="margin:10px 0 0;font-size:13px;line-height:1.45;color:#64748b;">Attachment: ${escapeHtml(attachmentLabel)}</p>`
+                    : ''
+                }
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:22px 24px 8px;">
+                ${options.bodyInnerHtml}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 24px 24px;">
+                <div style="border-top:1px solid #e5e7eb;padding-top:16px;font-size:13px;line-height:1.55;color:#64748b;">
+                  <p style="margin:0 0 6px;">This email was sent from Voice Inbox AI by an app user.</p>
+                  <p style="margin:0;">
+                    <a href="${siteUrl}" style="color:#475569;text-decoration:underline;">voice-inbox.online</a>
+                    <span style="color:#cbd5e1;"> · </span>
+                    <a href="mailto:${supportEmail}" style="color:#475569;text-decoration:underline;">${supportEmail}</a>
+                  </p>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>`;
 }
 
 export async function buildShareNoteEmailHtml(markdown: string, title: string): Promise<string> {
   const inner = await renderShareNoteMarkdownEmailInnerHtml(markdown);
-  return buildSimpleShareNoteEmailHtml(title, inner);
+  return buildShareNoteEmailShellHtml({
+    title,
+    bodyInnerHtml: inner,
+    preheader: `Shared note from Voice Inbox AI: ${title}`,
+  });
 }

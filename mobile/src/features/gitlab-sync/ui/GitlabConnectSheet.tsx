@@ -35,6 +35,7 @@ import {
   sheetFooterPrimaryButtonContainerStyle,
 } from '@/shared/ui/bottom-sheet';
 
+import { buildGitlabVerificationUriComplete } from '../lib/gitlabVerificationUri';
 import { GitlabConnectCountdownBadge } from './GitlabConnectCountdownBadge';
 import { GitlabIcon } from './GitlabIcon';
 
@@ -184,7 +185,8 @@ export function GitlabConnectSheet({
   const openGitlabVerification = useCallback(() => {
     if (!verificationUri || !userCode) return;
     setExternalCopySignal((prev) => prev + 1);
-    void openInAppBrowser(verificationUri).catch(() => {});
+    const url = buildGitlabVerificationUriComplete(verificationUri, userCode);
+    void openInAppBrowser(url).catch(() => {});
   }, [userCode, verificationUri]);
 
   useEffect(() => {

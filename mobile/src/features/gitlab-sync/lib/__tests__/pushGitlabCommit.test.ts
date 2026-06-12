@@ -89,6 +89,20 @@ describe('pushGitlabCommit', () => {
           contentHashes: {},
         },
       },
+      index: {
+        structureVersion: 2,
+        exportedAt: '2026-06-10T12:00:00.000Z',
+        notesPath: 'notes',
+        records: {
+          'rec-1': {
+            id: 'rec-1',
+            path: 'notes/rec-1.md',
+            hash: 'hash-1',
+            title: 'Note',
+            createdAt: '2026-06-01T10:00:00.000Z',
+          },
+        },
+      },
       recordCount: 1,
       folderCount: 1,
       graphLayoutCount: 0,

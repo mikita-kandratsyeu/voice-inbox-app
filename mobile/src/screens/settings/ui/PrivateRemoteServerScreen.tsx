@@ -27,7 +27,7 @@ import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import { type Colors, useColors } from '@/shared/config';
 import { hapticLight, IS_IOS, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
-import { HeaderIconButton, ScreenHeader } from '@/shared/ui';
+import { HeaderIconButton, ProcessingArcSpinner, ScreenHeader } from '@/shared/ui';
 
 import { formatMaskedApiKey } from '../lib/formatMaskedApiKey';
 import { usePrivateRemoteServerScreen } from '../lib/usePrivateRemoteServerScreen';
@@ -379,7 +379,7 @@ export const PrivateRemoteServerScreen = () => {
                 accessibilityState={{ disabled: screen.isDiscoveringLan }}
               >
                 {screen.isDiscoveringLan ? (
-                  <ActivityIndicator size="small" color={color.accent.primary} />
+                  <ProcessingArcSpinner size="md" color={color.accent.primary} />
                 ) : (
                   <Wifi size={16} color={color.accent.primary} strokeWidth={2.2} />
                 )}

@@ -12,6 +12,7 @@ export type SendRecordEmailInput = {
   subject: string;
   title: string;
   markdown: string;
+  attachMarkdown?: boolean;
 };
 
 export type SendRecordEmailResult = { ok: true } | { ok: false; error: string; status?: number };
@@ -31,6 +32,7 @@ export async function sendRecordEmail(input: SendRecordEmailInput): Promise<Send
         subject: input.subject.trim(),
         title: input.title.trim(),
         markdown: input.markdown,
+        ...(input.attachMarkdown === false ? { attachMarkdown: false } : {}),
       }),
     });
 

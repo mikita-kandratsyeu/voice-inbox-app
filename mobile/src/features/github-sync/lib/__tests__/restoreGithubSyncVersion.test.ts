@@ -76,7 +76,34 @@ describe('restoreGithubSyncVersion', () => {
       'token',
       'octocat',
       'notes',
-      'voice-inbox-ai/manifest.json',
+      'voice-inbox-ai/.voice-inbox-ai/manifest.json',
+      'abc123',
+    );
+  });
+
+  it('falls back to legacy root manifest', async () => {
+    mockGetFileContentAtRef.mockImplementation(async (...args) => {
+      const path = args[3];
+      return path === 'manifest.json' ? JSON.stringify(manifest) : null;
+    });
+
+    const result = await restoreGithubSyncVersion({
+      secrets: {
+        accessToken: 'token',
+        owner: 'octocat',
+        repo: 'notes',
+        branch: 'voice-inbox-ai',
+        basePath: 'voice-inbox-ai',
+      },
+      commitSha: 'abc123',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(mockGetFileContentAtRef).toHaveBeenCalledWith(
+      'token',
+      'octocat',
+      'notes',
+      'manifest.json',
       'abc123',
     );
   });

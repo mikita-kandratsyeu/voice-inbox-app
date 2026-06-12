@@ -4,6 +4,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { buildGithubSnapshot } from '../buildGithubSnapshot';
 import {
   GITHUB_SYNC_HEAD_FILE,
+  GITHUB_SYNC_LEGACY_MANIFEST_FILE,
   GITHUB_SYNC_MANIFEST_FILE,
   GITHUB_SYNC_README_FILE,
 } from '../constants';
@@ -68,18 +69,37 @@ describe('buildGithubSnapshot', () => {
     expect(snapshot.recordCount).toBe(1);
     expect(snapshot.folderCount).toBe(1);
     expect(snapshot.graphLayoutCount).toBe(1);
-    expect(snapshot.files.get('voice-inbox-ai/notes/rec-1.md')).toBe('# Meeting note');
+    const notePath = 'voice-inbox-ai/notes/2026/06/2026-06-01-meeting--rec-1.md';
+    expect(snapshot.files.get(notePath)).toContain('id: "rec-1"');
+    expect(snapshot.files.get(notePath)).toContain(
+      'path: "notes/2026/06/2026-06-01-meeting--rec-1.md"',
+    );
+    expect(snapshot.files.get(notePath)).toContain('# Meeting note');
     expect(snapshot.files.get(`voice-inbox-ai/${GITHUB_SYNC_MANIFEST_FILE}`)).toContain(
       '"version": 4',
     );
+    expect(snapshot.files.get(`voice-inbox-ai/${GITHUB_SYNC_LEGACY_MANIFEST_FILE}`)).toContain(
+      '"version": 4',
+    );
+    expect(snapshot.files.get('voice-inbox-ai/.voice-inbox-ai/index.json')).toContain(
+      '"structureVersion": 2',
+    );
     expect(snapshot.files.get(`voice-inbox-ai/${GITHUB_SYNC_HEAD_FILE}`)).toContain(
-      '"formatVersion": 1',
+      '"formatVersion": 2',
+    );
+    expect(snapshot.files.get(`voice-inbox-ai/${GITHUB_SYNC_HEAD_FILE}`)).toContain(
+      '"manifestPath": ".voice-inbox-ai/manifest.json"',
     );
     expect(snapshot.manifest.syncMeta.appVersion).toBe('1.2.3');
     expect(snapshot.manifest.syncMeta.contentHashes).toEqual({
       'rec-1': 'hash-value',
     });
-    expect(snapshot.contentHashes['voice-inbox-ai/notes/rec-1.md']).toBe('hash-value');
+    expect(snapshot.contentHashes[notePath]).toBe('hash-value');
+    expect(snapshot.index.records['rec-1']).toMatchObject({
+      id: 'rec-1',
+      path: 'notes/2026/06/2026-06-01-meeting--rec-1.md',
+      title: 'Meeting',
+    });
   });
 
   it('adds a readme when there are no records', async () => {

@@ -4,6 +4,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { buildGitlabSnapshot } from '../buildGitlabSnapshot';
 import {
   GITLAB_SYNC_HEAD_FILE,
+  GITLAB_SYNC_LEGACY_MANIFEST_FILE,
   GITLAB_SYNC_MANIFEST_FILE,
   GITLAB_SYNC_README_FILE,
 } from '../constants';
@@ -68,18 +69,26 @@ describe('buildGitlabSnapshot', () => {
     expect(snapshot.recordCount).toBe(1);
     expect(snapshot.folderCount).toBe(1);
     expect(snapshot.graphLayoutCount).toBe(1);
-    expect(snapshot.files.get('voice-inbox-ai/notes/rec-1.md')).toBe('# Meeting note');
+    const notePath = 'voice-inbox-ai/notes/2026/06/2026-06-01-meeting--rec-1.md';
+    expect(snapshot.files.get(notePath)).toContain('id: "rec-1"');
+    expect(snapshot.files.get(notePath)).toContain('# Meeting note');
     expect(snapshot.files.get(`voice-inbox-ai/${GITLAB_SYNC_MANIFEST_FILE}`)).toContain(
       '"version": 4',
     );
+    expect(snapshot.files.get(`voice-inbox-ai/${GITLAB_SYNC_LEGACY_MANIFEST_FILE}`)).toContain(
+      '"version": 4',
+    );
+    expect(snapshot.files.get('voice-inbox-ai/.voice-inbox-ai/index.json')).toContain(
+      '"structureVersion": 2',
+    );
     expect(snapshot.files.get(`voice-inbox-ai/${GITLAB_SYNC_HEAD_FILE}`)).toContain(
-      '"formatVersion": 1',
+      '"formatVersion": 2',
     );
     expect(snapshot.manifest.syncMeta.appVersion).toBe('1.2.3');
     expect(snapshot.manifest.syncMeta.contentHashes).toEqual({
       'rec-1': 'hash-value',
     });
-    expect(snapshot.contentHashes['voice-inbox-ai/notes/rec-1.md']).toBe('hash-value');
+    expect(snapshot.contentHashes[notePath]).toBe('hash-value');
   });
 
   it('adds a readme when there are no records', async () => {

@@ -101,14 +101,18 @@ function parseAccessTokenResponse(data: unknown): AccessTokenResponse | null {
   };
 }
 
+function buildGitlabOAuthFormBody(params: Record<string, string>): string {
+  return new URLSearchParams(params).toString();
+}
+
 async function requestDeviceCode(clientId: string): Promise<DeviceCodeResponse> {
   const response = await nitroFetch(GITLAB_DEVICE_CODE_URL, {
     method: 'POST',
     headers: {
       Accept: 'application/json',
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: JSON.stringify({
+    body: buildGitlabOAuthFormBody({
       client_id: clientId,
       scope: GITLAB_OAUTH_SCOPE,
     }),
@@ -145,9 +149,9 @@ async function pollAccessToken(
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify({
+      body: buildGitlabOAuthFormBody({
         client_id: clientId,
         device_code: deviceCode,
         grant_type: 'urn:ietf:params:oauth:grant-type:device_code',

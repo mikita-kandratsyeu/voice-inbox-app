@@ -36,6 +36,9 @@ export const PRIVATE_REMOTE_COMPLETION_TIMEOUT_MS = 10 * 60 * 1000;
 /** Health check and model list. */
 export const PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS = 45 * 1000;
 
+/** Manual "Test AI server" should fail quickly enough to keep settings responsive. */
+export const PRIVATE_REMOTE_HEALTH_CHECK_TIMEOUT_MS = 8 * 1000;
+
 /** LAN discovery probe per host/port. */
 export const PRIVATE_REMOTE_LAN_PROBE_TIMEOUT_MS = 2_000;
 

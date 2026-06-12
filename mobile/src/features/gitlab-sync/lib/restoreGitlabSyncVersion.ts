@@ -6,7 +6,7 @@ import {
   parseBackupMetadataPayload,
 } from '@/features/sync-data';
 
-import { GITLAB_SYNC_MANIFEST_FILE } from './constants';
+import { GITLAB_SYNC_LEGACY_MANIFEST_FILE, GITLAB_SYNC_MANIFEST_FILE } from './constants';
 import { getFileContentAtRef } from './gitlabApi';
 import type { GitlabSyncSecrets } from './gitlabSecrets';
 
@@ -18,12 +18,21 @@ export type RestoreGitlabSyncResult =
     }
   | { ok: false; code: string; message?: string };
 
-function joinManifestRepoPath(basePath: string): string {
+function joinRepoPath(basePath: string, filePath: string): string {
   const normalized = basePath.replace(/^\/+|\/+$/g, '');
   if (!normalized) {
-    return GITLAB_SYNC_MANIFEST_FILE;
+    return filePath;
   }
-  return `${normalized}/${GITLAB_SYNC_MANIFEST_FILE}`;
+  return `${normalized}/${filePath.replace(/^\/+/, '')}`;
+}
+
+function uniqueManifestPaths(basePath: string): string[] {
+  return [
+    joinRepoPath(basePath, GITLAB_SYNC_MANIFEST_FILE),
+    GITLAB_SYNC_MANIFEST_FILE,
+    joinRepoPath(basePath, GITLAB_SYNC_LEGACY_MANIFEST_FILE),
+    GITLAB_SYNC_LEGACY_MANIFEST_FILE,
+  ].filter((path, index, arr) => arr.indexOf(path) === index);
 }
 
 export async function restoreGitlabSyncVersion(params: {
@@ -35,7 +44,7 @@ export async function restoreGitlabSyncVersion(params: {
   }
 
   const { secrets, commitSha } = params;
-  const manifestPaths = [joinManifestRepoPath(secrets.basePath), GITLAB_SYNC_MANIFEST_FILE];
+  const manifestPaths = uniqueManifestPaths(secrets.basePath);
 
   try {
     let raw: string | null = null;

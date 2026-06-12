@@ -30,6 +30,12 @@ export type DiscoveredPrivateRemoteServer = {
   sampleModels: string[];
 };
 
+export type PrivateRemoteLanDiscoveryProgress = {
+  scanned: number;
+  total: number;
+  currentTarget?: string;
+};
+
 function buildBaseUrl(host: string, port: number): string {
   return `http://${host}:${port}`;
 }
@@ -77,7 +83,7 @@ export async function discoverPrivateRemoteServersOnLan(params: {
   deviceIp: string | null;
   apiKey?: string;
   signal?: AbortSignal;
-  onProgress?: (scanned: number, total: number) => void;
+  onProgress?: (progress: PrivateRemoteLanDiscoveryProgress) => void;
 }): Promise<DiscoveredPrivateRemoteServer[]> {
   const targets = buildPrivateRemoteLanProbeTargets(params.deviceIp);
   const total = targets.length;
@@ -85,7 +91,7 @@ export async function discoverPrivateRemoteServersOnLan(params: {
   const foundByUrl = new Map<string, DiscoveredPrivateRemoteServer>();
   let scanned = 0;
 
-  params.onProgress?.(0, total);
+  params.onProgress?.({ scanned: 0, total });
 
   let nextIndex = 0;
   const workerCount = Math.min(PRIVATE_REMOTE_LAN_SCAN_CONCURRENCY, targets.length);
@@ -98,9 +104,11 @@ export async function discoverPrivateRemoteServersOnLan(params: {
       if (index >= targets.length) return;
 
       const target = targets[index];
+      const currentTarget = buildBaseUrl(target.host, target.port);
+      params.onProgress?.({ scanned, total, currentTarget });
       const discovered = await probeLanTarget(target, apiKey, params.signal);
       scanned += 1;
-      params.onProgress?.(scanned, total);
+      params.onProgress?.({ scanned, total, currentTarget });
 
       if (!discovered || params.signal?.aborted) continue;
       if (!foundByUrl.has(discovered.baseUrl)) {

@@ -8,6 +8,9 @@ describe('parseShareNoteEmailPreviewVariant', () => {
   it('parses known variants', () => {
     expect(parseShareNoteEmailPreviewVariant('transcript')).toBe('transcript');
     expect(parseShareNoteEmailPreviewVariant('meeting-brief')).toBe('meeting-brief');
+    expect(parseShareNoteEmailPreviewVariant('short-note')).toBe('short-note');
+    expect(parseShareNoteEmailPreviewVariant('long-meeting')).toBe('long-meeting');
+    expect(parseShareNoteEmailPreviewVariant('en-meeting')).toBe('en-meeting');
   });
 
   it('defaults to speaker-turns', () => {
@@ -21,6 +24,9 @@ describe('getShareNoteEmailPreviewTitle', () => {
     expect(getShareNoteEmailPreviewTitle('transcript')).toContain('транскрипт');
     expect(getShareNoteEmailPreviewTitle('meeting-brief')).toContain('итоги');
     expect(getShareNoteEmailPreviewTitle('speaker-turns')).toContain('реплики');
+    expect(getShareNoteEmailPreviewTitle('short-note')).toContain('заметка');
+    expect(getShareNoteEmailPreviewTitle('long-meeting')).toContain('длинная');
+    expect(getShareNoteEmailPreviewTitle('en-meeting')).toContain('onboarding');
   });
 });
 
@@ -38,5 +44,18 @@ describe('getShareNoteEmailPreviewMarkdown', () => {
     const markdown = getShareNoteEmailPreviewMarkdown('transcript');
     expect(markdown).toContain('## Транскрипт');
     expect(markdown).toContain('[00:42]');
+  });
+
+  it('includes tasks for short note variant', () => {
+    const markdown = getShareNoteEmailPreviewMarkdown('short-note');
+    expect(markdown).toContain('## Задачи');
+    expect(markdown).toContain('- [ ]');
+  });
+
+  it('includes English speaker turns for English meeting variant', () => {
+    const markdown = getShareNoteEmailPreviewMarkdown('en-meeting');
+    expect(markdown).toContain('## Participants');
+    expect(markdown).toContain('Speaker 1:');
+    expect(markdown).toContain('Created with Voice Inbox AI');
   });
 });

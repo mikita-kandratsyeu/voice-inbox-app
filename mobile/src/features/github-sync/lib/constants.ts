@@ -1,15 +1,20 @@
-export const GITHUB_SYNC_DEFAULT_BRANCH = 'voice-inbox-ai-sync';
-export const GITHUB_SYNC_DEFAULT_REPO_NAME = 'voice-inbox-ai';
-export const GITHUB_SYNC_DEFAULT_BASE_PATH = GITHUB_SYNC_DEFAULT_REPO_NAME;
-export const GITHUB_SYNC_MANIFEST_FILE = 'manifest.json';
-export const GITHUB_SYNC_HEAD_FILE = '.voice-inbox-ai/HEAD.json';
-export const GITHUB_SYNC_NOTES_DIR = 'notes';
-export const GITHUB_SYNC_README_FILE = 'README.md';
+export {
+  REMOTE_SYNC_DEFAULT_BRANCH as GITHUB_SYNC_DEFAULT_BRANCH,
+  REMOTE_SYNC_DEFAULT_REPO_NAME as GITHUB_SYNC_DEFAULT_REPO_NAME,
+  REMOTE_SYNC_DEFAULT_BASE_PATH as GITHUB_SYNC_DEFAULT_BASE_PATH,
+  REMOTE_SYNC_LEGACY_MANIFEST_FILE as GITHUB_SYNC_LEGACY_MANIFEST_FILE,
+  REMOTE_SYNC_MANIFEST_FILE as GITHUB_SYNC_MANIFEST_FILE,
+  REMOTE_SYNC_HEAD_FILE as GITHUB_SYNC_HEAD_FILE,
+  REMOTE_SYNC_NOTES_DIR as GITHUB_SYNC_NOTES_DIR,
+  REMOTE_SYNC_README_FILE as GITHUB_SYNC_README_FILE,
+  REMOTE_SYNC_HEAD_FORMAT_VERSION as GITHUB_HEAD_FORMAT_VERSION,
+  REMOTE_SYNC_STRUCTURE_VERSION as GITHUB_SYNC_STRUCTURE_VERSION,
+} from '@/features/git-remote-sync/lib/constants';
+
 export const GITHUB_OAUTH_SCOPE = 'repo';
 export const GITHUB_API_BASE = 'https://api.github.com';
 export const GITHUB_DEVICE_CODE_URL = 'https://github.com/login/device/code';
 export const GITHUB_ACCESS_TOKEN_URL = 'https://github.com/login/oauth/access_token';
-export const GITHUB_HEAD_FORMAT_VERSION = 1;
 
 /** Per-request GitHub API timeout (prevents one hung call from blocking sync). */
 export const GITHUB_FETCH_TIMEOUT_MS = 60_000;

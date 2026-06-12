@@ -4,7 +4,7 @@ export type GitlabDeviceFlowChallenge = {
   verificationUriComplete: string;
 };
 
-/** GitHub does not pre-fill device codes from URL query params (by design). */
+/** GitLab supports verification_uri_complete with user_code in the query string. */
 export function buildGitlabVerificationUriComplete(
   verificationUri: string,
   userCode: string,

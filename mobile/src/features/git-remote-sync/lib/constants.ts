@@ -1,11 +1,18 @@
 export const REMOTE_SYNC_DEFAULT_BRANCH = 'voice-inbox-ai-sync';
 export const REMOTE_SYNC_DEFAULT_REPO_NAME = 'voice-inbox-ai';
 export const REMOTE_SYNC_DEFAULT_BASE_PATH = REMOTE_SYNC_DEFAULT_REPO_NAME;
-export const REMOTE_SYNC_MANIFEST_FILE = 'manifest.json';
-export const REMOTE_SYNC_HEAD_FILE = '.voice-inbox-ai/HEAD.json';
+export const REMOTE_SYNC_LEGACY_MANIFEST_FILE = 'manifest.json';
+export const REMOTE_SYNC_SYSTEM_DIR = '.voice-inbox-ai';
+export const REMOTE_SYNC_MANIFEST_FILE = `${REMOTE_SYNC_SYSTEM_DIR}/manifest.json`;
+export const REMOTE_SYNC_RECORDS_FILE = `${REMOTE_SYNC_SYSTEM_DIR}/records.json`;
+export const REMOTE_SYNC_FOLDERS_FILE = `${REMOTE_SYNC_SYSTEM_DIR}/folders.json`;
+export const REMOTE_SYNC_GRAPH_LAYOUTS_FILE = `${REMOTE_SYNC_SYSTEM_DIR}/graph-layouts.json`;
+export const REMOTE_SYNC_INDEX_FILE = `${REMOTE_SYNC_SYSTEM_DIR}/index.json`;
+export const REMOTE_SYNC_HEAD_FILE = `${REMOTE_SYNC_SYSTEM_DIR}/HEAD.json`;
 export const REMOTE_SYNC_NOTES_DIR = 'notes';
 export const REMOTE_SYNC_README_FILE = 'README.md';
-export const REMOTE_SYNC_HEAD_FORMAT_VERSION = 1;
+export const REMOTE_SYNC_HEAD_FORMAT_VERSION = 2;
+export const REMOTE_SYNC_STRUCTURE_VERSION = 2;
 
 export const REMOTE_SYNC_FETCH_TIMEOUT_MS = 60_000;
 export const REMOTE_SYNC_FETCH_MAX_RETRIES = 3;

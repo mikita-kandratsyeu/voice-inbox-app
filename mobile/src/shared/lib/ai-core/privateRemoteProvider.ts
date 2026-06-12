@@ -50,6 +50,7 @@ import {
 import { parseDigestResult } from './private-remote/parseDigestResult';
 import {
   PRIVATE_REMOTE_COMPLETION_TIMEOUT_MS,
+  PRIVATE_REMOTE_HEALTH_CHECK_TIMEOUT_MS,
   PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
   resolvePrivateRemoteAskMaxTokens,
   resolvePrivateRemoteJsonRepairMaxTokens,
@@ -713,7 +714,7 @@ export async function testPrivateRemoteConnection(
       const modelsResponse = await nitroFetch(modelsEndpoint, {
         method: 'GET',
         headers,
-        timeoutMs: PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
+        timeoutMs: PRIVATE_REMOTE_HEALTH_CHECK_TIMEOUT_MS,
       });
       if (isAuthFailureStatus(modelsResponse.status)) {
         return { ok: false, reason: 'auth_failed' };
@@ -760,7 +761,7 @@ export async function testPrivateRemoteConnection(
         method: 'POST',
         headers,
         body: JSON.stringify(pingPayload),
-        timeoutMs: PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
+        timeoutMs: PRIVATE_REMOTE_HEALTH_CHECK_TIMEOUT_MS,
       });
       if (isAuthFailureStatus(attempt.status)) {
         return { ok: false, reason: 'auth_failed' };

@@ -1,5 +1,7 @@
 import MarkdownIt from 'markdown-it';
 
+import { stripShareSectionMarkers } from './shareSectionMarkers';
+
 const md = new MarkdownIt({
   html: false,
   linkify: true,
@@ -51,7 +53,7 @@ const SHARE_PDF_HTML_STYLES = `
 
 /** Renders export markdown into a full HTML document for on-device PDF generation. */
 export function shareMarkdownToHtmlDocument(markdown: string, documentTitle: string): string {
-  const bodyHtml = md.render(markdown);
+  const bodyHtml = md.render(stripShareSectionMarkers(markdown));
   const safeTitle = documentTitle.replace(/[<>&]/g, '');
 
   return `<!DOCTYPE html>

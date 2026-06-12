@@ -8,6 +8,7 @@ import { useSettingsStore } from '@/entities/settings';
 import {
   type DiscoveredPrivateRemoteServer,
   discoverPrivateRemoteServersOnLan,
+  type PrivateRemoteLanDiscoveryProgress,
   type PrivateRemoteLanDiscoveryUnavailableReason,
   readDeviceLanIpv4,
   resolvePrivateRemoteLanDiscoveryUnavailableReason,
@@ -78,10 +79,8 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
   const lanDiscoveryAbortRef = React.useRef<AbortController | null>(null);
   const [lanDiscoveryVisible, setLanDiscoveryVisible] = React.useState(false);
   const [isDiscoveringLan, setIsDiscoveringLan] = React.useState(false);
-  const [lanDiscoveryProgress, setLanDiscoveryProgress] = React.useState<{
-    scanned: number;
-    total: number;
-  } | null>(null);
+  const [lanDiscoveryProgress, setLanDiscoveryProgress] =
+    React.useState<PrivateRemoteLanDiscoveryProgress | null>(null);
   const [discoveredLanServers, setDiscoveredLanServers] = React.useState<
     DiscoveredPrivateRemoteServer[]
   >([]);
@@ -506,8 +505,8 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
         deviceIp,
         apiKey: privateRemoteApiKey,
         signal: controller.signal,
-        onProgress: (scanned, total) => {
-          setLanDiscoveryProgress({ scanned, total });
+        onProgress: (progress: PrivateRemoteLanDiscoveryProgress) => {
+          setLanDiscoveryProgress(progress);
         },
       });
       if (!controller.signal.aborted) {

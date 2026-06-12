@@ -6,7 +6,7 @@ import {
   parseBackupMetadataPayload,
 } from '@/features/sync-data';
 
-import { GITHUB_SYNC_MANIFEST_FILE } from './constants';
+import { GITHUB_SYNC_LEGACY_MANIFEST_FILE, GITHUB_SYNC_MANIFEST_FILE } from './constants';
 import { getFileContentAtRef } from './githubApi';
 import type { GithubSyncSecrets } from './githubSecrets';
 
@@ -18,12 +18,21 @@ export type RestoreGithubSyncResult =
     }
   | { ok: false; code: string; message?: string };
 
-function joinManifestRepoPath(basePath: string): string {
+function joinRepoPath(basePath: string, filePath: string): string {
   const normalized = basePath.replace(/^\/+|\/+$/g, '');
   if (!normalized) {
-    return GITHUB_SYNC_MANIFEST_FILE;
+    return filePath;
   }
-  return `${normalized}/${GITHUB_SYNC_MANIFEST_FILE}`;
+  return `${normalized}/${filePath.replace(/^\/+/, '')}`;
+}
+
+function uniqueManifestPaths(basePath: string): string[] {
+  return [
+    joinRepoPath(basePath, GITHUB_SYNC_MANIFEST_FILE),
+    GITHUB_SYNC_MANIFEST_FILE,
+    joinRepoPath(basePath, GITHUB_SYNC_LEGACY_MANIFEST_FILE),
+    GITHUB_SYNC_LEGACY_MANIFEST_FILE,
+  ].filter((path, index, arr) => arr.indexOf(path) === index);
 }
 
 export async function restoreGithubSyncVersion(params: {
@@ -35,7 +44,7 @@ export async function restoreGithubSyncVersion(params: {
   }
 
   const { secrets, commitSha } = params;
-  const manifestPaths = [joinManifestRepoPath(secrets.basePath), GITHUB_SYNC_MANIFEST_FILE];
+  const manifestPaths = uniqueManifestPaths(secrets.basePath);
 
   try {
     let raw: string | null = null;

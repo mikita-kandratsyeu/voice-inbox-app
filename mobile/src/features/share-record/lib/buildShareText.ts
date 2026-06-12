@@ -131,6 +131,29 @@ function pushMeta(lines: string[], record: VoiceRecord, ctx: ShareExportContext)
   lines.push(`**${i18n.t('share.recordIdLabel')}:** \`${record.id}\``);
 }
 
+function pushEmailMeta(lines: string[], record: VoiceRecord, ctx: ShareExportContext): void {
+  if (!ctx.forEmail) return;
+
+  const locale = i18n.language ?? 'en';
+  const dateValue = record.createdAt ? formatShortDate(record.createdAt, locale) : record.createdAt;
+
+  lines.push(`**${i18n.t('share.dateLabel')}:** ${dateValue}`);
+  lines.push(`**${i18n.t('share.durationLabel')}:** ${record.duration}`);
+
+  const folder = folderNameFor(record, ctx);
+  if (folder) {
+    lines.push(`**${i18n.t('share.folderLabel')}:** ${folder}`);
+  }
+
+  if (record.classification) {
+    lines.push(
+      `**${i18n.t('share.classificationLabel')}:** ${i18n.t(`classification.${record.classification}`)}`,
+    );
+  }
+
+  lines.push('');
+}
+
 const pushTags = (lines: string[], record: VoiceRecord): void => {
   if (record.tags && record.tags.length > 0) {
     lines.push('');
@@ -313,6 +336,7 @@ const pushRecordHeader = (lines: string[], record: VoiceRecord, ctx: ShareExport
 function buildNoteBrief(record: VoiceRecord, ctx: ShareExportContext): string {
   const lines: string[] = [];
   pushRecordHeader(lines, record, ctx);
+  pushEmailMeta(lines, record, ctx);
   pushTags(lines, record);
   pushRecordingMarks(lines, record);
   pushSummary(lines, record);
@@ -328,6 +352,7 @@ function buildNoteBrief(record: VoiceRecord, ctx: ShareExportContext): string {
 function buildMeetingBrief(record: VoiceRecord, ctx: ShareExportContext): string {
   const lines: string[] = [];
   pushRecordHeader(lines, record, ctx);
+  pushEmailMeta(lines, record, ctx);
   lines.push(`_${i18n.t('share.meetingBriefSubtitle')}_`);
   lines.push('');
   pushTags(lines, record);
@@ -346,6 +371,7 @@ function buildMeetingBrief(record: VoiceRecord, ctx: ShareExportContext): string
 function buildMeetingSpeakerTurnsOnly(record: VoiceRecord, ctx: ShareExportContext): string {
   const lines: string[] = [];
   pushRecordHeader(lines, record, ctx);
+  pushEmailMeta(lines, record, ctx);
   pushTags(lines, record);
   pushMeetingDialogueSectionHeader(lines, ctx);
   const body = record.meetingDialogue?.trim();
@@ -364,6 +390,7 @@ function buildMeetingSpeakerTurnsOnly(record: VoiceRecord, ctx: ShareExportConte
 function buildEmailBrief(record: VoiceRecord, ctx: ShareExportContext): string {
   const lines: string[] = [];
   pushRecordHeader(lines, record, ctx);
+  pushEmailMeta(lines, record, ctx);
   const isMeeting = record.classification === 'meeting' || Boolean(record.meetingDialogue?.trim());
   pushTags(lines, record);
   pushRecordingMarks(lines, record);

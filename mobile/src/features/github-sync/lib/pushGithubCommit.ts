@@ -34,6 +34,24 @@ export type PushGithubCommitResult =
   | { ok: true; commitSha: string; alreadyUpToDate: boolean }
   | { ok: false; code: string; message?: string };
 
+function isNoteMarkdownPath(path: string): boolean {
+  const normalized = path.replace(/^\/+/, '');
+  return (
+    normalized.endsWith('.md') &&
+    (normalized.startsWith('notes/') || normalized.includes('/notes/'))
+  );
+}
+
+function addPathVariants(out: Set<string>, path: string, basePath: string): void {
+  const normalizedBase = basePath.replace(/^\/+|\/+$/g, '');
+  out.add(path);
+  if (normalizedBase && path.startsWith(`${normalizedBase}/`)) {
+    out.add(path.slice(normalizedBase.length + 1));
+  } else if (normalizedBase) {
+    out.add(`${normalizedBase}/${path.replace(/^\/+/, '')}`);
+  }
+}
+
 async function pushGithubCommitInternal(params: {
   secrets: GithubSyncSecrets;
   records: VoiceRecord[];
@@ -95,11 +113,14 @@ async function pushGithubCommitInternal(params: {
           parentSha,
           basePath,
         );
-        const currentNotePaths = new Set(
-          [...snapshot.files.keys()].filter((p) => p.includes('/notes/') && p.endsWith('.md')),
-        );
+        const currentNotePaths = new Set<string>();
+        for (const path of snapshot.files.keys()) {
+          if (isNoteMarkdownPath(path)) {
+            addPathVariants(currentNotePaths, path, basePath);
+          }
+        }
         for (const path of existingPaths) {
-          if (path.includes('/notes/') && path.endsWith('.md') && !currentNotePaths.has(path)) {
+          if (isNoteMarkdownPath(path) && !currentNotePaths.has(path)) {
             deletions.push(path);
           }
         }

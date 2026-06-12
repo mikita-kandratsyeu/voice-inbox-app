@@ -1,5 +1,6 @@
 import { DEFAULT_LOCAL_AI_MODEL_ID } from '@/entities/settings/model/constants';
 
+import { PRIVATE_REMOTE_HEALTH_CHECK_TIMEOUT_MS } from '../private-remote/privateRemoteConstants';
 import {
   listPrivateRemoteModels,
   resetPrivateRemoteFormatCapabilityCacheForTests,
@@ -312,6 +313,38 @@ describe('testPrivateRemoteConnection', () => {
 
     expect(result.ok).toBe(true);
     expect(completionCalls).toBe(2);
+  });
+
+  it('uses a short timeout for manual server checks', async () => {
+    mockNitroFetch.mockImplementation(async (url) => {
+      const urlText = String(url);
+      if (urlText.endsWith('/models')) {
+        return {
+          ok: true,
+          json: async () => ({ data: [{ id: 'gpt-test' }] }),
+        } as Response;
+      }
+      return mockChatCompletion({ content: 'pong' });
+    });
+
+    const result = await testPrivateRemoteConnection({
+      privateRemoteBaseUrl: 'http://127.0.0.1:1234',
+      privateRemoteApiKey: '',
+      privateRemoteModel: 'gpt-test',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(mockNitroFetch).toHaveBeenCalledTimes(2);
+    expect(mockNitroFetch).toHaveBeenNthCalledWith(
+      1,
+      'http://127.0.0.1:1234/v1/models',
+      expect.objectContaining({ timeoutMs: PRIVATE_REMOTE_HEALTH_CHECK_TIMEOUT_MS }),
+    );
+    expect(mockNitroFetch).toHaveBeenNthCalledWith(
+      2,
+      'http://127.0.0.1:1234/v1/chat/completions',
+      expect.objectContaining({ timeoutMs: PRIVATE_REMOTE_HEALTH_CHECK_TIMEOUT_MS }),
+    );
   });
 });
 

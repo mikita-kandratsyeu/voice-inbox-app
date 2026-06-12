@@ -1,4 +1,4 @@
-import { GITHUB_SYNC_MANIFEST_FILE } from './constants';
+import { GITHUB_SYNC_LEGACY_MANIFEST_FILE } from './constants';
 import { type GithubCommitSummary, listGithubCommits } from './githubApi';
 import type { GithubSyncSecrets } from './githubSecrets';
 
@@ -12,7 +12,7 @@ export async function fetchGithubSyncHistory(
     secrets.owner,
     secrets.repo,
     secrets.branch,
-    GITHUB_SYNC_MANIFEST_FILE,
+    GITHUB_SYNC_LEGACY_MANIFEST_FILE,
     page,
   );
 }

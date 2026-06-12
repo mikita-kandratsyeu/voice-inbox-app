@@ -1872,6 +1872,7 @@
         "title": "Servers on your network",
         "subtitle": "Tap a server to use its URL and first available model.",
         "progress": "Checked {{scanned}} of {{total}}.",
+        "scanningTarget": "Scanning {{target}}",
         "empty": "No compatible servers found. Make sure Ollama or LM Studio is running, bound to your network, and not blocked by a firewall.",
         "scanAgain": "Scan again",
         "limitedToLocalhost": "Could not read your Wi‑Fi IP — scanning this device only (127.0.0.1).",
