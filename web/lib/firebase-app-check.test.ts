@@ -5,6 +5,39 @@ import { isFirebaseAppCheckSkipped, requireAppCheckForToken } from './firebase-a
 const verifyToken = jest.fn();
 const recordAppCheckFailure = jest.fn();
 
+type TestEnv = {
+  NODE_ENV?: string;
+  SKIP_FIREBASE_APP_CHECK?: string;
+};
+
+function setTestEnv(overrides: TestEnv): () => void {
+  const env = process.env as TestEnv;
+  const saved: TestEnv = {
+    NODE_ENV: env.NODE_ENV,
+    SKIP_FIREBASE_APP_CHECK: env.SKIP_FIREBASE_APP_CHECK,
+  };
+
+  for (const key of Object.keys(overrides) as (keyof TestEnv)[]) {
+    const value = overrides[key];
+    if (value === undefined) {
+      delete env[key];
+    } else {
+      env[key] = value;
+    }
+  }
+
+  return () => {
+    for (const key of Object.keys(saved) as (keyof TestEnv)[]) {
+      const value = saved[key];
+      if (value === undefined) {
+        delete env[key];
+      } else {
+        env[key] = value;
+      }
+    }
+  };
+}
+
 jest.mock('@/lib/firebase-admin', () => ({
   isFirebaseAdminConfigured: jest.fn(() => true),
   getFirebaseAdmin: jest.fn(() => ({
@@ -21,65 +54,47 @@ jest.mock('@/lib/firebase-app-check-app-ids', () => ({
 }));
 
 describe('isFirebaseAppCheckSkipped', () => {
-  const originalNodeEnv = process.env.NODE_ENV;
-  const originalSkip = process.env.SKIP_FIREBASE_APP_CHECK;
-
-  afterEach(() => {
-    process.env.NODE_ENV = originalNodeEnv;
-    if (originalSkip === undefined) {
-      delete process.env.SKIP_FIREBASE_APP_CHECK;
-    } else {
-      process.env.SKIP_FIREBASE_APP_CHECK = originalSkip;
-    }
-  });
-
   it('is true only in development with SKIP_FIREBASE_APP_CHECK=1', () => {
-    process.env.NODE_ENV = 'development';
-    process.env.SKIP_FIREBASE_APP_CHECK = '1';
-    expect(isFirebaseAppCheckSkipped()).toBe(true);
+    const restore = setTestEnv({
+      NODE_ENV: 'development',
+      SKIP_FIREBASE_APP_CHECK: '1',
+    });
 
-    process.env.SKIP_FIREBASE_APP_CHECK = '0';
-    expect(isFirebaseAppCheckSkipped()).toBe(false);
+    try {
+      expect(isFirebaseAppCheckSkipped()).toBe(true);
 
-    process.env.NODE_ENV = 'production';
-    process.env.SKIP_FIREBASE_APP_CHECK = '1';
-    expect(isFirebaseAppCheckSkipped()).toBe(false);
+      setTestEnv({ SKIP_FIREBASE_APP_CHECK: '0' });
+      expect(isFirebaseAppCheckSkipped()).toBe(false);
+
+      setTestEnv({ NODE_ENV: 'production', SKIP_FIREBASE_APP_CHECK: '1' });
+      expect(isFirebaseAppCheckSkipped()).toBe(false);
+    } finally {
+      restore();
+    }
   });
 });
 
 describe('requireAppCheckForToken', () => {
-  const originalNodeEnv = process.env.NODE_ENV;
-  const originalSkip = process.env.SKIP_FIREBASE_APP_CHECK;
-
   beforeEach(() => {
     verifyToken.mockReset();
     recordAppCheckFailure.mockReset();
     verifyToken.mockResolvedValue({ appId: '1:828265085007:ios:1e2559c39ffa5bdbced23a' });
-    process.env.NODE_ENV = originalNodeEnv;
-    if (originalSkip === undefined) {
-      delete process.env.SKIP_FIREBASE_APP_CHECK;
-    } else {
-      process.env.SKIP_FIREBASE_APP_CHECK = originalSkip;
-    }
-  });
-
-  afterEach(() => {
-    process.env.NODE_ENV = originalNodeEnv;
-    if (originalSkip === undefined) {
-      delete process.env.SKIP_FIREBASE_APP_CHECK;
-    } else {
-      process.env.SKIP_FIREBASE_APP_CHECK = originalSkip;
-    }
   });
 
   it('skips verification in development when SKIP_FIREBASE_APP_CHECK=1', async () => {
-    process.env.NODE_ENV = 'development';
-    process.env.SKIP_FIREBASE_APP_CHECK = '1';
+    const restore = setTestEnv({
+      NODE_ENV: 'development',
+      SKIP_FIREBASE_APP_CHECK: '1',
+    });
 
-    const response = await requireAppCheckForToken(new Request('https://example.com/api/token'));
-    expect(response).toBeNull();
-    expect(verifyToken).not.toHaveBeenCalled();
-    expect(recordAppCheckFailure).not.toHaveBeenCalled();
+    try {
+      const response = await requireAppCheckForToken(new Request('https://example.com/api/token'));
+      expect(response).toBeNull();
+      expect(verifyToken).not.toHaveBeenCalled();
+      expect(recordAppCheckFailure).not.toHaveBeenCalled();
+    } finally {
+      restore();
+    }
   });
 
   it('rejects when header is missing', async () => {

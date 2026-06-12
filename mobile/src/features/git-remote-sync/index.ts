@@ -1,4 +1,8 @@
 export {
+  applyRemoteSyncAuxiliaryData,
+  type RemoteSyncAuxiliaryData,
+} from './lib/applyRemoteSyncAuxiliaryData';
+export {
   buildRemoteSnapshot,
   type RemoteSnapshot,
   type RemoteSyncManifest,
@@ -14,28 +18,19 @@ export {
   REMOTE_SYNC_DEFAULT_BRANCH,
   REMOTE_SYNC_DEFAULT_REPO_NAME,
 } from './lib/constants';
-export {
-  applyRemoteSyncAuxiliaryData,
-  type RemoteSyncAuxiliaryData,
-} from './lib/applyRemoteSyncAuxiliaryData';
 export { finalizeRemoteSyncRestore } from './lib/finalizeRemoteSyncRestore';
-export { loadRecordsForRemoteSync } from './lib/loadRecordsForRemoteSync';
-export {
-  buildRemoteSyncAiSettings,
-  parseRemoteSyncAiSettings,
-  type RemoteSyncAiSettingsPayload,
-} from './lib/remoteSyncAiSettings';
-export {
-  buildRemoteSyncPrivateProfiles,
-  parseRemoteSyncPrivateProfiles,
-  type RemoteSyncPrivateProfilesPayload,
-} from './lib/remoteSyncPrivateProfiles';
 export { formatRemoteSyncCommitMessage } from './lib/formatRemoteSyncCommitMessage';
+export { loadRecordsForRemoteSync } from './lib/loadRecordsForRemoteSync';
 export {
   pushRemoteCommit,
   type PushRemoteCommitResult,
   type RemoteSyncPushAdapter,
 } from './lib/pushRemoteCommit';
+export {
+  buildRemoteSyncAiSettings,
+  parseRemoteSyncAiSettings,
+  type RemoteSyncAiSettingsPayload,
+} from './lib/remoteSyncAiSettings';
 export {
   getRemoteSyncPinnedRepos,
   setRemoteSyncPinnedRepos,
@@ -45,6 +40,11 @@ export {
   REMOTE_SYNC_MAX_PINNED_REPOS,
   toggleRemoteSyncPinnedRepo,
 } from './lib/remoteSyncPinnedReposPolicy';
+export {
+  buildRemoteSyncPrivateProfiles,
+  parseRemoteSyncPrivateProfiles,
+  type RemoteSyncPrivateProfilesPayload,
+} from './lib/remoteSyncPrivateProfiles';
 export {
   addPathVariants,
   isNoteMarkdownPath,

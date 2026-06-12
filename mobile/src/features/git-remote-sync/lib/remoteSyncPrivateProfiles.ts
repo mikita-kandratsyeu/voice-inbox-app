@@ -66,7 +66,9 @@ function parseProfileEntry(raw: unknown): RemoteSyncPrivateProfileEntry | null {
   };
 }
 
-export function parseRemoteSyncPrivateProfiles(raw: unknown): RemoteSyncPrivateProfilesPayload | null {
+export function parseRemoteSyncPrivateProfiles(
+  raw: unknown,
+): RemoteSyncPrivateProfilesPayload | null {
   if (!isRecord(raw) || raw.version !== REMOTE_SYNC_PRIVATE_PROFILES_VERSION) {
     return null;
   }
@@ -103,7 +105,9 @@ export function applyRemoteSyncPrivateProfiles(payload: RemoteSyncPrivateProfile
     const existing = existingBySignature.get(signature);
     const id = existing?.id ?? profile.id;
     const name =
-      profile.name.length > 0 ? profile.name : defaultRemoteProfileName(profile.baseUrl, profile.model);
+      profile.name.length > 0
+        ? profile.name
+        : defaultRemoteProfileName(profile.baseUrl, profile.model);
     const nextProfile: PrivateRemoteProfile = {
       id,
       name,

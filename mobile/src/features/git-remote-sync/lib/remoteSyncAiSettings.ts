@@ -105,10 +105,7 @@ function readEnum<T extends string>(value: unknown, allowed: Set<T>, fallback: T
   return isString(value) && allowed.has(value as T) ? (value as T) : fallback;
 }
 
-function readOptionalEnum<T extends string>(
-  value: unknown,
-  allowed: Set<T>,
-): T | null | undefined {
+function readOptionalEnum<T extends string>(value: unknown, allowed: Set<T>): T | null | undefined {
   if (value === null) return null;
   return isString(value) && allowed.has(value as T) ? (value as T) : undefined;
 }
@@ -184,7 +181,11 @@ export function parseRemoteSyncAiSettings(raw: unknown): RemoteSyncAiSettingsPay
       TRANSCRIPTION_LANGUAGES,
       current.transcriptionLanguage,
     ),
-    selectedWhisperModel: readEnum(raw.selectedWhisperModel, WHISPER_MODELS, current.selectedWhisperModel),
+    selectedWhisperModel: readEnum(
+      raw.selectedWhisperModel,
+      WHISPER_MODELS,
+      current.selectedWhisperModel,
+    ),
     whisperModelWeightsFormat: readEnum(
       raw.whisperModelWeightsFormat,
       WHISPER_FORMATS,
@@ -226,7 +227,11 @@ export function parseRemoteSyncAiSettings(raw: unknown): RemoteSyncAiSettingsPay
       CAPABILITY_TIERS,
       current.privateCapabilityTier,
     ),
-    privateAiProvider: readEnum(raw.privateAiProvider, PRIVATE_PROVIDERS, current.privateAiProvider),
+    privateAiProvider: readEnum(
+      raw.privateAiProvider,
+      PRIVATE_PROVIDERS,
+      current.privateAiProvider,
+    ),
     privateRemoteBaseUrl: isString(raw.privateRemoteBaseUrl)
       ? raw.privateRemoteBaseUrl
       : current.privateRemoteBaseUrl,
