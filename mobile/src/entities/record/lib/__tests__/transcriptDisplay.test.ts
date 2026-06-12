@@ -1,5 +1,8 @@
 import type { TranscriptSegment } from '../../model/types';
-import { shouldOpenSegmentTranscriptEditor, shouldUseTranscriptSegmentView } from '../transcriptDisplay';
+import {
+  shouldOpenSegmentTranscriptEditor,
+  shouldUseTranscriptSegmentView,
+} from '../transcriptDisplay';
 
 const segment = (overrides: Partial<TranscriptSegment> = {}): TranscriptSegment => ({
   id: 'seg-1',

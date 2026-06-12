@@ -2,8 +2,6 @@ import dayjs from 'dayjs';
 import type { TFunction } from 'i18next';
 
 import type { TaskItem, VoiceRecord } from '@/entities/record';
-
-import { countRecordCardTextFragments } from './textNoteFragments';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import { parseTaskDeadline } from '@/shared/lib/parseTaskDeadline';
 import {

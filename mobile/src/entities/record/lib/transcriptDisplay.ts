@@ -1,5 +1,5 @@
-import { countRecordCardTextFragments } from './textNoteFragments';
 import type { TranscriptSegment } from '../model/types';
+import { countRecordCardTextFragments } from './textNoteFragments';
 
 /** True when transcript tab should use timed segment cards + karaoke highlight. */
 export function shouldUseTranscriptSegmentView(

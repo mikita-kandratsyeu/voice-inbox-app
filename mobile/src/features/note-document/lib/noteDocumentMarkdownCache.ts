@@ -6,7 +6,6 @@ import { resolveShareExportContext } from '@/features/share-record/lib/shareExpo
 import { buildNoteDocumentMarkdown } from './buildNoteDocumentMarkdown';
 import { buildNoteDocumentCacheKey } from './noteDocumentCacheKey';
 import {
-  getCachedNoteDocumentMarkdown,
   hasCachedNoteDocumentMarkdown,
   setCachedNoteDocumentMarkdown,
 } from './noteDocumentMarkdownStore';

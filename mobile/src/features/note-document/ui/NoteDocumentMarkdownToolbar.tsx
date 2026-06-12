@@ -15,11 +15,7 @@ const TOOLBAR_FLOAT_BOTTOM_PAD = 10;
 const TOOLBAR_ROW_INNER_HEIGHT = 4 * 2 + IOS_MIN_TOUCH_TARGET;
 const TOOLBAR_ICON_SIZE = 18;
 
-export type EnrichedMarkdownToolbarAction =
-  | 'bold'
-  | 'italic'
-  | 'strikethrough'
-  | 'underline';
+export type EnrichedMarkdownToolbarAction = 'bold' | 'italic' | 'strikethrough' | 'underline';
 
 const TOOLBAR_ACTIONS: EnrichedMarkdownToolbarAction[] = [
   'bold',
@@ -48,7 +44,10 @@ const TOOLBAR_ICONS = {
 const TOOLBAR_DIVIDER_HEIGHT = 1;
 
 export const NOTE_DOCUMENT_TOOLBAR_FALLBACK_HEIGHT =
-  TOOLBAR_FLOAT_TOP_PAD + TOOLBAR_FLOAT_BOTTOM_PAD + TOOLBAR_ROW_INNER_HEIGHT + TOOLBAR_DIVIDER_HEIGHT;
+  TOOLBAR_FLOAT_TOP_PAD +
+  TOOLBAR_FLOAT_BOTTOM_PAD +
+  TOOLBAR_ROW_INNER_HEIGHT +
+  TOOLBAR_DIVIDER_HEIGHT;
 
 type NoteDocumentMarkdownToolbarProps = {
   color: Colors;

@@ -1,8 +1,5 @@
 import type { VoiceRecord } from '@/entities/record';
-import {
-  buildShareText,
-  type ShareBriefTemplate,
-} from '@/features/share-record/lib/buildShareText';
+import { buildShareText } from '@/features/share-record/lib/buildShareText';
 import {
   resolveShareExportContext,
   type ShareExportContext,
