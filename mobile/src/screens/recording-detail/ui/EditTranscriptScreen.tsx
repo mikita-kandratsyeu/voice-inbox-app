@@ -98,9 +98,7 @@ export const EditTranscriptScreen = () => {
   return (
     <View style={{ flex: 1, backgroundColor: color.background.primary }}>
       <ScreenHeader
-        title={
-          useSegmentView ? t('recordingDetail.editTranscriptTitle') : t('recordingDetail.editText')
-        }
+        title={t('recordingDetail.editTranscript')}
         onBack={handleBack}
         dismissKeyboardOnPress
         rightSlot={

@@ -330,9 +330,7 @@ export const TranscriptTab = ({
           variant="secondary"
           size="lg"
           icon={<Pencil size={15} color={color.text.primary} strokeWidth={2} />}
-          label={
-            useSegmentView ? t('recordingDetail.editTranscript') : t('recordingDetail.editText')
-          }
+          label={t('recordingDetail.editTranscript')}
           color={color}
           onPress={onEditTranscript}
           disabled={isAiProcessing}
