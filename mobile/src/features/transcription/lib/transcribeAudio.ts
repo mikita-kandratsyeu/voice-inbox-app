@@ -7,11 +7,10 @@ import { createWavChunk, splitAudioIntoChunks } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
 import { isArray, isRecord, isString } from '@/shared/lib/type-guards';
 
+import { MIN_TRANSCRIBE_MS } from '../config/constants';
 import { TranscriptionError } from './transcriptionErrors';
 import { canRunWhisperGpuWork } from './whisperAppState';
 import { beginWhisperNativeWork, endWhisperNativeWork } from './whisperNativeLifecycle';
-
-const MIN_DURATION_MS = 500;
 
 const CHUNK_THRESHOLD_MS = 30_000;
 
@@ -184,7 +183,7 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
         throw new TranscriptionError('native_abort');
       }
 
-      if (durationMs < MIN_DURATION_MS) {
+      if (durationMs < MIN_TRANSCRIBE_MS) {
         return { segments: [], fullText: '', skipped: true };
       }
 

@@ -2,6 +2,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import {
   type AiExecutionMode,
+  hydratePrivateRemoteWorkingConfig,
   isPrivateCustomServerMode,
   type PrivateAiProvider,
 } from '@/entities/settings';
@@ -45,7 +46,8 @@ export async function dispatchAutoAiAfterTranscription(input: {
   if (isPrivateServer) {
     if (!shouldApplyPrivateServerAutoAi(autoAiAfterTranscription, isProActive)) return;
 
-    const reachable = await isPrivateRemoteServerReachable();
+    hydratePrivateRemoteWorkingConfig();
+    const reachable = await isPrivateRemoteServerReachable({ forceRefresh: true });
     if (reachable) {
       const processed = await processRecordViaPrivateAiBridge(record);
       if (processed) return;

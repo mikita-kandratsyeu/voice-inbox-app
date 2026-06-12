@@ -27,6 +27,7 @@ import type {
   TaskStrictness,
 } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
+import { isMeetingSpeakerSettingsAvailable } from '@/features/ai-processing/lib/meetingSpeakerBreakdown';
 import { type CloudAiKvTtlSeconds } from '@/entities/settings/lib/cloudAiKvTtl';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
@@ -169,7 +170,11 @@ export const AiSettingsScreen = () => {
   const { isProActive } = useProEntitlement();
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const customProviderLocked = !isProActive;
-  const showMeetingSpeakerSettings = isProActive && !isPrivateMode;
+  const showMeetingSpeakerSettings = isMeetingSpeakerSettingsAvailable(
+    aiExecutionMode,
+    privateAiProvider,
+    isProActive,
+  );
   const [privateServerProSheet, setPrivateServerProSheet] = React.useState(false);
   const [isAutoTestingProviderConnection, setIsAutoTestingProviderConnection] =
     React.useState(false);

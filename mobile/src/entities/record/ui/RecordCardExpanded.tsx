@@ -132,7 +132,8 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
     aiProcessing ||
     aiError ||
     translationProcessing ||
-    translationError;
+    translationError ||
+    item.summaryStatus === 'queued';
 
   const categoryLabel = hideCategoryLabel
     ? null

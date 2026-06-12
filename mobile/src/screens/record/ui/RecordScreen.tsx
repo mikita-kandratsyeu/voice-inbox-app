@@ -18,7 +18,11 @@ import {
 } from '@/features/app-storefront';
 import { useProEntitlement } from '@/features/pro-license';
 import { useRecordingDeeplinkStore } from '@/features/recording-deeplink/model/store';
-import { useTranscription } from '@/features/transcription';
+import {
+  notifyAutoTranscriptionTooShort,
+  tryScheduleAutoTranscription,
+  useTranscription,
+} from '@/features/transcription';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
 import {
   runAfterNavigationTransition,
@@ -138,7 +142,15 @@ export const RecordScreen = () => {
 
         const persist = useSettingsStore.getState().autoTranscribeOnSave;
         if (shouldApplyAutoTranscribeOnSave(persist, isProActive, aiExecutionMode)) {
-          startTranscription(record);
+          const scheduleResult = tryScheduleAutoTranscription(
+            record,
+            useRecordStore.getState().records,
+            (nextRecord) => startTranscription(nextRecord, undefined, { enforceMinDuration: true }),
+            record,
+          );
+          if (scheduleResult === 'too_short') {
+            notifyAutoTranscriptionTooShort();
+          }
         }
       };
 
@@ -308,7 +320,15 @@ export const RecordScreen = () => {
     const recordWithPath: VoiceRecord = { ...record, audioPath };
     addRecord(recordWithPath);
     if (applyAutoTranscribe) {
-      startTranscription(recordWithPath);
+      const scheduleResult = tryScheduleAutoTranscription(
+        recordWithPath,
+        useRecordStore.getState().records,
+        (nextRecord) => startTranscription(nextRecord, undefined, { enforceMinDuration: true }),
+        recordWithPath,
+      );
+      if (scheduleResult === 'too_short') {
+        notifyAutoTranscriptionTooShort();
+      }
     }
   };
 

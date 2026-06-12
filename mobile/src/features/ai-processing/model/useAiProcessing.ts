@@ -13,6 +13,7 @@ import {
   applyAiSummaryResult,
   existingTaskTextsForRecord,
 } from '@/features/ai-processing/lib/applyAiSummaryResult';
+import { shouldIncludeMeetingSpeakerBreakdown } from '@/features/ai-processing/lib/meetingSpeakerBreakdown';
 import {
   clearCloudSummarizeInFlight,
   isCloudSummarizeInFlight,
@@ -291,7 +292,7 @@ export const useAiProcessing = () => {
       abortHandlesRef.current.set(record.id, abortHandle);
       let cloudProgressTimer: ReturnType<typeof setInterval> | null = null;
       let cloudDisplayedPct = 5;
-      if (!isPrivateAi) {
+      if (!isPrivateAi || isPrivateRemote) {
         cloudProgressTimer = setInterval(() => {
           if (abortHandle.cancelled) return;
           cloudDisplayedPct = Math.min(92, cloudDisplayedPct + 2 + Math.floor(Math.random() * 5));
@@ -335,10 +336,16 @@ export const useAiProcessing = () => {
         const includeMeetingPreset = isProActive && recordIsMeeting;
         const meetingSummaryTemplate =
           snapshot?.meetingSummaryTemplate ?? record.meetingSummaryTemplate;
-        const shouldRefreshSpeakersOnRegen =
-          aiExecutionMode !== 'private_experimental' &&
-          (autoRefreshMeetingSpeakersOnRegen || !wasSummaryRegeneration);
-        includeMeetingSpeakerBreakdown = includeMeetingPreset && shouldRefreshSpeakersOnRegen;
+        includeMeetingSpeakerBreakdown =
+          includeMeetingPreset &&
+          shouldIncludeMeetingSpeakerBreakdown({
+            isProActive,
+            recordIsMeeting,
+            wasSummaryRegeneration,
+            aiExecutionMode,
+            privateAiProvider: effectivePrivateAiProvider,
+            autoRefreshMeetingSpeakersOnRegen,
+          });
 
         const getLatestRecord = (id: string) =>
           useRecordStore.getState().records.find((r) => r.id === id);

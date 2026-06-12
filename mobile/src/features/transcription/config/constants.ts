@@ -1,3 +1,6 @@
+/** Minimum audio length for Whisper transcription (auto and manual). */
+export const MIN_TRANSCRIBE_MS = 2_000;
+
 export const WHISPER_IDLE_RELEASE_MS = 2 * 60 * 1000;
 export const WHISPER_WARM_IDLE_RELEASE_MS = 5 * 60 * 1000;
 export const WHISPER_LOW_POWER_IDLE_RELEASE_MS = 30 * 1000;

@@ -16,6 +16,7 @@ import {
   getAdaptiveCheckpointInterval,
   getDevicePerformanceProfile,
 } from '../lib/devicePerformanceProfile';
+import { isTooShortForTranscription } from '../lib/transcriptionDuration';
 import { getWhisperContext, resetWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
 import { resolveTranscriptionChunkProfile } from '../lib/resolveTranscriptionChunkProfile';
 import { transcribeAudio } from '../lib/transcribeAudio';
@@ -113,6 +114,11 @@ const wait = (ms: number): Promise<void> =>
     setTimeout(resolve, ms);
   });
 
+export type StartTranscriptionOptions = {
+  /** When true, returns before loading Whisper if the recording is below MIN_TRANSCRIBE_MS. */
+  enforceMinDuration?: boolean;
+};
+
 const shouldFullyResetWhisperBeforeStart = (record: VoiceRecord): boolean => {
   const runtime = getTranscriptionRuntimeSnapshot();
   return (
@@ -144,7 +150,15 @@ export const useTranscription = () => {
   const currentRecordIdRef = useRef<string | null>(null);
 
   const startTranscription = useCallback(
-    async (record: VoiceRecord, languageOverride?: string): Promise<void> => {
+    async (
+      record: VoiceRecord,
+      languageOverride?: string,
+      options?: StartTranscriptionOptions,
+    ): Promise<void> => {
+      if (options?.enforceMinDuration && isTooShortForTranscription(record.durationMs)) {
+        return;
+      }
+
       void cancelTranscriptionPausedNotification(record.id).catch(() => {});
       const shouldResetBeforeStart =
         pendingWhisperResetRecordIds.has(record.id) ||

@@ -17,7 +17,11 @@ import {
 } from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
-import { isTranscriptionBlockedForRecord, useTranscription } from '@/features/transcription';
+import {
+  notifyAutoTranscriptionTooShort,
+  tryScheduleAutoTranscription,
+  useTranscription,
+} from '@/features/transcription';
 import { generateRecordId } from '@/screens/record/lib/generateRecordId';
 import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
 import { hapticError, hapticMedium, IS_IOS, useNetworkStatus } from '@/shared/lib';
@@ -214,9 +218,14 @@ export function useImportAudioFile() {
       await addRecord(record);
 
       if (applyAutoTranscribe) {
-        const records = useRecordStore.getState().records;
-        if (!isTranscriptionBlockedForRecord(record.id, records)) {
-          startTranscription(record);
+        const scheduleResult = tryScheduleAutoTranscription(
+          record,
+          useRecordStore.getState().records,
+          (nextRecord) => startTranscription(nextRecord, undefined, { enforceMinDuration: true }),
+          record,
+        );
+        if (scheduleResult === 'too_short') {
+          notifyAutoTranscriptionTooShort();
         }
       }
 

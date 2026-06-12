@@ -18,6 +18,11 @@ export {
 export { isDigestAiEnabled } from './lib/isDigestAiEnabled';
 export { isPrivateCustomServerMode } from './lib/isPrivateCustomServerMode';
 export {
+  hydratePrivateRemoteWorkingConfig,
+  resolvePrivateRemoteConnectionConfig,
+  type PrivateRemoteConnectionConfig,
+} from './lib/resolvePrivateRemoteConnectionConfig';
+export {
   getOnboardingCuratedCloudModels,
   ONBOARDING_CURATED_CLOUD_MODEL_IDS,
   shouldShowOnboardingAllModelsHint,

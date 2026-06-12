@@ -2,6 +2,7 @@ export { dispatchAutoAiAfterTranscription } from './lib/dispatchAutoAiAfterTrans
 export {
   drainPrivateAiTaskQueue,
   drainSinglePrivateAiTask,
+  type DrainQueueResult,
   scheduleDrainPrivateAiTaskQueue,
 } from './lib/privateAiTaskDrainCoordinator';
 export {

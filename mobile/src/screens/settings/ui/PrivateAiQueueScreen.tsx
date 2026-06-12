@@ -106,18 +106,33 @@ export const PrivateAiQueueScreen = () => {
     [loadQueue, t],
   );
 
+  const showServerUnreachableAlert = useCallback(() => {
+    Alert.alert(t('privateAiQueue.serverUnreachableTitle'), t('privateAiQueue.serverUnreachableMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('privateAiQueue.openServerSettings'),
+        onPress: () => navigation.navigate('PrivateRemoteServer'),
+      },
+    ]);
+  }, [navigation, t]);
+
   const onRunOne = useCallback(
     (task: PrivateAiQueuedTask) => {
       hapticSelection();
       setRunningTaskId(task.id);
       void drainSinglePrivateAiTask(task.id)
+        .then((result) => {
+          if (result === 'server_unreachable') {
+            showServerUnreachableAlert();
+          }
+        })
         .catch(() => {})
         .finally(() => {
           setRunningTaskId(null);
           void loadQueue();
         });
     },
-    [loadQueue],
+    [loadQueue, showServerUnreachableAlert],
   );
 
   const onRunAll = useCallback(() => {
@@ -125,14 +140,22 @@ export const PrivateAiQueueScreen = () => {
     hapticSelection();
     setRunningAll(true);
     setRunAllProgress({ current: 0, total: items.length });
-    void drainPrivateAiTaskQueue()
+    void drainPrivateAiTaskQueue({
+      forceReachabilityCheck: true,
+      onProgress: (current, total) => setRunAllProgress({ current, total }),
+    })
+      .then((result) => {
+        if (result === 'server_unreachable') {
+          showServerUnreachableAlert();
+        }
+      })
       .catch(() => {})
       .finally(() => {
         setRunningAll(false);
         setRunAllProgress({ current: 0, total: 0 });
         void loadQueue();
       });
-  }, [items.length, loadQueue]);
+  }, [items.length, loadQueue, showServerUnreachableAlert]);
 
   const listPaddingBottom = getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet);
   const contentWidth = contentMaxWidth ?? windowWidth;
@@ -229,7 +252,10 @@ export const PrivateAiQueueScreen = () => {
         total={runAllProgress.total}
         progressLabel={
           runAllProgress.total > 0
-            ? `${runAllProgress.current} / ${runAllProgress.total}`
+            ? t('batch.progressCounter', {
+                current: runAllProgress.current,
+                total: runAllProgress.total,
+              })
             : undefined
         }
       />

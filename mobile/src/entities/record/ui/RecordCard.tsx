@@ -72,7 +72,8 @@ export const RecordCard = memo(function RecordCard({
     aiProcessing ||
     aiError ||
     translationProcessing ||
-    translationError;
+    translationError ||
+    item.summaryStatus === 'queued';
   const showFolderStripe = Boolean(folderAccentColor);
   const isUnread = item.status === 'unread';
 

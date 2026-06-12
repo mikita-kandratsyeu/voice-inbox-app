@@ -2030,7 +2030,10 @@
     "removeTitle": "Remove from queue?",
     "removeMessage": "This note will stay without a summary until you generate one manually.",
     "removeConfirm": "Remove",
-    "lastError": "Last attempt: {{error}}"
+    "lastError": "Last attempt: {{error}}",
+    "serverUnreachableTitle": "AI server unavailable",
+    "serverUnreachableMessage": "Could not reach your AI server. Check that it is running and your settings are correct.",
+    "openServerSettings": "AI server settings"
   },
   "privateAiMode": {
     "title": "Private vs Smart",
@@ -2429,6 +2432,7 @@
     "secondsLeft": "~{{ count }} sec left",
     "minutesLeft": "~{{ count }} min left",
     "loadingModel": "Preparing model…",
+    "tooShortForAuto": "Recording is shorter than {{seconds}} sec — auto-transcription was skipped.",
     "batteryHint": "Transcription works only while the app is open. Battery usage may increase.",
     "resumeTitle": "Continue transcription?",
     "resumeBody": "{{title}} was paused when you left the app. You can pick up where you left off.",

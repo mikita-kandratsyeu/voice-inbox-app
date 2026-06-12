@@ -1,6 +1,7 @@
 jest.mock('@/entities/settings', () => ({
   isPrivateCustomServerMode: (mode: string, provider: string, isPro: boolean) =>
     mode === 'private_experimental' && provider === 'custom_openai' && isPro,
+  hydratePrivateRemoteWorkingConfig: jest.fn(),
 }));
 
 jest.mock('@/features/app-storefront', () => ({

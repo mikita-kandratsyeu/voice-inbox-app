@@ -1,4 +1,7 @@
-import { useSettingsStore } from '@/entities/settings';
+import {
+  hydratePrivateRemoteWorkingConfig,
+  resolvePrivateRemoteConnectionConfig,
+} from '@/entities/settings';
 import { testPrivateRemoteConnection } from '@/shared/lib/ai-core/privateRemoteProvider';
 
 const REACHABILITY_CACHE_MS = 45_000;
@@ -6,15 +9,6 @@ const REACHABILITY_CACHE_MS = 45_000;
 let cachedReachable: boolean | null = null;
 let cachedAtMs = 0;
 let inFlightCheck: Promise<boolean> | null = null;
-
-function readRemoteConfig() {
-  const settings = useSettingsStore.getState();
-  return {
-    privateRemoteBaseUrl: settings.privateRemoteBaseUrl,
-    privateRemoteApiKey: settings.privateRemoteApiKey,
-    privateRemoteModel: settings.privateRemoteModel,
-  };
-}
 
 export function invalidatePrivateRemoteReachabilityCache(): void {
   cachedReachable = null;
@@ -36,7 +30,13 @@ export async function isPrivateRemoteServerReachable(options?: {
   }
 
   inFlightCheck = (async () => {
-    const config = readRemoteConfig();
+    hydratePrivateRemoteWorkingConfig();
+    const config = resolvePrivateRemoteConnectionConfig();
+    if (!config.privateRemoteBaseUrl.trim() || !config.privateRemoteModel.trim()) {
+      cachedReachable = false;
+      cachedAtMs = Date.now();
+      return false;
+    }
     const result = await testPrivateRemoteConnection(config);
     cachedReachable = result.ok;
     cachedAtMs = Date.now();

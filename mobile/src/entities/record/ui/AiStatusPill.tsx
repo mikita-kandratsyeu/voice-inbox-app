@@ -66,6 +66,30 @@ export const AiStatusPill = ({
     />
   );
 
+  if (summaryStatus === 'queued' && !aiProcessing) {
+    const queuedLabel = t('aiStatus.queued');
+    return (
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel={queuedLabel}
+        hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+        className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
+        style={{ backgroundColor: color.status.processing.bg, ...pillContainerStyle }}
+        onPress={onPress}
+        activeOpacity={0.75}
+      >
+        <Layers size={11} color={color.status.processing.text} strokeWidth={2.5} />
+        <Text
+          className="text-xs font-medium"
+          style={{ color: color.status.processing.text, flexShrink: 1 }}
+          numberOfLines={1}
+        >
+          {queuedLabel}
+        </Text>
+      </TouchableOpacity>
+    );
+  }
+
   if (aiStatus === 'done' && !aiProcessing && !aiError) {
     return null;
   }
@@ -123,30 +147,6 @@ export const AiStatusPill = ({
           numberOfLines={1}
         >
           {label}
-        </Text>
-      </TouchableOpacity>
-    );
-  }
-
-  if (summaryStatus === 'queued' && !aiProcessing && !aiError) {
-    const queuedLabel = t('aiStatus.queued');
-    return (
-      <TouchableOpacity
-        accessibilityRole="button"
-        accessibilityLabel={queuedLabel}
-        hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-        className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
-        style={{ backgroundColor: color.status.processing.bg, ...pillContainerStyle }}
-        onPress={onPress}
-        activeOpacity={0.75}
-      >
-        <Layers size={11} color={color.status.processing.text} strokeWidth={2.5} />
-        <Text
-          className="text-xs font-medium"
-          style={{ color: color.status.processing.text, flexShrink: 1 }}
-          numberOfLines={1}
-        >
-          {queuedLabel}
         </Text>
       </TouchableOpacity>
     );

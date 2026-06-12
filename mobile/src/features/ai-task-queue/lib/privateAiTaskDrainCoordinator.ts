@@ -1,10 +1,15 @@
 import { useRecordStore } from '@/entities/record';
-import { isPrivateCustomServerMode, useSettingsStore } from '@/entities/settings';
+import {
+  hydratePrivateRemoteWorkingConfig,
+  isPrivateCustomServerMode,
+  useSettingsStore,
+} from '@/entities/settings';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import { waitForDb } from '@/shared/lib';
 
 import { processRecordViaPrivateAiBridge } from './privateAiTaskProcessBridge';
 import {
+  getPrivateAiTaskById,
   listPrivateAiTasks,
   markPrivateAiTaskAttempt,
   type PrivateAiQueuedTask,
@@ -14,7 +19,7 @@ import { isPrivateRemoteServerReachable } from './privateRemoteReachability';
 
 const drainInFlightByTask = new Map<string, Promise<void>>();
 let drainAllScheduled: ReturnType<typeof setTimeout> | null = null;
-let drainAllInFlight: Promise<void> | null = null;
+let drainAllInFlight: Promise<DrainQueueResult> | null = null;
 
 const MAX_CONCURRENT_DRAINS = 1;
 let activeDrains = 0;
@@ -48,6 +53,17 @@ function isPrivateServerAutomationActive(): boolean {
   );
 }
 
+async function ensureQueuedUiIfTaskRemains(task: PrivateAiQueuedTask): Promise<void> {
+  const row = await getPrivateAiTaskById(task.id);
+  if (!row) return;
+
+  const record = useRecordStore.getState().records.find((r) => r.id === task.recordId);
+  if (!record) return;
+  if (record.summaryStatus === 'processing' || record.tasksStatus === 'processing') return;
+
+  useRecordStore.getState().setSummaryStatus(task.recordId, 'queued');
+}
+
 function shouldSkipTask(recordId: string): boolean {
   const record = useRecordStore.getState().records.find((r) => r.id === recordId);
   if (!record?.transcript?.trim()) return true;
@@ -78,6 +94,7 @@ async function runDrainTask(task: PrivateAiQueuedTask): Promise<void> {
         return;
       }
 
+      hydratePrivateRemoteWorkingConfig();
       const reachable = await isPrivateRemoteServerReachable();
       if (!reachable) return;
 
@@ -95,6 +112,7 @@ async function runDrainTask(task: PrivateAiQueuedTask): Promise<void> {
       const message = err instanceof Error ? err.message : String(err);
       await markPrivateAiTaskAttempt(task.id, message);
     } finally {
+      await ensureQueuedUiIfTaskRemains(task);
       releaseDrainSlot();
     }
   })();
@@ -107,44 +125,64 @@ async function runDrainTask(task: PrivateAiQueuedTask): Promise<void> {
   }
 }
 
-export async function drainPrivateAiTaskQueue(): Promise<void> {
-  if (!isPrivateServerAutomationActive()) return;
+export type DrainQueueResult = 'completed' | 'server_unreachable' | 'inactive';
+
+export type DrainPrivateAiTaskQueueOptions = {
+  /** Called after each task finishes (`current` is completed count, 0..total). */
+  onProgress?: (current: number, total: number) => void;
+  /** Fresh health check before draining (manual Run / Run all). */
+  forceReachabilityCheck?: boolean;
+};
+
+export async function drainPrivateAiTaskQueue(
+  options?: DrainPrivateAiTaskQueueOptions,
+): Promise<DrainQueueResult> {
+  if (!isPrivateServerAutomationActive()) return 'inactive';
 
   try {
     await waitForDb();
   } catch {
-    return;
+    return 'inactive';
   }
 
-  const reachable = await isPrivateRemoteServerReachable();
-  if (!reachable) return;
+  hydratePrivateRemoteWorkingConfig();
+  const reachable = await isPrivateRemoteServerReachable({
+    forceRefresh: options?.forceReachabilityCheck === true,
+  });
+  if (!reachable) return 'server_unreachable';
 
   const tasks = await listPrivateAiTasks();
-  for (const task of tasks) {
-    await runDrainTask(task);
+  const total = tasks.length;
+  options?.onProgress?.(0, total);
+  for (let i = 0; i < tasks.length; i += 1) {
+    await runDrainTask(tasks[i]!);
+    options?.onProgress?.(i + 1, total);
   }
+  return 'completed';
 }
 
-export async function drainSinglePrivateAiTask(taskId: string): Promise<void> {
-  if (!isPrivateServerAutomationActive()) return;
+export async function drainSinglePrivateAiTask(taskId: string): Promise<DrainQueueResult> {
+  if (!isPrivateServerAutomationActive()) return 'inactive';
 
   try {
     await waitForDb();
   } catch {
-    return;
+    return 'inactive';
   }
 
   const tasks = await listPrivateAiTasks();
   const task = tasks.find((t) => t.id === taskId);
-  if (!task) return;
+  if (!task) return 'inactive';
 
+  hydratePrivateRemoteWorkingConfig();
   const reachable = await isPrivateRemoteServerReachable({ forceRefresh: true });
   if (!reachable) {
     await markPrivateAiTaskAttempt(task.id, 'server_unreachable');
-    return;
+    return 'server_unreachable';
   }
 
   await runDrainTask(task);
+  return 'completed';
 }
 
 const FOREGROUND_DRAIN_DEBOUNCE_MS = 2_500;
@@ -165,7 +203,7 @@ export function scheduleDrainPrivateAiTaskQueue(): void {
       return;
     }
     drainAllInFlight = drainPrivateAiTaskQueue()
-      .catch(() => {})
+      .catch((): DrainQueueResult => 'inactive')
       .finally(() => {
         drainAllInFlight = null;
       });
