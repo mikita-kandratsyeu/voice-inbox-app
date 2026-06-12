@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 
 import { useSettingsStore } from '@/entities/settings';
+import { clampPrivateRemoteQueueConcurrency } from '@/entities/settings/lib/privateRemoteQueueConcurrency';
 import {
   ALL_SELECTABLE_CLOUD_AI_MODEL_IDS,
   LOCAL_AI_MODELS,
@@ -16,6 +17,7 @@ import type {
   PrivateCapabilityTier,
   PrivateLocalLlmBudget,
   PrivateRemoteOutputBudget,
+  PrivateRemoteQueueConcurrency,
   SummaryStyle,
   TaskStrictness,
   TranscriptionLanguage,
@@ -44,6 +46,7 @@ export type RemoteSyncAiSettingsPayload = {
   privateLocalLlmBudget: PrivateLocalLlmBudget;
   privateRemoteOutputBudget: PrivateRemoteOutputBudget;
   privateRemotePreferJsonObject: boolean;
+  privateRemoteQueueConcurrency: PrivateRemoteQueueConcurrency;
   privateCapabilityTier: PrivateCapabilityTier;
   privateAiProvider: PrivateAiProvider;
   privateRemoteBaseUrl: string;
@@ -125,6 +128,15 @@ function readBackupReminderDays(
     : fallback;
 }
 
+function readQueueConcurrency(
+  value: unknown,
+  fallback: PrivateRemoteQueueConcurrency,
+): PrivateRemoteQueueConcurrency {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return clampPrivateRemoteQueueConcurrency(n);
+}
+
 export function buildRemoteSyncAiSettings(): RemoteSyncAiSettingsPayload {
   const state = useSettingsStore.getState();
   return {
@@ -144,6 +156,7 @@ export function buildRemoteSyncAiSettings(): RemoteSyncAiSettingsPayload {
     privateLocalLlmBudget: state.privateLocalLlmBudget,
     privateRemoteOutputBudget: state.privateRemoteOutputBudget,
     privateRemotePreferJsonObject: state.privateRemotePreferJsonObject,
+    privateRemoteQueueConcurrency: state.privateRemoteQueueConcurrency,
     privateCapabilityTier: state.privateCapabilityTier,
     privateAiProvider: state.privateAiProvider,
     privateRemoteBaseUrl: state.privateRemoteBaseUrl,
@@ -222,6 +235,10 @@ export function parseRemoteSyncAiSettings(raw: unknown): RemoteSyncAiSettingsPay
       raw.privateRemotePreferJsonObject,
       current.privateRemotePreferJsonObject,
     ),
+    privateRemoteQueueConcurrency: readQueueConcurrency(
+      raw.privateRemoteQueueConcurrency,
+      current.privateRemoteQueueConcurrency,
+    ),
     privateCapabilityTier: readEnum(
       raw.privateCapabilityTier,
       CAPABILITY_TIERS,
@@ -298,6 +315,7 @@ export function applyRemoteSyncAiSettings(payload: RemoteSyncAiSettingsPayload):
   store.setPrivateLocalLlmBudget(payload.privateLocalLlmBudget);
   store.setPrivateRemoteOutputBudget(payload.privateRemoteOutputBudget);
   store.setPrivateRemotePreferJsonObject(payload.privateRemotePreferJsonObject);
+  store.setPrivateRemoteQueueConcurrency(payload.privateRemoteQueueConcurrency);
   store.setPrivateCapabilityTier(payload.privateCapabilityTier);
   store.setPrivateAiProvider(payload.privateAiProvider);
   store.setPrivateRemoteBaseUrl(payload.privateRemoteBaseUrl);

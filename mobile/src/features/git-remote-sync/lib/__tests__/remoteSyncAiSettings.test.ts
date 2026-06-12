@@ -1,6 +1,10 @@
 import { useSettingsStore } from '@/entities/settings';
 
-import { applyRemoteSyncAiSettings, parseRemoteSyncAiSettings } from '../remoteSyncAiSettings';
+import {
+  applyRemoteSyncAiSettings,
+  buildRemoteSyncAiSettings,
+  parseRemoteSyncAiSettings,
+} from '../remoteSyncAiSettings';
 
 jest.mock('@/entities/settings', () => ({
   useSettingsStore: {
@@ -25,6 +29,7 @@ const baseState = {
   privateLocalLlmBudget: 'balanced',
   privateRemoteOutputBudget: 'balanced',
   privateRemotePreferJsonObject: false,
+  privateRemoteQueueConcurrency: 1,
   privateCapabilityTier: 'full',
   privateAiProvider: 'local',
   privateRemoteBaseUrl: '',
@@ -48,10 +53,20 @@ describe('remoteSyncAiSettings', () => {
     mockGetState.mockReturnValue(baseState as ReturnType<typeof useSettingsStore.getState>);
   });
 
+  it('exports queue concurrency in ai settings payload', () => {
+    mockGetState.mockReturnValue({
+      ...baseState,
+      privateRemoteQueueConcurrency: 4,
+    } as ReturnType<typeof useSettingsStore.getState>);
+
+    expect(buildRemoteSyncAiSettings().privateRemoteQueueConcurrency).toBe(4);
+  });
+
   it('parses and applies transcription and automation settings', () => {
     const setTranscriptionLanguage = jest.fn();
     const setAutoArchiveAfterDays = jest.fn();
     const setAutoTranscribeOnSave = jest.fn();
+    const setPrivateRemoteQueueConcurrency = jest.fn();
     mockGetState.mockReturnValue({
       ...baseState,
       setTranscriptionLanguage,
@@ -68,6 +83,7 @@ describe('remoteSyncAiSettings', () => {
       setPrivateLocalLlmBudget: jest.fn(),
       setPrivateRemoteOutputBudget: jest.fn(),
       setPrivateRemotePreferJsonObject: jest.fn(),
+      setPrivateRemoteQueueConcurrency,
       setPrivateCapabilityTier: jest.fn(),
       setPrivateAiProvider: jest.fn(),
       setPrivateRemoteBaseUrl: jest.fn(),
@@ -102,6 +118,7 @@ describe('remoteSyncAiSettings', () => {
       privateLocalLlmBudget: 'efficient',
       privateRemoteOutputBudget: 'unlimited',
       privateRemotePreferJsonObject: true,
+      privateRemoteQueueConcurrency: 3,
       privateCapabilityTier: 'full',
       privateAiProvider: 'custom_openai',
       privateRemoteBaseUrl: 'http://127.0.0.1:11434',
@@ -120,9 +137,54 @@ describe('remoteSyncAiSettings', () => {
     });
 
     expect(payload?.transcriptionLanguage).toBe('ru');
+    expect(payload?.privateRemoteQueueConcurrency).toBe(3);
     applyRemoteSyncAiSettings(payload!);
     expect(setTranscriptionLanguage).toHaveBeenCalledWith('ru');
     expect(setAutoArchiveAfterDays).toHaveBeenCalledWith(7);
     expect(setAutoTranscribeOnSave).toHaveBeenCalledWith(true);
+    expect(setPrivateRemoteQueueConcurrency).toHaveBeenCalledWith(3);
+  });
+
+  it('falls back to current queue concurrency when field is missing in export', () => {
+    mockGetState.mockReturnValue({
+      ...baseState,
+      privateRemoteQueueConcurrency: 2,
+    } as ReturnType<typeof useSettingsStore.getState>);
+
+    const payload = parseRemoteSyncAiSettings({
+      version: 1,
+      exportedAt: '2026-06-10T12:00:00.000Z',
+      transcriptionLanguage: 'auto',
+      selectedWhisperModel: 'whisper-base',
+      whisperModelWeightsFormat: 'q5_1',
+      selectedWhisperModelFormat: 'q5_1',
+      summaryStyle: 'standard',
+      taskStrictness: 'balanced',
+      aiOutputLanguage: 'same',
+      aiExecutionMode: 'smart_hybrid',
+      selectedAIModel: 'google/gemini-3.1-flash-lite',
+      aiModelRoutingMode: 'auto',
+      selectedLocalAiModel: null,
+      privateLocalLlmBudget: 'balanced',
+      privateRemoteOutputBudget: 'balanced',
+      privateRemotePreferJsonObject: false,
+      privateCapabilityTier: 'full',
+      privateAiProvider: 'local',
+      privateRemoteBaseUrl: '',
+      privateRemoteModel: '',
+      privateRemoteActiveProfileId: null,
+      showSummaryReasoningInNotes: true,
+      autoRefreshMeetingSpeakersOnRegen: false,
+      autoTranscribeOnSave: false,
+      autoAiAfterTranscription: false,
+      autoArchiveEnabled: false,
+      autoArchiveAfterDays: 14,
+      taskDeadlineNotificationsEnabled: true,
+      backupReminderNotificationsEnabled: false,
+      backupReminderPeriodDays: 14,
+      aiProcessingAlertsEnabled: true,
+    });
+
+    expect(payload?.privateRemoteQueueConcurrency).toBe(2);
   });
 });
