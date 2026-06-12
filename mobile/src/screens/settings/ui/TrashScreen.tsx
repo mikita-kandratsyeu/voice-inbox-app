@@ -1,18 +1,10 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
-import { Trash2 } from 'lucide-react-native';
+import { RotateCcw, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Pressable,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -25,21 +17,19 @@ import { useColors } from '@/shared/config';
 import {
   formatFileSize,
   hapticSelection,
-  IS_ANDROID,
   sumAudioFileSizesBytes,
   useIsTablet,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import {
+  ActionListItemCard,
   BlockingProgressModal,
   EmptyState,
   HeaderIconButton,
   SCREEN_PADDING,
   ScreenHeader,
 } from '@/shared/ui';
-
-const TRASH_RESTORE_BTN_H = 48;
 
 function trashedRecordDescription(item: TrashedRecordListItem): string | null {
   const fromTranscript = item.transcript?.trim();
@@ -256,82 +246,23 @@ export const TrashScreen = () => {
           renderItem={({ item }) => {
             const preview = trashedRecordDescription(item);
             return (
-              <View
-                className="mb-3 overflow-hidden rounded-2xl border px-4 py-3"
-                style={{
-                  borderColor: color.border.default,
-                  backgroundColor: color.background.card,
+              <ActionListItemCard
+                color={color}
+                title={item.title}
+                preview={preview}
+                meta={t('trash.purgeOn', { date: formatPurgeDate(item.purgeAt) })}
+                primaryAction={{
+                  label: t('trash.restore'),
+                  accessibilityLabel: t('trash.restoreItemA11y', { title: item.title }),
+                  icon: <RotateCcw size={15} color={color.accent.primary} strokeWidth={2.2} />,
+                  onPress: () => onRestore(item),
                 }}
-              >
-                <Text
-                  className="text-[16px] font-medium leading-[21px]"
-                  style={{ color: color.text.primary }}
-                  numberOfLines={2}
-                >
-                  {item.title}
-                </Text>
-                {preview ? (
-                  <Text
-                    className="mt-2 text-[14px] leading-5"
-                    style={{ color: color.text.secondary }}
-                    numberOfLines={2}
-                  >
-                    {preview}
-                  </Text>
-                ) : null}
-                <Text
-                  className="mt-2 text-[13px] leading-[18px]"
-                  style={{ color: color.text.muted }}
-                >
-                  {t('trash.purgeOn', { date: formatPurgeDate(item.purgeAt) })}
-                </Text>
-                <View style={{ marginTop: 12, gap: 6 }}>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={t('trash.restoreItemA11y', { title: item.title })}
-                    onPress={() => onRestore(item)}
-                    style={{
-                      height: TRASH_RESTORE_BTN_H,
-                      borderRadius: 12,
-                      borderWidth: 1,
-                      borderColor: color.border.default,
-                      backgroundColor: color.background.secondary,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Text
-                      className="text-[15px] font-semibold"
-                      style={{
-                        color: color.text.primary,
-                        ...(IS_ANDROID ? { includeFontPadding: false } : {}),
-                      }}
-                    >
-                      {t('trash.restore')}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={t('trash.deleteForeverItemA11y', { title: item.title })}
-                    onPress={() => onDeleteForever(item)}
-                    style={{
-                      paddingVertical: 12,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Text
-                      className="text-[15px] font-semibold"
-                      style={{
-                        color: color.accent.delete,
-                        ...(IS_ANDROID ? { includeFontPadding: false } : {}),
-                      }}
-                    >
-                      {t('trash.deleteForever')}
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
+                secondaryAction={{
+                  accessibilityLabel: t('trash.deleteForeverItemA11y', { title: item.title }),
+                  icon: <Trash2 size={16} color={color.accent.delete} strokeWidth={2.2} />,
+                  onPress: () => onDeleteForever(item),
+                }}
+              />
             );
           }}
         />

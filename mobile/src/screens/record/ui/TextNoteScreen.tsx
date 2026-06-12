@@ -11,11 +11,8 @@ import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
-import { useAiProcessing } from '@/features/ai-processing';
-import {
-  computeAdsAllowedForInterstitial,
-  shouldApplyAutoAiAfterTranscription,
-} from '@/features/app-storefront';
+import { dispatchAutoAiAfterTranscription } from '@/features/ai-task-queue';
+import { computeAdsAllowedForInterstitial } from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
 import {
@@ -40,9 +37,10 @@ export const TextNoteScreen = () => {
   const color = useColors();
   const addRecord = useRecordStore((s) => s.addRecord);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const { isProActive } = useProEntitlement();
   const { isConnected } = useNetworkStatus();
-  const { processRecord } = useAiProcessing();
   const noteInputRef = useRef<TextInput>(null);
   const saveInFlightRef = useRef(false);
   const [title, setTitle] = useState('');
@@ -151,9 +149,14 @@ export const TextNoteScreen = () => {
 
     generateAndSaveEmbeddingForRecord(record).catch(() => {});
 
-    if (shouldApplyAutoAiAfterTranscription(autoAiAfterTranscription, isProActive) && isConnected) {
-      void processRecord(record).catch(() => {});
-    }
+    void dispatchAutoAiAfterTranscription({
+      record,
+      autoAiAfterTranscription,
+      isProActive,
+      isConnected: isConnected === true,
+      aiExecutionMode,
+      privateAiProvider,
+    }).catch(() => {});
 
     navigation.goBack();
     const adsAllowed = computeAdsAllowedForInterstitial(isProActive);
@@ -162,12 +165,13 @@ export const TextNoteScreen = () => {
     });
   }, [
     addRecord,
+    aiExecutionMode,
     autoAiAfterTranscription,
     isConnected,
     isProActive,
     navigation,
     noteText,
-    processRecord,
+    privateAiProvider,
     resolvedTitle,
   ]);
 

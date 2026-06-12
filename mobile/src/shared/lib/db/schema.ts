@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const foldersTable = sqliteTable('folders', {
   id: text('id').primaryKey(),
@@ -78,6 +78,25 @@ export const cloudAiPendingTable = sqliteTable(
   (t) => [index('idx_cloud_ai_pending_jobId').on(t.jobId)],
 );
 
+/** Deferred private-server AI work (summarize after transcription, etc.). */
+export const privateAiTaskQueueTable = sqliteTable(
+  'private_ai_task_queue',
+  {
+    id: text('id').primaryKey(),
+    recordId: text('recordId').notNull(),
+    taskType: text('taskType').notNull(),
+    source: text('source').notNull(),
+    attemptCount: integer('attemptCount').default(0).notNull(),
+    lastError: text('lastError'),
+    createdAt: text('createdAt').notNull(),
+    updatedAt: text('updatedAt').notNull(),
+  },
+  (t) => [
+    index('idx_private_ai_task_queue_recordId').on(t.recordId),
+    uniqueIndex('idx_private_ai_task_queue_record_task').on(t.recordId, t.taskType),
+  ],
+);
+
 /** Versioned note-map node positions (per filter layout key). */
 export const notesGraphLayoutVersionTable = sqliteTable(
   'notes_graph_layout_version',
@@ -101,4 +120,5 @@ export type FolderRow = typeof foldersTable.$inferSelect;
 export type FolderInsert = typeof foldersTable.$inferInsert;
 export type RecordAskAiRow = typeof recordAskAiTable.$inferSelect;
 export type CloudAiPendingRow = typeof cloudAiPendingTable.$inferSelect;
+export type PrivateAiTaskQueueRow = typeof privateAiTaskQueueTable.$inferSelect;
 export type NotesGraphLayoutVersionRow = typeof notesGraphLayoutVersionTable.$inferSelect;

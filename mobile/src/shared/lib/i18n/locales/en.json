@@ -800,6 +800,7 @@
     "aiProcessing": "Generating summary...",
     "speakerTurnsProcessing": "Splitting by participant…",
     "askProcessing": "Answering…",
+    "queued": "Waiting for AI server",
     "done": "Transcript ready",
     "error": "Transcription error",
     "noTranscript": "No transcript"
@@ -2014,6 +2015,22 @@
       "subtitle": "Regenerating the summary or tasks also updates the participant breakdown. Turn off to keep your current list and name edits. Use the button on the Participants tab to update participants only.",
       "a11y": "Update participant breakdown when regenerating summary or tasks"
     }
+  },
+  "privateAiQueue": {
+    "title": "AI queue",
+    "automationHint": "Summaries that could not run while your AI server was offline.",
+    "pendingCount_one": "{{count}} waiting",
+    "pendingCount_other": "{{count}} waiting",
+    "emptyTitle": "Nothing waiting",
+    "emptySubtitle": "When your AI server is offline, summaries land here until you run them.",
+    "taskSummarize": "Summary",
+    "runOne": "Run",
+    "runAll": "Run all",
+    "runningAll": "Processing queue…",
+    "removeTitle": "Remove from queue?",
+    "removeMessage": "This note will stay without a summary until you generate one manually.",
+    "removeConfirm": "Remove",
+    "lastError": "Last attempt: {{error}}"
   },
   "privateAiMode": {
     "title": "Private vs Smart",

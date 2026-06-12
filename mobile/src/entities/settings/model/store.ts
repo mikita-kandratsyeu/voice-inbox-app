@@ -630,13 +630,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       storage.set(KEYS.PRIVATE_PREVIOUS_AUTO_AI, String(currentState.autoAiAfterTranscription));
       storage.set(KEYS.PRIVATE_PREVIOUS_AUTO_ARCHIVE, String(currentState.autoArchiveEnabled));
 
-      // Private mode uses isolated defaults and disables cloud-like automations.
-      storage.set(KEYS.AUTO_TRANSCRIBE_ON_SAVE, 'false');
+      // Private mode keeps local auto-transcribe; cloud-like automations are disabled.
       storage.set(KEYS.AUTO_AI_AFTER_TRANSCRIPTION, 'false');
       storage.set(KEYS.AUTO_ARCHIVE_ENABLED, 'false');
       set({
         aiExecutionMode: value,
-        autoTranscribeOnSave: false,
         autoAiAfterTranscription: false,
         autoArchiveEnabled: false,
       });

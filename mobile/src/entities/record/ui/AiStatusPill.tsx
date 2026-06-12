@@ -1,4 +1,4 @@
-import { AlertCircle, MicOff, RotateCcw } from 'lucide-react-native';
+import { AlertCircle, Layers, MicOff, RotateCcw } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
@@ -123,6 +123,30 @@ export const AiStatusPill = ({
           numberOfLines={1}
         >
           {label}
+        </Text>
+      </TouchableOpacity>
+    );
+  }
+
+  if (summaryStatus === 'queued' && !aiProcessing && !aiError) {
+    const queuedLabel = t('aiStatus.queued');
+    return (
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel={queuedLabel}
+        hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+        className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
+        style={{ backgroundColor: color.status.processing.bg, ...pillContainerStyle }}
+        onPress={onPress}
+        activeOpacity={0.75}
+      >
+        <Layers size={11} color={color.status.processing.text} strokeWidth={2.5} />
+        <Text
+          className="text-xs font-medium"
+          style={{ color: color.status.processing.text, flexShrink: 1 }}
+          numberOfLines={1}
+        >
+          {queuedLabel}
         </Text>
       </TouchableOpacity>
     );

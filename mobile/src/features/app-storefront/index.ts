@@ -1,6 +1,7 @@
 export {
   shouldApplyAutoAiAfterTranscription,
   shouldApplyAutoTranscribeOnSave,
+  shouldApplyPrivateServerAutoAi,
 } from './lib/effectiveAutomation';
 export type { RecordingDurationExecutionMode } from './lib/recordingDurationLimits';
 export {

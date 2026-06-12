@@ -65,7 +65,11 @@ export const RecordScreen = () => {
     () => getMaxRecordingMsForTier(isProActive, aiExecutionMode, privateAiProvider),
     [isProActive, aiExecutionMode, privateAiProvider],
   );
-  const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(autoTranscribeOnSave, isProActive);
+  const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(
+    autoTranscribeOnSave,
+    isProActive,
+    aiExecutionMode,
+  );
   const { startTranscription } = useTranscription();
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveModalReason, setSaveModalReason] = useState<'user' | 'limit' | 'deeplink'>('user');
@@ -133,7 +137,7 @@ export const RecordScreen = () => {
         useRecordStore.getState().addRecord(record);
 
         const persist = useSettingsStore.getState().autoTranscribeOnSave;
-        if (shouldApplyAutoTranscribeOnSave(persist, isProActive)) {
+        if (shouldApplyAutoTranscribeOnSave(persist, isProActive, aiExecutionMode)) {
           startTranscription(record);
         }
       };

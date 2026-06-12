@@ -10,10 +10,9 @@ import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
-import { useAiProcessing } from '@/features/ai-processing';
+import { dispatchAutoAiAfterTranscription } from '@/features/ai-task-queue';
 import {
   getMaxRecordingMsForTier,
-  shouldApplyAutoAiAfterTranscription,
   shouldApplyAutoTranscribeOnSave,
 } from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
@@ -137,9 +136,12 @@ export function useImportAudioFile() {
     () => getMaxRecordingMsForTier(isProActive, aiExecutionMode, privateAiProvider),
     [isProActive, aiExecutionMode, privateAiProvider],
   );
-  const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(autoTranscribeOnSave, isProActive);
+  const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(
+    autoTranscribeOnSave,
+    isProActive,
+    aiExecutionMode,
+  );
   const { startTranscription } = useTranscription();
-  const { processRecord } = useAiProcessing();
   const [isImporting, setIsImporting] = useState(false);
   const [importPhase, setImportPhase] = useState<ImportAudioPhase | null>(null);
   const [pendingFileImport, setPendingFileImport] = useState<PendingFileImport | null>(null);
@@ -169,16 +171,26 @@ export function useImportAudioFile() {
       await addRecord(record);
       generateAndSaveEmbeddingForRecord(record).catch(() => {});
 
-      if (
-        shouldApplyAutoAiAfterTranscription(autoAiAfterTranscription, isProActive) &&
-        isConnected
-      ) {
-        processRecord(record).catch(() => {});
-      }
+      void dispatchAutoAiAfterTranscription({
+        record,
+        autoAiAfterTranscription,
+        isProActive,
+        isConnected: isConnected === true,
+        aiExecutionMode,
+        privateAiProvider,
+      }).catch(() => {});
 
       navigation.navigate('RecordingDetail', { record });
     },
-    [addRecord, autoAiAfterTranscription, isConnected, isProActive, navigation, processRecord],
+    [
+      addRecord,
+      aiExecutionMode,
+      autoAiAfterTranscription,
+      isConnected,
+      isProActive,
+      navigation,
+      privateAiProvider,
+    ],
   );
 
   const confirmFileImport = useCallback(

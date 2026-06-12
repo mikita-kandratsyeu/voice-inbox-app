@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { usePrivateAiTaskQueueBridge } from '@/features/ai-task-queue';
 import {
   AnimatedBootSplash,
   AppProcessingKeepAwake,
@@ -110,6 +111,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
   useYandexMobileAdsInit();
   useAppBootstrap(onPushData, { onBootstrapReady, onCriticalError });
   useAppForegroundLifecycle();
+  usePrivateAiTaskQueueBridge();
   useResetAccentWhenNotPro({ enabled: !bootSplashVisible });
   useResetProOnlyAiModelWhenNotPro({ enabled: !bootSplashVisible });
   useResetPrivateAiServerWhenNotPro({ enabled: !bootSplashVisible });

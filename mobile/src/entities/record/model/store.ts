@@ -280,6 +280,8 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
       }
     }
     await recordRepository.remove(id);
+    const { removePrivateAiTasksForRecord } = await import('@/features/ai-task-queue');
+    await removePrivateAiTasksForRecord(id).catch(() => {});
     set((s) => {
       const next = s.records.filter((r) => r.id !== id);
       return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };

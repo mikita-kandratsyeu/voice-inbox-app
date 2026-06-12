@@ -17,6 +17,7 @@ export type RecordingStatus =
   | 'idle'
   | 'loading_model'
   | 'processing'
+  | 'queued'
   | 'paused'
   | 'resumable'
   | 'cancelling'

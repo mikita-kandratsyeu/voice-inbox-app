@@ -29,6 +29,7 @@ export {
   cloudAiPendingTable,
   foldersTable,
   notesGraphLayoutVersionTable,
+  privateAiTaskQueueTable,
   recordAskAiTable,
   recordsTable,
 } from './db/schema';

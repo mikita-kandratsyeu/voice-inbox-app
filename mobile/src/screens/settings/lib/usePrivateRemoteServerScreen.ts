@@ -6,6 +6,10 @@ import { Alert, Share } from 'react-native';
 
 import { useSettingsStore } from '@/entities/settings';
 import {
+  invalidatePrivateRemoteReachabilityCache,
+  scheduleDrainPrivateAiTaskQueue,
+} from '@/features/ai-task-queue';
+import {
   type DiscoveredPrivateRemoteServer,
   discoverPrivateRemoteServersOnLan,
   type PrivateRemoteLanDiscoveryProgress,
@@ -273,6 +277,8 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
           updatedAt: Date.now(),
         });
         setPrivateAiProvider('custom_openai');
+        invalidatePrivateRemoteReachabilityCache();
+        scheduleDrainPrivateAiTaskQueue();
         Alert.alert(
           t('aiSettings.privateProvider.connectionOkTitle'),
           t('aiSettings.privateProvider.connectionOkMessage'),

@@ -20,6 +20,7 @@ import {
   useSettingsStore,
 } from '@/entities/settings';
 import { type ProLimitResetSuccess, useResetProAiLimit } from '@/features/ai-limit-reset';
+import { usePrivateAiTaskQueueCount } from '@/features/ai-task-queue';
 import { openAppReviewFromSettings } from '@/features/app-review';
 import {
   getMonetizationMode,
@@ -95,6 +96,7 @@ export function useSettingsScreen() {
     expiresAtMs,
   } = useProEntitlement();
   const automationLocked = isAutomationUiLockedForPublicStore(proEntitlementActive);
+  const privateAiQueueCount = usePrivateAiTaskQueueCount();
   const monetizationMode = getMonetizationMode();
 
   const [planCardStoreProActive, setPlanCardStoreProActive] = useState<boolean | null>(null);
@@ -460,6 +462,8 @@ export function useSettingsScreen() {
     resetProLimitSuccessSheet,
     dismissResetProLimitSuccessSheet,
     isPrivateMode,
+    privateCustomServerModeActive,
+    privateAiQueueCount,
     digestAiEnabled,
     automationLocked,
     autoTranscribeOnSave,

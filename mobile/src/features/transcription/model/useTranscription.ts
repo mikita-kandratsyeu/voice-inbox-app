@@ -4,8 +4,7 @@ import { AppState } from 'react-native';
 import type { TranscriptSegment, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { getWhisperModelVariantId, useSettingsStore } from '@/entities/settings';
-import { useAiProcessing } from '@/features/ai-processing';
-import { shouldApplyAutoAiAfterTranscription } from '@/features/app-storefront';
+import { dispatchAutoAiAfterTranscription } from '@/features/ai-task-queue';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
 import { ensureRecordingsDir, i18n, RECORDINGS_DIR, useNetworkStatus } from '@/shared/lib';
@@ -136,9 +135,10 @@ export const useTranscription = () => {
   const setWhisperModelStatus = useSettingsStore((s) => s.setWhisperModelStatus);
   const transcriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const { isProActive } = useProEntitlement();
   const { isConnected } = useNetworkStatus();
-  const { processRecord } = useAiProcessing();
 
   const stopRef = useRef<(() => Promise<void>) | null>(null);
   const currentRecordIdRef = useRef<string | null>(null);
@@ -420,16 +420,18 @@ export const useTranscription = () => {
         };
         generateAndSaveEmbeddingForRecord(recordWithTranscript).catch(() => {});
 
-        if (
-          shouldApplyAutoAiAfterTranscription(autoAiAfterTranscription, isProActive) &&
-          isConnected
-        ) {
-          processRecord({
+        void dispatchAutoAiAfterTranscription({
+          record: {
             ...record,
             transcript: fullText,
             transcriptSegments: segments,
-          }).catch(() => {});
-        }
+          },
+          autoAiAfterTranscription,
+          isProActive,
+          isConnected: isConnected === true,
+          aiExecutionMode,
+          privateAiProvider,
+        }).catch(() => {});
 
         completedSuccessfully = true;
       } catch (err) {
@@ -515,10 +517,11 @@ export const useTranscription = () => {
       selectedWhisperModelFormat,
       whisperModelStatuses,
       transcriptionLanguage,
+      aiExecutionMode,
       autoAiAfterTranscription,
       isProActive,
       isConnected,
-      processRecord,
+      privateAiProvider,
       updateAiStatus,
       updateTranscript,
       clearAudioPath,

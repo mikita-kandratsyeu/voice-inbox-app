@@ -44,18 +44,24 @@ export const SettingsScreen = () => {
   const settings = useSettingsScreen();
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const trackScrollRef = useRef(true);
+  const latestScrollYRef = useRef(0);
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
-  useScrollToTopOnTabPress(scrollRef);
+  useScrollToTopOnTabPress(scrollRef, () => {
+    latestScrollYRef.current = 0;
+    persistedSettingsScrollY = 0;
+  });
 
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = event.nativeEvent.contentOffset.y;
+    latestScrollYRef.current = y;
     if (!trackScrollRef.current) {
       return;
     }
-    persistedSettingsScrollY = event.nativeEvent.contentOffset.y;
+    persistedSettingsScrollY = y;
   }, []);
 
   useFocusEffect(
@@ -69,10 +75,13 @@ export const SettingsScreen = () => {
         }
         requestAnimationFrame(() => {
           scrollRef.current?.scrollTo({ y, animated: false });
+          latestScrollYRef.current = y;
         });
       });
 
       return () => {
+        // Save before blur: stack push can zero-out ScrollView and emit a spurious onScroll.
+        persistedSettingsScrollY = latestScrollYRef.current;
         trackScrollRef.current = false;
         restoreTask.cancel();
       };
@@ -130,6 +139,7 @@ export const SettingsScreen = () => {
           ref={scrollRef}
           onScroll={handleScroll}
           scrollEventThrottle={16}
+          scrollsToTop={false}
           contentContainerStyle={{
             paddingHorizontal: SCREEN_PADDING,
             paddingTop: 16,
@@ -179,22 +189,28 @@ export const SettingsScreen = () => {
               t={settings.t}
             />
           ) : null}
-          {!settings.isPrivateMode && (
-            <SettingsAutomationSection
-              color={settings.color}
-              t={settings.t}
-              automationLocked={settings.automationLocked}
-              autoTranscribeOnSave={settings.autoTranscribeOnSave}
-              setAutoTranscribeOnSave={settings.setAutoTranscribeOnSave}
-              autoAiAfterTranscription={settings.autoAiAfterTranscription}
-              setAutoAiAfterTranscription={settings.setAutoAiAfterTranscription}
-              autoArchiveEnabled={settings.autoArchiveEnabled}
-              setAutoArchiveEnabled={settings.setAutoArchiveEnabled}
-              autoArchiveAfterDays={settings.autoArchiveAfterDays}
-              onAutoArchiveDelayPress={settings.handleAutoArchiveDelayPress}
-              onLockedPress={settings.setAutomationSheet}
-            />
-          )}
+          <SettingsAutomationSection
+            color={settings.color}
+            t={settings.t}
+            automationLocked={settings.isPrivateMode ? false : settings.automationLocked}
+            autoAiLocked={
+              settings.privateCustomServerModeActive ? settings.automationLocked : undefined
+            }
+            autoTranscribeOnSave={settings.autoTranscribeOnSave}
+            setAutoTranscribeOnSave={settings.setAutoTranscribeOnSave}
+            autoAiAfterTranscription={settings.autoAiAfterTranscription}
+            setAutoAiAfterTranscription={settings.setAutoAiAfterTranscription}
+            autoArchiveEnabled={settings.autoArchiveEnabled}
+            setAutoArchiveEnabled={settings.setAutoArchiveEnabled}
+            autoArchiveAfterDays={settings.autoArchiveAfterDays}
+            onAutoArchiveDelayPress={settings.handleAutoArchiveDelayPress}
+            onLockedPress={settings.setAutomationSheet}
+            showAutoAiRow={!settings.isPrivateMode || settings.privateCustomServerModeActive}
+            showAutoArchiveRow={!settings.isPrivateMode}
+            navigation={settings.navigation}
+            showPrivateAiQueueRow={settings.privateCustomServerModeActive}
+            privateAiQueueCount={settings.privateAiQueueCount}
+          />
           <SettingsAiProcessingSection
             color={settings.color}
             t={settings.t}

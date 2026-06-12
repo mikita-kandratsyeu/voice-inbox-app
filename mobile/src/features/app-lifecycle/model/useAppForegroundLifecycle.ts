@@ -4,6 +4,7 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { useRecordStore } from '@/entities/record';
 import { syncPrivateCapabilityTier } from '@/entities/settings';
 import { scheduleResumeAllPendingCloudSummarize } from '@/features/ai-processing';
+import { scheduleDrainPrivateAiTaskQueue } from '@/features/ai-task-queue';
 import { syncAllBackupReminderNotifications } from '@/features/backup-reminder-notifications';
 import { maybeRunScheduledGithubSync } from '@/features/github-sync/lib/githubSyncSchedule';
 import { maybeRunScheduledGitlabSync } from '@/features/gitlab-sync/lib/gitlabSyncSchedule';
@@ -93,6 +94,7 @@ export function useAppForegroundLifecycle(): void {
           sendForegroundHeartbeat();
           lastForegroundAt = now;
           scheduleResumeAllPendingCloudSummarize();
+          scheduleDrainPrivateAiTaskQueue();
           void syncAllBackupReminderNotifications();
           void maybeRunScheduledGithubSync();
           void maybeRunScheduledGitlabSync();
