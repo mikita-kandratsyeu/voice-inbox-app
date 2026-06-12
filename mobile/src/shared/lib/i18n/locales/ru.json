@@ -594,6 +594,8 @@
         "collapseA11y": "Свернуть «{{title}}»"
       },
       "toolbar": {
+        "undo": "Отменить",
+        "redo": "Повторить",
         "bold": "Жирный",
         "italic": "Курсив",
         "strikethrough": "Зачёркнутый",
