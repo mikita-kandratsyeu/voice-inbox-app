@@ -31,7 +31,7 @@ export type VoucherPdfCopy = {
 };
 
 /** Bump when below-strip, envelope, or voucher legal copy changes (printed on every PDF). */
-export const VOUCHER_TEMPLATE_VERSION = 'v17';
+export const VOUCHER_TEMPLATE_VERSION = 'v22';
 
 export type VoucherEnvelopeCopy = {
   pageTitle: string;
@@ -208,7 +208,11 @@ const COPY_EN: VoucherPdfCopy = {
   thankYouSidebar: 'Thank you for choosing Voice Inbox AI',
   thanksLead: 'Thank you for choosing',
   sidebarTagline: 'From thought to clarity.',
-  sidebarPerks: ['All PRO Features', 'AI summaries & tasks', 'Private mode on your device'],
+  sidebarPerks: [
+    'AI without extra taps',
+    'Your AI server & customization',
+    'GitHub & GitLab backup & sync',
+  ],
   sidebarPerkIcons: ['zap', 'brain', 'shield'],
   cutAlongOuterLine: 'CUT ALONG SOLID LINE',
   premiumHeadline: '',
@@ -234,7 +238,11 @@ const COPY_RU: VoucherPdfCopy = {
   thankYouSidebar: 'Спасибо, что выбрали Voice Inbox AI',
   thanksLead: 'Спасибо, что выбрали',
   sidebarTagline: 'От мысли — к ясности.',
-  sidebarPerks: ['Все PRO-возможности', 'ИИ сводки и задачи', 'Приватный режим на устройстве'],
+  sidebarPerks: [
+    'ИИ без лишних нажатий',
+    'Свой ИИ-сервер и кастомизация',
+    'Синхронизация с GitHub и GitLab',
+  ],
   sidebarPerkIcons: ['zap', 'brain', 'shield'],
   cutAlongOuterLine: 'РЕЖЬТЕ ПО СПЛОШНОЙ ЛИНИИ',
   premiumHeadline: '',

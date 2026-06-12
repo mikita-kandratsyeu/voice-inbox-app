@@ -41,6 +41,10 @@ export function AdminLogin() {
   };
 
   const inputWithIconClass = `${adminInputClass} pl-10`;
+  const inputAffixClass =
+    'absolute top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-zinc-400 dark:text-zinc-300';
+  const inputLeadingAffixClass = `${inputAffixClass} pointer-events-none left-2`;
+  const inputTrailingAffixClass = `${inputAffixClass} right-2 transition-colors hover:bg-zinc-100 hover:text-zinc-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:outline-none dark:hover:bg-zinc-800 dark:hover:text-zinc-100`;
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12">
@@ -94,11 +98,9 @@ export function AdminLogin() {
                 Login
               </label>
               <div className="relative">
-                <User
-                  className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500"
-                  strokeWidth={2}
-                  aria-hidden
-                />
+                <span className={inputLeadingAffixClass} aria-hidden>
+                  <User className="h-4 w-4" strokeWidth={2} />
+                </span>
                 <input
                   id="login"
                   type="text"
@@ -121,11 +123,9 @@ export function AdminLogin() {
                 Password
               </label>
               <div className="relative">
-                <Lock
-                  className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500"
-                  strokeWidth={2}
-                  aria-hidden
-                />
+                <span className={inputLeadingAffixClass} aria-hidden>
+                  <Lock className="h-4 w-4" strokeWidth={2} />
+                </span>
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
@@ -139,7 +139,7 @@ export function AdminLogin() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute top-1/2 right-2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:outline-none dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                  className={inputTrailingAffixClass}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
