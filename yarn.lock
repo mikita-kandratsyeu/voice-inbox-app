@@ -15360,6 +15360,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-enriched-markdown@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "react-native-enriched-markdown@npm:0.6.0"
+  peerDependencies:
+    "@expo/config-plugins": ">=50.0.0"
+    katex: ">=0.16.0"
+    react: "*"
+    react-native: "*"
+  peerDependenciesMeta:
+    "@expo/config-plugins":
+      optional: true
+    katex:
+      optional: true
+  checksum: 10c0/9d71d6c44bd317b3d575ac4a4d1501ee55f280da090a7660813b3d86d23f67fcce4e2f016fd9cc2ef0c567f47807d4a065af60dfd3278c05e5f81423480f521c
+  languageName: node
+  linkType: hard
+
 "react-native-fetch-api@npm:^3.0.0":
   version: 3.0.0
   resolution: "react-native-fetch-api@npm:3.0.0"
@@ -18383,6 +18400,7 @@ __metadata:
     react-native-calendar-events: "npm:^2.2.0"
     react-native-dotenv: "npm:^3.4.11"
     react-native-draggable-flatlist: "npm:^4.0.3"
+    react-native-enriched-markdown: "npm:^0.6.0"
     react-native-gesture-handler: "npm:^2.30.1"
     react-native-haptic-feedback: "npm:^3.0.0"
     react-native-html-to-pdf: "npm:^1.3.0"

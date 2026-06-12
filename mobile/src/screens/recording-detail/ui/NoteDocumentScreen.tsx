@@ -2,9 +2,10 @@ import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BookOpen, Check, FileCode, X } from 'lucide-react-native';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
+import type { EnrichedMarkdownTextInputInstance } from 'react-native-enriched-markdown';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -29,7 +30,8 @@ export const NoteDocumentScreen = () => {
   const insets = useSafeAreaInsets();
   const color = useColors();
   const isTablet = useIsTablet();
-  const sourceInputRef = useRef<TextInput>(null);
+  const sourceInputRef = useRef<EnrichedMarkdownTextInputInstance>(null);
+  const [sourceEditorKey, setSourceEditorKey] = useState(0);
 
   const scrollPaddingBottom = insets.bottom + 24;
 
@@ -127,6 +129,7 @@ export const NoteDocumentScreen = () => {
 
   const handleToggleMode = useCallback(() => {
     if (mode === 'reading') {
+      setSourceEditorKey((current) => current + 1);
       setMode('source');
       requestAnimationFrame(() => sourceInputRef.current?.focus());
       return;
@@ -273,13 +276,15 @@ export const NoteDocumentScreen = () => {
           ) : (
             <NoteDocumentSourceEditor
               color={color}
-              value={documentMarkdown}
-              onChangeText={setDocumentMarkdown}
+              documentKey={`${record.id}:${sourceEditorKey}`}
+              initialMarkdown={documentMarkdown}
+              onChangeMarkdown={setDocumentMarkdown}
               editable={!isSaving}
               horizontalPadding={sourceHorizontalPadding}
               scrollPaddingBottom={scrollPaddingBottom}
               isTablet={isTablet}
               inputRef={sourceInputRef}
+              autoFocus={initialMode === 'source'}
             />
           )}
           {isSaving ? <NoteDocumentSavingOverlay /> : null}

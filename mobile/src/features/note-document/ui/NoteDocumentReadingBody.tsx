@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
+import type { TaskListItemPressEvent } from 'react-native-enriched-markdown';
 
 import type { TaskItem } from '@/entities/record';
 import type { Colors } from '@/shared/config';
-import { NoteMarkdown } from '@/shared/ui/NoteMarkdown';
 
 import { stripNoteDocumentMarkers } from '../lib/noteDocumentSectionMarkers';
 import {
@@ -11,7 +11,7 @@ import {
   splitNoteDocumentForReading,
 } from '../lib/splitNoteDocumentForReading';
 import { NoteDocumentCollapsibleSection } from './NoteDocumentCollapsibleSection';
-import { NoteDocumentInteractiveTaskList } from './NoteDocumentInteractiveTaskList';
+import { NoteDocumentEnrichedMarkdown } from './NoteDocumentEnrichedMarkdown';
 
 type NoteDocumentReadingBodyProps = {
   color: Colors;
@@ -47,6 +47,17 @@ const NoteDocumentReadingSectionRow = React.memo(function NoteDocumentReadingSec
     onToggle(segment.id, segment.defaultExpanded);
   }, [onToggle, segment.defaultExpanded, segment.id]);
 
+  const handleTaskListItemPress = useCallback(
+    (event: TaskListItemPressEvent) => {
+      if (segment.id !== 'tasks') return;
+      const task = tasks[event.index];
+      if (task) {
+        onToggleTask(task.id);
+      }
+    },
+    [onToggleTask, segment.id, tasks],
+  );
+
   return (
     <NoteDocumentCollapsibleSection
       color={color}
@@ -54,13 +65,11 @@ const NoteDocumentReadingSectionRow = React.memo(function NoteDocumentReadingSec
       expanded={expanded}
       onToggle={handleToggle}
     >
-      {segment.id === 'tasks' && tasks.length > 0 ? (
-        <NoteDocumentInteractiveTaskList color={color} tasks={tasks} onToggleTask={onToggleTask} />
-      ) : (
-        <NoteMarkdown color={color} variant="document">
-          {segment.bodyMarkdown}
-        </NoteMarkdown>
-      )}
+      <NoteDocumentEnrichedMarkdown
+        color={color}
+        markdown={segment.bodyMarkdown}
+        onTaskListItemPress={segment.id === 'tasks' ? handleTaskListItemPress : undefined}
+      />
     </NoteDocumentCollapsibleSection>
   );
 });
@@ -112,11 +121,7 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
   }, []);
 
   if (!layout.hasSections) {
-    return (
-      <NoteMarkdown color={color} variant="document">
-        {flatMarkdown}
-      </NoteMarkdown>
-    );
+    return <NoteDocumentEnrichedMarkdown color={color} markdown={flatMarkdown} />;
   }
 
   return (
@@ -124,9 +129,11 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
       {layout.segments.map((segment) => {
         if (segment.kind === 'preamble') {
           return (
-            <NoteMarkdown key="preamble" color={color} variant="document">
-              {segment.markdown}
-            </NoteMarkdown>
+            <NoteDocumentEnrichedMarkdown
+              key="preamble"
+              color={color}
+              markdown={segment.markdown}
+            />
           );
         }
 
