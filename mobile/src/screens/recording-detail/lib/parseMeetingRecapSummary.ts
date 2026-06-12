@@ -82,10 +82,55 @@ function normalizeInlineSections(summary: string): string {
   });
 }
 
+/** Converts document markdown headings back to meeting-recap `Label:` sections. */
+export function restoreMeetingSummaryFromDocumentMarkdown(body: string): string {
+  if (!/^###\s+/m.test(body)) {
+    return body;
+  }
+
+  const lines = body.replace(/\r\n?/g, '\n').split('\n');
+  const out: string[] = [];
+  let currentLabel: string | null = null;
+  let sectionLines: string[] = [];
+
+  const flush = () => {
+    if (!currentLabel) return;
+    const trimmed = sectionLines.join('\n').trimEnd();
+    out.push(trimmed ? `${currentLabel}:\n${trimmed}` : `${currentLabel}:`);
+    sectionLines = [];
+  };
+
+  for (const line of lines) {
+    const heading = line.match(/^###\s+(.+?)\s*$/);
+    if (heading) {
+      flush();
+      currentLabel = heading[1]!.trim();
+      continue;
+    }
+
+    if (currentLabel !== null) {
+      sectionLines.push(line);
+    } else if (line.trim()) {
+      out.push(line);
+    }
+  }
+
+  flush();
+  return out.join('\n\n').trim();
+}
+
 export function parseMeetingRecapSummary(summary: string): MeetingRecapSection[] {
   const lines = normalizeInlineSections(summary).replace(/\r\n?/g, '\n').split('\n');
   const sections: MeetingRecapSection[] = [];
   let current: MeetingRecapSection | null = null;
+  let pendingLines: string[] = [];
+
+  const flushPendingAsBrief = () => {
+    const pending = pendingLines.join('\n').trim();
+    pendingLines = [];
+    if (!pending) return;
+    sections.push({ kind: 'brief', title: 'Brief', body: pending });
+  };
 
   for (const line of lines) {
     const sectionStart = parseSectionStart(line);
@@ -93,17 +138,32 @@ export function parseMeetingRecapSummary(summary: string): MeetingRecapSection[]
       if (current?.body.trim()) {
         sections.push({ ...current, body: current.body.trim() });
       }
+
+      if (pendingLines.length > 0) {
+        const pending = pendingLines.join('\n').trim();
+        pendingLines = [];
+        if (sectionStart.kind === 'brief') {
+          sectionStart.body = [pending, sectionStart.body].filter(Boolean).join('\n');
+        } else if (pending) {
+          sections.push({ kind: 'brief', title: 'Brief', body: pending });
+        }
+      }
+
       current = sectionStart;
       continue;
     }
 
     if (current) {
       current.body = [current.body, line].filter(Boolean).join('\n');
+    } else if (line.trim()) {
+      pendingLines.push(line);
     }
   }
 
   if (current?.body.trim()) {
     sections.push({ ...current, body: current.body.trim() });
+  } else if (pendingLines.length > 0) {
+    flushPendingAsBrief();
   }
 
   const seen = new Set<MeetingRecapSectionKind>();
@@ -113,5 +173,5 @@ export function parseMeetingRecapSummary(summary: string): MeetingRecapSection[]
     return true;
   });
 
-  return unique.length >= 2 ? unique : [];
+  return unique.length > 0 ? unique : [];
 }

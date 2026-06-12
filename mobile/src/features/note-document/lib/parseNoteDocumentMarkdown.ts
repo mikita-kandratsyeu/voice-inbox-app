@@ -1,5 +1,6 @@
 import type { TaskItem, TranscriptSegment, VoiceRecord } from '@/entities/record';
 import { stripDocumentTranscriptMarkup } from '@/entities/record/lib/transcriptText';
+import { restoreMeetingSummaryFromDocumentMarkdown } from '@/screens/recording-detail/lib/parseMeetingRecapSummary';
 import { i18n } from '@/shared/lib';
 
 import {
@@ -213,6 +214,12 @@ function collapseTranscriptSegments(record: VoiceRecord, transcript: string): Tr
   return [{ ...existing[0]!, text: trimmed }];
 }
 
+function serializeSummarySectionBody(body: string, record: VoiceRecord): string {
+  const isMeeting = record.classification === 'meeting' || Boolean(record.meetingDialogue?.trim());
+  if (!isMeeting) return body;
+  return restoreMeetingSummaryFromDocumentMarkdown(body);
+}
+
 function hadSectionContent(record: VoiceRecord, sectionId: string): boolean {
   switch (sectionId) {
     case 'tags':
@@ -257,7 +264,7 @@ export function parseNoteDocumentMarkdown(
 
   if (markerIds.has('summary') || hadSectionContent(record, 'summary')) {
     patch.summary = markerIds.has('summary')
-      ? normalizeSectionBody(sections.get('summary') ?? '')
+      ? serializeSummarySectionBody(normalizeSectionBody(sections.get('summary') ?? ''), record)
       : '';
   }
 

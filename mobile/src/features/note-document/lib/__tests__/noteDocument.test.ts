@@ -261,4 +261,34 @@ describe('note document markdown', () => {
     ]);
     expect(parsed.patch.transcriptSegments?.[0]?.tokens).toBeUndefined();
   });
+
+  it('restores meeting summary sections after document markdown round-trip', () => {
+    const record = makeRecord({
+      classification: 'meeting',
+      meetingDialogue: '**Speaker 1:** Hello team.',
+      summary: ['Коротко:', 'Обсудили запуск.', '', 'Решения:', '- Выпустить сборку.'].join('\n'),
+    });
+
+    const markdown = [
+      `# ${record.title}`,
+      '',
+      '<!-- vi:section:summary -->',
+      '## Meeting summary',
+      '',
+      '### Коротко',
+      '- Обсудили запуск.',
+      '',
+      '### Решения',
+      '- Выпустить сборку.',
+    ].join('\n');
+
+    const parsed = parseNoteDocumentMarkdown(markdown, record);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    expect(parsed.patch.summary).toContain('Коротко:');
+    expect(parsed.patch.summary).toContain('Обсудили запуск.');
+    expect(parsed.patch.summary).toContain('Решения:');
+    expect(parsed.patch.summary).toContain('Выпустить сборку.');
+  });
 });

@@ -94,14 +94,14 @@ function formatPlainTranscriptForShare(text: string, forDocument = false): strin
   const trimmed = text.trim();
   if (!trimmed) return '';
 
+  if (forDocument) {
+    return trimmed;
+  }
+
   const blocks = trimmed
     .split(/\n\s*\n/)
     .map((b) => b.replace(/\s+/g, ' ').trim())
     .filter(Boolean);
-
-  if (forDocument) {
-    return blocks.join('\n\n');
-  }
 
   return blocks.map((b) => wrapParagraphToWidth(b, SHARE_WRAP_WIDTH)).join('\n\n');
 }
@@ -218,6 +218,12 @@ const pushMeetingSummary = (
   pushDocumentSectionMarker(lines, 'summary', ctx);
   lines.push('');
   lines.push(`## ${i18n.t('recordingDetail.meetingSummaryTitle')}`);
+
+  if (ctx.forDocument) {
+    lines.push('');
+    lines.push(summary);
+    return;
+  }
 
   const sections = parseMeetingRecapSummary(summary).filter((section) =>
     MEETING_RECAP_EXPORT_SECTION_KINDS.has(section.kind),

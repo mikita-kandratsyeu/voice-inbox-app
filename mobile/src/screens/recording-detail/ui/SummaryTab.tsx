@@ -9,7 +9,7 @@ import {
   Share,
   UsersRound,
 } from 'lucide-react-native';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
@@ -69,9 +69,11 @@ type SummaryTabProps = {
 function MeetingRecapSectionBlock({
   section,
   color,
+  title,
 }: {
   section: MeetingRecapSection;
   color: Colors;
+  title: string;
 }) {
   const bodyItems = useMemo(() => splitMeetingRecapBody(section.body), [section.body]);
   const iconColor =
@@ -104,7 +106,7 @@ function MeetingRecapSectionBlock({
       <View className="flex-row items-center gap-2">
         {icon}
         <Text className="text-[13px] font-semibold" style={{ color: color.text.primary }}>
-          {section.title}
+          {title}
         </Text>
       </View>
       <View className="gap-2">
@@ -219,6 +221,12 @@ export const SummaryTab = ({
     [isMeeting, summary],
   );
 
+  const resolveMeetingSectionTitle = useCallback(
+    (section: MeetingRecapSection) =>
+      section.title === 'Brief' ? t('recordingDetail.summary') : section.title,
+    [t],
+  );
+
   const errMessage = useMemo(() => {
     return errorMessage ?? (showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : '');
   }, [errorMessage, showPrivateModeCta, t]);
@@ -323,6 +331,7 @@ export const SummaryTab = ({
             <MeetingRecapSectionBlock
               key={`${section.kind}:${section.title}`}
               section={section}
+              title={resolveMeetingSectionTitle(section)}
               color={color}
             />
           ))}

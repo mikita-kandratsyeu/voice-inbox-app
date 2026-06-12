@@ -1,4 +1,4 @@
-import { parseMeetingRecapSummary } from '../parseMeetingRecapSummary';
+import { parseMeetingRecapSummary, restoreMeetingSummaryFromDocumentMarkdown } from '../parseMeetingRecapSummary';
 
 describe('parseMeetingRecapSummary', () => {
   it('parses Russian meeting recap sections', () => {
@@ -31,11 +31,13 @@ describe('parseMeetingRecapSummary', () => {
     expect(sections[1]?.body).toBe('Выпустить сборку в пятницу.');
   });
 
-  it('parses English headings and ignores plain summaries', () => {
+  it('parses English headings and treats plain meeting prose as one brief section', () => {
     expect(
       parseMeetingRecapSummary('Brief:\nLaunch recap.\n\nNext steps:\nSend the update.'),
     ).toHaveLength(2);
-    expect(parseMeetingRecapSummary('The team discussed launch status.')).toEqual([]);
+    expect(parseMeetingRecapSummary('The team discussed launch status.')).toEqual([
+      expect.objectContaining({ kind: 'brief', body: 'The team discussed launch status.' }),
+    ]);
   });
 
   it('parses inline sections returned as a dense paragraph', () => {
@@ -52,5 +54,28 @@ describe('parseMeetingRecapSummary', () => {
     ]);
     expect(sections[0]?.body).toBe('Обсуждение переноса сроков.');
     expect(sections[1]?.body).toContain('2. Список будет доработан.');
+  });
+
+  it('keeps orphan lines before the first section header as brief', () => {
+    const sections = parseMeetingRecapSummary(
+      ['- Обсуждалась разработка материала.', '', 'Решения:', '- Срок перенесён.'].join('\n'),
+    );
+
+    expect(sections.map((section) => section.kind)).toEqual(['brief', 'decisions']);
+    expect(sections[0]?.body).toBe('- Обсуждалась разработка материала.');
+  });
+
+  it('restores meeting summary from document markdown headings', () => {
+    const restored = restoreMeetingSummaryFromDocumentMarkdown(
+      ['### Коротко', '- Обсудили запуск.', '', '### Решения', '- Выпустить сборку.'].join('\n'),
+    );
+
+    expect(restored).toContain('Коротко:');
+    expect(restored).toContain('- Обсудили запуск.');
+    expect(restored).toContain('Решения:');
+    expect(restored).toContain('- Выпустить сборку.');
+
+    const sections = parseMeetingRecapSummary(restored);
+    expect(sections.map((section) => section.kind)).toEqual(['brief', 'decisions']);
   });
 });
