@@ -1,4 +1,4 @@
-import { Bold, Italic, Link, Strikethrough, Underline } from 'lucide-react-native';
+import { Bold, Italic, Strikethrough, Underline } from 'lucide-react-native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
@@ -19,15 +19,13 @@ export type EnrichedMarkdownToolbarAction =
   | 'bold'
   | 'italic'
   | 'strikethrough'
-  | 'underline'
-  | 'link';
+  | 'underline';
 
 const TOOLBAR_ACTIONS: EnrichedMarkdownToolbarAction[] = [
   'bold',
   'italic',
   'strikethrough',
   'underline',
-  'link',
 ];
 
 const TOOLBAR_ACTION_VISUAL: Record<
@@ -38,7 +36,6 @@ const TOOLBAR_ACTION_VISUAL: Record<
   italic: { strokeWidth: 1.65 },
   strikethrough: { strokeWidth: 2 },
   underline: { strokeWidth: 2 },
-  link: { strokeWidth: 2 },
 };
 
 const TOOLBAR_ICONS = {
@@ -46,7 +43,6 @@ const TOOLBAR_ICONS = {
   italic: Italic,
   strikethrough: Strikethrough,
   underline: Underline,
-  link: Link,
 } as const;
 
 const TOOLBAR_DIVIDER_HEIGHT = 1;
@@ -78,8 +74,6 @@ function isToolbarActionActive(
       return styleState.strikethrough.isActive;
     case 'underline':
       return styleState.underline.isActive;
-    case 'link':
-      return styleState.link.isActive;
     default:
       return false;
   }

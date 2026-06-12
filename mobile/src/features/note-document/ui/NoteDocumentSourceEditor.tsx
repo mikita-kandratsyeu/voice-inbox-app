@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import {
   EnrichedMarkdownTextInput,
   type EnrichedMarkdownTextInputInstance,
@@ -14,9 +14,7 @@ import {
 } from '@/shared/ui/documentMarkdownTheme';
 
 import { buildNoteDocumentEnrichedInputStyle } from '../lib/enrichedMarkdownTheme';
-import { isValidMarkdownLinkUrl, normalizeMarkdownLinkUrl } from '../lib/markdownLink';
 import { NOTE_DOCUMENT_CONTENT_MAX_WIDTH } from '../lib/noteDocumentLayout';
-import { NoteDocumentLinkUrlPrompt } from './NoteDocumentLinkUrlPrompt';
 import {
   type EnrichedMarkdownToolbarAction,
   NOTE_DOCUMENT_TOOLBAR_FALLBACK_HEIGHT,
@@ -48,9 +46,7 @@ export function NoteDocumentSourceEditor({
 }: NoteDocumentSourceEditorProps) {
   const { t } = useTranslation();
   const [styleState, setStyleState] = useState<StyleState | null>(null);
-  const [linkPromptVisible, setLinkPromptVisible] = useState(false);
   const [toolbarHeight, setToolbarHeight] = useState(NOTE_DOCUMENT_TOOLBAR_FALLBACK_HEIGHT);
-  const selectionRef = useRef({ start: 0, end: 0 });
 
   const inputMarkdownStyle = useMemo(() => buildNoteDocumentEnrichedInputStyle(color), [color]);
   const editorColumnStyle = useMemo(
@@ -90,8 +86,8 @@ export function NoteDocumentSourceEditor({
       backgroundColor: color.background.primary,
       paddingHorizontal: horizontalPadding,
       // Scrolls with content so text can move flush under the overlaid toolbar.
-      paddingTop: toolbarHeight,
-      paddingBottom: scrollPaddingBottom,
+      marginTop: toolbarHeight,
+      marginBottom: scrollPaddingBottom,
     }),
     [
       color.background.primary,
@@ -105,10 +101,6 @@ export function NoteDocumentSourceEditor({
   const handleChangeText = useCallback(() => {
     onDirty();
   }, [onDirty]);
-
-  const handleChangeSelection = useCallback((selection: { start: number; end: number }) => {
-    selectionRef.current = selection;
-  }, []);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -135,47 +127,9 @@ export function NoteDocumentSourceEditor({
         case 'underline':
           editor.toggleUnderline();
           return;
-        case 'link':
-          setLinkPromptVisible(true);
       }
     },
     [inputRef],
-  );
-
-  const handleLinkSubmit = useCallback(
-    (url: string) => {
-      if (!url.trim()) {
-        setLinkPromptVisible(false);
-        return;
-      }
-
-      if (!isValidMarkdownLinkUrl(url)) {
-        Alert.alert(
-          t('recordingDetail.document.linkPrompt.invalidUrlTitle'),
-          t('recordingDetail.document.linkPrompt.invalidUrlMessage'),
-        );
-        return;
-      }
-
-      const editor = inputRef.current;
-      if (!editor) {
-        setLinkPromptVisible(false);
-        return;
-      }
-
-      const normalizedUrl = normalizeMarkdownLinkUrl(url);
-      const { start, end } = selectionRef.current;
-      const hasSelection = end > start;
-
-      if (hasSelection) {
-        editor.setLink(normalizedUrl);
-      } else {
-        editor.insertLink(t('recordingDetail.document.toolbar.link'), normalizedUrl);
-      }
-
-      setLinkPromptVisible(false);
-    },
-    [inputRef, t],
   );
 
   return (
@@ -197,7 +151,6 @@ export function NoteDocumentSourceEditor({
             markdownStyle={inputMarkdownStyle}
             onChangeText={handleChangeText}
             onChangeState={setStyleState}
-            onChangeSelection={handleChangeSelection}
             style={inputStyle}
           />
         </View>
@@ -221,12 +174,6 @@ export function NoteDocumentSourceEditor({
           />
         </View>
       </View>
-      <NoteDocumentLinkUrlPrompt
-        visible={linkPromptVisible}
-        color={color}
-        onCancel={() => setLinkPromptVisible(false)}
-        onSubmit={handleLinkSubmit}
-      />
     </View>
   );
 }

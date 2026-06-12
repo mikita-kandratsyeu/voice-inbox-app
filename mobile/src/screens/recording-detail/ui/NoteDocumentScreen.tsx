@@ -33,7 +33,7 @@ export const NoteDocumentScreen = () => {
   const sourceInputRef = useRef<EnrichedMarkdownTextInputInstance>(null);
   const [sourceEditorKey, setSourceEditorKey] = useState(0);
 
-  const scrollPaddingBottom = insets.bottom + 24;
+  const scrollPaddingBottom = insets.bottom + 4;
 
   const { record, initialMode } = route.params;
   const {
