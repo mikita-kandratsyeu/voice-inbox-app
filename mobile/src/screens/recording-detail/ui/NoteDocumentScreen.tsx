@@ -137,8 +137,9 @@ export const NoteDocumentScreen = () => {
     }, []),
   );
 
-  const readingHorizontalPadding = 16;
-  const sourceHorizontalPadding = 20;
+  const readingHorizontalPadding = isTablet ? 48 : 20;
+  const sourceHorizontalPadding = isTablet ? 48 : 20;
+  const readingMaxWidth = 680;
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.primary }}>
@@ -213,16 +214,21 @@ export const NoteDocumentScreen = () => {
           style={{ flex: 1 }}
           contentContainerStyle={{
             paddingHorizontal: readingHorizontalPadding,
-            paddingTop: 16,
-            paddingBottom: scrollPaddingBottom,
+            paddingTop: 24,
+            paddingBottom: scrollPaddingBottom + 24,
+            ...(isTablet && {
+              alignItems: 'center',
+            }),
           }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator
           bottomOffset={16}
         >
-          <NoteMarkdown color={color} variant="document">
-            {readingContent}
-          </NoteMarkdown>
+          <View style={{ width: '100%', maxWidth: isTablet ? readingMaxWidth : undefined }}>
+            <NoteMarkdown color={color} variant="document">
+              {readingContent}
+            </NoteMarkdown>
+          </View>
         </KeyboardAwareScrollView>
       ) : (
         <KeyboardAwareScrollView
@@ -244,8 +250,8 @@ export const NoteDocumentScreen = () => {
               {
                 color: color.text.primary,
                 fontFamily: 'Menlo',
-                fontSize: 14,
-                lineHeight: 22,
+                fontSize: 15,
+                lineHeight: 24,
                 minHeight: editorMinHeight,
                 textAlignVertical: 'top',
               },
