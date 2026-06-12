@@ -3,7 +3,7 @@ const NOTE_DOCUMENT_BODY_LINE_HEIGHT = 28;
 
 const INPUT_VERTICAL_PADDING = 16;
 const CHARS_PER_LINE_PHONE = 42;
-const CHARS_PER_LINE_TABLET = 72;
+const CHARS_PER_LINE_TABLET = 91;
 
 /** Fallback height before/without a reliable `onContentSizeChange` measurement. */
 export function estimateNoteDocumentInputHeight(

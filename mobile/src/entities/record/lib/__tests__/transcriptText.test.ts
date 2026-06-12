@@ -2,8 +2,7 @@ import { estimatePlainTextInputHeight, stripDocumentTranscriptMarkup } from '../
 
 describe('stripDocumentTranscriptMarkup', () => {
   it('removes block and inline bold timestamp markers', () => {
-    const input =
-      '**[00:00]** **[00:00]** **[00:00]** Первый абзац.\n\n**[00:42]** Второй абзац.';
+    const input = '**[00:00]** **[00:00]** **[00:00]** Первый абзац.\n\n**[00:42]** Второй абзац.';
 
     expect(stripDocumentTranscriptMarkup(input)).toBe('Первый абзац.\n\nВторой абзац.');
   });

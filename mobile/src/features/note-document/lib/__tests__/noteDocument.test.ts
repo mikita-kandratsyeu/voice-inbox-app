@@ -262,6 +262,42 @@ describe('note document markdown', () => {
     expect(parsed.patch.transcriptSegments?.[0]?.tokens).toBeUndefined();
   });
 
+  it('strips inline markdown from the document title on save', () => {
+    const record = makeRecord();
+    const markdown = buildNoteDocumentMarkdown(record).replace(
+      '# Writing is telepathy',
+      '# **Writing is telepathy**',
+    );
+
+    const parsed = parseNoteDocumentMarkdown(markdown, record);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    expect(parsed.patch.title).toBe('Writing is telepathy');
+  });
+
+  it('parses asterisk task checkboxes and bullet-list tags', () => {
+    const record = makeRecord();
+    const markdown = [
+      `# ${record.title}`,
+      '',
+      '<!-- vi:section:tags -->',
+      '## Tags',
+      '- #ideas',
+      '- #draft',
+      '<!-- vi:section:tasks -->',
+      '## Tasks',
+      '* [x] Follow up with the team',
+    ].join('\n');
+
+    const parsed = parseNoteDocumentMarkdown(markdown, record);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    expect(parsed.patch.tags).toEqual(expect.arrayContaining(['ideas', 'draft']));
+    expect(parsed.patch.tasks?.[0]?.isDone).toBe(true);
+  });
+
   it('restores meeting summary sections after document markdown round-trip', () => {
     const record = makeRecord({
       classification: 'meeting',

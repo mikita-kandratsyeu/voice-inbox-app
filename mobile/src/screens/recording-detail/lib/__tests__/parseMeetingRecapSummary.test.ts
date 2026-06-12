@@ -1,4 +1,7 @@
-import { parseMeetingRecapSummary, restoreMeetingSummaryFromDocumentMarkdown } from '../parseMeetingRecapSummary';
+import {
+  parseMeetingRecapSummary,
+  restoreMeetingSummaryFromDocumentMarkdown,
+} from '../parseMeetingRecapSummary';
 
 describe('parseMeetingRecapSummary', () => {
   it('parses Russian meeting recap sections', () => {
@@ -74,6 +77,18 @@ describe('parseMeetingRecapSummary', () => {
     expect(restored).toContain('- Обсудили запуск.');
     expect(restored).toContain('Решения:');
     expect(restored).toContain('- Выпустить сборку.');
+
+    const sections = parseMeetingRecapSummary(restored);
+    expect(sections.map((section) => section.kind)).toEqual(['brief', 'decisions']);
+  });
+
+  it('restores meeting summary from level-2 document headings', () => {
+    const restored = restoreMeetingSummaryFromDocumentMarkdown(
+      ['## Коротко', '- Обсудили запуск.', '', '## Решения', '- Выпустить сборку.'].join('\n'),
+    );
+
+    expect(restored).toContain('Коротко:');
+    expect(restored).toContain('Решения:');
 
     const sections = parseMeetingRecapSummary(restored);
     expect(sections.map((section) => section.kind)).toEqual(['brief', 'decisions']);

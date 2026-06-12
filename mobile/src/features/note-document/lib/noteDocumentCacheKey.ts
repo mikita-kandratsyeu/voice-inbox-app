@@ -24,7 +24,9 @@ function fingerprintList(items: readonly string[] | null | undefined): string {
 
 function fingerprintTasks(tasks: VoiceRecord['tasks']): string {
   if (!tasks?.length) return '0';
-  const payload = tasks.map((t) => `${t.id}|${t.isDone ? 1 : 0}|${t.text.length}|${t.text}`).join('\u001e');
+  const payload = tasks
+    .map((t) => `${t.id}|${t.isDone ? 1 : 0}|${t.text.length}|${t.text}`)
+    .join('\u001e');
   return `${tasks.length}:${hashStringFNV(payload)}`;
 }
 

@@ -25,5 +25,8 @@ export function estimatePlainTextInputHeight(text: string, minHeight: number): n
     return total + Math.max(1, Math.ceil(trimmed.length / 40));
   }, 0);
 
-  return Math.max(minHeight, wrappedLineCount * PLAIN_TEXT_LINE_HEIGHT + PLAIN_TEXT_VERTICAL_PADDING);
+  return Math.max(
+    minHeight,
+    wrappedLineCount * PLAIN_TEXT_LINE_HEIGHT + PLAIN_TEXT_VERTICAL_PADDING,
+  );
 }

@@ -38,7 +38,7 @@ function formatTaskMetaLine(task: TaskItem, t: (key: string) => string): string 
   return parts.length > 0 ? parts.join(' · ') : null;
 }
 
-export function NoteDocumentInteractiveTaskList({
+export const NoteDocumentInteractiveTaskList = React.memo(function NoteDocumentInteractiveTaskList({
   color,
   tasks,
   onToggleTask,
@@ -120,4 +120,4 @@ export function NoteDocumentInteractiveTaskList({
       </View>
     </View>
   );
-}
+});

@@ -82,9 +82,11 @@ function normalizeInlineSections(summary: string): string {
   });
 }
 
+const MEETING_SUMMARY_HEADING_RE = /^#{2,4}\s+(.+?)\s*$/;
+
 /** Converts document markdown headings back to meeting-recap `Label:` sections. */
 export function restoreMeetingSummaryFromDocumentMarkdown(body: string): string {
-  if (!/^###\s+/m.test(body)) {
+  if (!/^#{2,4}\s+/m.test(body)) {
     return body;
   }
 
@@ -101,7 +103,7 @@ export function restoreMeetingSummaryFromDocumentMarkdown(body: string): string 
   };
 
   for (const line of lines) {
-    const heading = line.match(/^###\s+(.+?)\s*$/);
+    const heading = line.match(MEETING_SUMMARY_HEADING_RE);
     if (heading) {
       flush();
       currentLabel = heading[1]!.trim();

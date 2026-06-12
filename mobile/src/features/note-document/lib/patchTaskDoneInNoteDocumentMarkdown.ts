@@ -14,7 +14,7 @@ export function patchTaskDoneInNoteDocumentMarkdown(
   if (!text) return markdown;
 
   const re = new RegExp(
-    `^(\\-\\s+\\[)[ xX](\\]\\s+${escapeRegExp(text)}(?:\\s+\\([^)]+\\))?)`,
+    `^([-*]\\s+\\[)[ xX](\\]\\s+${escapeRegExp(text)}(?:\\s+\\([^)]+\\))?)`,
     'gm',
   );
 

@@ -1,15 +1,12 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  NativeSyntheticEvent,
-  TextInput as TextInputType,
-  TextInputContentSizeChangeEventData,
-} from 'react-native';
+import type { TextInput as TextInputType } from 'react-native';
 import { Alert, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 import type { Colors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib';
+import { useMultilineInputAutoHeight } from '@/shared/lib/multilineInputAutoHeight';
 import {
   getInputFieldInputStyle,
   NOTE_DOCUMENT_BODY_FONT_SIZE,
@@ -28,12 +25,13 @@ import { NOTE_DOCUMENT_CONTENT_MAX_WIDTH } from '../lib/noteDocumentLayout';
 import { NoteDocumentLinkUrlPrompt } from './NoteDocumentLinkUrlPrompt';
 import { NoteDocumentMarkdownToolbar } from './NoteDocumentMarkdownToolbar';
 
+const MIN_INPUT_HEIGHT = 120;
+
 type NoteDocumentSourceEditorProps = {
   color: Colors;
   value: string;
   onChangeText: (text: string) => void;
   editable: boolean;
-  minHeight: number;
   horizontalPadding: number;
   scrollPaddingBottom: number;
   isTablet: boolean;
@@ -45,7 +43,6 @@ export function NoteDocumentSourceEditor({
   value,
   onChangeText,
   editable,
-  minHeight,
   horizontalPadding,
   scrollPaddingBottom,
   isTablet,
@@ -53,23 +50,12 @@ export function NoteDocumentSourceEditor({
 }: NoteDocumentSourceEditorProps) {
   const { t } = useTranslation();
   const selectionRef = useRef<TextSelection>({ start: value.length, end: value.length });
-  const [inputContentHeight, setInputContentHeight] = useState(() =>
-    estimateNoteDocumentInputHeight(value, minHeight, isTablet),
-  );
+  const { inputHeight: inputContentHeight, handleContentSizeChange } = useMultilineInputAutoHeight({
+    inputRef,
+    minHeight: MIN_INPUT_HEIGHT,
+    estimateHeight: () => estimateNoteDocumentInputHeight(value, MIN_INPUT_HEIGHT, isTablet),
+  });
   const [linkPromptVisible, setLinkPromptVisible] = useState(false);
-
-  useEffect(() => {
-    const estimated = estimateNoteDocumentInputHeight(value, minHeight, isTablet);
-    setInputContentHeight((prev) => Math.max(prev, estimated));
-  }, [isTablet, minHeight, value]);
-
-  const handleContentSizeChange = useCallback(
-    (event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
-      const measuredHeight = Math.max(minHeight, event.nativeEvent.contentSize.height);
-      setInputContentHeight((prev) => Math.max(prev, measuredHeight));
-    },
-    [minHeight],
-  );
 
   const applyEditResult = useCallback(
     (result: { text: string; selection: TextSelection }) => {
@@ -128,7 +114,6 @@ export function NoteDocumentSourceEditor({
       <KeyboardAwareScrollView
         style={{ flex: 1, backgroundColor: color.background.primary }}
         contentContainerStyle={{
-          flexGrow: 1,
           paddingHorizontal: horizontalPadding,
           paddingTop: 16,
           paddingBottom: scrollPaddingBottom,
@@ -151,10 +136,12 @@ export function NoteDocumentSourceEditor({
             style={[
               getInputFieldInputStyle(color, true),
               {
+                flex: 0,
+                width: '100%',
                 color: color.text.primary,
                 fontSize: NOTE_DOCUMENT_BODY_FONT_SIZE,
                 lineHeight: NOTE_DOCUMENT_BODY_LINE_HEIGHT,
-                minHeight,
+                minHeight: MIN_INPUT_HEIGHT,
                 height: inputContentHeight,
                 textAlignVertical: 'top',
               },

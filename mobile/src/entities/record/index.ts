@@ -6,10 +6,7 @@ export {
   RECORDING_MARK_PICKER_KINDS,
 } from './lib/recordingMarkKindUi';
 export { shouldUseTranscriptSegmentView } from './lib/transcriptDisplay';
-export {
-  estimatePlainTextInputHeight,
-  stripDocumentTranscriptMarkup,
-} from './lib/transcriptText';
+export { estimatePlainTextInputHeight, stripDocumentTranscriptMarkup } from './lib/transcriptText';
 export {
   DEFAULT_RECORDING_MARK_KIND,
   normalizeRecordingMarkKind,

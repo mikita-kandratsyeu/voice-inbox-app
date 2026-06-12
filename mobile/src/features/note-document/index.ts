@@ -2,7 +2,11 @@ export {
   buildNoteDocumentMarkdown,
   resolveNoteDocumentTemplate,
 } from './lib/buildNoteDocumentMarkdown';
-export { NOTE_DOCUMENT_CONTENT_MAX_WIDTH } from './lib/noteDocumentLayout';
+export {
+  NOTE_DOCUMENT_CONTENT_MAX_WIDTH,
+  NOTE_DOCUMENT_TABLET_HORIZONTAL_PADDING,
+} from './lib/noteDocumentLayout';
+export { warmNoteDocumentMarkdown } from './lib/noteDocumentMarkdownCache';
 export {
   listNoteDocumentSectionIds,
   stripNoteDocumentMarkers,
@@ -16,7 +20,6 @@ export {
 export { patchTaskDoneInNoteDocumentMarkdown } from './lib/patchTaskDoneInNoteDocumentMarkdown';
 export { splitNoteDocumentAtTasksSection } from './lib/splitNoteDocumentAtTasksSection';
 export { splitNoteDocumentForReading } from './lib/splitNoteDocumentForReading';
-export { warmNoteDocumentMarkdown } from './lib/noteDocumentMarkdownCache';
 export { useNoteDocument } from './model/useNoteDocument';
 export { NoteDocumentPreparingState } from './ui/NoteDocumentPreparingState';
 export { NoteDocumentReadingBody } from './ui/NoteDocumentReadingBody';

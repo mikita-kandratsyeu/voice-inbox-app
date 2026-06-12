@@ -8,7 +8,6 @@ import { Text, View } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { RootStackParamList } from '@/app/navigation/types';
 import {
   shouldUseTranscriptSegmentView,
@@ -17,7 +16,7 @@ import {
 } from '@/entities/record';
 import { useEditTranscript } from '@/features/edit-transcript';
 import { useColors } from '@/shared/config';
-import { IS_IOS, useIsTablet } from '@/shared/lib';
+import { IS_IOS } from '@/shared/lib';
 import { HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 import { EditTranscriptSegmentInput } from './EditTranscriptSegmentInput';
@@ -28,7 +27,6 @@ export const EditTranscriptScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'EditTranscript'>>();
   const insets = useSafeAreaInsets();
   const color = useColors();
-  const isTablet = useIsTablet();
 
   const { record } = route.params;
   const records = useRecordStore((s) => s.records);
@@ -121,7 +119,7 @@ export const EditTranscriptScreen = () => {
         contentContainerStyle={{
           paddingHorizontal: 12,
           paddingTop: 16,
-          paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
+          paddingBottom: insets.bottom + 24,
         }}
         keyboardDismissMode={IS_IOS ? 'interactive' : 'on-drag'}
         keyboardShouldPersistTaps="handled"

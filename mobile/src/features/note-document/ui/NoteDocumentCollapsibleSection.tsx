@@ -2,7 +2,13 @@ import { ChevronDown } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
-import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  FadeIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
@@ -15,7 +21,7 @@ type NoteDocumentCollapsibleSectionProps = {
   children: React.ReactNode;
 };
 
-export function NoteDocumentCollapsibleSection({
+export const NoteDocumentCollapsibleSection = React.memo(function NoteDocumentCollapsibleSection({
   color,
   title,
   expanded,
@@ -88,4 +94,4 @@ export function NoteDocumentCollapsibleSection({
       ) : null}
     </View>
   );
-}
+});

@@ -4,14 +4,14 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BookOpen, Check, FileCode, X } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { RootStackParamList } from '@/app/navigation/types';
 import {
   NOTE_DOCUMENT_CONTENT_MAX_WIDTH,
+  NOTE_DOCUMENT_TABLET_HORIZONTAL_PADDING,
   NoteDocumentPreparingState,
   NoteDocumentReadingBody,
   NoteDocumentSavingOverlay,
@@ -27,17 +27,11 @@ export const NoteDocumentScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'NoteDocument'>>();
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
   const color = useColors();
   const isTablet = useIsTablet();
   const sourceInputRef = useRef<TextInput>(null);
 
-  const editorMinHeight = useMemo(
-    () => Math.max(280, windowHeight - insets.top - insets.bottom - 96),
-    [insets.bottom, insets.top, windowHeight],
-  );
-
-  const scrollPaddingBottom = getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet);
+  const scrollPaddingBottom = insets.bottom + 24;
 
   const { record } = route.params;
   const {
@@ -145,8 +139,26 @@ export const NoteDocumentScreen = () => {
     }, []),
   );
 
-  const readingHorizontalPadding = isTablet ? 48 : 20;
-  const sourceHorizontalPadding = isTablet ? 48 : 20;
+  const readingHorizontalPadding = isTablet ? NOTE_DOCUMENT_TABLET_HORIZONTAL_PADDING : 20;
+  const sourceHorizontalPadding = isTablet ? NOTE_DOCUMENT_TABLET_HORIZONTAL_PADDING : 20;
+
+  const readingContentContainerStyle = useMemo(
+    () => ({
+      paddingHorizontal: readingHorizontalPadding,
+      paddingTop: 20,
+      paddingBottom: scrollPaddingBottom + 32,
+      ...(isTablet && { alignItems: 'center' as const }),
+    }),
+    [isTablet, readingHorizontalPadding, scrollPaddingBottom],
+  );
+
+  const readingColumnStyle = useMemo(
+    () => ({
+      width: '100%' as const,
+      maxWidth: isTablet ? NOTE_DOCUMENT_CONTENT_MAX_WIDTH : undefined,
+    }),
+    [isTablet],
+  );
 
   return (
     <View
@@ -233,24 +245,12 @@ export const NoteDocumentScreen = () => {
           {mode === 'reading' ? (
             <KeyboardAwareScrollView
               style={{ flex: 1, backgroundColor: color.background.primary }}
-              contentContainerStyle={{
-                paddingHorizontal: readingHorizontalPadding,
-                paddingTop: 20,
-                paddingBottom: scrollPaddingBottom + 32,
-                ...(isTablet && {
-                  alignItems: 'center',
-                }),
-              }}
+              contentContainerStyle={readingContentContainerStyle}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator
               bottomOffset={16}
             >
-              <View
-                style={{
-                  width: '100%',
-                  maxWidth: isTablet ? NOTE_DOCUMENT_CONTENT_MAX_WIDTH : undefined,
-                }}
-              >
+              <View style={readingColumnStyle}>
                 <NoteDocumentReadingBody
                   color={color}
                   documentMarkdown={documentMarkdown}
@@ -265,7 +265,6 @@ export const NoteDocumentScreen = () => {
               value={documentMarkdown}
               onChangeText={setDocumentMarkdown}
               editable={!isSaving}
-              minHeight={editorMinHeight}
               horizontalPadding={sourceHorizontalPadding}
               scrollPaddingBottom={scrollPaddingBottom}
               isTablet={isTablet}

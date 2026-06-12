@@ -25,7 +25,7 @@ export type ParseNoteDocumentResult =
   | { ok: true; patch: NoteDocumentPatch }
   | { ok: false; error: 'title_missing' };
 
-const TASK_CHECKBOX_RE = /^-\s+\[([ xX])\]\s+(.+)$/;
+const TASK_CHECKBOX_RE = /^[-*]\s+\[([ xX])\]\s+(.+)$/;
 const PRIORITY_VALUES = ['high', 'medium', 'low'] as const;
 const PRIORITY_VALUE_SET = new Set<string>(PRIORITY_VALUES);
 
@@ -48,9 +48,21 @@ function splitDocumentSections(markdown: string): {
   return { preamble, sections };
 }
 
+function stripInlineMarkdown(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/__(.+?)__/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/_(.+?)_/g, '$1')
+    .replace(/`(.+?)`/g, '$1')
+    .trim();
+}
+
 function parseTitleFromPreamble(preamble: string): string | null {
   const match = preamble.match(/^#\s+(.+?)(?:\r?\n|$)/m);
-  return match?.[1]?.trim() ?? null;
+  if (!match?.[1]) return null;
+  const title = stripInlineMarkdown(match[1].trim());
+  return title.length > 0 ? title : null;
 }
 
 function normalizeSectionBody(body: string): string {
@@ -85,10 +97,19 @@ function normalizeSectionBody(body: string): string {
 
 function parseTagsSection(body: string): string[] {
   const tags: string[] = [];
+
+  for (const line of body.split('\n')) {
+    const bulletTag = line.trim().match(/^[-*•]\s+#([\w\u0400-\u04FF-]+)/);
+    if (bulletTag?.[1]) {
+      tags.push(bulletTag[1]);
+    }
+  }
+
   for (const match of body.matchAll(/#([\w\u0400-\u04FF-]+)/g)) {
     const tag = match[1]?.trim();
     if (tag) tags.push(tag);
   }
+
   return [...new Set(tags)];
 }
 
