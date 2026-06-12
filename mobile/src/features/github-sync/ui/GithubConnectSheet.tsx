@@ -35,6 +35,7 @@ import {
   sheetFooterPrimaryButtonContainerStyle,
 } from '@/shared/ui/bottom-sheet';
 
+import { buildGithubVerificationUriComplete } from '../lib/githubVerificationUri';
 import { GithubConnectCountdownBadge } from './GithubConnectCountdownBadge';
 import { GithubIcon } from './GithubIcon';
 
@@ -184,7 +185,8 @@ export function GithubConnectSheet({
   const openGithubVerification = useCallback(() => {
     if (!verificationUri || !userCode) return;
     setExternalCopySignal((prev) => prev + 1);
-    void openInAppBrowser(verificationUri).catch(() => {});
+    const url = buildGithubVerificationUriComplete(verificationUri, userCode);
+    void openInAppBrowser(url).catch(() => {});
   }, [userCode, verificationUri]);
 
   useEffect(() => {

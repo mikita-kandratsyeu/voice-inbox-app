@@ -1,1 +1,1 @@
-export { openInAppBrowser } from './lib/openInAppBrowser';
+export { closeInAppBrowser, openInAppBrowser } from './lib/openInAppBrowser';

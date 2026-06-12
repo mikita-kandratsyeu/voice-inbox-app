@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
+import { closeInAppBrowser } from '@/features/in-app-browser';
 import { useProEntitlement } from '@/features/pro-license';
 
 import { GITLAB_SYNC_DEFAULT_BRANCH } from '../lib/constants';
@@ -177,6 +178,7 @@ export function useGitlabSync() {
       await startGitlabDeviceFlow((challenge) => {
         setConnectChallenge(challenge);
       });
+      await closeInAppBrowser();
       const nextSecrets = await getGitlabSyncSecrets();
       if (nextSecrets?.accessToken) {
         await persistGitlabLogin(nextSecrets.accessToken);
