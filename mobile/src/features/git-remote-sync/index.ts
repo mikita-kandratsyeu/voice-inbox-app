@@ -1,14 +1,20 @@
 export {
-  REMOTE_SYNC_DEFAULT_BRANCH,
-  REMOTE_SYNC_DEFAULT_REPO_NAME,
-  REMOTE_SYNC_DEFAULT_BASE_PATH,
-} from './lib/constants';
-export { buildRemoteSnapshot, type RemoteSnapshot, type RemoteSyncManifest } from './lib/buildRemoteSnapshot';
+  buildRemoteSnapshot,
+  type RemoteSnapshot,
+  type RemoteSyncManifest,
+} from './lib/buildRemoteSnapshot';
+export { buildRepoPickerRows, repoPickerListHeight } from './lib/buildRepoPickerRows';
 export {
   areRemoteSyncHashesEqual,
   computeRemoteSyncDiff,
   type RemoteSyncDiff,
 } from './lib/computeRemoteSyncDiff';
+export {
+  REMOTE_SYNC_DEFAULT_BASE_PATH,
+  REMOTE_SYNC_DEFAULT_BRANCH,
+  REMOTE_SYNC_DEFAULT_REPO_NAME,
+} from './lib/constants';
+export { finalizeRemoteSyncRestore } from './lib/finalizeRemoteSyncRestore';
 export { formatRemoteSyncCommitMessage } from './lib/formatRemoteSyncCommitMessage';
 export {
   pushRemoteCommit,
@@ -16,15 +22,14 @@ export {
   type RemoteSyncPushAdapter,
 } from './lib/pushRemoteCommit';
 export {
-  restoreRemoteSyncVersion,
-  type RestoreRemoteSyncResult,
-} from './lib/restoreRemoteSyncVersion';
-export { finalizeRemoteSyncRestore } from './lib/finalizeRemoteSyncRestore';
+  getRemoteSyncPinnedRepos,
+  setRemoteSyncPinnedRepos,
+  syncRemoteSyncPinnedRepos,
+} from './lib/remoteSyncPinnedRepos';
 export {
-  createRemoteSyncNowController,
-  type RemoteSyncNowController,
-  type RemoteSyncNowResult,
-} from './lib/runRemoteSyncNow';
+  REMOTE_SYNC_MAX_PINNED_REPOS,
+  toggleRemoteSyncPinnedRepo,
+} from './lib/remoteSyncPinnedReposPolicy';
 export {
   addPathVariants,
   isNoteMarkdownPath,
@@ -32,13 +37,15 @@ export {
   toRelativeRepoPaths,
   uniqueManifestPaths,
 } from './lib/repoPaths';
-export { buildRepoPickerRows, repoPickerListHeight } from './lib/buildRepoPickerRows';
 export {
-  getRemoteSyncPinnedRepos,
-  setRemoteSyncPinnedRepos,
-  syncRemoteSyncPinnedRepos,
-} from './lib/remoteSyncPinnedRepos';
-export { toggleRemoteSyncPinnedRepo, REMOTE_SYNC_MAX_PINNED_REPOS } from './lib/remoteSyncPinnedReposPolicy';
+  type RestoreRemoteSyncResult,
+  restoreRemoteSyncVersion,
+} from './lib/restoreRemoteSyncVersion';
+export {
+  createRemoteSyncNowController,
+  type RemoteSyncNowController,
+  type RemoteSyncNowResult,
+} from './lib/runRemoteSyncNow';
 export type {
   GitRemoteProvider,
   RemoteBranchSummary,
@@ -47,4 +54,4 @@ export type {
   RemoteSyncSecrets,
 } from './lib/types';
 export { GitRemoteRepoPickerSheet } from './ui/GitRemoteRepoPickerSheet';
-export { RemoteSyncBranchText, remoteSyncBranchA11yLabel } from './ui/RemoteSyncBranchText';
+export { remoteSyncBranchA11yLabel, RemoteSyncBranchText } from './ui/RemoteSyncBranchText';

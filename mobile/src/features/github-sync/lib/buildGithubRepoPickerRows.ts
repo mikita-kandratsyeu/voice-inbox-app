@@ -1,5 +1,7 @@
-import { buildRepoPickerRows, repoPickerListHeight } from '@/features/git-remote-sync/lib/buildRepoPickerRows';
-import type { RemoteRepoSummary } from '@/features/git-remote-sync/lib/types';
+import {
+  buildRepoPickerRows,
+  repoPickerListHeight,
+} from '@/features/git-remote-sync/lib/buildRepoPickerRows';
 
 import type { GithubRepoSummary } from './githubApi';
 
@@ -54,10 +56,10 @@ export function githubRepoPickerListHeight(rows: GithubRepoPickerRow[]): number 
       return {
         type: 'header' as const,
         id: row.id,
-        sectionSuffix: SECTION_SUFFIX_BY_KEY[row.titleKey].replace(
-          'settings.githubSync.',
-          '',
-        ) as 'currentRepoSection' | 'pinnedReposSection' | 'allReposSection',
+        sectionSuffix: SECTION_SUFFIX_BY_KEY[row.titleKey].replace('settings.githubSync.', '') as
+          | 'currentRepoSection'
+          | 'pinnedReposSection'
+          | 'allReposSection',
       };
     }
     return row;

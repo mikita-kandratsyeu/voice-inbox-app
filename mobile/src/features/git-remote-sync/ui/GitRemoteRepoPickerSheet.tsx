@@ -16,8 +16,8 @@ import {
 
 import {
   buildRepoPickerRows,
-  type RepoPickerRow,
   repoPickerListHeight,
+  type RepoPickerRow,
 } from '../lib/buildRepoPickerRows';
 import { REMOTE_SYNC_DEFAULT_BRANCH, REMOTE_SYNC_DEFAULT_REPO_NAME } from '../lib/constants';
 import type { RemoteRepoSummary } from '../lib/types';
@@ -251,8 +251,7 @@ export function GitRemoteRepoPickerSheet({
           <View
             style={{
               paddingHorizontal: 14,
-              paddingTop:
-                item.sectionSuffix === 'currentRepoSection' ? 12 : index === 0 ? 8 : 10,
+              paddingTop: item.sectionSuffix === 'currentRepoSection' ? 12 : index === 0 ? 8 : 10,
               paddingBottom: 6,
             }}
           >

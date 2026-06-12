@@ -56,10 +56,10 @@ export function gitlabRepoPickerListHeight(rows: GitlabRepoPickerRow[]): number 
       return {
         type: 'header' as const,
         id: row.id,
-        sectionSuffix: SECTION_SUFFIX_BY_KEY[row.titleKey].replace(
-          'settings.gitlabSync.',
-          '',
-        ) as 'currentRepoSection' | 'pinnedReposSection' | 'allReposSection',
+        sectionSuffix: SECTION_SUFFIX_BY_KEY[row.titleKey].replace('settings.gitlabSync.', '') as
+          | 'currentRepoSection'
+          | 'pinnedReposSection'
+          | 'allReposSection',
       };
     }
     return row;

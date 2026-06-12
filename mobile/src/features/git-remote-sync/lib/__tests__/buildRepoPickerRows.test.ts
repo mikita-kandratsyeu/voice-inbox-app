@@ -1,5 +1,5 @@
-import type { RemoteRepoSummary } from '../types';
 import { buildRepoPickerRows } from '../buildRepoPickerRows';
+import type { RemoteRepoSummary } from '../types';
 
 const repos: RemoteRepoSummary[] = [
   {

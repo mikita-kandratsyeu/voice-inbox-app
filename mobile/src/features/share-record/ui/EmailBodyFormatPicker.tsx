@@ -45,7 +45,9 @@ export function EmailBodyFormatPicker({
               className="min-h-[52px] min-w-0 flex-1 items-center justify-center rounded-xl border-2 px-2 py-2.5"
               style={{
                 borderColor: isSelected ? color.accent.primary : color.border.default,
-                backgroundColor: isSelected ? color.status.processing.bg : color.background.tertiary,
+                backgroundColor: isSelected
+                  ? color.status.processing.bg
+                  : color.background.tertiary,
                 gap: 6,
               }}
             >

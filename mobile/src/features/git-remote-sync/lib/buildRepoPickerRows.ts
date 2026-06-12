@@ -2,7 +2,10 @@ import { matchesSearchQuery } from '@/shared/lib/sheetSearchQuery';
 
 import type { RemoteRepoSummary } from './types';
 
-export type RepoPickerSectionSuffix = 'currentRepoSection' | 'pinnedReposSection' | 'allReposSection';
+export type RepoPickerSectionSuffix =
+  | 'currentRepoSection'
+  | 'pinnedReposSection'
+  | 'allReposSection';
 
 export type RepoPickerRowKind = 'current' | 'pinned' | 'default';
 

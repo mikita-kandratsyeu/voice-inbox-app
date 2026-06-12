@@ -12,6 +12,9 @@ export function setGitlabSyncPinnedRepos(login: string, fullNames: readonly stri
   setRemoteSyncPinnedRepos('gitlab', login, fullNames);
 }
 
-export function syncGitlabSyncPinnedRepos(login: string, availableFullNames: readonly string[]): string[] {
+export function syncGitlabSyncPinnedRepos(
+  login: string,
+  availableFullNames: readonly string[],
+): string[] {
   return syncRemoteSyncPinnedRepos('gitlab', login, availableFullNames);
 }

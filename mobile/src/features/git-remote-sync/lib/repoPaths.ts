@@ -1,7 +1,4 @@
-import {
-  REMOTE_SYNC_LEGACY_MANIFEST_FILE,
-  REMOTE_SYNC_MANIFEST_FILE,
-} from './constants';
+import { REMOTE_SYNC_LEGACY_MANIFEST_FILE, REMOTE_SYNC_MANIFEST_FILE } from './constants';
 
 export function joinRepoPath(basePath: string, filePath: string): string {
   const normalized = basePath.replace(/^\/+|\/+$/g, '');

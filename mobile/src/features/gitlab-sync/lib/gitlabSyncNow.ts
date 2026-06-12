@@ -1,8 +1,8 @@
 import { createRemoteSyncNowController } from '@/features/git-remote-sync/lib/runRemoteSyncNow';
 
 import { GITLAB_SYNC_COOLDOWN_MS } from './constants';
-import type { PushGitlabCommitResult } from './pushGitlabCommit';
 import { setGitlabSyncSessionActive } from './gitlabSyncSession';
+import type { PushGitlabCommitResult } from './pushGitlabCommit';
 
 export type GitlabSyncNowResult =
   | PushGitlabCommitResult

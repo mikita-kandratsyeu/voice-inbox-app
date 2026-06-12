@@ -59,8 +59,7 @@ async function resolveDeletionsAndExistingPaths(params: {
   let deletions = [...initialDeletions];
   let existingRelativePaths: Set<string> | undefined;
 
-  const loadExistingPaths = async (): Promise<string[]> =>
-    adapter.listTreePathsAtCommit(parentSha);
+  const loadExistingPaths = async (): Promise<string[]> => adapter.listTreePathsAtCommit(parentSha);
 
   if (deletions.length === 0) {
     try {

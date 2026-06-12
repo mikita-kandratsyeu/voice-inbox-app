@@ -1,8 +1,8 @@
 import { storage } from '@/shared/lib/async-storage/mmkv';
 import { isArray, isRecord, isString } from '@/shared/lib/type-guards';
 
-import type { GitRemoteProvider } from './types';
 import { pruneRemoteSyncPinnedRepos } from './remoteSyncPinnedReposPolicy';
+import type { GitRemoteProvider } from './types';
 
 const KEY_PINNED_REPOS_BY_PROVIDER_LOGIN = 'gitRemoteSync.pinnedReposByProviderLogin';
 const LEGACY_GITHUB_KEY = 'githubSync.pinnedReposByLogin';

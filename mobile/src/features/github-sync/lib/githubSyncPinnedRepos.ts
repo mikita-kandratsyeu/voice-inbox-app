@@ -12,6 +12,9 @@ export function setGithubSyncPinnedRepos(login: string, fullNames: readonly stri
   setRemoteSyncPinnedRepos('github', login, fullNames);
 }
 
-export function syncGithubSyncPinnedRepos(login: string, availableFullNames: readonly string[]): string[] {
+export function syncGithubSyncPinnedRepos(
+  login: string,
+  availableFullNames: readonly string[],
+): string[] {
   return syncRemoteSyncPinnedRepos('github', login, availableFullNames);
 }
