@@ -23,6 +23,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
+import { type PrivateRemoteQueueConcurrency, useSettingsStore } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import { type Colors, useColors } from '@/shared/config';
@@ -34,6 +35,7 @@ import { usePrivateRemoteServerScreen } from '../lib/usePrivateRemoteServerScree
 import { PrivateRemoteLanDiscoverySheet } from './private-remote/PrivateRemoteLanDiscoverySheet';
 import { PrivateRemoteModelsPicker } from './private-remote/PrivateRemoteModelsPicker';
 import { PrivateRemoteProfilesPicker } from './private-remote/PrivateRemoteProfilesPicker';
+import { PrivateRemoteQueueConcurrencySlider } from './PrivateRemoteQueueConcurrencySlider';
 
 const COPY_PRESS_IN_MS = 70;
 const COPY_SPRING_DAMPING = 14;
@@ -148,6 +150,10 @@ export const PrivateRemoteServerScreen = () => {
   }, [isProActive, navigation]);
 
   const screen = usePrivateRemoteServerScreen();
+  const privateRemoteQueueConcurrency = useSettingsStore((s) => s.privateRemoteQueueConcurrency);
+  const setPrivateRemoteQueueConcurrency = useSettingsStore((s) => s.setPrivateRemoteQueueConcurrency);
+  const queueConcurrencyLabel = (value: PrivateRemoteQueueConcurrency) =>
+    t(`aiSettings.privateProvider.queueConcurrency.m${value}`);
 
   if (!isProActive) {
     return null;
@@ -495,6 +501,30 @@ export const PrivateRemoteServerScreen = () => {
               color={color}
               refreshNonce={screen.remoteModelListNonce}
             />
+          </View>
+
+          <View className="mb-8">
+            <Text className="mb-2 text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+              {t('aiSettings.privateProvider.queueConcurrency.title')}
+            </Text>
+            <Text className="mb-3 text-[13px] leading-5" style={{ color: color.text.muted }}>
+              {t('aiSettings.privateProvider.queueConcurrency.hint')}
+            </Text>
+            <View
+              className="overflow-hidden rounded-2xl"
+              style={{ borderWidth: 1, borderColor: color.border.default }}
+            >
+              <PrivateRemoteQueueConcurrencySlider
+                value={privateRemoteQueueConcurrency}
+                onChange={setPrivateRemoteQueueConcurrency}
+                fullLabel={queueConcurrencyLabel}
+                tickLabel={(value) => t(`aiSettings.privateProvider.queueConcurrency.tick${value}`)}
+                sliderAccessibilityLabel={t(
+                  'aiSettings.privateProvider.queueConcurrency.sliderA11yLabel',
+                )}
+                color={color}
+              />
+            </View>
           </View>
 
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />

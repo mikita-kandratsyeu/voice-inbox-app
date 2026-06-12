@@ -18,6 +18,12 @@ export {
 export { isDigestAiEnabled } from './lib/isDigestAiEnabled';
 export { isPrivateCustomServerMode } from './lib/isPrivateCustomServerMode';
 export {
+  clampPrivateRemoteQueueConcurrency,
+  DEFAULT_PRIVATE_REMOTE_QUEUE_CONCURRENCY,
+  parseStoredPrivateRemoteQueueConcurrency,
+  PRIVATE_REMOTE_QUEUE_CONCURRENCY_OPTIONS,
+} from './lib/privateRemoteQueueConcurrency';
+export {
   hydratePrivateRemoteWorkingConfig,
   resolvePrivateRemoteConnectionConfig,
   type PrivateRemoteConnectionConfig,
@@ -81,6 +87,7 @@ export type {
   PrivateRemoteConfig,
   PrivateRemoteOutputBudget,
   PrivateRemoteProfile,
+  PrivateRemoteQueueConcurrency,
   SettingsState,
   SummaryStyle,
   TaskStrictness,

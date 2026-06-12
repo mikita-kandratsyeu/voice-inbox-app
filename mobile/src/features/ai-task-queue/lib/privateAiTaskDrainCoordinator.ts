@@ -21,12 +21,16 @@ const drainInFlightByTask = new Map<string, Promise<void>>();
 let drainAllScheduled: ReturnType<typeof setTimeout> | null = null;
 let drainAllInFlight: Promise<DrainQueueResult> | null = null;
 
-const MAX_CONCURRENT_DRAINS = 1;
 let activeDrains = 0;
 const waitQueue: Array<() => void> = [];
 
+function getMaxConcurrentDrains(): number {
+  return useSettingsStore.getState().privateRemoteQueueConcurrency;
+}
+
 function acquireDrainSlot(): Promise<void> {
-  if (activeDrains < MAX_CONCURRENT_DRAINS) {
+  const maxConcurrent = getMaxConcurrentDrains();
+  if (activeDrains < maxConcurrent) {
     activeDrains += 1;
     return Promise.resolve();
   }
@@ -152,13 +156,34 @@ export async function drainPrivateAiTaskQueue(
   if (!reachable) return 'server_unreachable';
 
   const tasks = await listPrivateAiTasks();
-  const total = tasks.length;
-  options?.onProgress?.(0, total);
-  for (let i = 0; i < tasks.length; i += 1) {
-    await runDrainTask(tasks[i]!);
-    options?.onProgress?.(i + 1, total);
-  }
+  await drainTasksWithConcurrency(tasks, options?.onProgress);
   return 'completed';
+}
+
+async function drainTasksWithConcurrency(
+  tasks: PrivateAiQueuedTask[],
+  onProgress?: (current: number, total: number) => void,
+): Promise<void> {
+  const total = tasks.length;
+  if (total === 0) return;
+
+  let completed = 0;
+  let nextIndex = 0;
+  const workerCount = Math.min(getMaxConcurrentDrains(), total);
+
+  const worker = async (): Promise<void> => {
+    while (true) {
+      const index = nextIndex;
+      if (index >= total) return;
+      nextIndex += 1;
+      await runDrainTask(tasks[index]!);
+      completed += 1;
+      onProgress?.(completed, total);
+    }
+  };
+
+  onProgress?.(0, total);
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
 }
 
 export async function drainSinglePrivateAiTask(taskId: string): Promise<DrainQueueResult> {

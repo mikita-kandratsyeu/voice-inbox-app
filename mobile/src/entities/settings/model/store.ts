@@ -7,6 +7,7 @@ import { storage } from '@/shared/lib/async-storage';
 import { isNumber, isRecord, isString } from '@/shared/lib/type-guards';
 
 import { CLOUD_AI_KV_TTL_DEFAULT_SECONDS, snapCloudAiKvTtlToChoice } from '../lib/cloudAiKvTtl';
+import { parseStoredPrivateRemoteQueueConcurrency } from '../lib/privateRemoteQueueConcurrency';
 import {
   getPrivateRemoteSecrets,
   removePrivateRemoteProfileApiKey,
@@ -37,6 +38,7 @@ import type {
   PrivateLocalLlmBudget,
   PrivateRemoteOutputBudget,
   PrivateRemoteProfile,
+  PrivateRemoteQueueConcurrency,
   SettingsState,
   SummaryStyle,
   TaskStrictness,
@@ -70,6 +72,7 @@ const KEYS = {
   PRIVATE_LOCAL_LLM_BUDGET: 'settings.privateLocalLlmBudget',
   PRIVATE_REMOTE_OUTPUT_BUDGET: 'settings.privateRemoteOutputBudget',
   PRIVATE_REMOTE_PREFER_JSON_OBJECT: 'settings.privateRemotePreferJsonObject',
+  PRIVATE_REMOTE_QUEUE_CONCURRENCY: 'settings.privateRemoteQueueConcurrency',
   PRIVATE_CAPABILITY_TIER: 'settings.privateCapabilityTier',
   PRIVATE_AI_PROVIDER: 'settings.privateAiProvider',
   PRIVATE_REMOTE_BASE_URL: 'settings.privateRemoteBaseUrl',
@@ -365,6 +368,11 @@ const getStoredPrivateRemotePreferJsonObject = (): boolean => {
   return true;
 };
 
+const getStoredPrivateRemoteQueueConcurrency = (): PrivateRemoteQueueConcurrency =>
+  parseStoredPrivateRemoteQueueConcurrency(
+    storage.getString(KEYS.PRIVATE_REMOTE_QUEUE_CONCURRENCY),
+  );
+
 const getStoredCloudAiThirdPartyConsentAccepted = (): boolean => {
   return storage.getString(KEYS.CLOUD_AI_THIRD_PARTY_CONSENT) === 'true';
 };
@@ -489,6 +497,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   privateLocalLlmBudget: getStoredPrivateLocalLlmBudget(),
   privateRemoteOutputBudget: getStoredPrivateRemoteOutputBudget(),
   privateRemotePreferJsonObject: getStoredPrivateRemotePreferJsonObject(),
+  privateRemoteQueueConcurrency: getStoredPrivateRemoteQueueConcurrency(),
   privateCapabilityTier: getStoredPrivateCapabilityTier(),
   privateAiProvider: getStoredPrivateAiProvider(),
   privateRemoteBaseUrl: getStoredPrivateRemoteBaseUrl(),
@@ -612,6 +621,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setPrivateRemotePreferJsonObject: (value: boolean) => {
     storage.set(KEYS.PRIVATE_REMOTE_PREFER_JSON_OBJECT, value ? 'true' : 'false');
     set({ privateRemotePreferJsonObject: value });
+  },
+
+  setPrivateRemoteQueueConcurrency: (value: PrivateRemoteQueueConcurrency) => {
+    storage.set(KEYS.PRIVATE_REMOTE_QUEUE_CONCURRENCY, String(value));
+    set({ privateRemoteQueueConcurrency: value });
   },
 
   setAiExecutionMode: (value: AiExecutionMode) => {

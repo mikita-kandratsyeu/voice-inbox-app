@@ -1945,6 +1945,21 @@
       },
       "exportProfiles": "Export profiles",
       "importProfiles": "Import profiles",
+      "queueConcurrency": {
+        "title": "Summaries at once",
+        "hint": "From 1 to 5 — how many queued summaries to run together when you tap Run all. On a slower home server, 1–2 is usually best.",
+        "sliderA11yLabel": "How many summaries to run at once",
+        "tick1": "1",
+        "tick2": "2",
+        "tick3": "3",
+        "tick4": "4",
+        "tick5": "5",
+        "m1": "1 summary at a time",
+        "m2": "2 summaries at a time",
+        "m3": "3 summaries at a time",
+        "m4": "4 summaries at a time",
+        "m5": "5 summaries at a time"
+      },
       "exportTitle": "Export server profiles",
       "exportEmptyTitle": "Nothing to export",
       "exportFailedTitle": "Export failed",
@@ -2031,9 +2046,9 @@
     "removeMessage": "This note will stay without a summary until you generate one manually.",
     "removeConfirm": "Remove",
     "lastError": "Last attempt: {{error}}",
-    "serverUnreachableTitle": "AI server unavailable",
-    "serverUnreachableMessage": "Could not reach your AI server. Check that it is running and your settings are correct.",
-    "openServerSettings": "AI server settings"
+    "serverUnreachableTitle": "Can't reach your AI server",
+    "serverUnreachableMessage": "Make sure the server is on, then check the URL and model in settings.",
+    "openServerSettings": "Open server settings"
   },
   "privateAiMode": {
     "title": "Private vs Smart",

@@ -28,6 +28,8 @@ export type AiExecutionMode = 'smart_hybrid' | 'private_experimental';
 export type PrivateLocalLlmBudget = 'efficient' | 'balanced' | 'expanded';
 /** Custom OpenAI-compatible server output length (null max_tokens when unlimited). */
 export type PrivateRemoteOutputBudget = PrivateLocalLlmBudget | 'unlimited';
+/** How many queued summaries may run at once against the private AI server. */
+export type PrivateRemoteQueueConcurrency = 1 | 2 | 3 | 4 | 5;
 export type PrivateCapabilityTier = 'full' | 'limited' | 'unavailable';
 export type PrivateAiProvider = 'local' | 'custom_openai';
 export type PrivateRemoteConfig = {
@@ -118,6 +120,8 @@ export type SettingsState = {
   privateRemoteOutputBudget: PrivateRemoteOutputBudget;
   /** Request `response_format: json_object` on custom server when supported. */
   privateRemotePreferJsonObject: boolean;
+  /** Parallel drain limit for the private AI task queue. */
+  privateRemoteQueueConcurrency: PrivateRemoteQueueConcurrency;
   privateCapabilityTier: PrivateCapabilityTier;
   privateAiProvider: PrivateAiProvider;
   privateRemoteBaseUrl: string;
@@ -166,6 +170,7 @@ export type SettingsState = {
   setPrivateLocalLlmBudget: (value: PrivateLocalLlmBudget) => void;
   setPrivateRemoteOutputBudget: (value: PrivateRemoteOutputBudget) => void;
   setPrivateRemotePreferJsonObject: (value: boolean) => void;
+  setPrivateRemoteQueueConcurrency: (value: PrivateRemoteQueueConcurrency) => void;
   setPrivateCapabilityTier: (value: PrivateCapabilityTier) => void;
   setPrivateAiProvider: (value: PrivateAiProvider) => void;
   setPrivateRemoteBaseUrl: (value: string) => void;
