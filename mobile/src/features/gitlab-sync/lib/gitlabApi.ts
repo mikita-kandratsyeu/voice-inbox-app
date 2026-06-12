@@ -280,11 +280,15 @@ export async function ensureGitlabBranchExists(
   if (existingSha) return;
 
   const defaultBranch = await getGitlabRepoDefaultBranch(accessToken, projectId);
-  const response = await gitlabFetch(accessToken, projectApiPath(projectId, '/repository/branches'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ branch, ref: defaultBranch }),
-  });
+  const response = await gitlabFetch(
+    accessToken,
+    projectApiPath(projectId, '/repository/branches'),
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ branch, ref: defaultBranch }),
+    },
+  );
   if (!response.ok && response.status !== 400) {
     await throwGitlabHttpError(`Create GitLab branch failed: ${response.status}`, response);
   }
@@ -330,8 +334,7 @@ export async function listGitlabCommits(
       sha: item.id,
       message: isString(item.title) ? item.title : isString(item.message) ? item.message : '',
       htmlUrl: isString(item.web_url) ? item.web_url : '',
-      committedAt:
-        isString(item.committed_date) ? item.committed_date : new Date().toISOString(),
+      committedAt: isString(item.committed_date) ? item.committed_date : new Date().toISOString(),
     });
   }
   return commits;
@@ -422,12 +425,7 @@ export async function listTreePathsAtCommit(
   }
 
   try {
-    return await listTreePathsAtCommitInternal(
-      accessToken,
-      projectId,
-      commitSha,
-      normalizedBase,
-    );
+    return await listTreePathsAtCommitInternal(accessToken, projectId, commitSha, normalizedBase);
   } catch (err) {
     if (isGitlabApiError(err) && err.status === 404) {
       return listTreePathsAtCommitInternal(accessToken, projectId, commitSha, undefined);
@@ -449,21 +447,19 @@ function toRelativeRepoPath(fullPath: string, basePath: string): string {
   return fullPath.replace(/^\/+/, '');
 }
 
-async function createGitlabCommitWithFilesInternal(
-  params: {
-    accessToken: string;
-    projectId: number;
-    branch: string;
-    basePath: string;
-    files: Map<string, string>;
-    deletions: string[];
-    existingRelativePaths?: ReadonlySet<string>;
-    message: string;
-    refConflictAttempt: number;
-    onUploadProgress?: (uploaded: number, total: number) => void;
-    onCommitting?: () => void;
-  },
-): Promise<string> {
+async function createGitlabCommitWithFilesInternal(params: {
+  accessToken: string;
+  projectId: number;
+  branch: string;
+  basePath: string;
+  files: Map<string, string>;
+  deletions: string[];
+  existingRelativePaths?: ReadonlySet<string>;
+  message: string;
+  refConflictAttempt: number;
+  onUploadProgress?: (uploaded: number, total: number) => void;
+  onCommitting?: () => void;
+}): Promise<string> {
   const {
     accessToken,
     projectId,
@@ -506,15 +502,19 @@ async function createGitlabCommitWithFilesInternal(
 
   onCommitting?.();
 
-  const response = await gitlabFetch(accessToken, projectApiPath(projectId, '/repository/commits'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      branch,
-      commit_message: refConflictAttempt > 0 ? `${message} (retry)` : message,
-      actions,
-    }),
-  });
+  const response = await gitlabFetch(
+    accessToken,
+    projectApiPath(projectId, '/repository/commits'),
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        branch,
+        commit_message: refConflictAttempt > 0 ? `${message} (retry)` : message,
+        actions,
+      }),
+    },
+  );
 
   if (response.status === 400 && refConflictAttempt < GITLAB_REF_CONFLICT_MAX_RETRIES) {
     throw createGitlabError('Ref conflict', 400, 'ref_conflict');
@@ -568,10 +568,7 @@ export async function resolveGitlabProjectId(
   projectId?: number,
 ): Promise<number> {
   if (projectId && projectId > 0) return projectId;
-  const response = await gitlabFetch(
-    accessToken,
-    `/projects/${encodeProjectPath(owner, repo)}`,
-  );
+  const response = await gitlabFetch(accessToken, `/projects/${encodeProjectPath(owner, repo)}`);
   if (!response.ok) {
     await throwGitlabHttpError(`Resolve GitLab project failed: ${response.status}`, response);
   }

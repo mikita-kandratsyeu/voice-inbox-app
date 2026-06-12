@@ -9,6 +9,7 @@ export {
   computeRemoteSyncDiff,
   type RemoteSyncDiff,
 } from './lib/computeRemoteSyncDiff';
+export { formatRemoteSyncCommitMessage } from './lib/formatRemoteSyncCommitMessage';
 export { buildRepoPickerRows, repoPickerListHeight } from './lib/buildRepoPickerRows';
 export {
   getRemoteSyncPinnedRepos,

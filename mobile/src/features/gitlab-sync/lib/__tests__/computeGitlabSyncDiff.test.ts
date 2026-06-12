@@ -19,6 +19,9 @@ describe('computeGitlabSyncDiff', () => {
     expect(diff.added).toBe(1);
     expect(diff.updated).toBe(1);
     expect(diff.removed).toBe(1);
+    expect(diff.notesAdded).toBe(1);
+    expect(diff.notesUpdated).toBe(0);
+    expect(diff.notesRemoved).toBe(1);
     expect(diff.hasChanges).toBe(true);
     expect(diff.deletionPaths).toEqual(['voice-inbox-ai/notes/c.md']);
   });
@@ -48,6 +51,7 @@ describe('computeGitlabSyncDiff', () => {
     });
 
     expect(diff.added).toBe(1);
+    expect(diff.notesAdded).toBe(1);
     expect(diff.hasChanges).toBe(true);
   });
 });
