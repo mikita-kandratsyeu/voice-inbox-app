@@ -53,6 +53,7 @@ import {
   PRIVATE_REMOTE_HEALTH_CHECK_TIMEOUT_MS,
   PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
   resolvePrivateRemoteAskMaxTokens,
+  resolvePrivateRemoteAutoOrganizeMaxTokens,
   resolvePrivateRemoteJsonRepairMaxTokens,
   resolvePrivateRemoteMeetingDialogueMaxTokens,
   resolvePrivateRemoteSummaryMaxTokens,
@@ -1226,7 +1227,9 @@ export async function runPrivateRemoteAutoOrganizeFolders(
     template,
   });
 
-  const maxTokens = resolvePrivateRemoteSummaryMaxTokens(ctx.privateRemoteOutputBudget) ?? 8192;
+  const maxTokens =
+    resolvePrivateRemoteAutoOrganizeMaxTokens(ctx.privateRemoteOutputBudget, expectedIds.length) ??
+    8192;
   const systemPrompt = buildAutoOrganizeSystemPrompt(mode, template);
 
   const sendOrganize = async (userContent: string): Promise<AutoOrganizeRunResult> => {
@@ -1266,23 +1269,32 @@ export async function runPrivateRemoteAutoOrganizeFolders(
     return { mode, template, data: foldersResult };
   };
 
+  const repairSuffix = buildAutoOrganizeRepairUserSuffix(mode, expectedIds);
+  let userContent = userPayload;
+  let lastAttemptError: unknown;
+
   try {
-    try {
-      const result = await sendOrganize(userPayload);
-      return { ok: true, result };
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : '';
-      if (msg === AI_REQUEST_CANCELLED || options?.abortSignal?.aborted) {
-        return { ok: false, error: AI_REQUEST_CANCELLED };
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const result = await sendOrganize(userContent);
+        return { ok: true, result };
+      } catch (e) {
+        lastAttemptError = e;
+        const msg = e instanceof Error ? e.message : '';
+        if (msg === AI_REQUEST_CANCELLED || options?.abortSignal?.aborted) {
+          return { ok: false, error: AI_REQUEST_CANCELLED };
+        }
+        const canRepair = msg.startsWith('Invalid AI response') || isAutoOrganizeParseFailure(e);
+        if (!canRepair || attempt >= 2) {
+          throw e;
+        }
+        userContent =
+          userPayload +
+          repairSuffix +
+          `\n\nSpecific validation error from previous attempt:\n${msg}\n\nEvery assignments[].folderName MUST exactly match one folders[].name string from your output.`;
       }
-      if (!msg.startsWith('Invalid AI response') && !isAutoOrganizeParseFailure(e)) {
-        throw e;
-      }
-      const repaired = await sendOrganize(
-        userPayload + buildAutoOrganizeRepairUserSuffix(mode, expectedIds),
-      );
-      return { ok: true, result: repaired };
     }
+    throw lastAttemptError;
   } catch (err) {
     if (
       options?.abortSignal?.aborted ||

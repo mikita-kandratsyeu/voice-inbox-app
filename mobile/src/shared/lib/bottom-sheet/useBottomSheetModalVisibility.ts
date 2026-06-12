@@ -13,6 +13,8 @@ export const bottomSheetModalStackBehavior = 'replace' as const;
 const MODAL_STATUS = {
   PRESENTED: 1,
   ANIMATING: 5,
+  /** gorhom v5 — modal dismissed but React `visible` may still be true */
+  DISMISSED: 6,
 } as const;
 
 /**
@@ -42,6 +44,10 @@ function readModalStatus(ref: RefObject<BottomSheetModal | null>): number | null
   return typeof status === 'number' ? status : null;
 }
 
+function isModalPresented(status: number | null): boolean {
+  return status === MODAL_STATUS.PRESENTED || status === MODAL_STATUS.ANIMATING;
+}
+
 function presentBottomSheetModal(
   ref: RefObject<BottomSheetModal | null>,
   meta?: {
@@ -50,24 +56,32 @@ function presentBottomSheetModal(
     enableDynamicSizing?: boolean;
     attempt?: number;
   },
+  onPresentFailed?: () => void,
 ) {
   const attempt = meta?.attempt ?? 0;
   ref.current?.present();
   requestAnimationFrame(() => {
     const status = readModalStatus(ref);
-    const presented = status === MODAL_STATUS.PRESENTED || status === MODAL_STATUS.ANIMATING;
-    if (presented) {
+    if (isModalPresented(status)) {
       return;
     }
     if (attempt < MAX_PRESENT_ATTEMPTS && meta != null) {
       requestAnimationFrame(() => {
-        presentBottomSheetModal(ref, { ...meta, attempt: attempt + 1 });
+        presentBottomSheetModal(ref, { ...meta, attempt: attempt + 1 }, onPresentFailed);
       });
       return;
     }
+    const finishPresentFailed = () => {
+      if (!isModalPresented(readModalStatus(ref))) {
+        onPresentFailed?.();
+      }
+    };
     if (!meta?.enableDynamicSizing) {
       ref.current?.snapToIndex(0);
+      requestAnimationFrame(finishPresentFailed);
+      return;
     }
+    finishPresentFailed();
   });
 }
 
@@ -88,6 +102,7 @@ export function useBottomSheetModalVisibility(
   const presentationGenerationRef = useRef(0);
   const pendingDismissGenerationRef = useRef<number | null>(null);
   const lastReopenRef = useRef(false);
+  const presentRecoveryCountRef = useRef(0);
 
   visibleRef.current = visible;
 
@@ -145,15 +160,36 @@ export function useBottomSheetModalVisibility(
 
   useEffect(() => {
     if (!visible || !presentOnVisible) {
+      presentRecoveryCountRef.current = 0;
       return undefined;
     }
+
+    const recoverPresent = () => {
+      if (!visibleRef.current) return;
+      if (presentRecoveryCountRef.current >= 2) return;
+      presentRecoveryCountRef.current += 1;
+      isInstanceSwapRef.current = true;
+      setSheetKey((key) => key + 1);
+    };
+
     const frame = requestAnimationFrame(() => {
-      presentBottomSheetModal(ref, {
-        sheetKey,
-        isReopen: lastReopenRef.current,
-        enableDynamicSizing,
-      });
-      isInstanceSwapRef.current = false;
+      const runPresent = () => {
+        presentBottomSheetModal(
+          ref,
+          {
+            sheetKey,
+            isReopen: lastReopenRef.current,
+            enableDynamicSizing,
+          },
+          recoverPresent,
+        );
+        isInstanceSwapRef.current = false;
+      };
+      if (lastReopenRef.current || sheetKey > 0) {
+        requestAnimationFrame(runPresent);
+        return;
+      }
+      runPresent();
     });
     return () => cancelAnimationFrame(frame);
   }, [enableDynamicSizing, presentOnVisible, presentRequestKey, ref, sheetKey, visible]);

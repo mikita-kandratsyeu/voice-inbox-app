@@ -6,6 +6,7 @@ import { AppBottomSheetContent, AppBottomSheetModal, SheetHeader } from '@/share
 
 type PrivateRemotePickerSheetFrameProps = {
   visible: boolean;
+  presentRequestKey?: number;
   title: string;
   subtitle?: string;
   color: Colors;
@@ -15,6 +16,7 @@ type PrivateRemotePickerSheetFrameProps = {
 
 export function PrivateRemotePickerSheetFrame({
   visible,
+  presentRequestKey = 0,
   title,
   subtitle,
   color,
@@ -22,7 +24,7 @@ export function PrivateRemotePickerSheetFrame({
   children,
 }: PrivateRemotePickerSheetFrameProps) {
   return (
-    <AppBottomSheetModal visible={visible} onClose={onClose}>
+    <AppBottomSheetModal visible={visible} presentRequestKey={presentRequestKey} onClose={onClose}>
       <AppBottomSheetContent scrollable>
         <SheetHeader
           title={title}

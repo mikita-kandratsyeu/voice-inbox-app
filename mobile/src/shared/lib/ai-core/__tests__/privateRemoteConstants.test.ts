@@ -1,5 +1,6 @@
 import {
   resolvePrivateRemoteAskMaxTokens,
+  resolvePrivateRemoteAutoOrganizeMaxTokens,
   resolvePrivateRemoteMeetingDialogueMaxTokens,
   resolvePrivateRemoteSummaryMaxTokens,
 } from '../private-remote/privateRemoteConstants';
@@ -15,5 +16,10 @@ describe('privateRemoteConstants', () => {
     expect(resolvePrivateRemoteSummaryMaxTokens('unlimited')).toBeNull();
     expect(resolvePrivateRemoteAskMaxTokens('unlimited')).toBeNull();
     expect(resolvePrivateRemoteMeetingDialogueMaxTokens('unlimited')).toBeNull();
+  });
+
+  it('scales auto-organize output above summary cap for large note sets', () => {
+    expect(resolvePrivateRemoteAutoOrganizeMaxTokens('efficient', 53)).toBe(3608);
+    expect(resolvePrivateRemoteAutoOrganizeMaxTokens('balanced', 5)).toBe(4096);
   });
 });

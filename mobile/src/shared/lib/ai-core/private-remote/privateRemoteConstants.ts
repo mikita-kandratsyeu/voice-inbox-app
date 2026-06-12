@@ -67,3 +67,14 @@ export function resolvePrivateRemoteMeetingDialogueMaxTokens(
 export function resolvePrivateRemoteJsonRepairMaxTokens(): number {
   return REMOTE_JSON_REPAIR_MAX_TOKENS;
 }
+
+/** Auto-organize JSON grows with note count; local servers need a higher floor than summaries. */
+export function resolvePrivateRemoteAutoOrganizeMaxTokens(
+  budget: PrivateRemoteOutputBudget,
+  noteCount: number,
+): number | null {
+  const budgetCap = resolvePrivateRemoteSummaryMaxTokens(budget);
+  const noteScaled = Math.min(16_384, 640 + Math.max(0, noteCount) * 56);
+  if (budgetCap === null) return noteScaled;
+  return Math.max(budgetCap, noteScaled);
+}

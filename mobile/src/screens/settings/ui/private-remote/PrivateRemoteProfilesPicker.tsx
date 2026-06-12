@@ -30,6 +30,7 @@ export function PrivateRemoteProfilesPicker({
 }: PrivateRemoteProfilesPickerProps) {
   const { t } = useTranslation();
   const [sheetVisible, setSheetVisible] = useState(false);
+  const [presentRequestKey, setPresentRequestKey] = useState(0);
 
   const activeProfile = useMemo(
     () => profiles.find((p) => p.id === activeProfileId) ?? null,
@@ -39,7 +40,12 @@ export function PrivateRemoteProfilesPicker({
   const openSheet = useCallback(() => {
     if (disabled) return;
     hapticSelection();
-    setSheetVisible(true);
+    setPresentRequestKey((key) => key + 1);
+    setSheetVisible((current) => {
+      if (!current) return true;
+      requestAnimationFrame(() => setSheetVisible(true));
+      return false;
+    });
   }, [disabled]);
 
   const closeSheet = useCallback(() => setSheetVisible(false), []);
@@ -102,6 +108,7 @@ export function PrivateRemoteProfilesPicker({
 
       <PrivateRemotePickerSheetFrame
         visible={sheetVisible}
+        presentRequestKey={presentRequestKey}
         title={t('aiSettings.privateProvider.profilesList.sheetTitle')}
         subtitle={t('aiSettings.privateProvider.profilesList.sheetSubtitle')}
         color={color}

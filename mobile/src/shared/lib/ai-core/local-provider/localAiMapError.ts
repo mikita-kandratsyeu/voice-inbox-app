@@ -54,5 +54,9 @@ export function mapLocalError(err: unknown): string {
     return i18n.t('ai.privateModeTooLongForLocal');
   }
 
+  if (message.includes('Invalid AI response') || message.includes('malformed JSON')) {
+    return i18n.t('ai.privateModeParseFailed');
+  }
+
   return i18n.t('ai.privateModeGenericError');
 }
