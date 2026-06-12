@@ -20,6 +20,23 @@ export const NoteMarkdown = ({ color, children, variant = 'answer' }: NoteMarkdo
   const fontSize = isReasoning ? 13 : isDocument ? 17 : 16;
   const lineHeight = isReasoning ? 20 : isDocument ? 28 : 28;
 
+  const accentColors = useMemo(
+    () => ({
+      h1: color.accent.primary,
+      h2: '#FF6B6B',
+      h3: '#4ECDC4',
+      h4: '#FFD93D',
+      h5: '#A78BFA',
+      h6: '#FB923C',
+      listBullet: '#22C55E',
+      listOrdered: '#3B82F6',
+      link: '#60A5FA',
+      code: '#F472B6',
+      quote: '#8B5CF6',
+    }),
+    [color.accent.primary],
+  );
+
   const markdownStyles = useMemo(
     () => ({
       body: {
@@ -41,29 +58,29 @@ export const NoteMarkdown = ({ color, children, variant = 'answer' }: NoteMarkdo
         marginBottom: isReasoning ? 6 : isDocument ? 16 : 8,
       },
       heading1: {
-        color: isDocument ? color.accent.primary : textColor,
+        color: isDocument ? accentColors.h1 : textColor,
         fontSize: isDocument ? 32 : isReasoning ? 15 : 18,
         lineHeight: isDocument ? 40 : isReasoning ? 22 : 26,
         fontWeight: '700' as const,
         marginTop: isDocument ? 24 : isReasoning ? 2 : 4,
         marginBottom: isDocument ? 16 : isReasoning ? 6 : 8,
         borderBottomWidth: isDocument ? 2 : 0,
-        borderBottomColor: isDocument ? color.border.default : undefined,
+        borderBottomColor: isDocument ? `${accentColors.h1}40` : undefined,
         paddingBottom: isDocument ? 12 : 0,
       },
       heading2: {
-        color: isDocument ? color.accent.primary : textColor,
+        color: isDocument ? accentColors.h2 : textColor,
         fontSize: isDocument ? 26 : isReasoning ? 14 : 17,
         lineHeight: isDocument ? 34 : isReasoning ? 20 : 24,
         fontWeight: '700' as const,
         marginTop: isDocument ? 20 : isReasoning ? 4 : 8,
         marginBottom: isDocument ? 12 : isReasoning ? 4 : 6,
         borderBottomWidth: isDocument ? 1 : 0,
-        borderBottomColor: isDocument ? color.border.default : undefined,
+        borderBottomColor: isDocument ? `${accentColors.h2}30` : undefined,
         paddingBottom: isDocument ? 8 : 0,
       },
       heading3: {
-        color: isDocument ? color.text.primary : textColor,
+        color: isDocument ? accentColors.h3 : textColor,
         fontSize: isDocument ? 22 : isReasoning ? 13 : 16,
         lineHeight: isDocument ? 30 : isReasoning ? 20 : 24,
         fontWeight: '600' as const,
@@ -71,7 +88,7 @@ export const NoteMarkdown = ({ color, children, variant = 'answer' }: NoteMarkdo
         marginBottom: isDocument ? 10 : isReasoning ? 2 : 4,
       },
       heading4: {
-        color: isDocument ? color.text.primary : textColor,
+        color: isDocument ? accentColors.h4 : textColor,
         fontSize: isDocument ? 19 : 15,
         lineHeight: isDocument ? 26 : 22,
         fontWeight: '600' as const,
@@ -79,7 +96,7 @@ export const NoteMarkdown = ({ color, children, variant = 'answer' }: NoteMarkdo
         marginBottom: isDocument ? 8 : 4,
       },
       heading5: {
-        color: isDocument ? color.text.secondary : textColor,
+        color: isDocument ? accentColors.h5 : textColor,
         fontSize: isDocument ? 17 : 14,
         lineHeight: isDocument ? 24 : 20,
         fontWeight: '600' as const,
@@ -87,7 +104,7 @@ export const NoteMarkdown = ({ color, children, variant = 'answer' }: NoteMarkdo
         marginBottom: isDocument ? 6 : 2,
       },
       heading6: {
-        color: isDocument ? color.text.secondary : textColor,
+        color: isDocument ? accentColors.h6 : textColor,
         fontSize: isDocument ? 16 : 13,
         lineHeight: isDocument ? 22 : 18,
         fontWeight: '600' as const,
@@ -95,21 +112,23 @@ export const NoteMarkdown = ({ color, children, variant = 'answer' }: NoteMarkdo
         marginBottom: isDocument ? 6 : 2,
       },
       strong: {
-        color: isReasoning ? color.text.primary : textColor,
+        color: isReasoning ? color.text.primary : isDocument ? accentColors.h1 : textColor,
         fontWeight: '700' as const,
       },
       em: {
-        color: textColor,
+        color: isDocument ? accentColors.h5 : textColor,
         fontStyle: 'italic' as const,
       },
       link: {
-        color: color.accent.primary,
+        color: isDocument ? accentColors.link : color.accent.primary,
         textDecorationLine: 'underline' as const,
+        fontWeight: '500' as const,
       },
       hr: {
-        backgroundColor: color.border.default,
-        height: 2,
+        backgroundColor: isDocument ? accentColors.h1 : color.border.default,
+        height: isDocument ? 3 : 2,
         marginVertical: isDocument ? 24 : 12,
+        opacity: isDocument ? 0.3 : 1,
       },
       bullet_list: {
         marginTop: isDocument ? 8 : 4,
@@ -126,11 +145,12 @@ export const NoteMarkdown = ({ color, children, variant = 'answer' }: NoteMarkdo
         marginBottom: isReasoning ? 2 : isDocument ? 6 : 4,
       },
       bullet_list_icon: {
-        color: color.accent.primary,
-        fontSize: isDocument ? 10 : fontSize,
+        color: isDocument ? accentColors.listBullet : color.accent.primary,
+        fontSize: isDocument ? 12 : fontSize,
         lineHeight,
         marginLeft: 0,
         marginRight: isDocument ? 12 : 8,
+        fontWeight: '700' as const,
       },
       bullet_list_content: {
         color: textColor,
@@ -138,10 +158,10 @@ export const NoteMarkdown = ({ color, children, variant = 'answer' }: NoteMarkdo
         lineHeight,
       },
       ordered_list_icon: {
-        color: color.accent.primary,
+        color: isDocument ? accentColors.listOrdered : color.accent.primary,
         fontSize,
         lineHeight,
-        fontWeight: '600' as const,
+        fontWeight: '700' as const,
         marginRight: isDocument ? 12 : 8,
       },
       ordered_list_content: {
@@ -150,31 +170,32 @@ export const NoteMarkdown = ({ color, children, variant = 'answer' }: NoteMarkdo
         lineHeight,
       },
       code_inline: {
-        backgroundColor: color.background.tertiary,
-        color: color.accent.primary,
+        backgroundColor: isDocument ? `${accentColors.code}20` : color.background.tertiary,
+        color: isDocument ? accentColors.code : color.accent.primary,
         borderRadius: 4,
         fontSize: isDocument ? 16 : 15,
         paddingHorizontal: 6,
         paddingVertical: 2,
         fontFamily: 'Menlo',
+        fontWeight: '600' as const,
       },
       fence: {
-        backgroundColor: color.background.tertiary,
+        backgroundColor: isDocument ? `${accentColors.h3}10` : color.background.tertiary,
         borderRadius: 8,
         padding: isDocument ? 16 : 12,
         marginVertical: isDocument ? 12 : 6,
         borderWidth: 1,
-        borderColor: color.border.default,
+        borderColor: isDocument ? `${accentColors.h3}40` : color.border.default,
       },
       code_block: {
-        color: color.text.primary,
+        color: isDocument ? accentColors.h3 : color.text.primary,
         fontSize: isDocument ? 15 : 14,
         lineHeight: isDocument ? 24 : 22,
         fontFamily: 'Menlo',
       },
       blockquote: {
-        backgroundColor: color.background.secondary,
-        borderLeftColor: color.accent.primary,
+        backgroundColor: isDocument ? `${accentColors.quote}15` : color.background.secondary,
+        borderLeftColor: isDocument ? accentColors.quote : color.accent.primary,
         borderLeftWidth: 4,
         paddingHorizontal: isDocument ? 16 : 12,
         paddingVertical: isDocument ? 12 : 6,
@@ -183,25 +204,25 @@ export const NoteMarkdown = ({ color, children, variant = 'answer' }: NoteMarkdo
       },
       table: {
         borderWidth: 1,
-        borderColor: color.border.default,
+        borderColor: isDocument ? `${accentColors.h1}30` : color.border.default,
         borderRadius: 8,
         marginVertical: isDocument ? 12 : 6,
-        overflow: 'hidden',
+        overflow: 'hidden' as const,
       },
       thead: {
-        backgroundColor: color.background.secondary,
+        backgroundColor: isDocument ? `${accentColors.h1}15` : color.background.secondary,
       },
       tbody: {
         backgroundColor: color.background.primary,
       },
       th: {
-        color: color.text.primary,
+        color: isDocument ? accentColors.h1 : color.text.primary,
         fontSize: isDocument ? 16 : 15,
-        fontWeight: '600' as const,
+        fontWeight: '700' as const,
         padding: isDocument ? 12 : 8,
         borderRightWidth: 1,
         borderBottomWidth: 1,
-        borderColor: color.border.default,
+        borderColor: isDocument ? `${accentColors.h1}20` : color.border.default,
       },
       tr: {
         borderBottomWidth: 1,
@@ -212,10 +233,10 @@ export const NoteMarkdown = ({ color, children, variant = 'answer' }: NoteMarkdo
         fontSize: isDocument ? 16 : 15,
         padding: isDocument ? 12 : 8,
         borderRightWidth: 1,
-        borderColor: color.border.default,
+        borderColor: isDocument ? `${accentColors.h1}10` : color.border.default,
       },
     }),
-    [color, fontSize, isDocument, isReasoning, lineHeight, textColor],
+    [accentColors, color, fontSize, isDocument, isReasoning, lineHeight, textColor],
   );
 
   const onLinkPress = useCallback(

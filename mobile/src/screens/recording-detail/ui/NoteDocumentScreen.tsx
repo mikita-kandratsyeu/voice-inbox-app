@@ -58,7 +58,7 @@ export const NoteDocumentScreen = () => {
   const canSave = mode === 'source' && hasUnsavedChanges && !isSaving && !isPreparing;
   const controlsDisabled = isSaving || isPreparing;
 
-  const screenTitle = useMemo(() => t('recordingDetail.document.screenTitle'), [i18n.language, t]);
+  const screenTitle = useMemo(() => t('recordingDetail.document.screenTitle'), [t]);
 
   const close = useCallback(() => {
     KeyboardController.dismiss({ animated: false });
