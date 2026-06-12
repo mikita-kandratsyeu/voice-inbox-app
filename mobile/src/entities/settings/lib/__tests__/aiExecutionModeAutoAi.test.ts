@@ -33,20 +33,21 @@ jest.mock('@/shared/lib/ai-core/localLlmSession', () => ({
 
 import { useSettingsStore } from '../../model/store';
 
-const testStorageMap = (globalThis as { __settingsTestStorageMap: Map<string, string> })
-  .__settingsTestStorageMap;
+const testStorageMap = (
+  globalThis as unknown as { __settingsTestStorageMap: Map<string, string> }
+).__settingsTestStorageMap;
 
 describe('setAiExecutionMode autoAiAfterTranscription', () => {
   beforeEach(() => {
     testStorageMap.clear();
     testStorageMap.set('settings.aiExecutionMode', 'smart_hybrid');
-    testStorageMap.set('settings.privateCapabilityTier', 'available');
+    testStorageMap.set('settings.privateCapabilityTier', 'full');
     useSettingsStore.setState({
       aiExecutionMode: 'smart_hybrid',
       autoAiAfterTranscription: false,
       autoTranscribeOnSave: false,
       autoArchiveEnabled: false,
-      privateCapabilityTier: 'available',
+      privateCapabilityTier: 'full',
     });
   });
 

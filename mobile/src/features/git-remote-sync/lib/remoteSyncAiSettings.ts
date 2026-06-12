@@ -25,9 +25,12 @@ import type {
   WhisperModelId,
   WhisperModelWeightsFormat,
 } from '@/entities/settings/model/types';
+import { storage } from '@/shared/lib/async-storage';
 import { isRecord, isString } from '@/shared/lib/type-guards';
 
 export const REMOTE_SYNC_AI_SETTINGS_VERSION = 1 as const;
+
+const PRIVATE_PREVIOUS_AUTO_AI_KEY = 'settings.private.previousAutoAiAfterTranscription';
 
 export type RemoteSyncAiSettingsPayload = {
   version: typeof REMOTE_SYNC_AI_SETTINGS_VERSION;
@@ -56,6 +59,7 @@ export type RemoteSyncAiSettingsPayload = {
   autoRefreshMeetingSpeakersOnRegen: boolean;
   autoTranscribeOnSave: boolean;
   autoAiAfterTranscription: boolean;
+  privateAutoAiAfterTranscription: boolean;
   autoArchiveEnabled: boolean;
   autoArchiveAfterDays: AutoArchiveAfterDays;
   taskDeadlineNotificationsEnabled: boolean;
@@ -137,6 +141,50 @@ function readQueueConcurrency(
   return clampPrivateRemoteQueueConcurrency(n);
 }
 
+function readSmartAutoAiForSync(
+  aiExecutionMode: AiExecutionMode,
+  autoAiAfterTranscription: boolean,
+): boolean {
+  if (aiExecutionMode === 'smart_hybrid') {
+    return autoAiAfterTranscription;
+  }
+  const previous = storage.getString(PRIVATE_PREVIOUS_AUTO_AI_KEY);
+  if (previous != null) {
+    return previous === 'true';
+  }
+  return autoAiAfterTranscription;
+}
+
+function prepareRemoteSyncAutoAiBeforeModeChange(payload: {
+  autoAiAfterTranscription: boolean;
+  privateAutoAiAfterTranscription: boolean;
+}): void {
+  const store = useSettingsStore.getState();
+  store.setPrivateAutoAiAfterTranscription(payload.privateAutoAiAfterTranscription);
+
+  if (store.aiExecutionMode === 'smart_hybrid') {
+    store.setAutoAiAfterTranscription(payload.autoAiAfterTranscription);
+  } else {
+    storage.set(PRIVATE_PREVIOUS_AUTO_AI_KEY, String(payload.autoAiAfterTranscription));
+  }
+}
+
+function finalizeRemoteSyncAutoAiAfterModeChange(payload: {
+  aiExecutionMode: AiExecutionMode;
+  autoAiAfterTranscription: boolean;
+  privateAutoAiAfterTranscription: boolean;
+}): void {
+  if (payload.aiExecutionMode === 'private_experimental') {
+    storage.set(PRIVATE_PREVIOUS_AUTO_AI_KEY, String(payload.autoAiAfterTranscription));
+    useSettingsStore
+      .getState()
+      .setAutoAiAfterTranscription(payload.privateAutoAiAfterTranscription);
+    return;
+  }
+
+  useSettingsStore.getState().setAutoAiAfterTranscription(payload.autoAiAfterTranscription);
+}
+
 export function buildRemoteSyncAiSettings(): RemoteSyncAiSettingsPayload {
   const state = useSettingsStore.getState();
   return {
@@ -165,7 +213,11 @@ export function buildRemoteSyncAiSettings(): RemoteSyncAiSettingsPayload {
     showSummaryReasoningInNotes: state.showSummaryReasoningInNotes,
     autoRefreshMeetingSpeakersOnRegen: state.autoRefreshMeetingSpeakersOnRegen,
     autoTranscribeOnSave: state.autoTranscribeOnSave,
-    autoAiAfterTranscription: state.autoAiAfterTranscription,
+    autoAiAfterTranscription: readSmartAutoAiForSync(
+      state.aiExecutionMode,
+      state.autoAiAfterTranscription,
+    ),
+    privateAutoAiAfterTranscription: state.privateAutoAiAfterTranscription,
     autoArchiveEnabled: state.autoArchiveEnabled,
     autoArchiveAfterDays: state.autoArchiveAfterDays,
     taskDeadlineNotificationsEnabled: state.taskDeadlineNotificationsEnabled,
@@ -272,7 +324,11 @@ export function parseRemoteSyncAiSettings(raw: unknown): RemoteSyncAiSettingsPay
     autoTranscribeOnSave: readBool(raw.autoTranscribeOnSave, current.autoTranscribeOnSave),
     autoAiAfterTranscription: readBool(
       raw.autoAiAfterTranscription,
-      current.autoAiAfterTranscription,
+      readSmartAutoAiForSync(current.aiExecutionMode, current.autoAiAfterTranscription),
+    ),
+    privateAutoAiAfterTranscription: readBool(
+      raw.privateAutoAiAfterTranscription,
+      current.privateAutoAiAfterTranscription,
     ),
     autoArchiveEnabled: readBool(raw.autoArchiveEnabled, current.autoArchiveEnabled),
     autoArchiveAfterDays: readArchiveDays(raw.autoArchiveAfterDays, current.autoArchiveAfterDays),
@@ -297,6 +353,11 @@ export function parseRemoteSyncAiSettings(raw: unknown): RemoteSyncAiSettingsPay
 
 export function applyRemoteSyncAiSettings(payload: RemoteSyncAiSettingsPayload): void {
   const store = useSettingsStore.getState();
+
+  prepareRemoteSyncAutoAiBeforeModeChange({
+    autoAiAfterTranscription: payload.autoAiAfterTranscription,
+    privateAutoAiAfterTranscription: payload.privateAutoAiAfterTranscription,
+  });
 
   store.setTranscriptionLanguage(payload.transcriptionLanguage);
   store.setWhisperModel(payload.selectedWhisperModel);
@@ -323,7 +384,6 @@ export function applyRemoteSyncAiSettings(payload: RemoteSyncAiSettingsPayload):
   store.setShowSummaryReasoningInNotes(payload.showSummaryReasoningInNotes);
   store.setAutoRefreshMeetingSpeakersOnRegen(payload.autoRefreshMeetingSpeakersOnRegen);
   store.setAutoTranscribeOnSave(payload.autoTranscribeOnSave);
-  store.setAutoAiAfterTranscription(payload.autoAiAfterTranscription);
   store.setAutoArchiveEnabled(payload.autoArchiveEnabled);
   store.setAutoArchiveAfterDays(payload.autoArchiveAfterDays);
   store.setTaskDeadlineNotificationsEnabled(payload.taskDeadlineNotificationsEnabled);
@@ -334,4 +394,10 @@ export function applyRemoteSyncAiSettings(payload: RemoteSyncAiSettingsPayload):
   if (payload.privateRemoteActiveProfileId) {
     store.setPrivateRemoteActiveProfile(payload.privateRemoteActiveProfileId);
   }
+
+  finalizeRemoteSyncAutoAiAfterModeChange({
+    aiExecutionMode: payload.aiExecutionMode,
+    autoAiAfterTranscription: payload.autoAiAfterTranscription,
+    privateAutoAiAfterTranscription: payload.privateAutoAiAfterTranscription,
+  });
 }

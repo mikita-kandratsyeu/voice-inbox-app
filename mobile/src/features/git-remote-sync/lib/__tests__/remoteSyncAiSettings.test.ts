@@ -1,5 +1,23 @@
 import { useSettingsStore } from '@/entities/settings';
 
+jest.mock('@/shared/lib/async-storage', () => {
+  const map = new Map<string, string>();
+  (globalThis as { __remoteSyncTestStorageMap?: Map<string, string> }).__remoteSyncTestStorageMap =
+    map;
+  return {
+    storage: {
+      getString: (key: string) => map.get(key),
+      set: (key: string, value: string) => {
+        map.set(key, value);
+      },
+      remove: (key: string) => {
+        map.delete(key);
+      },
+      contains: (key: string) => map.has(key),
+    },
+  };
+});
+
 import {
   applyRemoteSyncAiSettings,
   buildRemoteSyncAiSettings,
@@ -13,6 +31,9 @@ jest.mock('@/entities/settings', () => ({
 }));
 
 const mockGetState = jest.mocked(useSettingsStore.getState);
+const testStorageMap = (
+  globalThis as unknown as { __remoteSyncTestStorageMap: Map<string, string> }
+).__remoteSyncTestStorageMap;
 
 const baseState = {
   transcriptionLanguage: 'auto',
@@ -39,6 +60,7 @@ const baseState = {
   autoRefreshMeetingSpeakersOnRegen: false,
   autoTranscribeOnSave: false,
   autoAiAfterTranscription: false,
+  privateAutoAiAfterTranscription: false,
   autoArchiveEnabled: false,
   autoArchiveAfterDays: 14,
   taskDeadlineNotificationsEnabled: true,
@@ -50,6 +72,7 @@ const baseState = {
 describe('remoteSyncAiSettings', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    testStorageMap.clear();
     mockGetState.mockReturnValue(baseState as ReturnType<typeof useSettingsStore.getState>);
   });
 
@@ -66,6 +89,8 @@ describe('remoteSyncAiSettings', () => {
     const setTranscriptionLanguage = jest.fn();
     const setAutoArchiveAfterDays = jest.fn();
     const setAutoTranscribeOnSave = jest.fn();
+    const setPrivateAutoAiAfterTranscription = jest.fn();
+    const setAutoAiAfterTranscription = jest.fn();
     const setPrivateRemoteQueueConcurrency = jest.fn();
     mockGetState.mockReturnValue({
       ...baseState,
@@ -91,7 +116,8 @@ describe('remoteSyncAiSettings', () => {
       setShowSummaryReasoningInNotes: jest.fn(),
       setAutoRefreshMeetingSpeakersOnRegen: jest.fn(),
       setAutoTranscribeOnSave,
-      setAutoAiAfterTranscription: jest.fn(),
+      setPrivateAutoAiAfterTranscription,
+      setAutoAiAfterTranscription,
       setAutoArchiveEnabled: jest.fn(),
       setAutoArchiveAfterDays,
       setTaskDeadlineNotificationsEnabled: jest.fn(),
@@ -127,7 +153,8 @@ describe('remoteSyncAiSettings', () => {
       showSummaryReasoningInNotes: false,
       autoRefreshMeetingSpeakersOnRegen: true,
       autoTranscribeOnSave: true,
-      autoAiAfterTranscription: false,
+      autoAiAfterTranscription: true,
+      privateAutoAiAfterTranscription: true,
       autoArchiveEnabled: true,
       autoArchiveAfterDays: 7,
       taskDeadlineNotificationsEnabled: false,
@@ -142,7 +169,66 @@ describe('remoteSyncAiSettings', () => {
     expect(setTranscriptionLanguage).toHaveBeenCalledWith('ru');
     expect(setAutoArchiveAfterDays).toHaveBeenCalledWith(7);
     expect(setAutoTranscribeOnSave).toHaveBeenCalledWith(true);
+    expect(setPrivateAutoAiAfterTranscription).toHaveBeenCalledWith(true);
+    expect(setAutoAiAfterTranscription).toHaveBeenCalledWith(true);
     expect(setPrivateRemoteQueueConcurrency).toHaveBeenCalledWith(3);
+  });
+
+  it('exports smart auto-summary from private snapshot while in private mode', () => {
+    testStorageMap.set('settings.private.previousAutoAiAfterTranscription', 'true');
+    mockGetState.mockReturnValue({
+      ...baseState,
+      aiExecutionMode: 'private_experimental',
+      autoAiAfterTranscription: false,
+      privateAutoAiAfterTranscription: true,
+    } as ReturnType<typeof useSettingsStore.getState>);
+
+    const payload = buildRemoteSyncAiSettings();
+    expect(payload.autoAiAfterTranscription).toBe(true);
+    expect(payload.privateAutoAiAfterTranscription).toBe(true);
+  });
+
+  it('falls back to current private auto-summary when field is missing in export', () => {
+    mockGetState.mockReturnValue({
+      ...baseState,
+      privateAutoAiAfterTranscription: true,
+    } as ReturnType<typeof useSettingsStore.getState>);
+
+    const payload = parseRemoteSyncAiSettings({
+      version: 1,
+      exportedAt: '2026-06-10T12:00:00.000Z',
+      transcriptionLanguage: 'auto',
+      selectedWhisperModel: 'whisper-base',
+      whisperModelWeightsFormat: 'q5_1',
+      selectedWhisperModelFormat: 'q5_1',
+      summaryStyle: 'standard',
+      taskStrictness: 'balanced',
+      aiOutputLanguage: 'same',
+      aiExecutionMode: 'private_experimental',
+      selectedAIModel: 'google/gemini-3.1-flash-lite',
+      aiModelRoutingMode: 'auto',
+      selectedLocalAiModel: null,
+      privateLocalLlmBudget: 'balanced',
+      privateRemoteOutputBudget: 'balanced',
+      privateRemotePreferJsonObject: false,
+      privateCapabilityTier: 'full',
+      privateAiProvider: 'local',
+      privateRemoteBaseUrl: '',
+      privateRemoteModel: '',
+      privateRemoteActiveProfileId: null,
+      showSummaryReasoningInNotes: true,
+      autoRefreshMeetingSpeakersOnRegen: false,
+      autoTranscribeOnSave: false,
+      autoAiAfterTranscription: false,
+      autoArchiveEnabled: false,
+      autoArchiveAfterDays: 14,
+      taskDeadlineNotificationsEnabled: true,
+      backupReminderNotificationsEnabled: false,
+      backupReminderPeriodDays: 14,
+      aiProcessingAlertsEnabled: true,
+    });
+
+    expect(payload?.privateAutoAiAfterTranscription).toBe(true);
   });
 
   it('falls back to current queue concurrency when field is missing in export', () => {

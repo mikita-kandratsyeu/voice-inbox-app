@@ -134,6 +134,8 @@ export type SettingsState = {
   privateRemoteActiveProfileId: string | null;
   autoTranscribeOnSave: boolean;
   autoAiAfterTranscription: boolean;
+  /** Private custom-server auto-summary preference (independent of smart mode). */
+  privateAutoAiAfterTranscription: boolean;
   autoArchiveEnabled: boolean;
   autoArchiveAfterDays: AutoArchiveAfterDays;
   taskDeadlineNotificationsEnabled: boolean;
@@ -182,6 +184,7 @@ export type SettingsState = {
   removePrivateRemoteProfile: (id: string) => void;
   setAutoTranscribeOnSave: (value: boolean) => void;
   setAutoAiAfterTranscription: (value: boolean) => void;
+  setPrivateAutoAiAfterTranscription: (value: boolean) => void;
   setAutoArchiveEnabled: (value: boolean) => void;
   setAutoArchiveAfterDays: (value: AutoArchiveAfterDays) => void;
   setTaskDeadlineNotificationsEnabled: (value: boolean) => void;
