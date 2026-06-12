@@ -577,12 +577,24 @@
       "toolbar": {
         "bold": "Bold",
         "italic": "Italic",
+        "strikethrough": "Strikethrough",
         "heading2": "Section heading",
         "heading3": "Subheading",
         "bullet": "Bullet list",
+        "ordered": "Numbered list",
         "task": "Task checkbox",
         "quote": "Quote",
+        "code": "Inline code",
+        "link": "Link",
         "divider": "Divider"
+      },
+      "linkPrompt": {
+        "title": "Insert link",
+        "message": "Paste or type a web address. Selected text becomes the link label.",
+        "placeholder": "https://example.com",
+        "insert": "Insert",
+        "invalidUrlTitle": "Invalid link",
+        "invalidUrlMessage": "Enter a full http or https address."
       },
       "sections": {
         "expandA11y": "Expand {{title}}",

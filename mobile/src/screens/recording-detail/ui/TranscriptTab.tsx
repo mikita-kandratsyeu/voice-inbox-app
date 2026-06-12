@@ -20,7 +20,11 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import type { TranscriptSegment } from '@/entities/record';
+import {
+  shouldUseTranscriptSegmentView,
+  stripDocumentTranscriptMarkup,
+  type TranscriptSegment,
+} from '@/entities/record';
 import {
   getWhisperModelVariantId,
   TRANSLATE_LANGUAGES,
@@ -165,16 +169,19 @@ export const TranscriptTab = ({
   const transcribeDisabled = isAiProcessing || transcriptionBlocked || isDiscardingResume;
 
   const showTranslation = hasTranslation && viewMode === 'translated';
+  const useSegmentView = shouldUseTranscriptSegmentView(segments, hasAudio);
   const translatedParagraphs = buildReadableParagraphs(translatedTranscript ?? '');
   const hint =
     whisperStatus === 'not_downloaded'
       ? undefined
       : getWhisperModelDisplayName(selectedWhisperModel, selectedWhisperModelFormat);
   const originalTextParagraphs = buildReadableParagraphs(
-    segments
-      .map((segment) => segment.text.trim())
-      .filter(Boolean)
-      .join('\n\n'),
+    stripDocumentTranscriptMarkup(
+      segments
+        .map((segment) => segment.text.trim())
+        .filter(Boolean)
+        .join('\n\n'),
+    ),
   );
 
   if (segments.length === 0) {
@@ -323,7 +330,9 @@ export const TranscriptTab = ({
           variant="secondary"
           size="lg"
           icon={<Pencil size={15} color={color.text.primary} strokeWidth={2} />}
-          label={hasAudio ? t('recordingDetail.editTranscript') : t('recordingDetail.editText')}
+          label={
+            useSegmentView ? t('recordingDetail.editTranscript') : t('recordingDetail.editText')
+          }
           color={color}
           onPress={onEditTranscript}
           disabled={isAiProcessing}
@@ -365,7 +374,7 @@ export const TranscriptTab = ({
             <AlignLeft size={18} color={color.icon.muted} strokeWidth={2} />
             <View className="min-w-0 flex-1 gap-0.5">
               <Text className="text-sm font-medium" style={{ color: color.text.primary }}>
-                {hasAudio ? t('recordingDetail.transcript') : t('recordingDetail.text')}
+                {useSegmentView ? t('recordingDetail.transcript') : t('recordingDetail.text')}
               </Text>
               <Text className="text-xs" style={{ color: color.text.secondary }}>
                 {t('recordingDetail.transcriptSegmentCount', { count: segments.length })}
@@ -415,7 +424,7 @@ export const TranscriptTab = ({
                   </Text>
                 ))}
               </View>
-            ) : hasAudio ? (
+            ) : useSegmentView ? (
               <TranscriptHighlight
                 segments={segments}
                 currentPositionMs={currentPositionMs}

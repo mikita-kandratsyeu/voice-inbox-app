@@ -222,4 +222,43 @@ describe('note document markdown', () => {
     expect(layout.hasSections).toBe(false);
     expect(layout.segments).toEqual([]);
   });
+
+  it('flattens transcript segments after manual document edits', () => {
+    const record = makeRecord({
+      transcriptSegments: [
+        {
+          id: 'seg-1',
+          startTime: '00:00',
+          startMs: 0,
+          endMs: 1000,
+          text: 'Hello',
+          tokens: [{ text: 'Hello', startMs: 0, endMs: 500 }],
+        },
+        {
+          id: 'seg-2',
+          startTime: '00:01',
+          startMs: 1000,
+          endMs: 2000,
+          text: 'world',
+        },
+      ],
+    });
+    const markdown = buildNoteDocumentMarkdown(record).replace(
+      'Ideas can travel through time and space.',
+      'Edited transcript body.',
+    );
+
+    const parsed = parseNoteDocumentMarkdown(markdown, record);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    expect(parsed.patch.transcript).toBe('Edited transcript body.');
+    expect(parsed.patch.transcriptSegments).toEqual([
+      expect.objectContaining({
+        id: `${record.id}-text`,
+        text: 'Edited transcript body.',
+      }),
+    ]);
+    expect(parsed.patch.transcriptSegments?.[0]?.tokens).toBeUndefined();
+  });
 });

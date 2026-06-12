@@ -1,11 +1,15 @@
 import {
   Bold,
+  Code,
   Heading2,
   Heading3,
   Italic,
+  Link,
   List,
+  ListOrdered,
   ListTodo,
   Minus,
+  Strikethrough,
   TextQuote,
 } from 'lucide-react-native';
 import React, { useMemo } from 'react';
@@ -25,21 +29,26 @@ const TOOLBAR_ROW_INNER_HEIGHT = 4 * 2 + IOS_MIN_TOUCH_TARGET;
 const TOOLBAR_ICON_SIZE = 18;
 
 const TOOLBAR_GROUPS: MarkdownEditAction[][] = [
-  ['bold', 'italic'],
+  ['bold', 'italic', 'strikethrough'],
   ['heading2', 'heading3'],
-  ['bullet', 'task'],
-  ['quote', 'divider'],
+  ['bullet', 'ordered', 'task'],
+  ['quote', 'code', 'link'],
+  ['divider'],
 ];
 
 /** Per-action visual weight — matches rich editors (bold/heavy headings vs thin divider). */
 const TOOLBAR_ACTION_VISUAL: Record<MarkdownEditAction, { strokeWidth: number; size?: number }> = {
   bold: { strokeWidth: 2.85 },
   italic: { strokeWidth: 1.65 },
+  strikethrough: { strokeWidth: 2 },
   heading2: { strokeWidth: 2.6, size: 19 },
   heading3: { strokeWidth: 2.1, size: 17 },
   bullet: { strokeWidth: 2 },
+  ordered: { strokeWidth: 2 },
   task: { strokeWidth: 2 },
   quote: { strokeWidth: 1.85 },
+  code: { strokeWidth: 2 },
+  link: { strokeWidth: 2 },
   divider: { strokeWidth: 1.35 },
 };
 
@@ -176,11 +185,15 @@ export function NoteDocumentMarkdownToolbar({
         [
           { action: 'bold', Icon: Bold },
           { action: 'italic', Icon: Italic },
+          { action: 'strikethrough', Icon: Strikethrough },
           { action: 'heading2', Icon: Heading2 },
           { action: 'heading3', Icon: Heading3 },
           { action: 'bullet', Icon: List },
+          { action: 'ordered', Icon: ListOrdered },
           { action: 'task', Icon: ListTodo },
           { action: 'quote', Icon: TextQuote },
+          { action: 'code', Icon: Code },
+          { action: 'link', Icon: Link },
           { action: 'divider', Icon: Minus },
         ] as const
       ).map(({ action, Icon }) => {

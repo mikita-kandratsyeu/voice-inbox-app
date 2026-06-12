@@ -596,12 +596,24 @@
       "toolbar": {
         "bold": "Жирный",
         "italic": "Курсив",
+        "strikethrough": "Зачёркнутый",
         "heading2": "Заголовок секции",
         "heading3": "Подзаголовок",
         "bullet": "Маркированный список",
+        "ordered": "Нумерованный список",
         "task": "Задача с чекбоксом",
         "quote": "Цитата",
+        "code": "Код",
+        "link": "Ссылка",
         "divider": "Разделитель"
+      },
+      "linkPrompt": {
+        "title": "Вставить ссылку",
+        "message": "Вставьте или введите адрес. Выделенный текст станет названием ссылки.",
+        "placeholder": "https://example.com",
+        "insert": "Вставить",
+        "invalidUrlTitle": "Некорректная ссылка",
+        "invalidUrlMessage": "Укажите полный адрес с http или https."
       }
     },
     "marksSectionTitle": "Важные моменты",

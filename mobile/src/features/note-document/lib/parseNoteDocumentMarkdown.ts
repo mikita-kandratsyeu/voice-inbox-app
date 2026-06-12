@@ -1,4 +1,5 @@
 import type { TaskItem, TranscriptSegment, VoiceRecord } from '@/entities/record';
+import { stripDocumentTranscriptMarkup } from '@/entities/record/lib/transcriptText';
 import { i18n } from '@/shared/lib';
 
 import {
@@ -193,30 +194,23 @@ function collapseTranscriptSegments(record: VoiceRecord, transcript: string): Tr
   if (!trimmed) return [];
 
   const existing = record.transcriptSegments ?? [];
-  if (existing.length === 1) {
-    return [{ ...existing[0], text: trimmed }];
-  }
+  const priorTranscript = record.transcript?.trim() ?? '';
+  const transcriptChanged = priorTranscript !== trimmed;
+  const shouldFlattenSegments = existing.length > 1 || transcriptChanged || existing.length === 0;
 
-  if (existing.length > 1) {
-    const [first, ...rest] = existing;
+  if (shouldFlattenSegments) {
     return [
       {
-        ...first,
+        id: `${record.id}-text`,
+        startTime: '00:00',
+        startMs: 0,
+        endMs: record.durationMs ?? 0,
         text: trimmed,
-        endMs: rest[rest.length - 1]?.endMs ?? first.endMs,
       },
     ];
   }
 
-  return [
-    {
-      id: `${record.id}-text`,
-      startTime: '00:00',
-      startMs: 0,
-      endMs: record.durationMs ?? 0,
-      text: trimmed,
-    },
-  ];
+  return [{ ...existing[0]!, text: trimmed }];
 }
 
 function hadSectionContent(record: VoiceRecord, sectionId: string): boolean {
@@ -293,7 +287,7 @@ export function parseNoteDocumentMarkdown(
 
   if (markerIds.has('transcript') || hadSectionContent(record, 'transcript')) {
     const transcript = markerIds.has('transcript')
-      ? normalizeSectionBody(sections.get('transcript') ?? '')
+      ? stripDocumentTranscriptMarkup(normalizeSectionBody(sections.get('transcript') ?? ''))
       : '';
     patch.transcript = transcript;
     patch.transcriptSegments = collapseTranscriptSegments(record, transcript);

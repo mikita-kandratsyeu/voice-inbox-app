@@ -5,7 +5,7 @@ import type {
   TextInput as TextInputType,
   TextInputContentSizeChangeEventData,
 } from 'react-native';
-import { TextInput, View } from 'react-native';
+import { Alert, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 import type { Colors } from '@/shared/config';
@@ -18,10 +18,13 @@ import {
 
 import {
   applyMarkdownEdit,
+  applyMarkdownLink,
+  isValidMarkdownLinkUrl,
   type MarkdownEditAction,
   type TextSelection,
 } from '../lib/applyMarkdownEdit';
 import { NOTE_DOCUMENT_CONTENT_MAX_WIDTH } from '../lib/noteDocumentLayout';
+import { NoteDocumentLinkUrlPrompt } from './NoteDocumentLinkUrlPrompt';
 import { NoteDocumentMarkdownToolbar } from './NoteDocumentMarkdownToolbar';
 
 type NoteDocumentSourceEditorProps = {
@@ -50,6 +53,7 @@ export function NoteDocumentSourceEditor({
   const { t } = useTranslation();
   const selectionRef = useRef<TextSelection>({ start: value.length, end: value.length });
   const [inputContentHeight, setInputContentHeight] = useState(minHeight);
+  const [linkPromptVisible, setLinkPromptVisible] = useState(false);
 
   useEffect(() => {
     setInputContentHeight((prev) => Math.max(minHeight, prev));
@@ -63,9 +67,8 @@ export function NoteDocumentSourceEditor({
     [minHeight],
   );
 
-  const applyAction = useCallback(
-    (action: MarkdownEditAction) => {
-      const result = applyMarkdownEdit(value, selectionRef.current, action);
+  const applyEditResult = useCallback(
+    (result: { text: string; selection: TextSelection }) => {
       onChangeText(result.text);
       selectionRef.current = result.selection;
       requestAnimationFrame(() => {
@@ -73,7 +76,40 @@ export function NoteDocumentSourceEditor({
         inputRef.current?.focus();
       });
     },
-    [inputRef, onChangeText, value],
+    [inputRef, onChangeText],
+  );
+
+  const applyAction = useCallback(
+    (action: MarkdownEditAction) => {
+      if (action === 'link') {
+        setLinkPromptVisible(true);
+        return;
+      }
+
+      applyEditResult(applyMarkdownEdit(value, selectionRef.current, action));
+    },
+    [applyEditResult, value],
+  );
+
+  const handleLinkSubmit = useCallback(
+    (url: string) => {
+      if (!url.trim()) {
+        setLinkPromptVisible(false);
+        return;
+      }
+
+      if (!isValidMarkdownLinkUrl(url)) {
+        Alert.alert(
+          t('recordingDetail.document.linkPrompt.invalidUrlTitle'),
+          t('recordingDetail.document.linkPrompt.invalidUrlMessage'),
+        );
+        return;
+      }
+
+      setLinkPromptVisible(false);
+      applyEditResult(applyMarkdownLink(value, selectionRef.current, url));
+    },
+    [applyEditResult, t, value],
   );
 
   return (
@@ -136,6 +172,12 @@ export function NoteDocumentSourceEditor({
           />
         </View>
       </KeyboardAwareScrollView>
+      <NoteDocumentLinkUrlPrompt
+        visible={linkPromptVisible}
+        color={color}
+        onCancel={() => setLinkPromptVisible(false)}
+        onSubmit={handleLinkSubmit}
+      />
     </View>
   );
 }
