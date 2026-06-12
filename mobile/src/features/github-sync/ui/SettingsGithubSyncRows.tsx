@@ -139,7 +139,7 @@ export function SettingsGithubSyncRows({ color, t }: Props) {
         leftIcon={<GithubIcon size={20} color={color.accent.primary} />}
         showProBadge
         onPress={handleLockedPress}
-        isLast
+        isLast={false}
       />
     );
   } else if (!connected) {
@@ -152,7 +152,7 @@ export function SettingsGithubSyncRows({ color, t }: Props) {
         leftIcon={<GithubIcon size={20} color={color.accent.primary} />}
         loading={isConnecting}
         onPress={() => void handleConnect()}
-        isLast
+        isLast={false}
       />
     );
   } else {
@@ -167,7 +167,7 @@ export function SettingsGithubSyncRows({ color, t }: Props) {
         leftIcon={<GithubIcon size={20} color={color.accent.primary} />}
         loading={isSyncing}
         onPress={() => navigation.navigate('GithubSync')}
-        isLast
+        isLast={false}
       />
     );
   }

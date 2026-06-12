@@ -71,8 +71,13 @@ export type SettingsStackParamList = {
       commitSha: string;
       exportedAt: string;
     };
+    gitlabRestore?: {
+      commitSha: string;
+      exportedAt: string;
+    };
   };
   DiagnosticLogs: undefined;
   GithubSync: undefined;
+  GitlabSync: undefined;
   BackupRestore: undefined;
 };

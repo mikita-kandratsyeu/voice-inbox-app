@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 
 import { GithubSyncScreen } from '@/features/github-sync';
+import { GitlabSyncScreen } from '@/features/gitlab-sync';
 import {
   AboutAppScreen,
   AIModelPickerScreen,
@@ -125,6 +126,11 @@ export const SettingsNavigator = () => {
         <Stack.Screen
           name="GithubSync"
           component={GithubSyncScreen}
+          options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="GitlabSync"
+          component={GitlabSyncScreen}
           options={{ animation: 'slide_from_right' }}
         />
         <Stack.Screen

@@ -1,4 +1,5 @@
-import { matchesSearchQuery } from '@/shared/lib/sheetSearchQuery';
+import { buildRepoPickerRows, repoPickerListHeight } from '@/features/git-remote-sync/lib/buildRepoPickerRows';
+import type { RemoteRepoSummary } from '@/features/git-remote-sync/lib/types';
 
 import type { GithubRepoSummary } from './githubApi';
 
@@ -16,111 +17,50 @@ export type GithubRepoPickerRow =
 export const GITHUB_REPO_PICKER_HEADER_HEIGHT = 36;
 export const GITHUB_REPO_PICKER_ROW_HEIGHT = 72;
 
-function filterReposByQuery(
-  repos: GithubRepoSummary[],
-  normalizedQuery: string,
-): GithubRepoSummary[] {
-  if (!normalizedQuery) return repos;
-  return repos.filter(
-    (repo) =>
-      matchesSearchQuery(repo.fullName, normalizedQuery) ||
-      matchesSearchQuery(repo.name, normalizedQuery) ||
-      matchesSearchQuery(repo.owner, normalizedQuery),
-  );
-}
+const SECTION_SUFFIX_BY_KEY: Record<GithubRepoPickerSectionTitleKey, string> = {
+  'settings.githubSync.currentRepoSection': 'currentRepoSection',
+  'settings.githubSync.pinnedReposSection': 'pinnedReposSection',
+  'settings.githubSync.allReposSection': 'allReposSection',
+};
 
-export function buildGithubRepoPickerRows({
-  repos,
-  pinnedFullNames,
-  currentFullName,
-  normalizedQuery,
-}: {
+const KEY_BY_SECTION_SUFFIX: Record<string, GithubRepoPickerSectionTitleKey> = {
+  currentRepoSection: 'settings.githubSync.currentRepoSection',
+  pinnedReposSection: 'settings.githubSync.pinnedReposSection',
+  allReposSection: 'settings.githubSync.allReposSection',
+};
+
+export function buildGithubRepoPickerRows(params: {
   repos: GithubRepoSummary[];
   pinnedFullNames: readonly string[];
   currentFullName?: string | null;
   normalizedQuery: string;
 }): GithubRepoPickerRow[] {
-  const filtered = filterReposByQuery(repos, normalizedQuery);
-  const pinnedSet = new Set(pinnedFullNames);
-  const current = currentFullName?.trim() || null;
-
-  if (normalizedQuery) {
-    return filtered.map((repo) => ({
-      type: 'repo',
-      id: String(repo.id),
-      repo,
-      rowKind:
-        repo.fullName === current ? 'current' : pinnedSet.has(repo.fullName) ? 'pinned' : 'default',
-    }));
-  }
-
-  const repoByFullName = new Map(repos.map((repo) => [repo.fullName, repo]));
-  const rows: GithubRepoPickerRow[] = [];
-
-  const currentRepo = current ? repoByFullName.get(current) : undefined;
-  if (currentRepo) {
-    rows.push({
-      type: 'header',
-      id: 'header-current',
-      titleKey: 'settings.githubSync.currentRepoSection',
-    });
-    rows.push({
-      type: 'repo',
-      id: `current-${currentRepo.id}`,
-      repo: currentRepo,
-      rowKind: 'current',
-    });
-  }
-
-  const pinnedRepos = pinnedFullNames
-    .map((name) => repoByFullName.get(name))
-    .filter((repo): repo is GithubRepoSummary => repo != null && repo.fullName !== current);
-
-  if (pinnedRepos.length > 0) {
-    rows.push({
-      type: 'header',
-      id: 'header-pinned',
-      titleKey: 'settings.githubSync.pinnedReposSection',
-    });
-    for (const repo of pinnedRepos) {
-      rows.push({
-        type: 'repo',
-        id: `pinned-${repo.id}`,
-        repo,
-        rowKind: 'pinned',
-      });
+  const rows = buildRepoPickerRows(params);
+  return rows.map((row) => {
+    if (row.type === 'header') {
+      return {
+        type: 'header' as const,
+        id: row.id,
+        titleKey: KEY_BY_SECTION_SUFFIX[row.sectionSuffix] ?? 'settings.githubSync.allReposSection',
+      };
     }
-  }
-
-  const rest = repos.filter((repo) => repo.fullName !== current && !pinnedSet.has(repo.fullName));
-  if (rest.length > 0) {
-    if (rows.length > 0) {
-      rows.push({
-        type: 'header',
-        id: 'header-all',
-        titleKey: 'settings.githubSync.allReposSection',
-      });
-    }
-    for (const repo of rest) {
-      rows.push({
-        type: 'repo',
-        id: `repo-${repo.id}`,
-        repo,
-        rowKind: 'default',
-      });
-    }
-  }
-
-  return rows;
+    return row;
+  });
 }
 
 export function githubRepoPickerListHeight(rows: GithubRepoPickerRow[]): number {
-  const GITHUB_REPO_PICKER_LIST_MAX_HEIGHT = 420;
-  const contentHeight = rows.reduce(
-    (height, row) =>
-      height +
-      (row.type === 'header' ? GITHUB_REPO_PICKER_HEADER_HEIGHT : GITHUB_REPO_PICKER_ROW_HEIGHT),
-    0,
-  );
-  return Math.min(contentHeight, GITHUB_REPO_PICKER_LIST_MAX_HEIGHT);
+  const genericRows = rows.map((row) => {
+    if (row.type === 'header') {
+      return {
+        type: 'header' as const,
+        id: row.id,
+        sectionSuffix: SECTION_SUFFIX_BY_KEY[row.titleKey].replace(
+          'settings.githubSync.',
+          '',
+        ) as 'currentRepoSection' | 'pinnedReposSection' | 'allReposSection',
+      };
+    }
+    return row;
+  });
+  return repoPickerListHeight(genericRows);
 }

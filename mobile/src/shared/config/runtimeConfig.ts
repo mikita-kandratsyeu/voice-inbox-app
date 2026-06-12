@@ -1,6 +1,7 @@
 import {
   APP_STORE_URL,
   GITHUB_OAUTH_CLIENT_ID,
+  GITLAB_OAUTH_CLIENT_ID,
   GOOGLE_PLAY_URL,
   PREVIEW_WEB_API_URL,
   PRO_LICENSE_KEY_ACTIVATION_ENABLED,
@@ -46,6 +47,7 @@ type RemoteKey =
   | 'REVENUECAT_PACKAGE_TYPE_PREFERRED'
   | 'REVENUECAT_AI_RESET_PRODUCT_ID'
   | 'GITHUB_OAUTH_CLIENT_ID'
+  | 'GITLAB_OAUTH_CLIENT_ID'
   | 'SUBSCRIPTIONS_PUBLICLY_AVAILABLE'
   | 'PRO_LICENSE_KEY_ACTIVATION_ENABLED';
 
@@ -67,6 +69,7 @@ export type RuntimeConfigSnapshot = {
   revenueCatPackageTypePreferred: string;
   revenueCatAiResetProductId: string;
   githubOAuthClientId: string;
+  gitlabOAuthClientId: string;
   subscriptionsPubliclyAvailable: boolean;
   proLicenseKeyActivationEnabled: boolean;
 };
@@ -93,6 +96,7 @@ function buildEmbedded(): RuntimeConfigSnapshot {
     revenueCatPackageTypePreferred: REVENUECAT_PACKAGE_TYPE_PREFERRED?.trim() ?? '',
     revenueCatAiResetProductId: REVENUECAT_AI_RESET_PRODUCT_ID?.trim() ?? '',
     githubOAuthClientId: GITHUB_OAUTH_CLIENT_ID?.trim() ?? '',
+    gitlabOAuthClientId: GITLAB_OAUTH_CLIENT_ID?.trim() ?? '',
     subscriptionsPubliclyAvailable: isTruthyEnvFlag(SUBSCRIPTIONS_PUBLICLY_AVAILABLE),
     proLicenseKeyActivationEnabled: isTruthyEnvFlag(PRO_LICENSE_KEY_ACTIVATION_ENABLED),
   };
@@ -114,6 +118,7 @@ function toFirebaseDefaults(s: RuntimeConfigSnapshot): Record<string, string> {
     REVENUECAT_PACKAGE_TYPE_PREFERRED: s.revenueCatPackageTypePreferred,
     REVENUECAT_AI_RESET_PRODUCT_ID: s.revenueCatAiResetProductId,
     GITHUB_OAUTH_CLIENT_ID: s.githubOAuthClientId,
+    GITLAB_OAUTH_CLIENT_ID: s.gitlabOAuthClientId,
     SUBSCRIPTIONS_PUBLICLY_AVAILABLE: s.subscriptionsPubliclyAvailable ? '1' : '0',
     PRO_LICENSE_KEY_ACTIVATION_ENABLED: s.proLicenseKeyActivationEnabled ? '1' : '0',
   };
@@ -239,6 +244,11 @@ function mergeRemote(
       rc,
       'GITHUB_OAUTH_CLIENT_ID',
       embedded.githubOAuthClientId,
+    ),
+    gitlabOAuthClientId: readRemoteString(
+      rc,
+      'GITLAB_OAUTH_CLIENT_ID',
+      embedded.gitlabOAuthClientId,
     ),
     subscriptionsPubliclyAvailable: readRemoteBool(
       rc,
@@ -371,6 +381,10 @@ export function getRevenueCatAiResetProductId(): string {
 
 export function getGithubOAuthClientId(): string {
   return snapshot.githubOAuthClientId;
+}
+
+export function getGitlabOAuthClientId(): string {
+  return snapshot.gitlabOAuthClientId;
 }
 
 export function getSubscriptionsPubliclyAvailable(): boolean {

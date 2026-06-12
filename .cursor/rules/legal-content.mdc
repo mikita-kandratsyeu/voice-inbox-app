@@ -19,5 +19,6 @@ When editing legal pages (`privacy.*.md`, `terms.*.md`), keep statements aligned
   - `web/services/ai.service.ts`, `web/services/translate.service.ts`, `web/services/ask.service.ts`
   - `web/config/constants.ts` (TTL/rate-limit values)
   - `mobile/src/features/github-sync/` (optional Pro GitHub note sync — OAuth Device Flow, Keychain, direct GitHub API)
+  - `mobile/src/features/gitlab-sync/` (optional Pro GitLab note sync on gitlab.com — OAuth Device Flow, separate Keychain, direct GitLab API)
 - If behavior changes materially, update the **Last updated** date in legal docs.
 - Avoid promising stricter guarantees than the code currently enforces.

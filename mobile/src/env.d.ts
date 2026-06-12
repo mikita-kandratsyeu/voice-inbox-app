@@ -25,4 +25,6 @@ declare module '@env' {
   export const REVENUECAT_AI_RESET_PRODUCT_ID: string | undefined;
   /** GitHub OAuth App client id (Device Flow) for Pro note sync. */
   export const GITHUB_OAUTH_CLIENT_ID: string | undefined;
+  /** GitLab OAuth App client id (Device Flow) for Pro note sync. */
+  export const GITLAB_OAUTH_CLIENT_ID: string | undefined;
 }

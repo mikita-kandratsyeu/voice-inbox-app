@@ -5,6 +5,7 @@ import React from 'react';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import { SettingsGithubSyncRows } from '@/features/github-sync';
+import { SettingsGitlabSyncRows } from '@/features/gitlab-sync';
 import type { Colors } from '@/shared/config';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
@@ -26,5 +27,6 @@ export const SettingsBackupSection = ({ color, t, recordsCount, navigation }: Pr
       isFirst
     />
     <SettingsGithubSyncRows color={color} t={t} />
+    <SettingsGitlabSyncRows color={color} t={t} />
   </SettingsSection>
 );
