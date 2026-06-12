@@ -30,13 +30,19 @@ export function NoteDocumentPreparingState() {
 
   return (
     <View
-      className="flex-1 items-center justify-center"
-      style={{
-        paddingHorizontal: 24,
-        backgroundColor: color.background.secondary,
-      }}
+      pointerEvents="box-none"
       accessibilityRole="progressbar"
       accessibilityLabel={t('recordingDetail.document.loading')}
+      style={{
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 24,
+      }}
     >
       <ProgressStatusCard
         title={t('recordingDetail.document.loading')}

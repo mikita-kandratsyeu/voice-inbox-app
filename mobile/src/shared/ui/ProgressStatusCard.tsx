@@ -26,7 +26,7 @@ export function ProgressStatusCard({ title, subtitle }: ProgressStatusCardProps)
         elevation: 2,
       }}
     >
-      <View className="items-center justify-center">
+      <View style={{ width: '100%', alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size="large" color={color.accent.primary} />
       </View>
       <Text
@@ -35,7 +35,9 @@ export function ProgressStatusCard({ title, subtitle }: ProgressStatusCardProps)
       >
         {title}
       </Text>
-      {subtitle != null ? <View className="mt-2 items-center">{subtitle}</View> : null}
+      {subtitle != null ? (
+        <View style={{ marginTop: 8, width: '100%', alignItems: 'center' }}>{subtitle}</View>
+      ) : null}
     </View>
   );
 }

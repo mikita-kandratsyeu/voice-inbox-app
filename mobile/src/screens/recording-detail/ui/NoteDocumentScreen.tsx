@@ -4,7 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BookOpen, Check, FileCode, X } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { Alert, Pressable, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -149,7 +149,12 @@ export const NoteDocumentScreen = () => {
   const readingMaxWidth = 680;
 
   return (
-    <View style={{ flex: 1, backgroundColor: color.background.primary }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: isPreparing ? color.background.secondary : color.background.primary,
+      }}
+    >
       <View
         className="flex-row items-center justify-between px-4 pb-3"
         style={{
@@ -171,14 +176,21 @@ export const NoteDocumentScreen = () => {
             accessibilityLabel={t('common.close')}
           />
         </View>
-        <Text
-          className="min-w-0 flex-1 px-2 text-center text-[18px] font-semibold"
-          style={{ color: color.text.primary }}
-          numberOfLines={1}
+        <Pressable
+          className="min-w-0 flex-1 px-2"
           accessibilityRole="header"
+          accessibilityLabel={screenTitle}
+          onPress={() => KeyboardController.dismiss()}
+          hitSlop={{ top: 8, bottom: 8 }}
         >
-          {screenTitle}
-        </Text>
+          <Text
+            className="text-center text-[18px] font-semibold"
+            style={{ color: color.text.primary }}
+            numberOfLines={1}
+          >
+            {screenTitle}
+          </Text>
+        </Pressable>
         <View className="min-w-[96px] shrink-0 flex-row items-center justify-end gap-2">
           <HeaderIconButton
             iconOnly
@@ -214,49 +226,50 @@ export const NoteDocumentScreen = () => {
         </View>
       </View>
 
-      <View style={{ flex: 1 }}>
-        {isPreparing ? (
-          <NoteDocumentPreparingState />
-        ) : mode === 'reading' ? (
-          <KeyboardAwareScrollView
-            style={{ flex: 1, backgroundColor: color.background.primary }}
-            contentContainerStyle={{
-              paddingHorizontal: readingHorizontalPadding,
-              paddingTop: 20,
-              paddingBottom: scrollPaddingBottom + 32,
-              ...(isTablet && {
-                alignItems: 'center',
-              }),
-            }}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator
-            bottomOffset={16}
-          >
-            <View style={{ width: '100%', maxWidth: isTablet ? readingMaxWidth : undefined }}>
-              <NoteDocumentReadingBody
-                color={color}
-                documentMarkdown={documentMarkdown}
-                tasks={readingTasks}
-                onToggleTask={toggleTaskInReading}
-              />
-            </View>
-          </KeyboardAwareScrollView>
-        ) : (
-          <NoteDocumentSourceEditor
-            color={color}
-            value={documentMarkdown}
-            onChangeText={setDocumentMarkdown}
-            editable={!isSaving}
-            minHeight={editorMinHeight}
-            horizontalPadding={sourceHorizontalPadding}
-            scrollPaddingBottom={scrollPaddingBottom}
-            insetsBottom={insets.bottom}
-            isTablet={isTablet}
-            inputRef={sourceInputRef}
-          />
-        )}
-        {isSaving ? <NoteDocumentSavingOverlay /> : null}
-      </View>
+      {isPreparing ? (
+        <NoteDocumentPreparingState />
+      ) : (
+        <View style={{ flex: 1 }}>
+          {mode === 'reading' ? (
+            <KeyboardAwareScrollView
+              style={{ flex: 1, backgroundColor: color.background.primary }}
+              contentContainerStyle={{
+                paddingHorizontal: readingHorizontalPadding,
+                paddingTop: 20,
+                paddingBottom: scrollPaddingBottom + 32,
+                ...(isTablet && {
+                  alignItems: 'center',
+                }),
+              }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator
+              bottomOffset={16}
+            >
+              <View style={{ width: '100%', maxWidth: isTablet ? readingMaxWidth : undefined }}>
+                <NoteDocumentReadingBody
+                  color={color}
+                  documentMarkdown={documentMarkdown}
+                  tasks={readingTasks}
+                  onToggleTask={toggleTaskInReading}
+                />
+              </View>
+            </KeyboardAwareScrollView>
+          ) : (
+            <NoteDocumentSourceEditor
+              color={color}
+              value={documentMarkdown}
+              onChangeText={setDocumentMarkdown}
+              editable={!isSaving}
+              minHeight={editorMinHeight}
+              horizontalPadding={sourceHorizontalPadding}
+              scrollPaddingBottom={scrollPaddingBottom}
+              isTablet={isTablet}
+              inputRef={sourceInputRef}
+            />
+          )}
+          {isSaving ? <NoteDocumentSavingOverlay /> : null}
+        </View>
+      )}
     </View>
   );
 };

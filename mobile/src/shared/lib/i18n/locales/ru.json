@@ -589,6 +589,10 @@
       "discard": "Не сохранять",
       "parseErrorTitle": "Не удалось сохранить",
       "parseErrorMessage": "Проверьте формат секций и попробуйте снова.",
+      "sections": {
+        "expandA11y": "Развернуть «{{title}}»",
+        "collapseA11y": "Свернуть «{{title}}»"
+      },
       "toolbar": {
         "bold": "Жирный",
         "italic": "Курсив",

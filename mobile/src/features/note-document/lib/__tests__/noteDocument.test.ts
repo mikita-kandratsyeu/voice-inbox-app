@@ -56,6 +56,7 @@ import {
 } from '../parseNoteDocumentMarkdown';
 import { patchTaskDoneInNoteDocumentMarkdown } from '../patchTaskDoneInNoteDocumentMarkdown';
 import { splitNoteDocumentAtTasksSection } from '../splitNoteDocumentAtTasksSection';
+import { splitNoteDocumentForReading } from '../splitNoteDocumentForReading';
 
 function makeRecord(overrides: Partial<VoiceRecord> = {}): VoiceRecord {
   return {
@@ -182,5 +183,43 @@ describe('note document markdown', () => {
     expect(split).not.toBeNull();
     expect(split?.beforeMarkdown).toContain('# Writing is telepathy');
     expect(split?.afterMarkdown).toContain('## Transcript');
+  });
+
+  it('splits reading view into collapsible section segments', () => {
+    const markdown = buildNoteDocumentMarkdown(makeRecord());
+    const layout = splitNoteDocumentForReading(markdown);
+
+    expect(layout.hasSections).toBe(true);
+    expect(layout.segments[0]).toMatchObject({ kind: 'preamble' });
+
+    const summary = layout.segments.find(
+      (segment) => segment.kind === 'section' && segment.id === 'summary',
+    );
+    const transcript = layout.segments.find(
+      (segment) => segment.kind === 'section' && segment.id === 'transcript',
+    );
+
+    expect(summary).toMatchObject({
+      kind: 'section',
+      title: 'Summary',
+      defaultExpanded: true,
+    });
+    expect(summary && 'bodyMarkdown' in summary && summary.bodyMarkdown).toContain(
+      'A short recap of the note.',
+    );
+    expect(transcript).toMatchObject({
+      kind: 'section',
+      defaultExpanded: false,
+    });
+    expect(transcript && 'bodyMarkdown' in transcript && transcript.bodyMarkdown).not.toContain(
+      '## Transcript',
+    );
+  });
+
+  it('falls back to flat markdown when section markers are absent', () => {
+    const layout = splitNoteDocumentForReading('# Plain note\n\nJust text.');
+
+    expect(layout.hasSections).toBe(false);
+    expect(layout.segments).toEqual([]);
   });
 });

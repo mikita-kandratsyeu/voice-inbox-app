@@ -1,10 +1,15 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { TextInput as TextInputType } from 'react-native';
+import type {
+  NativeSyntheticEvent,
+  TextInput as TextInputType,
+  TextInputContentSizeChangeEventData,
+} from 'react-native';
 import { TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 import type { Colors } from '@/shared/config';
+import { IS_IOS } from '@/shared/lib';
 import {
   getInputFieldInputStyle,
   NOTE_DOCUMENT_BODY_FONT_SIZE,
@@ -16,10 +21,7 @@ import {
   type MarkdownEditAction,
   type TextSelection,
 } from '../lib/applyMarkdownEdit';
-import {
-  NOTE_DOCUMENT_TOOLBAR_FALLBACK_HEIGHT,
-  NoteDocumentMarkdownToolbar,
-} from './NoteDocumentMarkdownToolbar';
+import { NoteDocumentMarkdownToolbar } from './NoteDocumentMarkdownToolbar';
 
 type NoteDocumentSourceEditorProps = {
   color: Colors;
@@ -29,7 +31,6 @@ type NoteDocumentSourceEditorProps = {
   minHeight: number;
   horizontalPadding: number;
   scrollPaddingBottom: number;
-  insetsBottom: number;
   isTablet: boolean;
   inputRef: React.RefObject<TextInputType | null>;
 };
@@ -42,12 +43,24 @@ export function NoteDocumentSourceEditor({
   minHeight,
   horizontalPadding,
   scrollPaddingBottom,
-  insetsBottom,
   isTablet,
   inputRef,
 }: NoteDocumentSourceEditorProps) {
   const { t } = useTranslation();
   const selectionRef = useRef<TextSelection>({ start: value.length, end: value.length });
+  const [inputContentHeight, setInputContentHeight] = useState(minHeight);
+
+  useEffect(() => {
+    setInputContentHeight((prev) => Math.max(minHeight, prev));
+  }, [minHeight]);
+
+  const handleContentSizeChange = useCallback(
+    (event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
+      const nextHeight = Math.max(minHeight, event.nativeEvent.contentSize.height);
+      setInputContentHeight((prev) => (prev === nextHeight ? prev : nextHeight));
+    },
+    [minHeight],
+  );
 
   const applyAction = useCallback(
     (action: MarkdownEditAction) => {
@@ -64,17 +77,25 @@ export function NoteDocumentSourceEditor({
 
   return (
     <View style={{ flex: 1 }}>
+      <NoteDocumentMarkdownToolbar
+        color={color}
+        isTablet={isTablet}
+        onAction={applyAction}
+        disabled={!editable}
+      />
       <KeyboardAwareScrollView
         style={{ flex: 1, backgroundColor: color.background.primary }}
         contentContainerStyle={{
           flexGrow: 1,
           paddingHorizontal: horizontalPadding,
-          paddingTop: 20,
-          paddingBottom: scrollPaddingBottom + NOTE_DOCUMENT_TOOLBAR_FALLBACK_HEIGHT,
+          paddingTop: 16,
+          paddingBottom: scrollPaddingBottom,
         }}
+        keyboardDismissMode={IS_IOS ? 'interactive' : 'on-drag'}
         keyboardShouldPersistTaps="handled"
+        disableScrollOnKeyboardHide
         showsVerticalScrollIndicator
-        bottomOffset={NOTE_DOCUMENT_TOOLBAR_FALLBACK_HEIGHT + 16}
+        bottomOffset={16}
       >
         <TextInput
           ref={inputRef}
@@ -85,13 +106,15 @@ export function NoteDocumentSourceEditor({
               fontSize: NOTE_DOCUMENT_BODY_FONT_SIZE,
               lineHeight: NOTE_DOCUMENT_BODY_LINE_HEIGHT,
               minHeight,
+              height: inputContentHeight,
               textAlignVertical: 'top',
             },
           ]}
           multiline
-          scrollEnabled
+          scrollEnabled={false}
           value={value}
           onChangeText={onChangeText}
+          onContentSizeChange={handleContentSizeChange}
           onSelectionChange={(event) => {
             selectionRef.current = event.nativeEvent.selection;
           }}
@@ -103,13 +126,6 @@ export function NoteDocumentSourceEditor({
           accessibilityLabel={t('recordingDetail.document.editing')}
         />
       </KeyboardAwareScrollView>
-      <NoteDocumentMarkdownToolbar
-        color={color}
-        insetsBottom={insetsBottom}
-        isTablet={isTablet}
-        onAction={applyAction}
-        disabled={!editable}
-      />
     </View>
   );
 }

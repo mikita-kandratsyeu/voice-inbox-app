@@ -35,7 +35,14 @@ export function NoteDocumentSavingOverlay() {
       accessibilityRole="progressbar"
       accessibilityLabel={t('recordingDetail.document.saving')}
     >
-      <View className="flex-1 items-center justify-center px-6">
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 24,
+        }}
+      >
         <ProgressStatusCard
           title={t('recordingDetail.document.saving')}
           subtitle={
