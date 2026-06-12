@@ -8,6 +8,7 @@ import { buildBackupPayload } from '@/features/sync-data';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 
 import {
+  REMOTE_SYNC_AI_SETTINGS_FILE,
   REMOTE_SYNC_FOLDERS_FILE,
   REMOTE_SYNC_GRAPH_LAYOUTS_FILE,
   REMOTE_SYNC_HEAD_FILE,
@@ -16,11 +17,14 @@ import {
   REMOTE_SYNC_LEGACY_MANIFEST_FILE,
   REMOTE_SYNC_MANIFEST_FILE,
   REMOTE_SYNC_NOTES_DIR,
+  REMOTE_SYNC_PRIVATE_REMOTE_PROFILES_FILE,
   REMOTE_SYNC_README_FILE,
   REMOTE_SYNC_RECORDS_FILE,
   REMOTE_SYNC_STRUCTURE_VERSION,
 } from './constants';
 import { hashFileMap, sha256Hex } from './contentHash';
+import { buildRemoteSyncAiSettings } from './remoteSyncAiSettings';
+import { buildRemoteSyncPrivateProfiles } from './remoteSyncPrivateProfiles';
 
 export type RemoteSyncManifest = {
   version: 4;
@@ -202,6 +206,14 @@ export async function buildRemoteSnapshot(params: {
   const manifestJson = JSON.stringify(manifest, null, 2);
   const legacyManifestPath = joinRepoPath(basePath, REMOTE_SYNC_LEGACY_MANIFEST_FILE);
 
+  const aiSettings = buildRemoteSyncAiSettings();
+  const privateRemoteProfiles = buildRemoteSyncPrivateProfiles();
+  const aiSettingsPath = joinRepoPath(basePath, REMOTE_SYNC_AI_SETTINGS_FILE);
+  const privateRemoteProfilesPath = joinRepoPath(
+    basePath,
+    REMOTE_SYNC_PRIVATE_REMOTE_PROFILES_FILE,
+  );
+
   const headPath = joinRepoPath(basePath, REMOTE_SYNC_HEAD_FILE);
   const headJson = JSON.stringify(
     {
@@ -218,6 +230,8 @@ export async function buildRemoteSnapshot(params: {
       foldersPath: REMOTE_SYNC_FOLDERS_FILE,
       graphLayoutsPath: REMOTE_SYNC_GRAPH_LAYOUTS_FILE,
       indexPath: REMOTE_SYNC_INDEX_FILE,
+      aiSettingsPath: REMOTE_SYNC_AI_SETTINGS_FILE,
+      privateRemoteProfilesPath: REMOTE_SYNC_PRIVATE_REMOTE_PROFILES_FILE,
       notesPath: REMOTE_SYNC_NOTES_DIR,
     },
     null,
@@ -237,6 +251,8 @@ export async function buildRemoteSnapshot(params: {
     JSON.stringify(payload.graphLayouts, null, 2),
   );
   files.set(joinRepoPath(basePath, REMOTE_SYNC_INDEX_FILE), JSON.stringify(index, null, 2));
+  files.set(aiSettingsPath, JSON.stringify(aiSettings, null, 2));
+  files.set(privateRemoteProfilesPath, JSON.stringify(privateRemoteProfiles, null, 2));
   files.set(headPath, headJson);
 
   if (records.length === 0) {

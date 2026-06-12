@@ -8,11 +8,13 @@ export const REMOTE_SYNC_RECORDS_FILE = `${REMOTE_SYNC_SYSTEM_DIR}/records.json`
 export const REMOTE_SYNC_FOLDERS_FILE = `${REMOTE_SYNC_SYSTEM_DIR}/folders.json`;
 export const REMOTE_SYNC_GRAPH_LAYOUTS_FILE = `${REMOTE_SYNC_SYSTEM_DIR}/graph-layouts.json`;
 export const REMOTE_SYNC_INDEX_FILE = `${REMOTE_SYNC_SYSTEM_DIR}/index.json`;
+export const REMOTE_SYNC_AI_SETTINGS_FILE = `${REMOTE_SYNC_SYSTEM_DIR}/ai-settings.json`;
+export const REMOTE_SYNC_PRIVATE_REMOTE_PROFILES_FILE = `${REMOTE_SYNC_SYSTEM_DIR}/private-remote-profiles.json`;
 export const REMOTE_SYNC_HEAD_FILE = `${REMOTE_SYNC_SYSTEM_DIR}/HEAD.json`;
 export const REMOTE_SYNC_NOTES_DIR = 'notes';
 export const REMOTE_SYNC_README_FILE = 'README.md';
-export const REMOTE_SYNC_HEAD_FORMAT_VERSION = 2;
-export const REMOTE_SYNC_STRUCTURE_VERSION = 2;
+export const REMOTE_SYNC_HEAD_FORMAT_VERSION = 3;
+export const REMOTE_SYNC_STRUCTURE_VERSION = 3;
 
 export const REMOTE_SYNC_FETCH_TIMEOUT_MS = 60_000;
 export const REMOTE_SYNC_FETCH_MAX_RETRIES = 3;

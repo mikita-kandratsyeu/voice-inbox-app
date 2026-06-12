@@ -249,6 +249,7 @@ export function GitlabSyncScreen() {
                   folders: result.importResult.folders,
                   legacyFolders: result.importResult.legacyFolders,
                   graphLayouts: result.importResult.graphLayouts,
+                  remoteSyncAuxiliary: result.auxiliaryData,
                   gitlabRestore: {
                     commitSha: commit.sha,
                     exportedAt: result.exportedAt,

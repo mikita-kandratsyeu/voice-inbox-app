@@ -1,5 +1,6 @@
 import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
+import { loadRecordsForRemoteSync } from '@/features/git-remote-sync/lib/loadRecordsForRemoteSync';
 import {
   pushRemoteCommit,
   type PushRemoteCommitResult,
@@ -90,11 +91,12 @@ function createGithubPushAdapter(
 
 export async function pushGithubCommit(params: {
   secrets: GithubSyncSecrets;
-  records: VoiceRecord[];
+  records?: VoiceRecord[];
   folders: Folder[];
   reportProgress?: boolean;
 }): Promise<PushGithubCommitResult> {
-  const { secrets, records, folders, reportProgress = false } = params;
+  const { secrets, folders, reportProgress = false } = params;
+  const records = params.records ?? (await loadRecordsForRemoteSync());
 
   return pushRemoteCommit({
     records,

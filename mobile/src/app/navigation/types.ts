@@ -67,6 +67,7 @@ export type SettingsStackParamList = {
     folders?: Folder[];
     legacyFolders?: Folder[];
     graphLayouts?: import('@/features/sync-data').BackupGraphLayoutVersion[];
+    remoteSyncAuxiliary?: import('@/features/git-remote-sync/lib/applyRemoteSyncAuxiliaryData').RemoteSyncAuxiliaryData;
     githubRestore?: {
       commitSha: string;
       exportedAt: string;

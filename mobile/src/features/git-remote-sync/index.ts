@@ -14,7 +14,22 @@ export {
   REMOTE_SYNC_DEFAULT_BRANCH,
   REMOTE_SYNC_DEFAULT_REPO_NAME,
 } from './lib/constants';
+export {
+  applyRemoteSyncAuxiliaryData,
+  type RemoteSyncAuxiliaryData,
+} from './lib/applyRemoteSyncAuxiliaryData';
 export { finalizeRemoteSyncRestore } from './lib/finalizeRemoteSyncRestore';
+export { loadRecordsForRemoteSync } from './lib/loadRecordsForRemoteSync';
+export {
+  buildRemoteSyncAiSettings,
+  parseRemoteSyncAiSettings,
+  type RemoteSyncAiSettingsPayload,
+} from './lib/remoteSyncAiSettings';
+export {
+  buildRemoteSyncPrivateProfiles,
+  parseRemoteSyncPrivateProfiles,
+  type RemoteSyncPrivateProfilesPayload,
+} from './lib/remoteSyncPrivateProfiles';
 export { formatRemoteSyncCommitMessage } from './lib/formatRemoteSyncCommitMessage';
 export {
   pushRemoteCommit,

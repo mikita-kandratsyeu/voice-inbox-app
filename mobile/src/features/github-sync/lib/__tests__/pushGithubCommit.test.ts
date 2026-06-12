@@ -23,6 +23,10 @@ jest.mock('@/features/pro-license/lib/proEntitlementStorage', () => ({
   isProActiveFromStorageSync: jest.fn(() => true),
 }));
 
+jest.mock('@/features/git-remote-sync/lib/loadRecordsForRemoteSync', () => ({
+  loadRecordsForRemoteSync: jest.fn(async () => []),
+}));
+
 jest.mock('../buildGithubSnapshot', () => ({
   buildGithubSnapshot: jest.fn(),
 }));
@@ -89,7 +93,7 @@ describe('pushGithubCommit', () => {
         },
       },
       index: {
-        structureVersion: 2,
+        structureVersion: 3,
         exportedAt: '2026-06-10T12:00:00.000Z',
         notesPath: 'notes',
         records: {

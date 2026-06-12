@@ -23,6 +23,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { recordRepository } from '@/entities/record/model/repository';
 import { useAdsAllowed } from '@/features/app-storefront';
+import { applyRemoteSyncAuxiliaryData } from '@/features/git-remote-sync/lib/applyRemoteSyncAuxiliaryData';
 import { finalizeGithubSyncRestore } from '@/features/github-sync/lib/finalizeGithubSyncRestore';
 import { finalizeGitlabSyncRestore } from '@/features/gitlab-sync/lib/finalizeGitlabSyncRestore';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
@@ -231,6 +232,7 @@ export const ImportRecordsScreen = () => {
     folders: archiveFolders = [],
     legacyFolders = [],
     graphLayouts = [],
+    remoteSyncAuxiliary,
     githubRestore,
     gitlabRestore,
   } = route.params;
@@ -449,6 +451,9 @@ export const ImportRecordsScreen = () => {
           folders: useFolderStore.getState().folders,
         });
       }
+      if (remoteSyncAuxiliary) {
+        applyRemoteSyncAuxiliaryData(remoteSyncAuxiliary);
+      }
       navigation.goBack();
       await tryShowYandexInterstitial({ adsAllowed, trigger: 'after_import' });
       Alert.alert(t('common.done'), t('importExport.importSuccess', { count: toProcess.length }));
@@ -475,6 +480,7 @@ export const ImportRecordsScreen = () => {
     githubRestore,
     gitlabRestore,
     graphLayouts,
+    remoteSyncAuxiliary,
   ]);
 
   const handleImportPress = useCallback(() => {

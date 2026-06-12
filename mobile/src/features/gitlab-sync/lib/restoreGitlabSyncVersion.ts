@@ -19,5 +19,7 @@ export async function restoreGitlabSyncVersion(params: {
     commitSha,
     fetchManifestAtRef: (manifestPath, ref) =>
       getFileContentAtRef(secrets.accessToken, secrets.projectId, manifestPath, ref),
+    fetchFileAtRef: (filePath, ref) =>
+      getFileContentAtRef(secrets.accessToken, secrets.projectId, filePath, ref),
   });
 }

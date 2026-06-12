@@ -10,17 +10,57 @@ import {
 } from '../constants';
 
 jest.mock('@/features/sync-data', () => ({
-  buildBackupPayload: jest.fn(async () => ({
+  buildBackupPayload: jest.fn(async (records: VoiceRecord[], folders: Folder[]) => ({
     version: 4,
     exportedAt: '2026-06-10T12:00:00.000Z',
-    folders: [],
-    records: [],
+    folders,
+    records: records.map((record) => {
+      const { audioPath: _audioPath, ...withoutAudio } = record;
+      return withoutAudio;
+    }),
     graphLayouts: [{ id: 'layout-1' }],
   })),
 }));
 
 jest.mock('@/features/share-record', () => ({
   buildShareText: jest.fn(() => '# Meeting note'),
+}));
+
+jest.mock('@/entities/settings', () => ({
+  useSettingsStore: {
+    getState: jest.fn(() => ({
+      transcriptionLanguage: 'auto',
+      selectedWhisperModel: 'whisper-base',
+      whisperModelWeightsFormat: 'q5_1',
+      selectedWhisperModelFormat: 'q5_1',
+      summaryStyle: 'standard',
+      taskStrictness: 'balanced',
+      aiOutputLanguage: 'same',
+      aiExecutionMode: 'smart_hybrid',
+      selectedAIModel: 'google/gemini-3.1-flash-lite',
+      aiModelRoutingMode: 'auto',
+      selectedLocalAiModel: null,
+      privateLocalLlmBudget: 'balanced',
+      privateRemoteOutputBudget: 'balanced',
+      privateRemotePreferJsonObject: false,
+      privateCapabilityTier: 'full',
+      privateAiProvider: 'local',
+      privateRemoteBaseUrl: '',
+      privateRemoteModel: '',
+      privateRemoteActiveProfileId: null,
+      privateRemoteProfiles: [],
+      showSummaryReasoningInNotes: true,
+      autoRefreshMeetingSpeakersOnRegen: false,
+      autoTranscribeOnSave: false,
+      autoAiAfterTranscription: false,
+      autoArchiveEnabled: false,
+      autoArchiveAfterDays: 14,
+      taskDeadlineNotificationsEnabled: true,
+      backupReminderNotificationsEnabled: false,
+      backupReminderPeriodDays: 14,
+      aiProcessingAlertsEnabled: true,
+    })),
+  },
 }));
 
 jest.mock('@/shared/lib/device-id', () => ({
@@ -59,6 +99,24 @@ describe('buildGithubSnapshot', () => {
     } as Folder,
   ];
 
+  it('includes transcriptSegments in records payload', async () => {
+    const snapshot = await buildGithubSnapshot({
+      records: [
+        {
+          ...records[0],
+          transcriptSegments: [{ id: 'seg-1', startTime: '0:01', text: 'Hello' }],
+        } as VoiceRecord,
+      ],
+      folders,
+      basePath: 'voice-inbox-ai',
+    });
+
+    expect(snapshot.files.get('voice-inbox-ai/.voice-inbox-ai/records.json')).toContain(
+      '"transcriptSegments"',
+    );
+    expect(snapshot.files.get('voice-inbox-ai/.voice-inbox-ai/records.json')).toContain('"Hello"');
+  });
+
   it('builds note files, manifest, and head metadata', async () => {
     const snapshot = await buildGithubSnapshot({
       records,
@@ -82,10 +140,16 @@ describe('buildGithubSnapshot', () => {
       '"version": 4',
     );
     expect(snapshot.files.get('voice-inbox-ai/.voice-inbox-ai/index.json')).toContain(
-      '"structureVersion": 2',
+      '"structureVersion": 3',
     );
+    expect(snapshot.files.get('voice-inbox-ai/.voice-inbox-ai/ai-settings.json')).toContain(
+      '"transcriptionLanguage": "auto"',
+    );
+    expect(
+      snapshot.files.get('voice-inbox-ai/.voice-inbox-ai/private-remote-profiles.json'),
+    ).toContain('"profiles": []');
     expect(snapshot.files.get(`voice-inbox-ai/${GITHUB_SYNC_HEAD_FILE}`)).toContain(
-      '"formatVersion": 2',
+      '"formatVersion": 3',
     );
     expect(snapshot.files.get(`voice-inbox-ai/${GITHUB_SYNC_HEAD_FILE}`)).toContain(
       '"manifestPath": ".voice-inbox-ai/manifest.json"',

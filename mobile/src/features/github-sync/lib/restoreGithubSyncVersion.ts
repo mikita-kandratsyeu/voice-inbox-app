@@ -19,5 +19,7 @@ export async function restoreGithubSyncVersion(params: {
     commitSha,
     fetchManifestAtRef: (manifestPath, ref) =>
       getFileContentAtRef(secrets.accessToken, secrets.owner, secrets.repo, manifestPath, ref),
+    fetchFileAtRef: (filePath, ref) =>
+      getFileContentAtRef(secrets.accessToken, secrets.owner, secrets.repo, filePath, ref),
   });
 }
