@@ -1,86 +1,23 @@
-import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
-import type { ImportResult } from '@/features/sync-data';
 import {
-  type BackupExportPayload,
-  buildImportResultFromPayload,
-  parseBackupMetadataPayload,
-} from '@/features/sync-data';
+  type RestoreRemoteSyncResult,
+  restoreRemoteSyncVersion,
+} from '@/features/git-remote-sync/lib/restoreRemoteSyncVersion';
 
-import { GITLAB_SYNC_LEGACY_MANIFEST_FILE, GITLAB_SYNC_MANIFEST_FILE } from './constants';
 import { getFileContentAtRef } from './gitlabApi';
 import type { GitlabSyncSecrets } from './gitlabSecrets';
 
-export type RestoreGitlabSyncResult =
-  | {
-      ok: true;
-      importResult: Extract<ImportResult, { success: true }>;
-      exportedAt: string;
-    }
-  | { ok: false; code: string; message?: string };
-
-function joinRepoPath(basePath: string, filePath: string): string {
-  const normalized = basePath.replace(/^\/+|\/+$/g, '');
-  if (!normalized) {
-    return filePath;
-  }
-  return `${normalized}/${filePath.replace(/^\/+/, '')}`;
-}
-
-function uniqueManifestPaths(basePath: string): string[] {
-  return [
-    joinRepoPath(basePath, GITLAB_SYNC_MANIFEST_FILE),
-    GITLAB_SYNC_MANIFEST_FILE,
-    joinRepoPath(basePath, GITLAB_SYNC_LEGACY_MANIFEST_FILE),
-    GITLAB_SYNC_LEGACY_MANIFEST_FILE,
-  ].filter((path, index, arr) => arr.indexOf(path) === index);
-}
+export type RestoreGitlabSyncResult = RestoreRemoteSyncResult;
 
 export async function restoreGitlabSyncVersion(params: {
   secrets: GitlabSyncSecrets;
   commitSha: string;
 }): Promise<RestoreGitlabSyncResult> {
-  if (!isProActiveFromStorageSync()) {
-    return { ok: false, code: 'pro_required' };
-  }
-
   const { secrets, commitSha } = params;
-  const manifestPaths = uniqueManifestPaths(secrets.basePath);
 
-  try {
-    let raw: string | null = null;
-    for (const manifestPath of manifestPaths) {
-      raw = await getFileContentAtRef(
-        secrets.accessToken,
-        secrets.projectId,
-        manifestPath,
-        commitSha,
-      );
-      if (raw) {
-        break;
-      }
-    }
-
-    if (!raw) {
-      return { ok: false, code: 'manifest_not_found' };
-    }
-
-    const payload = parseBackupMetadataPayload(JSON.parse(raw) as unknown);
-    if (!payload) {
-      return { ok: false, code: 'invalid_manifest' };
-    }
-
-    const stripped: BackupExportPayload = {
-      ...payload,
-      records: payload.records.map((r) => {
-        const { audioPath: _audioPath, ...rest } = r as typeof r & { audioPath?: string };
-        return rest;
-      }),
-    } as BackupExportPayload;
-
-    const importResult = buildImportResultFromPayload(stripped);
-    return { ok: true, importResult, exportedAt: payload.exportedAt };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return { ok: false, code: 'restore_failed', message };
-  }
+  return restoreRemoteSyncVersion({
+    basePath: secrets.basePath,
+    commitSha,
+    fetchManifestAtRef: (manifestPath, ref) =>
+      getFileContentAtRef(secrets.accessToken, secrets.projectId, manifestPath, ref),
+  });
 }

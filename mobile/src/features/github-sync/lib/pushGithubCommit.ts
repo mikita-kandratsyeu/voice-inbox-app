@@ -1,9 +1,14 @@
 import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
+import {
+  pushRemoteCommit,
+  type PushRemoteCommitResult,
+  type RemoteSyncPushAdapter,
+} from '@/features/git-remote-sync/lib/pushRemoteCommit';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 
 import { buildGithubSnapshot } from './buildGithubSnapshot';
-import { areGithubSyncHashesEqual, computeGithubSyncDiff } from './computeGithubSyncDiff';
+import { areGithubSyncHashesEqual } from './computeGithubSyncDiff';
 import { formatGithubCommitMessage } from './formatGithubCommitMessage';
 import {
   createGithubCommitWithFiles,
@@ -28,161 +33,59 @@ import {
   withGithubSyncTimeout,
 } from './githubSyncTimeout';
 
-const PUSH_REF_CONFLICT_RETRIES = 2;
+export type PushGithubCommitResult = PushRemoteCommitResult;
 
-export type PushGithubCommitResult =
-  | { ok: true; commitSha: string; alreadyUpToDate: boolean }
-  | { ok: false; code: string; message?: string };
-
-function isNoteMarkdownPath(path: string): boolean {
-  const normalized = path.replace(/^\/+/, '');
-  return (
-    normalized.endsWith('.md') &&
-    (normalized.startsWith('notes/') || normalized.includes('/notes/'))
-  );
-}
-
-function addPathVariants(out: Set<string>, path: string, basePath: string): void {
-  const normalizedBase = basePath.replace(/^\/+|\/+$/g, '');
-  out.add(path);
-  if (normalizedBase && path.startsWith(`${normalizedBase}/`)) {
-    out.add(path.slice(normalizedBase.length + 1));
-  } else if (normalizedBase) {
-    out.add(`${normalizedBase}/${path.replace(/^\/+/, '')}`);
-  }
-}
-
-async function pushGithubCommitInternal(params: {
-  secrets: GithubSyncSecrets;
-  records: VoiceRecord[];
-  folders: Folder[];
-  reportProgress?: boolean;
-}): Promise<PushGithubCommitResult> {
-  const { secrets, records, folders, reportProgress = false } = params;
+function createGithubPushAdapter(
+  secrets: GithubSyncSecrets,
+  reportProgress: boolean,
+): RemoteSyncPushAdapter {
   const { accessToken, owner, repo, branch, basePath } = secrets;
 
-  const reportStage = (stage: 'preparing' | 'uploading' | 'committing') => {
-    if (!reportProgress) return;
-    updateGithubSyncProgress({ stage });
-  };
-
-  try {
-    reportStage('preparing');
-    try {
+  return {
+    accessToken,
+    branch,
+    basePath,
+    trackExistingPathsWhenDeleting: false,
+    verifyAuth: async () => {
       await fetchGithubUserLogin(accessToken);
-    } catch (authErr) {
-      const authStatus =
-        authErr instanceof Error && 'status' in authErr && typeof authErr.status === 'number'
-          ? authErr.status
-          : undefined;
-      if (authStatus === 401) {
-        return { ok: false, code: 'unauthorized' };
-      }
-      throw authErr;
-    }
-
-    const snapshot = await buildGithubSnapshot({ records, folders, basePath });
-    const previousHashes = getGithubSyncContentHashes();
-    const notesPrefix = `${basePath.replace(/^\/+|\/+$/g, '')}/notes`;
-
-    if (
-      Object.keys(previousHashes).length > 0 &&
-      areGithubSyncHashesEqual(snapshot.contentHashes, previousHashes)
-    ) {
-      return {
-        ok: true,
-        commitSha: getGithubSyncLastCommitSha() ?? '',
-        alreadyUpToDate: true,
-      };
-    }
-
-    const diff = computeGithubSyncDiff({
-      currentHashes: snapshot.contentHashes,
-      previousHashes,
-      notePathPrefix: notesPrefix,
-    });
-
-    let deletions = [...diff.deletionPaths];
-    const parentSha = await getBranchRefSha(accessToken, owner, repo, branch);
-    if (parentSha && deletions.length === 0) {
-      try {
-        const existingPaths = await listTreePathsAtCommit(
-          accessToken,
-          owner,
-          repo,
-          parentSha,
-          basePath,
-        );
-        const currentNotePaths = new Set<string>();
-        for (const path of snapshot.files.keys()) {
-          if (isNoteMarkdownPath(path)) {
-            addPathVariants(currentNotePaths, path, basePath);
-          }
+    },
+    getBranchRefSha: () => getBranchRefSha(accessToken, owner, repo, branch),
+    listTreePathsAtCommit: (parentSha) =>
+      listTreePathsAtCommit(accessToken, owner, repo, parentSha, basePath),
+    createCommitWithFiles: (input) =>
+      createGithubCommitWithFiles({
+        accessToken,
+        owner,
+        repo,
+        branch,
+        basePath,
+        files: input.files,
+        deletions: input.deletions,
+        message: input.message,
+        onUploadProgress: input.onUploadProgress,
+        onCommitting: input.onCommitting,
+      }),
+    isRefConflictError: (err) => isGithubApiError(err) && err.code === 'ref_conflict',
+    buildSnapshot: (records, folders) => buildGithubSnapshot({ records, folders, basePath }),
+    getPreviousHashes: getGithubSyncContentHashes,
+    areHashesEqual: areGithubSyncHashesEqual,
+    getLastCommitSha: getGithubSyncLastCommitSha,
+    setLastCommitSha: setGithubSyncLastCommitSha,
+    setLastSyncedAt: setGithubSyncLastSyncedAt,
+    setContentHashes: setGithubSyncContentHashes,
+    setLastError: setGithubSyncLastError,
+    formatCommitMessage: formatGithubCommitMessage,
+    reportStage: reportProgress
+      ? (stage) => {
+          updateGithubSyncProgress({ stage });
         }
-        for (const path of existingPaths) {
-          if (isNoteMarkdownPath(path) && !currentNotePaths.has(path)) {
-            deletions.push(path);
-          }
+      : undefined,
+    reportUploadProgress: reportProgress
+      ? (uploadCurrent, uploadTotal) => {
+          updateGithubSyncProgress({ stage: 'uploading', uploadCurrent, uploadTotal });
         }
-      } catch {
-        // Best-effort deletion detection.
-      }
-    }
-
-    const message = formatGithubCommitMessage({
-      diff,
-      recordCount: snapshot.recordCount,
-      folderCount: snapshot.folderCount,
-      graphLayoutCount: snapshot.graphLayoutCount,
-    });
-
-    const uploadTotal = snapshot.files.size;
-    if (reportProgress && uploadTotal > 0) {
-      updateGithubSyncProgress({ stage: 'uploading', uploadCurrent: 0, uploadTotal });
-    }
-
-    const commitSha = await createGithubCommitWithFiles({
-      accessToken,
-      owner,
-      repo,
-      branch,
-      basePath,
-      files: snapshot.files,
-      deletions,
-      message,
-      onUploadProgress: reportProgress
-        ? (uploaded, total) => {
-            updateGithubSyncProgress({
-              stage: 'uploading',
-              uploadCurrent: uploaded,
-              uploadTotal: total,
-            });
-          }
-        : undefined,
-      onCommitting: reportProgress ? () => reportStage('committing') : undefined,
-    });
-
-    setGithubSyncLastCommitSha(commitSha);
-    setGithubSyncLastSyncedAt(snapshot.manifest.exportedAt);
-    setGithubSyncContentHashes(snapshot.contentHashes);
-    setGithubSyncLastError(null);
-
-    return { ok: true, commitSha, alreadyUpToDate: false };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    const status =
-      err instanceof Error && 'status' in err && typeof err.status === 'number'
-        ? err.status
-        : undefined;
-    setGithubSyncLastError(message);
-    if (status === 401) {
-      return { ok: false, code: 'unauthorized', message };
-    }
-    if (isGithubApiError(err) && err.code === 'ref_conflict') {
-      return { ok: false, code: 'ref_conflict' };
-    }
-    return { ok: false, code: 'sync_failed', message };
-  }
+      : undefined,
+  };
 }
 
 export async function pushGithubCommit(params: {
@@ -191,29 +94,16 @@ export async function pushGithubCommit(params: {
   folders: Folder[];
   reportProgress?: boolean;
 }): Promise<PushGithubCommitResult> {
-  if (!isProActiveFromStorageSync()) {
-    return { ok: false, code: 'pro_required' };
-  }
+  const { secrets, records, folders, reportProgress = false } = params;
 
-  try {
-    const pushWithRefRetries = async (): Promise<PushGithubCommitResult> => {
-      let lastResult: PushGithubCommitResult = { ok: false, code: 'sync_failed' };
-      for (let attempt = 0; attempt <= PUSH_REF_CONFLICT_RETRIES; attempt += 1) {
-        lastResult = await pushGithubCommitInternal(params);
-        if (lastResult.ok || lastResult.code !== 'ref_conflict') {
-          return lastResult;
-        }
-      }
-      return lastResult;
-    };
-    return await withGithubSyncTimeout(pushWithRefRetries());
-  } catch (err) {
-    if (isGithubSyncTimeoutError(err)) {
-      setGithubSyncLastError(GITHUB_SYNC_TIMEOUT_ERROR);
-      return { ok: false, code: 'sync_timeout' };
-    }
-    const message = err instanceof Error ? err.message : String(err);
-    setGithubSyncLastError(message);
-    return { ok: false, code: 'sync_failed', message };
-  }
+  return pushRemoteCommit({
+    records,
+    folders,
+    reportProgress,
+    adapter: createGithubPushAdapter(secrets, reportProgress),
+    isProActive: isProActiveFromStorageSync,
+    withTimeout: withGithubSyncTimeout,
+    isTimeoutError: isGithubSyncTimeoutError,
+    timeoutErrorMessage: GITHUB_SYNC_TIMEOUT_ERROR,
+  });
 }

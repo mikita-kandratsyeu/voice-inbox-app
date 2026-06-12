@@ -1,5 +1,6 @@
 import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
+import { finalizeRemoteSyncRestore } from '@/features/git-remote-sync/lib/finalizeRemoteSyncRestore';
 
 import { buildGithubSnapshot } from './buildGithubSnapshot';
 import { getGithubSyncSecrets } from './githubSecrets';
@@ -17,19 +18,13 @@ export async function finalizeGithubSyncRestore(params: {
   folders: Folder[];
   exportedAt: string;
 }): Promise<void> {
-  const secrets = await getGithubSyncSecrets();
-  if (!secrets) {
-    return;
-  }
-
-  const snapshot = await buildGithubSnapshot({
-    records: params.records,
-    folders: params.folders,
-    basePath: secrets.basePath,
+  return finalizeRemoteSyncRestore({
+    ...params,
+    getBasePath: async () => (await getGithubSyncSecrets())?.basePath ?? null,
+    buildSnapshot: buildGithubSnapshot,
+    setLastCommitSha: setGithubSyncLastCommitSha,
+    setLastSyncedAt: setGithubSyncLastSyncedAt,
+    setContentHashes: setGithubSyncContentHashes,
+    setLastError: setGithubSyncLastError,
   });
-
-  setGithubSyncLastCommitSha(params.commitSha.trim());
-  setGithubSyncLastSyncedAt(params.exportedAt.trim() || snapshot.manifest.exportedAt);
-  setGithubSyncContentHashes(snapshot.contentHashes);
-  setGithubSyncLastError(null);
 }

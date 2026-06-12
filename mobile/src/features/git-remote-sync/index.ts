@@ -10,6 +10,28 @@ export {
   type RemoteSyncDiff,
 } from './lib/computeRemoteSyncDiff';
 export { formatRemoteSyncCommitMessage } from './lib/formatRemoteSyncCommitMessage';
+export {
+  pushRemoteCommit,
+  type PushRemoteCommitResult,
+  type RemoteSyncPushAdapter,
+} from './lib/pushRemoteCommit';
+export {
+  restoreRemoteSyncVersion,
+  type RestoreRemoteSyncResult,
+} from './lib/restoreRemoteSyncVersion';
+export { finalizeRemoteSyncRestore } from './lib/finalizeRemoteSyncRestore';
+export {
+  createRemoteSyncNowController,
+  type RemoteSyncNowController,
+  type RemoteSyncNowResult,
+} from './lib/runRemoteSyncNow';
+export {
+  addPathVariants,
+  isNoteMarkdownPath,
+  joinRepoPath,
+  toRelativeRepoPaths,
+  uniqueManifestPaths,
+} from './lib/repoPaths';
 export { buildRepoPickerRows, repoPickerListHeight } from './lib/buildRepoPickerRows';
 export {
   getRemoteSyncPinnedRepos,
