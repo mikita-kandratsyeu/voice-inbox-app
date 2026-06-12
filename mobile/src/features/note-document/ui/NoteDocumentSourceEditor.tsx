@@ -89,7 +89,6 @@ export const NoteDocumentSourceEditor = React.memo(function NoteDocumentSourceEd
       textAlignVertical: 'top' as const,
       backgroundColor: color.background.primary,
       paddingHorizontal: horizontalPadding,
-      // Scrolls with content so text can move flush under the overlaid toolbar.
       marginTop: toolbarHeight,
       marginBottom: scrollPaddingBottom,
     }),
