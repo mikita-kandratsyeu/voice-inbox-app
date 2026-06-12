@@ -18,6 +18,8 @@ declare module '@env' {
   export const SUBSCRIPTIONS_PUBLICLY_AVAILABLE: string | undefined;
   export const PRO_LICENSE_KEY_ACTIVATION_ENABLED: string | undefined;
   export const FIREBASE_APP_CHECK_DEBUG_TOKEN: string | undefined;
+  /** Local dev: skip client App Check (`__DEV__` only). Keep in sync with web `SKIP_FIREBASE_APP_CHECK`. */
+  export const SKIP_FIREBASE_APP_CHECK: string | undefined;
   export const REVENUECAT_API_KEY_IOS: string | undefined;
   export const REVENUECAT_API_KEY_ANDROID: string | undefined;
   export const REVENUECAT_ENTITLEMENT_ID: string | undefined;

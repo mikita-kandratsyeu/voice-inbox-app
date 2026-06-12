@@ -5,6 +5,7 @@ import {
   DATABASE_URL,
   DB_LOG,
   MOBILE_USER_AGENT,
+  SKIP_FIREBASE_APP_CHECK,
   TESTFLIGHT_INTERNAL_BUILD,
 } from '@env';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
@@ -75,6 +76,11 @@ export function isCrashlyticsDebugEnabled(): boolean {
 
 export function isTestflightInternalBuild(): boolean {
   return isTruthyBuildEnvFlag(TESTFLIGHT_INTERNAL_BUILD);
+}
+
+/** Matches web `isFirebaseAppCheckSkipped`: `__DEV__` + `SKIP_FIREBASE_APP_CHECK=1`. */
+export function isSkipFirebaseAppCheckEnabled(): boolean {
+  return __DEV__ && isTruthyBuildEnvFlag(SKIP_FIREBASE_APP_CHECK);
 }
 
 /** Dev or internal TestFlight — same gate as Settings → Debug entry. */

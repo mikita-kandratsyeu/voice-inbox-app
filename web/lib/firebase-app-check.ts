@@ -7,6 +7,11 @@ import { apiError, HttpStatus } from '@/lib/api/http-response';
 import { isAllowedFirebaseAppCheckAppId } from '@/lib/firebase-app-check-app-ids';
 import { getFirebaseAdmin, isFirebaseAdminConfigured } from '@/lib/firebase-admin';
 
+/** Local dev only: `SKIP_FIREBASE_APP_CHECK=1` with `NODE_ENV=development`. */
+export function isFirebaseAppCheckSkipped(): boolean {
+  return process.env.NODE_ENV === 'development' && process.env.SKIP_FIREBASE_APP_CHECK === '1';
+}
+
 export async function verifyFirebaseAppCheckToken(token: string): Promise<void> {
   const admin = getFirebaseAdmin();
   if (!admin) {
@@ -21,6 +26,10 @@ export async function verifyFirebaseAppCheckToken(token: string): Promise<void> 
 }
 
 export async function requireAppCheckForToken(request: Request): Promise<NextResponse | null> {
+  if (isFirebaseAppCheckSkipped()) {
+    return null;
+  }
+
   const token = request.headers.get(HEADER_FIREBASE_APP_CHECK)?.trim();
   if (!token) {
     void recordAppCheckFailure('missing');

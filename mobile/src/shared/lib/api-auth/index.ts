@@ -1,6 +1,7 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { getFirebaseAppCheckToken } from '@/shared/lib/app-check/appCheckToken';
 import { HEADER_FIREBASE_APP_CHECK } from '@/shared/lib/app-check/constants';
+import { shouldSkipFirebaseAppCheck } from '@/shared/lib/app-check/shouldSkipAppCheck';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { nitroFetch } from '@/shared/lib/fetch';
 
@@ -27,13 +28,14 @@ export function clearApiToken(): void {
 
 async function fetchToken(): Promise<{ token: string; deviceId: string }> {
   const deviceId = await getOrCreateDeviceId();
-  const appCheckToken = await getFirebaseAppCheckToken();
+  const skipAppCheck = shouldSkipFirebaseAppCheck();
+  const appCheckToken = skipAppCheck ? null : await getFirebaseAppCheckToken();
 
   const response = await nitroFetch(getTokenUrl(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      [HEADER_FIREBASE_APP_CHECK]: appCheckToken,
+      ...(appCheckToken ? { [HEADER_FIREBASE_APP_CHECK]: appCheckToken } : {}),
       'x-device-id': deviceId,
     },
   });
