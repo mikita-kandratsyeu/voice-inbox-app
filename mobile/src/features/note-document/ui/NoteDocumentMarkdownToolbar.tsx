@@ -78,7 +78,7 @@ function isToolbarActionActive(
   }
 }
 
-export function NoteDocumentMarkdownToolbar({
+export const NoteDocumentMarkdownToolbar = React.memo(function NoteDocumentMarkdownToolbar({
   color,
   isTablet,
   horizontalPadding,
@@ -182,4 +182,4 @@ export function NoteDocumentMarkdownToolbar({
       />
     </View>
   );
-}
+});

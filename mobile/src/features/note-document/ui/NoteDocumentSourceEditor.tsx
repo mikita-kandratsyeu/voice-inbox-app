@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import {
@@ -33,7 +33,7 @@ type NoteDocumentSourceEditorProps = {
   inputRef: React.RefObject<EnrichedMarkdownTextInputInstance | null>;
 };
 
-export function NoteDocumentSourceEditor({
+export const NoteDocumentSourceEditor = React.memo(function NoteDocumentSourceEditor({
   color,
   documentKey,
   initialMarkdown,
@@ -47,6 +47,10 @@ export function NoteDocumentSourceEditor({
   const { t } = useTranslation();
   const [styleState, setStyleState] = useState<StyleState | null>(null);
   const [toolbarHeight, setToolbarHeight] = useState(NOTE_DOCUMENT_TOOLBAR_FALLBACK_HEIGHT);
+
+  // Throttle onDirty calls to reduce re-renders
+  const dirtyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isDirtyRef = useRef(false);
 
   const inputMarkdownStyle = useMemo(() => buildNoteDocumentEnrichedInputStyle(color), [color]);
   const editorColumnStyle = useMemo(
@@ -98,9 +102,34 @@ export function NoteDocumentSourceEditor({
     ],
   );
 
+  // Throttle onDirty to 300ms - call immediately on first change, then debounce
   const handleChangeText = useCallback(() => {
-    onDirty();
+    if (!isDirtyRef.current) {
+      isDirtyRef.current = true;
+      onDirty();
+    }
+
+    if (dirtyTimeoutRef.current) {
+      clearTimeout(dirtyTimeoutRef.current);
+    }
+
+    dirtyTimeoutRef.current = setTimeout(() => {
+      dirtyTimeoutRef.current = null;
+    }, 300);
   }, [onDirty]);
+
+  // Throttle styleState updates to reduce toolbar re-renders
+  const styleStateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const handleChangeState = useCallback((newState: StyleState) => {
+    if (styleStateTimeoutRef.current) {
+      clearTimeout(styleStateTimeoutRef.current);
+    }
+
+    styleStateTimeoutRef.current = setTimeout(() => {
+      setStyleState(newState);
+      styleStateTimeoutRef.current = null;
+    }, 100);
+  }, []);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -108,6 +137,18 @@ export function NoteDocumentSourceEditor({
     });
     return () => cancelAnimationFrame(frame);
   }, [documentKey, inputRef]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (dirtyTimeoutRef.current) {
+        clearTimeout(dirtyTimeoutRef.current);
+      }
+      if (styleStateTimeoutRef.current) {
+        clearTimeout(styleStateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleToolbarAction = useCallback(
     (action: EnrichedMarkdownToolbarAction) => {
@@ -150,7 +191,7 @@ export function NoteDocumentSourceEditor({
             cursorColor={color.accent.primary}
             markdownStyle={inputMarkdownStyle}
             onChangeText={handleChangeText}
-            onChangeState={setStyleState}
+            onChangeState={handleChangeState}
             style={inputStyle}
           />
         </View>
@@ -176,4 +217,4 @@ export function NoteDocumentSourceEditor({
       </View>
     </View>
   );
-}
+});
