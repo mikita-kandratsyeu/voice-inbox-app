@@ -23,6 +23,7 @@ import {
   type MarkdownEditAction,
   type TextSelection,
 } from '../lib/applyMarkdownEdit';
+import { estimateNoteDocumentInputHeight } from '../lib/estimateNoteDocumentInputHeight';
 import { NOTE_DOCUMENT_CONTENT_MAX_WIDTH } from '../lib/noteDocumentLayout';
 import { NoteDocumentLinkUrlPrompt } from './NoteDocumentLinkUrlPrompt';
 import { NoteDocumentMarkdownToolbar } from './NoteDocumentMarkdownToolbar';
@@ -52,17 +53,20 @@ export function NoteDocumentSourceEditor({
 }: NoteDocumentSourceEditorProps) {
   const { t } = useTranslation();
   const selectionRef = useRef<TextSelection>({ start: value.length, end: value.length });
-  const [inputContentHeight, setInputContentHeight] = useState(minHeight);
+  const [inputContentHeight, setInputContentHeight] = useState(() =>
+    estimateNoteDocumentInputHeight(value, minHeight, isTablet),
+  );
   const [linkPromptVisible, setLinkPromptVisible] = useState(false);
 
   useEffect(() => {
-    setInputContentHeight((prev) => Math.max(minHeight, prev));
-  }, [minHeight]);
+    const estimated = estimateNoteDocumentInputHeight(value, minHeight, isTablet);
+    setInputContentHeight((prev) => Math.max(prev, estimated));
+  }, [isTablet, minHeight, value]);
 
   const handleContentSizeChange = useCallback(
     (event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
-      const nextHeight = Math.max(minHeight, event.nativeEvent.contentSize.height);
-      setInputContentHeight((prev) => (prev === nextHeight ? prev : nextHeight));
+      const measuredHeight = Math.max(minHeight, event.nativeEvent.contentSize.height);
+      setInputContentHeight((prev) => Math.max(prev, measuredHeight));
     },
     [minHeight],
   );

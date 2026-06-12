@@ -8,10 +8,9 @@ import {
   type ShareExportContext,
 } from '@/features/share-record/lib/shareExportContext';
 
-export function resolveNoteDocumentTemplate(record: VoiceRecord): ShareBriefTemplate {
-  const isMeeting = record.classification === 'meeting' || Boolean(record.meetingDialogue?.trim());
-  return isMeeting ? 'meetingBrief' : 'noteBrief';
-}
+import { resolveNoteDocumentTemplate } from './noteDocumentTemplate';
+
+export { resolveNoteDocumentTemplate } from './noteDocumentTemplate';
 
 export function buildNoteDocumentMarkdown(
   record: VoiceRecord,

@@ -14,7 +14,11 @@ type NoteMarkdownProps = {
   variant?: NoteMarkdownVariant;
 };
 
-export const NoteMarkdown = ({ color, children, variant = 'answer' }: NoteMarkdownProps) => {
+export const NoteMarkdown = React.memo(function NoteMarkdown({
+  color,
+  children,
+  variant = 'answer',
+}: NoteMarkdownProps) {
   const browserScheme = useAppTheme();
   const isReasoning = variant === 'reasoning';
   const isDocument = variant === 'document';
@@ -175,4 +179,4 @@ export const NoteMarkdown = ({ color, children, variant = 'answer' }: NoteMarkdo
       {children}
     </Markdown>
   );
-};
+});

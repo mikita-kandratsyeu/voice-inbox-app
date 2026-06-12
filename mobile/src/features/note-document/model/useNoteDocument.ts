@@ -8,6 +8,11 @@ import { resolveShareExportContext } from '@/features/share-record/lib/shareExpo
 
 import { buildNoteDocumentMarkdown } from '../lib/buildNoteDocumentMarkdown';
 import {
+  buildNoteDocumentCacheKey,
+  getCachedNoteDocumentMarkdown,
+  setCachedNoteDocumentMarkdown,
+} from '../lib/noteDocumentMarkdownCache';
+import {
   parseNoteDocumentMarkdown,
   parseTasksFromNoteDocumentMarkdown,
 } from '../lib/parseNoteDocumentMarkdown';
@@ -52,17 +57,33 @@ export function useNoteDocument({ recordId, fallbackRecord }: UseNoteDocumentOpt
 
   useEffect(() => {
     let cancelled = false;
-    setIsPreparing(true);
+    const ctx = resolveShareExportContext();
+    const cacheKey = buildNoteDocumentCacheKey(liveRecordRef.current, i18n.language, ctx);
 
-    const interactionHandle = InteractionManager.runAfterInteractions(() => {
+    const applyBuilt = (built: string) => {
       if (cancelled) return;
-
-      const built = buildNoteDocumentMarkdown(liveRecordRef.current, resolveShareExportContext());
-      if (cancelled) return;
-
+      setCachedNoteDocumentMarkdown(cacheKey, built);
       setSavedMarkdown(built);
       setDocumentMarkdown(built);
       setIsPreparing(false);
+    };
+
+    const cached = getCachedNoteDocumentMarkdown(cacheKey);
+    if (cached) {
+      applyBuilt(cached);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setIsPreparing(true);
+
+    const interactionHandle = InteractionManager.runAfterInteractions(() => {
+      requestAnimationFrame(() => {
+        if (cancelled) return;
+        const built = buildNoteDocumentMarkdown(liveRecordRef.current, ctx);
+        applyBuilt(built);
+      });
     });
 
     return () => {
@@ -78,17 +99,20 @@ export function useNoteDocument({ recordId, fallbackRecord }: UseNoteDocumentOpt
       return;
     }
 
-    const built = buildNoteDocumentMarkdown(liveRecord, resolveShareExportContext());
+    const ctx = resolveShareExportContext();
+    const cacheKey = buildNoteDocumentCacheKey(liveRecord, i18n.language, ctx);
+    const built = buildNoteDocumentMarkdown(liveRecord, ctx);
+    setCachedNoteDocumentMarkdown(cacheKey, built);
     setSavedMarkdown(built);
     setDocumentMarkdown((current) => (current === savedMarkdownRef.current ? built : current));
-  }, [isPreparing, isSaving, liveRecord]);
+  }, [i18n.language, isPreparing, isSaving, liveRecord]);
 
   const hasUnsavedChanges = documentMarkdown !== savedMarkdown;
 
-  const readingTasks = useMemo(
-    () => parseTasksFromNoteDocumentMarkdown(documentMarkdown, liveRecord),
-    [documentMarkdown, liveRecord],
-  );
+  const readingTasks = useMemo(() => {
+    if (mode !== 'reading') return [];
+    return parseTasksFromNoteDocumentMarkdown(documentMarkdown, liveRecord);
+  }, [documentMarkdown, liveRecord, mode]);
 
   const toggleTaskInReading = useCallback(
     (taskId: string) => {
@@ -161,6 +185,10 @@ export function useNoteDocument({ recordId, fallbackRecord }: UseNoteDocumentOpt
       await Promise.all(updates);
       setSavedMarkdown(documentMarkdown);
       savedMarkdownRef.current = documentMarkdown;
+      setCachedNoteDocumentMarkdown(
+        buildNoteDocumentCacheKey(liveRecord, i18n.language, resolveShareExportContext()),
+        documentMarkdown,
+      );
       suppressLiveRecordSyncRef.current = true;
       return 'ok';
     } catch (error) {
@@ -169,6 +197,7 @@ export function useNoteDocument({ recordId, fallbackRecord }: UseNoteDocumentOpt
     }
   }, [
     documentMarkdown,
+    i18n.language,
     liveRecord,
     recordId,
     renameRecord,

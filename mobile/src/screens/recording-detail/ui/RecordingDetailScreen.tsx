@@ -34,6 +34,7 @@ import {
 } from '@/entities/settings';
 import { resumeCloudSummarizeForRecord, useAiProcessing } from '@/features/ai-processing';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
+import { warmNoteDocumentMarkdown } from '@/features/note-document';
 import { useProEntitlement } from '@/features/pro-license';
 import { useRecordActions } from '@/features/record-actions';
 import type { ShareBriefTemplate, ShareRecordExportFormat } from '@/features/share-record';
@@ -83,7 +84,7 @@ type TaskEditValue = {
 };
 
 export const RecordingDetailScreen = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'RecordingDetail'>>();
   const color = useColors();
@@ -212,6 +213,10 @@ export const RecordingDetailScreen = () => {
   useEffect(() => {
     void hydrateRecordDetails(recordId);
   }, [hydrateRecordDetails, recordId]);
+
+  useEffect(() => {
+    warmNoteDocumentMarkdown(liveRecord, i18n.language);
+  }, [i18n.language, liveRecord]);
 
   useEffect(() => {
     resumeCloudSummarizeForRecord(recordId);

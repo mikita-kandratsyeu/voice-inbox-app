@@ -90,7 +90,7 @@ function wrapParagraphToWidth(paragraph: string, maxWidth: number): string {
   return outLines.join('\n');
 }
 
-function formatPlainTranscriptForShare(text: string): string {
+function formatPlainTranscriptForShare(text: string, forDocument = false): string {
   const trimmed = text.trim();
   if (!trimmed) return '';
 
@@ -98,6 +98,10 @@ function formatPlainTranscriptForShare(text: string): string {
     .split(/\n\s*\n/)
     .map((b) => b.replace(/\s+/g, ' ').trim())
     .filter(Boolean);
+
+  if (forDocument) {
+    return blocks.join('\n\n');
+  }
 
   return blocks.map((b) => wrapParagraphToWidth(b, SHARE_WRAP_WIDTH)).join('\n\n');
 }
@@ -199,7 +203,7 @@ const pushSummary = (lines: string[], record: VoiceRecord, ctx: ShareExportConte
     pushDocumentSectionMarker(lines, 'summary', ctx);
     lines.push('');
     lines.push(`## ${i18n.t('recordingDetail.summary')}`);
-    lines.push(formatPlainTranscriptForShare(record.summary));
+    lines.push(formatPlainTranscriptForShare(record.summary, ctx.forDocument));
   }
 };
 
@@ -220,7 +224,7 @@ const pushMeetingSummary = (
   );
 
   if (sections.length === 0) {
-    lines.push(formatPlainTranscriptForShare(summary));
+    lines.push(formatPlainTranscriptForShare(summary, ctx.forDocument));
     return;
   }
 
@@ -307,11 +311,13 @@ const pushTranslation = (lines: string[], record: VoiceRecord, ctx: ShareExportC
   pushDocumentSectionMarker(lines, 'translation', ctx);
   lines.push('');
   lines.push(`## ${heading}`);
-  lines.push(formatPlainTranscriptWithTimestamps(translated, ctx.forEmail));
+  lines.push(
+    ctx.forDocument ? translated : formatPlainTranscriptWithTimestamps(translated, ctx.forEmail),
+  );
 };
 
 const pushTranscript = (lines: string[], record: VoiceRecord, ctx: ShareExportContext): void => {
-  const transcriptBody = formatTranscriptBodyForShare(record, ctx.forEmail);
+  const transcriptBody = formatTranscriptBodyForShare(record, ctx.forEmail, ctx.forDocument);
   if (transcriptBody) {
     pushDocumentSectionMarker(lines, 'transcript', ctx);
     lines.push('');

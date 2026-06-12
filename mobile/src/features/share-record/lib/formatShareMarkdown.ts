@@ -88,13 +88,29 @@ export function formatMeetingDialogueForShareMarkdown(
 }
 
 /** Transcript for share / email / PDF — one block per timestamp or segment. */
-export function formatTranscriptBodyForShare(record: VoiceRecord, forEmail = false): string {
+export function formatTranscriptBodyForShare(
+  record: VoiceRecord,
+  forEmail = false,
+  forDocument = false,
+): string {
   const segments = record.transcriptSegments ?? [];
+  if (forDocument && segments.length > 0) {
+    return segments
+      .map((s) => s.text.replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+      .join('\n\n');
+  }
+
   if (segments.length > 0) {
     return segments
       .map((s) => formatTranscriptTurn(s.startTime, s.text, forEmail))
       .filter((block) => block.length > 0)
       .join(forEmail ? '\n' : '\n\n');
   }
+
+  if (forDocument) {
+    return (record.transcript ?? '').trim();
+  }
+
   return formatPlainTranscriptWithTimestamps(record.transcript ?? '', forEmail);
 }

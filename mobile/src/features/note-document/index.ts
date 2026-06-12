@@ -16,6 +16,7 @@ export {
 export { patchTaskDoneInNoteDocumentMarkdown } from './lib/patchTaskDoneInNoteDocumentMarkdown';
 export { splitNoteDocumentAtTasksSection } from './lib/splitNoteDocumentAtTasksSection';
 export { splitNoteDocumentForReading } from './lib/splitNoteDocumentForReading';
+export { warmNoteDocumentMarkdown } from './lib/noteDocumentMarkdownCache';
 export { useNoteDocument } from './model/useNoteDocument';
 export { NoteDocumentPreparingState } from './ui/NoteDocumentPreparingState';
 export { NoteDocumentReadingBody } from './ui/NoteDocumentReadingBody';
