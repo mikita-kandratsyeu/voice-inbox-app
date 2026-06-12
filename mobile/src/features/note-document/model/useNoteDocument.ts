@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { InteractionManager } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { resolveShareExportContext } from '@/features/share-record/lib/shareExportContext';
-import { i18n } from '@/shared/lib';
 
 import { buildNoteDocumentMarkdown } from '../lib/buildNoteDocumentMarkdown';
-import { patchTaskDoneInNoteDocumentMarkdown } from '../lib/patchTaskDoneInNoteDocumentMarkdown';
 import {
   parseNoteDocumentMarkdown,
   parseTasksFromNoteDocumentMarkdown,
 } from '../lib/parseNoteDocumentMarkdown';
+import { patchTaskDoneInNoteDocumentMarkdown } from '../lib/patchTaskDoneInNoteDocumentMarkdown';
 
 export type NoteDocumentMode = 'reading' | 'source';
 
@@ -21,6 +21,7 @@ type UseNoteDocumentOptions = {
 };
 
 export function useNoteDocument({ recordId, fallbackRecord }: UseNoteDocumentOptions) {
+  const { i18n } = useTranslation();
   const records = useRecordStore((s) => s.records);
   const renameRecord = useRecordStore((s) => s.renameRecord);
   const updateTranscript = useRecordStore((s) => s.updateTranscript);
@@ -56,10 +57,7 @@ export function useNoteDocument({ recordId, fallbackRecord }: UseNoteDocumentOpt
     const interactionHandle = InteractionManager.runAfterInteractions(() => {
       if (cancelled) return;
 
-      const built = buildNoteDocumentMarkdown(
-        liveRecordRef.current,
-        resolveShareExportContext(),
-      );
+      const built = buildNoteDocumentMarkdown(liveRecordRef.current, resolveShareExportContext());
       if (cancelled) return;
 
       setSavedMarkdown(built);

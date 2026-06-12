@@ -1,7 +1,10 @@
 import type { TaskItem, TranscriptSegment, VoiceRecord } from '@/entities/record';
 import { i18n } from '@/shared/lib';
 
-import { listNoteDocumentSectionIds, NOTE_DOCUMENT_SECTION_MARKER_RE } from './noteDocumentSectionMarkers';
+import {
+  listNoteDocumentSectionIds,
+  NOTE_DOCUMENT_SECTION_MARKER_RE,
+} from './noteDocumentSectionMarkers';
 
 export type NoteDocumentPatch = {
   title?: string;
@@ -24,7 +27,10 @@ const TASK_CHECKBOX_RE = /^-\s+\[([ xX])\]\s+(.+)$/;
 const PRIORITY_VALUES = ['high', 'medium', 'low'] as const;
 const PRIORITY_VALUE_SET = new Set<string>(PRIORITY_VALUES);
 
-function splitDocumentSections(markdown: string): { preamble: string; sections: Map<string, string> } {
+function splitDocumentSections(markdown: string): {
+  preamble: string;
+  sections: Map<string, string>;
+} {
   const sections = new Map<string, string>();
   const parts = markdown.split(NOTE_DOCUMENT_SECTION_MARKER_RE);
   const preamble = parts[0] ?? '';
@@ -182,10 +188,7 @@ function parseTasksSection(body: string, record: VoiceRecord): TaskItem[] {
   return tasks;
 }
 
-function collapseTranscriptSegments(
-  record: VoiceRecord,
-  transcript: string,
-): TranscriptSegment[] {
+function collapseTranscriptSegments(record: VoiceRecord, transcript: string): TranscriptSegment[] {
   const trimmed = transcript.trim();
   if (!trimmed) return [];
 
@@ -253,7 +256,9 @@ export function parseNoteDocumentMarkdown(
   const patch: NoteDocumentPatch = { title };
 
   if (markerIds.has('tags') || hadSectionContent(record, 'tags')) {
-    patch.tags = markerIds.has('tags') ? parseTagsSection(normalizeSectionBody(sections.get('tags') ?? '')) : [];
+    patch.tags = markerIds.has('tags')
+      ? parseTagsSection(normalizeSectionBody(sections.get('tags') ?? ''))
+      : [];
   }
 
   if (markerIds.has('summary') || hadSectionContent(record, 'summary')) {

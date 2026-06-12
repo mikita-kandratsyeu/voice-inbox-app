@@ -2,7 +2,6 @@ import React from 'react';
 import { Text } from 'react-native';
 
 import type { Colors } from '@/shared/config';
-
 import { getDocumentSectionHeadingStyle } from '@/shared/ui/documentMarkdownTheme';
 
 type DocumentSectionTitleProps = {
@@ -11,14 +10,13 @@ type DocumentSectionTitleProps = {
   isFirst?: boolean;
 };
 
-export function DocumentSectionTitle({ color, children, isFirst = false }: DocumentSectionTitleProps) {
+export function DocumentSectionTitle({
+  color,
+  children,
+  isFirst = false,
+}: DocumentSectionTitleProps) {
   return (
-    <Text
-      style={[
-        getDocumentSectionHeadingStyle(color),
-        isFirst ? { marginTop: 0 } : null,
-      ]}
-    >
+    <Text style={[getDocumentSectionHeadingStyle(color), isFirst ? { marginTop: 0 } : null]}>
       {children}
     </Text>
   );

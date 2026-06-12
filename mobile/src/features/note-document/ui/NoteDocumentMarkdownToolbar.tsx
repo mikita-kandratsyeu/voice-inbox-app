@@ -47,13 +47,7 @@ type NoteDocumentMarkdownToolbarProps = {
   disabled?: boolean;
 };
 
-function ToolbarRail({
-  color,
-  children,
-}: {
-  color: Colors;
-  children: React.ReactNode;
-}) {
+function ToolbarRail({ color, children }: { color: Colors; children: React.ReactNode }) {
   return (
     <View
       style={[
@@ -132,9 +126,7 @@ function FormatButton({
         hapticSelection();
         onAction(item.action);
       }}
-      icon={
-        <Icon size={TOOLBAR_ICON_SIZE} color={color.text.primary} strokeWidth={2.2} />
-      }
+      icon={<Icon size={TOOLBAR_ICON_SIZE} color={color.text.primary} strokeWidth={2.2} />}
       containerStyle={{
         width: TOOLBAR_BTN_SIZE,
         height: TOOLBAR_BTN_SIZE,
@@ -177,8 +169,7 @@ export function NoteDocumentMarkdownToolbar({
     [],
   );
 
-  const labelFor = (action: MarkdownEditAction) =>
-    t(`recordingDetail.document.toolbar.${action}`);
+  const labelFor = (action: MarkdownEditAction) => t(`recordingDetail.document.toolbar.${action}`);
 
   return (
     <KeyboardStickyView offset={{ closed: 0, opened: 0 }} style={{ alignSelf: 'stretch' }}>

@@ -11,9 +11,7 @@ export type NoteDocumentReadingSplit = {
 };
 
 /** Splits full document markdown around the tasks section for interactive task rendering. */
-export function splitNoteDocumentAtTasksSection(
-  markdown: string,
-): NoteDocumentReadingSplit | null {
+export function splitNoteDocumentAtTasksSection(markdown: string): NoteDocumentReadingSplit | null {
   const match = markdown.match(TASKS_SECTION_MARKER);
   if (!match || match.index === undefined) return null;
 
@@ -22,8 +20,7 @@ export function splitNoteDocumentAtTasksSection(
 
   const nextMarker = new RegExp(NOTE_DOCUMENT_SECTION_MARKER_RE.source, 'i');
   const nextMatch = nextMarker.exec(afterTasksMarker);
-  const after =
-    nextMatch?.index !== undefined ? afterTasksMarker.slice(nextMatch.index) : '';
+  const after = nextMatch?.index !== undefined ? afterTasksMarker.slice(nextMatch.index) : '';
 
   return {
     beforeMarkdown: stripNoteDocumentMarkers(before).trimEnd(),

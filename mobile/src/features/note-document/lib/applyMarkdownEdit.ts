@@ -55,11 +55,7 @@ function wrapSelection(
   };
 }
 
-function prefixLines(
-  text: string,
-  selection: TextSelection,
-  prefix: string,
-): MarkdownEditResult {
+function prefixLines(text: string, selection: TextSelection, prefix: string): MarkdownEditResult {
   const startLine = lineStartIndex(text, selection.start);
   const endLine = lineEndIndex(text, selection.end);
   const block = text.slice(startLine, endLine);

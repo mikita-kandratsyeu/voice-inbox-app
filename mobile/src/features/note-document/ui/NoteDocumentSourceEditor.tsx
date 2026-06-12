@@ -11,7 +11,11 @@ import {
   NOTE_DOCUMENT_BODY_LINE_HEIGHT,
 } from '@/shared/ui';
 
-import { applyMarkdownEdit, type MarkdownEditAction, type TextSelection } from '../lib/applyMarkdownEdit';
+import {
+  applyMarkdownEdit,
+  type MarkdownEditAction,
+  type TextSelection,
+} from '../lib/applyMarkdownEdit';
 import {
   NOTE_DOCUMENT_TOOLBAR_FALLBACK_HEIGHT,
   NoteDocumentMarkdownToolbar,

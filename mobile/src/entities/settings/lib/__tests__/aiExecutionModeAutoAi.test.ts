@@ -33,9 +33,8 @@ jest.mock('@/shared/lib/ai-core/localLlmSession', () => ({
 
 import { useSettingsStore } from '../../model/store';
 
-const testStorageMap = (
-  globalThis as unknown as { __settingsTestStorageMap: Map<string, string> }
-).__settingsTestStorageMap;
+const testStorageMap = (globalThis as unknown as { __settingsTestStorageMap: Map<string, string> })
+  .__settingsTestStorageMap;
 
 describe('setAiExecutionMode autoAiAfterTranscription', () => {
   beforeEach(() => {

@@ -9,8 +9,8 @@ export {
 export {
   type NoteDocumentPatch,
   parseNoteDocumentMarkdown,
-  parseTasksFromNoteDocumentMarkdown,
   type ParseNoteDocumentResult,
+  parseTasksFromNoteDocumentMarkdown,
 } from './lib/parseNoteDocumentMarkdown';
 export { patchTaskDoneInNoteDocumentMarkdown } from './lib/patchTaskDoneInNoteDocumentMarkdown';
 export { splitNoteDocumentAtTasksSection } from './lib/splitNoteDocumentAtTasksSection';

@@ -17,25 +17,24 @@ jest.mock('@/shared/lib', () => ({
 }));
 
 jest.mock('@/features/share-record/lib/buildShareText', () => ({
-  buildShareText: jest.fn(
-    (record: VoiceRecord, template: string) =>
-      [
-        `# ${record.title}`,
-        '',
-        '<!-- vi:section:tags -->',
-        '## Tags',
-        record.tags?.map((tag) => `#${tag}`).join(' ') ?? '',
-        '<!-- vi:section:summary -->',
-        '## Summary',
-        record.summary ?? '',
-        '<!-- vi:section:tasks -->',
-        '## Tasks',
-        ...(record.tasks ?? []).map((task) => `- [${task.isDone ? 'x' : ' '}] ${task.text}`),
-        '<!-- vi:section:transcript -->',
-        '## Transcript',
-        record.transcript ?? '',
-        template === 'meetingBrief' ? '<!-- vi:section:meeting-dialogue -->' : '',
-      ].join('\n'),
+  buildShareText: jest.fn((record: VoiceRecord, template: string) =>
+    [
+      `# ${record.title}`,
+      '',
+      '<!-- vi:section:tags -->',
+      '## Tags',
+      record.tags?.map((tag) => `#${tag}`).join(' ') ?? '',
+      '<!-- vi:section:summary -->',
+      '## Summary',
+      record.summary ?? '',
+      '<!-- vi:section:tasks -->',
+      '## Tasks',
+      ...(record.tasks ?? []).map((task) => `- [${task.isDone ? 'x' : ' '}] ${task.text}`),
+      '<!-- vi:section:transcript -->',
+      '## Transcript',
+      record.transcript ?? '',
+      template === 'meetingBrief' ? '<!-- vi:section:meeting-dialogue -->' : '',
+    ].join('\n'),
   ),
 }));
 
@@ -47,7 +46,10 @@ import {
   buildNoteDocumentMarkdown,
   resolveNoteDocumentTemplate,
 } from '../buildNoteDocumentMarkdown';
-import { listNoteDocumentSectionIds, stripNoteDocumentMarkers } from '../noteDocumentSectionMarkers';
+import {
+  listNoteDocumentSectionIds,
+  stripNoteDocumentMarkers,
+} from '../noteDocumentSectionMarkers';
 import {
   parseNoteDocumentMarkdown,
   parseTasksFromNoteDocumentMarkdown,
@@ -154,7 +156,10 @@ describe('note document markdown', () => {
   it('reads task done state from document markdown without saving', () => {
     const record = makeRecord();
     const markdown = buildNoteDocumentMarkdown(record);
-    const toggled = markdown.replace('- [ ] Follow up with the team', '- [x] Follow up with the team');
+    const toggled = markdown.replace(
+      '- [ ] Follow up with the team',
+      '- [x] Follow up with the team',
+    );
 
     const tasks = parseTasksFromNoteDocumentMarkdown(toggled, record);
     expect(tasks[0]?.isDone).toBe(true);

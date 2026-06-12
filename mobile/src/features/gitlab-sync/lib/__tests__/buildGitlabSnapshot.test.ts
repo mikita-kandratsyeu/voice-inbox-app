@@ -1,3 +1,12 @@
+jest.mock('@/shared/lib/async-storage', () => ({
+  storage: {
+    getString: jest.fn(),
+    set: jest.fn(),
+    remove: jest.fn(),
+    contains: jest.fn(() => false),
+  },
+}));
+
 import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
 
