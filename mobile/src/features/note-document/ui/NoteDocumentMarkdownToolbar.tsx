@@ -9,10 +9,12 @@ import {
   ListOrdered,
   ListTodo,
   Minus,
+  Redo2,
   Strikethrough,
   TextQuote,
+  Undo2,
 } from 'lucide-react-native';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
 
@@ -28,7 +30,10 @@ const TOOLBAR_FLOAT_BOTTOM_PAD = 10;
 const TOOLBAR_ROW_INNER_HEIGHT = 4 * 2 + IOS_MIN_TOUCH_TARGET;
 const TOOLBAR_ICON_SIZE = 18;
 
-const TOOLBAR_GROUPS: MarkdownEditAction[][] = [
+type ToolbarAction = MarkdownEditAction | 'undo' | 'redo';
+
+const TOOLBAR_GROUPS: ToolbarAction[][] = [
+  ['undo', 'redo'],
   ['bold', 'italic', 'strikethrough'],
   ['heading2', 'heading3'],
   ['bullet', 'ordered', 'task'],
@@ -37,7 +42,9 @@ const TOOLBAR_GROUPS: MarkdownEditAction[][] = [
 ];
 
 /** Per-action visual weight — matches rich editors (bold/heavy headings vs thin divider). */
-const TOOLBAR_ACTION_VISUAL: Record<MarkdownEditAction, { strokeWidth: number; size?: number }> = {
+const TOOLBAR_ACTION_VISUAL: Record<ToolbarAction, { strokeWidth: number; size?: number }> = {
+  undo: { strokeWidth: 2.2 },
+  redo: { strokeWidth: 2.2 },
   bold: { strokeWidth: 2.85 },
   italic: { strokeWidth: 1.65 },
   strikethrough: { strokeWidth: 2 },
@@ -56,10 +63,11 @@ export const NOTE_DOCUMENT_TOOLBAR_FALLBACK_HEIGHT =
   TOOLBAR_FLOAT_TOP_PAD + TOOLBAR_FLOAT_BOTTOM_PAD + TOOLBAR_ROW_INNER_HEIGHT;
 
 type ToolbarItem = {
-  action: MarkdownEditAction;
+  action: ToolbarAction;
   Icon: typeof Bold;
   strokeWidth: number;
   size: number;
+  individualDisabled?: boolean;
 };
 
 type NoteDocumentMarkdownToolbarProps = {
@@ -67,6 +75,10 @@ type NoteDocumentMarkdownToolbarProps = {
   isTablet: boolean;
   horizontalPadding: number;
   onAction: (action: MarkdownEditAction) => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
   disabled?: boolean;
 };
 
@@ -107,9 +119,9 @@ function FormatButton({
       disabled={disabled}
       activeOpacity={0.7}
       onPress={() => {
-        if (disabled) return;
+        if (disabled || item.individualDisabled) return;
         hapticSelection();
-        onAction(item.action);
+        onAction(item.action as MarkdownEditAction);
       }}
       style={{
         minHeight: IOS_MIN_TOUCH_TARGET,
@@ -120,7 +132,7 @@ function FormatButton({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'transparent',
-        opacity: disabled ? 0.45 : 1,
+        opacity: disabled || item.individualDisabled ? 0.35 : 1,
       }}
     >
       <Icon size={size} color={color.text.primary} strokeWidth={strokeWidth} />
@@ -133,15 +145,32 @@ function ToolbarButtonRow({
   items,
   disabled,
   onAction,
+  onUndo,
+  onRedo,
   labelFor,
 }: {
   color: Colors;
   items: ToolbarItem[];
   disabled: boolean;
   onAction: (action: MarkdownEditAction) => void;
-  labelFor: (action: MarkdownEditAction) => string;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  labelFor: (action: ToolbarAction) => string;
 }) {
   const itemsByAction = useMemo(() => new Map(items.map((item) => [item.action, item])), [items]);
+
+  const handleAction = useCallback(
+    (action: ToolbarAction) => {
+      if (action === 'undo' && onUndo) {
+        onUndo();
+      } else if (action === 'redo' && onRedo) {
+        onRedo();
+      } else {
+        onAction(action as MarkdownEditAction);
+      }
+    },
+    [onAction, onUndo, onRedo],
+  );
 
   return (
     <View className="flex-row items-center" style={{ gap: 2 }}>
@@ -158,8 +187,8 @@ function ToolbarButtonRow({
                   color={color}
                   item={item}
                   label={labelFor(item.action)}
-                  disabled={disabled}
-                  onAction={onAction}
+                  disabled={disabled || (item.individualDisabled ?? false)}
+                  onAction={handleAction}
                 />
               );
             })}
@@ -175,6 +204,10 @@ export function NoteDocumentMarkdownToolbar({
   isTablet,
   horizontalPadding,
   onAction,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
   disabled = false,
 }: NoteDocumentMarkdownToolbarProps) {
   const { t } = useTranslation();
@@ -183,6 +216,8 @@ export function NoteDocumentMarkdownToolbar({
     () =>
       (
         [
+          { action: 'undo', Icon: Undo2 },
+          { action: 'redo', Icon: Redo2 },
           { action: 'bold', Icon: Bold },
           { action: 'italic', Icon: Italic },
           { action: 'strikethrough', Icon: Strikethrough },
@@ -198,17 +233,20 @@ export function NoteDocumentMarkdownToolbar({
         ] as const
       ).map(({ action, Icon }) => {
         const visual = TOOLBAR_ACTION_VISUAL[action];
+        const individualDisabled =
+          (action === 'undo' && !canUndo) || (action === 'redo' && !canRedo);
         return {
           action,
           Icon,
           strokeWidth: visual.strokeWidth,
           size: visual.size ?? TOOLBAR_ICON_SIZE,
+          individualDisabled: individualDisabled ?? false,
         };
       }),
-    [],
+    [canUndo, canRedo],
   );
 
-  const labelFor = (action: MarkdownEditAction) => t(`recordingDetail.document.toolbar.${action}`);
+  const labelFor = (action: ToolbarAction) => t(`recordingDetail.document.toolbar.${action}`);
 
   const buttonRow = (
     <ToolbarButtonRow
@@ -216,6 +254,8 @@ export function NoteDocumentMarkdownToolbar({
       items={items}
       disabled={disabled}
       onAction={onAction}
+      onUndo={onUndo}
+      onRedo={onRedo}
       labelFor={labelFor}
     />
   );

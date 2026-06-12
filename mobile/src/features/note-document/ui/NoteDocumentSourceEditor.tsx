@@ -22,6 +22,7 @@ import {
 } from '../lib/applyMarkdownEdit';
 import { estimateNoteDocumentInputHeight } from '../lib/estimateNoteDocumentInputHeight';
 import { NOTE_DOCUMENT_CONTENT_MAX_WIDTH } from '../lib/noteDocumentLayout';
+import { useUndoRedo } from '../lib/useUndoRedo';
 import { NoteDocumentLinkUrlPrompt } from './NoteDocumentLinkUrlPrompt';
 import { NoteDocumentMarkdownToolbar } from './NoteDocumentMarkdownToolbar';
 
@@ -52,6 +53,20 @@ export function NoteDocumentSourceEditor({
   const selectionRef = useRef<TextSelection>({ start: value.length, end: value.length });
   const isTypingRef = useRef(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isUndoRedoActionRef = useRef(false);
+
+  const {
+    recordChange,
+    flushPending,
+    undo: performUndo,
+    redo: performRedo,
+    canUndo: checkCanUndo,
+    canRedo: checkCanRedo,
+    reset: resetHistory,
+  } = useUndoRedo();
+
+  const [canUndo, setCanUndo] = React.useState(false);
+  const [canRedo, setCanRedo] = React.useState(false);
 
   const { inputHeight: inputContentHeight, handleContentSizeChange } = useMultilineInputAutoHeight({
     inputRef,
@@ -62,16 +77,34 @@ export function NoteDocumentSourceEditor({
   const [linkPromptVisible, setLinkPromptVisible] = useState(false);
 
   useEffect(() => {
+    // Initialize history with current value
+    resetHistory(value, selectionRef.current);
+  }, [resetHistory, value]);
+
+  useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
+      flushPending();
     };
-  }, []);
+  }, [flushPending]);
+
+  // Update undo/redo button states
+  const updateUndoRedoState = useCallback(() => {
+    setCanUndo(checkCanUndo());
+    setCanRedo(checkCanRedo());
+  }, [checkCanUndo, checkCanRedo]);
 
   const handleTextChange = useCallback(
     (text: string) => {
       onChangeText(text);
+
+      // Record to history (unless this is an undo/redo action)
+      if (!isUndoRedoActionRef.current) {
+        recordChange(text, selectionRef.current);
+        updateUndoRedoState();
+      }
 
       // Mark as typing and reset timeout
       isTypingRef.current = true;
@@ -82,8 +115,36 @@ export function NoteDocumentSourceEditor({
         isTypingRef.current = false;
       }, 150);
     },
-    [onChangeText],
+    [onChangeText, recordChange, updateUndoRedoState],
   );
+
+  const undo = useCallback(() => {
+    const entry = performUndo();
+    if (entry) {
+      isUndoRedoActionRef.current = true;
+      onChangeText(entry.text);
+      selectionRef.current = entry.selection;
+      requestAnimationFrame(() => {
+        inputRef.current?.setNativeProps({ selection: entry.selection });
+        isUndoRedoActionRef.current = false;
+        updateUndoRedoState();
+      });
+    }
+  }, [performUndo, onChangeText, inputRef, updateUndoRedoState]);
+
+  const redo = useCallback(() => {
+    const entry = performRedo();
+    if (entry) {
+      isUndoRedoActionRef.current = true;
+      onChangeText(entry.text);
+      selectionRef.current = entry.selection;
+      requestAnimationFrame(() => {
+        inputRef.current?.setNativeProps({ selection: entry.selection });
+        isUndoRedoActionRef.current = false;
+        updateUndoRedoState();
+      });
+    }
+  }, [performRedo, onChangeText, inputRef, updateUndoRedoState]);
 
   const applyEditResult = useCallback(
     (result: { text: string; selection: TextSelection }) => {
@@ -137,6 +198,10 @@ export function NoteDocumentSourceEditor({
         isTablet={isTablet}
         horizontalPadding={horizontalPadding}
         onAction={applyAction}
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
         disabled={!editable}
       />
       <KeyboardAwareScrollView

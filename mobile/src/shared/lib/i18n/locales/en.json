@@ -575,6 +575,8 @@
       "parseErrorTitle": "Couldn't save note",
       "parseErrorMessage": "Check section formatting and try again.",
       "toolbar": {
+        "undo": "Undo",
+        "redo": "Redo",
         "bold": "Bold",
         "italic": "Italic",
         "strikethrough": "Strikethrough",
