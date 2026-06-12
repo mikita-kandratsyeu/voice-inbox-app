@@ -19,8 +19,9 @@ import {
   readTestflightWebApiUrlOverride,
   subscribeTestflightWebApiUrlOverride,
 } from '@/shared/config/testflightWebApiOverride';
+import { getWebApiEnvironmentStatus, getWebApiHost } from '@/shared/config/webApiEnvironment';
 import { clearApiToken } from '@/shared/lib/api-auth';
-import { diagWarn } from '@/shared/lib/appLogger';
+import { diagInfo, diagWarn } from '@/shared/lib/appLogger';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
@@ -169,6 +170,10 @@ export const SettingsInternalTechInfo = () => {
     }
 
     clearApiToken();
+    diagInfo('[settings] web API', {
+      environment: getWebApiEnvironmentStatus(),
+      host: getWebApiHost(),
+    });
 
     if (urlResult === 'cleared') {
       Alert.alert(t('settings.internalTech.webApiOverrideClearedTitle'));
@@ -291,6 +296,7 @@ export const SettingsInternalTechInfo = () => {
   }
 
   const webApiUrl = getWebApiUrl().trim();
+  const webApiEnvironment = getWebApiEnvironmentStatus();
   const webApiOverrideActive = readTestflightWebApiUrlOverride() != null;
   const websiteUrl = getWebsiteUrl().trim();
   const userAgent = getMobileUserAgent().trim();
@@ -389,6 +395,13 @@ export const SettingsInternalTechInfo = () => {
           ) : null}
         </View>
       </View>
+      <TechRow
+        label={t('settings.internalTech.webApiEnvironment')}
+        value={t(`settings.internalTech.webApiEnvironment_${webApiEnvironment}`)}
+        copyText={webApiEnvironment}
+        onCopy={onCopy}
+        color={color}
+      />
       <TechRow
         label={t('settings.internalTech.webApiUrl')}
         value={webApiUrl || empty}

@@ -1504,6 +1504,10 @@
     "internalTech": {
       "title": "Внутренняя сборка",
       "hint": "Нажмите на строку, чтобы скопировать значение.",
+      "webApiEnvironment": "Окружение Web API",
+      "webApiEnvironment_dev": "Dev (локальный)",
+      "webApiEnvironment_preview": "Preview (staging)",
+      "webApiEnvironment_prod": "Production",
       "webApiUrl": "Базовый URL API (WEB_API_URL)",
       "websiteUrl": "Сайт (WEBSITE_URL)",
       "userAgent": "User-Agent клиента (MOBILE_USER_AGENT)",

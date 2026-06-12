@@ -5,6 +5,7 @@ import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
 import { getAiSettingsDiagnostics } from '@/entities/settings';
 import { getMobileUserAgent } from '@/shared/config/buildEnv';
+import { getWebApiEnvironmentStatus, getWebApiHost } from '@/shared/config/webApiEnvironment';
 import { collectCrashlyticsDiagnostics } from '@/shared/lib/crashlytics';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
@@ -61,6 +62,8 @@ export async function collectSupportDiagnostics(): Promise<SupportDiagnosticsPay
     })),
     timeZone: RNLocalize.getTimeZone(),
     userAgent: isString(userAgent) ? userAgent : '',
+    webApiEnvironment: getWebApiEnvironmentStatus(),
+    webApiHost: getWebApiHost(),
     collectedAt: dayjs().toISOString(),
   };
 }

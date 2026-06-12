@@ -12,10 +12,11 @@ import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorag
 import { syncAllTaskDeadlineNotifications } from '@/features/task-deadline-notifications';
 import { cleanupOrphanTranscriptionTempWavs } from '@/features/transcription/lib/transcriptionTempAudioCleanup';
 import { initRuntimeConfig } from '@/shared/config/runtimeConfig';
+import { getWebApiEnvironmentStatus, getWebApiHost } from '@/shared/config/webApiEnvironment';
 import { initDB } from '@/shared/lib';
 import { syncAnalyticsUserId } from '@/shared/lib/analytics';
 import { initFirebaseAppCheck } from '@/shared/lib/app-check/appCheckToken';
-import { diagWarn } from '@/shared/lib/appLogger';
+import { diagInfo, diagWarn } from '@/shared/lib/appLogger';
 import { syncCrashlyticsUserId } from '@/shared/lib/crashlytics';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { prefetchModelManifest } from '@/shared/lib/model-manifest';
@@ -57,6 +58,10 @@ export function useAppBootstrap(
         diagWarn('[bootstrap] failed to initialize remote config');
       })
       .then(() => {
+        diagInfo('[bootstrap] web API', {
+          environment: getWebApiEnvironmentStatus(),
+          host: getWebApiHost(),
+        });
         prefetchModelManifest();
         return dbInit;
       })

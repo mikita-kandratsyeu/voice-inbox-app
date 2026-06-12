@@ -1464,6 +1464,10 @@
     "internalTech": {
       "title": "Internal build",
       "hint": "Tap a row to copy its value.",
+      "webApiEnvironment": "Web API environment",
+      "webApiEnvironment_dev": "Dev (local)",
+      "webApiEnvironment_preview": "Preview (staging)",
+      "webApiEnvironment_prod": "Production",
       "webApiUrl": "API base URL (WEB_API_URL)",
       "websiteUrl": "Website (WEBSITE_URL)",
       "userAgent": "Mobile user-agent (MOBILE_USER_AGENT)",

@@ -347,6 +347,10 @@ export function getWebApiUrl(): string {
   return resolveWebApiUrlFromSnapshot(snapshot);
 }
 
+export function getPreviewWebApiUrl(): string {
+  return snapshot.previewWebApiUrl.trim();
+}
+
 export function getYandexRewardedAdUnitId(): string {
   return snapshot.yandexRewardedAdUnitId;
 }
