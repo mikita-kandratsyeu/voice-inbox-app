@@ -302,3 +302,17 @@ export function parseNoteDocumentMarkdown(
 
   return { ok: true, patch };
 }
+
+/** Task rows for reading view — reflects unsaved checkbox edits in document markdown. */
+export function parseTasksFromNoteDocumentMarkdown(
+  markdown: string,
+  record: VoiceRecord,
+): TaskItem[] {
+  const markerIds = listNoteDocumentSectionIds(markdown);
+  if (!markerIds.has('tasks')) {
+    return record.tasks ?? [];
+  }
+
+  const { sections } = splitDocumentSections(markdown);
+  return parseTasksSection(normalizeSectionBody(sections.get('tasks') ?? ''), record);
+}

@@ -46,7 +46,7 @@ export const SettingsAiProcessingSection = ({
       <SettingsRow
         label={t('settings.aiModel')}
         value={aiModelName?.trim() ? aiModelName : undefined}
-        leftIcon={<Bot size={20} color={color.accent.transcript} strokeWidth={1.8} />}
+        leftIcon={<Bot size={20} color={color.accent.primary} strokeWidth={1.8} />}
         onPress={
           aiModelLockedByPrivateRemote
             ? () => navigation.navigate('AiSettings')
@@ -57,12 +57,12 @@ export const SettingsAiProcessingSection = ({
       <SettingsRow
         label={t('settings.transcription')}
         value={transcriptionValue}
-        leftIcon={<Mic size={20} color={color.accent.transcript} strokeWidth={1.8} />}
+        leftIcon={<Mic size={20} color={color.accent.primary} strokeWidth={1.8} />}
         onPress={() => navigation.navigate('WhisperModelPicker')}
       />
       <SettingsRow
         label={t('settings.aiSettings')}
-        leftIcon={<Settings2 size={20} color={color.accent.transcript} strokeWidth={1.8} />}
+        leftIcon={<Settings2 size={20} color={color.accent.primary} strokeWidth={1.8} />}
         onPress={() => navigation.navigate('AiSettings')}
         isLast={aiSettingsIsLast}
       />

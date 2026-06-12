@@ -555,9 +555,16 @@
       "switchToReadingA11y": "Switch to reading view",
       "switchToEditingA11y": "Switch to edit view",
       "loading": "Preparing your note…",
+      "saving": "Saving your note…",
+      "savingTips": {
+        "sync": "Your edits are applied to the note's title, summary, tasks, and transcript.",
+        "tasks": "Task checkboxes you changed will show on the Tasks tab after save.",
+        "sections": "Each section in the document maps to a field in your note.",
+        "source": "Switch to source mode anytime to fine-tune the markdown."
+      },
       "loadingTips": {
         "readingMode": "Reading view shows your note as one continuous document.",
-        "editMode": "Tap the pen icon to edit the markdown source directly.",
+        "editMode": "Edit mode has a formatting toolbar for bold, lists, tasks, and more.",
         "sections": "Summary, tasks, and transcript are grouped into sections you can edit.",
         "save": "Tap the checkmark to save — changes sync back to your note."
       },
@@ -566,7 +573,17 @@
       "unsavedMessage": "Your edits haven't been saved yet.",
       "discard": "Discard",
       "parseErrorTitle": "Couldn't save note",
-      "parseErrorMessage": "Check section formatting and try again."
+      "parseErrorMessage": "Check section formatting and try again.",
+      "toolbar": {
+        "bold": "Bold",
+        "italic": "Italic",
+        "heading2": "Section heading",
+        "heading3": "Subheading",
+        "bullet": "Bullet list",
+        "task": "Task checkbox",
+        "quote": "Quote",
+        "divider": "Divider"
+      }
     },
     "marksSectionTitle": "Pinned moments",
     "markUntitled": {

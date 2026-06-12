@@ -48,7 +48,12 @@ import {
   resolveNoteDocumentTemplate,
 } from '../buildNoteDocumentMarkdown';
 import { listNoteDocumentSectionIds, stripNoteDocumentMarkers } from '../noteDocumentSectionMarkers';
-import { parseNoteDocumentMarkdown } from '../parseNoteDocumentMarkdown';
+import {
+  parseNoteDocumentMarkdown,
+  parseTasksFromNoteDocumentMarkdown,
+} from '../parseNoteDocumentMarkdown';
+import { patchTaskDoneInNoteDocumentMarkdown } from '../patchTaskDoneInNoteDocumentMarkdown';
+import { splitNoteDocumentAtTasksSection } from '../splitNoteDocumentAtTasksSection';
 
 function makeRecord(overrides: Partial<VoiceRecord> = {}): VoiceRecord {
   return {
@@ -144,5 +149,33 @@ describe('note document markdown', () => {
   it('fails when title heading is missing', () => {
     const parsed = parseNoteDocumentMarkdown('No title here', makeRecord());
     expect(parsed.ok).toBe(false);
+  });
+
+  it('reads task done state from document markdown without saving', () => {
+    const record = makeRecord();
+    const markdown = buildNoteDocumentMarkdown(record);
+    const toggled = markdown.replace('- [ ] Follow up with the team', '- [x] Follow up with the team');
+
+    const tasks = parseTasksFromNoteDocumentMarkdown(toggled, record);
+    expect(tasks[0]?.isDone).toBe(true);
+    expect(record.tasks?.[0]?.isDone).toBe(false);
+  });
+
+  it('patches a task checkbox line in markdown', () => {
+    const record = makeRecord();
+    const markdown = buildNoteDocumentMarkdown(record);
+    const task = record.tasks![0]!;
+
+    const patched = patchTaskDoneInNoteDocumentMarkdown(markdown, task, true);
+    expect(patched).toContain('- [x] Follow up with the team');
+  });
+
+  it('splits markdown around the tasks section', () => {
+    const markdown = buildNoteDocumentMarkdown(makeRecord());
+    const split = splitNoteDocumentAtTasksSection(markdown);
+
+    expect(split).not.toBeNull();
+    expect(split?.beforeMarkdown).toContain('# Writing is telepathy');
+    expect(split?.afterMarkdown).toContain('## Transcript');
   });
 });

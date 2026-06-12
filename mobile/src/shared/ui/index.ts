@@ -49,6 +49,12 @@ export { getInputFieldInputStyle, InputField } from './InputField';
 export { SCREEN_PADDING, SECTION_STACK_GAP } from './layoutSpacing';
 export type { LinkedNoteContext } from './LinkedNoteContextBanner';
 export { LinkedNoteContextBanner } from './LinkedNoteContextBanner';
+export {
+  getDocumentSectionHeadingStyle,
+  getNoteDocumentMarkdownStyles,
+  NOTE_DOCUMENT_BODY_FONT_SIZE,
+  NOTE_DOCUMENT_BODY_LINE_HEIGHT,
+} from './documentMarkdownTheme';
 export { NoteMarkdown, type NoteMarkdownVariant } from './NoteMarkdown';
 export { PLAN_PAYWALL_FEATURE_LINE_HEIGHT, PlanPaywallProChip } from './PlanPaywallProChip';
 export { PrivateExecutionBadge, PrivateModeBadge } from './PrivateModeBadge';

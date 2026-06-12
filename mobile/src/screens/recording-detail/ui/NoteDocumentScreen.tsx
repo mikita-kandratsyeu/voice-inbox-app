@@ -12,16 +12,17 @@ import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { RootStackParamList } from '@/app/navigation/types';
 import {
   NoteDocumentPreparingState,
-  stripNoteDocumentMarkers,
+  NoteDocumentReadingBody,
+  NoteDocumentSavingOverlay,
+  NoteDocumentSourceEditor,
   useNoteDocument,
 } from '@/features/note-document';
 import { useColors } from '@/shared/config';
 import { hapticSuccess, useIsTablet } from '@/shared/lib';
-import { getInputFieldInputStyle, HeaderIconButton } from '@/shared/ui';
-import { NoteMarkdown } from '@/shared/ui/NoteMarkdown';
+import { HeaderIconButton } from '@/shared/ui';
 
 export const NoteDocumentScreen = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'NoteDocument'>>();
   const insets = useSafeAreaInsets();
@@ -48,14 +49,12 @@ export const NoteDocumentScreen = () => {
     reset,
     isSaving,
     isPreparing,
+    readingTasks,
+    toggleTaskInReading,
+    finishSaving,
   } = useNoteDocument({ recordId: record.id, fallbackRecord: record });
 
-  const readingContent = useMemo(
-    () => stripNoteDocumentMarkers(documentMarkdown),
-    [documentMarkdown],
-  );
-
-  const canSave = mode === 'source' && hasUnsavedChanges && !isSaving && !isPreparing;
+  const canSave = hasUnsavedChanges && !isSaving && !isPreparing;
   const controlsDisabled = isSaving || isPreparing;
 
   const screenTitle = useMemo(() => t('recordingDetail.document.screenTitle'), [t]);
@@ -97,13 +96,14 @@ export const NoteDocumentScreen = () => {
                 return;
               }
               hapticSuccess();
+              finishSaving();
               close();
             })();
           },
         },
       ],
     );
-  }, [close, hasUnsavedChanges, reset, save, t]);
+  }, [close, finishSaving, hasUnsavedChanges, reset, save, t]);
 
   const handleSave = useCallback(async () => {
     KeyboardController.dismiss({ animated: false });
@@ -115,9 +115,16 @@ export const NoteDocumentScreen = () => {
       );
       return;
     }
-    hapticSuccess();
-    setMode('reading');
-  }, [save, setMode, t]);
+    if (mode === 'source') {
+      setMode('reading');
+    }
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        hapticSuccess();
+        finishSaving();
+      });
+    });
+  }, [finishSaving, mode, save, setMode, t]);
 
   const handleToggleMode = useCallback(() => {
     if (mode === 'reading') {
@@ -207,66 +214,49 @@ export const NoteDocumentScreen = () => {
         </View>
       </View>
 
-      {isPreparing ? (
-        <NoteDocumentPreparingState />
-      ) : mode === 'reading' ? (
-        <KeyboardAwareScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{
-            paddingHorizontal: readingHorizontalPadding,
-            paddingTop: 24,
-            paddingBottom: scrollPaddingBottom + 24,
-            ...(isTablet && {
-              alignItems: 'center',
-            }),
-          }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator
-          bottomOffset={16}
-        >
-          <View style={{ width: '100%', maxWidth: isTablet ? readingMaxWidth : undefined }}>
-            <NoteMarkdown color={color} variant="document">
-              {readingContent}
-            </NoteMarkdown>
-          </View>
-        </KeyboardAwareScrollView>
-      ) : (
-        <KeyboardAwareScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{
-            flexGrow: 1,
-            paddingHorizontal: sourceHorizontalPadding,
-            paddingTop: 16,
-            paddingBottom: scrollPaddingBottom,
-          }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator
-          bottomOffset={16}
-        >
-          <TextInput
-            ref={sourceInputRef}
-            style={[
-              getInputFieldInputStyle(color, true),
-              {
-                color: color.text.primary,
-                fontFamily: 'Menlo',
-                fontSize: 15,
-                lineHeight: 24,
-                minHeight: editorMinHeight,
-                textAlignVertical: 'top',
-              },
-            ]}
-            multiline
-            scrollEnabled
+      <View style={{ flex: 1 }}>
+        {isPreparing ? (
+          <NoteDocumentPreparingState />
+        ) : mode === 'reading' ? (
+          <KeyboardAwareScrollView
+            style={{ flex: 1, backgroundColor: color.background.primary }}
+            contentContainerStyle={{
+              paddingHorizontal: readingHorizontalPadding,
+              paddingTop: 20,
+              paddingBottom: scrollPaddingBottom + 32,
+              ...(isTablet && {
+                alignItems: 'center',
+              }),
+            }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator
+            bottomOffset={16}
+          >
+            <View style={{ width: '100%', maxWidth: isTablet ? readingMaxWidth : undefined }}>
+              <NoteDocumentReadingBody
+                color={color}
+                documentMarkdown={documentMarkdown}
+                tasks={readingTasks}
+                onToggleTask={toggleTaskInReading}
+              />
+            </View>
+          </KeyboardAwareScrollView>
+        ) : (
+          <NoteDocumentSourceEditor
+            color={color}
             value={documentMarkdown}
             onChangeText={setDocumentMarkdown}
             editable={!isSaving}
-            autoCorrect={false}
-            autoCapitalize="sentences"
-            accessibilityLabel={t('recordingDetail.document.editing')}
+            minHeight={editorMinHeight}
+            horizontalPadding={sourceHorizontalPadding}
+            scrollPaddingBottom={scrollPaddingBottom}
+            insetsBottom={insets.bottom}
+            isTablet={isTablet}
+            inputRef={sourceInputRef}
           />
-        </KeyboardAwareScrollView>
-      )}
+        )}
+        {isSaving ? <NoteDocumentSavingOverlay /> : null}
+      </View>
     </View>
   );
 };

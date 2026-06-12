@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { InteractionManager } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -7,7 +7,11 @@ import { resolveShareExportContext } from '@/features/share-record/lib/shareExpo
 import { i18n } from '@/shared/lib';
 
 import { buildNoteDocumentMarkdown } from '../lib/buildNoteDocumentMarkdown';
-import { parseNoteDocumentMarkdown } from '../lib/parseNoteDocumentMarkdown';
+import { patchTaskDoneInNoteDocumentMarkdown } from '../lib/patchTaskDoneInNoteDocumentMarkdown';
+import {
+  parseNoteDocumentMarkdown,
+  parseTasksFromNoteDocumentMarkdown,
+} from '../lib/parseNoteDocumentMarkdown';
 
 export type NoteDocumentMode = 'reading' | 'source';
 
@@ -33,6 +37,17 @@ export function useNoteDocument({ recordId, fallbackRecord }: UseNoteDocumentOpt
   const [isPreparing, setIsPreparing] = useState(true);
   const [mode, setMode] = useState<NoteDocumentMode>('reading');
   const [isSaving, setIsSaving] = useState(false);
+  const savedMarkdownRef = useRef(savedMarkdown);
+  const liveRecordRef = useRef(liveRecord);
+  const suppressLiveRecordSyncRef = useRef(false);
+
+  useEffect(() => {
+    savedMarkdownRef.current = savedMarkdown;
+  }, [savedMarkdown]);
+
+  useEffect(() => {
+    liveRecordRef.current = liveRecord;
+  }, [liveRecord]);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,7 +56,10 @@ export function useNoteDocument({ recordId, fallbackRecord }: UseNoteDocumentOpt
     const interactionHandle = InteractionManager.runAfterInteractions(() => {
       if (cancelled) return;
 
-      const built = buildNoteDocumentMarkdown(liveRecord, resolveShareExportContext());
+      const built = buildNoteDocumentMarkdown(
+        liveRecordRef.current,
+        resolveShareExportContext(),
+      );
       if (cancelled) return;
 
       setSavedMarkdown(built);
@@ -53,9 +71,38 @@ export function useNoteDocument({ recordId, fallbackRecord }: UseNoteDocumentOpt
       cancelled = true;
       interactionHandle.cancel();
     };
-  }, [liveRecord, i18n.language]);
+  }, [recordId, i18n.language]);
+
+  useEffect(() => {
+    if (isPreparing || isSaving) return;
+    if (suppressLiveRecordSyncRef.current) {
+      suppressLiveRecordSyncRef.current = false;
+      return;
+    }
+
+    const built = buildNoteDocumentMarkdown(liveRecord, resolveShareExportContext());
+    setSavedMarkdown(built);
+    setDocumentMarkdown((current) => (current === savedMarkdownRef.current ? built : current));
+  }, [isPreparing, isSaving, liveRecord]);
 
   const hasUnsavedChanges = documentMarkdown !== savedMarkdown;
+
+  const readingTasks = useMemo(
+    () => parseTasksFromNoteDocumentMarkdown(documentMarkdown, liveRecord),
+    [documentMarkdown, liveRecord],
+  );
+
+  const toggleTaskInReading = useCallback(
+    (taskId: string) => {
+      const task = readingTasks.find((item) => item.id === taskId);
+      if (!task) return;
+
+      setDocumentMarkdown((current) =>
+        patchTaskDoneInNoteDocumentMarkdown(current, task, !task.isDone),
+      );
+    },
+    [readingTasks],
+  );
 
   const reset = useCallback(() => {
     setDocumentMarkdown(savedMarkdown);
@@ -114,9 +161,13 @@ export function useNoteDocument({ recordId, fallbackRecord }: UseNoteDocumentOpt
       }
 
       await Promise.all(updates);
+      setSavedMarkdown(documentMarkdown);
+      savedMarkdownRef.current = documentMarkdown;
+      suppressLiveRecordSyncRef.current = true;
       return 'ok';
-    } finally {
+    } catch (error) {
       setIsSaving(false);
+      throw error;
     }
   }, [
     documentMarkdown,
@@ -143,5 +194,8 @@ export function useNoteDocument({ recordId, fallbackRecord }: UseNoteDocumentOpt
     reset,
     isSaving,
     isPreparing,
+    readingTasks,
+    toggleTaskInReading,
+    finishSaving: () => setIsSaving(false),
   };
 }
