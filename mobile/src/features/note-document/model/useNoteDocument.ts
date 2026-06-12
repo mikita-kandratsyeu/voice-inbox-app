@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { InteractionManager } from 'react-native';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
@@ -32,7 +33,9 @@ export function useNoteDocument({
   initialMode = 'reading',
 }: UseNoteDocumentOptions) {
   const { i18n } = useTranslation();
-  const records = useRecordStore((s) => s.records);
+  const liveRecord = useRecordStore(
+    useShallow((s) => s.records.find((r) => r.id === recordId) ?? fallbackRecord),
+  );
   const renameRecord = useRecordStore((s) => s.renameRecord);
   const updateTranscript = useRecordStore((s) => s.updateTranscript);
   const updateSummary = useRecordStore((s) => s.updateSummary);
@@ -41,13 +44,12 @@ export function useNoteDocument({
   const updateAiExtras = useRecordStore((s) => s.updateAiExtras);
   const updateTranslation = useRecordStore((s) => s.updateTranslation);
 
-  const liveRecord = records.find((r) => r.id === recordId) ?? fallbackRecord;
-
   const [savedMarkdown, setSavedMarkdown] = useState('');
   const [documentMarkdown, setDocumentMarkdown] = useState('');
   const [isPreparing, setIsPreparing] = useState(true);
   const [mode, setMode] = useState<NoteDocumentMode>(initialMode);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditorDirty, setIsEditorDirty] = useState(false);
   const savedMarkdownRef = useRef(savedMarkdown);
   const liveRecordRef = useRef(liveRecord);
   const suppressLiveRecordSyncRef = useRef(false);
@@ -98,21 +100,39 @@ export function useNoteDocument({
   }, [recordId, i18n.language]);
 
   useEffect(() => {
-    if (isPreparing || isSaving) return;
+    if (isPreparing || isSaving || mode === 'source') return;
     if (suppressLiveRecordSyncRef.current) {
       suppressLiveRecordSyncRef.current = false;
       return;
     }
 
+    let cancelled = false;
     const ctx = resolveShareExportContext();
     const cacheKey = buildNoteDocumentCacheKey(liveRecord, i18n.language, ctx);
-    const built = buildNoteDocumentMarkdown(liveRecord, ctx);
-    setCachedNoteDocumentMarkdown(cacheKey, built);
-    setSavedMarkdown(built);
-    setDocumentMarkdown((current) => (current === savedMarkdownRef.current ? built : current));
-  }, [i18n.language, isPreparing, isSaving, liveRecord]);
 
-  const hasUnsavedChanges = documentMarkdown !== savedMarkdown;
+    const interactionHandle = InteractionManager.runAfterInteractions(() => {
+      if (cancelled) return;
+      const built = buildNoteDocumentMarkdown(liveRecord, ctx);
+      setCachedNoteDocumentMarkdown(cacheKey, built);
+      setSavedMarkdown(built);
+      setDocumentMarkdown((current) => (current === savedMarkdownRef.current ? built : current));
+    });
+
+    return () => {
+      cancelled = true;
+      interactionHandle.cancel();
+    };
+  }, [i18n.language, isPreparing, isSaving, liveRecord, mode]);
+
+  const hasUnsavedChanges = documentMarkdown !== savedMarkdown || isEditorDirty;
+
+  const markEditorDirty = useCallback(() => {
+    setIsEditorDirty(true);
+  }, []);
+
+  const clearEditorDirty = useCallback(() => {
+    setIsEditorDirty(false);
+  }, []);
 
   const readingTasks = useMemo(() => {
     if (mode !== 'reading') return [];
@@ -133,86 +153,93 @@ export function useNoteDocument({
 
   const reset = useCallback(() => {
     setDocumentMarkdown(savedMarkdown);
+    setIsEditorDirty(false);
   }, [savedMarkdown]);
 
-  const save = useCallback(async (): Promise<'ok' | 'parse_error'> => {
-    const parsed = parseNoteDocumentMarkdown(documentMarkdown, liveRecord);
-    if (!parsed.ok) {
-      return 'parse_error';
-    }
-
-    setIsSaving(true);
-    try {
-      const { patch } = parsed;
-      const updates: Promise<void>[] = [];
-
-      if (patch.title !== undefined && patch.title !== liveRecord.title) {
-        updates.push(renameRecord(recordId, patch.title));
-      }
-      if (patch.summary !== undefined) {
-        updates.push(updateSummary(recordId, patch.summary));
-      }
-      if (patch.transcript !== undefined && patch.transcriptSegments !== undefined) {
-        updates.push(updateTranscript(recordId, patch.transcript, patch.transcriptSegments));
-      }
-      if (patch.tasks !== undefined) {
-        updates.push(updateTasks(recordId, patch.tasks));
-      }
-      if (patch.tags !== undefined) {
-        updates.push(updateTags(recordId, patch.tags));
+  const save = useCallback(
+    async (markdownToSave?: string): Promise<'ok' | 'parse_error'> => {
+      const markdown = markdownToSave ?? documentMarkdown;
+      const parsed = parseNoteDocumentMarkdown(markdown, liveRecord);
+      if (!parsed.ok) {
+        return 'parse_error';
       }
 
-      const aiExtras: Parameters<typeof updateAiExtras>[1] = {};
-      if (patch.nextSteps !== undefined) {
-        aiExtras.nextSteps = patch.nextSteps;
-      }
-      if (patch.keyPhrases !== undefined) {
-        aiExtras.keyPhrases = patch.keyPhrases;
-      }
-      if (patch.meetingDialogue !== undefined) {
-        aiExtras.meetingDialogue = patch.meetingDialogue;
-      }
-      if (Object.keys(aiExtras).length > 0) {
-        updates.push(updateAiExtras(recordId, aiExtras));
-      }
+      setIsSaving(true);
+      try {
+        const { patch } = parsed;
+        const updates: Promise<void>[] = [];
 
-      if (patch.translatedTranscript !== undefined) {
-        const trimmed = patch.translatedTranscript?.trim() ?? '';
-        updates.push(
-          updateTranslation(
-            recordId,
-            trimmed.length > 0 ? trimmed : null,
-            trimmed.length > 0 ? (liveRecord.translationLanguage ?? null) : null,
-          ),
+        if (patch.title !== undefined && patch.title !== liveRecord.title) {
+          updates.push(renameRecord(recordId, patch.title));
+        }
+        if (patch.summary !== undefined) {
+          updates.push(updateSummary(recordId, patch.summary));
+        }
+        if (patch.transcript !== undefined && patch.transcriptSegments !== undefined) {
+          updates.push(updateTranscript(recordId, patch.transcript, patch.transcriptSegments));
+        }
+        if (patch.tasks !== undefined) {
+          updates.push(updateTasks(recordId, patch.tasks));
+        }
+        if (patch.tags !== undefined) {
+          updates.push(updateTags(recordId, patch.tags));
+        }
+
+        const aiExtras: Parameters<typeof updateAiExtras>[1] = {};
+        if (patch.nextSteps !== undefined) {
+          aiExtras.nextSteps = patch.nextSteps;
+        }
+        if (patch.keyPhrases !== undefined) {
+          aiExtras.keyPhrases = patch.keyPhrases;
+        }
+        if (patch.meetingDialogue !== undefined) {
+          aiExtras.meetingDialogue = patch.meetingDialogue;
+        }
+        if (Object.keys(aiExtras).length > 0) {
+          updates.push(updateAiExtras(recordId, aiExtras));
+        }
+
+        if (patch.translatedTranscript !== undefined) {
+          const trimmed = patch.translatedTranscript?.trim() ?? '';
+          updates.push(
+            updateTranslation(
+              recordId,
+              trimmed.length > 0 ? trimmed : null,
+              trimmed.length > 0 ? (liveRecord.translationLanguage ?? null) : null,
+            ),
+          );
+        }
+
+        await Promise.all(updates);
+        setDocumentMarkdown(markdown);
+        setSavedMarkdown(markdown);
+        savedMarkdownRef.current = markdown;
+        setIsEditorDirty(false);
+        setCachedNoteDocumentMarkdown(
+          buildNoteDocumentCacheKey(liveRecord, i18n.language, resolveShareExportContext()),
+          markdown,
         );
+        suppressLiveRecordSyncRef.current = true;
+        return 'ok';
+      } catch (error) {
+        setIsSaving(false);
+        throw error;
       }
-
-      await Promise.all(updates);
-      setSavedMarkdown(documentMarkdown);
-      savedMarkdownRef.current = documentMarkdown;
-      setCachedNoteDocumentMarkdown(
-        buildNoteDocumentCacheKey(liveRecord, i18n.language, resolveShareExportContext()),
-        documentMarkdown,
-      );
-      suppressLiveRecordSyncRef.current = true;
-      return 'ok';
-    } catch (error) {
-      setIsSaving(false);
-      throw error;
-    }
-  }, [
-    documentMarkdown,
-    i18n.language,
-    liveRecord,
-    recordId,
-    renameRecord,
-    updateAiExtras,
-    updateSummary,
-    updateTags,
-    updateTasks,
-    updateTranscript,
-    updateTranslation,
-  ]);
+    },
+    [
+      documentMarkdown,
+      i18n.language,
+      liveRecord,
+      recordId,
+      renameRecord,
+      updateAiExtras,
+      updateSummary,
+      updateTags,
+      updateTasks,
+      updateTranscript,
+      updateTranslation,
+    ],
+  );
 
   return {
     liveRecord,
@@ -228,6 +255,8 @@ export function useNoteDocument({
     isPreparing,
     readingTasks,
     toggleTaskInReading,
+    markEditorDirty,
+    clearEditorDirty,
     finishSaving: () => setIsSaving(false),
   };
 }

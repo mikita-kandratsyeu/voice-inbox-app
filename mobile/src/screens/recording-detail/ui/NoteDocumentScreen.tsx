@@ -4,9 +4,9 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BookOpen, Check, FileCode, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import type { EnrichedMarkdownTextInputInstance } from 'react-native-enriched-markdown';
-import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
+import { KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { RootStackParamList } from '@/app/navigation/types';
@@ -48,6 +48,8 @@ export const NoteDocumentScreen = () => {
     isPreparing,
     readingTasks,
     toggleTaskInReading,
+    markEditorDirty,
+    clearEditorDirty,
     finishSaving,
   } = useNoteDocument({
     recordId: record.id,
@@ -59,6 +61,14 @@ export const NoteDocumentScreen = () => {
   const controlsDisabled = isSaving || isPreparing;
 
   const screenTitle = useMemo(() => t('recordingDetail.document.screenTitle'), [t]);
+
+  const flushEditorMarkdown = useCallback(async () => {
+    if (mode !== 'source') {
+      return documentMarkdown;
+    }
+    const markdown = await sourceInputRef.current?.getMarkdown();
+    return markdown ?? documentMarkdown;
+  }, [documentMarkdown, mode]);
 
   const close = useCallback(() => {
     KeyboardController.dismiss({ animated: false });
@@ -88,7 +98,8 @@ export const NoteDocumentScreen = () => {
           text: t('recordingDetail.document.save'),
           onPress: () => {
             void (async () => {
-              const result = await save();
+              const markdown = await flushEditorMarkdown();
+              const result = await save(markdown);
               if (result === 'parse_error') {
                 Alert.alert(
                   t('recordingDetail.document.parseErrorTitle'),
@@ -104,11 +115,12 @@ export const NoteDocumentScreen = () => {
         },
       ],
     );
-  }, [close, finishSaving, hasUnsavedChanges, reset, save, t]);
+  }, [close, finishSaving, flushEditorMarkdown, hasUnsavedChanges, reset, save, t]);
 
   const handleSave = useCallback(async () => {
     KeyboardController.dismiss({ animated: false });
-    const result = await save();
+    const markdown = await flushEditorMarkdown();
+    const result = await save(markdown);
     if (result === 'parse_error') {
       Alert.alert(
         t('recordingDetail.document.parseErrorTitle'),
@@ -125,18 +137,25 @@ export const NoteDocumentScreen = () => {
         finishSaving();
       });
     });
-  }, [finishSaving, mode, save, setMode, t]);
+  }, [finishSaving, flushEditorMarkdown, mode, save, setMode, t]);
 
   const handleToggleMode = useCallback(() => {
     if (mode === 'reading') {
+      clearEditorDirty();
       setSourceEditorKey((current) => current + 1);
       setMode('source');
       requestAnimationFrame(() => sourceInputRef.current?.focus());
       return;
     }
-    KeyboardController.dismiss({ animated: false });
-    setMode('reading');
-  }, [mode, setMode]);
+
+    void (async () => {
+      const markdown = await flushEditorMarkdown();
+      setDocumentMarkdown(markdown);
+      clearEditorDirty();
+      KeyboardController.dismiss({ animated: false });
+      setMode('reading');
+    })();
+  }, [clearEditorDirty, flushEditorMarkdown, mode, setDocumentMarkdown, setMode]);
 
   useEffect(() => {
     if (initialMode !== 'source' || isPreparing) {
@@ -257,12 +276,11 @@ export const NoteDocumentScreen = () => {
       ) : (
         <View style={{ flex: 1 }}>
           {mode === 'reading' ? (
-            <KeyboardAwareScrollView
+            <ScrollView
               style={{ flex: 1, backgroundColor: color.background.primary }}
               contentContainerStyle={readingContentContainerStyle}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator
-              bottomOffset={16}
             >
               <View style={readingColumnStyle}>
                 <NoteDocumentReadingBody
@@ -272,13 +290,13 @@ export const NoteDocumentScreen = () => {
                   onToggleTask={toggleTaskInReading}
                 />
               </View>
-            </KeyboardAwareScrollView>
+            </ScrollView>
           ) : (
             <NoteDocumentSourceEditor
               color={color}
               documentKey={`${record.id}:${sourceEditorKey}`}
               initialMarkdown={documentMarkdown}
-              onChangeMarkdown={setDocumentMarkdown}
+              onDirty={markEditorDirty}
               editable={!isSaving}
               horizontalPadding={sourceHorizontalPadding}
               scrollPaddingBottom={scrollPaddingBottom}

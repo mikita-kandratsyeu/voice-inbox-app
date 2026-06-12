@@ -5,6 +5,7 @@ import type { TaskListItemPressEvent } from 'react-native-enriched-markdown';
 import type { TaskItem } from '@/entities/record';
 import type { Colors } from '@/shared/config';
 
+import { buildNoteDocumentEnrichedMarkdownStyle } from '../lib/enrichedMarkdownTheme';
 import { stripNoteDocumentMarkers } from '../lib/noteDocumentSectionMarkers';
 import {
   type NoteDocumentReadingSectionSegment,
@@ -22,6 +23,7 @@ type NoteDocumentReadingBodyProps = {
 
 type NoteDocumentReadingSectionRowProps = {
   color: Colors;
+  markdownStyle: ReturnType<typeof buildNoteDocumentEnrichedMarkdownStyle>;
   segment: NoteDocumentReadingSectionSegment;
   expanded: boolean;
   onToggle: (sectionId: string, defaultExpanded: boolean) => void;
@@ -37,6 +39,7 @@ function buildInitialExpandedState(
 
 const NoteDocumentReadingSectionRow = React.memo(function NoteDocumentReadingSectionRow({
   color,
+  markdownStyle,
   segment,
   expanded,
   onToggle,
@@ -68,6 +71,7 @@ const NoteDocumentReadingSectionRow = React.memo(function NoteDocumentReadingSec
       <NoteDocumentEnrichedMarkdown
         color={color}
         markdown={segment.bodyMarkdown}
+        markdownStyle={markdownStyle}
         onTaskListItemPress={segment.id === 'tasks' ? handleTaskListItemPress : undefined}
       />
     </NoteDocumentCollapsibleSection>
@@ -80,6 +84,7 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
   tasks,
   onToggleTask,
 }: NoteDocumentReadingBodyProps) {
+  const markdownStyle = useMemo(() => buildNoteDocumentEnrichedMarkdownStyle(color), [color]);
   const layout = useMemo(() => splitNoteDocumentForReading(documentMarkdown), [documentMarkdown]);
   const flatMarkdown = useMemo(
     () => stripNoteDocumentMarkers(documentMarkdown),
@@ -121,7 +126,13 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
   }, []);
 
   if (!layout.hasSections) {
-    return <NoteDocumentEnrichedMarkdown color={color} markdown={flatMarkdown} />;
+    return (
+      <NoteDocumentEnrichedMarkdown
+        color={color}
+        markdown={flatMarkdown}
+        markdownStyle={markdownStyle}
+      />
+    );
   }
 
   return (
@@ -133,6 +144,7 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
               key="preamble"
               color={color}
               markdown={segment.markdown}
+              markdownStyle={markdownStyle}
             />
           );
         }
@@ -141,6 +153,7 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
           <NoteDocumentReadingSectionRow
             key={segment.id}
             color={color}
+            markdownStyle={markdownStyle}
             segment={segment}
             expanded={expandedBySectionId[segment.id] ?? segment.defaultExpanded}
             onToggle={toggleSection}

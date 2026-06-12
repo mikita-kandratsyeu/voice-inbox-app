@@ -26,7 +26,7 @@ type NoteDocumentSourceEditorProps = {
   color: Colors;
   documentKey: string;
   initialMarkdown: string;
-  onChangeMarkdown: (markdown: string) => void;
+  onDirty: () => void;
   editable: boolean;
   horizontalPadding: number;
   scrollPaddingBottom: number;
@@ -39,7 +39,7 @@ export function NoteDocumentSourceEditor({
   color,
   documentKey,
   initialMarkdown,
-  onChangeMarkdown,
+  onDirty,
   editable,
   horizontalPadding,
   scrollPaddingBottom,
@@ -61,6 +61,35 @@ export function NoteDocumentSourceEditor({
     }),
     [isTablet],
   );
+  const editorPaddingStyle = useMemo(
+    () => ({
+      flex: 1,
+      paddingHorizontal: horizontalPadding,
+      paddingTop: 16,
+      paddingBottom: scrollPaddingBottom,
+      ...(isTablet && { alignItems: 'center' as const }),
+    }),
+    [horizontalPadding, isTablet, scrollPaddingBottom],
+  );
+  const inputStyle = useMemo(
+    () => ({
+      flex: 1,
+      width: '100%' as const,
+      color: color.text.primary,
+      fontSize: NOTE_DOCUMENT_BODY_FONT_SIZE,
+      lineHeight: NOTE_DOCUMENT_BODY_LINE_HEIGHT,
+      textAlignVertical: 'top' as const,
+    }),
+    [color.text.primary],
+  );
+
+  const handleChangeText = useCallback(() => {
+    onDirty();
+  }, [onDirty]);
+
+  const handleChangeSelection = useCallback((selection: { start: number; end: number }) => {
+    selectionRef.current = selection;
+  }, []);
 
   const handleToolbarAction = useCallback(
     (action: EnrichedMarkdownToolbarAction) => {
@@ -133,15 +162,7 @@ export function NoteDocumentSourceEditor({
         onAction={handleToolbarAction}
         disabled={!editable}
       />
-      <View
-        style={{
-          flex: 1,
-          paddingHorizontal: horizontalPadding,
-          paddingTop: 16,
-          paddingBottom: scrollPaddingBottom,
-          ...(isTablet && { alignItems: 'center' }),
-        }}
-      >
+      <View style={editorPaddingStyle}>
         <View style={editorColumnStyle}>
           <EnrichedMarkdownTextInput
             key={documentKey}
@@ -157,19 +178,10 @@ export function NoteDocumentSourceEditor({
             selectionColor={color.accent.primary}
             cursorColor={color.accent.primary}
             markdownStyle={inputMarkdownStyle}
-            onChangeMarkdown={onChangeMarkdown}
+            onChangeText={handleChangeText}
             onChangeState={setStyleState}
-            onChangeSelection={(selection) => {
-              selectionRef.current = selection;
-            }}
-            style={{
-              flex: 1,
-              width: '100%',
-              color: color.text.primary,
-              fontSize: NOTE_DOCUMENT_BODY_FONT_SIZE,
-              lineHeight: NOTE_DOCUMENT_BODY_LINE_HEIGHT,
-              textAlignVertical: 'top',
-            }}
+            onChangeSelection={handleChangeSelection}
+            style={inputStyle}
           />
         </View>
       </View>
