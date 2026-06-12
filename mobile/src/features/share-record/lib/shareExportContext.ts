@@ -4,6 +4,8 @@ export type ShareExportContext = {
   folderNameById?: Record<string, string>;
   /** Omit note metadata and duplicate title — used for HTML/plain email bodies. */
   forEmail?: boolean;
+  /** In-app full-note document: section markers, no footer/record id. */
+  forDocument?: boolean;
 };
 
 export function resolveShareExportContext(override?: ShareExportContext): ShareExportContext {

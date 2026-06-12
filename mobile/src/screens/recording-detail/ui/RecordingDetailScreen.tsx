@@ -602,6 +602,21 @@ export const RecordingDetailScreen = () => {
   const onAskAI = useCallback(() => {
     navigation.navigate('RecordingAskAI', { record: liveRecord });
   }, [navigation, liveRecord]);
+  const [isOpeningDocument, setIsOpeningDocument] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      setIsOpeningDocument(false);
+    }, []),
+  );
+
+  const onOpenDocument = useCallback(() => {
+    if (isOpeningDocument) return;
+    setIsOpeningDocument(true);
+    requestAnimationFrame(() => {
+      navigation.navigate('NoteDocument', { record: liveRecord });
+    });
+  }, [isOpeningDocument, navigation, liveRecord]);
   const onRename = useCallback(
     () => setRenameTarget({ id: liveRecord.id, title: liveRecord.title }),
     [liveRecord.id, liveRecord.title],
@@ -739,6 +754,8 @@ export const RecordingDetailScreen = () => {
         onBack={onBack}
         onTogglePin={onTogglePin}
         onShare={onOpenShareMenu}
+        onOpenDocument={onOpenDocument}
+        isOpeningDocument={isOpeningDocument}
         onAskAI={onAskAI}
         onRename={onRename}
         onMoveToFolder={onMoveToFolderMenu}

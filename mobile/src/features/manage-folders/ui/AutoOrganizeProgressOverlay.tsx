@@ -5,6 +5,7 @@ import { ActivityIndicator, Animated, Easing, Modal, Text, View } from 'react-na
 
 import type { AutoOrganizeMode } from '@/entities/folder/lib/autoOrganizeTypes';
 import { useColors } from '@/shared/config';
+import { IS_IOS } from '@/shared/lib';
 import { AiProcessingCancelButton } from '@/shared/ui';
 
 export type AutoOrganizeProgressVariant = 'organize' | 'apply';
@@ -126,7 +127,13 @@ export const AutoOrganizeProgressOverlay = ({
   }, [mode, successOpacity, successScale, visible]);
 
   return (
-    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      {...(IS_IOS ? ({ presentationStyle: 'overFullScreen' } as const) : {})}
+    >
       <View
         className="flex-1 items-center justify-center px-6"
         style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}

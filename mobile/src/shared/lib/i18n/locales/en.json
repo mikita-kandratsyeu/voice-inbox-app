@@ -547,6 +547,27 @@
     "summary": "Summary",
     "dialogue": "Participants",
     "tasks": "Tasks",
+    "document": {
+      "screenTitle": "Full note",
+      "openA11y": "View full note",
+      "reading": "Reading",
+      "editing": "Edit",
+      "switchToReadingA11y": "Switch to reading view",
+      "switchToEditingA11y": "Switch to edit view",
+      "loading": "Preparing your note…",
+      "loadingTips": {
+        "readingMode": "Reading view shows your note as one continuous document.",
+        "editMode": "Tap the pen icon to edit the markdown source directly.",
+        "sections": "Summary, tasks, and transcript are grouped into sections you can edit.",
+        "save": "Tap the checkmark to save — changes sync back to your note."
+      },
+      "save": "Save",
+      "unsavedTitle": "Discard changes?",
+      "unsavedMessage": "Your edits haven't been saved yet.",
+      "discard": "Discard",
+      "parseErrorTitle": "Couldn't save note",
+      "parseErrorMessage": "Check section formatting and try again."
+    },
     "marksSectionTitle": "Pinned moments",
     "markUntitled": {
       "important": "Important moment",

@@ -13,6 +13,7 @@ import { RecordScreen, TextNoteScreen } from '@/screens/record';
 import {
   AskAIScreen,
   EditTranscriptScreen,
+  NoteDocumentScreen,
   RecordingDetailScreen,
 } from '@/screens/recording-detail';
 import { WhisperModelPickerScreen } from '@/screens/settings';
@@ -93,6 +94,16 @@ export const RootNavigator = () => (
         options={{
           headerShown: false,
           animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="NoteDocument"
+        component={NoteDocumentScreen}
+        options={{
+          headerShown: false,
+          presentation: 'fullScreenModal',
+          animation: 'slide_from_bottom',
           gestureEnabled: true,
         }}
       />

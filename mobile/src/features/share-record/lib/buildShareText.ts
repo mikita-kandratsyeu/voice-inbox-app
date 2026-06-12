@@ -128,7 +128,19 @@ function pushMeta(lines: string[], record: VoiceRecord, ctx: ShareExportContext)
     );
   }
 
-  lines.push(`**${i18n.t('share.recordIdLabel')}:** \`${record.id}\``);
+  if (!ctx.forDocument) {
+    lines.push(`**${i18n.t('share.recordIdLabel')}:** \`${record.id}\``);
+  }
+}
+
+function pushDocumentSectionMarker(
+  lines: string[],
+  sectionId: string,
+  ctx: ShareExportContext,
+): void {
+  if (ctx.forDocument) {
+    lines.push(`<!-- vi:section:${sectionId} -->`);
+  }
 }
 
 function pushEmailMeta(lines: string[], record: VoiceRecord, ctx: ShareExportContext): void {
@@ -154,8 +166,9 @@ function pushEmailMeta(lines: string[], record: VoiceRecord, ctx: ShareExportCon
   lines.push('');
 }
 
-const pushTags = (lines: string[], record: VoiceRecord): void => {
+const pushTags = (lines: string[], record: VoiceRecord, ctx: ShareExportContext): void => {
   if (record.tags && record.tags.length > 0) {
+    pushDocumentSectionMarker(lines, 'tags', ctx);
     lines.push('');
     lines.push(`## ${i18n.t('share.tagsLabel')}`);
     lines.push(record.tags.map((tag) => `#${tag}`).join(' '));
@@ -181,18 +194,24 @@ const pushRecordingMarks = (lines: string[], record: VoiceRecord): void => {
   });
 };
 
-const pushSummary = (lines: string[], record: VoiceRecord): void => {
+const pushSummary = (lines: string[], record: VoiceRecord, ctx: ShareExportContext): void => {
   if (record.summary) {
+    pushDocumentSectionMarker(lines, 'summary', ctx);
     lines.push('');
     lines.push(`## ${i18n.t('recordingDetail.summary')}`);
     lines.push(formatPlainTranscriptForShare(record.summary));
   }
 };
 
-const pushMeetingSummary = (lines: string[], record: VoiceRecord): void => {
+const pushMeetingSummary = (
+  lines: string[],
+  record: VoiceRecord,
+  ctx: ShareExportContext,
+): void => {
   const summary = record.summary?.trim();
   if (!summary) return;
 
+  pushDocumentSectionMarker(lines, 'summary', ctx);
   lines.push('');
   lines.push(`## ${i18n.t('recordingDetail.meetingSummaryTitle')}`);
 
@@ -225,8 +244,9 @@ function splitMeetingRecapBodyForShare(body: string): string[] {
   return normalized.length > 0 ? normalized : [body.trim()].filter(Boolean);
 }
 
-const pushKeyPhrases = (lines: string[], record: VoiceRecord): void => {
+const pushKeyPhrases = (lines: string[], record: VoiceRecord, ctx: ShareExportContext): void => {
   if (record.keyPhrases && record.keyPhrases.length > 0) {
+    pushDocumentSectionMarker(lines, 'key-phrases', ctx);
     lines.push('');
     lines.push(`## ${i18n.t('recordingDetail.keyPhrases')}`);
     record.keyPhrases.forEach((phrase) => {
@@ -252,8 +272,9 @@ const formatTaskForShare = (task: NonNullable<VoiceRecord['tasks']>[number]): st
   return formatTaskLineForShare(task, suffix);
 };
 
-const pushTasks = (lines: string[], record: VoiceRecord): void => {
+const pushTasks = (lines: string[], record: VoiceRecord, ctx: ShareExportContext): void => {
   if (record.tasks && record.tasks.length > 0) {
+    pushDocumentSectionMarker(lines, 'tasks', ctx);
     lines.push('');
     lines.push(`## ${i18n.t('recordingDetail.tasks')}`);
     record.tasks.forEach((t) => {
@@ -262,8 +283,9 @@ const pushTasks = (lines: string[], record: VoiceRecord): void => {
   }
 };
 
-const pushNextSteps = (lines: string[], record: VoiceRecord): void => {
+const pushNextSteps = (lines: string[], record: VoiceRecord, ctx: ShareExportContext): void => {
   if (record.nextSteps && record.nextSteps.length > 0) {
+    pushDocumentSectionMarker(lines, 'next-steps', ctx);
     lines.push('');
     lines.push(`## ${i18n.t('recordingDetail.nextSteps')}`);
     record.nextSteps.forEach((step) => {
@@ -282,6 +304,7 @@ const pushTranslation = (lines: string[], record: VoiceRecord, ctx: ShareExportC
       ? `${i18n.t('share.translationLabel')} (${lang})`
       : i18n.t('share.translationLabel');
 
+  pushDocumentSectionMarker(lines, 'translation', ctx);
   lines.push('');
   lines.push(`## ${heading}`);
   lines.push(formatPlainTranscriptWithTimestamps(translated, ctx.forEmail));
@@ -290,6 +313,7 @@ const pushTranslation = (lines: string[], record: VoiceRecord, ctx: ShareExportC
 const pushTranscript = (lines: string[], record: VoiceRecord, ctx: ShareExportContext): void => {
   const transcriptBody = formatTranscriptBodyForShare(record, ctx.forEmail);
   if (transcriptBody) {
+    pushDocumentSectionMarker(lines, 'transcript', ctx);
     lines.push('');
     lines.push(`## ${i18n.t('recordingDetail.transcript')}`);
     lines.push(transcriptBody);
@@ -315,13 +339,15 @@ const pushMeetingDialogue = (
   const body = record.meetingDialogue?.trim();
   if (!body) return;
 
+  pushDocumentSectionMarker(lines, 'meeting-dialogue', ctx);
   pushMeetingDialogueSectionHeader(lines, ctx);
   lines.push(
     formatMeetingDialogueForShareMarkdown(body, ctx.forEmail, record.meetingSpeakerLabels),
   );
 };
 
-const pushFooter = (lines: string[]): void => {
+const pushFooter = (lines: string[], ctx: ShareExportContext): void => {
+  if (ctx.forDocument) return;
   lines.push('');
   lines.push(i18n.t('share.exportedFrom'));
 };
@@ -337,15 +363,15 @@ function buildNoteBrief(record: VoiceRecord, ctx: ShareExportContext): string {
   const lines: string[] = [];
   pushRecordHeader(lines, record, ctx);
   pushEmailMeta(lines, record, ctx);
-  pushTags(lines, record);
+  pushTags(lines, record, ctx);
   pushRecordingMarks(lines, record);
-  pushSummary(lines, record);
-  pushKeyPhrases(lines, record);
+  pushSummary(lines, record, ctx);
+  pushKeyPhrases(lines, record, ctx);
   pushTranslation(lines, record, ctx);
-  pushNextSteps(lines, record);
-  pushTasks(lines, record);
+  pushNextSteps(lines, record, ctx);
+  pushTasks(lines, record, ctx);
   pushTranscript(lines, record, ctx);
-  pushFooter(lines);
+  pushFooter(lines, ctx);
   return lines.join('\n');
 }
 
@@ -355,16 +381,16 @@ function buildMeetingBrief(record: VoiceRecord, ctx: ShareExportContext): string
   pushEmailMeta(lines, record, ctx);
   lines.push(`_${i18n.t('share.meetingBriefSubtitle')}_`);
   lines.push('');
-  pushTags(lines, record);
+  pushTags(lines, record, ctx);
   pushRecordingMarks(lines, record);
-  pushMeetingSummary(lines, record);
-  pushKeyPhrases(lines, record);
+  pushMeetingSummary(lines, record, ctx);
+  pushKeyPhrases(lines, record, ctx);
   pushMeetingDialogue(lines, record, ctx);
   pushTranslation(lines, record, ctx);
-  pushNextSteps(lines, record);
-  pushTasks(lines, record);
+  pushNextSteps(lines, record, ctx);
+  pushTasks(lines, record, ctx);
   pushTranscript(lines, record, ctx);
-  pushFooter(lines);
+  pushFooter(lines, ctx);
   return lines.join('\n');
 }
 
@@ -372,7 +398,7 @@ function buildMeetingSpeakerTurnsOnly(record: VoiceRecord, ctx: ShareExportConte
   const lines: string[] = [];
   pushRecordHeader(lines, record, ctx);
   pushEmailMeta(lines, record, ctx);
-  pushTags(lines, record);
+  pushTags(lines, record, ctx);
   pushMeetingDialogueSectionHeader(lines, ctx);
   const body = record.meetingDialogue?.trim();
   if (body) {
@@ -382,7 +408,7 @@ function buildMeetingSpeakerTurnsOnly(record: VoiceRecord, ctx: ShareExportConte
   } else {
     lines.push(`_${i18n.t('share.speakerTurnsEmpty')}_`);
   }
-  pushFooter(lines);
+  pushFooter(lines, ctx);
   return lines.join('\n');
 }
 
@@ -392,20 +418,20 @@ function buildEmailBrief(record: VoiceRecord, ctx: ShareExportContext): string {
   pushRecordHeader(lines, record, ctx);
   pushEmailMeta(lines, record, ctx);
   const isMeeting = record.classification === 'meeting' || Boolean(record.meetingDialogue?.trim());
-  pushTags(lines, record);
+  pushTags(lines, record, ctx);
   pushRecordingMarks(lines, record);
   if (isMeeting) {
-    pushMeetingSummary(lines, record);
+    pushMeetingSummary(lines, record, ctx);
   } else {
-    pushSummary(lines, record);
+    pushSummary(lines, record, ctx);
   }
-  pushKeyPhrases(lines, record);
+  pushKeyPhrases(lines, record, ctx);
   if (isMeeting) {
     pushMeetingDialogue(lines, record, ctx);
   }
-  pushNextSteps(lines, record);
-  pushTasks(lines, record);
-  pushFooter(lines);
+  pushNextSteps(lines, record, ctx);
+  pushTasks(lines, record, ctx);
+  pushFooter(lines, ctx);
   return lines.join('\n');
 }
 

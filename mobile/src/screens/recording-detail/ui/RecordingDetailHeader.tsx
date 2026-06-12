@@ -1,8 +1,8 @@
 import { MenuView } from '@react-native-menu/menu';
-import { ChevronLeft, MessageSquare, MoreVertical, Share } from 'lucide-react-native';
+import { ChevronLeft, MessageSquare, MoreVertical, NotepadText } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,6 +20,8 @@ type RecordingDetailHeaderProps = {
   onBack: () => void;
   onTogglePin: () => void;
   onShare: () => void;
+  onOpenDocument: () => void;
+  isOpeningDocument?: boolean;
   onAskAI: () => void;
   onRename: () => void;
   onMoveToFolder: () => void;
@@ -37,6 +39,8 @@ export const RecordingDetailHeader = ({
   onBack,
   onTogglePin,
   onShare,
+  onOpenDocument,
+  isOpeningDocument = false,
   onAskAI,
   onRename,
   onMoveToFolder,
@@ -104,6 +108,14 @@ export const RecordingDetailHeader = ({
           titleColor,
         };
 
+    const shareAction: NativeMenuAction = {
+      id: 'share',
+      title: t('share.share'),
+      image: 'square.and.arrow.up',
+      imageColor: titleColor,
+      titleColor,
+    };
+
     const actions: NativeMenuAction[] = [];
 
     if (showAllTasks) {
@@ -126,7 +138,9 @@ export const RecordingDetailHeader = ({
       inlineNativeMenuSection(
         'folderAndArchiveSection',
         titleColor,
-        !isPrivateMode ? [moveToFolderAction, archiveAction] : [archiveAction],
+        !isPrivateMode
+          ? [moveToFolderAction, archiveAction, shareAction]
+          : [archiveAction, shareAction],
       ),
     );
     actions.push(
@@ -188,13 +202,21 @@ export const RecordingDetailHeader = ({
           iconOnly
           variant="icon"
           size="md"
-          icon={<Share size={18} color={color.text.primary} strokeWidth={2.2} />}
+          icon={
+            isOpeningDocument ? (
+              <ActivityIndicator size="small" color={color.text.primary} />
+            ) : (
+              <NotepadText size={18} color={color.text.primary} strokeWidth={2.2} />
+            )
+          }
           color={color}
-          onPress={onShare}
+          onPress={onOpenDocument}
+          disabled={isOpeningDocument}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           containerStyle={iconBtnBg}
-          accessibilityLabel={t('share.share')}
+          accessibilityLabel={t('recordingDetail.document.openA11y')}
+          accessibilityState={{ disabled: isOpeningDocument, busy: isOpeningDocument }}
         />
         <HeaderIconButton
           iconOnly
@@ -218,6 +240,7 @@ export const RecordingDetailHeader = ({
             if (nativeEvent.event === 'moveToFolder') onMoveToFolder();
             if (nativeEvent.event === 'archive') onArchive();
             if (nativeEvent.event === 'unarchive') onUnarchive();
+            if (nativeEvent.event === 'share') onShare();
             if (nativeEvent.event === 'delete') onDelete();
             if (nativeEvent.event === 'allTasksForNote') onOpenAllTasksForNote?.();
           }}
