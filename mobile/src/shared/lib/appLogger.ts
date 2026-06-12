@@ -60,13 +60,15 @@ function truncateString(value: string): string {
 function redactUrl(url: string): string {
   try {
     const parsed = new URL(url);
-    if (parsed.search) {
-      parsed.search = '?[REDACTED]';
-    }
-    return parsed.toString();
+    const path = parsed.pathname || '/';
+    return parsed.search ? `${path}?[REDACTED]` : path;
   } catch {
-    const [base, query] = url.split('?');
-    return query != null ? `${base}?[REDACTED]` : url;
+    const trimmed = url.trim();
+    if (trimmed.startsWith('/')) {
+      const [path, query] = trimmed.split('?');
+      return query != null ? `${path}?[REDACTED]` : path;
+    }
+    return '[REDACTED_URL]';
   }
 }
 
@@ -117,8 +119,11 @@ function sanitizeForLog(value: unknown, depth = 0): unknown {
         continue;
       }
 
-      if (normalizedKey === 'url' && typeof nestedValue === 'string') {
-        out[key] = redactUrl(nestedValue);
+      if (
+        (normalizedKey === 'url' || normalizedKey === 'host' || normalizedKey === 'webapihost') &&
+        typeof nestedValue === 'string'
+      ) {
+        out[key] = normalizedKey === 'url' ? redactUrl(nestedValue) : '[REDACTED]';
         continue;
       }
 

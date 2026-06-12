@@ -12,7 +12,7 @@ import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorag
 import { syncAllTaskDeadlineNotifications } from '@/features/task-deadline-notifications';
 import { cleanupOrphanTranscriptionTempWavs } from '@/features/transcription/lib/transcriptionTempAudioCleanup';
 import { initRuntimeConfig } from '@/shared/config/runtimeConfig';
-import { getWebApiEnvironmentStatus, getWebApiHost } from '@/shared/config/webApiEnvironment';
+import { getWebApiEnvironmentStatus } from '@/shared/config/webApiEnvironment';
 import { initDB } from '@/shared/lib';
 import { syncAnalyticsUserId } from '@/shared/lib/analytics';
 import { initFirebaseAppCheck } from '@/shared/lib/app-check/appCheckToken';
@@ -60,7 +60,6 @@ export function useAppBootstrap(
       .then(() => {
         diagInfo('[bootstrap] web API', {
           environment: getWebApiEnvironmentStatus(),
-          host: getWebApiHost(),
         });
         prefetchModelManifest();
         return dbInit;

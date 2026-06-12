@@ -19,7 +19,7 @@ import {
   readTestflightWebApiUrlOverride,
   subscribeTestflightWebApiUrlOverride,
 } from '@/shared/config/testflightWebApiOverride';
-import { getWebApiEnvironmentStatus, getWebApiHost } from '@/shared/config/webApiEnvironment';
+import { getWebApiEnvironmentStatus } from '@/shared/config/webApiEnvironment';
 import { clearApiToken } from '@/shared/lib/api-auth';
 import { diagInfo, diagWarn } from '@/shared/lib/appLogger';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
@@ -172,7 +172,6 @@ export const SettingsInternalTechInfo = () => {
     clearApiToken();
     diagInfo('[settings] web API', {
       environment: getWebApiEnvironmentStatus(),
-      host: getWebApiHost(),
     });
 
     if (urlResult === 'cleared') {
