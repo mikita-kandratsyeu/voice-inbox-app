@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TextInput as TextInputType } from 'react-native';
 import { Alert, TextInput, View } from 'react-native';
@@ -50,6 +50,9 @@ export function NoteDocumentSourceEditor({
 }: NoteDocumentSourceEditorProps) {
   const { t } = useTranslation();
   const selectionRef = useRef<TextSelection>({ start: value.length, end: value.length });
+  const isTypingRef = useRef(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const { inputHeight: inputContentHeight, handleContentSizeChange } = useMultilineInputAutoHeight({
     inputRef,
     minHeight: MIN_INPUT_HEIGHT,
@@ -58,16 +61,40 @@ export function NoteDocumentSourceEditor({
   });
   const [linkPromptVisible, setLinkPromptVisible] = useState(false);
 
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleTextChange = useCallback(
+    (text: string) => {
+      onChangeText(text);
+
+      // Mark as typing and reset timeout
+      isTypingRef.current = true;
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      typingTimeoutRef.current = setTimeout(() => {
+        isTypingRef.current = false;
+      }, 150);
+    },
+    [onChangeText],
+  );
+
   const applyEditResult = useCallback(
     (result: { text: string; selection: TextSelection }) => {
-      onChangeText(result.text);
+      handleTextChange(result.text);
       selectionRef.current = result.selection;
       requestAnimationFrame(() => {
         inputRef.current?.setNativeProps({ selection: result.selection });
         inputRef.current?.focus();
       });
     },
-    [inputRef, onChangeText],
+    [inputRef, handleTextChange],
   );
 
   const applyAction = useCallback(
@@ -124,7 +151,8 @@ export function NoteDocumentSourceEditor({
         keyboardShouldPersistTaps="handled"
         disableScrollOnKeyboardHide
         showsVerticalScrollIndicator
-        bottomOffset={16}
+        bottomOffset={24}
+        enabled={editable}
       >
         <View
           style={{
@@ -150,10 +178,17 @@ export function NoteDocumentSourceEditor({
             multiline
             scrollEnabled={false}
             value={value}
-            onChangeText={onChangeText}
+            onChangeText={handleTextChange}
             onContentSizeChange={handleContentSizeChange}
             onSelectionChange={(event) => {
-              selectionRef.current = event.nativeEvent.selection;
+              const newSelection = event.nativeEvent.selection;
+              // Only update if selection actually changed
+              if (
+                newSelection.start !== selectionRef.current.start ||
+                newSelection.end !== selectionRef.current.end
+              ) {
+                selectionRef.current = newSelection;
+              }
             }}
             editable={editable}
             autoCorrect={false}

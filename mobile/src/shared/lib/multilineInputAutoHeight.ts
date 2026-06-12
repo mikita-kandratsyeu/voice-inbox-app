@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import type {
-  NativeSyntheticEvent,
-  TextInput,
-  TextInputContentSizeChangeEventData,
-} from 'react-native';
+import type { NativeSyntheticEvent, TextInput } from 'react-native';
 
 const DEFAULT_HEIGHT_QUANTUM = 16;
 
@@ -37,17 +33,22 @@ export function useMultilineInputAutoHeight({
   const heightRef = useRef<number | null>(null);
   const pendingHeightRef = useRef<number | null>(null);
   const rafIdRef = useRef<number | null>(null);
+  const lastAppliedHeightRef = useRef<number | null>(null);
 
   if (heightRef.current === null) {
-    heightRef.current = quantizeMultilineInputHeight(estimateHeight(), minHeight, heightQuantum);
+    const estimated = quantizeMultilineInputHeight(estimateHeight(), minHeight, heightQuantum);
+    heightRef.current = estimated;
+    lastAppliedHeightRef.current = estimated;
   }
 
   const flushPendingHeight = useCallback(() => {
     rafIdRef.current = null;
     const next = pendingHeightRef.current;
     pendingHeightRef.current = null;
-    if (next === null || next === heightRef.current) return;
+    if (next === null || next === lastAppliedHeightRef.current) return;
+
     heightRef.current = next;
+    lastAppliedHeightRef.current = next;
     inputRef.current?.setNativeProps({ style: { height: next } });
   }, [inputRef]);
 
@@ -64,16 +65,19 @@ export function useMultilineInputAutoHeight({
   );
 
   const handleContentSizeChange = useCallback(
-    (event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
+    (event: NativeSyntheticEvent<{ contentSize: { width: number; height: number } }>) => {
       const next = quantizeMultilineInputHeight(
         event.nativeEvent.contentSize.height,
         minHeight,
         heightQuantum,
       );
-      if (next === heightRef.current) {
+
+      // Skip if height hasn't changed significantly
+      if (next === heightRef.current || next === lastAppliedHeightRef.current) {
         pendingHeightRef.current = null;
         return;
       }
+
       pendingHeightRef.current = next;
       scheduleHeightFlush();
     },
