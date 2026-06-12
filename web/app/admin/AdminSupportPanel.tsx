@@ -109,9 +109,7 @@ function calculateStats(items: SupportItem[]): SupportStats {
   const closed = items.filter((i) => i.status === 'closed').length;
 
   // Calculate average response time for closed tickets (in hours)
-  const closedWithTime = items.filter(
-    (i) => i.status === 'closed' && i.createdAt && i.updatedAt,
-  );
+  const closedWithTime = items.filter((i) => i.status === 'closed' && i.createdAt && i.updatedAt);
   let avgResponseTime: number | null = null;
   if (closedWithTime.length > 0) {
     const totalTime = closedWithTime.reduce((sum, item) => {
@@ -536,9 +534,7 @@ export function AdminSupportPanel() {
         </div>
       ) : items.length === 0 ? (
         <AdminEmptyState
-          title={
-            debouncedSearch ? 'No tickets match this search.' : 'No tickets for this filter.'
-          }
+          title={debouncedSearch ? 'No tickets match this search.' : 'No tickets for this filter.'}
           hint="Tickets will appear here when users submit support requests."
         />
       ) : (
@@ -661,11 +657,7 @@ export function AdminSupportPanel() {
                       <button
                         type="button"
                         onClick={() => setReplyOpenId(showReply ? null : row.id)}
-                        className={
-                          showReply
-                            ? `${adminBtnPrimaryClass}`
-                            : adminBtnSecondaryClass
-                        }
+                        className={showReply ? `${adminBtnPrimaryClass}` : adminBtnSecondaryClass}
                       >
                         {showReply ? 'Hide reply' : 'Reply'}
                       </button>

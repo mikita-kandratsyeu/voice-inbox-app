@@ -1,4 +1,4 @@
-import { MIN_TRANSCRIBE_MS, isTooShortForTranscription } from '../transcriptionDuration';
+import { isTooShortForTranscription, MIN_TRANSCRIBE_MS } from '../transcriptionDuration';
 
 describe('transcriptionDuration', () => {
   it('isTooShortForTranscription uses MIN_TRANSCRIBE_MS', () => {

@@ -27,8 +27,8 @@ import type {
   TaskStrictness,
 } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
-import { isMeetingSpeakerSettingsAvailable } from '@/features/ai-processing/lib/meetingSpeakerBreakdown';
 import { type CloudAiKvTtlSeconds } from '@/entities/settings/lib/cloudAiKvTtl';
+import { isMeetingSpeakerSettingsAvailable } from '@/features/ai-processing/lib/meetingSpeakerBreakdown';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';

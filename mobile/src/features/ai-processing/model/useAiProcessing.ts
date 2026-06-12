@@ -13,13 +13,13 @@ import {
   applyAiSummaryResult,
   existingTaskTextsForRecord,
 } from '@/features/ai-processing/lib/applyAiSummaryResult';
-import { shouldIncludeMeetingSpeakerBreakdown } from '@/features/ai-processing/lib/meetingSpeakerBreakdown';
 import {
   clearCloudSummarizeInFlight,
   isCloudSummarizeInFlight,
   markCloudSummarizeInFlight,
 } from '@/features/ai-processing/lib/cloudSummarizeInFlight';
 import { markUnreadAfterSummaryRegenerationIfNeeded } from '@/features/ai-processing/lib/markUnreadAfterSummaryRegeneration';
+import { shouldIncludeMeetingSpeakerBreakdown } from '@/features/ai-processing/lib/meetingSpeakerBreakdown';
 import { regenerateMeetingDialogue as runRegenerateMeetingDialogue } from '@/features/ai-processing/lib/regenerateMeetingDialogue';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';

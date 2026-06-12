@@ -25,11 +25,13 @@ export function shouldIncludeMeetingSpeakerBreakdown(input: {
   autoRefreshMeetingSpeakersOnRegen: boolean;
 }): boolean {
   if (!input.isProActive || !input.recordIsMeeting) return false;
-  if (!isMeetingSpeakerSettingsAvailable(
-    input.aiExecutionMode,
-    input.privateAiProvider,
-    input.isProActive,
-  )) {
+  if (
+    !isMeetingSpeakerSettingsAvailable(
+      input.aiExecutionMode,
+      input.privateAiProvider,
+      input.isProActive,
+    )
+  ) {
     return false;
   }
   return input.autoRefreshMeetingSpeakersOnRegen || !input.wasSummaryRegeneration;

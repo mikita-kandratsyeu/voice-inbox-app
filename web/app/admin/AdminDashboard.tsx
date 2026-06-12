@@ -717,7 +717,7 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
                           QStash:{' '}
                           {status.qstash.ok
                             ? `✓ ${status.qstash.transport ?? 'qstash'}`
-                            : status.qstash.error ?? 'not configured'}
+                            : (status.qstash.error ?? 'not configured')}
                         </p>
                       )}
                     </div>
@@ -802,8 +802,8 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
                                       d.state === 'READY'
                                         ? 'success'
                                         : d.state === 'ERROR' || d.state === 'CANCELED'
-                                        ? 'error'
-                                        : 'warning'
+                                          ? 'error'
+                                          : 'warning'
                                     }
                                   >
                                     {d.state}

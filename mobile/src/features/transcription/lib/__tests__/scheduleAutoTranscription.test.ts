@@ -7,12 +7,10 @@ jest.mock('../../model/transcriptionConcurrency', () => ({
 describe('tryScheduleAutoTranscription', () => {
   it('skips short recordings', () => {
     const start = jest.fn();
-    const result = tryScheduleAutoTranscription(
-      { id: 'r1', durationMs: 500 },
-      [],
-      start,
-      { id: 'r1', durationMs: 500 } as never,
-    );
+    const result = tryScheduleAutoTranscription({ id: 'r1', durationMs: 500 }, [], start, {
+      id: 'r1',
+      durationMs: 500,
+    } as never);
 
     expect(result).toBe('too_short');
     expect(start).not.toHaveBeenCalled();

@@ -16,7 +16,6 @@ import {
   getAdaptiveCheckpointInterval,
   getDevicePerformanceProfile,
 } from '../lib/devicePerformanceProfile';
-import { isTooShortForTranscription } from '../lib/transcriptionDuration';
 import { getWhisperContext, resetWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
 import { resolveTranscriptionChunkProfile } from '../lib/resolveTranscriptionChunkProfile';
 import { transcribeAudio } from '../lib/transcribeAudio';
@@ -25,6 +24,7 @@ import {
   removeTranscriptionCheckpoint,
   saveTranscriptionCheckpoint,
 } from '../lib/transcriptionCheckpoint';
+import { isTooShortForTranscription } from '../lib/transcriptionDuration';
 import {
   getTranscriptionErrorCode,
   isAbortTranscriptionError,

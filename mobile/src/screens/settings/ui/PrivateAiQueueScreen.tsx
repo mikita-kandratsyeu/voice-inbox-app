@@ -107,13 +107,17 @@ export const PrivateAiQueueScreen = () => {
   );
 
   const showServerUnreachableAlert = useCallback(() => {
-    Alert.alert(t('privateAiQueue.serverUnreachableTitle'), t('privateAiQueue.serverUnreachableMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('privateAiQueue.openServerSettings'),
-        onPress: () => navigation.navigate('PrivateRemoteServer'),
-      },
-    ]);
+    Alert.alert(
+      t('privateAiQueue.serverUnreachableTitle'),
+      t('privateAiQueue.serverUnreachableMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('privateAiQueue.openServerSettings'),
+          onPress: () => navigation.navigate('PrivateRemoteServer'),
+        },
+      ],
+    );
   }, [navigation, t]);
 
   const onRunOne = useCallback(

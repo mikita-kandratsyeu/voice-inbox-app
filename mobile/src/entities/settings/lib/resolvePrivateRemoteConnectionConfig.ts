@@ -51,10 +51,7 @@ export function hydratePrivateRemoteWorkingConfig(): void {
   if (privateRemoteModel.trim() !== resolved.privateRemoteModel) {
     setPrivateRemoteModel(resolved.privateRemoteModel);
   }
-  if (
-    resolved.privateRemoteApiKey &&
-    privateRemoteApiKey.trim() !== resolved.privateRemoteApiKey
-  ) {
+  if (resolved.privateRemoteApiKey && privateRemoteApiKey.trim() !== resolved.privateRemoteApiKey) {
     setPrivateRemoteApiKey(resolved.privateRemoteApiKey);
   }
 }

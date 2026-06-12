@@ -118,11 +118,12 @@ export function AdminMetricCard({
   className = '',
   trend,
 }: AdminMetricCardProps) {
-  const trendColor = trend === 'up'
-    ? 'text-emerald-600 dark:text-emerald-400'
-    : trend === 'down'
-    ? 'text-red-600 dark:text-red-400'
-    : 'text-zinc-500 dark:text-zinc-400';
+  const trendColor =
+    trend === 'up'
+      ? 'text-emerald-600 dark:text-emerald-400'
+      : trend === 'down'
+        ? 'text-red-600 dark:text-red-400'
+        : 'text-zinc-500 dark:text-zinc-400';
 
   return (
     <section className={`${adminMetricCardClass} ${className}`.trim()}>
@@ -426,8 +427,7 @@ export function AdminDetailsSection({
 }
 
 /** Enhanced table styles */
-export const adminTableClass =
-  'min-w-full divide-y divide-zinc-200/80 dark:divide-zinc-700/80';
+export const adminTableClass = 'min-w-full divide-y divide-zinc-200/80 dark:divide-zinc-700/80';
 
 export const adminTableHeadClass =
   'bg-gradient-to-br from-zinc-50 to-zinc-100/50 dark:from-zinc-900/80 dark:to-zinc-800/40';
@@ -441,5 +441,4 @@ export const adminTableBodyClass =
 export const adminTableRowClass =
   'transition-colors duration-150 hover:bg-zinc-50/80 dark:hover:bg-zinc-800/50';
 
-export const adminTableCellClass =
-  'px-4 py-3.5 text-sm text-zinc-900 dark:text-zinc-100';
+export const adminTableCellClass = 'px-4 py-3.5 text-sm text-zinc-900 dark:text-zinc-100';

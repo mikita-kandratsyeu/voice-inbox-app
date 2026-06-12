@@ -18,17 +18,6 @@ export {
 export { isDigestAiEnabled } from './lib/isDigestAiEnabled';
 export { isPrivateCustomServerMode } from './lib/isPrivateCustomServerMode';
 export {
-  clampPrivateRemoteQueueConcurrency,
-  DEFAULT_PRIVATE_REMOTE_QUEUE_CONCURRENCY,
-  parseStoredPrivateRemoteQueueConcurrency,
-  PRIVATE_REMOTE_QUEUE_CONCURRENCY_OPTIONS,
-} from './lib/privateRemoteQueueConcurrency';
-export {
-  hydratePrivateRemoteWorkingConfig,
-  resolvePrivateRemoteConnectionConfig,
-  type PrivateRemoteConnectionConfig,
-} from './lib/resolvePrivateRemoteConnectionConfig';
-export {
   getOnboardingCuratedCloudModels,
   ONBOARDING_CURATED_CLOUD_MODEL_IDS,
   shouldShowOnboardingAllModelsHint,
@@ -40,10 +29,21 @@ export {
   type PrivateAiCapabilityDiagnostics,
   resolvePrivateAiCapabilityTier,
 } from './lib/privateAiCapability';
+export {
+  clampPrivateRemoteQueueConcurrency,
+  DEFAULT_PRIVATE_REMOTE_QUEUE_CONCURRENCY,
+  parseStoredPrivateRemoteQueueConcurrency,
+  PRIVATE_REMOTE_QUEUE_CONCURRENCY_OPTIONS,
+} from './lib/privateRemoteQueueConcurrency';
 export { FALLBACK_AI_MODEL_WHEN_NOT_PRO, isProOnlyAiModel } from './lib/proOnlyAiModels';
 export { RECOMMENDED_AI_MODEL_ID } from './lib/recommendAiModel';
 export { getRecommendedWhisperModelId } from './lib/recommendWhisperModel';
 export { resolveEffectivePrivateAiProvider } from './lib/resolveEffectivePrivateAiProvider';
+export {
+  hydratePrivateRemoteWorkingConfig,
+  type PrivateRemoteConnectionConfig,
+  resolvePrivateRemoteConnectionConfig,
+} from './lib/resolvePrivateRemoteConnectionConfig';
 export { syncPrivateCapabilityTier } from './lib/syncPrivateCapabilityTier';
 export { TRANSCRIPTION_LANGUAGES, TRANSLATE_LANGUAGES } from './lib/transcriptionLanguages';
 export { useRecommendedWhisperModelId } from './lib/useRecommendedWhisperModelId';

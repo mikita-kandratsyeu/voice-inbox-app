@@ -11,21 +11,17 @@ import {
 describe('meetingSpeakerBreakdown gates', () => {
   describe('isMeetingSpeakerSettingsAvailable', () => {
     it('is available in Smart with Pro', () => {
-      expect(
-        isMeetingSpeakerSettingsAvailable('smart_hybrid', 'local', true),
-      ).toBe(true);
+      expect(isMeetingSpeakerSettingsAvailable('smart_hybrid', 'local', true)).toBe(true);
     });
 
     it('is available in Private custom server with Pro', () => {
-      expect(
-        isMeetingSpeakerSettingsAvailable('private_experimental', 'custom_openai', true),
-      ).toBe(true);
+      expect(isMeetingSpeakerSettingsAvailable('private_experimental', 'custom_openai', true)).toBe(
+        true,
+      );
     });
 
     it('is hidden in Private local LLM', () => {
-      expect(
-        isMeetingSpeakerSettingsAvailable('private_experimental', 'local', true),
-      ).toBe(false);
+      expect(isMeetingSpeakerSettingsAvailable('private_experimental', 'local', true)).toBe(false);
     });
   });
 

@@ -151,7 +151,9 @@ export const PrivateRemoteServerScreen = () => {
 
   const screen = usePrivateRemoteServerScreen();
   const privateRemoteQueueConcurrency = useSettingsStore((s) => s.privateRemoteQueueConcurrency);
-  const setPrivateRemoteQueueConcurrency = useSettingsStore((s) => s.setPrivateRemoteQueueConcurrency);
+  const setPrivateRemoteQueueConcurrency = useSettingsStore(
+    (s) => s.setPrivateRemoteQueueConcurrency,
+  );
   const queueConcurrencyLabel = (value: PrivateRemoteQueueConcurrency) =>
     t(`aiSettings.privateProvider.queueConcurrency.m${value}`);
 
@@ -504,7 +506,10 @@ export const PrivateRemoteServerScreen = () => {
           </View>
 
           <View className="mb-8">
-            <Text className="mb-2 text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+            <Text
+              className="mb-2 text-[13px] font-semibold"
+              style={{ color: color.text.secondary }}
+            >
               {t('aiSettings.privateProvider.queueConcurrency.title')}
             </Text>
             <Text className="mb-3 text-[13px] leading-5" style={{ color: color.text.muted }}>

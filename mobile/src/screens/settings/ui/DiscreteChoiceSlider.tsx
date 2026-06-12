@@ -28,7 +28,10 @@ function indexForValue(choices: readonly number[], value: number): number {
  * Horizontal range where the native Slider thumb centers actually move.
  * @react-native-community/slider draws the track inset from the control bounds; values are tuned for alignment with tick marks.
  */
-function sliderThumbGeometry(trackWidth: number, maxIndex: number): { inset: number; span: number } {
+function sliderThumbGeometry(
+  trackWidth: number,
+  maxIndex: number,
+): { inset: number; span: number } {
   if (trackWidth <= 0 || maxIndex <= 0) return { inset: 0, span: 0 };
   const inset = selectPlatform({
     ios: Math.min(16, trackWidth * 0.078),

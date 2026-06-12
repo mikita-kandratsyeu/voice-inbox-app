@@ -55,7 +55,9 @@ describe('resolvePrivateRemoteConnectionConfig', () => {
       ],
     });
 
-    expect(resolvePrivateRemoteConnectionConfig().privateRemoteBaseUrl).toBe('http://10.0.0.2:1234/v1');
+    expect(resolvePrivateRemoteConnectionConfig().privateRemoteBaseUrl).toBe(
+      'http://10.0.0.2:1234/v1',
+    );
   });
 
   it('hydrates working fields from saved config', () => {
