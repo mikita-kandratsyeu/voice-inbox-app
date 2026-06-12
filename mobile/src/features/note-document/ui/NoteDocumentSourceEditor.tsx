@@ -21,6 +21,7 @@ import {
   type MarkdownEditAction,
   type TextSelection,
 } from '../lib/applyMarkdownEdit';
+import { NOTE_DOCUMENT_CONTENT_MAX_WIDTH } from '../lib/noteDocumentLayout';
 import { NoteDocumentMarkdownToolbar } from './NoteDocumentMarkdownToolbar';
 
 type NoteDocumentSourceEditorProps = {
@@ -80,6 +81,7 @@ export function NoteDocumentSourceEditor({
       <NoteDocumentMarkdownToolbar
         color={color}
         isTablet={isTablet}
+        horizontalPadding={horizontalPadding}
         onAction={applyAction}
         disabled={!editable}
       />
@@ -90,6 +92,7 @@ export function NoteDocumentSourceEditor({
           paddingHorizontal: horizontalPadding,
           paddingTop: 16,
           paddingBottom: scrollPaddingBottom,
+          ...(isTablet && { alignItems: 'center' }),
         }}
         keyboardDismissMode={IS_IOS ? 'interactive' : 'on-drag'}
         keyboardShouldPersistTaps="handled"
@@ -97,34 +100,41 @@ export function NoteDocumentSourceEditor({
         showsVerticalScrollIndicator
         bottomOffset={16}
       >
-        <TextInput
-          ref={inputRef}
-          style={[
-            getInputFieldInputStyle(color, true),
-            {
-              color: color.text.primary,
-              fontSize: NOTE_DOCUMENT_BODY_FONT_SIZE,
-              lineHeight: NOTE_DOCUMENT_BODY_LINE_HEIGHT,
-              minHeight,
-              height: inputContentHeight,
-              textAlignVertical: 'top',
-            },
-          ]}
-          multiline
-          scrollEnabled={false}
-          value={value}
-          onChangeText={onChangeText}
-          onContentSizeChange={handleContentSizeChange}
-          onSelectionChange={(event) => {
-            selectionRef.current = event.nativeEvent.selection;
+        <View
+          style={{
+            width: '100%',
+            maxWidth: isTablet ? NOTE_DOCUMENT_CONTENT_MAX_WIDTH : undefined,
           }}
-          editable={editable}
-          autoCorrect={false}
-          autoCapitalize="sentences"
-          keyboardAppearance="default"
-          textAlignVertical="top"
-          accessibilityLabel={t('recordingDetail.document.editing')}
-        />
+        >
+          <TextInput
+            ref={inputRef}
+            style={[
+              getInputFieldInputStyle(color, true),
+              {
+                color: color.text.primary,
+                fontSize: NOTE_DOCUMENT_BODY_FONT_SIZE,
+                lineHeight: NOTE_DOCUMENT_BODY_LINE_HEIGHT,
+                minHeight,
+                height: inputContentHeight,
+                textAlignVertical: 'top',
+              },
+            ]}
+            multiline
+            scrollEnabled={false}
+            value={value}
+            onChangeText={onChangeText}
+            onContentSizeChange={handleContentSizeChange}
+            onSelectionChange={(event) => {
+              selectionRef.current = event.nativeEvent.selection;
+            }}
+            editable={editable}
+            autoCorrect={false}
+            autoCapitalize="sentences"
+            keyboardAppearance="default"
+            textAlignVertical="top"
+            accessibilityLabel={t('recordingDetail.document.editing')}
+          />
+        </View>
       </KeyboardAwareScrollView>
     </View>
   );

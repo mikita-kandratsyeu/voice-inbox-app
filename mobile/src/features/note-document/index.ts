@@ -2,6 +2,7 @@ export {
   buildNoteDocumentMarkdown,
   resolveNoteDocumentTemplate,
 } from './lib/buildNoteDocumentMarkdown';
+export { NOTE_DOCUMENT_CONTENT_MAX_WIDTH } from './lib/noteDocumentLayout';
 export {
   listNoteDocumentSectionIds,
   stripNoteDocumentMarkers,

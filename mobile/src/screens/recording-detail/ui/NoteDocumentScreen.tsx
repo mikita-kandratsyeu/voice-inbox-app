@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { RootStackParamList } from '@/app/navigation/types';
 import {
+  NOTE_DOCUMENT_CONTENT_MAX_WIDTH,
   NoteDocumentPreparingState,
   NoteDocumentReadingBody,
   NoteDocumentSavingOverlay,
@@ -146,7 +147,6 @@ export const NoteDocumentScreen = () => {
 
   const readingHorizontalPadding = isTablet ? 48 : 20;
   const sourceHorizontalPadding = isTablet ? 48 : 20;
-  const readingMaxWidth = 680;
 
   return (
     <View
@@ -245,7 +245,12 @@ export const NoteDocumentScreen = () => {
               showsVerticalScrollIndicator
               bottomOffset={16}
             >
-              <View style={{ width: '100%', maxWidth: isTablet ? readingMaxWidth : undefined }}>
+              <View
+                style={{
+                  width: '100%',
+                  maxWidth: isTablet ? NOTE_DOCUMENT_CONTENT_MAX_WIDTH : undefined,
+                }}
+              >
                 <NoteDocumentReadingBody
                   color={color}
                   documentMarkdown={documentMarkdown}
