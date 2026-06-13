@@ -57,12 +57,19 @@ function mergeDeadline(a?: string | null, b?: string | null): string | undefined
   return a <= b ? a : b;
 }
 
+function mergeDeadlineTime(a?: string | null, b?: string | null): string | undefined {
+  if (!a?.trim()) return b?.trim() ?? undefined;
+  if (!b?.trim()) return a.trim();
+  return a <= b ? a : b;
+}
+
 function mergePair(keep: TaskItem, incoming: TaskItem): TaskItem {
   return {
     ...keep,
     text: mergeTaskText(keep, incoming),
     priority: mergePriority(keep.priority, incoming.priority),
     deadline: mergeDeadline(keep.deadline, incoming.deadline),
+    deadlineTime: mergeDeadlineTime(keep.deadlineTime, incoming.deadlineTime),
   };
 }
 

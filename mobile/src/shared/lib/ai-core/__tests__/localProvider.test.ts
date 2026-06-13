@@ -221,6 +221,10 @@ describe('normalizeDeadline', () => {
     expect(normalizeDeadline('2024-02-29')).toBe('2024-02-29');
   });
 
+  it('accepts ISO datetime and keeps date part', () => {
+    expect(normalizeDeadline('2026-06-13T18:00:00+03:00')).toBe('2026-06-13');
+  });
+
   it('rejects invalid calendar dates', () => {
     expect(normalizeDeadline('2024-02-30')).toBe(null);
     expect(normalizeDeadline('2023-02-29')).toBe(null);
@@ -330,6 +334,21 @@ describe('sanitizeTasks', () => {
   it('defaults unknown priority to medium', () => {
     expect(sanitizeTasks([{ title: 't', priority: 'urgent' }])).toEqual([
       { title: 't', priority: 'medium', deadline: null },
+    ]);
+  });
+
+  it('splits ISO datetime into deadline and deadlineTime', () => {
+    expect(
+      sanitizeTasks([
+        { title: 'Pick up suit', priority: 'high', deadline: '2026-06-13T18:00:00+03:00' },
+      ]),
+    ).toEqual([
+      {
+        title: 'Pick up suit',
+        priority: 'high',
+        deadline: '2026-06-13',
+        deadlineTime: expect.stringMatching(/^\d{2}:\d{2}$/),
+      },
     ]);
   });
 });

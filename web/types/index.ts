@@ -19,6 +19,7 @@ export type AiResult = {
     title: string;
     priority: 'high' | 'medium' | 'low';
     deadline: string | null;
+    deadlineTime?: string | null;
   }>;
   tags: string[];
   classification?: RecordClassification;

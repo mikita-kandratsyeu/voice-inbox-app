@@ -308,7 +308,8 @@ ${
   - medium = important but not urgent
   - low = optional, exploratory, vague, or future-facing
 - deadline:
-  - Convert clearly stated dates or relative dates to ISO 8601 format (YYYY-MM-DD).
+  - Use YYYY-MM-DD when only a date is known.
+  - When a specific time is stated (e.g. "at 18:00"), use ISO 8601 datetime YYYY-MM-DDTHH:mm:ss with the user's local offset if known.
   - Use the reference date above for words like "today", "tomorrow", "next week", or weekday names.
   - If the date is unclear, approximate, or missing, use null.
   - Do NOT guess missing dates.

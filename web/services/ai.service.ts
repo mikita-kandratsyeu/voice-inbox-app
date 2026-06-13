@@ -30,6 +30,7 @@ import {
 import type { AutoOrganizeMode, AutoOrganizeTemplate } from '@/lib/auto-organize-types';
 import { normalizeAutoOrganizeTemplate } from '@/lib/auto-organize-types';
 import { buildAskUserMessageContent } from '@/lib/ask-user-message';
+import { normalizeTaskDeadlineFields } from '@/lib/normalizeTaskDeadlineFields';
 import { parseOpenRouterJsonContent } from '@/lib/parse-openrouter-json';
 import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
 import { ASK_QUESTION_SYSTEM_PROMPT } from '@/lib/prompts';
@@ -94,10 +95,14 @@ function buildSummaryAiResult(
       throw new Error('Invalid AI response: invalid task structure');
     }
     const task = t as { title: string; priority: string; deadline?: string | null };
+    const normalizedDeadline = normalizeTaskDeadlineFields(task.deadline);
     return {
       title: task.title,
       priority: task.priority as 'high' | 'medium' | 'low',
-      deadline: task.deadline ?? null,
+      deadline: normalizedDeadline?.deadline ?? null,
+      ...(normalizedDeadline?.deadlineTime
+        ? { deadlineTime: normalizedDeadline.deadlineTime }
+        : {}),
     };
   });
 

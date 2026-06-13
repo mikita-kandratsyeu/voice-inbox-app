@@ -87,7 +87,7 @@ const LOCAL_SUMMARY_SYSTEM_BASE = [
   'UTF-8, double-quoted keys; arrays [] when empty. Plain text in strings. Follow the user message for language, summary length, and task strictness.',
   'Stay faithful; do not invent people, dates, or commitments.',
   'Fields: summary, suggestedTitle, tasks[], tags[], classification, keyPhrases[], nextSteps[].',
-  'tasks[] items: {title, priority, deadline}. priority: high|medium|low. deadline: YYYY-MM-DD or null — use Reference date only for relative phrases; if unsure, null.',
+  'tasks[] items: {title, priority, deadline}. priority: high|medium|low. deadline: YYYY-MM-DD, ISO datetime YYYY-MM-DDTHH:mm:ss when time is stated, or null — use Reference date only for relative phrases; if unsure, null.',
   'classification: personal|work|meeting|idea|other (dominant theme).',
   'suggestedTitle: ~3–8 words, specific; generic title only if content is empty or unusable.',
   'tags: 2–5 lowercase topics; not note/voice/recording/заметка. keyPhrases: 3–8 short entities (not sentences). nextSteps: 0–3 follow-ups; do not copy task titles or lines listed under existing saved tasks.',

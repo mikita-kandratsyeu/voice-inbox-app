@@ -1,4 +1,5 @@
 import type { TaskItem } from '@/entities/record';
+import { normalizeTaskDeadlineFields } from '@/shared/lib/normalizeTaskDeadlineFields';
 import { isArray, isBoolean, isRecord, isString } from '@/shared/lib/type-guards';
 
 const TASK_PRIORITIES = new Set<TaskItem['priority']>(['high', 'medium', 'low']);
@@ -25,11 +26,16 @@ export function normalizeImportedTasks(raw: unknown): TaskItem[] | undefined {
     };
 
     if (isString(item.deadline)) {
-      const deadline = item.deadline.trim();
-      task.deadline = deadline.length > 0 ? deadline : null;
+      const normalized = normalizeTaskDeadlineFields(item.deadline);
+      if (normalized) {
+        task.deadline = normalized.deadline;
+        if (normalized.deadlineTime) {
+          task.deadlineTime = normalized.deadlineTime;
+        }
+      }
     }
 
-    if (isString(item.deadlineTime)) {
+    if (isString(item.deadlineTime) && task.deadlineTime == null) {
       const deadlineTime = item.deadlineTime.trim();
       task.deadlineTime = deadlineTime.length > 0 ? deadlineTime : null;
     }

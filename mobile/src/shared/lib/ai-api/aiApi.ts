@@ -73,6 +73,7 @@ export type AiTask = {
   title: string;
   priority: 'high' | 'medium' | 'low';
   deadline: string | null;
+  deadlineTime?: string | null;
 };
 
 export type RecordClassification = 'personal' | 'work' | 'meeting' | 'idea' | 'other';

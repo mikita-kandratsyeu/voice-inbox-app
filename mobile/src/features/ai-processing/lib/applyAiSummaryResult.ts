@@ -9,7 +9,25 @@ import {
   normalizedManualTaskTextSet,
 } from '@/entities/record/model/taskTextDedupe';
 import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
-import type { AiProcessingResult } from '@/shared/lib/ai-api';
+import type { AiProcessingResult, AiTask } from '@/shared/lib/ai-api';
+import { normalizeTaskDeadlineFields } from '@/shared/lib/normalizeTaskDeadlineFields';
+
+function aiTaskToTaskItemFields(task: AiTask): Pick<TaskItem, 'deadline' | 'deadlineTime'> {
+  if (task.deadlineTime) {
+    return {
+      deadline: task.deadline ?? undefined,
+      deadlineTime: task.deadlineTime,
+    };
+  }
+
+  const normalized = normalizeTaskDeadlineFields(task.deadline);
+  if (!normalized) return {};
+
+  return {
+    deadline: normalized.deadline,
+    ...(normalized.deadlineTime ? { deadlineTime: normalized.deadlineTime } : {}),
+  };
+}
 
 export type ApplyAiSummaryResultParams = {
   record: VoiceRecord;
@@ -83,7 +101,7 @@ export async function applyAiSummaryResult(params: ApplyAiSummaryResultParams): 
     id: `${record.id}-task-${index}`,
     text: t.title,
     isDone: false,
-    deadline: t.deadline ?? undefined,
+    ...aiTaskToTaskItemFields(t),
     priority: t.priority,
     source: 'ai',
   }));

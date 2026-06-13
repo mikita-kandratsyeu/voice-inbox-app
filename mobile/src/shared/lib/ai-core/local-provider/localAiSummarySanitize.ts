@@ -1,10 +1,9 @@
 import type { AiProcessingResult, AiTask, RecordClassification } from '@/shared/lib/ai-api/aiApi';
+import { normalizeTaskDeadlineFields } from '@/shared/lib/normalizeTaskDeadlineFields';
 import { isRecord, isString } from '@/shared/lib/type-guards';
 
 import { FIELD_LIMITS } from './localAiConstants';
 import { LocalAiError } from './localAiErrors';
-
-const DEADLINE_ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 const CLASSIFICATION_VALUES: readonly RecordClassification[] = [
   'personal',
@@ -15,25 +14,21 @@ const CLASSIFICATION_VALUES: readonly RecordClassification[] = [
 ] as const;
 
 export function normalizeDeadline(value: unknown): string | null {
-  if (value === null || value === undefined) return null;
-  if (!isString(value)) return null;
+  return normalizeTaskDeadlineFields(value)?.deadline ?? null;
+}
 
-  const t = value.trim();
-
-  if (!t || t.toLowerCase() === 'null') return null;
-  if (!DEADLINE_ISO_RE.test(t)) return null;
-
-  const [ys, ms, ds] = t.split('-');
-  const y = Number(ys);
-  const mo = Number(ms);
-  const d = Number(ds);
-  const dt = new Date(Date.UTC(y, mo - 1, d));
-
-  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) {
-    return null;
+export function normalizeAiTaskDeadlineFields(
+  value: unknown,
+): Pick<AiTask, 'deadline' | 'deadlineTime'> {
+  const normalized = normalizeTaskDeadlineFields(value);
+  if (!normalized) {
+    return { deadline: null };
   }
 
-  return t;
+  return {
+    deadline: normalized.deadline,
+    ...(normalized.deadlineTime ? { deadlineTime: normalized.deadlineTime } : {}),
+  };
 }
 
 export function normalizeClassification(value: unknown): RecordClassification | undefined {
@@ -90,8 +85,13 @@ export function sanitizeTasks(value: unknown): AiTask[] {
     const title = isString(v.title) ? v.title.trim() : '';
     if (!title) continue;
     const priority = isString(v.priority) ? normalizePriority(v.priority) : 'medium';
-    const deadline = normalizeDeadline(v.deadline);
-    out.push({ title, priority, deadline });
+    const { deadline, deadlineTime } = normalizeAiTaskDeadlineFields(v.deadline);
+    out.push({
+      title,
+      priority,
+      deadline,
+      ...(deadlineTime ? { deadlineTime } : {}),
+    });
   }
 
   return out;
