@@ -160,6 +160,7 @@ export const TranscriptContent = ({
         isDiscardingResume={isCancellingTranscription}
         onEditTranscript={() => {
           const hasAudio = Boolean(r.audioPath?.trim());
+
           if (
             shouldOpenSegmentTranscriptEditor(transcriptSegments, {
               transcript: r.transcript,
@@ -170,6 +171,7 @@ export const TranscriptContent = ({
             navigation.navigate('EditTranscript', { record: r });
             return;
           }
+
           navigation.navigate('NoteDocument', { record: r, initialMode: 'source' });
         }}
         onTranslate={isTranscriptTooLongForTranslate ? undefined : handleTranslate}

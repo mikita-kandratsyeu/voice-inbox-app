@@ -7,7 +7,7 @@ export function shouldUseTranscriptSegmentView(
   hasAudio: boolean,
 ): boolean {
   if (!hasAudio || segments.length === 0) return false;
-  if (segments.length > 1) return true;
+  if (hasAudio && segments.length >= 1) return true;
   return (segments[0]?.tokens?.length ?? 0) > 0;
 }
 
@@ -22,12 +22,12 @@ export function shouldOpenSegmentTranscriptEditor(
   segments: TranscriptSegment[],
   { transcript, transcriptSegments, hasAudio }: SegmentTranscriptEditorInput,
 ): boolean {
-  if (shouldUseTranscriptSegmentView(segments, hasAudio)) {
-    return true;
+  if (!hasAudio) {
+    return false;
   }
 
-  if (hasAudio) {
-    return false;
+  if (shouldUseTranscriptSegmentView(segments, hasAudio)) {
+    return true;
   }
 
   return countRecordCardTextFragments(transcript, transcriptSegments) > 1;
