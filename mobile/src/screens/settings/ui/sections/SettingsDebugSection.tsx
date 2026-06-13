@@ -5,6 +5,8 @@ import React from 'react';
 import type { Colors } from '@/shared/config';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../../lib/settingsIconColor';
+
 type Props = {
   color: Colors;
   onHardReset: () => void;
@@ -22,7 +24,13 @@ export const SettingsDebugSection = ({
     {showCrashlyticsButton && (
       <SettingsRow
         label="Test Crashlytics (native crash)"
-        leftIcon={<AlertTriangle size={20} color={color.status.error.text} strokeWidth={1.8} />}
+        leftIcon={
+          <AlertTriangle
+            size={20}
+            color={getSettingsIconColor(color, 'alertTriangle')}
+            strokeWidth={1.8}
+          />
+        }
         onPress={() => crash(getCrashlytics())}
         showChevron={false}
         isFirst
@@ -32,7 +40,9 @@ export const SettingsDebugSection = ({
     )}
     <SettingsRow
       label={isHardResetting ? 'Hard reset in progress...' : 'Hard reset (wipe all app data)'}
-      leftIcon={<RotateCcw size={20} color={color.status.error.text} strokeWidth={1.8} />}
+      leftIcon={
+        <RotateCcw size={20} color={getSettingsIconColor(color, 'rotateCcw')} strokeWidth={1.8} />
+      }
       loading={isHardResetting}
       onPress={onHardReset}
       showChevron={false}

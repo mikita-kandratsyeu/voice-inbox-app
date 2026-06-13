@@ -7,6 +7,8 @@ import type { Colors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../../lib/settingsIconColor';
+
 type Props = {
   color: Colors;
   onOpenDigest: () => void;
@@ -20,7 +22,9 @@ export const SettingsDigestSection = ({ color, t, onOpenDigest, onOpenSiriShortc
       <SettingsRow
         label={t('settings.digest.title')}
         subtitle={t('settings.digest.settingsSubtitle')}
-        leftIcon={<Newspaper size={20} color={color.accent.transcript} strokeWidth={1.8} />}
+        leftIcon={
+          <Newspaper size={20} color={getSettingsIconColor(color, 'newspaper')} strokeWidth={1.8} />
+        }
         onPress={onOpenDigest}
         showChevron
         isFirst
@@ -29,7 +33,9 @@ export const SettingsDigestSection = ({ color, t, onOpenDigest, onOpenSiriShortc
         <SettingsRow
           label={t('settings.siriShortcuts.entryTitle')}
           subtitle={t('settings.siriShortcuts.entrySubtitle')}
-          leftIcon={<Command size={20} color={color.accent.pin} strokeWidth={1.8} />}
+          leftIcon={
+            <Command size={20} color={getSettingsIconColor(color, 'command')} strokeWidth={1.8} />
+          }
           onPress={onOpenSiriShortcuts}
           isLast
         />

@@ -7,6 +7,8 @@ import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { Colors } from '@/shared/config';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../../lib/settingsIconColor';
+
 type Props = {
   color: Colors;
   t: TFunction;
@@ -19,18 +21,28 @@ export const SettingsDeviceSection = ({ color, t, navigation, isAppLockEnabled }
     <SettingsRow
       label={t('settings.appLock')}
       value={isAppLockEnabled ? t('settings.on') : t('settings.off')}
-      leftIcon={<Fingerprint size={20} color={color.accent.primary} strokeWidth={1.8} />}
+      leftIcon={
+        <Fingerprint
+          size={20}
+          color={getSettingsIconColor(color, 'fingerprint')}
+          strokeWidth={1.8}
+        />
+      }
       onPress={() => navigation.navigate('AppLockSetup')}
       isFirst
     />
     <SettingsRow
       label={t('settings.offlineStorage')}
-      leftIcon={<HardDrive size={20} color={color.accent.success} strokeWidth={1.8} />}
+      leftIcon={
+        <HardDrive size={20} color={getSettingsIconColor(color, 'hardDrive')} strokeWidth={1.8} />
+      }
       onPress={() => navigation.navigate('StorageDetails')}
     />
     <SettingsRow
       label={t('trash.title')}
-      leftIcon={<Trash2 size={20} color={color.accent.delete} strokeWidth={1.8} />}
+      leftIcon={
+        <Trash2 size={20} color={getSettingsIconColor(color, 'trash2')} strokeWidth={1.8} />
+      }
       onPress={() => navigation.navigate('Trash')}
       isLast
     />

@@ -2,14 +2,14 @@ import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BookOpen, Check, FileCode, X } from 'lucide-react-native';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
-import type { EnrichedMarkdownTextInputInstance } from 'react-native-enriched-markdown';
 import { KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { RootStackParamList } from '@/app/navigation/types';
+import { isMeetingRecord } from '@/entities/record';
 import {
   NOTE_DOCUMENT_CONTENT_MAX_WIDTH,
   NOTE_DOCUMENT_TABLET_HORIZONTAL_PADDING,
@@ -17,6 +17,7 @@ import {
   NoteDocumentReadingBody,
   NoteDocumentSavingOverlay,
   NoteDocumentSourceEditor,
+  type NoteDocumentSourceEditorHandle,
   useNoteDocument,
 } from '@/features/note-document';
 import { useColors } from '@/shared/config';
@@ -30,7 +31,7 @@ export const NoteDocumentScreen = () => {
   const insets = useSafeAreaInsets();
   const color = useColors();
   const isTablet = useIsTablet();
-  const sourceInputRef = useRef<EnrichedMarkdownTextInputInstance>(null);
+  const sourceInputRef = useRef<NoteDocumentSourceEditorHandle>(null);
   const [sourceEditorKey, setSourceEditorKey] = useState(0);
 
   const scrollPaddingBottom = insets.bottom + 4;
@@ -60,8 +61,16 @@ export const NoteDocumentScreen = () => {
 
   const canSave = hasUnsavedChanges && !isSaving && !isPreparing;
   const controlsDisabled = isSaving || isPreparing;
+  const allowSourceEditing = !isMeetingRecord(liveRecord);
 
   const screenTitle = liveRecord.title;
+
+  useEffect(() => {
+    if (!allowSourceEditing && mode === 'source') {
+      clearEditorDirty();
+      setMode('reading');
+    }
+  }, [allowSourceEditing, clearEditorDirty, mode, setMode]);
 
   const flushEditorMarkdown = useCallback(async () => {
     if (mode !== 'source') {
@@ -230,26 +239,28 @@ export const NoteDocumentScreen = () => {
           </Text>
         </Pressable>
         <View className="shrink-0 flex-row items-center gap-2">
-          <HeaderIconButton
-            iconOnly
-            variant="icon"
-            size="md"
-            icon={
-              mode === 'reading' ? (
-                <FileCode size={20} color={color.text.primary} strokeWidth={2.2} />
-              ) : (
-                <BookOpen size={20} color={color.text.primary} strokeWidth={2.2} />
-              )
-            }
-            color={color}
-            onPress={handleToggleMode}
-            disabled={controlsDisabled}
-            accessibilityLabel={
-              mode === 'reading'
-                ? t('recordingDetail.document.switchToEditingA11y')
-                : t('recordingDetail.document.switchToReadingA11y')
-            }
-          />
+          {allowSourceEditing ? (
+            <HeaderIconButton
+              iconOnly
+              variant="icon"
+              size="md"
+              icon={
+                mode === 'reading' ? (
+                  <FileCode size={20} color={color.text.primary} strokeWidth={2.2} />
+                ) : (
+                  <BookOpen size={20} color={color.text.primary} strokeWidth={2.2} />
+                )
+              }
+              color={color}
+              onPress={handleToggleMode}
+              disabled={controlsDisabled}
+              accessibilityLabel={
+                mode === 'reading'
+                  ? t('recordingDetail.document.switchToEditingA11y')
+                  : t('recordingDetail.document.switchToReadingA11y')
+              }
+            />
+          ) : null}
           <HeaderIconButton
             iconOnly
             variant="icon"
@@ -286,6 +297,7 @@ export const NoteDocumentScreen = () => {
             </ScrollView>
           ) : (
             <NoteDocumentSourceEditor
+              ref={sourceInputRef}
               color={color}
               documentKey={`${record.id}:${sourceEditorKey}`}
               initialMarkdown={documentMarkdown}
@@ -294,7 +306,6 @@ export const NoteDocumentScreen = () => {
               horizontalPadding={sourceHorizontalPadding}
               scrollPaddingBottom={scrollPaddingBottom}
               isTablet={isTablet}
-              inputRef={sourceInputRef}
             />
           )}
           {isSaving ? <NoteDocumentSavingOverlay /> : null}

@@ -18,6 +18,7 @@ import {
   useBottomSheetContentPadding,
 } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../../lib/settingsIconColor';
 import { PrivateRemoteSheetPickerRow } from './PrivateRemoteSheetPickerRow';
 
 type PrivateRemoteModelsPickerProps = {
@@ -208,7 +209,7 @@ export function PrivateRemoteModelsPicker({
           label={trimmedSelected || t('aiSettings.privateProvider.modelList.pickFromServer')}
           subtitle={triggerSubtitle}
           onPress={openSheet}
-          leftIcon={<Box size={20} color={color.accent.primary} strokeWidth={2} />}
+          leftIcon={<Box size={20} color={getSettingsIconColor(color, 'box')} strokeWidth={2} />}
           showChevron
           isFirst
           isLast

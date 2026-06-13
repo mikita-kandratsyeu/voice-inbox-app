@@ -9,6 +9,8 @@ import { SettingsGitlabSyncRows } from '@/features/gitlab-sync';
 import type { Colors } from '@/shared/config';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../../lib/settingsIconColor';
+
 type Props = {
   color: Colors;
   t: TFunction;
@@ -22,7 +24,9 @@ export const SettingsBackupSection = ({ color, t, recordsCount, navigation }: Pr
       label={t('settings.backupRestoreScreen.entryRow')}
       subtitle={t('settings.backupRestoreScreen.entryHint')}
       value={t('inbox.recordsCount', { count: recordsCount })}
-      leftIcon={<HardDrive size={20} color={color.accent.primary} strokeWidth={1.8} />}
+      leftIcon={
+        <HardDrive size={20} color={getSettingsIconColor(color, 'hardDrive')} strokeWidth={1.8} />
+      }
       onPress={() => navigation.navigate('BackupRestore')}
       isFirst
     />

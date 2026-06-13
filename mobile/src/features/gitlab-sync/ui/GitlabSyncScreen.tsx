@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { SettingsStackParamList } from '@/app/navigation/types';
+import { getSettingsIconColor } from '@/screens/settings/lib/settingsIconColor';
 import { useColors } from '@/shared/config';
 import { formatRelativeTime, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import {
@@ -370,7 +371,13 @@ export function GitlabSyncScreen() {
           <SettingsRow
             label={isSyncing ? t('settings.gitlabSync.syncing') : t('settings.gitlabSync.syncNow')}
             subtitle={syncSubtitle}
-            leftIcon={<RefreshCw size={20} color={color.accent.success} strokeWidth={1.8} />}
+            leftIcon={
+              <RefreshCw
+                size={20}
+                color={getSettingsIconColor(color, 'refreshCw')}
+                strokeWidth={1.8}
+              />
+            }
             loading={isSyncing}
             onPress={isSyncing ? undefined : () => void handleSync()}
           />
@@ -386,7 +393,13 @@ export function GitlabSyncScreen() {
           <SettingsRow
             label={t('settings.gitlabSync.autoSync')}
             subtitle={t('settings.gitlabSync.autoSyncHint')}
-            leftIcon={<CalendarClock size={20} color={color.accent.primary} strokeWidth={1.8} />}
+            leftIcon={
+              <CalendarClock
+                size={20}
+                color={getSettingsIconColor(color, 'calendarClock')}
+                strokeWidth={1.8}
+              />
+            }
             rightSlot={
               <Switch
                 value={autoSyncEnabled}

@@ -9,6 +9,7 @@ import { useRecordStore } from '@/entities/record';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { SCREEN_PADDING, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../lib/settingsIconColor';
 import { useBackupRestoreScreen } from '../lib/useBackupRestoreScreen';
 import { BackupEncryptionNoticeSheet } from './BackupEncryptionNoticeSheet';
 import { BackupPasswordSheet } from './BackupPasswordSheet';
@@ -52,7 +53,11 @@ export const BackupRestoreScreen = () => {
               label={screen.t('settings.backupEncryption.toggleLabel')}
               subtitle={screen.t('settings.backupEncryption.toggleHint')}
               leftIcon={
-                <LockKeyhole size={20} color={screen.color.accent.primary} strokeWidth={1.8} />
+                <LockKeyhole
+                  size={20}
+                  color={getSettingsIconColor(screen.color, 'lockKeyhole')}
+                  strokeWidth={1.8}
+                />
               }
               rightSlot={
                 <Switch
@@ -75,7 +80,11 @@ export const BackupRestoreScreen = () => {
               }
               value={screen.t('inbox.recordsCount', { count: recordsCount })}
               leftIcon={
-                <UploadCloud size={20} color={screen.color.accent.primary} strokeWidth={1.8} />
+                <UploadCloud
+                  size={20}
+                  color={getSettingsIconColor(screen.color, 'uploadCloud')}
+                  strokeWidth={1.8}
+                />
               }
               loading={screen.isExporting}
               onPress={screen.handleExport}
@@ -85,7 +94,11 @@ export const BackupRestoreScreen = () => {
                 screen.isImporting ? screen.t('settings.importing') : screen.t('settings.import')
               }
               leftIcon={
-                <Download size={20} color={screen.color.accent.primary} strokeWidth={1.8} />
+                <Download
+                  size={20}
+                  color={getSettingsIconColor(screen.color, 'download')}
+                  strokeWidth={1.8}
+                />
               }
               loading={screen.isImporting}
               onPress={() => void screen.handleImport()}

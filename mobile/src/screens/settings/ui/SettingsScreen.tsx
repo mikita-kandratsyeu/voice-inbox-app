@@ -21,6 +21,7 @@ import {
 import { runAfterInteractions } from '@/shared/lib/runAfterInteractions';
 import { PrivateExecutionBadge, SCREEN_PADDING, SettingsRow, SettingsSection } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../lib/settingsIconColor';
 import { useSettingsScreen } from '../lib/useSettingsScreen';
 import { AiUsageCard } from './AiUsageCard';
 import { AutoArchiveDelaySheet } from './AutoArchiveDelaySheet';
@@ -260,7 +261,13 @@ export const SettingsScreen = () => {
             <SettingsSection title={settings.t('settings.debugScreen.title')}>
               <SettingsRow
                 label={settings.t('settings.debugScreen.entryRow')}
-                leftIcon={<Bug size={20} color={settings.color.icon.muted} strokeWidth={1.8} />}
+                leftIcon={
+                  <Bug
+                    size={20}
+                    color={getSettingsIconColor(settings.color, 'bug')}
+                    strokeWidth={1.8}
+                  />
+                }
                 onPress={settings.openDebugScreen}
                 isFirst
                 isLast

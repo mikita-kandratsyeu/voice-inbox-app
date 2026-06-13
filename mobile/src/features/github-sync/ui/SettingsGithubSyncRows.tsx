@@ -7,6 +7,7 @@ import { Alert } from 'react-native';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import { openPlanPaywall } from '@/features/plan-paywall';
+import { getSettingsIconColor } from '@/screens/settings/lib/settingsIconColor';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import type { Colors } from '@/shared/config';
 import { formatRelativeTime } from '@/shared/lib';
@@ -136,7 +137,7 @@ export function SettingsGithubSyncRows({ color, t }: Props) {
       <SettingsRow
         label={t('settings.githubSync.connect')}
         subtitle={t('settings.githubSync.connectHint')}
-        leftIcon={<GithubIcon size={20} color={color.accent.primary} />}
+        leftIcon={<GithubIcon size={20} color={getSettingsIconColor(color, 'github')} />}
         showProBadge
         onPress={handleLockedPress}
         isLast={false}
@@ -149,7 +150,7 @@ export function SettingsGithubSyncRows({ color, t }: Props) {
           isConnecting ? t('settings.githubSync.connecting') : t('settings.githubSync.connect')
         }
         subtitle={t('settings.githubSync.connectHint')}
-        leftIcon={<GithubIcon size={20} color={color.accent.primary} />}
+        leftIcon={<GithubIcon size={20} color={getSettingsIconColor(color, 'github')} />}
         loading={isConnecting}
         onPress={() => void handleConnect()}
         isLast={false}
@@ -164,7 +165,7 @@ export function SettingsGithubSyncRows({ color, t }: Props) {
       <SettingsRow
         label={connectedLabel}
         subtitle={syncSubtitle}
-        leftIcon={<GithubIcon size={20} color={color.accent.primary} />}
+        leftIcon={<GithubIcon size={20} color={getSettingsIconColor(color, 'github')} />}
         loading={isSyncing}
         onPress={() => navigation.navigate('GithubSync')}
         isLast={false}

@@ -10,6 +10,7 @@ import type { Colors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../../lib/settingsIconColor';
 import type { AutomationFeatureKind } from '../AutomationComingSoonSheet';
 
 type Props = {
@@ -65,7 +66,7 @@ export const SettingsAutomationSection = ({
       <SettingsRow
         label={t('settings.autoTranscribeOnSave')}
         subtitle={t('settings.autoTranscribeOnSaveHint')}
-        leftIcon={<Zap size={20} color={color.accent.primary} strokeWidth={1.8} />}
+        leftIcon={<Zap size={20} color={getSettingsIconColor(color, 'zap')} strokeWidth={1.8} />}
         isFirst={!IS_IOS}
         rightSlot={
           <View
@@ -93,7 +94,13 @@ export const SettingsAutomationSection = ({
         <SettingsRow
           label={t('settings.autoAiAfterTranscription')}
           subtitle={t('settings.autoAiAfterTranscriptionHint')}
-          leftIcon={<ClipboardList size={20} color={color.accent.primary} strokeWidth={1.8} />}
+          leftIcon={
+            <ClipboardList
+              size={20}
+              color={getSettingsIconColor(color, 'clipboardList')}
+              strokeWidth={1.8}
+            />
+          }
           rightSlot={
             <View
               className="flex-row items-center gap-2"
@@ -126,7 +133,9 @@ export const SettingsAutomationSection = ({
               ? t('privateAiQueue.pendingCount', { count: privateAiQueueCount })
               : undefined
           }
-          leftIcon={<Layers size={20} color={color.accent.primary} strokeWidth={1.8} />}
+          leftIcon={
+            <Layers size={20} color={getSettingsIconColor(color, 'layers')} strokeWidth={1.8} />
+          }
           onPress={() => navigation.navigate('PrivateAiQueue')}
           showChevron
           isLast={!showAutoArchiveRow && !showArchiveDelayRow && !IS_IOS}
@@ -136,7 +145,9 @@ export const SettingsAutomationSection = ({
         <SettingsRow
           label={t('settings.autoArchiveReadNotes')}
           subtitle={t('settings.autoArchiveReadNotesHint')}
-          leftIcon={<Archive size={20} color={color.accent.primary} strokeWidth={1.8} />}
+          leftIcon={
+            <Archive size={20} color={getSettingsIconColor(color, 'archive')} strokeWidth={1.8} />
+          }
           rightSlot={
             <View
               className="flex-row items-center gap-2"

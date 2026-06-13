@@ -8,6 +8,7 @@ import type { Colors } from '@/shared/config';
 import type { MicPermissionStatus } from '@/shared/lib/permissions';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../../lib/settingsIconColor';
 import { SettingsPermissionStatusBadge } from '../SettingsPermissionStatusBadge';
 
 type Props = {
@@ -28,7 +29,7 @@ export const SettingsPermissionsSection = ({
   <SettingsSection title={t('settings.permissionsSection')}>
     <SettingsRow
       label={t('settings.permissionMicrophone')}
-      leftIcon={<Mic size={20} color={color.accent.primary} strokeWidth={1.8} />}
+      leftIcon={<Mic size={20} color={getSettingsIconColor(color, 'mic')} strokeWidth={1.8} />}
       onPress={micStatus === 'granted' ? undefined : onMicPress}
       showChevron={micStatus !== 'granted'}
       rightSlot={
@@ -46,7 +47,7 @@ export const SettingsPermissionsSection = ({
     />
     <SettingsRow
       label={t('settings.notificationsEntry')}
-      leftIcon={<Bell size={20} color={color.accent.primary} strokeWidth={1.8} />}
+      leftIcon={<Bell size={20} color={getSettingsIconColor(color, 'bell')} strokeWidth={1.8} />}
       onPress={() => navigation.navigate('Notifications')}
       isLast
     />

@@ -8,6 +8,7 @@ import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { IS_IOS, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { SCREEN_PADDING, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../lib/settingsIconColor';
 import { useNotificationsScreen } from '../lib/useNotificationsScreen';
 import { BackupReminderPeriodSheet } from './BackupReminderPeriodSheet';
 import { SettingsPermissionStatusBadge } from './SettingsPermissionStatusBadge';
@@ -49,7 +50,13 @@ export const NotificationsScreen = () => {
           <SettingsSection title={screen.t('settings.permissionsSection')}>
             <SettingsRow
               label={screen.t('settings.notificationsEntry')}
-              leftIcon={<Bell size={20} color={screen.color.accent.primary} strokeWidth={1.8} />}
+              leftIcon={
+                <Bell
+                  size={20}
+                  color={getSettingsIconColor(screen.color, 'bell')}
+                  strokeWidth={1.8}
+                />
+              }
               onPress={permissionGranted ? undefined : screen.handleNotificationPermission}
               showChevron={!permissionGranted}
               rightSlot={
@@ -74,7 +81,11 @@ export const NotificationsScreen = () => {
                 label={screen.t('settings.permissionNotifications')}
                 subtitle={screen.t('settings.permissionNotificationsDesc')}
                 leftIcon={
-                  <CloudCheck size={20} color={screen.color.accent.success} strokeWidth={1.8} />
+                  <CloudCheck
+                    size={20}
+                    color={getSettingsIconColor(screen.color, 'cloudCheck')}
+                    strokeWidth={1.8}
+                  />
                 }
                 value={
                   permissionGranted
@@ -89,7 +100,11 @@ export const NotificationsScreen = () => {
               label={screen.t('settings.transcriptionRecoveryNotifications')}
               subtitle={screen.t('settings.transcriptionRecoveryNotificationsHint')}
               leftIcon={
-                <RotateCcw size={20} color={screen.color.accent.transcript} strokeWidth={1.8} />
+                <RotateCcw
+                  size={20}
+                  color={getSettingsIconColor(screen.color, 'rotateCcw')}
+                  strokeWidth={1.8}
+                />
               }
               value={
                 permissionGranted
@@ -103,7 +118,11 @@ export const NotificationsScreen = () => {
               label={screen.t('settings.taskDeadlineNotifications')}
               subtitle={screen.t('settings.taskDeadlineNotificationsHint')}
               leftIcon={
-                <CalendarClock size={20} color={screen.color.accent.cache} strokeWidth={1.8} />
+                <CalendarClock
+                  size={20}
+                  color={getSettingsIconColor(screen.color, 'calendarClock')}
+                  strokeWidth={1.8}
+                />
               }
               rightSlot={
                 <Switch
@@ -125,7 +144,11 @@ export const NotificationsScreen = () => {
               label={screen.t('settings.backupReminderNotifications')}
               subtitle={screen.t('settings.backupReminderNotificationsHint')}
               leftIcon={
-                <UploadCloud size={20} color={screen.color.accent.models} strokeWidth={1.8} />
+                <UploadCloud
+                  size={20}
+                  color={getSettingsIconColor(screen.color, 'uploadCloud')}
+                  strokeWidth={1.8}
+                />
               }
               rightSlot={
                 <Switch

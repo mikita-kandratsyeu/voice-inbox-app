@@ -8,7 +8,11 @@ import { useShallow } from 'zustand/react/shallow';
 import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
-import { shouldOpenSegmentTranscriptEditor, useRecordStore } from '@/entities/record';
+import {
+  isMeetingRecord,
+  shouldOpenSegmentTranscriptEditor,
+  useRecordStore,
+} from '@/entities/record';
 import { useTranscriptionBlockedForRecord } from '@/features/transcription/model/transcriptionConcurrency';
 import { hasActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
 import { useTranslate } from '@/features/translate';
@@ -145,6 +149,14 @@ export const TranscriptContent = ({
     );
   };
 
+  const hasAudio = Boolean(r.audioPath?.trim());
+  const opensSegmentEditor = shouldOpenSegmentTranscriptEditor(transcriptSegments, {
+    transcript: r.transcript,
+    transcriptSegments: r.transcriptSegments,
+    hasAudio,
+  });
+  const showEditTranscript = opensSegmentEditor || !isMeetingRecord(r);
+
   return (
     <>
       <TranscriptTab
@@ -159,21 +171,14 @@ export const TranscriptContent = ({
         onDiscardResume={onDiscardResume}
         isDiscardingResume={isCancellingTranscription}
         onEditTranscript={() => {
-          const hasAudio = Boolean(r.audioPath?.trim());
-
-          if (
-            shouldOpenSegmentTranscriptEditor(transcriptSegments, {
-              transcript: r.transcript,
-              transcriptSegments: r.transcriptSegments,
-              hasAudio,
-            })
-          ) {
+          if (opensSegmentEditor) {
             navigation.navigate('EditTranscript', { record: r });
             return;
           }
 
           navigation.navigate('NoteDocument', { record: r, initialMode: 'source' });
         }}
+        showEditTranscript={showEditTranscript}
         onTranslate={isTranscriptTooLongForTranslate ? undefined : handleTranslate}
         onDeleteTranslation={handleDeleteTranslation}
         isTranslating={isTranslating}

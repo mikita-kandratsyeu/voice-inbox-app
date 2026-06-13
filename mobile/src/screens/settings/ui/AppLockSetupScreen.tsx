@@ -13,6 +13,8 @@ import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../lib/settingsIconColor';
+
 type SetupStep = 'confirm' | 'initial';
 
 export const AppLockSetupScreen = () => {
@@ -133,6 +135,7 @@ export const AppLockSetupScreen = () => {
   const isFaceBiometry =
     biometryType === 'FaceID' || biometryType === 'Face' || biometryType === 'OpticID';
   const BioIcon = isFaceBiometry ? ScanFace : Fingerprint;
+  const bioIconColor = getSettingsIconColor(color, isFaceBiometry ? 'scanFace' : 'fingerprint');
 
   const pinLengthLocked = step !== 'initial';
 
@@ -218,7 +221,7 @@ export const AppLockSetupScreen = () => {
                 <SettingsSection title={t('common.biometrics')}>
                   <SettingsRow
                     label={bioLabel}
-                    leftIcon={<BioIcon size={20} color={color.accent.success} strokeWidth={1.8} />}
+                    leftIcon={<BioIcon size={20} color={bioIconColor} strokeWidth={1.8} />}
                     rightSlot={
                       <Switch
                         value={useBiometrics}
@@ -256,7 +259,13 @@ export const AppLockSetupScreen = () => {
             <SettingsSection title={t('appLock.settings')}>
               <SettingsRow
                 label={t('appLock.title')}
-                leftIcon={<Fingerprint size={20} color={color.accent.primary} strokeWidth={1.8} />}
+                leftIcon={
+                  <Fingerprint
+                    size={20}
+                    color={getSettingsIconColor(color, 'fingerprint')}
+                    strokeWidth={1.8}
+                  />
+                }
                 rightSlot={
                   <Switch
                     value={isEnabled}
@@ -278,7 +287,7 @@ export const AppLockSetupScreen = () => {
                 <SettingsRow
                   label={bioLabel}
                   value={useBiometrics ? t('settings.on') : t('settings.off')}
-                  leftIcon={<BioIcon size={20} color={color.accent.success} strokeWidth={1.8} />}
+                  leftIcon={<BioIcon size={20} color={bioIconColor} strokeWidth={1.8} />}
                   rightSlot={
                     <Switch
                       value={useBiometrics}

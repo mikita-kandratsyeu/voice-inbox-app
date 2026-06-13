@@ -8,6 +8,7 @@ import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import { SettingsRow } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../../lib/settingsIconColor';
 import { PrivateRemotePickerSheetFrame } from './PrivateRemotePickerSheetFrame';
 import { PrivateRemoteSheetPickerRow } from './PrivateRemoteSheetPickerRow';
 
@@ -99,7 +100,9 @@ export function PrivateRemoteProfilesPicker({
           label={triggerLabel}
           subtitle={triggerSubtitle}
           onPress={openSheet}
-          leftIcon={<Server size={20} color={color.accent.primary} strokeWidth={2} />}
+          leftIcon={
+            <Server size={20} color={getSettingsIconColor(color, 'server')} strokeWidth={2} />
+          }
           showChevron
           isFirst
           isLast

@@ -1,3 +1,4 @@
+export { isMeetingRecord } from './lib/isMeetingRecord';
 export type { RecordingMarkKindUiConfig } from './lib/recordingMarkKindUi';
 export {
   getRecordingMarkKindAccentColors,
