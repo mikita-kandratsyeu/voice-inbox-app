@@ -776,7 +776,7 @@
     "askContextProcessingCloud": "Облачный ИИ",
     "askContextLearnMoreA11y": "Подробнее, что передаётся",
     "askContextSheetTitle": "Что учитывается в каждом ответе",
-    "askContextSheetIntro": "В один запрос могут входить:",
+    "askContextSheetIntro": "Чтобы ответить, ИИ учитывает:",
     "askContextBulletTranscript": "Транскрипт заметки.",
     "askContextBulletSummary": "Сводка заметки, если она уже есть.",
     "askContextBulletTasks": "Тексты сохранённых задач этой заметки, если они есть.",
