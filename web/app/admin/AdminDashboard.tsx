@@ -54,6 +54,7 @@ import { AdminChangePasswordForm } from './AdminChangePasswordForm';
 import { AdminConfigPanel } from './AdminConfigPanel';
 import { AdminOperationsPanel } from './AdminOperationsPanel';
 import { AdminInAppEventsPanel } from './AdminInAppEventsPanel';
+import { AdminMessagingPanel } from './AdminMessagingPanel';
 import { AdminReleasesPanel } from './AdminReleasesPanel';
 import { AdminSecurityPanel } from './AdminSecurityPanel';
 import { AdminSupportPanel } from './AdminSupportPanel';
@@ -737,13 +738,7 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
           {adminTab === 'operations' && <AdminOperationsPanel />}
           {adminTab === 'budget' && <AdminBudgetPanel />}
           {adminTab === 'security' && <AdminSecurityPanel />}
-          {adminTab === 'messaging' && (
-            <div>
-              <AdminAlert tone="info" className="mb-6">
-                This is a placeholder for the messaging tab. Implement broadcast functionality here.
-              </AdminAlert>
-            </div>
-          )}
+          {adminTab === 'messaging' && <AdminMessagingPanel />}
         </div>
       </div>
     </div>
