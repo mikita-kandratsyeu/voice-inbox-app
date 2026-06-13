@@ -13,12 +13,12 @@ import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComin
 import { useColors } from '@/shared/config';
 import { ScreenHeader } from '@/shared/ui';
 
+import { getGraphShowArchived } from '../lib/graphArchivePreferences';
 import {
   DEFAULT_EDGE_VISIBILITY,
   DEFAULT_GRAPH_LAYOUT_MODE,
   type GraphFilters,
 } from '../lib/graphTypes';
-import { getGraphShowArchived } from '../lib/graphArchivePreferences';
 import {
   getPrefetchedNotesGraphScreenBody,
   prefetchNotesGraphScreenBody,

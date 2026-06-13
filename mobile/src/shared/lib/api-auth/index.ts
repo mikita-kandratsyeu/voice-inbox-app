@@ -5,8 +5,8 @@ import { shouldSkipFirebaseAppCheck } from '@/shared/lib/app-check/shouldSkipApp
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { nitroFetch, type NitroFetchInit } from '@/shared/lib/fetch';
 
-import { WEB_API_FETCH_TIMEOUT_MS } from './constants';
 import { isNumber, isString } from '../type-guards';
+import { WEB_API_FETCH_TIMEOUT_MS } from './constants';
 
 function getTokenUrl(): string {
   const base = getWebApiUrl().replace(/\/$/, '');

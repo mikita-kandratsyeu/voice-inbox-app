@@ -1,7 +1,4 @@
-import {
-  getGraphShowArchived,
-  setGraphShowArchived,
-} from '../graphArchivePreferences';
+import { getGraphShowArchived, setGraphShowArchived } from '../graphArchivePreferences';
 
 const mockStorageState = new Map<string, string>();
 

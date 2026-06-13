@@ -1,5 +1,5 @@
-import { WEB_API_POLL_FETCH_TIMEOUT_MS } from '@/shared/lib/api-auth/constants';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { WEB_API_POLL_FETCH_TIMEOUT_MS } from '@/shared/lib/api-auth/constants';
 
 import {
   type AiFetchOptions,

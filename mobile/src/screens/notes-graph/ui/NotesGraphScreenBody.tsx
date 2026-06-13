@@ -24,11 +24,11 @@ import { EmptyState, HeaderIconButton, ScreenHeader } from '@/shared/ui';
 import { collectUniqueTags, countFilteredGraphRecords } from '../lib/buildGraphModel';
 import { buildNotesGraphPersistKey } from '../lib/buildNotesGraphPersistKey';
 import { formatGraphAppliedLayoutHeaderSubtitle } from '../lib/formatGraphAppliedLayoutHeaderSubtitle';
+import { getGraphShowArchived, setGraphShowArchived } from '../lib/graphArchivePreferences';
 import {
   getGraphFolderHighlightsVisible,
   setGraphFolderHighlightsVisible,
 } from '../lib/graphFolderHighlightsPreferences';
-import { getGraphShowArchived, setGraphShowArchived } from '../lib/graphArchivePreferences';
 import { getGraphMinimapVisible, setGraphMinimapVisible } from '../lib/graphMinimapPreferences';
 import { findGraphSearchMatchIds, type GraphSearchIndexEntry } from '../lib/graphSearch';
 import { getSessionNodePositions, replaceSessionNodePositions } from '../lib/graphSessionLayout';
@@ -781,7 +781,14 @@ export const NotesGraphScreenBody = () => {
     );
 
     return actions;
-  }, [color.text.primary, filters.showArchived, folderHighlightsVisible, foldersEnabled, minimapVisible, t]);
+  }, [
+    color.text.primary,
+    filters.showArchived,
+    folderHighlightsVisible,
+    foldersEnabled,
+    minimapVisible,
+    t,
+  ]);
 
   const headerRightSlot =
     recordCount > 0 ? (

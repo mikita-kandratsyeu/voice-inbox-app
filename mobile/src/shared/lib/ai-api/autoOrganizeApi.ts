@@ -6,8 +6,8 @@ import type {
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { i18n } from '@/shared/lib';
 import { requestAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
-import { WEB_API_POLL_FETCH_TIMEOUT_MS } from '@/shared/lib/api-auth/constants';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { WEB_API_POLL_FETCH_TIMEOUT_MS } from '@/shared/lib/api-auth/constants';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 
 import { headersForAiOperation } from './aiOperation';

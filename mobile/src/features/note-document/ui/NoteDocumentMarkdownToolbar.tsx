@@ -12,7 +12,6 @@ import { NOTE_DOCUMENT_CONTENT_MAX_WIDTH } from '../lib/noteDocumentLayout';
 
 const TOOLBAR_FLOAT_TOP_PAD = 10;
 const TOOLBAR_FLOAT_BOTTOM_PAD = 10;
-const TOOLBAR_ROW_INNER_HEIGHT = 4 * 2 + IOS_MIN_TOUCH_TARGET;
 const TOOLBAR_ICON_SIZE = 18;
 
 export type EnrichedMarkdownToolbarAction = 'bold' | 'italic' | 'strikethrough' | 'underline';
