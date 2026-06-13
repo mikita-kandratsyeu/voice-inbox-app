@@ -6,6 +6,7 @@ import {
   type EnrichedMarkdownTextInputInstance,
   type StyleState,
 } from 'react-native-enriched-markdown';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 import type { Colors } from '@/shared/config';
 import {
@@ -14,10 +15,8 @@ import {
 } from '@/shared/ui/documentMarkdownTheme';
 
 import { buildNoteDocumentEnrichedInputStyle } from '../lib/enrichedMarkdownTheme';
-import { NOTE_DOCUMENT_CONTENT_MAX_WIDTH } from '../lib/noteDocumentLayout';
 import {
   type EnrichedMarkdownToolbarAction,
-  NOTE_DOCUMENT_TOOLBAR_FALLBACK_HEIGHT,
   NoteDocumentMarkdownToolbar,
 } from './NoteDocumentMarkdownToolbar';
 
@@ -46,21 +45,12 @@ export const NoteDocumentSourceEditor = React.memo(function NoteDocumentSourceEd
 }: NoteDocumentSourceEditorProps) {
   const { t } = useTranslation();
   const [styleState, setStyleState] = useState<StyleState | null>(null);
-  const [toolbarHeight, setToolbarHeight] = useState(NOTE_DOCUMENT_TOOLBAR_FALLBACK_HEIGHT);
 
   // Throttle onDirty calls to reduce re-renders
   const dirtyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isDirtyRef = useRef(false);
 
   const inputMarkdownStyle = useMemo(() => buildNoteDocumentEnrichedInputStyle(color), [color]);
-  const editorColumnStyle = useMemo(
-    () => ({
-      width: '100%' as const,
-      maxWidth: isTablet ? NOTE_DOCUMENT_CONTENT_MAX_WIDTH : undefined,
-      flex: 1,
-    }),
-    [isTablet],
-  );
   const editorAreaStyle = useMemo(
     () => ({
       flex: 1,
@@ -71,10 +61,6 @@ export const NoteDocumentSourceEditor = React.memo(function NoteDocumentSourceEd
   );
   const toolbarOverlayStyle = useMemo(
     () => ({
-      position: 'absolute' as const,
-      top: 0,
-      left: 0,
-      right: 0,
       zIndex: 1,
     }),
     [],
@@ -88,17 +74,8 @@ export const NoteDocumentSourceEditor = React.memo(function NoteDocumentSourceEd
       lineHeight: NOTE_DOCUMENT_BODY_LINE_HEIGHT,
       textAlignVertical: 'top' as const,
       backgroundColor: color.background.primary,
-      paddingHorizontal: horizontalPadding,
-      marginTop: toolbarHeight,
-      marginBottom: scrollPaddingBottom,
     }),
-    [
-      color.background.primary,
-      color.text.primary,
-      horizontalPadding,
-      scrollPaddingBottom,
-      toolbarHeight,
-    ],
+    [color.background.primary, color.text.primary],
   );
 
   // Throttle onDirty to 300ms - call immediately on first change, then debounce
@@ -174,8 +151,28 @@ export const NoteDocumentSourceEditor = React.memo(function NoteDocumentSourceEd
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.primary }}>
-      <View style={editorAreaStyle}>
-        <View style={editorColumnStyle}>
+      <View pointerEvents="box-none" style={toolbarOverlayStyle}>
+        <NoteDocumentMarkdownToolbar
+          color={color}
+          isTablet={isTablet}
+          horizontalPadding={horizontalPadding}
+          styleState={styleState}
+          onAction={handleToolbarAction}
+          disabled={!editable}
+        />
+      </View>
+      <KeyboardAwareScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingBottom: scrollPaddingBottom,
+          paddingHorizontal: horizontalPadding,
+          paddingTop: 12,
+        }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        bottomOffset={16}
+      >
+        <View style={editorAreaStyle}>
           <EnrichedMarkdownTextInput
             key={documentKey}
             ref={inputRef}
@@ -194,26 +191,7 @@ export const NoteDocumentSourceEditor = React.memo(function NoteDocumentSourceEd
             style={inputStyle}
           />
         </View>
-        <View
-          pointerEvents="box-none"
-          style={toolbarOverlayStyle}
-          onLayout={(event) => {
-            const nextHeight = Math.ceil(event.nativeEvent.layout.height);
-            if (nextHeight > 0) {
-              setToolbarHeight((current) => (current === nextHeight ? current : nextHeight));
-            }
-          }}
-        >
-          <NoteDocumentMarkdownToolbar
-            color={color}
-            isTablet={isTablet}
-            horizontalPadding={horizontalPadding}
-            styleState={styleState}
-            onAction={handleToolbarAction}
-            disabled={!editable}
-          />
-        </View>
-      </View>
+      </KeyboardAwareScrollView>
     </View>
   );
 });

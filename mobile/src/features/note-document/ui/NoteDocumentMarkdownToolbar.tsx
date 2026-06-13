@@ -43,12 +43,6 @@ const TOOLBAR_ICONS = {
 
 const TOOLBAR_DIVIDER_HEIGHT = 1;
 
-export const NOTE_DOCUMENT_TOOLBAR_FALLBACK_HEIGHT =
-  TOOLBAR_FLOAT_TOP_PAD +
-  TOOLBAR_FLOAT_BOTTOM_PAD +
-  TOOLBAR_ROW_INNER_HEIGHT +
-  TOOLBAR_DIVIDER_HEIGHT;
-
 type NoteDocumentMarkdownToolbarProps = {
   color: Colors;
   isTablet: boolean;
