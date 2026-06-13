@@ -136,19 +136,31 @@ export const AskAiContextDisclosure = ({
       <BottomSheetView
         style={{
           paddingHorizontal: 20,
-          paddingTop: 12,
           ...contentPadding,
         }}
       >
         <Text
           className="text-[17px] font-semibold leading-6"
-          style={{ color: color.text.primary, marginBottom: 8 }}
+          style={{
+            color: color.text.primary,
+            fontSize: 20,
+            fontWeight: '700',
+            lineHeight: 28,
+            marginTop: 4,
+            textAlign: 'center',
+          }}
         >
           {t('recordingDetail.askContextSheetTitle')}
         </Text>
         <Text
-          className="text-[14px] leading-5"
-          style={{ color: color.text.secondary, marginBottom: 12 }}
+          style={{
+            color: color.text.secondary,
+            fontSize: 15,
+            lineHeight: 22,
+            marginBottom: 18,
+            marginTop: 6,
+            textAlign: 'center',
+          }}
         >
           {t('recordingDetail.askContextSheetIntro')}
         </Text>
