@@ -24,7 +24,4 @@ export { useNoteDocument } from './model/useNoteDocument';
 export { NoteDocumentPreparingState } from './ui/NoteDocumentPreparingState';
 export { NoteDocumentReadingBody } from './ui/NoteDocumentReadingBody';
 export { NoteDocumentSavingOverlay } from './ui/NoteDocumentSavingOverlay';
-export {
-  NoteDocumentSourceEditor,
-  type NoteDocumentSourceEditorHandle,
-} from './ui/NoteDocumentSourceEditor';
+export { NoteDocumentSourceEditor } from './ui/NoteDocumentSourceEditor';

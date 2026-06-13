@@ -1,12 +1,4 @@
-import React, {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import {
@@ -28,10 +20,6 @@ import {
   NoteDocumentMarkdownToolbar,
 } from './NoteDocumentMarkdownToolbar';
 
-export type NoteDocumentSourceEditorHandle = {
-  getMarkdown: () => Promise<string>;
-};
-
 type NoteDocumentSourceEditorProps = {
   color: Colors;
   documentKey: string;
@@ -41,40 +29,26 @@ type NoteDocumentSourceEditorProps = {
   horizontalPadding: number;
   scrollPaddingBottom: number;
   isTablet: boolean;
+  inputRef: React.RefObject<EnrichedMarkdownTextInputInstance | null>;
 };
 
-const NoteDocumentSourceEditorInner = forwardRef<
-  NoteDocumentSourceEditorHandle,
-  NoteDocumentSourceEditorProps
->(function NoteDocumentSourceEditor(
-  {
-    color,
-    documentKey,
-    initialMarkdown,
-    onDirty,
-    editable,
-    horizontalPadding,
-    scrollPaddingBottom,
-    isTablet,
-  },
-  ref,
-) {
+export const NoteDocumentSourceEditor = React.memo(function NoteDocumentSourceEditor({
+  color,
+  documentKey,
+  initialMarkdown,
+  onDirty,
+  editable,
+  horizontalPadding,
+  scrollPaddingBottom,
+  isTablet,
+  inputRef,
+}: NoteDocumentSourceEditorProps) {
   const { t } = useTranslation();
   const [styleState, setStyleState] = useState<StyleState | null>(null);
-  const enrichedInputRef = useRef<EnrichedMarkdownTextInputInstance>(null);
 
+  // Throttle onDirty calls to reduce re-renders
   const dirtyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isDirtyRef = useRef(false);
-
-  useImperativeHandle(
-    ref,
-    () => ({
-      getMarkdown: async () => {
-        return (await enrichedInputRef.current?.getMarkdown()) ?? initialMarkdown;
-      },
-    }),
-    [initialMarkdown],
-  );
 
   const inputMarkdownStyle = useMemo(() => buildNoteDocumentEnrichedInputStyle(color), [color]);
   const editorAreaStyle = useMemo(
@@ -104,6 +78,7 @@ const NoteDocumentSourceEditorInner = forwardRef<
     [color.background.primary, color.text.primary],
   );
 
+  // Throttle onDirty to 300ms - call immediately on first change, then debounce
   const handleChangeText = useCallback(() => {
     if (!isDirtyRef.current) {
       isDirtyRef.current = true;
@@ -119,6 +94,7 @@ const NoteDocumentSourceEditorInner = forwardRef<
     }, 300);
   }, [onDirty]);
 
+  // Throttle styleState updates to reduce toolbar re-renders
   const styleStateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const handleChangeState = useCallback((newState: StyleState) => {
     if (styleStateTimeoutRef.current) {
@@ -133,11 +109,12 @@ const NoteDocumentSourceEditorInner = forwardRef<
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
-      void enrichedInputRef.current?.setSelection(0, 0);
+      void inputRef.current?.setSelection(0, 0);
     });
     return () => cancelAnimationFrame(frame);
-  }, [documentKey]);
+  }, [documentKey, inputRef]);
 
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (dirtyTimeoutRef.current) {
@@ -151,7 +128,7 @@ const NoteDocumentSourceEditorInner = forwardRef<
 
   const handleToolbarAction = useCallback(
     (action: EnrichedMarkdownToolbarAction) => {
-      const editor = enrichedInputRef.current;
+      const editor = inputRef.current;
       if (!editor) return;
 
       onDirty();
@@ -171,7 +148,7 @@ const NoteDocumentSourceEditorInner = forwardRef<
           return;
       }
     },
-    [onDirty],
+    [inputRef, onDirty],
   );
 
   return (
@@ -200,7 +177,7 @@ const NoteDocumentSourceEditorInner = forwardRef<
         <View style={editorAreaStyle}>
           <EnrichedMarkdownTextInput
             key={documentKey}
-            ref={enrichedInputRef}
+            ref={inputRef}
             defaultValue={initialMarkdown}
             editable={editable}
             scrollEnabled
@@ -220,5 +197,3 @@ const NoteDocumentSourceEditorInner = forwardRef<
     </View>
   );
 });
-
-export const NoteDocumentSourceEditor = React.memo(NoteDocumentSourceEditorInner);

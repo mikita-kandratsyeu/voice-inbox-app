@@ -4,7 +4,7 @@ import { InteractionManager } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { VoiceRecord } from '@/entities/record';
-import { isMeetingRecord, useRecordStore } from '@/entities/record';
+import { useRecordStore } from '@/entities/record';
 import { resolveShareExportContext } from '@/features/share-record/lib/shareExportContext';
 
 import { buildNoteDocumentMarkdown } from '../lib/buildNoteDocumentMarkdown';
@@ -47,9 +47,7 @@ export function useNoteDocument({
   const [savedMarkdown, setSavedMarkdown] = useState('');
   const [documentMarkdown, setDocumentMarkdown] = useState('');
   const [isPreparing, setIsPreparing] = useState(true);
-  const [mode, setMode] = useState<NoteDocumentMode>(() =>
-    initialMode === 'source' && isMeetingRecord(fallbackRecord) ? 'reading' : initialMode,
-  );
+  const [mode, setMode] = useState<NoteDocumentMode>(initialMode);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditorDirty, setIsEditorDirty] = useState(false);
   const savedMarkdownRef = useRef(savedMarkdown);

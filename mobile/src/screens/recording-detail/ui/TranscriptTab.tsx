@@ -50,7 +50,6 @@ type TranscriptTabProps = {
   onTranscribe: () => void;
   onDiscardResume?: () => void;
   onEditTranscript: () => void;
-  showEditTranscript?: boolean;
   onTranslate?: (targetLanguage: string) => Promise<boolean>;
   onDeleteTranslation?: () => void;
   isTranslating?: boolean;
@@ -121,7 +120,6 @@ export const TranscriptTab = ({
   hasAudio,
   onTranscribe,
   onEditTranscript,
-  showEditTranscript = true,
   onTranslate,
   onDeleteTranslation,
   isTranslating = false,
@@ -328,17 +326,15 @@ export const TranscriptTab = ({
               </View>
             </MenuView>
           )}
-        {showEditTranscript ? (
-          <Button
-            variant="secondary"
-            size="lg"
-            icon={<Pencil size={15} color={color.text.primary} strokeWidth={2} />}
-            label={t('recordingDetail.editTranscript')}
-            color={color}
-            onPress={onEditTranscript}
-            disabled={isAiProcessing}
-          />
-        ) : null}
+        <Button
+          variant="secondary"
+          size="lg"
+          icon={<Pencil size={15} color={color.text.primary} strokeWidth={2} />}
+          label={t('recordingDetail.editTranscript')}
+          color={color}
+          onPress={onEditTranscript}
+          disabled={isAiProcessing}
+        />
         {hasAudio && (
           <Button
             variant="secondary"
