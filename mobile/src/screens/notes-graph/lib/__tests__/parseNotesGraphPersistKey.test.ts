@@ -10,6 +10,7 @@ describe('parseNotesGraphPersistKey', () => {
       'folder-1',
       'beta|alpha',
       '0',
+      '0',
       'contains:0,sameFolder:1,sharedTag:0,similar:1',
       'cluster',
       'auto',
@@ -21,6 +22,7 @@ describe('parseNotesGraphPersistKey', () => {
     expect(parsed?.folderId).toBe('folder-1');
     expect(parsed?.tags).toEqual(['beta', 'alpha']);
     expect(parsed?.showTasks).toBe(false);
+    expect(parsed?.showArchived).toBe(false);
     expect(parsed?.simplifyOverride).toBeNull();
     expect(parsed?.filteredCount).toBe(5);
     expect(parsedPersistKeyToGraphFilters(parsed!).edgeVisibility).toEqual({
@@ -30,6 +32,21 @@ describe('parseNotesGraphPersistKey', () => {
       contains: false,
     });
     expect(parsed?.layoutMode).toBe('cluster');
+  });
+
+  it('parses legacy keys without showArchived as off', () => {
+    const layoutKey = [
+      '2:a,b',
+      'folder-1',
+      'beta|alpha',
+      '0',
+      'contains:0,sameFolder:1,sharedTag:0,similar:1',
+      'cluster',
+      'auto',
+      '5',
+    ].join(';');
+
+    expect(parseNotesGraphPersistKey(layoutKey)?.showArchived).toBe(false);
   });
 
   it('parses legacy keys without layout mode as cluster', () => {
@@ -44,6 +61,7 @@ describe('parseNotesGraphPersistKey', () => {
     ].join(';');
 
     expect(parseNotesGraphPersistKey(layoutKey)?.layoutMode).toBe('cluster');
+    expect(parseNotesGraphPersistKey(layoutKey)?.showArchived).toBe(false);
   });
 
   it('returns null for malformed keys', () => {
@@ -56,6 +74,7 @@ describe('parseNotesGraphPersistKey', () => {
       '',
       '',
       '1',
+      '1',
       'contains:1,sameFolder:1,sharedTag:1,similar:1',
       'force',
       '1',
@@ -63,6 +82,7 @@ describe('parseNotesGraphPersistKey', () => {
     ].join(';');
 
     expect(parseNotesGraphPersistKey(layoutKey)?.simplifyOverride).toBe(true);
+    expect(parseNotesGraphPersistKey(layoutKey)?.showArchived).toBe(true);
   });
 
   it('maps parsed keys back to graph filters', () => {
@@ -71,6 +91,7 @@ describe('parseNotesGraphPersistKey', () => {
       'folder-1',
       'beta|alpha',
       '1',
+      '0',
       'contains:1,sameFolder:0,sharedTag:1,similar:0',
       'circular',
       '0',
@@ -82,6 +103,7 @@ describe('parseNotesGraphPersistKey', () => {
       folderId: 'folder-1',
       tags: ['beta', 'alpha'],
       showTasks: true,
+      showArchived: false,
       edgeVisibility: {
         contains: true,
         sameFolder: false,
@@ -98,6 +120,7 @@ describe('parseNotesGraphPersistKey', () => {
       'folder-1',
       'beta|alpha',
       '0',
+      '0',
       'contains:0,sameFolder:1,sharedTag:0,similar:1',
       'grid',
       'auto',
@@ -108,7 +131,9 @@ describe('parseNotesGraphPersistKey', () => {
   });
 
   it('returns null for malformed edge visibility segments', () => {
-    const layoutKey = ['1:a', '', '', '1', 'contains:1,invalid', 'cluster', 'auto', '1'].join(';');
+    const layoutKey = ['1:a', '', '', '1', '0', 'contains:1,invalid', 'cluster', 'auto', '1'].join(
+      ';',
+    );
 
     expect(parseNotesGraphPersistKey(layoutKey)).toBeNull();
   });

@@ -80,6 +80,12 @@ export function buildNotesGraphLayoutFilterSummary({
   });
 
   rows.push({
+    id: 'showArchived',
+    label: t('notesGraph.history.filters.showArchived'),
+    value: filters.showArchived ? t('settings.on') : t('settings.off'),
+  });
+
+  rows.push({
     id: 'links',
     label: t('notesGraph.history.filters.links'),
     value: formatEdgeVisibility(filters.edgeVisibility, t),

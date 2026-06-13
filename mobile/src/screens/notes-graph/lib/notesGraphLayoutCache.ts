@@ -12,6 +12,7 @@ export const DEFAULT_NOTES_GRAPH_FILTERS: GraphFilters = {
   folderId: null,
   tags: [],
   showTasks: true,
+  showArchived: false,
   edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
   layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
 };
@@ -42,6 +43,7 @@ export function buildNotesGraphLayoutCacheKey(
     filters.folderId ?? '',
     tagKey,
     filters.showTasks ? 1 : 0,
+    filters.showArchived ? 1 : 0,
     edgeKey,
     simplifyOverride === null ? 'auto' : simplifyOverride ? 1 : 0,
     filters.layoutMode,

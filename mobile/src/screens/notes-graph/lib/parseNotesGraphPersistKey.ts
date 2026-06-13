@@ -5,14 +5,16 @@ import {
   isGraphLayoutMode,
 } from './graphTypes';
 
-const PERSIST_KEY_TAIL_PARTS = 7;
-const LEGACY_PERSIST_KEY_TAIL_PARTS = 6;
+const PERSIST_KEY_TAIL_PARTS = 8;
+const LEGACY_PERSIST_KEY_TAIL_PARTS = 7;
+const LEGACY_PERSIST_KEY_TAIL_PARTS_NO_LAYOUT = 6;
 
 export type ParsedNotesGraphPersistKey = {
   recordsRevision: string;
   folderId: string | null;
   tags: string[];
   showTasks: boolean;
+  showArchived: boolean;
   edgeVisibility: GraphEdgeVisibility;
   layoutMode: GraphLayoutMode;
   simplifyOverride: boolean | null;
@@ -44,8 +46,8 @@ function parseSimplifyToken(token: string): boolean | null | undefined {
   return undefined;
 }
 
-function parseLegacyPersistKey(parts: string[]): ParsedNotesGraphPersistKey | null {
-  if (parts.length < LEGACY_PERSIST_KEY_TAIL_PARTS + 1) return null;
+function parseLegacyPersistKeyNoLayout(parts: string[]): ParsedNotesGraphPersistKey | null {
+  if (parts.length < LEGACY_PERSIST_KEY_TAIL_PARTS_NO_LAYOUT + 1) return null;
 
   const filteredCount = Number(parts[parts.length - 1]);
   if (!Number.isFinite(filteredCount)) return null;
@@ -60,6 +62,46 @@ function parseLegacyPersistKey(parts: string[]): ParsedNotesGraphPersistKey | nu
   const showTasks = parts[parts.length - 4] === '1';
   const tagKey = parts[parts.length - 5]!;
   const folderIdRaw = parts[parts.length - 6]!;
+  const recordsRevision = parts
+    .slice(0, parts.length - LEGACY_PERSIST_KEY_TAIL_PARTS_NO_LAYOUT)
+    .join(';');
+
+  return {
+    recordsRevision,
+    folderId: folderIdRaw || null,
+    tags: tagKey ? tagKey.split('|').filter(Boolean) : [],
+    showTasks,
+    showArchived: false,
+    edgeVisibility,
+    layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
+    simplifyOverride,
+    filteredCount,
+  };
+}
+
+function parseLegacyPersistKey(parts: string[]): ParsedNotesGraphPersistKey | null {
+  if (parts.length < LEGACY_PERSIST_KEY_TAIL_PARTS + 1) {
+    return parseLegacyPersistKeyNoLayout(parts);
+  }
+
+  const filteredCount = Number(parts[parts.length - 1]);
+  if (!Number.isFinite(filteredCount)) return null;
+
+  const simplifyOverride = parseSimplifyToken(parts[parts.length - 2]!);
+  if (simplifyOverride === undefined) return null;
+
+  const layoutModeToken = parts[parts.length - 3]!;
+  if (!isGraphLayoutMode(layoutModeToken)) {
+    return parseLegacyPersistKeyNoLayout(parts);
+  }
+
+  const edgeKey = parts[parts.length - 4]!;
+  const edgeVisibility = parseEdgeVisibility(edgeKey);
+  if (!edgeVisibility) return null;
+
+  const showTasks = parts[parts.length - 5] === '1';
+  const tagKey = parts[parts.length - 6]!;
+  const folderIdRaw = parts[parts.length - 7]!;
   const recordsRevision = parts.slice(0, parts.length - LEGACY_PERSIST_KEY_TAIL_PARTS).join(';');
 
   return {
@@ -67,8 +109,9 @@ function parseLegacyPersistKey(parts: string[]): ParsedNotesGraphPersistKey | nu
     folderId: folderIdRaw || null,
     tags: tagKey ? tagKey.split('|').filter(Boolean) : [],
     showTasks,
+    showArchived: false,
     edgeVisibility,
-    layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
+    layoutMode: layoutModeToken,
     simplifyOverride,
     filteredCount,
   };
@@ -95,9 +138,10 @@ export function parseNotesGraphPersistKey(layoutKey: string): ParsedNotesGraphPe
   const edgeVisibility = parseEdgeVisibility(edgeKey);
   if (!edgeVisibility) return null;
 
-  const showTasks = parts[parts.length - 5] === '1';
-  const tagKey = parts[parts.length - 6]!;
-  const folderIdRaw = parts[parts.length - 7]!;
+  const showArchived = parts[parts.length - 5] === '1';
+  const showTasks = parts[parts.length - 6] === '1';
+  const tagKey = parts[parts.length - 7]!;
+  const folderIdRaw = parts[parts.length - 8]!;
   const recordsRevision = parts.slice(0, parts.length - PERSIST_KEY_TAIL_PARTS).join(';');
 
   return {
@@ -105,6 +149,7 @@ export function parseNotesGraphPersistKey(layoutKey: string): ParsedNotesGraphPe
     folderId: folderIdRaw || null,
     tags: tagKey ? tagKey.split('|').filter(Boolean) : [],
     showTasks,
+    showArchived,
     edgeVisibility,
     layoutMode: layoutModeToken,
     simplifyOverride,
@@ -117,6 +162,7 @@ export function parsedPersistKeyToGraphFilters(parsed: ParsedNotesGraphPersistKe
     folderId: parsed.folderId,
     tags: parsed.tags,
     showTasks: parsed.showTasks,
+    showArchived: parsed.showArchived,
     edgeVisibility: { ...parsed.edgeVisibility },
     layoutMode: parsed.layoutMode,
   };

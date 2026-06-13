@@ -37,6 +37,7 @@ const defaultFilters: GraphFilters = {
   folderId: null,
   tags: [],
   showTasks: true,
+  showArchived: false,
   edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
   layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
 };
@@ -58,6 +59,16 @@ describe('countFilteredGraphRecords', () => {
     ];
 
     expect(countFilteredGraphRecords(records, { ...defaultFilters, tags: ['work'] })).toBe(1);
+  });
+
+  it('excludes archived records unless showArchived is enabled', () => {
+    const records = [
+      makeRecord('a', 'A', { status: 'read' }),
+      makeRecord('b', 'B', { status: 'archived' }),
+    ];
+
+    expect(countFilteredGraphRecords(records, defaultFilters)).toBe(1);
+    expect(countFilteredGraphRecords(records, { ...defaultFilters, showArchived: true })).toBe(2);
   });
 });
 

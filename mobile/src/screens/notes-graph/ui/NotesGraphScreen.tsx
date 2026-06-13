@@ -18,6 +18,7 @@ import {
   DEFAULT_GRAPH_LAYOUT_MODE,
   type GraphFilters,
 } from '../lib/graphTypes';
+import { getGraphShowArchived } from '../lib/graphArchivePreferences';
 import {
   getPrefetchedNotesGraphScreenBody,
   prefetchNotesGraphScreenBody,
@@ -46,6 +47,7 @@ export const NotesGraphScreen = () => {
       folderId: route.params?.folderId ?? null,
       tags: route.params?.tag ? [route.params.tag] : [],
       showTasks: true,
+      showArchived: getGraphShowArchived(),
       edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
       layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
     }),

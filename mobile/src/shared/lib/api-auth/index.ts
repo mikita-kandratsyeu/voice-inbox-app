@@ -3,8 +3,9 @@ import { getFirebaseAppCheckToken } from '@/shared/lib/app-check/appCheckToken';
 import { HEADER_FIREBASE_APP_CHECK } from '@/shared/lib/app-check/constants';
 import { shouldSkipFirebaseAppCheck } from '@/shared/lib/app-check/shouldSkipAppCheck';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
-import { nitroFetch } from '@/shared/lib/fetch';
+import { nitroFetch, type NitroFetchInit } from '@/shared/lib/fetch';
 
+import { WEB_API_FETCH_TIMEOUT_MS } from './constants';
 import { isNumber, isString } from '../type-guards';
 
 function getTokenUrl(): string {
@@ -38,6 +39,7 @@ async function fetchToken(): Promise<{ token: string; deviceId: string }> {
       ...(appCheckToken ? { [HEADER_FIREBASE_APP_CHECK]: appCheckToken } : {}),
       'x-device-id': deviceId,
     },
+    timeoutMs: WEB_API_FETCH_TIMEOUT_MS,
   });
 
   if (!response.ok) {
@@ -100,21 +102,31 @@ function mergeHeaders(
   return out;
 }
 
+export type FetchWithAuthOptions = RequestInit & {
+  skipRetry?: boolean;
+  timeoutMs?: NitroFetchInit['timeoutMs'];
+};
+
 export async function fetchWithAuth(
   url: string,
-  options: RequestInit & { skipRetry?: boolean } = {},
+  options: FetchWithAuthOptions = {},
 ): Promise<Response> {
-  const { skipRetry, ...fetchOptions } = options;
+  const { skipRetry, timeoutMs, ...fetchOptions } = options;
   const auth = await getAuthHeaders();
   const headers = mergeHeaders(fetchOptions.headers, auth);
+  const nitroInit = {
+    ...fetchOptions,
+    headers,
+    timeoutMs: timeoutMs ?? WEB_API_FETCH_TIMEOUT_MS,
+  };
 
-  let response = await nitroFetch(url, { ...fetchOptions, headers });
+  let response = await nitroFetch(url, nitroInit);
 
   if (response.status === 401 && !skipRetry) {
     clearApiToken();
     const auth2 = await getAuthHeaders();
     const retryHeaders = mergeHeaders(fetchOptions.headers, auth2);
-    response = await nitroFetch(url, { ...fetchOptions, headers: retryHeaders });
+    response = await nitroFetch(url, { ...nitroInit, headers: retryHeaders });
   }
 
   return response;

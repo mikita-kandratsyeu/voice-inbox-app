@@ -39,6 +39,7 @@ export type GraphFilters = {
   folderId: string | null;
   tags: string[];
   showTasks: boolean;
+  showArchived: boolean;
   edgeVisibility: GraphEdgeVisibility;
   layoutMode: GraphLayoutMode;
 };

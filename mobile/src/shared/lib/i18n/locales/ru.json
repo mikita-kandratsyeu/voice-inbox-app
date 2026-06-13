@@ -276,6 +276,7 @@
         "tags": "Теги",
         "tagsNone": "Нет",
         "showTasks": "Задачи",
+        "showArchived": "Показывать архив",
         "links": "Линии связей",
         "linksNone": "Скрыты",
         "layoutMode": "Построение",
@@ -366,7 +367,10 @@
       "toggleFolderHighlightsHintOff": "Показать выделение папок на карте",
       "toggleMinimap": "Мини-карта",
       "toggleMinimapHintOn": "Скрыть мини-карту на карте",
-      "toggleMinimapHintOff": "Показать мини-карту на карте"
+      "toggleMinimapHintOff": "Показать мини-карту на карте",
+      "toggleShowArchived": "Показывать архив",
+      "toggleShowArchivedHintOn": "Скрыть архивные заметки на карте",
+      "toggleShowArchivedHintOff": "Показывать архивные заметки на карте"
     },
     "legend": {
       "toggle": "Что означают линии",

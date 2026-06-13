@@ -1,3 +1,4 @@
+import { WEB_API_POLL_FETCH_TIMEOUT_MS } from '@/shared/lib/api-auth/constants';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 
 import {
@@ -62,7 +63,11 @@ export async function pollGetLoop<T>(
 
     let response: Response;
     try {
-      response = await fetchWithAuth(url, { headers, signal });
+      response = await fetchWithAuth(url, {
+        headers,
+        signal,
+        timeoutMs: WEB_API_POLL_FETCH_TIMEOUT_MS,
+      });
     } catch (err) {
       if (signal?.aborted || isAbortLikeError(err)) {
         return aiRequestCancelledFailure();

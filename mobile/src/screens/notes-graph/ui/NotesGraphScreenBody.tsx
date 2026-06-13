@@ -28,6 +28,7 @@ import {
   getGraphFolderHighlightsVisible,
   setGraphFolderHighlightsVisible,
 } from '../lib/graphFolderHighlightsPreferences';
+import { getGraphShowArchived, setGraphShowArchived } from '../lib/graphArchivePreferences';
 import { getGraphMinimapVisible, setGraphMinimapVisible } from '../lib/graphMinimapPreferences';
 import { findGraphSearchMatchIds, type GraphSearchIndexEntry } from '../lib/graphSearch';
 import { getSessionNodePositions, replaceSessionNodePositions } from '../lib/graphSessionLayout';
@@ -95,6 +96,7 @@ export const NotesGraphScreenBody = () => {
     folderId: route.params?.folderId ?? null,
     tags: route.params?.tag ? [route.params.tag] : [],
     showTasks: true,
+    showArchived: getGraphShowArchived(),
     edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
     layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
   }));
@@ -750,6 +752,15 @@ export const NotesGraphScreenBody = () => {
       state: minimapVisible ? 'on' : 'off',
     });
 
+    actions.push({
+      id: 'toggleShowArchived',
+      title: t('notesGraph.controls.toggleShowArchived'),
+      image: 'archivebox',
+      imageColor: titleColor,
+      titleColor,
+      state: filters.showArchived ? 'on' : 'off',
+    });
+
     actions.push(
       inlineNativeMenuSection('notesGraphMainSection', titleColor, [
         {
@@ -770,7 +781,7 @@ export const NotesGraphScreenBody = () => {
     );
 
     return actions;
-  }, [color.text.primary, folderHighlightsVisible, foldersEnabled, minimapVisible, t]);
+  }, [color.text.primary, filters.showArchived, folderHighlightsVisible, foldersEnabled, minimapVisible, t]);
 
   const headerRightSlot =
     recordCount > 0 ? (
@@ -836,6 +847,15 @@ export const NotesGraphScreenBody = () => {
                 const next = !value;
                 setGraphMinimapVisible(next);
                 return next;
+              });
+              return;
+            }
+            if (nativeEvent.event === 'toggleShowArchived') {
+              hapticSelection();
+              setFilters((prev) => {
+                const next = !prev.showArchived;
+                setGraphShowArchived(next);
+                return { ...prev, showArchived: next };
               });
               return;
             }

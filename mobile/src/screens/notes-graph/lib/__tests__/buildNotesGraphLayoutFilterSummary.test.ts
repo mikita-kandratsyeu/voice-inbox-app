@@ -15,6 +15,7 @@ const baseFilters: GraphFilters = {
   folderId: null,
   tags: [],
   showTasks: true,
+  showArchived: false,
   edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
   layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
 };
@@ -34,6 +35,7 @@ describe('buildNotesGraphLayoutFilterSummary', () => {
       'folder',
       'tags',
       'showTasks',
+      'showArchived',
       'links',
       'layoutMode',
       'view',
@@ -43,7 +45,7 @@ describe('buildNotesGraphLayoutFilterSummary', () => {
     expect(rows.find((row) => row.id === 'layoutMode')?.value).toBe(
       'notesGraph.filters.layoutMode.cluster',
     );
-    expect(rows[5]?.value).toBe('notesGraph.history.filters.viewFull');
+    expect(rows[6]?.value).toBe('notesGraph.history.filters.viewFull');
   });
 
   it.each([

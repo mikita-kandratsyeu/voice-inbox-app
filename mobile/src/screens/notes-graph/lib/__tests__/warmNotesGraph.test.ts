@@ -17,6 +17,7 @@ const filters = {
   folderId: null,
   tags: [] as string[],
   showTasks: true,
+  showArchived: false,
   edgeVisibility: {
     similar: true,
     sharedTag: true,

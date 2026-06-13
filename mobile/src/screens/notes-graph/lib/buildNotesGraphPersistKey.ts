@@ -28,6 +28,7 @@ export function buildNotesGraphPersistKey(
     filters.folderId ?? '',
     tagKey,
     filters.showTasks ? 1 : 0,
+    filters.showArchived ? 1 : 0,
     edgeKey,
     filters.layoutMode,
     simplifyOverride === null ? 'auto' : simplifyOverride ? 1 : 0,

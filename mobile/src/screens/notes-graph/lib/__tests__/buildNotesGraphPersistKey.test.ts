@@ -31,6 +31,7 @@ const filters: GraphFilters = {
   folderId: null,
   tags: [],
   showTasks: false,
+  showArchived: false,
   edgeVisibility: {
     ...DEFAULT_EDGE_VISIBILITY,
     contains: false,
@@ -50,6 +51,7 @@ describe('buildNotesGraphPersistKey', () => {
     expect(parsed?.folderId).toBeNull();
     expect(parsed?.tags).toEqual([]);
     expect(parsed?.showTasks).toBe(false);
+    expect(parsed?.showArchived).toBe(false);
     expect(parsed?.simplifyOverride).toBeNull();
     expect(parsed?.filteredCount).toBe(2);
     expect(parsed?.edgeVisibility).toEqual(filters.edgeVisibility);

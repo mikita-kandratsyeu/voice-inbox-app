@@ -267,6 +267,7 @@
         "tags": "Tags",
         "tagsNone": "None",
         "showTasks": "Tasks",
+        "showArchived": "Include archive",
         "links": "Connection lines",
         "linksNone": "Hidden",
         "layoutMode": "Layout",
@@ -353,7 +354,10 @@
       "toggleFolderHighlightsHintOff": "Show folder highlights on the map",
       "toggleMinimap": "Minimap",
       "toggleMinimapHintOn": "Hide the minimap on the map",
-      "toggleMinimapHintOff": "Show the minimap on the map"
+      "toggleMinimapHintOff": "Show the minimap on the map",
+      "toggleShowArchived": "Include archive",
+      "toggleShowArchivedHintOn": "Exclude archived notes from the map",
+      "toggleShowArchivedHintOff": "Include archived notes on the map"
     },
     "legend": {
       "toggle": "What the lines mean",
@@ -761,7 +765,7 @@
     "askContextProcessingCloud": "Cloud AI",
     "askContextLearnMoreA11y": "Details on what is sent",
     "askContextSheetTitle": "What goes into each answer",
-    "askContextSheetIntro": "Each request can include:",
+    "askContextSheetIntro": "To answer your question, the AI uses:",
     "askContextBulletTranscript": "The note transcript.",
     "askContextBulletSummary": "The note summary, if it exists.",
     "askContextBulletTasks": "Saved task titles from this note, if any.",

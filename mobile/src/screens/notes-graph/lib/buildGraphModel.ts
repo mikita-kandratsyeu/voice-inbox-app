@@ -31,6 +31,10 @@ function filterRecords(records: VoiceRecord[], filters: GraphFilters): VoiceReco
     result = result.filter((r) => (r.tags ?? []).some((tag) => wanted.has(normalizeTag(tag))));
   }
 
+  if (!filters.showArchived) {
+    result = result.filter((r) => r.status !== 'archived');
+  }
+
   return result;
 }
 

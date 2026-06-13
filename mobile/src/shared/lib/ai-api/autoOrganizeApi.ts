@@ -6,6 +6,7 @@ import type {
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { i18n } from '@/shared/lib';
 import { requestAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
+import { WEB_API_POLL_FETCH_TIMEOUT_MS } from '@/shared/lib/api-auth/constants';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 
@@ -128,7 +129,10 @@ export async function pollAutoOrganizeFolders(
     }
     let response: Response;
     try {
-      response = await fetchWithAuth(url, { headers });
+      response = await fetchWithAuth(url, {
+        headers,
+        timeoutMs: WEB_API_POLL_FETCH_TIMEOUT_MS,
+      });
     } catch {
       continue;
     }

@@ -28,6 +28,7 @@ const filters = {
   folderId: null,
   tags: [] as string[],
   showTasks: false,
+  showArchived: false,
   edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY, contains: false },
   layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
 };
