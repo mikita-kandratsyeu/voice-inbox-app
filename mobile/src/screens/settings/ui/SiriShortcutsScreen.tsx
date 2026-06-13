@@ -11,6 +11,8 @@ import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { SCREEN_PADDING, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../lib';
+
 type ShortcutRow = {
   key: string;
   icon: React.ReactNode;
@@ -99,7 +101,7 @@ export const SiriShortcutsScreen = () => {
     () => [
       {
         key: 'startRecording',
-        icon: <Mic size={20} color={color.accent.primary} strokeWidth={1.8} />,
+        icon: <Mic size={20} color={getSettingsIconColor(color, 'mic')} strokeWidth={1.8} />,
         title: t('settings.siriShortcuts.shortcuts.startRecording.title'),
         subtitle: t('settings.siriShortcuts.shortcuts.startRecording.subtitle'),
         value: t('settings.siriShortcuts.shortcuts.startRecording.value'),

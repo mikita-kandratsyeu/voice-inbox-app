@@ -50,6 +50,7 @@ import {
   SkeletonPulse,
 } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../lib';
 import { AiUsageHistoryExportError, exportAiUsageHistoryCsv } from '../lib/exportAiUsageHistoryCsv';
 
 type UsageMetricCardProps = {
@@ -439,7 +440,7 @@ export const AiUsageDashboardScreen = () => {
     () => [
       {
         key: 'transcription',
-        icon: <Mic size={20} color={color.accent.success} strokeWidth={1.8} />,
+        icon: <Mic size={20} color={getSettingsIconColor(color, 'mic')} strokeWidth={1.8} />,
         label: t('settings.aiUsageDashboard.features.transcription.title'),
         value: t('settings.aiUsageDashboard.localBadge'),
         subtitle: t('settings.aiUsageDashboard.features.transcription.subtitle'),
