@@ -19,6 +19,7 @@ import {
   type EnrichedMarkdownToolbarAction,
   NoteDocumentMarkdownToolbar,
 } from './NoteDocumentMarkdownToolbar';
+import { NoteDocumentSourceEditorSizeBanner } from './NoteDocumentSourceEditorSizeBanner';
 
 type NoteDocumentSourceEditorProps = {
   color: Colors;
@@ -29,6 +30,7 @@ type NoteDocumentSourceEditorProps = {
   horizontalPadding: number;
   scrollPaddingBottom: number;
   isTablet: boolean;
+  showLargeDocumentWarning?: boolean;
   inputRef: React.RefObject<EnrichedMarkdownTextInputInstance | null>;
 };
 
@@ -41,6 +43,7 @@ export const NoteDocumentSourceEditor = React.memo(function NoteDocumentSourceEd
   horizontalPadding,
   scrollPaddingBottom,
   isTablet,
+  showLargeDocumentWarning = false,
   inputRef,
 }: NoteDocumentSourceEditorProps) {
   const { t } = useTranslation();
@@ -153,6 +156,13 @@ export const NoteDocumentSourceEditor = React.memo(function NoteDocumentSourceEd
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.primary }}>
+      {showLargeDocumentWarning ? (
+        <NoteDocumentSourceEditorSizeBanner
+          color={color}
+          horizontalPadding={horizontalPadding}
+          isTablet={isTablet}
+        />
+      ) : null}
       <View pointerEvents="box-none" style={toolbarOverlayStyle}>
         <NoteDocumentMarkdownToolbar
           color={color}

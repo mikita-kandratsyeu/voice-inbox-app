@@ -578,6 +578,11 @@
       "discard": "Discard",
       "parseErrorTitle": "Couldn't save note",
       "parseErrorMessage": "Check section formatting and try again.",
+      "largeDocumentWarnTitle": "Long note",
+      "largeDocumentWarnMessage": "This note is quite long. Typing may feel sluggish while you edit.",
+      "largeDocumentWarnContinue": "Edit anyway",
+      "largeDocumentSlowBannerTitle": "Long note",
+      "largeDocumentSlowBannerMessage": "Typing may feel slower than usual while you edit.",
       "toolbar": {
         "undo": "Undo",
         "redo": "Redo",

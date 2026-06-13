@@ -2,7 +2,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BookOpen, Check, FileCode, X } from 'lucide-react-native';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import type { EnrichedMarkdownTextInputInstance } from 'react-native-enriched-markdown';
@@ -17,6 +17,7 @@ import {
   NoteDocumentReadingBody,
   NoteDocumentSavingOverlay,
   NoteDocumentSourceEditor,
+  shouldWarnNoteDocumentEditorSize,
   useNoteDocument,
 } from '@/features/note-document';
 import { useColors } from '@/shared/config';
@@ -32,6 +33,7 @@ export const NoteDocumentScreen = () => {
   const isTablet = useIsTablet();
   const sourceInputRef = useRef<EnrichedMarkdownTextInputInstance>(null);
   const [sourceEditorKey, setSourceEditorKey] = useState(0);
+  const initialSourcePromptRef = useRef(false);
 
   const scrollPaddingBottom = insets.bottom + 4;
 
@@ -60,8 +62,64 @@ export const NoteDocumentScreen = () => {
 
   const canSave = hasUnsavedChanges && !isSaving && !isPreparing;
   const controlsDisabled = isSaving || isPreparing;
+  const documentCharacterCount = documentMarkdown.length;
+  const showSourceEditorSizeBanner =
+    mode === 'source' && shouldWarnNoteDocumentEditorSize(documentCharacterCount);
 
   const screenTitle = liveRecord.title;
+
+  const enterSourceMode = useCallback(() => {
+    clearEditorDirty();
+    setSourceEditorKey((current) => current + 1);
+    setMode('source');
+  }, [clearEditorDirty, setMode]);
+
+  const promptLargeDocumentBeforeSource = useCallback(
+    (onContinue: () => void) => {
+      if (!shouldWarnNoteDocumentEditorSize(documentCharacterCount)) {
+        onContinue();
+        return;
+      }
+
+      Alert.alert(
+        t('recordingDetail.document.largeDocumentWarnTitle'),
+        t('recordingDetail.document.largeDocumentWarnMessage'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('recordingDetail.document.largeDocumentWarnContinue'),
+            style: 'destructive',
+            onPress: onContinue,
+          },
+        ],
+      );
+    },
+    [documentCharacterCount, t],
+  );
+
+  useEffect(() => {
+    if (isPreparing || initialSourcePromptRef.current) {
+      return;
+    }
+    if (initialMode !== 'source' || mode !== 'source') {
+      return;
+    }
+    if (!shouldWarnNoteDocumentEditorSize(documentCharacterCount)) {
+      return;
+    }
+
+    initialSourcePromptRef.current = true;
+    setMode('reading');
+    promptLargeDocumentBeforeSource(enterSourceMode);
+  }, [
+    documentCharacterCount,
+    enterSourceMode,
+    initialMode,
+    isPreparing,
+    mode,
+    promptLargeDocumentBeforeSource,
+    setMode,
+  ]);
 
   const flushEditorMarkdown = useCallback(async () => {
     if (mode !== 'source') {
@@ -142,9 +200,7 @@ export const NoteDocumentScreen = () => {
 
   const handleToggleMode = useCallback(() => {
     if (mode === 'reading') {
-      clearEditorDirty();
-      setSourceEditorKey((current) => current + 1);
-      setMode('source');
+      promptLargeDocumentBeforeSource(enterSourceMode);
       return;
     }
 
@@ -155,7 +211,15 @@ export const NoteDocumentScreen = () => {
       KeyboardController.dismiss({ animated: false });
       setMode('reading');
     })();
-  }, [clearEditorDirty, flushEditorMarkdown, mode, setDocumentMarkdown, setMode]);
+  }, [
+    clearEditorDirty,
+    enterSourceMode,
+    flushEditorMarkdown,
+    mode,
+    promptLargeDocumentBeforeSource,
+    setDocumentMarkdown,
+    setMode,
+  ]);
 
   useFocusEffect(
     useCallback(() => {
@@ -294,6 +358,7 @@ export const NoteDocumentScreen = () => {
               horizontalPadding={sourceHorizontalPadding}
               scrollPaddingBottom={scrollPaddingBottom}
               isTablet={isTablet}
+              showLargeDocumentWarning={showSourceEditorSizeBanner}
               inputRef={sourceInputRef}
             />
           )}

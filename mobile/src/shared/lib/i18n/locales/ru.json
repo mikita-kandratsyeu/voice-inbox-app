@@ -593,6 +593,11 @@
       "discard": "Не сохранять",
       "parseErrorTitle": "Не удалось сохранить",
       "parseErrorMessage": "Проверьте формат секций и попробуйте снова.",
+      "largeDocumentWarnTitle": "Объёмная заметка",
+      "largeDocumentWarnMessage": "Заметка получилась объёмной — при редактировании текст может набираться с задержкой.",
+      "largeDocumentWarnContinue": "Всё равно редактировать",
+      "largeDocumentSlowBannerTitle": "Объёмная заметка",
+      "largeDocumentSlowBannerMessage": "Текст может набираться медленнее обычного.",
       "sections": {
         "expandA11y": "Развернуть «{{title}}»",
         "collapseA11y": "Свернуть «{{title}}»"

@@ -6,6 +6,11 @@ export {
   NOTE_DOCUMENT_CONTENT_MAX_WIDTH,
   NOTE_DOCUMENT_TABLET_HORIZONTAL_PADDING,
 } from './lib/noteDocumentLayout';
+export {
+  estimateNoteDocumentCharacterCount,
+  NOTE_DOCUMENT_EDITOR_COMFORTABLE_MAX_CHARS,
+  shouldWarnNoteDocumentEditorSize,
+} from './lib/noteDocumentEditorSizeLimits';
 export { warmNoteDocumentMarkdown } from './lib/noteDocumentMarkdownCache';
 export {
   listNoteDocumentSectionIds,
@@ -25,3 +30,4 @@ export { NoteDocumentPreparingState } from './ui/NoteDocumentPreparingState';
 export { NoteDocumentReadingBody } from './ui/NoteDocumentReadingBody';
 export { NoteDocumentSavingOverlay } from './ui/NoteDocumentSavingOverlay';
 export { NoteDocumentSourceEditor } from './ui/NoteDocumentSourceEditor';
+export { NoteDocumentSourceEditorSizeBanner } from './ui/NoteDocumentSourceEditorSizeBanner';
