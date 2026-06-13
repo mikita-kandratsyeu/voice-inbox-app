@@ -6,7 +6,9 @@ import {
 
 describe('noteDocumentEditorSizeLimits', () => {
   it('does not warn for comfortable documents', () => {
-    expect(shouldWarnNoteDocumentEditorSize(NOTE_DOCUMENT_EDITOR_COMFORTABLE_MAX_CHARS)).toBe(false);
+    expect(shouldWarnNoteDocumentEditorSize(NOTE_DOCUMENT_EDITOR_COMFORTABLE_MAX_CHARS)).toBe(
+      false,
+    );
   });
 
   it('warns for large documents', () => {

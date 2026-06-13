@@ -3,14 +3,14 @@ export {
   resolveNoteDocumentTemplate,
 } from './lib/buildNoteDocumentMarkdown';
 export {
-  NOTE_DOCUMENT_CONTENT_MAX_WIDTH,
-  NOTE_DOCUMENT_TABLET_HORIZONTAL_PADDING,
-} from './lib/noteDocumentLayout';
-export {
   estimateNoteDocumentCharacterCount,
   NOTE_DOCUMENT_EDITOR_COMFORTABLE_MAX_CHARS,
   shouldWarnNoteDocumentEditorSize,
 } from './lib/noteDocumentEditorSizeLimits';
+export {
+  NOTE_DOCUMENT_CONTENT_MAX_WIDTH,
+  NOTE_DOCUMENT_TABLET_HORIZONTAL_PADDING,
+} from './lib/noteDocumentLayout';
 export { warmNoteDocumentMarkdown } from './lib/noteDocumentMarkdownCache';
 export {
   listNoteDocumentSectionIds,

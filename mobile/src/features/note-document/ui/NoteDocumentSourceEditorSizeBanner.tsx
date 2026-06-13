@@ -61,10 +61,7 @@ export function NoteDocumentSourceEditorSizeBanner({
             >
               {t('recordingDetail.document.largeDocumentSlowBannerTitle')}
             </Text>
-            <Text
-              className="text-[12px] leading-[17px]"
-              style={{ color: color.text.secondary }}
-            >
+            <Text className="text-[12px] leading-[17px]" style={{ color: color.text.secondary }}>
               {t('recordingDetail.document.largeDocumentSlowBannerMessage')}
             </Text>
           </View>
