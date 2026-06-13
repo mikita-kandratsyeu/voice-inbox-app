@@ -156,7 +156,10 @@ export const InboxScreen = () => {
 
   const handleImportFile = useCallback(() => void importFile(), [importFile]);
 
-  const handleSearchClear = useCallback(() => setSearchBarExplicitOpen(false), []);
+  const handleSearchClear = useCallback(
+    () => setSearchBarExplicitOpen(false),
+    [setSearchBarExplicitOpen],
+  );
 
   return (
     <View style={[screenStyle, { flex: 1 }]}>

@@ -188,7 +188,7 @@ export const useRecording = ({
           .catch(() => {});
       }
     });
-  }, [t]);
+  }, [audioLevelShared, t]);
 
   const startRecording = useCallback(async () => {
     const status = await checkMicPermission();
@@ -235,7 +235,7 @@ export const useRecording = ({
     } catch (err) {
       diagWarn('[useRecording] startRecorder failed:', err);
     }
-  }, [addRecordBackListener, t]);
+  }, [addRecordBackListener, audioLevelShared, t]);
 
   const pauseRecording = useCallback(async () => {
     try {
@@ -250,7 +250,7 @@ export const useRecording = ({
     } catch (err) {
       diagWarn('[useRecording] pauseRecorder failed:', err);
     }
-  }, []);
+  }, [audioLevelShared]);
 
   const resumeRecording = useCallback(async () => {
     try {
@@ -267,7 +267,7 @@ export const useRecording = ({
     } catch (err) {
       diagWarn('[useRecording] resumeRecorder failed:', err);
     }
-  }, [addRecordBackListener]);
+  }, [addRecordBackListener, audioLevelShared]);
 
   const stopRecording = useCallback(async (): Promise<string | null> => {
     try {
@@ -322,7 +322,7 @@ export const useRecording = ({
     setElapsedMs(0);
     audioLevelShared.value = 0;
     setState('idle');
-  }, []);
+  }, [audioLevelShared]);
 
   const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
 

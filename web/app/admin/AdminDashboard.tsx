@@ -16,7 +16,6 @@ import {
   User,
   Wallet,
   Wrench,
-  TrendingUp,
   Activity,
   Zap,
 } from 'lucide-react';
@@ -47,12 +46,7 @@ import {
   AdminStatusBadge,
   AdminEmptyState,
   AdminAlert,
-  adminBtnPrimaryClass,
   adminBtnSecondaryClass,
-  adminCardSurfaceClass,
-  adminInputClass,
-  adminSelectClass,
-  adminBtnDangerClass,
 } from './admin-ui';
 
 import { AdminBudgetPanel } from './AdminBudgetPanel';
@@ -111,8 +105,6 @@ type StatusResponse = {
   app: { baseUrl: string; env: string; devicesWithPush?: number };
 };
 
-type BroadcastResult = { ok: true; sent: number; failed: number; total: number };
-
 type GitHubCommitInfo = {
   sha: string;
   shortSha: string;
@@ -128,20 +120,6 @@ type GitHubResponse = {
   repoUrl?: string;
   commits?: GitHubCommitInfo[];
   error?: string;
-};
-
-type BroadcastHistoryItem = {
-  id: string;
-  createdAt: string;
-  kind: string;
-  notifyType: string;
-  title: string | null;
-  sent: number;
-  failed: number;
-  total: number;
-  errorSample: string | null;
-  adminLogin: string;
-  deviceId: string | null;
 };
 
 type AdminTab =
@@ -242,7 +220,6 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
   );
   const canAccessSecurity = adminHasPermission(accessProfile, 'security');
   const canAccessOverview = adminHasPermission(accessProfile, 'overview');
-  const canAccessMessaging = adminHasPermission(accessProfile, 'messaging');
   const [adminTab, setAdminTab] = useState<AdminTab>(() => visibleTabs[0] ?? 'overview');
 
   useEffect(() => {
@@ -254,52 +231,8 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
 
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
-  const [broadcastLoading, setBroadcastLoading] = useState(false);
-  const [broadcastResult, setBroadcastResult] = useState<BroadcastResult | null>(null);
-  const [broadcastType, setBroadcastType] = useState<string>('policy_update');
-  const [broadcastLocaleTab, setBroadcastLocaleTab] = useState<'en' | 'ru'>('en');
-  const [broadcastI18n, setBroadcastI18n] = useState({
-    en: { title: '', body: '', message: '' },
-    ru: { title: '', body: '', message: '' },
-  });
-  const [broadcastPolicyAiBrief, setBroadcastPolicyAiBrief] = useState('');
-  const [broadcastPolicyAiLocale, setBroadcastPolicyAiLocale] = useState<'en' | 'ru' | null>(null);
-  const [broadcastPolicyAiError, setBroadcastPolicyAiError] = useState<{
-    locale: 'en' | 'ru';
-    message: string;
-  } | null>(null);
-  const [singleDeviceId, setSingleDeviceId] = useState('');
-  const [singleType, setSingleType] = useState<string>('policy_update');
-  const [singleTitle, setSingleTitle] = useState('');
-  const [singleBody, setSingleBody] = useState('');
-  const [singleMessage, setSingleMessage] = useState('');
-  const [singlePushLoading, setSinglePushLoading] = useState(false);
-  const [singlePushResult, setSinglePushResult] = useState<{ ok: true } | { error: string } | null>(
-    null,
-  );
-  const [deviceIds, setDeviceIds] = useState<string[]>([]);
-  const [deviceIdsLoading, setDeviceIdsLoading] = useState(false);
   const [github, setGithub] = useState<GitHubResponse | null>(null);
   const [githubLoading, setGithubLoading] = useState(false);
-
-  const [broadcastConfirm, setBroadcastConfirm] = useState(false);
-  const [broadcastHistory, setBroadcastHistory] = useState<BroadcastHistoryItem[]>([]);
-  const [broadcastHistoryLoading, setBroadcastHistoryLoading] = useState(false);
-
-  const fetchBroadcastHistory = useCallback(async () => {
-    setBroadcastHistoryLoading(true);
-    try {
-      const res = await fetch('/api/admin/broadcast-history?limit=30', {
-        credentials: 'include',
-      });
-      const data = (await res.json()) as { ok?: boolean; items?: BroadcastHistoryItem[] };
-      setBroadcastHistory(data.ok && Array.isArray(data.items) ? data.items : []);
-    } catch {
-      setBroadcastHistory([]);
-    } finally {
-      setBroadcastHistoryLoading(false);
-    }
-  }, []);
 
   const fetchStatus = useCallback(async () => {
     setStatusLoading(true);
@@ -311,21 +244,6 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
       setStatus(null);
     } finally {
       setStatusLoading(false);
-    }
-  }, []);
-
-  const fetchDeviceIds = useCallback(async () => {
-    setDeviceIdsLoading(true);
-    try {
-      const res = await fetch('/api/admin/devices', { credentials: 'include' });
-      const data = await res.json();
-      setDeviceIds(
-        Array.isArray((data as { deviceIds?: string[] }).deviceIds) ? data.deviceIds : [],
-      );
-    } catch {
-      setDeviceIds([]);
-    } finally {
-      setDeviceIdsLoading(false);
     }
   }, []);
 
@@ -350,144 +268,13 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
   }, []);
 
   useEffect(() => {
-    if (!canAccessMessaging && !canAccessOverview) return;
-    void fetchDeviceIds();
-  }, [fetchDeviceIds, canAccessMessaging, canAccessOverview]);
-
-  useEffect(() => {
     if (!canAccessOverview) return;
     void fetchGithub();
   }, [fetchGithub, canAccessOverview]);
 
-  useEffect(() => {
-    if (adminTab === 'messaging') void fetchBroadcastHistory();
-  }, [adminTab, fetchBroadcastHistory]);
-
   const handleLogout = async () => {
     await fetch('/api/admin/logout', { method: 'POST', credentials: 'include' });
     router.refresh();
-  };
-
-  const handleSinglePush = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSinglePushResult(null);
-    setSinglePushLoading(true);
-    try {
-      const res = await fetch('/api/admin/push/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          deviceId: singleDeviceId.trim(),
-          type: singleType,
-          ...(singleTitle && { title: singleTitle }),
-          ...(singleBody && { body: singleBody }),
-          ...(singleMessage && { message: singleMessage }),
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setSinglePushResult({ ok: true });
-        void fetchBroadcastHistory();
-      } else setSinglePushResult({ error: (data as { error?: string }).error ?? 'Failed' });
-    } catch {
-      setSinglePushResult({ error: 'Request failed' });
-    } finally {
-      setSinglePushLoading(false);
-    }
-  };
-
-  const handleBroadcast = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!broadcastConfirm) return;
-    setBroadcastResult(null);
-    setBroadcastLoading(true);
-    try {
-      const i18n: Partial<
-        Record<'en' | 'ru', { title?: string; body?: string; message?: string }>
-      > = {};
-      for (const loc of ['en', 'ru'] as const) {
-        const row = broadcastI18n[loc];
-        const pack: { title?: string; body?: string; message?: string } = {};
-        const t = row.title.trim();
-        const b = row.body.trim();
-        const m = row.message.trim();
-        if (t) pack.title = t;
-        if (b) pack.body = b;
-        if (m) pack.message = m;
-        if (Object.keys(pack).length) i18n[loc] = pack;
-      }
-      const payload: { type: string; i18n?: typeof i18n } = { type: broadcastType };
-      if (Object.keys(i18n).length) payload.i18n = i18n;
-
-      const res = await fetch('/api/admin/broadcast', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setBroadcastResult(data as BroadcastResult);
-        setBroadcastConfirm(false);
-        void fetchBroadcastHistory();
-      }
-    } finally {
-      setBroadcastLoading(false);
-    }
-  };
-
-  const handleBroadcastPolicyAiMarkdown = async (locale: 'en' | 'ru') => {
-    setBroadcastPolicyAiLocale(locale);
-    setBroadcastPolicyAiError(null);
-    try {
-      const contextParts = [
-        broadcastI18n[locale].title.trim(),
-        broadcastI18n[locale].body.trim(),
-        broadcastI18n[locale].message.trim(),
-      ].filter(Boolean);
-      const res = await fetch('/api/admin/ai/push-policy-markdown', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          locale,
-          brief: broadcastPolicyAiBrief.trim() || undefined,
-          context: contextParts.length ? contextParts.join('\n\n') : undefined,
-        }),
-      });
-      let data: { ok?: boolean; markdown?: string; error?: string };
-      try {
-        data = (await res.json()) as { ok?: boolean; markdown?: string; error?: string };
-      } catch {
-        setBroadcastPolicyAiError({
-          locale,
-          message: 'Invalid response from server (not JSON).',
-        });
-        return;
-      }
-      if (res.ok && data.ok && typeof data.markdown === 'string') {
-        setBroadcastPolicyAiError(null);
-        setBroadcastI18n((prev) => ({
-          ...prev,
-          [locale]: { ...prev[locale], message: data.markdown as string },
-        }));
-        return;
-      }
-      const fromBody =
-        typeof data.error === 'string' && data.error.trim() ? data.error.trim() : null;
-      setBroadcastPolicyAiError({
-        locale,
-        message: fromBody ?? `Request failed (${res.status}).`,
-      });
-    } catch (e) {
-      setBroadcastPolicyAiError({
-        locale,
-        message: e instanceof Error ? e.message : 'Network or unexpected error.',
-      });
-    } finally {
-      setBroadcastPolicyAiLocale(null);
-    }
   };
 
   const formatDate = (ts: number) => new Date(ts).toLocaleString();

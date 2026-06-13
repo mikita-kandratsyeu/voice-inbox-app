@@ -1,15 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import {
-  BarChart3,
-  CheckCircle2,
-  Clock,
-  Mail,
-  MessageSquare,
-  TrendingUp,
-  XCircle,
-} from 'lucide-react';
+import { BarChart3, CheckCircle2, Clock, Mail, MessageSquare, TrendingUp } from 'lucide-react';
 
 import {
   AdminAlert,
