@@ -131,6 +131,8 @@ export const NoteDocumentSourceEditor = React.memo(function NoteDocumentSourceEd
       const editor = inputRef.current;
       if (!editor) return;
 
+      onDirty();
+
       switch (action) {
         case 'bold':
           editor.toggleBold();
@@ -146,7 +148,7 @@ export const NoteDocumentSourceEditor = React.memo(function NoteDocumentSourceEd
           return;
       }
     },
-    [inputRef],
+    [inputRef, onDirty],
   );
 
   return (
