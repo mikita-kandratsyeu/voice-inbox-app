@@ -31,8 +31,8 @@ describe('shouldUseTranscriptSegmentView', () => {
     ).toBe(true);
   });
 
-  it('returns false for a flattened single segment without tokens', () => {
-    expect(shouldUseTranscriptSegmentView([segment()], true)).toBe(false);
+  it('returns true for a flattened single segment without tokens', () => {
+    expect(shouldUseTranscriptSegmentView([segment()], true)).toBe(true);
   });
 });
 
@@ -68,7 +68,7 @@ describe('shouldOpenSegmentTranscriptEditor', () => {
     ).toBe(false);
   });
 
-  it('opens segment editor for a text note with multiple fragments', () => {
+  it('opens markdown editor for a text note with multiple fragments', () => {
     expect(
       shouldOpenSegmentTranscriptEditor(
         [
@@ -85,15 +85,15 @@ describe('shouldOpenSegmentTranscriptEditor', () => {
           hasAudio: false,
         },
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
 
-  it('opens markdown editor for a flattened single voice transcript', () => {
+  it('opens segment editor for a flattened single voice transcript', () => {
     expect(
       shouldOpenSegmentTranscriptEditor([segment()], {
         transcript: 'Hello',
         hasAudio: true,
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 });
