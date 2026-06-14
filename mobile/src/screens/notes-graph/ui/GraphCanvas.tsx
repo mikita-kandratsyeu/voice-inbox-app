@@ -22,7 +22,8 @@ import Animated, {
 import type { ViewShotRef } from 'react-native-view-shot';
 
 import type { Folder } from '@/entities/folder';
-import type { Colors } from '@/shared/config';
+import { useSettingsStore } from '@/entities/settings';
+import { type Colors, DEFAULT_ACCENT_COLOR_ID } from '@/shared/config';
 
 import {
   computeGraphExportLayout,
@@ -35,6 +36,8 @@ import {
 } from '../lib/graphCanvasGestures';
 import { buildGraphClusters } from '../lib/graphClusterLayout';
 import { GRAPH_DRAG_RECONCILE_MIN_MS } from '../lib/graphDragReconcile';
+import type { GraphExportBackgroundId } from '../lib/graphExportBackground';
+import { resolveGraphExportColors } from '../lib/graphExportColors';
 import { getSessionNodePositions, setSessionNodePosition } from '../lib/graphSessionLayout';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
 import {
@@ -105,6 +108,7 @@ type GraphCanvasProps = {
   onDiscardLayout?: () => void;
   /** Mounts off-screen ViewShot tree for capture. */
   exportCaptureActive?: boolean;
+  exportCaptureBackgroundId?: GraphExportBackgroundId;
   /** Shows export progress in controls without mounting the capture tree. */
   isExportCapturing?: boolean;
   folderHighlightsVisible?: boolean;
@@ -155,6 +159,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     onSaveLayout,
     onDiscardLayout,
     exportCaptureActive = false,
+    exportCaptureBackgroundId = 'canvas',
     isExportCapturing = false,
     folderHighlightsVisible = true,
     minimapVisible = true,
@@ -163,6 +168,16 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 ) {
   const exportBusy = exportCaptureActive || isExportCapturing;
   const { t } = useTranslation();
+  const accentColorId = useSettingsStore((s) => s.accentColorId);
+  const exportCaptureColors = useMemo(
+    () =>
+      resolveGraphExportColors(
+        exportCaptureBackgroundId,
+        color,
+        isProActive ? accentColorId : DEFAULT_ACCENT_COLOR_ID,
+      ),
+    [accentColorId, color, exportCaptureBackgroundId, isProActive],
+  );
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const fullExportRef = useRef<ViewShotRef>(null);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
@@ -718,7 +733,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
           edges={edges}
           graphWidth={graphWidth}
           graphHeight={graphHeight}
-          color={color}
+          color={exportCaptureColors}
           foldersById={foldersById}
           isProActive={isProActive}
         />

@@ -42,6 +42,7 @@ type GraphExportPreviewSheetProps = {
   imageUri: string | null;
   imagePixelSize?: ImageSize | null;
   isLoadingPreview?: boolean;
+  onBackgroundChange?: (backgroundId: GraphExportBackgroundId) => void;
   onClose: () => void;
 };
 
@@ -75,6 +76,7 @@ export function GraphExportPreviewSheet({
   imageUri,
   imagePixelSize = null,
   isLoadingPreview = false,
+  onBackgroundChange,
   onClose,
 }: GraphExportPreviewSheetProps) {
   const { t } = useTranslation();
@@ -173,6 +175,14 @@ export function GraphExportPreviewSheet({
     if (!crop || !imageSize) return null;
     return computeCropCaptureLayout(crop, imageSize);
   }, [crop, imageSize]);
+
+  const handleBackgroundSelect = useCallback(
+    (nextBackgroundId: GraphExportBackgroundId) => {
+      setBackgroundId(nextBackgroundId);
+      onBackgroundChange?.(nextBackgroundId);
+    },
+    [onBackgroundChange],
+  );
 
   const handleExport = useCallback(async () => {
     if (!imageUri || !imageSize || !crop || isExporting || isLoadingPreview) return;
@@ -294,7 +304,8 @@ export function GraphExportPreviewSheet({
             backgroundId={backgroundId}
             canReset={canResetCrop}
             color={color}
-            onBackgroundSelect={setBackgroundId}
+            disabled={isPreviewBusy}
+            onBackgroundSelect={handleBackgroundSelect}
             onReset={handleResetCrop}
             onSelect={handleApplyCropTemplate}
           />

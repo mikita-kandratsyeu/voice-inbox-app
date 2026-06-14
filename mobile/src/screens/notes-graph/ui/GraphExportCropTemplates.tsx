@@ -5,11 +5,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { hapticLight } from '@/shared/lib/haptics';
-import {
-  FILTER_CHIP_LABEL_STYLE,
-  FILTER_CHIP_MIN_HEIGHT,
-  filterChipRowStyle,
-} from '@/shared/ui/filterChipMetrics';
+import { FILTER_CHIP_LABEL_STYLE, filterChipRowStyle } from '@/shared/ui/filterChipMetrics';
 
 import type { GraphExportBackgroundId } from '../lib/graphExportBackground';
 import {
