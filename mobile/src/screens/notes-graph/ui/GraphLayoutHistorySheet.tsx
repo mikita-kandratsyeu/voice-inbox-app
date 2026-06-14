@@ -599,29 +599,29 @@ export function GraphLayoutHistorySheet({
 
         {listBody}
 
-        <LayoutDetailsCard
-          color={color}
-          rows={detailRows}
-          title={t('notesGraph.history.detailsTitle')}
-          emptyMessage={t('notesGraph.history.detailsSelectHint')}
-        />
+        {entries.length > 0 ? (
+          <LayoutDetailsCard
+            color={color}
+            rows={detailRows}
+            title={t('notesGraph.history.detailsTitle')}
+            emptyMessage={t('notesGraph.history.detailsSelectHint')}
+          />
+        ) : null}
 
-        <SheetFooterButtons
-          color={color}
-          onPrimaryPress={handleApply}
-          primaryLabel={t('notesGraph.history.apply')}
-          primaryDisabled={!selectedEntry || isApplying || isDeletingAll}
-          primaryLoading={isApplying}
-          bottomAction={
-            entries.length > 0
-              ? {
-                  label: t('notesGraph.history.deleteAll'),
-                  onPress: confirmDeleteAll,
-                  disabled: loading || isApplying || isDeletingAll || deletingVersionId != null,
-                }
-              : undefined
-          }
-        />
+        {entries.length > 0 ? (
+          <SheetFooterButtons
+            color={color}
+            onPrimaryPress={handleApply}
+            primaryLabel={t('notesGraph.history.apply')}
+            primaryDisabled={!selectedEntry || isApplying || isDeletingAll}
+            primaryLoading={isApplying}
+            bottomAction={{
+              label: t('notesGraph.history.deleteAll'),
+              onPress: confirmDeleteAll,
+              disabled: loading || isApplying || isDeletingAll || deletingVersionId != null,
+            }}
+          />
+        ) : null}
       </AppBottomSheetContent>
     </AppBottomSheetModal>
   );

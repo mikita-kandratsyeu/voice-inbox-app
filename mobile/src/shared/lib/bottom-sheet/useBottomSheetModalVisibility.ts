@@ -55,34 +55,44 @@ function presentBottomSheetModal(
     isReopen: boolean;
     enableDynamicSizing?: boolean;
     attempt?: number;
+    afterRemount?: boolean;
   },
   onPresentFailed?: () => void,
 ) {
   const attempt = meta?.attempt ?? 0;
-  ref.current?.present();
-  requestAnimationFrame(() => {
-    const status = readModalStatus(ref);
-    if (isModalPresented(status)) {
-      return;
-    }
-    if (attempt < MAX_PRESENT_ATTEMPTS && meta != null) {
-      requestAnimationFrame(() => {
-        presentBottomSheetModal(ref, { ...meta, attempt: attempt + 1 }, onPresentFailed);
-      });
-      return;
-    }
-    const finishPresentFailed = () => {
-      if (!isModalPresented(readModalStatus(ref))) {
-        onPresentFailed?.();
+
+  const invokePresent = () => {
+    ref.current?.present();
+    requestAnimationFrame(() => {
+      const status = readModalStatus(ref);
+      if (isModalPresented(status)) {
+        return;
       }
-    };
-    if (!meta?.enableDynamicSizing) {
-      ref.current?.snapToIndex(0);
-      requestAnimationFrame(finishPresentFailed);
-      return;
-    }
-    finishPresentFailed();
-  });
+      if (attempt < MAX_PRESENT_ATTEMPTS && meta != null) {
+        requestAnimationFrame(() => {
+          presentBottomSheetModal(ref, { ...meta, attempt: attempt + 1 }, onPresentFailed);
+        });
+        return;
+      }
+      const finishPresentFailed = () => {
+        if (!isModalPresented(readModalStatus(ref))) {
+          onPresentFailed?.();
+        }
+      };
+      if (!meta?.enableDynamicSizing) {
+        ref.current?.snapToIndex(0);
+        requestAnimationFrame(finishPresentFailed);
+        return;
+      }
+      finishPresentFailed();
+    });
+  };
+
+  if (attempt === 0 && meta?.afterRemount) {
+    requestAnimationFrame(invokePresent);
+    return;
+  }
+  invokePresent();
 }
 
 export function useBottomSheetModalVisibility(
@@ -103,6 +113,10 @@ export function useBottomSheetModalVisibility(
   const pendingDismissGenerationRef = useRef<number | null>(null);
   const lastReopenRef = useRef(false);
   const presentRecoveryCountRef = useRef(0);
+  /** Re-open remount target; present waits until `sheetKey` reaches this value. */
+  const reopenPresentSheetKeyRef = useRef<number | null>(null);
+  /** Invalidates in-flight present rAF chains when the present effect re-runs or unmounts. */
+  const presentRunIdRef = useRef(0);
 
   visibleRef.current = visible;
 
@@ -116,10 +130,12 @@ export function useBottomSheetModalVisibility(
     }
 
     if (isStaleDismiss) {
+      pendingDismissGenerationRef.current = null;
       return;
     }
 
     if (!visibleRef.current) {
+      pendingDismissGenerationRef.current = null;
       return;
     }
 
@@ -134,11 +150,15 @@ export function useBottomSheetModalVisibility(
       const isReopen = presentationGenerationRef.current > 0;
       wasVisibleRef.current = true;
       dismissedFromModalRef.current = false;
+      pendingDismissGenerationRef.current = null;
       presentationGenerationRef.current += 1;
       lastReopenRef.current = isReopen;
       if (isReopen) {
         isInstanceSwapRef.current = true;
-        setSheetKey((key) => key + 1);
+        setSheetKey((key) => {
+          reopenPresentSheetKeyRef.current = key + 1;
+          return key + 1;
+        });
       }
       return undefined;
     }
@@ -146,6 +166,7 @@ export function useBottomSheetModalVisibility(
     if (wasVisibleRef.current) {
       const generation = presentationGenerationRef.current;
       const skipDismiss = dismissedFromModalRef.current;
+      reopenPresentSheetKeyRef.current = null;
       Keyboard.dismiss();
       if (!skipDismiss) {
         pendingDismissGenerationRef.current = generation;
@@ -156,7 +177,7 @@ export function useBottomSheetModalVisibility(
       wasVisibleRef.current = false;
     }
     return undefined;
-  }, [visible, ref]);
+  }, [ref, visible]);
 
   useEffect(() => {
     if (!visible || !presentOnVisible) {
@@ -169,29 +190,59 @@ export function useBottomSheetModalVisibility(
       if (presentRecoveryCountRef.current >= 2) return;
       presentRecoveryCountRef.current += 1;
       isInstanceSwapRef.current = true;
-      setSheetKey((key) => key + 1);
+      setSheetKey((key) => {
+        reopenPresentSheetKeyRef.current = key + 1;
+        return key + 1;
+      });
     };
 
+    const pendingReopenKey = reopenPresentSheetKeyRef.current;
+    if (pendingReopenKey !== null && sheetKey !== pendingReopenKey) {
+      return undefined;
+    }
+    if (pendingReopenKey !== null && sheetKey === pendingReopenKey) {
+      reopenPresentSheetKeyRef.current = null;
+    }
+
+    const runId = ++presentRunIdRef.current;
+    const afterRemount = sheetKey > 0;
+
     const frame = requestAnimationFrame(() => {
+      if (runId !== presentRunIdRef.current) {
+        return;
+      }
       const runPresent = () => {
+        if (runId !== presentRunIdRef.current) {
+          return;
+        }
         presentBottomSheetModal(
           ref,
           {
             sheetKey,
             isReopen: lastReopenRef.current,
             enableDynamicSizing,
+            afterRemount,
           },
           recoverPresent,
         );
         isInstanceSwapRef.current = false;
       };
       if (lastReopenRef.current || sheetKey > 0) {
-        requestAnimationFrame(runPresent);
+        requestAnimationFrame(() => {
+          if (runId !== presentRunIdRef.current) {
+            return;
+          }
+          runPresent();
+        });
         return;
       }
       runPresent();
     });
-    return () => cancelAnimationFrame(frame);
+
+    return () => {
+      presentRunIdRef.current += 1;
+      cancelAnimationFrame(frame);
+    };
   }, [enableDynamicSizing, presentOnVisible, presentRequestKey, ref, sheetKey, visible]);
 
   return { handleDismiss, sheetKey };
