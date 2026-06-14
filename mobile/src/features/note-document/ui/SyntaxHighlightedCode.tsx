@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 
-import { tokenizeCode } from '../lib/syntaxHighlighting';
+import { type SyntaxToken, tokenizeCode } from '../lib/syntaxHighlighting';
 
 type SyntaxHighlightedCodeProps = {
   code: string;
@@ -24,8 +24,8 @@ export const SyntaxHighlightedCode = React.memo(function SyntaxHighlightedCode({
 
   // Split tokens into lines for better rendering
   const lines = useMemo(() => {
-    const result: (typeof tokens)[][] = [];
-    let currentLine: typeof tokens = [];
+    const result: SyntaxToken[][] = [];
+    let currentLine: SyntaxToken[] = [];
 
     for (const token of tokens) {
       const parts = token.content.split('\n');

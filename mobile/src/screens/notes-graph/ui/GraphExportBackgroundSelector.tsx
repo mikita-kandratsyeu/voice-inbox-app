@@ -113,7 +113,7 @@ export function GraphExportBackgroundSelector({
             flexShrink: 1,
           }}
         >
-          {controlLabel}
+          {label}
         </Text>
         <ChevronDown color={color.text.secondary} size={15} strokeWidth={2.2} />
       </Pressable>

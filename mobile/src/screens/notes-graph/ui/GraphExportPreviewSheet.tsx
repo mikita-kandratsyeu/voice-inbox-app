@@ -31,9 +31,9 @@ import {
   type ImageSize,
   isFullImageCrop,
 } from '../lib/graphExportCrop';
+import { GraphExportBackgroundFill } from './GraphExportBackgroundFill';
 import { GraphExportCropOverlay } from './GraphExportCropOverlay';
 import { GraphExportCropTemplates } from './GraphExportCropTemplates';
-import { GraphExportBackgroundFill } from './GraphExportBackgroundFill';
 
 const PREVIEW_HEIGHT = 380;
 

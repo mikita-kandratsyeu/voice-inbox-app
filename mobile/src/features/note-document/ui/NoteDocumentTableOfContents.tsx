@@ -1,11 +1,11 @@
 import { List } from 'lucide-react-native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
-import { AppBottomSheetModal, SheetHeader } from '@/shared/ui';
+import { AppBottomSheetContent, AppBottomSheetModal, SheetHeader } from '@/shared/ui';
 
 import type { TocItem } from '../lib/generateTableOfContents';
 
@@ -41,25 +41,17 @@ export const NoteDocumentTableOfContents = React.memo(function NoteDocumentTable
   }, [items]);
 
   return (
-    <AppBottomSheetModal visible={visible} onClose={onClose} color={color}>
-      <SheetHeader
-        title={t('recordingDetail.document.tocTitle')}
-        subtitle={t('recordingDetail.document.tocSubtitle', { count: filteredItems.length })}
-        color={color}
-        onClose={onClose}
-        icon={<List size={20} color={color.text.primary} strokeWidth={2} />}
-      />
+    <AppBottomSheetModal visible={visible} onClose={onClose}>
+      <AppBottomSheetContent scrollable bottomPadding={32}>
+        <SheetHeader
+          title={t('recordingDetail.document.tocTitle')}
+          subtitle={t('recordingDetail.document.tocSubtitle', { count: filteredItems.length })}
+          color={color}
+          icon={<List size={20} color={color.text.primary} strokeWidth={2} />}
+          marginBottom={16}
+          textAlign="left"
+        />
 
-      <ScrollView
-        style={{
-          flex: 1,
-          backgroundColor: color.background.primary,
-        }}
-        contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingBottom: 32,
-        }}
-      >
         {filteredItems.map((item) => {
           const indentLevel = item.level - 1;
           const leftPadding = indentLevel * 16;
@@ -132,7 +124,7 @@ export const NoteDocumentTableOfContents = React.memo(function NoteDocumentTable
             </Text>
           </View>
         )}
-      </ScrollView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 });
