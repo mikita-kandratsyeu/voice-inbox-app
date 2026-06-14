@@ -12,7 +12,7 @@ import {
   splitNoteDocumentForReading,
 } from '../lib/splitNoteDocumentForReading';
 import { NoteDocumentCollapsibleSection } from './NoteDocumentCollapsibleSection';
-import { NoteDocumentEnrichedMarkdown } from './NoteDocumentEnrichedMarkdown';
+import { NoteDocumentEnhancedMarkdown } from './NoteDocumentEnhancedMarkdown';
 
 type NoteDocumentReadingBodyProps = {
   color: Colors;
@@ -68,7 +68,7 @@ const NoteDocumentReadingSectionRow = React.memo(function NoteDocumentReadingSec
       expanded={expanded}
       onToggle={handleToggle}
     >
-      <NoteDocumentEnrichedMarkdown
+      <NoteDocumentEnhancedMarkdown
         color={color}
         markdown={segment.bodyMarkdown}
         markdownStyle={markdownStyle}
@@ -127,7 +127,7 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
 
   if (!layout.hasSections) {
     return (
-      <NoteDocumentEnrichedMarkdown
+      <NoteDocumentEnhancedMarkdown
         color={color}
         markdown={flatMarkdown}
         markdownStyle={markdownStyle}
@@ -140,7 +140,7 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
       {layout.segments.map((segment) => {
         if (segment.kind === 'preamble') {
           return (
-            <NoteDocumentEnrichedMarkdown
+            <NoteDocumentEnhancedMarkdown
               key="preamble"
               color={color}
               markdown={segment.markdown}

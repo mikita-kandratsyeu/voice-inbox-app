@@ -28,7 +28,9 @@
     "open": "Open",
     "moreActions": "More actions",
     "tryPro": "Try Pro",
-    "notchBrandMark": "Voice Inbox AI"
+    "notchBrandMark": "Voice Inbox AI",
+    "copy": "Copy",
+    "copied": "Copied"
   },
   "proLicense": {
     "modalTitle": "Special offer",
@@ -615,7 +617,12 @@
       "sections": {
         "expandA11y": "Expand {{title}}",
         "collapseA11y": "Collapse {{title}}"
-      }
+      },
+      "tocTitle": "Table of Contents",
+      "tocSubtitle": "{{count}} headings",
+      "tocEmpty": "No headings found in this document",
+      "tocHeadingLevel": "Heading level",
+      "tocButtonA11y": "Show table of contents"
     },
     "marksSectionTitle": "Pinned moments",
     "markUntitled": {

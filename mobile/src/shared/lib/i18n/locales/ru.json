@@ -28,7 +28,9 @@
     "open": "Открыть",
     "moreActions": "Дополнительные действия",
     "tryPro": "Попробовать Pro",
-    "notchBrandMark": "Voice Inbox AI"
+    "notchBrandMark": "Voice Inbox AI",
+    "copy": "Копировать",
+    "copied": "Скопировано"
   },
   "proLicense": {
     "modalTitle": "Специальное предложение",
@@ -602,6 +604,11 @@
         "expandA11y": "Развернуть «{{title}}»",
         "collapseA11y": "Свернуть «{{title}}»"
       },
+      "tocTitle": "Оглавление",
+      "tocSubtitle": "Заголовков: {{count}}",
+      "tocEmpty": "В этом документе нет заголовков",
+      "tocHeadingLevel": "Уровень заголовка",
+      "tocButtonA11y": "Показать оглавление",
       "toolbar": {
         "undo": "Отменить",
         "redo": "Повторить",

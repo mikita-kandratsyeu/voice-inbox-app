@@ -27,8 +27,13 @@ export { patchTaskDoneInNoteDocumentMarkdown } from './lib/patchTaskDoneInNoteDo
 export { splitNoteDocumentAtTasksSection } from './lib/splitNoteDocumentAtTasksSection';
 export { splitNoteDocumentForReading } from './lib/splitNoteDocumentForReading';
 export { useNoteDocument } from './model/useNoteDocument';
+export { NoteDocumentCallout } from './ui/NoteDocumentCallout';
+export { NoteDocumentCodeBlock } from './ui/NoteDocumentCodeBlock';
+export { NoteDocumentEnhancedMarkdown } from './ui/NoteDocumentEnhancedMarkdown';
 export { NoteDocumentPreparingState } from './ui/NoteDocumentPreparingState';
 export { NoteDocumentReadingBody } from './ui/NoteDocumentReadingBody';
 export { NoteDocumentSavingOverlay } from './ui/NoteDocumentSavingOverlay';
 export { NoteDocumentSourceEditor } from './ui/NoteDocumentSourceEditor';
 export { NoteDocumentSourceEditorSizeBanner } from './ui/NoteDocumentSourceEditorSizeBanner';
+export { NoteDocumentTableOfContents } from './ui/NoteDocumentTableOfContents';
+export { SyntaxHighlightedCode } from './ui/SyntaxHighlightedCode';
