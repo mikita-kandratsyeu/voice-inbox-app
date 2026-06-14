@@ -4,9 +4,15 @@ import {
   shouldWarnNoteDocumentEditorSize,
 } from '../noteDocumentEditorSizeLimits';
 
-// Mock deviceMemoryTier to avoid native module dependencies
-jest.mock('@/shared/lib/deviceMemoryTier', () => ({
-  resolveDeviceMemoryTier: jest.fn(() => 'medium'),
+// Mock deviceCapabilities to avoid native module dependencies
+jest.mock('@/shared/lib/deviceCapabilities', () => ({
+  getDeviceCapabilities: jest.fn(() => ({
+    memoryTier: 'medium',
+    markdownEditorLimit: 8_000,
+    maxExportDimension: 4096,
+    maxSafeExportPixels: 4096 * 4096,
+    canHandleLargeOperations: false,
+  })),
 }));
 
 describe('noteDocumentEditorSizeLimits', () => {

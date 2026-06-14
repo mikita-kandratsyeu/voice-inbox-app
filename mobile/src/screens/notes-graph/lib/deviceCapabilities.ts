@@ -1,7 +1,14 @@
-import { type DeviceMemoryTier, resolveDeviceMemoryTier } from '@/shared/lib/deviceMemoryTier';
+import {
+  type DeviceMemoryTier,
+  getDeviceCapabilities as getSharedCapabilities,
+} from '@/shared/lib/deviceCapabilities';
 
 export type { DeviceMemoryTier };
 
+/**
+ * Graph-specific device capabilities view.
+ * Uses shared device capabilities under the hood.
+ */
 export type DeviceCapabilities = {
   memoryTier: DeviceMemoryTier;
   maxExportDimension: number;
@@ -9,61 +16,21 @@ export type DeviceCapabilities = {
   canHandleLargeExport: boolean;
 };
 
-let cachedCapabilities: DeviceCapabilities | null = null;
-
 /**
  * Detects device capabilities for graph export.
- * Results are cached for the app lifetime.
+ * Delegates to shared capabilities system for consistency.
+ *
+ * @deprecated Use getDeviceCapabilities from @/shared/lib/deviceCapabilities for new code
  */
 export function detectDeviceCapabilities(): DeviceCapabilities {
-  if (cachedCapabilities) {
-    return cachedCapabilities;
-  }
+  const shared = getSharedCapabilities();
 
-  const memoryTier = resolveDeviceMemoryTier();
-
-  let maxExportDimension: number;
-  let maxSafeExportPixels: number;
-  let canHandleLargeExport: boolean;
-
-  switch (memoryTier) {
-    case 'ultra':
-      // High-end devices: full GPU texture limit
-      maxExportDimension = 8192;
-      maxSafeExportPixels = 8192 * 8192;
-      canHandleLargeExport = true;
-      break;
-
-    case 'high':
-      // Modern devices: can handle large exports but not maximum
-      maxExportDimension = 6144;
-      maxSafeExportPixels = 6144 * 6144;
-      canHandleLargeExport = true;
-      break;
-
-    case 'medium':
-      // Mid-range devices: conservative limits
-      maxExportDimension = 4096;
-      maxSafeExportPixels = 4096 * 4096;
-      canHandleLargeExport = false;
-      break;
-
-    case 'low':
-      // Older/budget devices: safe limits to avoid crashes
-      maxExportDimension = 2048;
-      maxSafeExportPixels = 2048 * 2048;
-      canHandleLargeExport = false;
-      break;
-  }
-
-  cachedCapabilities = {
-    memoryTier,
-    maxExportDimension,
-    maxSafeExportPixels,
-    canHandleLargeExport,
+  return {
+    memoryTier: shared.memoryTier,
+    maxExportDimension: shared.maxExportDimension,
+    maxSafeExportPixels: shared.maxSafeExportPixels,
+    canHandleLargeExport: shared.canHandleLargeOperations,
   };
-
-  return cachedCapabilities;
 }
 
 /**

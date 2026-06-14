@@ -1,27 +1,16 @@
 import type { VoiceRecord } from '@/entities/record';
-import { type DeviceMemoryTier, resolveDeviceMemoryTier } from '@/shared/lib/deviceMemoryTier';
-
-/**
- * Dynamic editor size limits based on device performance tier.
- * Optimized for enriched markdown editing responsiveness.
- */
-const NOTE_DOCUMENT_EDITOR_LIMITS: Record<DeviceMemoryTier, number> = {
-  low: 4_000, // Older devices, conservative limit
-  medium: 8_000, // Mid-range devices
-  high: 15_000, // Flagship devices from 2022+
-  ultra: 20_000, // Latest flagships with 8GB+ RAM
-};
+import { getDeviceCapabilities } from '@/shared/lib/deviceCapabilities';
 
 /** Rough overhead for section markers, headers, and metadata in exported markdown. */
 const NOTE_DOCUMENT_EDITOR_EXPORT_OVERHEAD_CHARS = 900;
 
 /**
  * Returns the comfortable character limit for the current device.
- * Call once and cache the result to avoid repeated device tier lookups.
+ * Uses cached device capabilities to avoid repeated lookups.
  */
 export function getNoteDocumentEditorCharacterLimit(): number {
-  const tier = resolveDeviceMemoryTier();
-  return NOTE_DOCUMENT_EDITOR_LIMITS[tier];
+  const capabilities = getDeviceCapabilities();
+  return capabilities.markdownEditorLimit;
 }
 
 /**

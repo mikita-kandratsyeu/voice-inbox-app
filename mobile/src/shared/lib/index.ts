@@ -33,6 +33,8 @@ export {
   recordAskAiTable,
   recordsTable,
 } from './db/schema';
+export type { DeviceCapabilities } from './deviceCapabilities';
+export { getDeviceCapabilities, resetDeviceCapabilitiesCache } from './deviceCapabilities';
 export type { DeviceMemoryTier } from './deviceMemoryTier';
 export { readTotalRamMb, resolveDeviceMemoryTier } from './deviceMemoryTier';
 export {
