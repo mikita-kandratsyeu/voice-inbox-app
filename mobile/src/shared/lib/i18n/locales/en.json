@@ -1782,6 +1782,17 @@
     "totalDuration": "Total time",
     "aiProcessed": "AI processed",
     "tasksCompletion": "Tasks done",
+    "metrics": {
+      "totalRecordsHelper": "In your library",
+      "totalDurationHelper": "Total recorded",
+      "aiProcessedHelper": "With AI summary",
+      "tasksCompletionHelper": "Marked complete"
+    },
+    "activityTitle": {
+      "day": "Today",
+      "week": "Last 7 days",
+      "month": "Last 30 days"
+    },
     "weeklyActivity": "Last 7 days",
     "classification": "Note types",
     "topTags": "Top tags",

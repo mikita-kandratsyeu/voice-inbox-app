@@ -58,7 +58,6 @@ export type SettingsStackParamList = {
   SiriShortcuts: undefined;
   Digest: undefined;
   WhisperModelPicker: undefined;
-  AppStats: undefined;
   StorageDetails: undefined;
   Trash: undefined;
   AboutApp: undefined;

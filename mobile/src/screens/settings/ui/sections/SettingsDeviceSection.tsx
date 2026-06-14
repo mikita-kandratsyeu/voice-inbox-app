@@ -1,6 +1,6 @@
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { TFunction } from 'i18next';
-import { BarChart2, Fingerprint, HardDrive, Trash2 } from 'lucide-react-native';
+import { Fingerprint, HardDrive, Trash2 } from 'lucide-react-native';
 import React from 'react';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
@@ -30,13 +30,6 @@ export const SettingsDeviceSection = ({ color, t, navigation, isAppLockEnabled }
       }
       onPress={() => navigation.navigate('AppLockSetup')}
       isFirst
-    />
-    <SettingsRow
-      label={t('appStats.title')}
-      leftIcon={
-        <BarChart2 size={20} color={getSettingsIconColor(color, 'barChart2')} strokeWidth={1.8} />
-      }
-      onPress={() => navigation.navigate('AppStats')}
     />
     <SettingsRow
       label={t('settings.offlineStorage')}

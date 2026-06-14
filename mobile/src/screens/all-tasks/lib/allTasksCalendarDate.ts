@@ -2,21 +2,13 @@ import '@/shared/lib/date';
 
 import dayjs from 'dayjs';
 
-export const RU_WEEKDAY_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] as const;
+export { EN_WEEKDAY_SHORT, formatWeekdayShort, RU_WEEKDAY_SHORT } from '@/shared/lib/date';
 
 export type WeekSlideDirection = 'prev' | 'next' | 'none';
 
 export function capitalizeFirst(value: string): string {
   if (!value) return value;
   return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-export function formatWeekdayShort(date: dayjs.Dayjs, locale: 'en' | 'ru'): string {
-  if (locale === 'ru') {
-    return RU_WEEKDAY_SHORT[date.isoWeekday() - 1] ?? date.format('dd');
-  }
-
-  return capitalizeFirst(date.format('ddd'));
 }
 
 export function formatCalendarHeaderDate(date: dayjs.Dayjs, language: string): string {

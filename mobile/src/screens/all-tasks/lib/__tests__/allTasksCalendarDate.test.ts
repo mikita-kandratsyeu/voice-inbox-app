@@ -29,9 +29,9 @@ describe('allTasksCalendarDate', () => {
       expect(formatWeekdayShort(tuesday, 'ru')).toBe('Вт');
     });
 
-    it('capitalizes English weekday labels', () => {
+    it('uses compact English weekday labels', () => {
       const tuesday = dayjs('2026-06-09').locale('en');
-      expect(formatWeekdayShort(tuesday, 'en')).toBe('Tue');
+      expect(formatWeekdayShort(tuesday, 'en')).toBe('Tu');
     });
   });
 

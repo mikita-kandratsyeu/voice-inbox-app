@@ -47,6 +47,7 @@ import {
 import { Button, HeaderIconButton, NoteMarkdown, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
 
 import { getSettingsIconColor } from '../lib';
+import { buildAppStats, formatDigestDurationMs } from '../lib/appStats';
 import { buildDigestAiExecutionContext } from '../lib/buildDigestAiExecutionContext';
 import {
   buildDeterministicDigest,
@@ -72,6 +73,8 @@ import {
   shareDigestExport,
   shareDigestPlainText,
 } from '../lib/shareDigest';
+import { AppStatsContent } from './AppStatsContent';
+import { DigestMetricCard, DigestSectionCard } from './DigestScreenCards';
 import { DigestShareSheet } from './DigestShareSheet';
 
 type MetricCardProps = {
@@ -81,32 +84,8 @@ type MetricCardProps = {
   tone: string;
 };
 
-function MetricCard({ label, value, helper, tone }: MetricCardProps) {
-  const color = useColors();
-  return (
-    <View
-      className="flex-1 rounded-2xl p-4"
-      style={{
-        minWidth: '47%',
-        borderWidth: 1,
-        borderColor: color.border.default,
-        backgroundColor: color.background.card,
-      }}
-    >
-      <Text
-        className="text-xs font-semibold uppercase tracking-wider"
-        style={{ color: color.text.muted }}
-      >
-        {label}
-      </Text>
-      <Text className="mt-2 text-[22px] font-semibold leading-7" style={{ color: tone }}>
-        {value}
-      </Text>
-      <Text className="mt-1 text-[13px] leading-[18px]" style={{ color: color.text.secondary }}>
-        {helper}
-      </Text>
-    </View>
-  );
+function MetricCard(props: MetricCardProps) {
+  return <DigestMetricCard {...props} />;
 }
 
 function SectionCard({
@@ -118,27 +97,10 @@ function SectionCard({
   children: React.ReactNode;
   icon?: React.ReactNode;
 }) {
-  const color = useColors();
   return (
-    <View
-      className="mb-7 rounded-2xl p-4"
-      style={{
-        borderWidth: 1,
-        borderColor: color.border.default,
-        backgroundColor: color.background.card,
-      }}
-    >
-      <View className="mb-3 flex-row items-center gap-2">
-        {icon}
-        <Text
-          className="text-[16px] font-semibold leading-[21px]"
-          style={{ color: color.text.primary }}
-        >
-          {title}
-        </Text>
-      </View>
+    <DigestSectionCard title={title} icon={icon}>
       {children}
-    </View>
+    </DigestSectionCard>
   );
 }
 
@@ -471,17 +433,7 @@ export const DigestScreen = () => {
           .locale(dayjsLocale)
           .format('D MMM YYYY')}`;
 
-  const formatDuration = (durationMs: number): string => {
-    const minutes = Math.round(durationMs / 60_000);
-    if (minutes < 60) {
-      return t('settings.digest.durationMinutes', { count: minutes });
-    }
-    const hours = Math.floor(minutes / 60);
-    const rest = minutes % 60;
-    return rest > 0
-      ? t('settings.digest.durationHoursMinutes', { hours, minutes: rest })
-      : t('settings.digest.durationHours', { count: hours });
-  };
+  const formatDuration = (durationMs: number): string => formatDigestDurationMs(durationMs, t);
 
   const onRefresh = useCallback(async () => {
     if (!digestAiEnabled) return;
@@ -659,47 +611,23 @@ export const DigestScreen = () => {
   if (!digestAiEnabled) {
     return (
       <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-        <ScreenHeader title={t('settings.digest.title')} onBack={() => navigation.goBack()} />
-        <View
-          className="flex-1 items-center justify-center px-6"
-          style={{ alignSelf: 'center', width: '100%', maxWidth: contentMaxWidth }}
-        >
-          <View
-            className="w-full items-center rounded-3xl p-6"
-            style={{
-              borderWidth: 1,
-              borderColor: color.border.default,
-              backgroundColor: color.background.card,
+        <ScreenHeader
+          title={t('settings.digest.sectionTitle')}
+          onBack={() => navigation.goBack()}
+        />
+        <View style={{ flex: 1, alignSelf: 'center', width: '100%', maxWidth: contentMaxWidth }}>
+          <ScrollView
+            contentContainerStyle={{
+              paddingHorizontal: SCREEN_PADDING,
+              paddingTop: 16,
+              paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
             }}
+            showsVerticalScrollIndicator={false}
           >
-            <View
-              className="mb-4 h-14 w-14 items-center justify-center rounded-full"
-              style={{ backgroundColor: color.background.tertiary }}
-            >
-              <Newspaper size={24} color={color.accent.transcript} strokeWidth={1.8} />
-            </View>
-            <Text
-              className="text-center text-[20px] font-semibold leading-7"
-              style={{ color: color.text.primary }}
-            >
-              {t('settings.digest.unavailableTitle')}
-            </Text>
-            <Text
-              className="mt-2 text-center text-[14px] leading-5"
-              style={{ color: color.text.secondary }}
-            >
-              {t('settings.digest.unavailableDesc')}
-            </Text>
-            <View className="mt-6 w-full">
-              <Button
-                label={t('common.goBack')}
-                color={color}
-                variant="secondary"
-                onPress={() => navigation.goBack()}
-                fullWidth
-              />
-            </View>
-          </View>
+            <PeriodTabs period={period} onChange={setPeriod} />
+            <AppStatsContent period={period} locale={i18n.language} />
+            <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
+          </ScrollView>
         </View>
       </View>
     );
@@ -816,6 +744,8 @@ export const DigestScreen = () => {
               />
             ) : null}
           </SectionCard>
+
+          <AppStatsContent period={period} locale={i18n.language} />
 
           <SectionCard
             title={t('settings.digest.topicsTitle')}

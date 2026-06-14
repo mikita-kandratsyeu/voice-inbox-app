@@ -1,6 +1,5 @@
 import type { TFunction } from 'i18next';
-import { Newspaper } from 'lucide-react-native';
-import { Command } from 'lucide-react-native';
+import { Command, Newspaper } from 'lucide-react-native';
 import React from 'react';
 
 import type { Colors } from '@/shared/config';
@@ -17,6 +16,8 @@ type Props = {
 };
 
 export const SettingsDigestSection = ({ color, t, onOpenDigest, onOpenSiriShortcuts }: Props) => {
+  const showSiri = IS_IOS;
+
   return (
     <SettingsSection title={t('settings.digest.sectionTitle')}>
       <SettingsRow
@@ -28,8 +29,9 @@ export const SettingsDigestSection = ({ color, t, onOpenDigest, onOpenSiriShortc
         onPress={onOpenDigest}
         showChevron
         isFirst
+        isLast={!showSiri}
       />
-      {IS_IOS ? (
+      {showSiri ? (
         <SettingsRow
           label={t('settings.siriShortcuts.entryTitle')}
           subtitle={t('settings.siriShortcuts.entrySubtitle')}

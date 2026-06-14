@@ -1822,6 +1822,17 @@
     "totalDuration": "Общее время",
     "aiProcessed": "Обработано ИИ",
     "tasksCompletion": "Задачи выполнены",
+    "metrics": {
+      "totalRecordsHelper": "Во всей библиотеке",
+      "totalDurationHelper": "Суммарная длительность",
+      "aiProcessedHelper": "С ИИ-обработкой",
+      "tasksCompletionHelper": "Отмечены выполненными"
+    },
+    "activityTitle": {
+      "day": "Сегодня",
+      "week": "Последние 7 дней",
+      "month": "Последние 30 дней"
+    },
     "weeklyActivity": "Последние 7 дней",
     "classification": "Типы записей",
     "topTags": "Топ тегов",

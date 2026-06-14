@@ -182,14 +182,12 @@ export const SettingsScreen = () => {
               resetPriceLabel={settings.resetProLimitPriceLabel}
             />
           )}
-          {settings.digestAiEnabled ? (
-            <SettingsDigestSection
-              color={settings.color}
-              onOpenDigest={() => settings.navigation.navigate('Digest')}
-              onOpenSiriShortcuts={() => settings.navigation.navigate('SiriShortcuts')}
-              t={settings.t}
-            />
-          ) : null}
+          <SettingsDigestSection
+            color={settings.color}
+            onOpenDigest={() => settings.navigation.navigate('Digest')}
+            onOpenSiriShortcuts={() => settings.navigation.navigate('SiriShortcuts')}
+            t={settings.t}
+          />
           <SettingsAutomationSection
             color={settings.color}
             t={settings.t}

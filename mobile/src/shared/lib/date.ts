@@ -13,6 +13,16 @@ export const resolveDayjsLocale = (locale: string | null | undefined): 'en' | 'r
   return locale?.toLowerCase().startsWith('ru') ? 'ru' : 'en';
 };
 
+export const RU_WEEKDAY_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] as const;
+export const EN_WEEKDAY_SHORT = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const;
+
+export function formatWeekdayShort(date: dayjs.Dayjs, locale: string | null | undefined): string {
+  const resolved = resolveDayjsLocale(locale);
+  const index = date.isoWeekday() - 1;
+  const labels = resolved === 'ru' ? RU_WEEKDAY_SHORT : EN_WEEKDAY_SHORT;
+  return labels[index] ?? date.format('dd');
+}
+
 export const formatRelativeTime = (isoDate: string, locale = 'en'): string => {
   const dayjsLocale = resolveDayjsLocale(locale);
   const date = dayjs(isoDate).locale(dayjsLocale);

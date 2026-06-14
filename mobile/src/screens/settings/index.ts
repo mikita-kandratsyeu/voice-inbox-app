@@ -4,7 +4,6 @@ export { AiSettingsScreen } from './ui/AiSettingsScreen';
 export { AiUsageDashboardScreen } from './ui/AiUsageDashboardScreen';
 export { AppearanceScreen } from './ui/AppearanceScreen';
 export { AppLockSetupScreen } from './ui/AppLockSetupScreen';
-export { AppStatsScreen } from './ui/AppStatsScreen';
 export { BackupRestoreScreen } from './ui/BackupRestoreScreen';
 export { DiagnosticLogsScreen } from './ui/DiagnosticLogsScreen';
 export { DigestScreen } from './ui/DigestScreen';
