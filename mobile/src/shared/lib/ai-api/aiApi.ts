@@ -99,6 +99,8 @@ export type PollAiMessageOptions = AiFetchOptions & {
   expectAsyncMeetingDialogue?: boolean;
   /** Fired when summary/tasks are ready but speaker breakdown is still processing. */
   onSummaryReady?: (result: AiProcessingResult) => void | Promise<void>;
+  /** Optional callback for progress updates (0-100). */
+  onProgress?: (progress: number) => void;
 };
 
 export type AiMessageResult =
@@ -599,6 +601,10 @@ export async function pollAiMessage(
     (json) => {
       const state = parseMessagePollState(json);
       if (state.kind === 'processing') {
+        // Report progress if callback provided
+        if (state.progress !== undefined && options?.onProgress) {
+          options.onProgress(state.progress);
+        }
         return 'processing';
       }
       if (state.kind === 'error') {
@@ -628,6 +634,8 @@ export async function pollAiMessage(
       signal: options?.signal,
       headers,
       timeoutMs: options?.timeoutMs ?? aiPollTimeoutMs(expectAsyncMeetingDialogue),
+      jobType: expectAsyncMeetingDialogue ? 'meeting_dialogue' : 'summary',
+      onProgress: options?.onProgress,
     },
   );
 

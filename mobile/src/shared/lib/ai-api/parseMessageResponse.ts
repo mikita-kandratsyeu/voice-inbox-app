@@ -5,7 +5,15 @@ import type { AiProcessingResult, AiTask, RecordClassification } from './aiApi';
 export type ServerMeetingDialogueStatus = 'processing' | 'done' | 'failed' | 'skipped';
 
 export type ParsedMessagePollState =
-  | { kind: 'processing' }
+  | {
+      kind: 'processing';
+      /** Optional server hint: recommended retry interval (ms) */
+      retryAfterMs?: number;
+      /** Optional server hint: estimated completion time (ms from now) */
+      estimatedCompletionMs?: number;
+      /** Optional server hint: progress percentage (0-100) */
+      progress?: number;
+    }
   | { kind: 'error'; error: string }
   | {
       kind: 'done';
@@ -39,7 +47,24 @@ export function parseMessagePollState(json: unknown): ParsedMessagePollState {
   const status = msg.status;
 
   if (status === 'processing') {
-    return { kind: 'processing' };
+    // Extract optional server hints for adaptive polling
+    const retryAfterMs =
+      typeof msg.retryAfterMs === 'number' && msg.retryAfterMs > 0 ? msg.retryAfterMs : undefined;
+    const estimatedCompletionMs =
+      typeof msg.estimatedCompletionMs === 'number' && msg.estimatedCompletionMs > 0
+        ? msg.estimatedCompletionMs
+        : undefined;
+    const progress =
+      typeof msg.progress === 'number' && msg.progress >= 0 && msg.progress <= 100
+        ? msg.progress
+        : undefined;
+
+    return {
+      kind: 'processing',
+      retryAfterMs,
+      estimatedCompletionMs,
+      progress,
+    };
   }
 
   if (status === 'error') {
