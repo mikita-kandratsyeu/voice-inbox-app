@@ -71,6 +71,7 @@ export { SettingsRow } from './SettingsRow';
 export { SettingsSection } from './SettingsSection';
 export { SkeletonPulse } from './SkeletonPulse';
 export { SwipeableCard, SwipeableCardContext } from './SwipeableCard';
+export { SwipeableListRow, SwipeableListRowContext } from './SwipeableListRow';
 export { SwipeHintBanner } from './SwipeHintBanner';
 export { IOS_INLINE_DATE_PICKER_HEIGHT, SystemInlineDatePicker } from './SystemInlineDatePicker';
 export { TabEmptyState } from './TabEmptyState';

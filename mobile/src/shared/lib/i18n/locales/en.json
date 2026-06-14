@@ -2557,7 +2557,8 @@
     "pickNoteSearchPlaceholder": "Search notes",
     "pickNoteEmpty": "No notes available",
     "pickNoteSearchEmpty": "No matches",
-    "unlinkA11y": "Remove link to {{title}}"
+    "unlinkA11y": "Remove link to {{title}}",
+    "unlinkSwipeA11y": "Swipe left to remove link to {{title}}"
   },
   "taskOutcome": {
     "sheetTitle": "Task complete",

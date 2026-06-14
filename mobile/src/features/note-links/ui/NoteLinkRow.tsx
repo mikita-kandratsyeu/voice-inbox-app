@@ -1,5 +1,5 @@
-import { ChevronRight, Inbox, X } from 'lucide-react-native';
-import React, { useMemo } from 'react';
+import { ChevronRight, Inbox, Link2Off } from 'lucide-react-native';
+import React, { useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
@@ -10,6 +10,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { useProEntitlement } from '@/features/pro-license';
 import { type Colors, useAppTheme } from '@/shared/config';
 import { formatRelativeTime, hapticSelection, withAlphaHex } from '@/shared/lib';
+import { SwipeableListRow, SwipeableListRowContext } from '@/shared/ui';
 
 type NoteLinkRowProps = {
   record: VoiceRecord;
@@ -20,17 +21,13 @@ type NoteLinkRowProps = {
   onUnlink?: () => void;
 };
 
-export function NoteLinkRow({
-  record,
-  folder,
-  color,
-  isLast,
-  onPress,
-  onUnlink,
-}: NoteLinkRowProps) {
+type NoteLinkRowContentProps = Omit<NoteLinkRowProps, 'onUnlink'>;
+
+function NoteLinkRowContent({ record, folder, color, isLast, onPress }: NoteLinkRowContentProps) {
   const { t, i18n } = useTranslation();
   const scheme = useAppTheme();
   const { isProActive } = useProEntitlement();
+  const { isSwiping } = useContext(SwipeableListRowContext);
 
   const classificationLabel =
     record.classification && !record.folderId ? t(`classification.${record.classification}`) : null;
@@ -64,13 +61,14 @@ export function NoteLinkRow({
   return (
     <Pressable
       onPress={() => {
+        if (isSwiping) return;
         hapticSelection();
         onPress();
       }}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => ({
-        backgroundColor: pressed ? color.background.tertiary : 'transparent',
+        backgroundColor: pressed && !isSwiping ? color.background.tertiary : color.background.card,
         borderBottomColor: color.border.default,
         borderBottomWidth: isLast ? 0 : 1,
         width: '100%',
@@ -157,30 +155,54 @@ export function NoteLinkRow({
             </Text>
           ) : null}
         </View>
-        <View style={{ alignItems: 'center', flexDirection: 'row', flexShrink: 0, gap: 8 }}>
-          {onUnlink ? (
-            <Pressable
-              onPress={() => {
-                hapticSelection();
-                onUnlink();
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={t('noteLinks.unlinkA11y', { title: record.title })}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              style={({ pressed }) => ({
-                alignItems: 'center',
-                backgroundColor: pressed ? color.background.tertiary : 'transparent',
-                borderRadius: 8,
-                justifyContent: 'center',
-                padding: 4,
-              })}
-            >
-              <X size={18} color={color.text.muted} strokeWidth={2.2} />
-            </Pressable>
-          ) : null}
+        <View style={{ flexShrink: 0, marginLeft: 2 }}>
           <ChevronRight size={18} color={color.text.muted} strokeWidth={2.2} />
         </View>
       </View>
     </Pressable>
+  );
+}
+
+export function NoteLinkRow({
+  record,
+  folder,
+  color,
+  isLast,
+  onPress,
+  onUnlink,
+}: NoteLinkRowProps) {
+  const { t } = useTranslation();
+
+  if (!onUnlink) {
+    return (
+      <NoteLinkRowContent
+        record={record}
+        folder={folder}
+        color={color}
+        isLast={isLast}
+        onPress={onPress}
+      />
+    );
+  }
+
+  return (
+    <SwipeableListRow
+      onSwipeAction={() => {
+        hapticSelection();
+        onUnlink();
+      }}
+      actionBackgroundColor={color.accent.archive}
+      surfaceBackgroundColor={color.background.card}
+      actionIcon={<Link2Off size={22} color={color.icon.onAccent} strokeWidth={2} />}
+      actionAccessibilityLabel={t('noteLinks.unlinkSwipeA11y', { title: record.title })}
+    >
+      <NoteLinkRowContent
+        record={record}
+        folder={folder}
+        color={color}
+        isLast={isLast}
+        onPress={onPress}
+      />
+    </SwipeableListRow>
   );
 }

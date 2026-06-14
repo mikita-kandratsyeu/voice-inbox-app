@@ -2607,7 +2607,8 @@
     "pickNoteSearchPlaceholder": "Поиск заметок",
     "pickNoteEmpty": "Нет доступных заметок",
     "pickNoteSearchEmpty": "Ничего не найдено",
-    "unlinkA11y": "Убрать связь с «{{title}}»"
+    "unlinkA11y": "Убрать связь с «{{title}}»",
+    "unlinkSwipeA11y": "Свайп влево, чтобы убрать связь с «{{title}}»"
   },
   "taskOutcome": {
     "sheetTitle": "Задача выполнена",
