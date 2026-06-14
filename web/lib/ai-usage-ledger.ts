@@ -1,20 +1,23 @@
 import type { Prisma } from '@/generated/prisma/client';
 
 import { prisma } from '@/lib/prisma';
+import type { AiOperation } from './ai-operation';
 
 export type AiUsageLedgerKind = 'debit' | 'credit' | 'refund';
 
+/**
+ * Operations tracked in AI usage ledger.
+ * Extends AiOperation with ledger-specific operations (bonus, reset, etc).
+ *
+ * Note: Uses 'auto_organize' instead of 'folder_auto_organize' for historical reasons.
+ */
 export type AiUsageOperation =
-  | 'transcript_summarize'
-  | 'transcript_summarize_meeting'
-  | 'transcript_ask'
-  | 'translate'
-  | 'digest'
-  | 'auto_organize'
-  | 'meeting_dialogue'
-  | 'bonus'
-  | 'pro_limit_reset'
-  | 'unknown';
+  | Exclude<AiOperation, 'folder_auto_organize' | 'meeting_dialogue_retry'>
+  | 'transcript_summarize_meeting' // Extended: meeting with speakers (2 credits)
+  | 'auto_organize' // Maps to folder_auto_organize
+  | 'bonus' // User credit bonus
+  | 'pro_limit_reset' // Pro subscription limit reset
+  | 'unknown'; // Fallback for unrecognized operations
 
 export type AiUsageLedgerContext = {
   operation: AiUsageOperation;

@@ -9,6 +9,8 @@ import { releaseJobLock } from '@/lib/ai-job-lock';
 import { dispatchMeetingDialogueJob } from '@/lib/meeting-dialogue-dispatch';
 import { aiModelResponseFields, enrichMessageWithModelLabel } from '@/lib/ai-model-display';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
+import { saveJobMetadata, getJobMetadata } from '@/lib/job-metadata';
+import { enrichWithPollingHints, operationToJobType } from '@/lib/polling-hints';
 import type {
   MeetingDialogueAuxPayload,
   MeetingDialogueJobPayload,
@@ -88,6 +90,12 @@ export const createMessage = async (
   };
 
   await saveJobPayload(jobPayload);
+
+  // Save job metadata for polling hints calculation
+  const operation = jobPayload.operation; // 'transcript_summarize'
+  const jobType = operationToJobType(operation);
+  await saveJobMetadata(id, jobType, deviceId, ttl);
+
   await dispatchAiJob(jobPayload);
 
   return { created: true, syncToken };
@@ -95,7 +103,24 @@ export const createMessage = async (
 
 export const getMessageById = async (id: string, syncToken?: string): Promise<Message | null> => {
   const message = await getMessage(id, syncToken);
-  return message ? enrichMessageWithModelLabel(message) : null;
+
+  if (!message) {
+    return null;
+  }
+
+  // Enrich with model label
+  const enriched = enrichMessageWithModelLabel(message);
+
+  // Add adaptive polling hints for processing messages
+  if (enriched.status === 'processing') {
+    const metadata = await getJobMetadata(id);
+
+    if (metadata) {
+      return enrichWithPollingHints(enriched, metadata.jobType, metadata.startedAt);
+    }
+  }
+
+  return enriched;
 };
 
 type RetryMeetingDialogueResult =

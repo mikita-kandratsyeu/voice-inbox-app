@@ -3,6 +3,8 @@ import { MESSAGE_TTL_SECONDS } from '@/config/constants';
 import { checkAndIncrement, type AiLimitContext } from '@/lib/ai-rate-limit';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
+import { saveJobMetadata, getJobMetadata } from '@/lib/job-metadata';
+import { enrichWithPollingHints, operationToJobType } from '@/lib/polling-hints';
 import { aiModelResponseFields, enrichMessageWithModelLabel } from '@/lib/ai-model-display';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
@@ -87,6 +89,12 @@ export const createAsk = async (
   };
 
   await saveJobPayload(jobPayload);
+
+  // Save job metadata for polling hints calculation
+  const operation = jobPayload.operation; // 'transcript_ask'
+  const jobType = operationToJobType(operation);
+  await saveJobMetadata(id, jobType, deviceId, ttl);
+
   await dispatchAiJob(jobPayload);
 
   return { created: true, syncToken };
@@ -126,7 +134,15 @@ export const getAskById = async (id: string, syncToken?: string): Promise<AskMes
       : {};
 
   if (msg.status === 'processing') {
-    return { id: msg.id, status: 'processing', ...modelFields };
+    const base = { id: msg.id, status: 'processing', ...modelFields } as const;
+
+    // Add adaptive polling hints
+    const metadata = await getJobMetadata(msg.id);
+    if (metadata) {
+      return enrichWithPollingHints(base, metadata.jobType, metadata.startedAt) as AskMessage;
+    }
+
+    return base as AskMessage;
   }
   if (msg.status === 'done' && typeof msg.answer === 'string') {
     const answerKind =

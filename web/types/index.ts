@@ -33,8 +33,30 @@ export type AiResult = {
   tokenUsage?: { prompt: number; completion: number };
 };
 
+/**
+ * Adaptive polling hints for mobile client optimization.
+ * Helps client adjust polling intervals based on job progress.
+ */
+export type PollingHints = {
+  /** Current progress percentage (0-100) */
+  progress?: number;
+  /** Recommended next poll interval in milliseconds */
+  retryAfterMs?: number;
+  /** Estimated milliseconds until completion */
+  estimatedCompletionMs?: number;
+};
+
 export type Message =
-  | { id: string; status: 'processing'; model?: string; modelLabel?: string }
+  | {
+      id: string;
+      status: 'processing';
+      model?: string;
+      modelLabel?: string;
+      /** Adaptive polling hints for client optimization */
+      progress?: number;
+      retryAfterMs?: number;
+      estimatedCompletionMs?: number;
+    }
   | {
       id: string;
       status: 'done';
@@ -55,7 +77,16 @@ export type Message =
   | { id: string; status: 'error'; error: string; model?: string; modelLabel?: string };
 
 export type AskMessage =
-  | { id: string; status: 'processing'; model?: string; modelLabel?: string }
+  | {
+      id: string;
+      status: 'processing';
+      model?: string;
+      modelLabel?: string;
+      /** Adaptive polling hints for client optimization */
+      progress?: number;
+      retryAfterMs?: number;
+      estimatedCompletionMs?: number;
+    }
   | {
       id: string;
       status: 'done';
@@ -88,6 +119,13 @@ export type AutoOrganizeResult =
   | AutoOrganizeArchiveResult;
 
 export type AutoOrganizeMessage =
-  | { id: string; status: 'processing' }
+  | {
+      id: string;
+      status: 'processing';
+      /** Adaptive polling hints for client optimization */
+      progress?: number;
+      retryAfterMs?: number;
+      estimatedCompletionMs?: number;
+    }
   | { id: string; status: 'done'; result: AutoOrganizeResult; mode: AutoOrganizeMode }
   | { id: string; status: 'error'; error: string };
