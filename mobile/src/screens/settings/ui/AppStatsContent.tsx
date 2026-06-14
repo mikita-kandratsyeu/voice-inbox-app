@@ -1,11 +1,9 @@
 import { BarChart2, ChartPie, Tag as TagIcon } from 'lucide-react-native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
-  runOnJS,
-  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -21,7 +19,7 @@ import { Tag } from '@/shared/ui';
 import { buildAppStats, formatDigestDurationMs } from '../lib/appStats';
 import type { DigestPeriod } from '../lib/digest';
 import { getSettingsIconColor } from '../lib/settingsIconColor';
-import { DigestSectionCard } from './DigestScreenCards';
+import { AnimatedMetricCard, DigestSectionCard, useAnimatedCounter } from './DigestScreenCards';
 
 const CLASS_COLORS: Record<string, (c: Colors) => string> = {
   work: (c) => c.accent.primary,
@@ -33,69 +31,6 @@ const CLASS_COLORS: Record<string, (c: Colors) => string> = {
 
 const CLASS_ORDER = ['work', 'meeting', 'idea', 'personal', 'other'] as const;
 
-type AnimatedMetricCardProps = {
-  label: string;
-  helper: string;
-  rawValue: number;
-  formatter: (n: number) => string;
-  tone: string;
-};
-
-function AnimatedMetricCard({ label, helper, rawValue, formatter, tone }: AnimatedMetricCardProps) {
-  const color = useColors();
-  const sv = useSharedValue(0);
-  const [display, setDisplay] = useState(formatter(0));
-
-  const updateDisplay = useCallback(
-    (value: number) => {
-      setDisplay(formatter(value));
-    },
-    [formatter],
-  );
-
-  useEffect(() => {
-    sv.value = 0;
-    sv.value = withTiming(rawValue, {
-      duration: getAnimationDuration(900),
-      easing: Easing.out(Easing.cubic),
-    });
-  }, [rawValue, sv]);
-
-  useAnimatedReaction(
-    () => Math.round(sv.value),
-    (current, previous) => {
-      if (current !== previous) {
-        runOnJS(updateDisplay)(current);
-      }
-    },
-  );
-
-  return (
-    <View
-      className="flex-1 rounded-2xl p-4"
-      style={{
-        minWidth: '47%',
-        borderWidth: 1,
-        borderColor: color.border.default,
-        backgroundColor: color.background.card,
-      }}
-    >
-      <Text
-        className="text-xs font-semibold uppercase tracking-wider"
-        style={{ color: color.text.muted }}
-      >
-        {label}
-      </Text>
-      <Text className="mt-2 text-[22px] font-semibold leading-7" style={{ color: tone }}>
-        {display}
-      </Text>
-      <Text className="mt-1 text-[13px] leading-[18px]" style={{ color: color.text.secondary }}>
-        {helper}
-      </Text>
-    </View>
-  );
-}
-
 const BAR_MAX_H = 56;
 
 type ActivityBarProps = {
@@ -105,9 +40,18 @@ type ActivityBarProps = {
   delay: number;
   color: Colors;
   dense?: boolean;
+  animationKey: string;
 };
 
-function ActivityBar({ count, maxCount, label, delay, color, dense }: ActivityBarProps) {
+function ActivityBar({
+  count,
+  maxCount,
+  label,
+  delay,
+  color,
+  dense,
+  animationKey,
+}: ActivityBarProps) {
   const targetH = maxCount > 0 ? Math.max(count > 0 ? 4 : 0, (count / maxCount) * BAR_MAX_H) : 0;
   const heightSv = useSharedValue(0);
 
@@ -117,7 +61,7 @@ function ActivityBar({ count, maxCount, label, delay, color, dense }: ActivityBa
       getAnimationDuration(delay),
       withSpring(targetH, SPRING_CONFIGS.gentle),
     );
-  }, [targetH, delay, heightSv]);
+  }, [animationKey, targetH, delay, heightSv]);
 
   const barStyle = useAnimatedStyle(() => ({ height: heightSv.value }));
 
@@ -149,12 +93,24 @@ type ClassBarProps = {
   barColor: string;
   delay: number;
   color: Colors;
+  animationKey: string;
   isLast?: boolean;
 };
 
-function ClassificationBar({ label, count, total, barColor, delay, color, isLast }: ClassBarProps) {
+function ClassificationBar({
+  label,
+  count,
+  total,
+  barColor,
+  delay,
+  color,
+  animationKey,
+  isLast,
+}: ClassBarProps) {
   const pct = total > 0 ? (count / total) * 100 : 0;
   const widthSv = useSharedValue(0);
+  const animatedCount = useAnimatedCounter(count, `${animationKey}-count`);
+  const animatedPct = useAnimatedCounter(Math.round(pct), `${animationKey}-pct`);
 
   useEffect(() => {
     widthSv.value = 0;
@@ -162,7 +118,7 @@ function ClassificationBar({ label, count, total, barColor, delay, color, isLast
       getAnimationDuration(delay),
       withTiming(pct, { duration: getAnimationDuration(700), easing: Easing.out(Easing.cubic) }),
     );
-  }, [pct, delay, widthSv]);
+  }, [animationKey, pct, delay, widthSv]);
 
   const barStyle = useAnimatedStyle(() => ({ width: `${widthSv.value}%` }));
 
@@ -176,7 +132,7 @@ function ClassificationBar({ label, count, total, barColor, delay, color, isLast
           </Text>
         </View>
         <Text className="text-[13px] tabular-nums" style={{ color: color.text.secondary }}>
-          {count} · {Math.round(pct)}%
+          {animatedCount} · {animatedPct}%
         </Text>
       </View>
       <View
@@ -210,10 +166,13 @@ export const AppStatsContent = ({ period, locale }: AppStatsContentProps) => {
   );
 
   const metricsHelperKey =
-    period === 'all' ? 'settings.digest.metrics.allTimeHelper' : 'settings.digest.metrics.recordsHelper';
+    period === 'all'
+      ? 'settings.digest.metrics.allTimeHelper'
+      : 'settings.digest.metrics.recordsHelper';
 
   const maxDayCount = Math.max(...stats.activityCounts, 1);
   const activityDense = period === 'month' || period === 'all';
+  const metricsAnimationKey = `stats-${period}`;
 
   const activityChart = (
     <View className={`w-full flex-row items-end ${activityDense ? 'gap-0.5' : 'gap-1'}`}>
@@ -226,6 +185,7 @@ export const AppStatsContent = ({ period, locale }: AppStatsContentProps) => {
           delay={index * 55}
           color={color}
           dense={activityDense}
+          animationKey={`${period}-${index}`}
         />
       ))}
     </View>
@@ -241,6 +201,7 @@ export const AppStatsContent = ({ period, locale }: AppStatsContentProps) => {
 
       <View className="mb-7 flex-row flex-wrap gap-3">
         <AnimatedMetricCard
+          animationKey={`${metricsAnimationKey}-total`}
           label={t('appStats.totalRecords')}
           helper={t(metricsHelperKey)}
           rawValue={stats.total}
@@ -248,6 +209,7 @@ export const AppStatsContent = ({ period, locale }: AppStatsContentProps) => {
           tone={color.text.primary}
         />
         <AnimatedMetricCard
+          animationKey={`${metricsAnimationKey}-duration`}
           label={t('appStats.totalDuration')}
           helper={t('settings.digest.metrics.durationHelper')}
           rawValue={stats.totalMinutes}
@@ -255,6 +217,7 @@ export const AppStatsContent = ({ period, locale }: AppStatsContentProps) => {
           tone={color.accent.transcript}
         />
         <AnimatedMetricCard
+          animationKey={`${metricsAnimationKey}-ai`}
           label={t('appStats.aiProcessed')}
           helper={t(metricsHelperKey)}
           rawValue={stats.aiPct}
@@ -262,6 +225,7 @@ export const AppStatsContent = ({ period, locale }: AppStatsContentProps) => {
           tone={color.accent.aiData}
         />
         <AnimatedMetricCard
+          animationKey={`${metricsAnimationKey}-tasks`}
           label={t('appStats.tasksCompletion')}
           helper={t(metricsHelperKey)}
           rawValue={stats.tasksPct}
@@ -293,6 +257,7 @@ export const AppStatsContent = ({ period, locale }: AppStatsContentProps) => {
               barColor={CLASS_COLORS[cls]!(color)}
               delay={index * 80}
               color={color}
+              animationKey={`${period}-${cls}`}
               isLast={index === CLASS_ORDER.length - 1}
             />
           ))}

@@ -61,10 +61,7 @@ export function DigestPeriodFilter({ period, onChange }: Props) {
               },
             ]}
           >
-            <Text
-              style={{ ...FILTER_CHIP_LABEL_STYLE, color: foregroundColor }}
-              numberOfLines={1}
-            >
+            <Text style={{ ...FILTER_CHIP_LABEL_STYLE, color: foregroundColor }} numberOfLines={1}>
               {t(`settings.digest.periodTab.${item}`)}
             </Text>
           </TouchableOpacity>

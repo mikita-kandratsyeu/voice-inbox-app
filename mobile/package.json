@@ -60,7 +60,7 @@
     "llama.rn": "^0.12.4",
     "lucide-react-native": "^1.16.0",
     "markdown-it": "^14.2.0",
-    "markdown-it-multimd-table": "^4.2.3",
+    "markdown-it-task-lists": "^2.1.1",
     "nativewind": "^4.2.4",
     "react": "19.2.3",
     "react-i18next": "^17.0.8",

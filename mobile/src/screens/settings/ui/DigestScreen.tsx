@@ -80,19 +80,8 @@ import {
 } from '../lib/shareDigest';
 import { AppStatsContent } from './AppStatsContent';
 import { DigestPeriodFilter } from './DigestPeriodFilter';
-import { DigestCollapsibleSectionCard, DigestMetricCard } from './DigestScreenCards';
+import { AnimatedMetricCard, DigestCollapsibleSectionCard } from './DigestScreenCards';
 import { type DigestShareKind, DigestShareSheet } from './DigestShareSheet';
-
-type MetricCardProps = {
-  label: string;
-  value: string;
-  helper: string;
-  tone: string;
-};
-
-function MetricCard(props: MetricCardProps) {
-  return <DigestMetricCard {...props} />;
-}
 
 function DigestAiCoverageBanner({ coverage }: { coverage: DigestAiPayloadCoverage }) {
   const { t } = useTranslation();
@@ -723,27 +712,35 @@ export const DigestScreen = () => {
           </View>
 
           <View className="mb-7 flex-row flex-wrap gap-3">
-            <MetricCard
+            <AnimatedMetricCard
+              animationKey={`digest-${period}-records`}
               label={t('settings.digest.metrics.records')}
-              value={String(digest.recordCount)}
+              rawValue={digest.recordCount}
+              formatter={(n) => `${n}`}
               helper={t(metricsHelperKey)}
               tone={color.text.primary}
             />
-            <MetricCard
+            <AnimatedMetricCard
+              animationKey={`digest-${period}-duration`}
               label={t('settings.digest.metrics.duration')}
-              value={formatDuration(digest.totalDurationMs)}
+              rawValue={Math.floor(digest.totalDurationMs / 60_000)}
+              formatter={(n) => formatDuration(n * 60_000)}
               helper={t('settings.digest.metrics.durationHelper')}
               tone={color.accent.transcript}
             />
-            <MetricCard
+            <AnimatedMetricCard
+              animationKey={`digest-${period}-open-tasks`}
               label={t('settings.digest.metrics.openTasks')}
-              value={String(digest.openTasks.length)}
+              rawValue={digest.openTasks.length}
+              formatter={(n) => `${n}`}
               helper={t(metricsHelperKey)}
               tone={color.accent.primary}
             />
-            <MetricCard
+            <AnimatedMetricCard
+              animationKey={`digest-${period}-overdue`}
               label={t('settings.digest.metrics.overdue')}
-              value={String(digest.overdueTasks.length)}
+              rawValue={digest.overdueTasks.length}
+              formatter={(n) => `${n}`}
               helper={t(metricsHelperKey)}
               tone={digest.overdueTasks.length > 0 ? color.accent.delete : color.accent.success}
             />
@@ -763,7 +760,7 @@ export const DigestScreen = () => {
                 strokeWidth={1.8}
               />
             }
-            defaultExpanded={!!aiResult || (digestAiPeriodActive && digest.recordCount > 0)}
+            defaultExpanded={!aiResult && digestAiPeriodActive && digest.recordCount > 0}
             persistentContent={
               digestAiPeriodActive && aiCreatedAt ? (
                 <Text className="text-[13px] leading-[18px]" style={{ color: color.text.muted }}>

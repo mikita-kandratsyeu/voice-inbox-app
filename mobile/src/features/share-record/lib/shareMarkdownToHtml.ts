@@ -1,17 +1,7 @@
-import MarkdownIt from 'markdown-it';
-import markdownItMultimdTable from 'markdown-it-multimd-table';
-
+import { createSharePdfMarkdownIt } from './createSharePdfMarkdownIt';
 import { stripShareSectionMarkers } from './shareSectionMarkers';
 
-const md = new MarkdownIt({
-  html: false,
-  linkify: true,
-  breaks: true,
-}).use(markdownItMultimdTable, {
-  multiline: false,
-  rowspan: false,
-  headerless: false,
-});
+const md = createSharePdfMarkdownIt();
 
 const SHARE_PDF_HTML_STYLES = `
   @page { margin: 28pt; }
@@ -33,6 +23,13 @@ const SHARE_PDF_HTML_STYLES = `
   li { margin: 0 0 4pt; }
   strong { font-weight: 600; color: #1f2937; }
   em { font-style: italic; color: #4b5563; }
+  s, del { color: #6b7280; text-decoration: line-through; }
+  blockquote {
+    margin: 0 0 12pt;
+    padding: 0 0 0 12pt;
+    border-left: 3pt solid #d1d5db;
+    color: #4b5563;
+  }
   table {
     width: 100%;
     border-collapse: collapse;
@@ -50,6 +47,20 @@ const SHARE_PDF_HTML_STYLES = `
     word-break: break-word;
   }
   th { font-weight: 600; color: #111827; }
+  ul.contains-task-list { list-style: none; padding-left: 0; }
+  li.task-list-item {
+    list-style: none;
+    display: flex;
+    align-items: flex-start;
+    gap: 8pt;
+    margin: 0 0 6pt;
+  }
+  input.task-list-item-checkbox {
+    margin: 2pt 0 0;
+    width: 12pt;
+    height: 12pt;
+    flex-shrink: 0;
+  }
   hr {
     border: none;
     border-top: 1px solid #d1d5db;

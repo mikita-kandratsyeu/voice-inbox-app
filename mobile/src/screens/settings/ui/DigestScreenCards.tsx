@@ -1,16 +1,18 @@
 import { ChevronDown } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
+  runOnJS,
+  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 
-import { useColors } from '@/shared/config';
+import { getAnimationDuration, useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 
 export type DigestMetricCardProps = {
@@ -41,6 +43,82 @@ export function DigestMetricCard({ label, value, helper, tone }: DigestMetricCar
       </Text>
       <Text className="mt-2 text-[22px] font-semibold leading-7" style={{ color: tone }}>
         {value}
+      </Text>
+      <Text className="mt-1 text-[13px] leading-[18px]" style={{ color: color.text.secondary }}>
+        {helper}
+      </Text>
+    </View>
+  );
+}
+
+export type AnimatedMetricCardProps = {
+  label: string;
+  helper: string;
+  rawValue: number;
+  formatter: (n: number) => string;
+  tone: string;
+  /** Remount / restart count-up when the digest period changes. */
+  animationKey: string;
+};
+
+export function useAnimatedCounter(rawValue: number, animationKey: string): number {
+  const sv = useSharedValue(0);
+  const [display, setDisplay] = useState(0);
+
+  const updateDisplay = useCallback((value: number) => {
+    setDisplay(value);
+  }, []);
+
+  useEffect(() => {
+    sv.value = 0;
+    sv.value = withTiming(rawValue, {
+      duration: getAnimationDuration(900),
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [animationKey, rawValue, sv]);
+
+  useAnimatedReaction(
+    () => Math.round(sv.value),
+    (current, previous) => {
+      if (current !== previous) {
+        runOnJS(updateDisplay)(current);
+      }
+    },
+  );
+
+  return display;
+}
+
+export function AnimatedMetricCard({
+  label,
+  helper,
+  rawValue,
+  formatter,
+  tone,
+  animationKey,
+}: AnimatedMetricCardProps) {
+  const color = useColors();
+  const animatedValue = useAnimatedCounter(rawValue, animationKey);
+  const display = formatter(animatedValue);
+
+  return (
+    <View
+      className="flex-1 rounded-2xl p-4"
+      style={{
+        minWidth: '47%',
+        borderWidth: 1,
+        borderColor: color.border.default,
+        backgroundColor: color.background.card,
+      }}
+    >
+      <Text
+        className="text-xs font-semibold uppercase tracking-wider"
+        style={{ color: color.text.muted }}
+      >
+        {label}
+      </Text>
+      <Text className="mt-2 text-[22px] font-semibold leading-7" style={{ color: tone }}>
+        {display}
       </Text>
       <Text className="mt-1 text-[13px] leading-[18px]" style={{ color: color.text.secondary }}>
         {helper}
