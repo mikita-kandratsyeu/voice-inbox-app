@@ -7,11 +7,8 @@ import {
 export function shouldApplyAutoTranscribeOnSave(
   persistedToggle: boolean,
   isProActive: boolean,
-  aiExecutionMode?: AiExecutionMode,
+  _aiExecutionMode?: AiExecutionMode,
 ): boolean {
-  if (aiExecutionMode === 'private_experimental') {
-    return persistedToggle;
-  }
   return persistedToggle && isProActive;
 }
 

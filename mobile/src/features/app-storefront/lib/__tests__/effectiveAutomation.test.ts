@@ -11,13 +11,11 @@ import {
 
 describe('effectiveAutomation', () => {
   describe('shouldApplyAutoTranscribeOnSave', () => {
-    it('requires Pro in smart mode', () => {
+    it('requires Pro in smart and private mode', () => {
       expect(shouldApplyAutoTranscribeOnSave(true, false, 'smart_hybrid')).toBe(false);
       expect(shouldApplyAutoTranscribeOnSave(true, true, 'smart_hybrid')).toBe(true);
-    });
-
-    it('allows private mode without Pro', () => {
-      expect(shouldApplyAutoTranscribeOnSave(true, false, 'private_experimental')).toBe(true);
+      expect(shouldApplyAutoTranscribeOnSave(true, false, 'private_experimental')).toBe(false);
+      expect(shouldApplyAutoTranscribeOnSave(true, true, 'private_experimental')).toBe(true);
       expect(shouldApplyAutoTranscribeOnSave(false, false, 'private_experimental')).toBe(false);
     });
   });

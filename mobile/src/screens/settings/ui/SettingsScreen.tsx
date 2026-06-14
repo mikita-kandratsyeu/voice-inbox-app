@@ -193,7 +193,7 @@ export const SettingsScreen = () => {
           <SettingsAutomationSection
             color={settings.color}
             t={settings.t}
-            automationLocked={settings.isPrivateMode ? false : settings.automationLocked}
+            automationLocked={settings.automationLocked}
             autoAiLocked={
               settings.privateCustomServerModeActive ? settings.automationLocked : undefined
             }
@@ -283,25 +283,23 @@ export const SettingsScreen = () => {
           limit={settings.resetProLimitSuccessSheet?.reset.limit ?? 0}
           alreadyApplied={settings.resetProLimitSuccessSheet?.alreadyApplied ?? false}
         />
-        {!settings.isPrivateMode && (
-          <>
-            <AutomationComingSoonSheet
-              visible={settings.automationSheet !== null}
-              feature={settings.automationSheet ?? 'autoTranscribe'}
-              onUpgradePress={() => {
-                settings.setAutomationSheet(null);
-                openPlanPaywall();
-              }}
-              onClose={() => settings.setAutomationSheet(null)}
-            />
-            <AutoArchiveDelaySheet
-              visible={settings.autoArchiveDelaySheetVisible}
-              selectedDays={settings.autoArchiveAfterDays}
-              onSelect={settings.handleAutoArchiveDelaySelect}
-              onClose={settings.handleAutoArchiveDelaySheetClose}
-            />
-          </>
-        )}
+        <AutomationComingSoonSheet
+          visible={settings.automationSheet !== null}
+          feature={settings.automationSheet ?? 'autoTranscribe'}
+          onUpgradePress={() => {
+            settings.setAutomationSheet(null);
+            openPlanPaywall();
+          }}
+          onClose={() => settings.setAutomationSheet(null)}
+        />
+        {!settings.isPrivateMode ? (
+          <AutoArchiveDelaySheet
+            visible={settings.autoArchiveDelaySheetVisible}
+            selectedDays={settings.autoArchiveAfterDays}
+            onSelect={settings.handleAutoArchiveDelaySelect}
+            onClose={settings.handleAutoArchiveDelaySheetClose}
+          />
+        ) : null}
       </View>
     </View>
   );
