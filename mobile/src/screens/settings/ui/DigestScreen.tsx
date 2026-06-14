@@ -75,12 +75,8 @@ import {
   shareDigestPlainText,
 } from '../lib/shareDigest';
 import { AppStatsContent } from './AppStatsContent';
-import {
-  DigestCollapsibleSectionCard,
-  DigestMetricCard,
-  DigestSectionCard,
-} from './DigestScreenCards';
 import { DigestPeriodFilter } from './DigestPeriodFilter';
+import { DigestCollapsibleSectionCard, DigestMetricCard } from './DigestScreenCards';
 import { DigestShareSheet } from './DigestShareSheet';
 
 type MetricCardProps = {
@@ -92,22 +88,6 @@ type MetricCardProps = {
 
 function MetricCard(props: MetricCardProps) {
   return <DigestMetricCard {...props} />;
-}
-
-function SectionCard({
-  title,
-  children,
-  icon,
-}: {
-  title: string;
-  children: React.ReactNode;
-  icon?: React.ReactNode;
-}) {
-  return (
-    <DigestSectionCard title={title} icon={icon}>
-      {children}
-    </DigestSectionCard>
-  );
 }
 
 function DigestAiCoverageBanner({ coverage }: { coverage: DigestAiPayloadCoverage }) {
@@ -678,7 +658,8 @@ export const DigestScreen = () => {
             <DigestFormatTabs format={digestFormat} onChange={handleDigestFormatChange} />
           ) : null}
 
-          <SectionCard
+          <DigestCollapsibleSectionCard
+            key={`digest-ai-${period}`}
             title={t('settings.digest.aiTitle')}
             icon={
               <Newspaper
@@ -687,15 +668,25 @@ export const DigestScreen = () => {
                 strokeWidth={1.8}
               />
             }
+            defaultExpanded={!!aiResult || (digestAiPeriodActive && digest.recordCount > 0)}
+            persistentContent={
+              digestAiPeriodActive && aiCreatedAt ? (
+                <Text className="text-[13px] leading-[18px]" style={{ color: color.text.muted }}>
+                  {aiGeneratedText}
+                </Text>
+              ) : undefined
+            }
           >
             {digestAiPeriodActive ? (
               <>
-                <Text
-                  className="mb-3 text-[13px] leading-[18px]"
-                  style={{ color: color.text.muted }}
-                >
-                  {aiGeneratedText}
-                </Text>
+                {!aiCreatedAt ? (
+                  <Text
+                    className="mb-3 text-[13px] leading-[18px]"
+                    style={{ color: color.text.muted }}
+                  >
+                    {aiGeneratedText}
+                  </Text>
+                ) : null}
                 {digest.recordCount > 0 ? (
                   <DigestAiCoverageBanner coverage={aiPayloadCoverage} />
                 ) : null}
@@ -735,7 +726,7 @@ export const DigestScreen = () => {
                 {t('settings.digest.aiUnavailableAllTime')}
               </Text>
             )}
-          </SectionCard>
+          </DigestCollapsibleSectionCard>
 
           <AppStatsContent period={period} locale={i18n.language} />
 

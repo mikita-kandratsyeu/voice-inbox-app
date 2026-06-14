@@ -86,6 +86,8 @@ export type DigestCollapsibleSectionCardProps = {
   children: React.ReactNode;
   icon?: React.ReactNode;
   defaultExpanded?: boolean;
+  /** Shown below the header whether the section is expanded or collapsed. */
+  persistentContent?: React.ReactNode;
 };
 
 export function DigestCollapsibleSectionCard({
@@ -93,6 +95,7 @@ export function DigestCollapsibleSectionCard({
   children,
   icon,
   defaultExpanded = true,
+  persistentContent,
 }: DigestCollapsibleSectionCardProps) {
   const { t } = useTranslation();
   const color = useColors();
@@ -156,6 +159,7 @@ export function DigestCollapsibleSectionCard({
           <ChevronDown size={16} color={color.text.secondary} strokeWidth={2} />
         </Animated.View>
       </Pressable>
+      {persistentContent ? <View className="pt-2">{persistentContent}</View> : null}
       {expanded ? (
         <Animated.View entering={FadeIn.duration(140)} className="pt-3">
           {children}
