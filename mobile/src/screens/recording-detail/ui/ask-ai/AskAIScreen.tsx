@@ -200,8 +200,10 @@ export const AskAIScreen = () => {
   );
 
   const shouldShowInputRow = hasTranscript && !isRestoringSession && !isLoading;
-  /** Fill scroll height for empty / error states that vertically center content. */
-  const scrollContentFlexGrow = !hasTranscript || Boolean(error && !answer && hasTranscript);
+  const showStandaloneAskError =
+    Boolean(error && !answer && hasTranscript) && history.length === 0 && !question?.trim();
+  /** Fill scroll height for empty / standalone error states that vertically center content. */
+  const scrollContentFlexGrow = !hasTranscript || showStandaloneAskError;
   const scrollContentCentered = scrollContentFlexGrow;
   const canSend =
     Boolean(questionInput.trim()) &&
