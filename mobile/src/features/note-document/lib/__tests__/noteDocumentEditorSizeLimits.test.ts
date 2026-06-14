@@ -1,21 +1,31 @@
 import {
   estimateNoteDocumentCharacterCount,
-  NOTE_DOCUMENT_EDITOR_COMFORTABLE_MAX_CHARS,
+  getNoteDocumentEditorCharacterLimit,
   shouldWarnNoteDocumentEditorSize,
 } from '../noteDocumentEditorSizeLimits';
 
+// Mock deviceMemoryTier to avoid native module dependencies
+jest.mock('@/shared/lib/deviceMemoryTier', () => ({
+  resolveDeviceMemoryTier: jest.fn(() => 'medium'),
+}));
+
 describe('noteDocumentEditorSizeLimits', () => {
-  it('does not warn for comfortable documents', () => {
-    expect(shouldWarnNoteDocumentEditorSize(NOTE_DOCUMENT_EDITOR_COMFORTABLE_MAX_CHARS)).toBe(
-      false,
-    );
+  it('returns device-specific character limit', () => {
+    const limit = getNoteDocumentEditorCharacterLimit();
+    // Medium tier device should return 8000
+    expect(limit).toBe(8_000);
   });
 
-  it('warns for large documents', () => {
-    expect(shouldWarnNoteDocumentEditorSize(NOTE_DOCUMENT_EDITOR_COMFORTABLE_MAX_CHARS + 1)).toBe(
-      true,
-    );
-    expect(shouldWarnNoteDocumentEditorSize(23_197)).toBe(true);
+  it('does not warn for documents within device limit', () => {
+    const limit = getNoteDocumentEditorCharacterLimit();
+    expect(shouldWarnNoteDocumentEditorSize(limit)).toBe(false);
+    expect(shouldWarnNoteDocumentEditorSize(limit - 100)).toBe(false);
+  });
+
+  it('warns for documents exceeding device limit', () => {
+    const limit = getNoteDocumentEditorCharacterLimit();
+    expect(shouldWarnNoteDocumentEditorSize(limit + 1)).toBe(true);
+    expect(shouldWarnNoteDocumentEditorSize(limit + 10_000)).toBe(true);
   });
 
   it('estimates document size from record fields', () => {

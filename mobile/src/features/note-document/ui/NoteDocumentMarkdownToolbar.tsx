@@ -102,6 +102,7 @@ export const NoteDocumentMarkdownToolbar = React.memo(function NoteDocumentMarkd
             key={action}
             accessibilityRole="button"
             accessibilityLabel={t(`recordingDetail.document.toolbar.${action}`)}
+            accessibilityHint={t(`recordingDetail.document.toolbar.${action}Hint`)}
             accessibilityState={{ disabled, selected: isActive }}
             disabled={disabled}
             activeOpacity={0.7}

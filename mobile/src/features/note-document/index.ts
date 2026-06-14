@@ -4,7 +4,7 @@ export {
 } from './lib/buildNoteDocumentMarkdown';
 export {
   estimateNoteDocumentCharacterCount,
-  NOTE_DOCUMENT_EDITOR_COMFORTABLE_MAX_CHARS,
+  getNoteDocumentEditorCharacterLimit,
   shouldWarnNoteDocumentEditorSize,
 } from './lib/noteDocumentEditorSizeLimits';
 export {
@@ -16,6 +16,7 @@ export {
   listNoteDocumentSectionIds,
   stripNoteDocumentMarkers,
 } from './lib/noteDocumentSectionMarkers';
+export { parseNoteDocumentAsync, shouldUseAsyncParsing } from './lib/parseNoteDocumentAsync';
 export {
   type NoteDocumentPatch,
   parseNoteDocumentMarkdown,
