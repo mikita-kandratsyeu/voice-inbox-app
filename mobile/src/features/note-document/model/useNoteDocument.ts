@@ -13,10 +13,8 @@ import {
   getCachedNoteDocumentMarkdown,
   setCachedNoteDocumentMarkdown,
 } from '../lib/noteDocumentMarkdownCache';
-import {
-  parseNoteDocumentMarkdown,
-  parseTasksFromNoteDocumentMarkdown,
-} from '../lib/parseNoteDocumentMarkdown';
+import { parseNoteDocumentAsync } from '../lib/parseNoteDocumentAsync';
+import { parseTasksFromNoteDocumentMarkdown } from '../lib/parseNoteDocumentMarkdown';
 import { patchTaskDoneInNoteDocumentMarkdown } from '../lib/patchTaskDoneInNoteDocumentMarkdown';
 
 export type NoteDocumentMode = 'reading' | 'source';
@@ -159,13 +157,17 @@ export function useNoteDocument({
   const save = useCallback(
     async (markdownToSave?: string): Promise<'ok' | 'parse_error'> => {
       const markdown = markdownToSave ?? documentMarkdown;
-      const parsed = parseNoteDocumentMarkdown(markdown, liveRecord);
-      if (!parsed.ok) {
-        return 'parse_error';
-      }
 
       setIsSaving(true);
+
       try {
+        // Use async parsing for large documents to avoid blocking UI
+        const parsed = await parseNoteDocumentAsync(markdown, liveRecord);
+
+        if (!parsed.ok) {
+          setIsSaving(false);
+          return 'parse_error';
+        }
         const { patch } = parsed;
         const updates: Promise<void>[] = [];
 

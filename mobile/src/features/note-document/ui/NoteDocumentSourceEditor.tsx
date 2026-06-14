@@ -49,9 +49,10 @@ export const NoteDocumentSourceEditor = React.memo(function NoteDocumentSourceEd
   const { t } = useTranslation();
   const [styleState, setStyleState] = useState<StyleState | null>(null);
 
-  // Throttle onDirty calls to reduce re-renders
+  // Debounce onDirty calls to reduce parent component re-renders
   const dirtyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isDirtyRef = useRef(false);
+  const hasPendingDirtyCallRef = useRef(false);
 
   const inputMarkdownStyle = useMemo(() => buildNoteDocumentEnrichedInputStyle(color), [color]);
   const editorAreaStyle = useMemo(
@@ -81,33 +82,49 @@ export const NoteDocumentSourceEditor = React.memo(function NoteDocumentSourceEd
     [color.background.primary, color.text.primary],
   );
 
-  // Throttle onDirty to 300ms - call immediately on first change, then debounce
+  // Debounce onDirty to 1000ms to reduce parent re-renders
+  // First change marks dirty immediately, subsequent changes debounced
   const handleChangeText = useCallback(() => {
     if (!isDirtyRef.current) {
       isDirtyRef.current = true;
-      onDirty();
+      hasPendingDirtyCallRef.current = true;
+
+      dirtyTimeoutRef.current = setTimeout(() => {
+        if (hasPendingDirtyCallRef.current) {
+          onDirty();
+          hasPendingDirtyCallRef.current = false;
+        }
+        dirtyTimeoutRef.current = null;
+      }, 1000);
+      return;
     }
 
+    // Already dirty, just reset the debounce timer
     if (dirtyTimeoutRef.current) {
       clearTimeout(dirtyTimeoutRef.current);
     }
 
+    hasPendingDirtyCallRef.current = true;
     dirtyTimeoutRef.current = setTimeout(() => {
+      if (hasPendingDirtyCallRef.current) {
+        onDirty();
+        hasPendingDirtyCallRef.current = false;
+      }
       dirtyTimeoutRef.current = null;
-    }, 300);
+    }, 1000);
   }, [onDirty]);
 
-  // Throttle styleState updates to reduce toolbar re-renders
-  const styleStateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Update styleState with requestAnimationFrame for immediate UI feedback
+  const styleStateFrameRef = useRef<number | null>(null);
   const handleChangeState = useCallback((newState: StyleState) => {
-    if (styleStateTimeoutRef.current) {
-      clearTimeout(styleStateTimeoutRef.current);
+    if (styleStateFrameRef.current !== null) {
+      cancelAnimationFrame(styleStateFrameRef.current);
     }
 
-    styleStateTimeoutRef.current = setTimeout(() => {
+    styleStateFrameRef.current = requestAnimationFrame(() => {
       setStyleState(newState);
-      styleStateTimeoutRef.current = null;
-    }, 100);
+      styleStateFrameRef.current = null;
+    });
   }, []);
 
   useEffect(() => {
@@ -117,14 +134,14 @@ export const NoteDocumentSourceEditor = React.memo(function NoteDocumentSourceEd
     return () => cancelAnimationFrame(frame);
   }, [documentKey, inputRef]);
 
-  // Cleanup timeouts on unmount
+  // Cleanup timeouts and animation frames on unmount
   useEffect(() => {
     return () => {
       if (dirtyTimeoutRef.current) {
         clearTimeout(dirtyTimeoutRef.current);
       }
-      if (styleStateTimeoutRef.current) {
-        clearTimeout(styleStateTimeoutRef.current);
+      if (styleStateFrameRef.current !== null) {
+        cancelAnimationFrame(styleStateFrameRef.current);
       }
     };
   }, []);
@@ -183,6 +200,7 @@ export const NoteDocumentSourceEditor = React.memo(function NoteDocumentSourceEd
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         bottomOffset={16}
+        removeClippedSubviews
       >
         <View style={editorAreaStyle}>
           <EnrichedMarkdownTextInput
