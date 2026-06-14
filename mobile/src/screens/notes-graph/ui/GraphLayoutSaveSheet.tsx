@@ -1,6 +1,6 @@
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Text } from 'react-native';
 
@@ -36,10 +36,8 @@ export function GraphLayoutSaveSheet({
   const [title, setTitle] = useState('');
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
-  useLayoutEffect(() => {
-    if (visible) {
-      setKeyboardVisible(true);
-    } else {
+  useEffect(() => {
+    if (!visible) {
       setKeyboardVisible(false);
     }
   }, [visible]);
@@ -105,7 +103,7 @@ export function GraphLayoutSaveSheet({
         useTabletPadding
         style={{
           paddingTop: 4,
-          paddingBottom: keyboardVisible ? SAVE_SHEET_KEYBOARD_BOTTOM_PADDING : undefined,
+          ...(keyboardVisible ? { paddingBottom: SAVE_SHEET_KEYBOARD_BOTTOM_PADDING } : {}),
           gap: 12,
         }}
       >
