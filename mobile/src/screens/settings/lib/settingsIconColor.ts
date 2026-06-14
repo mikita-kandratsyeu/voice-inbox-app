@@ -3,6 +3,7 @@ import type { Colors } from '@/shared/config';
 /** Same id → same color everywhere in Settings. */
 export type SettingsIconId =
   | 'alertTriangle'
+  | 'barChart2'
   | 'archive'
   | 'bell'
   | 'bot'
@@ -38,6 +39,7 @@ export type SettingsIconId =
   | 'zap';
 
 const SETTINGS_ICON_COLOR: Record<SettingsIconId, (color: Colors) => string> = {
+  barChart2: (c) => c.accent.primary,
   archive: (c) => c.accent.archive,
   bell: (c) => c.accent.unpin,
   bot: (c) => c.accent.aiData,

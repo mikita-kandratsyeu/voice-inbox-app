@@ -10,6 +10,7 @@ import {
   AiUsageDashboardScreen,
   AppearanceScreen,
   AppLockSetupScreen,
+  AppStatsScreen,
   BackupRestoreScreen,
   DiagnosticLogsScreen,
   DigestScreen,
@@ -87,6 +88,11 @@ export const SettingsNavigator = () => {
         <Stack.Screen
           name="WhisperModelPicker"
           component={WhisperModelPickerScreen}
+          options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="AppStats"
+          component={AppStatsScreen}
           options={{ animation: 'slide_from_right' }}
         />
         <Stack.Screen
