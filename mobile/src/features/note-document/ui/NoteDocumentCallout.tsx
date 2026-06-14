@@ -28,7 +28,7 @@ type CalloutConfig = {
   title: string;
 };
 
-function getCalloutConfig(type: CalloutType, color: Colors): CalloutConfig {
+function getCalloutConfig(type: CalloutType): CalloutConfig {
   switch (type) {
     case 'note':
       return {
@@ -79,7 +79,7 @@ export const NoteDocumentCallout = React.memo(function NoteDocumentCallout({
   color,
   children,
 }: NoteDocumentCalloutProps) {
-  const config = useMemo(() => getCalloutConfig(type, color), [type, color]);
+  const config = useMemo(() => getCalloutConfig(type), [type]);
   const Icon = config.icon;
 
   return (

@@ -16,10 +16,10 @@ export const AskTurnQuestion = ({ color, question }: AskTurnQuestionProps) => {
 
   return (
     <View className="gap-1">
-      <Text className="text-sm font-semibold" style={{ color: color.text.secondary }}>
+      <Text className="text-xs font-semibold" style={{ color: color.text.secondary }}>
         {t('recordingDetail.ask')}
       </Text>
-      <Text className="text-base leading-6" style={{ color: color.text.primary }}>
+      <Text className="text-base leading-6 font-semibold" style={{ color: color.text.primary }}>
         {question}
       </Text>
     </View>

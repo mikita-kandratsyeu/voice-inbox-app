@@ -283,11 +283,11 @@ export function buildDigestEnrichedMarkdownStyle(color: Colors): MarkdownStyle {
     paragraphMarginBottom: 6,
     heading1Size: 16,
     heading1LineHeight: 22,
-    heading2Size: 15,
-    heading2LineHeight: 21,
+    heading2Size: 14,
+    heading2LineHeight: 20,
     heading3Size: 14,
-    heading3LineHeight: 21,
-    listMarginBottom: 0,
+    heading3LineHeight: 20,
+    listMarginBottom: 16,
   });
 }
 
