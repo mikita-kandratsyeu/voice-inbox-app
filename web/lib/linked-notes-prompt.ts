@@ -21,8 +21,7 @@ export function parseAskLinkedNotes(raw: unknown): AskLinkedNoteForPrompt[] | un
     const title = typeof o.title === 'string' ? o.title.replace(/\s+/g, ' ').trim() : '';
     if (!title) continue;
 
-    const summary =
-      typeof o.summary === 'string' ? o.summary.replace(/\s+/g, ' ').trim() : '';
+    const summary = typeof o.summary === 'string' ? o.summary.replace(/\s+/g, ' ').trim() : '';
     const trimmedSummary = summary
       ? summary.slice(0, ASK_LINKED_NOTE_SUMMARY_MAX_CHARS)
       : undefined;
@@ -37,11 +36,14 @@ export function parseAskLinkedNotes(raw: unknown): AskLinkedNoteForPrompt[] | un
         )
         .filter((text): text is string => Boolean(text))
         .slice(0, ASK_LINKED_NOTE_MAX_TASKS)
-        .map((text) => ({ text })) ;
+        .map((text) => ({ text }));
 
     const transcriptExcerpt =
       typeof o.transcriptExcerpt === 'string'
-        ? o.transcriptExcerpt.replace(/\s+/g, ' ').trim().slice(0, ASK_LINKED_NOTE_TRANSCRIPT_EXCERPT_MAX_CHARS)
+        ? o.transcriptExcerpt
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, ASK_LINKED_NOTE_TRANSCRIPT_EXCERPT_MAX_CHARS)
         : undefined;
 
     if (!trimmedSummary && !transcriptExcerpt && (!tasks || tasks.length === 0)) continue;

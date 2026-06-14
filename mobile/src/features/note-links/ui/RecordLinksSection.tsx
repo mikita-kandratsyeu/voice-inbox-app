@@ -82,12 +82,7 @@ function LinkSectionBlock({
           />
         ))}
         {showAddRow ? (
-          <LinkNoteAddRow
-            color={color}
-            hasLinks={records.length > 0}
-            isLast
-            onPress={onAdd}
-          />
+          <LinkNoteAddRow color={color} hasLinks={records.length > 0} isLast onPress={onAdd} />
         ) : null}
       </View>
     </View>
@@ -111,9 +106,7 @@ export function RecordLinksSection({
 
   const linkedRecords = useMemo(() => {
     const ids = record.linkedRecordIds ?? [];
-    return ids
-      .map((id) => recordById.get(id))
-      .filter((item): item is VoiceRecord => item != null);
+    return ids.map((id) => recordById.get(id)).filter((item): item is VoiceRecord => item != null);
   }, [record.linkedRecordIds, recordById]);
 
   const backlinkRecords = useMemo(

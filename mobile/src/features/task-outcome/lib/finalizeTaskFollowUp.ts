@@ -1,8 +1,8 @@
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 
-import { applyTaskCompletion, patchTaskInList } from './applyTaskCompletion';
 import { usePendingTaskFollowUpStore } from '../model/pendingTaskFollowUpStore';
+import { applyTaskCompletion, patchTaskInList } from './applyTaskCompletion';
 import type { PendingTaskFollowUp } from './types';
 
 export function enrichRecordWithFollowUpDraft(

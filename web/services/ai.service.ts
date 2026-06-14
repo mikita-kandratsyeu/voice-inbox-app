@@ -196,7 +196,13 @@ async function callSummaryModel(
 type AskAnswerKind = 'plain' | 'list' | 'tasks' | 'decisions';
 type AskEvidence = {
   quote: string;
-  source?: 'transcript' | 'summary' | 'tasks' | 'recording_mark' | 'prior_conversation' | 'linked_note';
+  source?:
+    | 'transcript'
+    | 'summary'
+    | 'tasks'
+    | 'recording_mark'
+    | 'prior_conversation'
+    | 'linked_note';
   offsetMs?: number | null;
   label?: string;
 };

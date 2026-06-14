@@ -1,6 +1,6 @@
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useFolderStore } from '@/entities/folder';
@@ -9,8 +9,8 @@ import { useRecordStore } from '@/entities/record';
 
 import { applyTaskCompletion, applyTaskReopen, patchTaskInList } from '../lib/applyTaskCompletion';
 import { buildFollowUpNoteDraft } from '../lib/buildFollowUpNoteDraft';
-import { usePendingTaskFollowUpStore } from './pendingTaskFollowUpStore';
 import type { TaskCompletionTarget } from '../lib/types';
+import { usePendingTaskFollowUpStore } from './pendingTaskFollowUpStore';
 
 type UseTaskCompletionFlowOptions = {
   navigation: NativeStackNavigationProp<RootStackParamList>;

@@ -1,4 +1,9 @@
-export { applyTaskCompletion, applyTaskReopen, normalizeOutcomeText, patchTaskInList } from './lib/applyTaskCompletion';
+export {
+  applyTaskCompletion,
+  applyTaskReopen,
+  normalizeOutcomeText,
+  patchTaskInList,
+} from './lib/applyTaskCompletion';
 export { buildFollowUpNoteDraft } from './lib/buildFollowUpNoteDraft';
 export {
   completePendingTaskFollowUp,

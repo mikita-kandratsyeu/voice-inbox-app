@@ -24,9 +24,7 @@ export function LinkNotePickerSheet({
   const linkedSet = new Set(linkedRecordIds);
   const pickableRecords = records.filter(
     (record) =>
-      record.id !== sourceRecordId &&
-      record.status !== 'archived' &&
-      !linkedSet.has(record.id),
+      record.id !== sourceRecordId && record.status !== 'archived' && !linkedSet.has(record.id),
   );
 
   return (

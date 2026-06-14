@@ -156,10 +156,7 @@ describe('buildGraphModel', () => {
 
   it('creates explicit linked edges between records', () => {
     const model = buildGraphModel(
-      [
-        makeRecord('a', 'A', { linkedRecordIds: ['b'] }),
-        makeRecord('b', 'B'),
-      ],
+      [makeRecord('a', 'A', { linkedRecordIds: ['b'] }), makeRecord('b', 'B')],
       defaultFilters,
     );
 

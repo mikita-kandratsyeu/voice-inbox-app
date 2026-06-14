@@ -8,8 +8,5 @@ import { buildBacklinkRecordIds } from '../lib/buildBacklinksForRecord';
 export function useRecordBacklinks(recordId: string): string[] {
   const records = useRecordStore(useShallow((s) => s.records));
 
-  return useMemo(
-    () => buildBacklinkRecordIds(recordId, records),
-    [recordId, records],
-  );
+  return useMemo(() => buildBacklinkRecordIds(recordId, records), [recordId, records]);
 }

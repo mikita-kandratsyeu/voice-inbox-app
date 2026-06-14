@@ -35,10 +35,7 @@ type GraphConnectionsFilterSheetProps = {
   onClose: () => void;
   onApply: (value: {
     showTasks: boolean;
-    edgeVisibility: Pick<
-      GraphEdgeVisibility,
-      'similar' | 'sharedTag' | 'sameFolder' | 'linked'
-    >;
+    edgeVisibility: Pick<GraphEdgeVisibility, 'similar' | 'sharedTag' | 'sameFolder' | 'linked'>;
   }) => void;
 };
 

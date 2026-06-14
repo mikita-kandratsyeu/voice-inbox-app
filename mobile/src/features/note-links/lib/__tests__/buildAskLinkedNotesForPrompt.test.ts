@@ -2,11 +2,7 @@ import type { VoiceRecord } from '@/entities/record';
 
 import { buildAskLinkedNotesForPrompt } from '../buildAskLinkedNotesForPrompt';
 
-const makeRecord = (
-  id: string,
-  title: string,
-  patch: Partial<VoiceRecord> = {},
-): VoiceRecord =>
+const makeRecord = (id: string, title: string, patch: Partial<VoiceRecord> = {}): VoiceRecord =>
   ({
     id,
     title,

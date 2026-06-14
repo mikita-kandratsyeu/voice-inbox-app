@@ -1,12 +1,12 @@
 import type { RecordListItem, VoiceRecord } from '@/entities/record';
-import type { AskLinkedNoteForPrompt } from '@/shared/lib/ai-core/types';
 import {
-  ASK_LINKED_NOTES_PROMPT_MAX_ITEMS,
   ASK_LINKED_NOTE_MAX_TASKS,
   ASK_LINKED_NOTE_SUMMARY_MAX_CHARS,
   ASK_LINKED_NOTE_TITLE_MAX_CHARS,
   ASK_LINKED_NOTE_TRANSCRIPT_EXCERPT_MAX_CHARS,
+  ASK_LINKED_NOTES_PROMPT_MAX_ITEMS,
 } from '@/shared/lib/ai-core/linkedNotesForPrompt';
+import type { AskLinkedNoteForPrompt } from '@/shared/lib/ai-core/types';
 
 type LinkedNoteSource = Pick<
   VoiceRecord | RecordListItem,

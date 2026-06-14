@@ -40,10 +40,7 @@ import { useProEntitlement } from '@/features/pro-license';
 import { useRecordActions } from '@/features/record-actions';
 import type { ShareBriefTemplate, ShareRecordExportFormat } from '@/features/share-record';
 import { saveLastShareRecipientEmail, useShareRecord } from '@/features/share-record';
-import {
-  TaskOutcomeSheet,
-  useTaskCompletionFlow,
-} from '@/features/task-outcome';
+import { TaskOutcomeSheet, useTaskCompletionFlow } from '@/features/task-outcome';
 import { useTranscription } from '@/features/transcription';
 import { useAppTheme, useColors } from '@/shared/config';
 import {

@@ -21,10 +21,7 @@ import { useAdsAllowed } from '@/features/app-storefront';
 import { DeferredInboxBannerAd, InboxBannerAd } from '@/features/inbox-banner';
 import { useManageFolders } from '@/features/manage-folders';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
-import {
-  TaskOutcomeSheet,
-  useTaskCompletionFlow,
-} from '@/features/task-outcome';
+import { TaskOutcomeSheet, useTaskCompletionFlow } from '@/features/task-outcome';
 import { TaskEditSheet } from '@/screens/recording-detail/ui/TaskEditSheet';
 import { useColors } from '@/shared/config';
 import {

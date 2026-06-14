@@ -8,9 +8,7 @@ export function buildFollowUpNoteDraft(
   labels: { titlePrefix: string; seedHeading: string },
 ): TaskFollowUpDraft {
   const taskText = task.text.trim();
-  const suggestedTitle = taskText
-    ? `${labels.titlePrefix}: ${taskText}`
-    : labels.titlePrefix;
+  const suggestedTitle = taskText ? `${labels.titlePrefix}: ${taskText}` : labels.titlePrefix;
 
   const seedTranscript = taskText
     ? `${labels.seedHeading}\n${taskText}\n\n`

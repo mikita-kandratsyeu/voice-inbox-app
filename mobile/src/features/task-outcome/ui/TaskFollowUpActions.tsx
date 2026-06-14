@@ -1,7 +1,7 @@
 import { Mic, SquarePen } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { getRecordingMarkKindAccentColors } from '@/entities/record';
 import type { Colors } from '@/shared/config';

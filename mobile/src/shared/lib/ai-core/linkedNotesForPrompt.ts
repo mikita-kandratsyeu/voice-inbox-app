@@ -34,7 +34,10 @@ export function sanitizeAskLinkedNotesForPrompt(
 
     const transcriptExcerpt =
       typeof note.transcriptExcerpt === 'string'
-        ? note.transcriptExcerpt.replace(/\s+/g, ' ').trim().slice(0, ASK_LINKED_NOTE_TRANSCRIPT_EXCERPT_MAX_CHARS)
+        ? note.transcriptExcerpt
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, ASK_LINKED_NOTE_TRANSCRIPT_EXCERPT_MAX_CHARS)
         : undefined;
 
     if (!trimmedSummary && !transcriptExcerpt && tasks.length === 0) continue;

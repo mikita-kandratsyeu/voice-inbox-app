@@ -98,7 +98,13 @@ export type AskMessage =
       suggestedFollowUps?: string[];
       evidence?: Array<{
         quote: string;
-        source?: 'transcript' | 'summary' | 'tasks' | 'recording_mark' | 'prior_conversation' | 'linked_note';
+        source?:
+          | 'transcript'
+          | 'summary'
+          | 'tasks'
+          | 'recording_mark'
+          | 'prior_conversation'
+          | 'linked_note';
         offsetMs?: number | null;
         label?: string;
       }>;

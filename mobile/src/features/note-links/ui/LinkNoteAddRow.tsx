@@ -31,7 +31,11 @@ export function LinkNoteAddRow({ color, hasLinks, isLast, onPress }: LinkNoteAdd
       accessibilityRole="button"
       accessibilityLabel={hint ? `${title}. ${hint}` : title}
       style={({ pressed }) => ({
-        backgroundColor: pressed ? color.background.tertiary : hasLinks ? 'transparent' : color.background.tertiary,
+        backgroundColor: pressed
+          ? color.background.tertiary
+          : hasLinks
+            ? 'transparent'
+            : color.background.tertiary,
         borderBottomColor: color.border.default,
         borderBottomWidth: isLast ? 0 : 1,
         borderTopColor: color.border.default,

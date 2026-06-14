@@ -20,10 +20,7 @@ import {
   shouldWarnNoteDocumentEditorSize,
   useNoteDocument,
 } from '@/features/note-document';
-import {
-  TaskOutcomeSheet,
-  useTaskCompletionFlow,
-} from '@/features/task-outcome';
+import { TaskOutcomeSheet, useTaskCompletionFlow } from '@/features/task-outcome';
 import { useColors } from '@/shared/config';
 import { hapticSuccess, useIsTablet } from '@/shared/lib';
 import { HeaderIconButton } from '@/shared/ui';
