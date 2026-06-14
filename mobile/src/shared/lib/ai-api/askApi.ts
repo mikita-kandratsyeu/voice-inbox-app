@@ -211,7 +211,7 @@ export async function pollAskResult(
 
       return 'processing';
     },
-    { ...options, headers },
+    { ...options, headers, jobType: 'ask' },
   );
 
   if (!result.ok && result.error === 'Timeout waiting for AI result') {
