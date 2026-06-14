@@ -27,6 +27,11 @@ type AllTasksNotePickerSheetProps = {
   folders: Folder[];
   onClose: () => void;
   onSelect: (recordId: string) => void;
+  titleKey?: string;
+  subtitleKey?: string;
+  searchPlaceholderKey?: string;
+  emptyKey?: string;
+  searchEmptyKey?: string;
 };
 
 function recordMatchesQuery(record: RecordListItem, query: string): boolean {
@@ -43,6 +48,11 @@ export function AllTasksNotePickerSheet({
   folders,
   onClose,
   onSelect,
+  titleKey = 'allTasks.pickNoteTitle',
+  subtitleKey = 'allTasks.pickNoteSubtitle',
+  searchPlaceholderKey = 'allTasks.pickNoteSearchPlaceholder',
+  emptyKey = 'allTasks.pickNoteEmpty',
+  searchEmptyKey = 'allTasks.pickNoteSearchEmpty',
 }: AllTasksNotePickerSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
@@ -96,8 +106,8 @@ export function AllTasksNotePickerSheet({
     <AppBottomSheetModal visible={visible} onClose={handleClose}>
       <AppBottomSheetContent bottomPadding={12}>
         <SheetHeader
-          title={t('allTasks.pickNoteTitle')}
-          subtitle={t('allTasks.pickNoteSubtitle')}
+          title={t(titleKey)}
+          subtitle={t(subtitleKey)}
           color={color}
           marginBottom={10}
         />
@@ -123,7 +133,7 @@ export function AllTasksNotePickerSheet({
           />
           <BottomSheetTextInput
             style={[getInputFieldInputStyle(color), { flex: 1 }]}
-            placeholder={t('allTasks.pickNoteSearchPlaceholder')}
+            placeholder={t(searchPlaceholderKey)}
             placeholderTextColor={color.text.secondary}
             value={query}
             onChangeText={setQuery}
@@ -155,7 +165,7 @@ export function AllTasksNotePickerSheet({
               textAlign: 'center',
             }}
           >
-            {t('allTasks.pickNoteEmpty')}
+            {t(emptyKey)}
           </Text>
         ) : filteredRecords.length === 0 ? (
           <Text
@@ -167,7 +177,7 @@ export function AllTasksNotePickerSheet({
               textAlign: 'center',
             }}
           >
-            {t('allTasks.pickNoteSearchEmpty')}
+            {t(searchEmptyKey)}
           </Text>
         ) : (
           <View

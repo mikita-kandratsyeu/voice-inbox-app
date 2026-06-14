@@ -2,7 +2,7 @@ import type { TaskItem, VoiceRecord } from '@/entities/record';
 
 export type GraphNodeKind = 'record' | 'task';
 
-export type GraphEdgeKind = 'contains' | 'similar' | 'sharedTag' | 'sameFolder';
+export type GraphEdgeKind = 'contains' | 'similar' | 'sharedTag' | 'sameFolder' | 'linked';
 
 export type GraphNode = {
   id: string;
@@ -29,6 +29,7 @@ export type GraphEdgeVisibility = {
   sharedTag: boolean;
   sameFolder: boolean;
   contains: boolean;
+  linked: boolean;
 };
 
 export const GRAPH_LAYOUT_MODES = ['cluster', 'force', 'circular'] as const;
@@ -55,6 +56,7 @@ export const DEFAULT_EDGE_VISIBILITY: GraphEdgeVisibility = {
   sharedTag: true,
   sameFolder: true,
   contains: true,
+  linked: true,
 };
 
 export const DEFAULT_GRAPH_LAYOUT_MODE: GraphLayoutMode = 'cluster';

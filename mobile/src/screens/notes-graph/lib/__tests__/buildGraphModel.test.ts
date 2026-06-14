@@ -154,6 +154,23 @@ describe('buildGraphModel', () => {
     });
   });
 
+  it('creates explicit linked edges between records', () => {
+    const model = buildGraphModel(
+      [
+        makeRecord('a', 'A', { linkedRecordIds: ['b'] }),
+        makeRecord('b', 'B'),
+      ],
+      defaultFilters,
+    );
+
+    expect(model.edges).toContainEqual({
+      id: 'linked:a->b',
+      kind: 'linked',
+      sourceId: recordNodeId('a'),
+      targetId: recordNodeId('b'),
+    });
+  });
+
   it('respects edge visibility flags', () => {
     const records = [
       makeRecord('a', 'A', { folderId: 'f1', tags: ['work'] }),
@@ -166,6 +183,7 @@ describe('buildGraphModel', () => {
         sharedTag: false,
         sameFolder: false,
         contains: false,
+        linked: false,
       },
       showTasks: false,
     };

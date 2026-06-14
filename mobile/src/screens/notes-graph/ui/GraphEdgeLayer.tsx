@@ -31,7 +31,8 @@ const EDGE_KIND_DRAW_ORDER: Record<GraphEdgeKind, number> = {
   sameFolder: 0,
   sharedTag: 1,
   contains: 2,
-  similar: 3,
+  linked: 3,
+  similar: 4,
 };
 
 const EDGE_EMPHASIS_DRAW_ORDER: Record<GraphEdgeEmphasis, number> = {

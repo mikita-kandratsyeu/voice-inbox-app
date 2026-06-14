@@ -185,6 +185,23 @@ function addSameFolderEdges(records: VoiceRecord[], edges: GraphEdge[]): void {
   }
 }
 
+function addLinkedEdges(records: VoiceRecord[], edges: GraphEdge[]): void {
+  const idSet = new Set(records.map((record) => record.id));
+
+  for (const record of records) {
+    for (const targetId of record.linkedRecordIds ?? []) {
+      if (!idSet.has(targetId) || targetId === record.id) continue;
+
+      edges.push({
+        id: `linked:${record.id}->${targetId}`,
+        kind: 'linked',
+        sourceId: recordNodeId(record.id),
+        targetId: recordNodeId(targetId),
+      });
+    }
+  }
+}
+
 export function buildGraphModel(allRecords: VoiceRecord[], filters: GraphFilters): GraphModel {
   const filtered = filterRecords(allRecords, filters);
   const nodes: GraphNode[] = [];
@@ -235,6 +252,9 @@ export function buildGraphModel(allRecords: VoiceRecord[], filters: GraphFilters
   }
   if (filters.edgeVisibility.sameFolder) {
     addSameFolderEdges(filtered, edges);
+  }
+  if (filters.edgeVisibility.linked) {
+    addLinkedEdges(filtered, edges);
   }
 
   return {

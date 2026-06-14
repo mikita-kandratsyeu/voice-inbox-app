@@ -19,6 +19,12 @@ import {
 import { useProEntitlement } from '@/features/pro-license';
 import { useRecordingDeeplinkStore } from '@/features/recording-deeplink/model/store';
 import {
+  completePendingTaskFollowUp,
+  peekPendingTaskFollowUp,
+  prepareRecordForTaskFollowUp,
+  usePendingTaskFollowUpStore,
+} from '@/features/task-outcome';
+import {
   notifyAutoTranscriptionTooShort,
   tryScheduleAutoTranscription,
   useTranscription,
@@ -86,12 +92,22 @@ export const RecordScreen = () => {
   const [markSheetVisible, setMarkSheetVisible] = useState(false);
   const [markSheetOpenId, setMarkSheetOpenId] = useState(0);
   const [markSnapshotOffsetMs, setMarkSnapshotOffsetMs] = useState(0);
+  const [followUpContextHint, setFollowUpContextHint] = useState<string | null>(null);
+  const clearPendingFollowUp = usePendingTaskFollowUpStore((s) => s.clearPending);
   const [appState, setAppState] = useState(AppState.currentState);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', setAppState);
     return () => sub.remove();
   }, []);
+
+  useEffect(() => {
+    if (!showSaveModal) return;
+    const pending = peekPendingTaskFollowUp();
+    if (!pending || pending.mode !== 'voice') return;
+    setTitle(pending.draft.suggestedTitle);
+    setFollowUpContextHint(t('taskOutcome.followUpRecordHint'));
+  }, [showSaveModal, t]);
 
   const {
     state,
@@ -235,6 +251,8 @@ export const RecordScreen = () => {
       return;
     }
     navigation.goBack();
+    clearPendingFollowUp();
+    setFollowUpContextHint(null);
   };
 
   const handlePauseResume = () => {
@@ -317,8 +335,20 @@ export const RecordScreen = () => {
         audioPath = resolvedPath;
       }
     }
-    const recordWithPath: VoiceRecord = { ...record, audioPath };
-    addRecord(recordWithPath);
+
+    const pendingFollowUp = peekPendingTaskFollowUp();
+    const recordWithPath = prepareRecordForTaskFollowUp(
+      { ...record, audioPath },
+      pendingFollowUp?.mode === 'voice' ? pendingFollowUp : null,
+    );
+
+    await addRecord(recordWithPath);
+    await completePendingTaskFollowUp(
+      recordWithPath.id,
+      pendingFollowUp?.mode === 'voice' ? pendingFollowUp : null,
+    );
+    setFollowUpContextHint(null);
+
     if (applyAutoTranscribe) {
       const scheduleResult = tryScheduleAutoTranscription(
         recordWithPath,
@@ -344,6 +374,8 @@ export const RecordScreen = () => {
   const handleSaveModalDiscard = async () => {
     await discardRecording();
     setShowSaveModal(false);
+    clearPendingFollowUp();
+    setFollowUpContextHint(null);
     navigation.goBack();
   };
 
@@ -429,7 +461,10 @@ export const RecordScreen = () => {
           onSaveComplete={handleSaveComplete}
           onDiscard={handleSaveModalDiscard}
           allowResume={saveModalReason === 'user'}
-          contextHint={saveModalReason === 'limit' ? t('record.saveAfterLimitHint') : null}
+          contextHint={
+            followUpContextHint ??
+            (saveModalReason === 'limit' ? t('record.saveAfterLimitHint') : null)
+          }
         />
       ) : null}
     </View>

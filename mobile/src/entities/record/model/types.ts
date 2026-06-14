@@ -52,6 +52,12 @@ export type TaskItem = {
   deadlineTime?: string | null;
   priority?: 'high' | 'medium' | 'low';
   source?: TaskSource;
+  /** ISO timestamp when the task was marked done. */
+  completedAt?: string | null;
+  /** Short free-text outcome captured on completion. */
+  outcomeText?: string | null;
+  /** Follow-up note linked as the task result artifact. */
+  outcomeRecordId?: string | null;
 };
 
 export const RECORDING_MARK_KINDS = [
@@ -137,6 +143,8 @@ export type VoiceRecord = {
   audioPath?: string;
   embedding?: number[];
   folderId?: string | null;
+  /** Explicit links to other notes (outgoing). */
+  linkedRecordIds?: string[];
   detailsHydrated?: boolean;
 };
 

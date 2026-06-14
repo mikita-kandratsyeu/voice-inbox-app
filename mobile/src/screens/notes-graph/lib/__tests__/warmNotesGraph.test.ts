@@ -23,6 +23,7 @@ const filters = {
     sharedTag: true,
     sameFolder: true,
     contains: true,
+    linked: true,
   },
   layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
 };

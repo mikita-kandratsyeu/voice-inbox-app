@@ -20,6 +20,10 @@ import {
   shouldWarnNoteDocumentEditorSize,
   useNoteDocument,
 } from '@/features/note-document';
+import {
+  TaskOutcomeSheet,
+  useTaskCompletionFlow,
+} from '@/features/task-outcome';
 import { useColors } from '@/shared/config';
 import { hapticSuccess, useIsTablet } from '@/shared/lib';
 import { HeaderIconButton } from '@/shared/ui';
@@ -59,6 +63,48 @@ export const NoteDocumentScreen = () => {
     fallbackRecord: record,
     initialMode,
   });
+
+  const showTaskUpdateError = useCallback(() => {
+    Alert.alert(t('common.error'), t('allTasks.taskUpdateError'));
+  }, [t]);
+
+  const handleTaskCompletedInReading = useCallback(
+    (taskId: string) => {
+      const task = readingTasks.find((item) => item.id === taskId);
+      if (!task || task.isDone) return;
+      toggleTaskInReading(taskId);
+    },
+    [readingTasks, toggleTaskInReading],
+  );
+
+  const {
+    outcomeTarget,
+    linkedNoteContext,
+    requestTaskToggle,
+    closeOutcomeSheet,
+    completeWithOutcome,
+    completeAndSkip,
+    startVoiceFollowUp,
+    startTextFollowUp,
+  } = useTaskCompletionFlow({
+    navigation,
+    onUpdateError: showTaskUpdateError,
+    onTaskCompleted: handleTaskCompletedInReading,
+  });
+
+  const handleToggleTaskInReading = useCallback(
+    (taskId: string) => {
+      const task = readingTasks.find((item) => item.id === taskId);
+      if (!task) return;
+      if (task.isDone) {
+        requestTaskToggle(liveRecord.id, task);
+        toggleTaskInReading(taskId);
+        return;
+      }
+      requestTaskToggle(liveRecord.id, task);
+    },
+    [liveRecord.id, readingTasks, requestTaskToggle, toggleTaskInReading],
+  );
 
   const canSave = hasUnsavedChanges && !isSaving && !isPreparing;
   const controlsDisabled = isSaving || isPreparing;
@@ -344,7 +390,7 @@ export const NoteDocumentScreen = () => {
                   color={color}
                   documentMarkdown={documentMarkdown}
                   tasks={readingTasks}
-                  onToggleTask={toggleTaskInReading}
+                  onToggleTask={handleToggleTaskInReading}
                 />
               </View>
             </ScrollView>
@@ -365,6 +411,16 @@ export const NoteDocumentScreen = () => {
           {isSaving ? <NoteDocumentSavingOverlay /> : null}
         </View>
       )}
+      <TaskOutcomeSheet
+        visible={outcomeTarget !== null}
+        task={outcomeTarget?.task ?? null}
+        linkedNoteContext={linkedNoteContext}
+        onClose={closeOutcomeSheet}
+        onComplete={completeWithOutcome}
+        onSkip={completeAndSkip}
+        onVoiceFollowUp={startVoiceFollowUp}
+        onTextFollowUp={startTextFollowUp}
+      />
     </View>
   );
 };

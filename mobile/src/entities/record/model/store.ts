@@ -2,6 +2,10 @@ import { create } from 'zustand';
 
 import { folderRepository } from '@/entities/folder/model/repository';
 import { loadAskAiInboxStatusesByRecordId } from '@/features/ask-ai/model/askAiSessionDb';
+import {
+  appendLinkedRecordId,
+  removeLinkedRecordId,
+} from '@/features/note-links/lib/normalizeLinkedRecordIds';
 import { waitForDb } from '@/shared/lib';
 import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
@@ -138,6 +142,8 @@ type RecordStore = {
   updateSummary: (id: string, summary: string) => Promise<void>;
   updateTasks: (id: string, tasks: TaskItem[]) => Promise<void>;
   updateTags: (id: string, tags: string[]) => Promise<void>;
+  linkRecord: (sourceId: string, targetId: string) => Promise<void>;
+  unlinkRecord: (sourceId: string, targetId: string) => Promise<void>;
   updateRecordingMarks: (id: string, marks: RecordingMark[]) => Promise<void>;
   updateAiExtras: (
     id: string,
@@ -280,10 +286,18 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
       }
     }
     await recordRepository.remove(id);
+    const prunedIds = await recordRepository.pruneLinkedRecordReferences(id);
     const { removePrivateAiTasksForRecord } = await import('@/features/ai-task-queue');
     await removePrivateAiTasksForRecord(id).catch(() => {});
     set((s) => {
-      const next = s.records.filter((r) => r.id !== id);
+      let next = s.records.filter((r) => r.id !== id);
+      if (prunedIds.length > 0) {
+        next = next.map((r) => {
+          if (!prunedIds.includes(r.id)) return r;
+          const linkedRecordIds = removeLinkedRecordId(r.linkedRecordIds, id);
+          return { ...r, linkedRecordIds };
+        });
+      }
       return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
     });
     scheduleTaskDeadlineNotificationSync();
@@ -500,6 +514,32 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     await recordRepository.updateTags(id, tags);
     set((s) => ({
       records: updateRecord(s.records, id, { tags }),
+    }));
+  },
+
+  linkRecord: async (sourceId, targetId) => {
+    const source = get().records.find((record) => record.id === sourceId);
+    if (!source) return;
+
+    const linkedRecordIds = appendLinkedRecordId(source.linkedRecordIds, targetId, sourceId);
+    if (linkedRecordIds === source.linkedRecordIds) return;
+
+    await recordRepository.updateLinkedRecordIds(sourceId, linkedRecordIds ?? []);
+    set((s) => ({
+      records: updateRecord(s.records, sourceId, { linkedRecordIds }),
+    }));
+  },
+
+  unlinkRecord: async (sourceId, targetId) => {
+    const source = get().records.find((record) => record.id === sourceId);
+    if (!source?.linkedRecordIds?.length) return;
+
+    const linkedRecordIds = removeLinkedRecordId(source.linkedRecordIds, targetId);
+    if (linkedRecordIds === source.linkedRecordIds) return;
+
+    await recordRepository.updateLinkedRecordIds(sourceId, linkedRecordIds ?? []);
+    set((s) => ({
+      records: updateRecord(s.records, sourceId, { linkedRecordIds }),
     }));
   },
 

@@ -16,7 +16,7 @@ const edge: GraphEdge = {
 };
 
 const color = {
-  accent: { primary: '#3b82f6' },
+  accent: { primary: '#3b82f6', success: '#22c55e' },
   text: { primary: '#e5e5e5', secondary: '#6b6b6b', muted: '#6b7280' },
   border: { default: '#2e2e2e' },
 } as Colors;
@@ -43,7 +43,7 @@ describe('resolveGraphEdgeEmphasis', () => {
 });
 
 describe('getLegendEdgeStrokeStyle', () => {
-  it.each<GraphEdgeKind>(['similar', 'sharedTag', 'sameFolder', 'contains'])(
+  it.each<GraphEdgeKind>(['similar', 'sharedTag', 'sameFolder', 'contains', 'linked'])(
     'returns legend stroke for %s edges',
     (kind) => {
       const style = getLegendEdgeStrokeStyle(kind, color);
@@ -73,8 +73,9 @@ describe('getGraphEdgeStrokeStyle', () => {
 });
 
 describe('getGraphEdgeGlowStyle', () => {
-  it('returns glow only for similar edges', () => {
+  it('returns glow for similar and linked edges', () => {
     expect(getGraphEdgeGlowStyle('similar', color)?.stroke).toBe(color.accent.primary);
+    expect(getGraphEdgeGlowStyle('linked', color)?.stroke).toBe(color.accent.success);
     expect(getGraphEdgeGlowStyle('sharedTag', color)).toBeNull();
   });
 });

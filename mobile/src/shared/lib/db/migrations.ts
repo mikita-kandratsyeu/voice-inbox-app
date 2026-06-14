@@ -125,6 +125,8 @@ CREATE INDEX IF NOT EXISTS \`idx_private_ai_task_queue_recordId\` ON \`private_a
 --> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS \`idx_private_ai_task_queue_record_task\` ON \`private_ai_task_queue\` (\`recordId\`,\`taskType\`);`;
 
+const migration0023 = `ALTER TABLE \`records\` ADD \`linkedRecordIds\` text DEFAULT '[]';`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -158,5 +160,6 @@ export const migrationsConfig = {
     m0020: migration0020,
     m0021: migration0021,
     m0022: migration0022,
+    m0023: migration0023,
   } as Record<string, string>,
 };

@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Check, LayoutTemplate, X } from 'lucide-react-native';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
@@ -15,6 +15,12 @@ import { dispatchAutoAiAfterTranscription } from '@/features/ai-task-queue';
 import { computeAdsAllowedForInterstitial } from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
+import {
+  completePendingTaskFollowUp,
+  peekPendingTaskFollowUp,
+  prepareRecordForTaskFollowUp,
+  usePendingTaskFollowUpStore,
+} from '@/features/task-outcome';
 import {
   runAfterNavigationTransition,
   tryShowYandexInterstitial,
@@ -43,10 +49,18 @@ export const TextNoteScreen = () => {
   const { isConnected } = useNetworkStatus();
   const noteInputRef = useRef<TextInput>(null);
   const saveInFlightRef = useRef(false);
+  const clearPendingFollowUp = usePendingTaskFollowUpStore((s) => s.clearPending);
   const [title, setTitle] = useState('');
   const [noteText, setNoteText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const hasUnsavedChanges = title.trim().length > 0 || noteText.trim().length > 0;
+
+  useEffect(() => {
+    const pending = peekPendingTaskFollowUp();
+    if (!pending || pending.mode !== 'text') return;
+    setTitle(pending.draft.suggestedTitle);
+    setNoteText(pending.draft.seedTranscript);
+  }, []);
 
   const canSave = noteText.trim().length > 0 && !isSaving;
 
@@ -84,10 +98,13 @@ export const TextNoteScreen = () => {
       {
         text: t('textNote.discardConfirm'),
         style: 'destructive',
-        onPress: close,
+        onPress: () => {
+          clearPendingFollowUp();
+          close();
+        },
       },
     ]);
-  }, [hasUnsavedChanges, navigation, t]);
+  }, [clearPendingFollowUp, hasUnsavedChanges, navigation, t]);
 
   const templateHints = useMemo(
     () => [t('textNote.templatesHint1'), t('textNote.templatesHint2')],
@@ -121,26 +138,34 @@ export const TextNoteScreen = () => {
     setIsSaving(true);
     KeyboardController.dismiss({ animated: false });
 
-    const record: VoiceRecord = {
-      id: generateRecordId(),
-      title: resolvedTitle,
-      transcript,
-      transcriptSegments: [],
-      summary: '',
-      tasks: [],
-      duration: '00:00',
-      durationMs: 0,
-      createdAt: new Date().toISOString(),
-      status: 'unread',
-      aiStatus: 'idle',
-      transcriptProgress: 0,
-      isPinned: false,
-      tags: [],
-      audioPath: '',
-    };
+    const pendingFollowUp = peekPendingTaskFollowUp();
+    const record: VoiceRecord = prepareRecordForTaskFollowUp(
+      {
+        id: generateRecordId(),
+        title: resolvedTitle,
+        transcript,
+        transcriptSegments: [],
+        summary: '',
+        tasks: [],
+        duration: '00:00',
+        durationMs: 0,
+        createdAt: new Date().toISOString(),
+        status: 'unread',
+        aiStatus: 'idle',
+        transcriptProgress: 0,
+        isPinned: false,
+        tags: [],
+        audioPath: '',
+      },
+      pendingFollowUp?.mode === 'text' ? pendingFollowUp : null,
+    );
 
     try {
       await addRecord(record);
+      await completePendingTaskFollowUp(
+        record.id,
+        pendingFollowUp?.mode === 'text' ? pendingFollowUp : null,
+      );
     } catch {
       saveInFlightRef.current = false;
       setIsSaving(false);

@@ -18,6 +18,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { TaskOutcomePreview } from '@/features/task-outcome';
 import { type Colors, useAppTheme } from '@/shared/config';
 import { hapticLight, hapticSelection, hapticSuccess, inlineNativeMenuSection } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
@@ -34,6 +35,8 @@ type AllTasksTaskRowProps = {
   compactHorizontalMargin?: boolean;
   openNoteLabel: string;
   onToggle: (recordId: string, taskId: string, currentlyDone: boolean) => void;
+  getFollowUpRecordTitle?: (recordId: string) => string | null;
+  onOpenFollowUp?: (recordId: string) => void;
   onOpenNote: (recordId: string) => void;
   onEditTask: (recordId: string, taskId: string, text: string) => void;
   onQuickSchedule: (recordId: string, taskId: string, deadline: string) => void;
@@ -48,6 +51,8 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
   compactHorizontalMargin = false,
   openNoteLabel,
   onToggle,
+  getFollowUpRecordTitle,
+  onOpenFollowUp,
   onOpenNote,
   onEditTask,
   onQuickSchedule,
@@ -308,6 +313,21 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
                 </Pressable>
               </View>
             ) : null}
+            <TaskOutcomePreview
+              task={task}
+              color={color}
+              indent={false}
+              followUpTitle={
+                task.outcomeRecordId && getFollowUpRecordTitle
+                  ? getFollowUpRecordTitle(task.outcomeRecordId)
+                  : null
+              }
+              onOpenFollowUp={
+                task.outcomeRecordId && onOpenFollowUp
+                  ? () => onOpenFollowUp(task.outcomeRecordId!)
+                  : undefined
+              }
+            />
           </View>
 
           <View className="justify-center px-1 pr-1.5" style={{ zIndex: 10 }}>

@@ -35,10 +35,15 @@ import {
 import { resumeCloudSummarizeForRecord, useAiProcessing } from '@/features/ai-processing';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { warmNoteDocumentMarkdown } from '@/features/note-document';
+import { LinkNotePickerSheet, RecordLinksSection } from '@/features/note-links';
 import { useProEntitlement } from '@/features/pro-license';
 import { useRecordActions } from '@/features/record-actions';
 import type { ShareBriefTemplate, ShareRecordExportFormat } from '@/features/share-record';
 import { saveLastShareRecipientEmail, useShareRecord } from '@/features/share-record';
+import {
+  TaskOutcomeSheet,
+  useTaskCompletionFlow,
+} from '@/features/task-outcome';
 import { useTranscription } from '@/features/transcription';
 import { useAppTheme, useColors } from '@/shared/config';
 import {
@@ -98,7 +103,6 @@ export const RecordingDetailScreen = () => {
   const {
     liveRecord,
     togglePin,
-    toggleTask,
     updateTasks,
     promoteNextStepToTask,
     setSummaryStatus,
@@ -113,11 +117,12 @@ export const RecordingDetailScreen = () => {
     renameRecord,
     updateRecordingMarks,
     updateAiExtras,
+    linkRecord,
+    unlinkRecord,
   } = useRecordStore(
     useShallow((s) => ({
       liveRecord: s.records.find((r) => r.id === recordId) ?? routeRecord,
       togglePin: s.togglePin,
-      toggleTask: s.toggleTask,
       updateTasks: s.updateTasks,
       promoteNextStepToTask: s.promoteNextStepToTask,
       setSummaryStatus: s.setSummaryStatus,
@@ -132,6 +137,8 @@ export const RecordingDetailScreen = () => {
       renameRecord: s.renameRecord,
       updateRecordingMarks: s.updateRecordingMarks,
       updateAiExtras: s.updateAiExtras,
+      linkRecord: s.linkRecord,
+      unlinkRecord: s.unlinkRecord,
     })),
   );
 
@@ -174,6 +181,7 @@ export const RecordingDetailScreen = () => {
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
   const [mountedTabs, setMountedTabs] = useState<Set<Tab>>(new Set(['transcript']));
   const [folderPickerVisible, setFolderPickerVisible] = useState(false);
+  const [linkNotePickerVisible, setLinkNotePickerVisible] = useState(false);
   const [shareSheetVisible, setShareSheetVisible] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
   const [renameTarget, setRenameTarget] = useState<{ id: string; title: string } | null>(null);
@@ -233,11 +241,45 @@ export const RecordingDetailScreen = () => {
   const onDeleted = useCallback(() => navigation.goBack(), [navigation]);
   const { promptDelete } = useRecordActions({ onDeleted });
 
-  const handleToggleTask = useCallback(
-    (taskId: string) => {
-      toggleTask(liveRecord.id, taskId).catch(() => {});
+  const records = useRecordStore((s) => s.records);
+
+  const showTaskUpdateError = useCallback(() => {
+    Alert.alert(t('common.error'), t('allTasks.taskUpdateError'));
+  }, [t]);
+
+  const {
+    outcomeTarget,
+    linkedNoteContext,
+    requestTaskToggle,
+    closeOutcomeSheet,
+    completeWithOutcome,
+    completeAndSkip,
+    startVoiceFollowUp,
+    startTextFollowUp,
+  } = useTaskCompletionFlow({
+    navigation,
+    onUpdateError: showTaskUpdateError,
+  });
+
+  const getFollowUpRecordTitle = useCallback(
+    (recordId: string) => records.find((record) => record.id === recordId)?.title ?? null,
+    [records],
+  );
+
+  const handleOpenFollowUp = useCallback(
+    (recordId: string) => {
+      const record = records.find((item) => item.id === recordId);
+      if (!record) return;
+      navigation.push('RecordingDetail', { record });
     },
-    [liveRecord.id, toggleTask],
+    [navigation, records],
+  );
+
+  const handleTaskPress = useCallback(
+    (task: TaskItem) => {
+      requestTaskToggle(liveRecord.id, task);
+    },
+    [liveRecord.id, requestTaskToggle],
   );
 
   const handleAddManualTask = useCallback(
@@ -622,6 +664,31 @@ export const RecordingDetailScreen = () => {
       navigation.navigate('NoteDocument', { record: liveRecord });
     });
   }, [isOpeningDocument, navigation, liveRecord]);
+
+  const onOpenLinkNotePicker = useCallback(() => {
+    setLinkNotePickerVisible(true);
+  }, []);
+
+  const onCloseLinkNotePicker = useCallback(() => {
+    setLinkNotePickerVisible(false);
+  }, []);
+
+  const onSelectLinkedNote = useCallback(
+    async (targetId: string) => {
+      setLinkNotePickerVisible(false);
+      await linkRecord(liveRecord.id, targetId);
+      hapticSuccess();
+    },
+    [linkRecord, liveRecord.id],
+  );
+
+  const onUnlinkNote = useCallback(
+    async (targetId: string) => {
+      await unlinkRecord(liveRecord.id, targetId);
+      hapticSelection();
+    },
+    [liveRecord.id, unlinkRecord],
+  );
   const onRename = useCallback(
     () => setRenameTarget({ id: liveRecord.id, title: liveRecord.title }),
     [liveRecord.id, liveRecord.title],
@@ -767,6 +834,7 @@ export const RecordingDetailScreen = () => {
         onArchive={onArchive}
         onUnarchive={onUnarchive}
         onDelete={onDelete}
+        onLinkNote={liveRecord.status !== 'archived' ? onOpenLinkNotePicker : undefined}
         onOpenAllTasksForNote={
           (liveRecord.tasks?.length ?? 0) > 0
             ? () => navigation.navigate('AllTasks', { recordId: liveRecord.id })
@@ -1005,7 +1073,9 @@ export const RecordingDetailScreen = () => {
                 hasTranscript={Boolean(liveRecord.transcript)}
                 recordTitle={liveRecord.title}
                 color={color}
-                onToggle={handleToggleTask}
+                onTaskPress={handleTaskPress}
+                getFollowUpRecordTitle={getFollowUpRecordTitle}
+                onOpenFollowUp={handleOpenFollowUp}
                 onExtract={handleExtractTasks}
                 onAddManualTask={handleAddManualTask}
                 onPromoteNextStepToTask={handlePromoteNextStepToTask}
@@ -1029,11 +1099,36 @@ export const RecordingDetailScreen = () => {
         </View>
 
         <View style={{ width: '100%', maxWidth: contentMaxWidth }}>
+          <RecordLinksSection
+            record={liveRecord}
+            color={color}
+            onLinkNote={onOpenLinkNotePicker}
+            onUnlinkNote={onUnlinkNote}
+          />
           <RelatedNotesSection recordId={liveRecord.id} color={color} />
         </View>
 
         <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
       </KeyboardAwareScrollView>
+      <LinkNotePickerSheet
+        visible={linkNotePickerVisible}
+        records={records}
+        folders={folders}
+        sourceRecordId={liveRecord.id}
+        linkedRecordIds={liveRecord.linkedRecordIds ?? []}
+        onClose={onCloseLinkNotePicker}
+        onSelect={onSelectLinkedNote}
+      />
+      <TaskOutcomeSheet
+        visible={outcomeTarget !== null}
+        task={outcomeTarget?.task ?? null}
+        linkedNoteContext={linkedNoteContext}
+        onClose={closeOutcomeSheet}
+        onComplete={completeWithOutcome}
+        onSkip={completeAndSkip}
+        onVoiceFollowUp={startVoiceFollowUp}
+        onTextFollowUp={startTextFollowUp}
+      />
     </View>
   );
 };

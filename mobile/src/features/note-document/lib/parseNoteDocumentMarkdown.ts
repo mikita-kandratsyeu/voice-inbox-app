@@ -205,6 +205,9 @@ function parseTasksSection(body: string, record: VoiceRecord): TaskItem[] {
       deadlineTime: meta.deadlineTime ?? existingTask?.deadlineTime ?? null,
       priority: meta.priority ?? existingTask?.priority,
       source: existingTask?.source,
+      completedAt: existingTask?.completedAt ?? (isDone ? new Date().toISOString() : null),
+      outcomeText: existingTask?.outcomeText ?? null,
+      outcomeRecordId: existingTask?.outcomeRecordId ?? null,
     });
   }
 

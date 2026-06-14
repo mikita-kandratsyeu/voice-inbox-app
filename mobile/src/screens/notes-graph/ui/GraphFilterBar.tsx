@@ -25,14 +25,15 @@ import { GraphConnectionsFilterSheet } from './GraphConnectionsFilterSheet';
 import { GraphLayoutModeSheet } from './GraphLayoutModeSheet';
 import { TagPickerSheet } from './TagPickerSheet';
 
-const CONNECTION_FILTER_COUNT = 4;
+const CONNECTION_FILTER_COUNT = 5;
 
 function countActiveConnectionFilters(filters: GraphFilters): number {
   return (
     Number(filters.showTasks) +
     Number(filters.edgeVisibility.similar) +
     Number(filters.edgeVisibility.sharedTag) +
-    Number(filters.edgeVisibility.sameFolder)
+    Number(filters.edgeVisibility.sameFolder) +
+    Number(filters.edgeVisibility.linked)
   );
 }
 

@@ -62,6 +62,13 @@ export function getLegendEdgeStrokeStyle(kind: GraphEdgeKind, color: Colors): Gr
         strokeLinecap: 'round',
         opacity: 0.9,
       };
+    case 'linked':
+      return {
+        stroke: color.accent.success,
+        strokeWidth: 2.75,
+        strokeLinecap: 'round',
+        opacity: 0.95,
+      };
     case 'contains':
     default:
       return {
@@ -102,6 +109,13 @@ function baseGraphEdgeStrokeStyle(kind: GraphEdgeKind, color: Colors): GraphEdge
         strokeDasharray: '3 6',
         strokeLinecap: 'round',
         opacity: 0.5,
+      };
+    case 'linked':
+      return {
+        stroke: color.accent.success,
+        strokeWidth: 2.4,
+        strokeLinecap: 'round',
+        opacity: 0.9,
       };
     case 'contains':
     default:
@@ -169,6 +183,13 @@ export function getGraphEdgeGlowStyle(
         strokeWidth: 7,
         strokeLinecap: 'round',
         opacity: 0.25,
+      };
+    case 'linked':
+      return {
+        stroke: color.accent.success,
+        strokeWidth: 7,
+        strokeLinecap: 'round',
+        opacity: 0.22,
       };
     default:
       return null;

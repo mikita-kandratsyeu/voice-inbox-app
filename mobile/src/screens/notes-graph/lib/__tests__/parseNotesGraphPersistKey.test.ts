@@ -30,6 +30,7 @@ describe('parseNotesGraphPersistKey', () => {
       sharedTag: false,
       sameFolder: true,
       contains: false,
+      linked: true,
     });
     expect(parsed?.layoutMode).toBe('cluster');
   });
@@ -109,6 +110,7 @@ describe('parseNotesGraphPersistKey', () => {
         sameFolder: false,
         sharedTag: true,
         similar: false,
+        linked: true,
       },
       layoutMode: 'circular',
     });

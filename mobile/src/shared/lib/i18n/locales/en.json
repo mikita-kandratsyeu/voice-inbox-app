@@ -336,6 +336,7 @@
       "similar": "Related",
       "tags": "Shared tags",
       "folders": "Same folder",
+      "linked": "Linked notes",
       "pickTags": "Choose tags",
       "tagsCount": "{{count}} tags",
       "folderPickerTitle": "Show folder",
@@ -380,6 +381,7 @@
       "similar": "Related notes",
       "sharedTag": "Shared tags",
       "sameFolder": "Same folder",
+      "linked": "Linked notes",
       "tasks": "Open tasks"
     }
   },
@@ -2540,6 +2542,41 @@
       "sat": "Sat",
       "sun": "Sun"
     }
+  },
+  "noteLinks": {
+    "linked": "Linked notes",
+    "backlinks": "Links here",
+    "linkNote": "Link note",
+    "linkNoteHint": "Connect a related note to this one",
+    "linkNoteAddAnother": "Link another note",
+    "linkNoteMenu": "Link note",
+    "pickNoteTitle": "Link a note",
+    "pickNoteSubtitle": "Choose a note to connect with this one.",
+    "pickNoteSearchPlaceholder": "Search notes",
+    "pickNoteEmpty": "No notes available",
+    "pickNoteSearchEmpty": "No matches",
+    "unlinkA11y": "Remove link to {{title}}"
+  },
+  "taskOutcome": {
+    "sheetTitle": "Task complete",
+    "outcomeLabel": "Result",
+    "outcomePlaceholder": "What did you accomplish? (optional)",
+    "optionalHint": "Optional — or capture it as a linked note below.",
+    "followUpSectionTitle": "Linked note",
+    "recordFollowUpSubtitle": "New recording tied to this task",
+    "textFollowUpSubtitle": "Quick text note",
+    "saveDone": "Done",
+    "skip": "Skip",
+    "recordFollowUp": "Record note",
+    "textFollowUp": "Text note",
+    "recordFollowUpA11y": "Record a voice note for this task",
+    "textFollowUpA11y": "Create a text note for this task",
+    "followUpTitlePrefix": "Result",
+    "followUpSeedHeading": "Task",
+    "followUpRecordHint": "This note will link to the task when you save the recording.",
+    "resultLabel": "Result",
+    "openFollowUp": "Note: {{title}}",
+    "openFollowUpA11y": "Open linked note, {{title}}"
   },
   "taskDeadlineNotifications": {
     "fallbackTitle": "Task due",

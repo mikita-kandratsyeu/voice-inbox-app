@@ -162,6 +162,7 @@ export function GraphControls({
               edgeKind="sameFolder"
               label={t('notesGraph.legend.sameFolder')}
             />
+            <LegendRow color={color} edgeKind="linked" label={t('notesGraph.legend.linked')} />
             <LegendRow color={color} edgeKind="contains" label={t('notesGraph.legend.tasks')} />
           </View>
         ) : null}

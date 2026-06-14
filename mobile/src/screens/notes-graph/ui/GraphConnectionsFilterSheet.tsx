@@ -1,4 +1,4 @@
-import { Check, Folder, ListChecks, Tag, Waypoints } from 'lucide-react-native';
+import { Check, Folder, Link2, ListChecks, Tag, Waypoints } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
@@ -18,13 +18,14 @@ import type { GraphEdgeVisibility } from '../lib/graphTypes';
 
 const CONNECTION_FILTER_ROW_HEIGHT = 52;
 
-type ConnectionFilterKey = 'showTasks' | 'similar' | 'sharedTag' | 'sameFolder';
+type ConnectionFilterKey = 'showTasks' | 'similar' | 'sharedTag' | 'sameFolder' | 'linked';
 
 type ConnectionFilterDraft = {
   showTasks: boolean;
   similar: boolean;
   sharedTag: boolean;
   sameFolder: boolean;
+  linked: boolean;
 };
 
 type GraphConnectionsFilterSheetProps = {
@@ -34,7 +35,10 @@ type GraphConnectionsFilterSheetProps = {
   onClose: () => void;
   onApply: (value: {
     showTasks: boolean;
-    edgeVisibility: Pick<GraphEdgeVisibility, 'similar' | 'sharedTag' | 'sameFolder'>;
+    edgeVisibility: Pick<
+      GraphEdgeVisibility,
+      'similar' | 'sharedTag' | 'sameFolder' | 'linked'
+    >;
   }) => void;
 };
 
@@ -48,6 +52,8 @@ function getConnectionFilterAccent(key: ConnectionFilterKey, color: Colors): str
       return color.accent.unpin;
     case 'sameFolder':
       return color.accent.models;
+    case 'linked':
+      return color.accent.success;
   }
 }
 
@@ -73,6 +79,8 @@ function ConnectionFilterIcon({
       return <Tag {...iconProps} />;
     case 'sameFolder':
       return <Folder {...iconProps} />;
+    case 'linked':
+      return <Link2 {...iconProps} />;
   }
 }
 
@@ -157,6 +165,7 @@ function toDraft(showTasks: boolean, edgeVisibility: GraphEdgeVisibility): Conne
     similar: edgeVisibility.similar,
     sharedTag: edgeVisibility.sharedTag,
     sameFolder: edgeVisibility.sameFolder,
+    linked: edgeVisibility.linked,
   };
 }
 
@@ -185,6 +194,7 @@ export function GraphConnectionsFilterSheet({
         { key: 'similar' as const, label: t('notesGraph.filters.similar') },
         { key: 'sharedTag' as const, label: t('notesGraph.filters.tags') },
         { key: 'sameFolder' as const, label: t('notesGraph.filters.folders') },
+        { key: 'linked' as const, label: t('notesGraph.filters.linked') },
       ] satisfies Array<{ key: ConnectionFilterKey; label: string }>,
     [t],
   );
@@ -204,6 +214,7 @@ export function GraphConnectionsFilterSheet({
         similar: draft.similar,
         sharedTag: draft.sharedTag,
         sameFolder: draft.sameFolder,
+        linked: draft.linked,
       },
     });
     handleClose();
@@ -215,6 +226,7 @@ export function GraphConnectionsFilterSheet({
       similar: false,
       sharedTag: false,
       sameFolder: false,
+      linked: false,
     });
   }, []);
 
@@ -223,7 +235,8 @@ export function GraphConnectionsFilterSheet({
       Number(draft.showTasks) +
       Number(draft.similar) +
       Number(draft.sharedTag) +
-      Number(draft.sameFolder),
+      Number(draft.sameFolder) +
+      Number(draft.linked),
     [draft],
   );
 

@@ -73,6 +73,7 @@ describe('buildNotesGraphLayoutFilterSummary', () => {
           sharedTag: false,
           sameFolder: false,
           contains: true,
+          linked: false,
         },
       },
       folderName: null,

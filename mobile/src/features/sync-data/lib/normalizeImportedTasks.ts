@@ -48,6 +48,21 @@ export function normalizeImportedTasks(raw: unknown): TaskItem[] | undefined {
       task.source = item.source as NonNullable<TaskItem['source']>;
     }
 
+    if (isString(item.completedAt)) {
+      const completedAt = item.completedAt.trim();
+      task.completedAt = completedAt.length > 0 ? completedAt : null;
+    }
+
+    if (isString(item.outcomeText)) {
+      const outcomeText = item.outcomeText.trim();
+      task.outcomeText = outcomeText.length > 0 ? outcomeText : null;
+    }
+
+    if (isString(item.outcomeRecordId)) {
+      const outcomeRecordId = item.outcomeRecordId.trim();
+      task.outcomeRecordId = outcomeRecordId.length > 0 ? outcomeRecordId : null;
+    }
+
     out.push(task);
   }
 

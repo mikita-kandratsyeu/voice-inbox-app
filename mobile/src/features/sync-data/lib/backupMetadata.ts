@@ -11,6 +11,7 @@ import type {
   VoiceRecord,
 } from '@/entities/record';
 import { sanitizeRecordingMark } from '@/entities/record/model/normalizeRecordingMark';
+import { normalizeLinkedRecordIds } from '@/features/note-links/lib/normalizeLinkedRecordIds';
 import { sanitizeMeetingSpeakerLabels } from '@/screens/recording-detail/lib/meetingSpeakerLabels';
 import { DEFAULT_FOLDER_BRAND_HEX } from '@/shared/lib/folderColor';
 import { isArray, isNumber, isRecord, isString, isStringArrayItem } from '@/shared/lib/type-guards';
@@ -106,6 +107,7 @@ const VoiceRecordSchema = z.looseObject({
     .max(500)
     .optional()
     .nullable(),
+  linkedRecordIds: z.array(safeString).max(MAX_ARRAY_LENGTH).optional().nullable(),
 });
 
 const FolderSchema = z.looseObject({
@@ -270,6 +272,7 @@ export function normalizeImportedVoiceRecord(raw: z.infer<typeof VoiceRecordSche
 
   const tasks = normalizeImportedTasks(base.tasks);
   const tags = normalizeImportedTags(base.tags);
+  const linkedRecordIds = normalizeLinkedRecordIds(base.linkedRecordIds);
   const transcriptSegments = normalizeImportedTranscriptSegments(base.transcriptSegments);
   const status = normalizeImportedStatus(base);
   const readAt = isString(base.readAt) && base.readAt.trim().length > 0 ? base.readAt.trim() : null;
@@ -287,6 +290,7 @@ export function normalizeImportedVoiceRecord(raw: z.infer<typeof VoiceRecordSche
     keyPhrases: keyPhrases.length > 0 ? keyPhrases : (base.keyPhrases ?? []),
     nextSteps: nextSteps.length > 0 ? nextSteps : (base.nextSteps ?? []),
     tags: tags.length > 0 ? tags : undefined,
+    linkedRecordIds,
     tasks,
     transcriptSegments,
     meetingDialogue: normalizeMeetingDialogueImport(base.meetingDialogue),

@@ -15,6 +15,7 @@ export function buildSimplifiedGraphFilters(filters: GraphFilters): GraphFilters
       sharedTag: filters.edgeVisibility.sharedTag,
       sameFolder: false,
       contains: false,
+      linked: filters.edgeVisibility.linked,
     },
   };
 }
@@ -36,5 +37,6 @@ export function simplifiedEdgeVisibility(base: GraphEdgeVisibility): GraphEdgeVi
     sharedTag: base.sharedTag,
     sameFolder: false,
     contains: false,
+    linked: base.linked,
   };
 }

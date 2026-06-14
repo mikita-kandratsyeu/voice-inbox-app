@@ -28,6 +28,7 @@ type RecordingDetailHeaderProps = {
   onArchive: () => void;
   onUnarchive: () => void;
   onDelete: () => void;
+  onLinkNote?: () => void;
   onOpenAllTasksForNote?: () => void;
 };
 
@@ -47,6 +48,7 @@ export const RecordingDetailHeader = ({
   onArchive,
   onUnarchive,
   onDelete,
+  onLinkNote,
   onOpenAllTasksForNote,
 }: RecordingDetailHeaderProps) => {
   const { t } = useTranslation();
@@ -65,6 +67,7 @@ export const RecordingDetailHeader = ({
   const menuActions = useMemo(() => {
     const titleColor = color.text.primary;
     const showAllTasks = Boolean(onOpenAllTasksForNote && !isArchived);
+    const showLinkNote = Boolean(onLinkNote && !isArchived);
 
     const showPin = !isArchived;
 
@@ -134,6 +137,16 @@ export const RecordingDetailHeader = ({
       actions.push(renameAction);
     }
 
+    if (showLinkNote) {
+      actions.push({
+        id: 'linkNote',
+        title: t('noteLinks.linkNoteMenu'),
+        image: 'link',
+        imageColor: titleColor,
+        titleColor,
+      });
+    }
+
     actions.push(
       inlineNativeMenuSection(
         'folderAndArchiveSection',
@@ -163,6 +176,7 @@ export const RecordingDetailHeader = ({
     color.text.primary,
     isArchived,
     isPrivateMode,
+    onLinkNote,
     onOpenAllTasksForNote,
     record.isPinned,
     t,
@@ -242,6 +256,7 @@ export const RecordingDetailHeader = ({
             if (nativeEvent.event === 'unarchive') onUnarchive();
             if (nativeEvent.event === 'share') onShare();
             if (nativeEvent.event === 'delete') onDelete();
+            if (nativeEvent.event === 'linkNote') onLinkNote?.();
             if (nativeEvent.event === 'allTasksForNote') onOpenAllTasksForNote?.();
           }}
           actions={menuActions}

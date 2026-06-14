@@ -25,6 +25,7 @@ function formatEdgeVisibility(edgeVisibility: GraphEdgeVisibility, t: TFunction)
   if (edgeVisibility.similar) enabled.push(t('notesGraph.filters.similar'));
   if (edgeVisibility.sharedTag) enabled.push(t('notesGraph.filters.tags'));
   if (edgeVisibility.sameFolder) enabled.push(t('notesGraph.filters.folders'));
+  if (edgeVisibility.linked) enabled.push(t('notesGraph.filters.linked'));
 
   if (enabled.length === 0) {
     return t('notesGraph.history.filters.linksNone');

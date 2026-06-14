@@ -12,7 +12,8 @@ const PARALLEL_EDGE_KIND_ORDER: Record<GraphEdgeKind, number> = {
   sameFolder: 0,
   sharedTag: 1,
   contains: 2,
-  similar: 3,
+  linked: 3,
+  similar: 4,
 };
 
 export type ParallelEdgeBend = {

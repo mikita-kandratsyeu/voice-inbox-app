@@ -37,6 +37,24 @@ function parseMeetingSpeakerLabelsJson(raw: string | null | undefined) {
   }
 }
 
+function parseLinkedRecordIds(raw: string | null | undefined): string[] {
+  try {
+    const v = JSON.parse(raw ?? '[]') as unknown;
+    if (!Array.isArray(v)) return [];
+    const out: string[] = [];
+    for (const item of v) {
+      if (!isString(item)) continue;
+      const trimmed = item.trim();
+      if (!trimmed || out.includes(trimmed)) continue;
+      out.push(trimmed);
+      if (out.length >= 200) break;
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 function parseRecordingMarks(raw: string | null | undefined): RecordingMark[] {
   try {
     const v = JSON.parse(raw ?? '[]') as unknown;
@@ -118,6 +136,7 @@ type RecordListQueryRow = {
   audioPath: string | null;
   folderId: string | null;
   recordingMarks: string | null;
+  linkedRecordIds: string | null;
 };
 
 type RecordRowRaw = RecordListQueryRow & {
@@ -178,6 +197,10 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     audioPath: audioPathFromDbValue(row.audioPath),
     embedding: row.embedding ? (JSON.parse(row.embedding) as number[]) : undefined,
     folderId: row.folderId ?? null,
+    linkedRecordIds: (() => {
+      const ids = parseLinkedRecordIds(row.linkedRecordIds);
+      return ids.length > 0 ? ids : undefined;
+    })(),
     summaryStatus: summary ? ('done' as RecordingStatus) : undefined,
     tasksStatus: tasks.length > 0 ? ('done' as RecordingStatus) : undefined,
   };
@@ -235,6 +258,10 @@ const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
       : ('idle' as RecordingStatus),
     audioPath: audioPathFromDbValue(row.audioPath),
     folderId: row.folderId ?? null,
+    linkedRecordIds: (() => {
+      const ids = parseLinkedRecordIds(row.linkedRecordIds);
+      return ids.length > 0 ? ids : undefined;
+    })(),
     detailsHydrated: false,
     summaryStatus: summary ? ('done' as RecordingStatus) : undefined,
     tasksStatus: tasks.length > 0 ? ('done' as RecordingStatus) : undefined,
@@ -275,6 +302,7 @@ const recordListColumns = {
   translationLanguage: recordsTable.translationLanguage,
   audioPath: recordsTable.audioPath,
   folderId: recordsTable.folderId,
+  linkedRecordIds: recordsTable.linkedRecordIds,
 } as const;
 
 const activeRecordsClause = isNull(recordsTable.deletedAt);
@@ -415,6 +443,7 @@ export const recordRepository = {
         audioPath: audioPathToDbValue(record.audioPath),
         embedding: record.embedding ? JSON.stringify(record.embedding) : null,
         folderId: record.folderId ?? null,
+        linkedRecordIds: JSON.stringify(record.linkedRecordIds ?? []),
         deletedAt: null,
         purgeAt: null,
       })
@@ -542,6 +571,38 @@ export const recordRepository = {
       .update(recordsTable)
       .set({ tags: JSON.stringify(tags) })
       .where(eq(recordsTable.id, id));
+  },
+
+  updateLinkedRecordIds: async (id: string, linkedRecordIds: string[]): Promise<void> => {
+    logDb('updateLinkedRecordIds', { id, count: linkedRecordIds.length });
+    const db = getDB();
+    await db
+      .update(recordsTable)
+      .set({ linkedRecordIds: JSON.stringify(linkedRecordIds) })
+      .where(eq(recordsTable.id, id));
+  },
+
+  pruneLinkedRecordReferences: async (deletedId: string): Promise<string[]> => {
+    logDb('pruneLinkedRecordReferences', { deletedId });
+    const db = getDB();
+    const rows = await db
+      .select({ id: recordsTable.id, linkedRecordIds: recordsTable.linkedRecordIds })
+      .from(recordsTable)
+      .where(activeRecordsClause);
+    const updatedIds: string[] = [];
+
+    for (const row of rows) {
+      const ids = parseLinkedRecordIds(row.linkedRecordIds);
+      if (!ids.includes(deletedId)) continue;
+      const next = ids.filter((linkedId) => linkedId !== deletedId);
+      await db
+        .update(recordsTable)
+        .set({ linkedRecordIds: JSON.stringify(next) })
+        .where(eq(recordsTable.id, row.id));
+      updatedIds.push(row.id);
+    }
+
+    return updatedIds;
   },
 
   updateRecordingMarks: async (id: string, marks: RecordingMark[]): Promise<void> => {

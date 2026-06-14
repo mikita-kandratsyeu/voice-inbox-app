@@ -39,6 +39,8 @@ function edgeWeight(kind: GraphEdge['kind']): number {
       return 1.4;
     case 'sameFolder':
       return 2;
+    case 'linked':
+      return 3.5;
     default:
       return 1.5;
   }

@@ -21,6 +21,10 @@ import { useAdsAllowed } from '@/features/app-storefront';
 import { DeferredInboxBannerAd, InboxBannerAd } from '@/features/inbox-banner';
 import { useManageFolders } from '@/features/manage-folders';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
+import {
+  TaskOutcomeSheet,
+  useTaskCompletionFlow,
+} from '@/features/task-outcome';
 import { TaskEditSheet } from '@/screens/recording-detail/ui/TaskEditSheet';
 import { useColors } from '@/shared/config';
 import {
@@ -101,10 +105,9 @@ export const AllTasksScreen = () => {
 
   const listRef = useRef<FlashListRef<AllTasksListItem>>(null);
 
-  const { records, toggleTask, updateTasks } = useRecordStore(
+  const { records, updateTasks } = useRecordStore(
     useShallow((s) => ({
       records: s.records,
-      toggleTask: s.toggleTask,
       updateTasks: s.updateTasks,
     })),
   );
@@ -162,6 +165,65 @@ export const AllTasksScreen = () => {
   const showTaskUpdateError = useCallback(() => {
     Alert.alert(t('common.error'), t('allTasks.taskUpdateError'));
   }, [t]);
+
+  const clearRecentlyCompleted = useCallback((taskId: string) => {
+    if (timeoutsRef.current[taskId]) {
+      clearTimeout(timeoutsRef.current[taskId]);
+      delete timeoutsRef.current[taskId];
+    }
+
+    setRecentlyCompleted((prev) => {
+      const next = new Set(prev);
+      next.delete(taskId);
+      return next;
+    });
+  }, []);
+
+  const markRecentlyCompleted = useCallback(
+    (taskId: string) => {
+      if (quickFilter === 'done') return;
+
+      setRecentlyCompleted((prev) => {
+        const next = new Set(prev);
+        next.add(taskId);
+        return next;
+      });
+
+      timeoutsRef.current[taskId] = setTimeout(() => {
+        clearRecentlyCompleted(taskId);
+      }, 500);
+    },
+    [clearRecentlyCompleted, quickFilter],
+  );
+
+  const {
+    outcomeTarget,
+    linkedNoteContext,
+    requestTaskToggle,
+    closeOutcomeSheet,
+    completeWithOutcome,
+    completeAndSkip,
+    startVoiceFollowUp,
+    startTextFollowUp,
+  } = useTaskCompletionFlow({
+    navigation,
+    onUpdateError: showTaskUpdateError,
+    onTaskCompleted: markRecentlyCompleted,
+  });
+
+  const getFollowUpRecordTitle = useCallback(
+    (recordId: string) => records.find((record) => record.id === recordId)?.title ?? null,
+    [records],
+  );
+
+  const openFollowUpNote = useCallback(
+    (recordId: string) => {
+      const record = records.find((item) => item.id === recordId);
+      if (!record) return;
+      navigation.push('RecordingDetail', { record });
+    },
+    [navigation, records],
+  );
 
   useEffect(() => {
     return () => {
@@ -254,41 +316,19 @@ export const AllTasksScreen = () => {
     [navigation, records],
   );
 
-  const clearRecentlyCompleted = useCallback((taskId: string) => {
-    if (timeoutsRef.current[taskId]) {
-      clearTimeout(timeoutsRef.current[taskId]);
-      delete timeoutsRef.current[taskId];
-    }
-
-    setRecentlyCompleted((prev) => {
-      const next = new Set(prev);
-      next.delete(taskId);
-      return next;
-    });
-  }, []);
-
   const onToggle = useCallback(
     (recordId: string, taskId: string, currentlyDone: boolean) => {
-      if (!currentlyDone && quickFilter !== 'done') {
-        setRecentlyCompleted((prev) => {
-          const next = new Set(prev);
-          next.add(taskId);
-          return next;
-        });
+      const record = records.find((item) => item.id === recordId);
+      const task = record?.tasks?.find((item) => item.id === taskId);
+      if (!record || !task) return;
 
-        timeoutsRef.current[taskId] = setTimeout(() => {
-          clearRecentlyCompleted(taskId);
-        }, 500);
-      } else if (currentlyDone) {
+      if (currentlyDone) {
         clearRecentlyCompleted(taskId);
       }
 
-      void toggleTask(recordId, taskId).catch(() => {
-        clearRecentlyCompleted(taskId);
-        showTaskUpdateError();
-      });
+      requestTaskToggle(recordId, task);
     },
-    [clearRecentlyCompleted, quickFilter, showTaskUpdateError, toggleTask],
+    [clearRecentlyCompleted, records, requestTaskToggle],
   );
 
   const openCreateTask = useCallback(() => {
@@ -625,6 +665,8 @@ export const AllTasksScreen = () => {
           compactHorizontalMargin={isTablet}
           openNoteLabel={t('allTasks.openNote')}
           onToggle={onToggle}
+          getFollowUpRecordTitle={getFollowUpRecordTitle}
+          onOpenFollowUp={openFollowUpNote}
           onOpenNote={openNote}
           onEditTask={(recordId, taskId, text) => {
             openEditTaskSheet({
@@ -656,6 +698,8 @@ export const AllTasksScreen = () => {
       bannerMaxWidth,
       color,
       onToggle,
+      getFollowUpRecordTitle,
+      openFollowUpNote,
       openNote,
       openEditTaskSheet,
       onAddTaskToReminder,
@@ -832,6 +876,16 @@ export const AllTasksScreen = () => {
       />
       {editTaskSheet}
       {createTaskSheet}
+      <TaskOutcomeSheet
+        visible={outcomeTarget !== null}
+        task={outcomeTarget?.task ?? null}
+        linkedNoteContext={linkedNoteContext}
+        onClose={closeOutcomeSheet}
+        onComplete={completeWithOutcome}
+        onSkip={completeAndSkip}
+        onVoiceFollowUp={startVoiceFollowUp}
+        onTextFollowUp={startTextFollowUp}
+      />
     </View>
   );
 };

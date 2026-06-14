@@ -349,6 +349,7 @@
       "similar": "Похожие",
       "tags": "Общие теги",
       "folders": "В одной папке",
+      "linked": "Связанные заметки",
       "pickTags": "Выбрать теги",
       "tagsCount": "{{count}} тегов",
       "folderPickerTitle": "Показать папку",
@@ -393,6 +394,7 @@
       "similar": "Похожие заметки",
       "sharedTag": "Общие теги",
       "sameFolder": "Одна папка",
+      "linked": "Связанные заметки",
       "tasks": "Открытые задачи"
     }
   },
@@ -2590,6 +2592,41 @@
       "sat": "СБ",
       "sun": "ВС"
     }
+  },
+  "noteLinks": {
+    "linked": "Связанные заметки",
+    "backlinks": "Ссылаются сюда",
+    "linkNote": "Связать заметку",
+    "linkNoteHint": "Свяжите с другой заметкой по теме",
+    "linkNoteAddAnother": "Связать ещё",
+    "linkNoteMenu": "Связать заметку",
+    "pickNoteTitle": "Связать заметку",
+    "pickNoteSubtitle": "Выберите заметку, которую хотите связать с этой.",
+    "pickNoteSearchPlaceholder": "Поиск заметок",
+    "pickNoteEmpty": "Нет доступных заметок",
+    "pickNoteSearchEmpty": "Ничего не найдено",
+    "unlinkA11y": "Убрать связь с «{{title}}»"
+  },
+  "taskOutcome": {
+    "sheetTitle": "Задача выполнена",
+    "outcomeLabel": "Итог",
+    "outcomePlaceholder": "Кратко — что получилось?",
+    "optionalHint": "Можно пропустить или оформить отдельной заметкой ниже.",
+    "followUpSectionTitle": "Отдельная заметка",
+    "recordFollowUpSubtitle": "Новая запись, связанная с задачей",
+    "textFollowUpSubtitle": "Короткая текстовая заметка",
+    "saveDone": "Готово",
+    "skip": "Пропустить",
+    "recordFollowUp": "Записать",
+    "textFollowUp": "Написать",
+    "recordFollowUpA11y": "Записать голосовую заметку по этой задаче",
+    "textFollowUpA11y": "Создать текстовую заметку по этой задаче",
+    "followUpTitlePrefix": "Итог",
+    "followUpSeedHeading": "Задача",
+    "followUpRecordHint": "Заметка привяжется к задаче после сохранения записи.",
+    "resultLabel": "Итог",
+    "openFollowUp": "Заметка: {{title}}",
+    "openFollowUpA11y": "Открыть заметку «{{title}}»"
   },
   "taskDeadlineNotifications": {
     "fallbackTitle": "Срок задачи",

@@ -37,6 +37,7 @@ describe('buildSimplifiedGraphFilters', () => {
       sharedTag: true,
       sameFolder: false,
       contains: false,
+      linked: true,
     });
     expect(simplified.tags).toEqual(['work']);
   });
@@ -70,12 +71,14 @@ describe('simplifiedEdgeVisibility', () => {
         sharedTag: true,
         sameFolder: true,
         contains: true,
+        linked: false,
       }),
     ).toEqual({
       similar: false,
       sharedTag: true,
       sameFolder: false,
       contains: false,
+      linked: false,
     });
   });
 });

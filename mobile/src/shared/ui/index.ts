@@ -55,6 +55,7 @@ export { SCREEN_PADDING, SECTION_STACK_GAP } from './layoutSpacing';
 export type { LinkedNoteContext } from './LinkedNoteContextBanner';
 export { LinkedNoteContextBanner } from './LinkedNoteContextBanner';
 export { NoteMarkdown, type NoteMarkdownVariant } from './NoteMarkdown';
+export { PickerKindCard, type PickerKindCardProps } from './PickerKindCard';
 export { PLAN_PAYWALL_FEATURE_LINE_HEIGHT, PlanPaywallProChip } from './PlanPaywallProChip';
 export { PrivateExecutionBadge, PrivateModeBadge } from './PrivateModeBadge';
 export { ProcessingArcSpinner } from './ProcessingArcSpinner';

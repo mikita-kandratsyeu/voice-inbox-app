@@ -47,6 +47,7 @@ export const recordsTable = sqliteTable(
     audioPath: text('audioPath'),
     embedding: text('embedding'),
     folderId: text('folderId'),
+    linkedRecordIds: text('linkedRecordIds').default('[]'),
     deletedAt: text('deletedAt'),
     purgeAt: text('purgeAt'),
   },
