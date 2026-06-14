@@ -12,7 +12,6 @@ import {
   getGraphExportViewShotMaxDimension,
 } from '../lib/computeGraphExportLayout';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
-import { DottedBackground } from './DottedBackground';
 import { GraphEdgeLayer } from './GraphEdgeLayer';
 import { GraphNodeLayer } from './GraphNodeLayer';
 
@@ -63,16 +62,10 @@ export const GraphFullExportCapture = forwardRef<ViewShotRef, GraphFullExportCap
           ref={ref}
           options={getGraphExportViewShotCaptureOptions()}
           style={{
-            backgroundColor: color.background.secondary,
             height: layout.exportHeight,
             width: layout.exportWidth,
           }}
         >
-          <DottedBackground
-            width={layout.exportWidth}
-            height={layout.exportHeight}
-            dotColor={color.text.muted}
-          />
           <View
             style={{
               height: layout.worldHeight,

@@ -1,6 +1,6 @@
 import { MenuView } from '@react-native-menu/menu';
 import { ChevronDown, Languages } from 'lucide-react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 
@@ -8,7 +8,7 @@ import type { TranscriptionLanguage } from '@/entities/settings';
 import { TRANSCRIPTION_LANGUAGES, useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { hapticSelection } from '@/shared/lib';
+import { hapticSelection, inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
 
 type WhisperDefaultLanguageSectionProps = {
   color: Colors;
@@ -23,6 +23,29 @@ export const WhisperDefaultLanguageSection = ({ color }: WhisperDefaultLanguageS
   const setTranscriptionLanguage = useSettingsStore((s) => s.setTranscriptionLanguage);
 
   const label = t(`recordingDetail.language.${transcriptionLanguage}`);
+  const titleColor = color.text.primary;
+
+  const menuActions = useMemo<NativeMenuAction[]>(
+    () => [
+      {
+        id: 'auto' as const,
+        title: t('recordingDetail.language.auto'),
+        titleColor,
+        state: transcriptionLanguage === 'auto' ? 'on' : 'off',
+      },
+      inlineNativeMenuSection(
+        'specificLanguagesSection',
+        titleColor,
+        TRANSCRIPTION_LANGUAGES.filter((lang) => lang !== 'auto').map((lang) => ({
+          id: lang,
+          title: t(`recordingDetail.language.${lang}`),
+          titleColor,
+          state: lang === transcriptionLanguage ? 'on' : 'off',
+        })),
+      ),
+    ],
+    [t, titleColor, transcriptionLanguage],
+  );
 
   return (
     <View className="mb-6 gap-2 rounded-2xl p-4" style={{ backgroundColor: color.background.card }}>
@@ -42,12 +65,7 @@ export const WhisperDefaultLanguageSection = ({ color }: WhisperDefaultLanguageS
             setTranscriptionLanguage(lang);
           }
         }}
-        actions={TRANSCRIPTION_LANGUAGES.map((lang) => ({
-          id: lang,
-          title: t(`recordingDetail.language.${lang}`),
-          titleColor: color.text.primary,
-          state: lang === transcriptionLanguage ? 'on' : 'off',
-        }))}
+        actions={menuActions}
       >
         <TouchableOpacity
           accessibilityRole="button"

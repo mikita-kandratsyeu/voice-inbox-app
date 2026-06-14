@@ -60,7 +60,7 @@ export const NoteDocumentTableOfContents = React.memo(function NoteDocumentTable
           paddingBottom: 32,
         }}
       >
-        {filteredItems.map((item, index) => {
+        {filteredItems.map((item) => {
           const indentLevel = item.level - 1;
           const leftPadding = indentLevel * 16;
 

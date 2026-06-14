@@ -16,6 +16,10 @@ import {
 
 import { getGraphExportViewShotCaptureOptions } from '../lib/computeGraphExportLayout';
 import {
+  type GraphExportBackgroundId,
+  resolveGraphExportBackground,
+} from '../lib/graphExportBackground';
+import {
   clipDisplayCropToImageLayout,
   computeContainLayout,
   computeCropCaptureLayout,
@@ -29,6 +33,7 @@ import {
 } from '../lib/graphExportCrop';
 import { GraphExportCropOverlay } from './GraphExportCropOverlay';
 import { GraphExportCropTemplates } from './GraphExportCropTemplates';
+import { GraphExportBackgroundFill } from './GraphExportBackgroundFill';
 
 const PREVIEW_HEIGHT = 380;
 
@@ -81,12 +86,19 @@ export function GraphExportPreviewSheet({
   const [previewWidth, setPreviewWidth] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
   const [cropTemplateId, setCropTemplateId] = useState<CropAspectTemplateId>('full');
+  const [backgroundId, setBackgroundId] = useState<GraphExportBackgroundId>('canvas');
+
+  const backgroundStyle = useMemo(
+    () => resolveGraphExportBackground(backgroundId, color),
+    [backgroundId, color],
+  );
 
   useEffect(() => {
     if (!visible || !imageUri) {
       setImageSize(null);
       setCrop(null);
       setCropTemplateId('full');
+      setBackgroundId('canvas');
       return;
     }
 
@@ -165,9 +177,10 @@ export function GraphExportPreviewSheet({
   const handleExport = useCallback(async () => {
     if (!imageUri || !imageSize || !crop || isExporting || isLoadingPreview) return;
 
-    const needsCropCapture = !isFullImageCrop(crop, imageSize.width, imageSize.height);
+    const needsCompositeCapture =
+      backgroundId !== 'transparent' || !isFullImageCrop(crop, imageSize.width, imageSize.height);
 
-    if (needsCropCapture) {
+    if (needsCompositeCapture) {
       setIsExporting(true);
       await waitForNextFrame();
     }
@@ -175,10 +188,10 @@ export function GraphExportPreviewSheet({
     try {
       let exportUri = imageUri;
 
-      if (needsCropCapture) {
+      if (needsCompositeCapture) {
         const captured = await cropCaptureRef.current?.capture?.();
         if (!captured) {
-          throw new Error('crop capture failed');
+          throw new Error('composite capture failed');
         }
         exportUri = captured;
       }
@@ -201,7 +214,7 @@ export function GraphExportPreviewSheet({
     } finally {
       setIsExporting(false);
     }
-  }, [crop, imageSize, imageUri, isExporting, isLoadingPreview, onClose, t]);
+  }, [backgroundId, crop, imageSize, imageUri, isExporting, isLoadingPreview, onClose, t]);
 
   const isPreviewBusy = isLoadingPreview || isExporting;
   const loadingLabel = isLoadingPreview
@@ -235,16 +248,30 @@ export function GraphExportPreviewSheet({
           }}
         >
           {imageUri && containLayout ? (
-            <Image
-              source={{ uri: imageUri }}
+            <View
               style={{
                 height: containLayout.height,
                 left: containLayout.x,
+                overflow: 'hidden',
                 position: 'absolute',
                 top: containLayout.y,
                 width: containLayout.width,
               }}
-            />
+            >
+              <GraphExportBackgroundFill
+                background={backgroundStyle}
+                height={containLayout.height}
+                showTransparencyGrid
+                width={containLayout.width}
+              />
+              <Image
+                source={{ uri: imageUri }}
+                style={{
+                  height: containLayout.height,
+                  width: containLayout.width,
+                }}
+              />
+            </View>
           ) : null}
 
           {displayCrop && crop && imageSize && containLayout && !isPreviewBusy ? (
@@ -264,8 +291,10 @@ export function GraphExportPreviewSheet({
         {imageSize && !isPreviewBusy ? (
           <GraphExportCropTemplates
             activeTemplateId={cropTemplateId}
+            backgroundId={backgroundId}
             canReset={canResetCrop}
             color={color}
+            onBackgroundSelect={setBackgroundId}
             onReset={handleResetCrop}
             onSelect={handleApplyCropTemplate}
           />
@@ -303,10 +332,22 @@ export function GraphExportPreviewSheet({
             ref={cropCaptureRef}
             options={getGraphExportViewShotCaptureOptions()}
             style={{
+              backgroundColor:
+                backgroundStyle.backgroundColor === 'transparent'
+                  ? 'transparent'
+                  : backgroundStyle.backgroundColor,
               height: cropCaptureLayout.shotHeight,
               width: cropCaptureLayout.shotWidth,
             }}
           >
+            <GraphExportBackgroundFill
+              background={backgroundStyle}
+              height={cropCaptureLayout.imageHeight}
+              offsetX={cropCaptureLayout.offsetX}
+              offsetY={cropCaptureLayout.offsetY}
+              showTransparencyGrid={false}
+              width={cropCaptureLayout.imageWidth}
+            />
             <Image
               source={{ uri: imageUri }}
               style={{

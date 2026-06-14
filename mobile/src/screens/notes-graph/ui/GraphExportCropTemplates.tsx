@@ -11,13 +11,17 @@ import {
   filterChipRowStyle,
 } from '@/shared/ui/filterChipMetrics';
 
+import type { GraphExportBackgroundId } from '../lib/graphExportBackground';
 import { CROP_ASPECT_TEMPLATES, type CropAspectTemplateId } from '../lib/graphExportCrop';
+import { GraphExportBackgroundSelector } from './GraphExportBackgroundSelector';
 
 type GraphExportCropTemplatesProps = {
   color: Colors;
   activeTemplateId: CropAspectTemplateId;
+  backgroundId: GraphExportBackgroundId;
   canReset: boolean;
   disabled?: boolean;
+  onBackgroundSelect: (backgroundId: GraphExportBackgroundId) => void;
   onReset: () => void;
   onSelect: (templateId: Exclude<CropAspectTemplateId, 'custom'>) => void;
 };
@@ -42,8 +46,10 @@ const RESET_BUTTON_SIZE = FILTER_CHIP_MIN_HEIGHT;
 export function GraphExportCropTemplates({
   color,
   activeTemplateId,
+  backgroundId,
   canReset,
   disabled = false,
+  onBackgroundSelect,
   onReset,
   onSelect,
 }: GraphExportCropTemplatesProps) {
@@ -87,6 +93,22 @@ export function GraphExportCropTemplates({
           strokeWidth={2.2}
         />
       </Pressable>
+
+      <GraphExportBackgroundSelector
+        color={color}
+        disabled={disabled}
+        onSelect={onBackgroundSelect}
+        value={backgroundId}
+      />
+
+      <View
+        style={{
+          alignSelf: 'stretch',
+          backgroundColor: color.border.default,
+          marginVertical: 4,
+          width: 1,
+        }}
+      />
 
       <ScrollView
         horizontal
