@@ -1,4 +1,4 @@
-import { calculateOptimalConcurrency } from '@/features/git-remote-sync';
+import { calculateOptimalConcurrency } from '@/features/git-remote-sync/lib/syncOptimization';
 import { nitroFetch } from '@/shared/lib/fetch';
 import { isArray, isRecord, isString } from '@/shared/lib/type-guards';
 

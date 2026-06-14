@@ -1,4 +1,4 @@
-import { calculateSyncTimeout } from '@/features/git-remote-sync';
+import { calculateSyncTimeout } from '@/features/git-remote-sync/lib/syncOptimization';
 
 import { GITLAB_SYNC_TIMEOUT_MS } from './constants';
 
