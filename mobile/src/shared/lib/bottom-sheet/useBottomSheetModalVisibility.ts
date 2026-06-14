@@ -58,24 +58,36 @@ function presentBottomSheetModal(
     afterRemount?: boolean;
   },
   onPresentFailed?: () => void,
+  runIdRef?: { current: number },
+  runId?: number,
 ) {
   const attempt = meta?.attempt ?? 0;
+
+  const isCancelled = () => runIdRef != null && runId !== runIdRef.current;
 
   const invokePresent = () => {
     ref.current?.present();
     requestAnimationFrame(() => {
+      if (isCancelled()) return;
       const status = readModalStatus(ref);
       if (isModalPresented(status)) {
         return;
       }
       if (attempt < MAX_PRESENT_ATTEMPTS && meta != null) {
         requestAnimationFrame(() => {
-          presentBottomSheetModal(ref, { ...meta, attempt: attempt + 1 }, onPresentFailed);
+          if (isCancelled()) return;
+          presentBottomSheetModal(
+            ref,
+            { ...meta, attempt: attempt + 1 },
+            onPresentFailed,
+            runIdRef,
+            runId,
+          );
         });
         return;
       }
       const finishPresentFailed = () => {
-        if (!isModalPresented(readModalStatus(ref))) {
+        if (!isCancelled() && !isModalPresented(readModalStatus(ref))) {
           onPresentFailed?.();
         }
       };
@@ -224,6 +236,8 @@ export function useBottomSheetModalVisibility(
             afterRemount,
           },
           recoverPresent,
+          presentRunIdRef,
+          runId,
         );
         isInstanceSwapRef.current = false;
       };
