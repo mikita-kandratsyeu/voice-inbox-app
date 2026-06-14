@@ -45,6 +45,41 @@ function resolveMethod(input: RequestInfo | URL, init?: NitroFetchInit): NitroRe
   return (method ?? 'GET').toUpperCase() as NitroRequestMethod;
 }
 
+function bodySupportsNativeTimeout(body: BodyInit | null | undefined): boolean {
+  return body == null || typeof body === 'string';
+}
+
+async function fetchWithAbortTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const { signal: userSignal, ...rest } = init;
+
+  const onUserAbort = () => controller.abort();
+  if (userSignal) {
+    if (userSignal.aborted) {
+      clearTimeout(timeoutId);
+      throw createAbortError();
+    }
+    userSignal.addEventListener('abort', onUserAbort, { once: true });
+  }
+
+  try {
+    return await rnNitroFetch(input, { ...rest, signal: controller.signal });
+  } catch (e) {
+    if (controller.signal.aborted) {
+      throw createAbortError();
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeoutId);
+    userSignal?.removeEventListener('abort', onUserAbort);
+  }
+}
+
 /** Native URLSession timeout; `AbortSignal.timeout` alone does not extend it on iOS. */
 async function nitroFetchWithNativeTimeout(
   input: RequestInfo | URL,
@@ -126,7 +161,10 @@ export async function nitroFetch(
   const mergedInit = { ...rest, headers };
 
   if (timeoutMs != null && timeoutMs > 0) {
-    return nitroFetchWithNativeTimeout(input, { ...mergedInit, timeoutMs });
+    if (bodySupportsNativeTimeout(mergedInit.body)) {
+      return nitroFetchWithNativeTimeout(input, { ...mergedInit, timeoutMs });
+    }
+    return fetchWithAbortTimeout(input, mergedInit, timeoutMs);
   }
 
   return rnNitroFetch(input, mergedInit);

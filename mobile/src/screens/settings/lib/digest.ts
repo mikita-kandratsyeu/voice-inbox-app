@@ -332,8 +332,6 @@ export function buildDigestSharePayload(params: {
     '',
     params.sourceNote,
     '',
-    '---',
-    '',
   ].join('\n');
 
   return {

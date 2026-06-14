@@ -1,4 +1,5 @@
 import MarkdownIt from 'markdown-it';
+import markdownItMultimdTable from 'markdown-it-multimd-table';
 
 import { stripShareSectionMarkers } from './shareSectionMarkers';
 
@@ -6,6 +7,10 @@ const md = new MarkdownIt({
   html: false,
   linkify: true,
   breaks: true,
+}).use(markdownItMultimdTable, {
+  multiline: false,
+  rowspan: false,
+  headerless: false,
 });
 
 const SHARE_PDF_HTML_STYLES = `
@@ -27,6 +32,24 @@ const SHARE_PDF_HTML_STYLES = `
   ul, ol { margin: 0 0 10pt; padding-left: 20pt; }
   li { margin: 0 0 4pt; }
   strong { font-weight: 600; color: #1f2937; }
+  em { font-style: italic; color: #4b5563; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 12pt;
+    font-size: 10pt;
+    line-height: 1.45;
+    table-layout: fixed;
+  }
+  thead { background: #f9fafb; }
+  th, td {
+    border: 1px solid #d1d5db;
+    padding: 6pt 8pt;
+    text-align: left;
+    vertical-align: top;
+    word-break: break-word;
+  }
+  th { font-weight: 600; color: #111827; }
   hr {
     border: none;
     border-top: 1px solid #d1d5db;

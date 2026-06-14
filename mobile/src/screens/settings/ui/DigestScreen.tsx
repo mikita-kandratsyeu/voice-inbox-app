@@ -47,7 +47,11 @@ import {
 import { Button, HeaderIconButton, NoteMarkdown, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
 
 import { getSettingsIconColor } from '../lib';
-import { formatDigestDurationMs } from '../lib/appStats';
+import { buildAppStats, formatDigestDurationMs } from '../lib/appStats';
+import {
+  buildAnalyticsSharePayload,
+  formatAnalyticsTaskLine,
+} from '../lib/buildAnalyticsSharePayload';
 import { buildDigestAiExecutionContext } from '../lib/buildDigestAiExecutionContext';
 import {
   buildDeterministicDigest,
@@ -77,7 +81,7 @@ import {
 import { AppStatsContent } from './AppStatsContent';
 import { DigestPeriodFilter } from './DigestPeriodFilter';
 import { DigestCollapsibleSectionCard, DigestMetricCard } from './DigestScreenCards';
-import { DigestShareSheet } from './DigestShareSheet';
+import { type DigestShareKind, DigestShareSheet } from './DigestShareSheet';
 
 type MetricCardProps = {
   label: string;
@@ -305,10 +309,10 @@ export const DigestScreen = () => {
   const mountedRef = useRef(true);
 
   useEffect(() => {
-    if (digestAiEnabled && !isLoaded) {
+    if (!isLoaded) {
       void loadRecords();
     }
-  }, [digestAiEnabled, isLoaded, loadRecords]);
+  }, [isLoaded, loadRecords]);
 
   const digest = useMemo(() => buildDeterministicDigest(period, records), [period, records]);
   const aiPayloadCoverage = useMemo(() => getDigestAiPayloadCoverage(digest), [digest]);
@@ -496,30 +500,97 @@ export const DigestScreen = () => {
     };
   }, [aiCreatedAt, aiResult, dayjsLocale, digestFormat, period, rangeText, t]);
 
+  const analyticsSharePayload = useMemo(() => {
+    const stats = buildAppStats(period, records, i18n.language);
+    const exportedAt = new Date();
+    const exportedAtText = `${dayjs(exportedAt).locale(dayjsLocale).format('D MMM YYYY')} ${formatLocalTimeOfDay(exportedAt)}`;
+    const { message, title } = buildAnalyticsSharePayload({
+      periodLabel: t(`settings.digest.period.${period}`),
+      rangeText,
+      exportedAtText,
+      stats,
+      digest,
+      formatDuration: (durationMs) => formatDigestDurationMs(durationMs, t),
+      formatTaskLine: (task) =>
+        formatAnalyticsTaskLine(task, (hhmm) =>
+          hhmm?.trim() ? ` ${formatTaskDeadlineTimeForDisplay(hhmm)}` : '',
+        ),
+      labels: {
+        title: t('appStats.title'),
+        period: t('settings.digest.exportHeader.period'),
+        dates: t('settings.digest.exportHeader.dates'),
+        exported: t('settings.digest.exportHeader.exported'),
+        sourceNote: t('settings.digest.exportAnalyticsSourceNote'),
+        overview: t('settings.digest.exportAnalyticsOverview'),
+        totalRecords: t('appStats.totalRecords'),
+        totalDuration: t('appStats.totalDuration'),
+        aiProcessed: t('appStats.aiProcessed'),
+        tasksCompletion: t('appStats.tasksCompletion'),
+        activity: t(`appStats.activityTitle.${period}`),
+        activityColumnLabel: t('settings.digest.exportAnalyticsActivityLabel'),
+        activityColumnCount: t('settings.digest.exportAnalyticsActivityCount'),
+        classification: t('appStats.classification'),
+        classificationType: t('settings.digest.exportAnalyticsClassificationType'),
+        classificationCount: t('settings.digest.exportAnalyticsClassificationCount'),
+        classificationShare: t('settings.digest.exportAnalyticsClassificationShare'),
+        topTags: t('appStats.topTags'),
+        topicsTitle: t('settings.digest.topicsTitle'),
+        nextStepsTitle: t('settings.digest.nextStepsTitle'),
+        openTasksTitle: t('settings.digest.openTasksTitle'),
+        overdueTitle: t('settings.digest.overdueTitle'),
+        empty: t('settings.digest.exportAnalyticsEmpty'),
+        class: {
+          work: t('appStats.class.work'),
+          meeting: t('appStats.class.meeting'),
+          idea: t('appStats.class.idea'),
+          personal: t('appStats.class.personal'),
+          other: t('appStats.class.other'),
+        },
+      },
+    });
+
+    return {
+      message,
+      title,
+      fileBaseName: sanitizeDigestFileBaseName(title),
+    };
+  }, [dayjsLocale, digest, i18n.language, period, rangeText, records, t]);
+
+  const resolveSharePayload = useCallback(
+    (kind: DigestShareKind) => (kind === 'aiDigest' ? digestSharePayload : analyticsSharePayload),
+    [analyticsSharePayload, digestSharePayload],
+  );
+
   const handleShareDigestExport = useCallback(
-    async (format: ShareRecordExportFormat) => {
-      if (!digestSharePayload) return;
+    async (format: ShareRecordExportFormat, kind: DigestShareKind) => {
+      const payload = resolveSharePayload(kind);
+      if (!payload) return;
 
       try {
-        await shareDigestExport(digestSharePayload, format);
+        await shareDigestExport(payload, format);
       } catch (err) {
         Alert.alert(t('common.error'), toUserFacingFetchErrorFromUnknown(err));
       }
     },
-    [digestSharePayload, t],
+    [resolveSharePayload, t],
   );
 
   const handleEmailDigest = useCallback(
-    async (email: string, format: ShareRecordExportFormat) => {
-      if (!digestSharePayload) return;
+    async (email: string, format: ShareRecordExportFormat, kind: DigestShareKind) => {
+      const payload = resolveSharePayload(kind);
+      if (!payload) return;
 
       setEmailSending(true);
       try {
-        await emailDigestExport(email, digestSharePayload, format);
+        await emailDigestExport(email, payload, format);
         saveLastShareRecipientEmail(email);
         hapticSuccess();
         setShareSheetVisible(false);
-        Alert.alert(t('share.emailSentTitle'), t('settings.digest.emailSentMessage', { email }));
+        const sentMessageKey =
+          kind === 'analytics'
+            ? 'settings.digest.emailSentMessageAnalytics'
+            : 'settings.digest.emailSentMessage';
+        Alert.alert(t('share.emailSentTitle'), t(sentMessageKey, { email }));
       } catch (err) {
         hapticError();
         Alert.alert(t('share.emailFailedTitle'), toUserFacingFetchErrorFromUnknown(err));
@@ -527,27 +598,40 @@ export const DigestScreen = () => {
         setEmailSending(false);
       }
     },
-    [digestSharePayload, t],
+    [resolveSharePayload, t],
   );
 
+  const canShareAnalytics = analyticsSharePayload !== null;
+  const canShareAiDigest = digestSharePayload !== null;
+
   const onOpenShare = useCallback(() => {
-    if (!digestSharePayload) return;
+    if (!canShareAnalytics && !canShareAiDigest) return;
 
     if (isProActive) {
       setShareSheetVisible(true);
       return;
     }
 
-    void shareDigestPlainText(digestSharePayload).catch((err: unknown) => {
+    const fallbackPayload = digestSharePayload ?? analyticsSharePayload;
+    if (!fallbackPayload) return;
+
+    void shareDigestPlainText(fallbackPayload).catch((err: unknown) => {
       Alert.alert(t('common.error'), toUserFacingFetchErrorFromUnknown(err));
     });
-  }, [digestSharePayload, isProActive, t]);
+  }, [
+    analyticsSharePayload,
+    canShareAiDigest,
+    canShareAnalytics,
+    digestSharePayload,
+    isProActive,
+    t,
+  ]);
 
   const onCloseShareSheet = useCallback(() => setShareSheetVisible(false), []);
 
   const shareHeaderButton = useMemo(
     () =>
-      digestAiPeriodActive && aiResult ? (
+      canShareAnalytics || canShareAiDigest ? (
         <HeaderIconButton
           iconOnly
           variant="icon"
@@ -560,7 +644,7 @@ export const DigestScreen = () => {
           accessibilityLabel={t('share.share')}
         />
       ) : null,
-    [aiResult, color, digestAiPeriodActive, onOpenShare, t],
+    [canShareAiDigest, canShareAnalytics, color, onOpenShare, t],
   );
 
   if (!digestAiEnabled) {
@@ -569,6 +653,7 @@ export const DigestScreen = () => {
         <ScreenHeader
           title={t('settings.digest.sectionTitle')}
           onBack={() => navigation.goBack()}
+          rightSlot={shareHeaderButton}
         />
         <View style={{ flex: 1, alignSelf: 'center', width: '100%', maxWidth: contentMaxWidth }}>
           <ScrollView
@@ -584,6 +669,16 @@ export const DigestScreen = () => {
             <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
           </ScrollView>
         </View>
+
+        <DigestShareSheet
+          visible={shareSheetVisible}
+          isSendingEmail={emailSending}
+          canShareAnalytics={canShareAnalytics}
+          canShareAiDigest={false}
+          onClose={onCloseShareSheet}
+          onShare={handleShareDigestExport}
+          onEmail={handleEmailDigest}
+        />
       </View>
     );
   }
@@ -775,6 +870,8 @@ export const DigestScreen = () => {
       <DigestShareSheet
         visible={shareSheetVisible}
         isSendingEmail={emailSending}
+        canShareAnalytics={canShareAnalytics}
+        canShareAiDigest={canShareAiDigest}
         onClose={onCloseShareSheet}
         onShare={handleShareDigestExport}
         onEmail={handleEmailDigest}

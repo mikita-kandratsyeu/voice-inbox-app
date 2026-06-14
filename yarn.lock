@@ -12577,6 +12577,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"markdown-it-multimd-table@npm:^4.2.3":
+  version: 4.2.3
+  resolution: "markdown-it-multimd-table@npm:4.2.3"
+  checksum: 10c0/84d4fcdc6388b8dd09e6a5a86c4e6fdb5b39bd2a37b64510c0d82ca59b105cf1f8fa4a09215266ff5812b7f54a12f5f4269a50d72d95377907fc4c55c0415837
+  languageName: node
+  linkType: hard
+
 "markdown-it@npm:12.3.2":
   version: 12.3.2
   resolution: "markdown-it@npm:12.3.2"
@@ -18338,6 +18345,7 @@ __metadata:
     llama.rn: "npm:^0.12.4"
     lucide-react-native: "npm:^1.16.0"
     markdown-it: "npm:^14.2.0"
+    markdown-it-multimd-table: "npm:^4.2.3"
     nativewind: "npm:^4.2.4"
     patch-package: "npm:^8.0.1"
     prettier: "npm:^3.8.3"
