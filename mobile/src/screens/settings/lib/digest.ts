@@ -4,7 +4,7 @@ import type { RecordListItem, TaskItem } from '@/entities/record';
 import type { DigestAiResult } from '@/shared/lib/ai-api';
 import { storage } from '@/shared/lib/async-storage/mmkv';
 
-export type DigestPeriod = 'day' | 'week' | 'month';
+export type DigestPeriod = 'day' | 'week' | 'month' | 'all';
 export type DigestFormat = 'brief' | 'detailed' | 'tasks';
 
 export type DigestTask = TaskItem & {
@@ -61,6 +61,10 @@ export type DigestAiPayloadCoverage = {
   truncatedSummaryCount: number;
 };
 
+export function isDigestAiPeriod(period: DigestPeriod): boolean {
+  return period !== 'all';
+}
+
 export function getDigestAiNotesLimit(period: DigestPeriod): number {
   return period === 'month' ? MAX_AI_NOTES_IN_PAYLOAD_MONTH : MAX_AI_NOTES_IN_PAYLOAD;
 }
@@ -83,6 +87,13 @@ export function getDigestAiPayloadCoverage(digest: DeterministicDigest): DigestA
 }
 
 export function getDigestRange(period: DigestPeriod, now = dayjs()) {
+  if (period === 'all') {
+    return {
+      from: dayjs(0),
+      to: now.endOf('day'),
+    };
+  }
+
   if (period === 'day') {
     return {
       from: now.startOf('day'),

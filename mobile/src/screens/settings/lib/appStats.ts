@@ -21,6 +21,10 @@ export type AppStats = {
 const CLASS_KEYS = ['work', 'meeting', 'idea', 'personal', 'other'] as const;
 
 function filterRecordsInPeriod(records: RecordListItem[], period: DigestPeriod): RecordListItem[] {
+  if (period === 'all') {
+    return records.filter((record) => dayjs(record.createdAt).isValid());
+  }
+
   const { from, to } = getDigestRange(period);
 
   return records.filter((record) => {
@@ -40,6 +44,27 @@ function buildActivitySeries(
 ): { activityCounts: number[]; activityLabels: string[] } {
   const { from, to } = getDigestRange(period);
   const dayjsLocale = resolveDayjsLocale(locale);
+
+  if (period === 'all') {
+    const monthCount = 12;
+    const end = dayjs().endOf('month');
+    const activityCounts = Array.from({ length: monthCount }, (_, index) => {
+      const monthStart = end.subtract(monthCount - 1 - index, 'month').startOf('month');
+      const monthEnd = monthStart.endOf('month');
+      return inRange.filter((record) => {
+        const created = dayjs(record.createdAt);
+        return !created.isBefore(monthStart) && !created.isAfter(monthEnd);
+      }).length;
+    });
+    const activityLabels = Array.from({ length: monthCount }, (_, index) =>
+      end
+        .subtract(monthCount - 1 - index, 'month')
+        .startOf('month')
+        .locale(dayjsLocale)
+        .format('MMM'),
+    );
+    return { activityCounts, activityLabels };
+  }
 
   if (period === 'day') {
     const bucketHours = 4;

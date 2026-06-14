@@ -1153,20 +1153,24 @@
     },
     "digest": {
       "sectionTitle": "Overview",
-      "title": "AI digest",
-      "settingsSubtitle": "Notes, tasks, and themes — today, the last 7 days, or 30 days.",
+      "title": "AI digest and statistics",
+      "settingsSubtitle": "AI recap, stats, and themes — today, 7 days, or 30 days.",
       "subtitle": "We build the numbers and lists on your device from your summaries, tasks, and key phrases.",
+      "subtitleAll": "All notes in your library — numbers and lists built on device.",
+      "aiUnavailableAllTime": "AI recap is available for today, the last 7 days, or 30 days. Pick a shorter period to generate a summary.",
       "unavailableTitle": "Digest isn't available yet",
       "unavailableDesc": "Turn on Smart mode, or connect an AI server in Private (Pro), to see your day, week, or month at a glance and get an AI-written recap.",
       "period": {
         "day": "Today",
         "week": "Last 7 days",
-        "month": "Last 30 days"
+        "month": "Last 30 days",
+        "all": "All time"
       },
       "periodTab": {
         "day": "Today",
         "week": "7 days",
-        "month": "30 days"
+        "month": "30 days",
+        "all": "All time"
       },
       "formatTitle": "Summary format",
       "formatHint": "How the AI response is structured",
@@ -1188,6 +1192,7 @@
       "metrics": {
         "records": "Notes",
         "recordsHelper": "In this period",
+        "allTimeHelper": "Entire library",
         "duration": "Audio",
         "durationHelper": "Total recorded",
         "openTasks": "Open",
@@ -1791,7 +1796,8 @@
     "activityTitle": {
       "day": "Today",
       "week": "Last 7 days",
-      "month": "Last 30 days"
+      "month": "Last 30 days",
+      "all": "Last 12 months"
     },
     "weeklyActivity": "Last 7 days",
     "classification": "Note types",

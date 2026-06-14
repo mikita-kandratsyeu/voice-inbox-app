@@ -209,8 +209,11 @@ export const AppStatsContent = ({ period, locale }: AppStatsContentProps) => {
     [t],
   );
 
+  const metricsHelperKey =
+    period === 'all' ? 'settings.digest.metrics.allTimeHelper' : 'settings.digest.metrics.recordsHelper';
+
   const maxDayCount = Math.max(...stats.activityCounts, 1);
-  const activityDense = period === 'month';
+  const activityDense = period === 'month' || period === 'all';
 
   const activityChart = (
     <View className={`w-full flex-row items-end ${activityDense ? 'gap-0.5' : 'gap-1'}`}>
@@ -239,7 +242,7 @@ export const AppStatsContent = ({ period, locale }: AppStatsContentProps) => {
       <View className="mb-7 flex-row flex-wrap gap-3">
         <AnimatedMetricCard
           label={t('appStats.totalRecords')}
-          helper={t('settings.digest.metrics.recordsHelper')}
+          helper={t(metricsHelperKey)}
           rawValue={stats.total}
           formatter={(n) => `${n}`}
           tone={color.text.primary}
@@ -253,14 +256,14 @@ export const AppStatsContent = ({ period, locale }: AppStatsContentProps) => {
         />
         <AnimatedMetricCard
           label={t('appStats.aiProcessed')}
-          helper={t('settings.digest.metrics.recordsHelper')}
+          helper={t(metricsHelperKey)}
           rawValue={stats.aiPct}
           formatter={(n) => `${n}%`}
           tone={color.accent.aiData}
         />
         <AnimatedMetricCard
           label={t('appStats.tasksCompletion')}
-          helper={t('settings.digest.metrics.recordsHelper')}
+          helper={t(metricsHelperKey)}
           rawValue={stats.tasksPct}
           formatter={(n) => `${n}%`}
           tone={color.accent.primary}
