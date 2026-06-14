@@ -1595,7 +1595,14 @@
       "disableAds": "Disable ads",
       "disableAdsSubtitle": "Banners, interstitials, rewarded preload (dev / internal TestFlight only).",
       "forcePro": "Treat as Pro",
-      "forceProSubtitle": "Local Pro entitlement for limits and paywalls (dev / internal TestFlight only)."
+      "forceProSubtitle": "Local Pro entitlement for limits and paywalls (dev / internal TestFlight only).",
+      "clearMmkv": "Clear MMKV storage",
+      "clearMmkvSubtitle": "Deletes all keys in voice-inbox-storage. Does not touch SQLite or recordings.",
+      "clearMmkvInProgress": "Clearing MMKV…",
+      "clearMmkvAlertTitle": "Clear MMKV storage?",
+      "clearMmkvAlertMessage": "This removes {{count}} keys from MMKV (settings, caches, debug flags). SQLite and recordings stay. Restart the app after clearing.",
+      "clearMmkvSuccess": "MMKV cleared. Fully restart the app.",
+      "clearMmkvFailed": "Could not clear MMKV storage."
     },
     "gitlabSync": {
       "sectionTitle": "GitLab sync",

@@ -1635,7 +1635,14 @@
       "disableAds": "Отключить рекламу",
       "disableAdsSubtitle": "Баннеры, интерстициалы, предзагрузка rewarded (только dev / внутренний TestFlight).",
       "forcePro": "Считать Pro",
-      "forceProSubtitle": "Локально как Pro для лимитов и paywall (только dev / внутренний TestFlight)."
+      "forceProSubtitle": "Локально как Pro для лимитов и paywall (только dev / внутренний TestFlight).",
+      "clearMmkv": "Очистить MMKV",
+      "clearMmkvSubtitle": "Удаляет все ключи в voice-inbox-storage. SQLite и записи не затрагиваются.",
+      "clearMmkvInProgress": "Очищаем MMKV…",
+      "clearMmkvAlertTitle": "Очистить MMKV?",
+      "clearMmkvAlertMessage": "Будет удалено ключей: {{count}} (настройки, кэши, debug-флаги). SQLite и записи останутся. После очистки полностью перезапустите приложение.",
+      "clearMmkvSuccess": "MMKV очищен. Полностью перезапустите приложение.",
+      "clearMmkvFailed": "Не удалось очистить MMKV."
     },
     "gitlabSync": {
       "sectionTitle": "Синхронизация с GitLab",

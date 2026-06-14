@@ -4,12 +4,41 @@ import { Alert } from 'react-native';
 
 import { isCrashlyticsDebugEnabled } from '@/shared/config/buildEnv';
 import { devWarn } from '@/shared/lib/appLogger';
+import { clearMmkvStorage, getMmkvKeyCount } from '@/shared/lib/async-storage/mmkv';
 
 import { performHardReset } from '../../settings/lib/hardReset';
 
 export function useDebugScreen() {
   const { t } = useTranslation();
   const [isHardResetting, setIsHardResetting] = useState(false);
+  const [isClearingMmkv, setIsClearingMmkv] = useState(false);
+
+  const handleClearMmkv = useCallback(() => {
+    const keyCount = getMmkvKeyCount();
+    Alert.alert(
+      t('settings.debugScreen.clearMmkvAlertTitle'),
+      t('settings.debugScreen.clearMmkvAlertMessage', { count: keyCount }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('settings.debugScreen.clearMmkv'),
+          style: 'destructive',
+          onPress: () => {
+            try {
+              setIsClearingMmkv(true);
+              clearMmkvStorage();
+              Alert.alert(t('common.done'), t('settings.debugScreen.clearMmkvSuccess'));
+            } catch (err) {
+              devWarn('[debug] clear mmkv failed', err);
+              Alert.alert(t('common.error'), t('settings.debugScreen.clearMmkvFailed'));
+            } finally {
+              setIsClearingMmkv(false);
+            }
+          },
+        },
+      ],
+    );
+  }, [t]);
 
   const handleHardReset = useCallback(() => {
     Alert.alert(
@@ -40,5 +69,11 @@ export function useDebugScreen() {
 
   const showCrashlyticsButton = __DEV__ && isCrashlyticsDebugEnabled();
 
-  return { handleHardReset, isHardResetting, showCrashlyticsButton };
+  return {
+    handleClearMmkv,
+    handleHardReset,
+    isClearingMmkv,
+    isHardResetting,
+    showCrashlyticsButton,
+  };
 }
