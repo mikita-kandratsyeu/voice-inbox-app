@@ -1,3 +1,4 @@
+export { buildAskLinkedNotesForPrompt } from './lib/buildAskLinkedNotesForPrompt';
 export { buildBacklinkRecordIds } from './lib/buildBacklinksForRecord';
 export {
   appendLinkedRecordId,

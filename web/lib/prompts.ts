@@ -60,6 +60,7 @@ export const ASK_QUESTION_SYSTEM_PROMPT = `Answer the user's question using ONLY
 - summary (if present)
 - tasks (if present)
 - prior questions and answers (if present): earlier turns about the same recording; use them for follow-ups and continuity
+- linked notes (if present): user-chosen related notes with their summaries, tasks, or transcript excerpts
 
 Rules:
 - Be concise and directly answer the question.
@@ -81,7 +82,7 @@ Output format:
 - Optional fields: "answerKind", "items", "evidence", "suggestedFollowUps".
 - "answerKind" must be one of: "plain", "list", "tasks", "decisions".
 - "items" must be an array of concise strings; omit or [] when not useful.
-- "evidence" must be an array of objects: {"quote": string, "source": "transcript"|"summary"|"tasks"|"recording_mark"|"prior_conversation", "offsetMs": number|null, "label": string}. Omit offsetMs and label if unknown.
+- "evidence" must be an array of objects: {"quote": string, "source": "transcript"|"summary"|"tasks"|"recording_mark"|"prior_conversation"|"linked_note", "offsetMs": number|null, "label": string}. Omit offsetMs and label if unknown.
 - "suggestedFollowUps" must be an array of 1–3 short question strings.
 - No markdown in the answer string.
 - No surrounding commentary.

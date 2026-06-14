@@ -1,10 +1,12 @@
 import type { MeetingSummaryTemplate } from '@/entities/record';
 import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
 
+import { buildLinkedNotesPromptBlock } from '../linkedNotesForPrompt';
 import {
   buildRecordingMarksPromptBlock,
   type RecordingMarkForPrompt,
 } from '../recordingMarksForPrompt';
+import type { AskLinkedNoteForPrompt } from '../types';
 
 /** One JSON object, no wrapper prose — mirrored from web prompts. */
 const LLM_JSON_SINGLE_OBJECT_DISCIPLINE =
@@ -15,6 +17,7 @@ export const WEB_PARITY_ASK_SYSTEM_PROMPT = `Answer the user's question using ON
 - summary (if present)
 - tasks (if present)
 - prior questions and answers (if present): earlier turns about the same recording; use them for follow-ups and continuity
+- linked notes (if present): user-chosen related notes with their summaries, tasks, or transcript excerpts
 
 Rules:
 - Be concise and directly answer the question.
@@ -36,7 +39,7 @@ Output format:
 - Optional fields: "answerKind", "items", "evidence", "suggestedFollowUps".
 - "answerKind" must be one of: "plain", "list", "tasks", "decisions".
 - "items" must be an array of concise strings; omit or [] when not useful.
-- "evidence" must be an array of objects: {"quote": string, "source": "transcript"|"summary"|"tasks"|"recording_mark"|"prior_conversation", "offsetMs": number|null, "label": string}. Omit offsetMs and label if unknown.
+- "evidence" must be an array of objects: {"quote": string, "source": "transcript"|"summary"|"tasks"|"recording_mark"|"prior_conversation"|"linked_note", "offsetMs": number|null, "label": string}. Omit offsetMs and label if unknown.
 - "suggestedFollowUps" must be an array of 1–3 short question strings.
 - No markdown in the answer string.
 - No surrounding commentary.
@@ -404,6 +407,7 @@ export function buildWebParityAskUserMessageContent(
   tasks?: { text: string }[],
   priorTurns?: { question: string; answer: string }[],
   recordingMarks?: RecordingMarkForPrompt[],
+  linkedNotes?: AskLinkedNoteForPrompt[],
 ): string {
   const parts: string[] = ['Transcript:\n\n', transcript];
   if (summary && summary.trim()) {
@@ -415,6 +419,9 @@ export function buildWebParityAskUserMessageContent(
   }
   if (recordingMarks && recordingMarks.length > 0) {
     parts.push('\n\n', buildRecordingMarksPromptBlock(recordingMarks));
+  }
+  if (linkedNotes && linkedNotes.length > 0) {
+    parts.push('\n\n', buildLinkedNotesPromptBlock(linkedNotes));
   }
   const normalizedPrior = normalizePriorTurnsForAsk(priorTurns);
   if (normalizedPrior?.length) {

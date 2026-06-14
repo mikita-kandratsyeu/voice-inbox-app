@@ -80,7 +80,8 @@ export type AskEvidenceSource =
   | 'summary'
   | 'tasks'
   | 'recording_mark'
-  | 'prior_conversation';
+  | 'prior_conversation'
+  | 'linked_note';
 
 export type AskEvidence = {
   quote: string;
@@ -98,6 +99,13 @@ export type AskAnswerResult = {
   model?: string;
 };
 
+export type AskLinkedNoteForPrompt = {
+  title: string;
+  summary?: string;
+  tasks?: Array<{ text: string }>;
+  transcriptExcerpt?: string;
+};
+
 export type AskRequest = {
   id: string;
   transcript: string;
@@ -105,6 +113,7 @@ export type AskRequest = {
   priorTurns?: AskPriorTurn[];
   summary?: string;
   tasks?: Array<{ text: string }>;
+  linkedNotes?: AskLinkedNoteForPrompt[];
   recordingMarks?: RecordingMarkForPrompt[];
   onLocalGenerationProgress?: (event: AiLocalGenerationProgressEvent) => void;
   abortSignal?: AbortSignal;

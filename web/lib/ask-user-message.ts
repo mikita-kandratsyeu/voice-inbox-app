@@ -1,5 +1,9 @@
 import { ASK_QUESTION_SYSTEM_PROMPT } from '@/lib/prompts';
 import {
+  buildLinkedNotesPromptBlock,
+  type AskLinkedNoteForPrompt,
+} from '@/lib/linked-notes-prompt';
+import {
   buildRecordingMarksPromptBlock,
   type RecordingMarkForPrompt,
 } from '@/lib/recording-marks-prompt';
@@ -55,6 +59,7 @@ export function buildAskUserMessageContent(
   tasks?: { text: string }[],
   priorTurns?: { question: string; answer: string }[],
   recordingMarks?: RecordingMarkForPrompt[],
+  linkedNotes?: AskLinkedNoteForPrompt[],
 ): string {
   const parts: string[] = ['Transcript:\n\n', transcript];
   if (summary && summary.trim()) {
@@ -66,6 +71,9 @@ export function buildAskUserMessageContent(
   }
   if (recordingMarks && recordingMarks.length > 0) {
     parts.push('\n\n', buildRecordingMarksPromptBlock(recordingMarks));
+  }
+  if (linkedNotes && linkedNotes.length > 0) {
+    parts.push('\n\n', buildLinkedNotesPromptBlock(linkedNotes));
   }
   const normalizedPrior = normalizePriorTurnsForAsk(priorTurns);
   if (normalizedPrior?.length) {
@@ -85,10 +93,18 @@ export function estimateAskRoutingChars(
   tasks?: { text: string }[],
   priorTurns?: { question: string; answer: string }[],
   recordingMarks?: RecordingMarkForPrompt[],
+  linkedNotes?: AskLinkedNoteForPrompt[],
 ): number {
   return (
     ASK_QUESTION_SYSTEM_PROMPT.length +
-    buildAskUserMessageContent(transcript, question, summary, tasks, priorTurns, recordingMarks)
-      .length
+    buildAskUserMessageContent(
+      transcript,
+      question,
+      summary,
+      tasks,
+      priorTurns,
+      recordingMarks,
+      linkedNotes,
+    ).length
   );
 }

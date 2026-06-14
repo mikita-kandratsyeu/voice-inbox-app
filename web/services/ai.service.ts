@@ -30,6 +30,7 @@ import {
 import type { AutoOrganizeMode, AutoOrganizeTemplate } from '@/lib/auto-organize-types';
 import { normalizeAutoOrganizeTemplate } from '@/lib/auto-organize-types';
 import { buildAskUserMessageContent } from '@/lib/ask-user-message';
+import type { AskLinkedNoteForPrompt } from '@/lib/linked-notes-prompt';
 import { normalizeTaskDeadlineFields } from '@/lib/normalizeTaskDeadlineFields';
 import { parseOpenRouterJsonContent } from '@/lib/parse-openrouter-json';
 import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
@@ -195,7 +196,7 @@ async function callSummaryModel(
 type AskAnswerKind = 'plain' | 'list' | 'tasks' | 'decisions';
 type AskEvidence = {
   quote: string;
-  source?: 'transcript' | 'summary' | 'tasks' | 'recording_mark' | 'prior_conversation';
+  source?: 'transcript' | 'summary' | 'tasks' | 'recording_mark' | 'prior_conversation' | 'linked_note';
   offsetMs?: number | null;
   label?: string;
 };
@@ -406,6 +407,7 @@ export async function processAskQuestion(
   clientUserAgent?: string | null,
   recordingMarks?: RecordingMarkForPrompt[],
   deviceId?: string | null,
+  linkedNotes?: AskLinkedNoteForPrompt[],
 ): Promise<AskAnswerResult> {
   const userContent = buildAskUserMessageContent(
     transcript,
@@ -414,6 +416,7 @@ export async function processAskQuestion(
     tasks,
     priorTurns,
     recordingMarks,
+    linkedNotes,
   );
 
   const callAsk = async (m: string): Promise<AskAnswerResult> => {

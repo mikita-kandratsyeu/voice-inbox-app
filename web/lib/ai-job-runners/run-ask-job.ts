@@ -21,6 +21,7 @@ export async function runAskJob(payload: AskJobPayload): Promise<void> {
     priorTurns,
     clientUserAgent,
     recordingMarks,
+    linkedNotes,
   } = payload;
 
   const saveAskMessage = (msgId: string, data: AskMessage) =>
@@ -37,6 +38,7 @@ export async function runAskJob(payload: AskJobPayload): Promise<void> {
       clientUserAgent,
       recordingMarks,
       deviceId,
+      linkedNotes,
     );
     await saveAskMessage(id, {
       id,

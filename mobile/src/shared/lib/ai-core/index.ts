@@ -6,6 +6,7 @@ export type {
   AiOrchestratorResult,
   AiProviderKind,
   AiTaskIntent,
+  AskLinkedNoteForPrompt,
   AskPriorTurn,
   AskRequest,
   AskTaskResult,

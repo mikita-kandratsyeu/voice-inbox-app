@@ -1,6 +1,7 @@
 import type { MeetingSummaryTemplate } from '@/entities/record';
 import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
 
+import { buildLinkedNotesPromptBlock } from '../linkedNotesForPrompt';
 import {
   buildRecordingMarksPromptBlock,
   type RecordingMarkForPrompt,
@@ -198,6 +199,10 @@ export function buildLocalAskUserContent(request: AskRequest, transcript: string
     blocks.push(buildRecordingMarksPromptBlock(request.recordingMarks));
   }
 
+  if (request.linkedNotes?.length) {
+    blocks.push(buildLinkedNotesPromptBlock(request.linkedNotes));
+  }
+
   const priorTurns = sanitizeAskPriorTurnsForLocal(request.priorTurns);
   if (priorTurns.length > 0) {
     const lines = priorTurns.map((t, i) => `Turn ${i + 1}\nQ: ${t.question}\nA: ${t.answer}`);
@@ -211,14 +216,14 @@ export function buildLocalAskUserContent(request: AskRequest, transcript: string
 
 export function buildLocalAskSystemPrompt(): string {
   return [
-    'Use ONLY the provided blocks (Transcript; optional Summary, Tasks, Recording pins, Prior conversation; and the current Question).',
+    'Use ONLY the provided blocks (Transcript; optional Summary, Tasks, Recording pins, Linked notes, Prior conversation; and the current Question).',
     'Prior conversation is earlier Q&A about the same transcript; use it for follow-ups and continuity.',
     'Answer concisely in the SAME language as the current Question.',
     'If the context does not support an answer, say so in one short sentence. Do not invent facts.',
     'Classify the answer as answerKind: plain, list, tasks, or decisions. Use list for enumerations, tasks for action items, decisions for agreements/decisions, otherwise plain.',
     'For list/tasks/decisions, include items: an array of concise strings that mirror the answer. For plain, omit items unless a short list is clearly helpful.',
     'Include evidence: 0-5 short verbatim quotes from Transcript or Recording pins that support the answer. Do not invent quotes. If no direct support exists, use [].',
-    'Evidence items: {quote, source, offsetMs, label}. source is transcript, recording_mark, summary, tasks, or prior_conversation. offsetMs only when supported by a recording pin.',
+    'Evidence items: {quote, source, offsetMs, label}. source is transcript, recording_mark, summary, tasks, linked_note, or prior_conversation. offsetMs only when supported by a recording pin.',
     'Include suggestedFollowUps: 1-3 concise follow-up questions the user may naturally ask next, based on this answer and the same recording. Avoid duplicates of the current question.',
     'No markdown. Return exactly one JSON object with answer plus optional answerKind, items, evidence, suggestedFollowUps.',
     'The answer value must be plain text only (no nested JSON, no code fences).',

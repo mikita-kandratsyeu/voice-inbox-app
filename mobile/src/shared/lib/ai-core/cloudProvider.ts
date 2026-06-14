@@ -216,6 +216,7 @@ export async function runCloudAsk(
       tasks: request.tasks,
       ...(request.priorTurns?.length ? { priorTurns: request.priorTurns } : {}),
       ...(request.recordingMarks?.length ? { recordingMarks: request.recordingMarks } : {}),
+      ...(request.linkedNotes?.length ? { linkedNotes: request.linkedNotes } : {}),
     },
     fetchOptions,
   );

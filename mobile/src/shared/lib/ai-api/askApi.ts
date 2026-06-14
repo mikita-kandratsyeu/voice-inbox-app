@@ -1,5 +1,5 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
-import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
+import type { AskAnswerKind, AskEvidence, AskLinkedNoteForPrompt } from '@/shared/lib/ai-core/types';
 import { requestAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { devWarn, diagWarn } from '@/shared/lib/appLogger';
@@ -24,6 +24,7 @@ type AskApiRequestBody = {
   tasks?: { text: string }[];
   priorTurns?: { question: string; answer: string }[];
   recordingMarks?: { offsetMs: number; label: string }[];
+  linkedNotes?: AskLinkedNoteForPrompt[];
   /** Server clamps to 300–3600; omit for API default (1 hour). */
   messageTtlSeconds?: number;
 };

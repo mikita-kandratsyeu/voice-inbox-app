@@ -8,6 +8,7 @@ import { enrichWithPollingHints, operationToJobType } from '@/lib/polling-hints'
 import { aiModelResponseFields, enrichMessageWithModelLabel } from '@/lib/ai-model-display';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
+import type { AskLinkedNoteForPrompt } from '@/lib/linked-notes-prompt';
 import type { AskJobPayload } from '@/types/ai-job';
 import type { AskMessage, Message } from '@/types';
 
@@ -32,6 +33,7 @@ export const createAsk = async (
   clientUserAgent?: string | null,
   messageTtlSeconds: number = MESSAGE_TTL_SECONDS,
   recordingMarks?: RecordingMarkForPrompt[],
+  linkedNotes?: AskLinkedNoteForPrompt[],
   aiLimitContext?: AiLimitContext,
 ): Promise<CreateAskResult> => {
   const ttl = messageTtlSeconds;
@@ -86,6 +88,7 @@ export const createAsk = async (
     priorTurns,
     clientUserAgent,
     recordingMarks,
+    linkedNotes,
   };
 
   await saveJobPayload(jobPayload);

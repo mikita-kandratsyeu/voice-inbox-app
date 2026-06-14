@@ -40,6 +40,7 @@ export const AskAiContextDisclosure = ({
 
   const hasSummary = Boolean(record.summary?.trim());
   const hasTasks = Boolean(record.tasks?.some((task) => task.text?.trim()));
+  const hasLinkedNotes = Boolean(record.linkedRecordIds?.length);
   const hasPrior = priorDepth > 0;
   const isPrivate = aiExecutionMode === 'private_experimental';
 
@@ -47,9 +48,10 @@ export const AskAiContextDisclosure = ({
     const labels = [t('recordingDetail.askContextSourceTranscript')];
     if (hasSummary) labels.push(t('recordingDetail.askContextSourceSummary'));
     if (hasTasks) labels.push(t('recordingDetail.askContextSourceTasks'));
+    if (hasLinkedNotes) labels.push(t('recordingDetail.askContextSourceLinkedNotes'));
     if (hasPrior) labels.push(t('recordingDetail.askContextSourceChat'));
     return labels;
-  }, [hasPrior, hasSummary, hasTasks, t]);
+  }, [hasLinkedNotes, hasPrior, hasSummary, hasTasks, t]);
 
   const sourcesLine = useMemo(() => sourceLabels.join(' · '), [sourceLabels]);
   const processingLine = isPrivate
@@ -74,10 +76,13 @@ export const AskAiContextDisclosure = ({
     ];
     if (hasSummary) items.push({ key: 'sum', text: t('recordingDetail.askContextBulletSummary') });
     if (hasTasks) items.push({ key: 'tasks', text: t('recordingDetail.askContextBulletTasks') });
+    if (hasLinkedNotes) {
+      items.push({ key: 'linked', text: t('recordingDetail.askContextBulletLinkedNotes') });
+    }
     if (hasPrior) items.push({ key: 'prior', text: t('recordingDetail.askContextBulletPrior') });
     items.push({ key: 'q', text: t('recordingDetail.askContextBulletQuestion') });
     return items;
-  }, [hasPrior, hasSummary, hasTasks, t]);
+  }, [hasLinkedNotes, hasPrior, hasSummary, hasTasks, t]);
 
   const footerText = isPrivate
     ? t('recordingDetail.askContextFooterPrivate')

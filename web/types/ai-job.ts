@@ -1,6 +1,7 @@
 import type { AiOperation } from '@/lib/ai-operation';
 import type { MeetingDialogueTranscriptSegment } from '@/lib/meeting-dialogue-user-prompt';
 import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
+import type { AskLinkedNoteForPrompt } from '@/lib/linked-notes-prompt';
 
 export type MeetingDialogueAuxPayload = {
   transcriptSegments?: MeetingDialogueTranscriptSegment[];
@@ -44,6 +45,7 @@ export type AskJobPayload = {
   priorTurns?: { question: string; answer: string }[];
   clientUserAgent?: string | null;
   recordingMarks?: RecordingMarkForPrompt[];
+  linkedNotes?: AskLinkedNoteForPrompt[];
 };
 
 import type { AutoOrganizeMode, AutoOrganizeTemplate } from '@/lib/auto-organize-types';

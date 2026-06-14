@@ -7,6 +7,7 @@ import {
   resolveEffectivePrivateAiProvider,
   useSettingsStore,
 } from '@/entities/settings';
+import { buildAskLinkedNotesForPrompt } from '@/features/note-links';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import {
   type AiAbortHandle,
@@ -453,6 +454,10 @@ export const useAskAI = (
 
       try {
         const recordingMarks = sanitizeRecordingMarksForPrompt(record.recordingMarks);
+        const linkedNotes = buildAskLinkedNotesForPrompt(
+          record,
+          new Map(useRecordStore.getState().records.map((item) => [item.id, item])),
+        );
 
         const runResult = await AIOrchestrator.runAsk(
           {
@@ -463,6 +468,7 @@ export const useAskAI = (
             summary: record.summary ?? undefined,
             tasks: record.tasks?.map((t) => ({ text: t.text })) ?? undefined,
             ...(recordingMarks?.length ? { recordingMarks } : {}),
+            ...(linkedNotes?.length ? { linkedNotes } : {}),
             onLocalGenerationProgress,
             abortSignal: abortHandle.signal,
           },

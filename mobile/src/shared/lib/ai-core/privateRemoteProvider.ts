@@ -1146,6 +1146,7 @@ export async function runPrivateRemoteAsk(
       request.tasks,
       request.priorTurns,
       request.recordingMarks,
+      request.linkedNotes,
     );
     const askSystemPrompt = WEB_PARITY_ASK_SYSTEM_PROMPT;
     const askMaxTokens = resolvePrivateRemoteAskMaxTokens(ctx.privateRemoteOutputBudget);
