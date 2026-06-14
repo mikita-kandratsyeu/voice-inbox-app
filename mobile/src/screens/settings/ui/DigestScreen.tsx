@@ -46,6 +46,7 @@ import {
 } from '@/shared/lib/taskDeadlineTimeDisplay';
 import { Button, HeaderIconButton, NoteMarkdown, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../lib';
 import { buildDigestAiExecutionContext } from '../lib/buildDigestAiExecutionContext';
 import {
   buildDeterministicDigest,
@@ -773,7 +774,13 @@ export const DigestScreen = () => {
 
           <SectionCard
             title={t('settings.digest.aiTitle')}
-            icon={<Newspaper size={18} color={color.accent.transcript} strokeWidth={1.8} />}
+            icon={
+              <Newspaper
+                size={18}
+                color={getSettingsIconColor(color, 'newspaper')}
+                strokeWidth={1.8}
+              />
+            }
           >
             <Text className="mb-3 text-[13px] leading-[18px]" style={{ color: color.text.muted }}>
               {aiGeneratedText}

@@ -475,7 +475,9 @@ export const AiUsageDashboardScreen = () => {
       },
       {
         key: 'digest',
-        icon: <Newspaper size={20} color={color.accent.archive} strokeWidth={1.8} />,
+        icon: (
+          <Newspaper size={20} color={getSettingsIconColor(color, 'newspaper')} strokeWidth={1.8} />
+        ),
         label: t('settings.aiUsageDashboard.features.digest.title'),
         value: t('settings.aiUsageDashboard.hybridBadge'),
         subtitle: t('settings.aiUsageDashboard.features.digest.subtitle'),
