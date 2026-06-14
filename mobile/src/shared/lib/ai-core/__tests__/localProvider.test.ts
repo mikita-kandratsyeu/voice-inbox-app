@@ -1,3 +1,21 @@
+jest.mock('react-native-quick-crypto', () => ({
+  __esModule: true,
+  createHash: () => ({
+    update: jest.fn().mockReturnThis(),
+    digest: () => 'deadbeef',
+  }),
+}));
+
+jest.mock('../localLlmSession', () => ({
+  completeLocalChat: jest.fn(),
+}));
+
+jest.mock('@/shared/lib', () => ({
+  i18n: {
+    t: (key: string) => key,
+  },
+}));
+
 import { DEFAULT_LOCAL_AI_MODEL_ID } from '@/entities/settings/model/constants';
 
 import { completeLocalChat } from '../localLlmSession';
@@ -21,16 +39,6 @@ import {
   truncateTranscriptSmart,
 } from '../localProvider';
 import type { AiExecutionContext, AskRequest } from '../types';
-
-jest.mock('../localLlmSession', () => ({
-  completeLocalChat: jest.fn(),
-}));
-
-jest.mock('@/shared/lib', () => ({
-  i18n: {
-    t: (key: string) => key,
-  },
-}));
 
 const mockedCompleteLocalChat = jest.mocked(completeLocalChat);
 

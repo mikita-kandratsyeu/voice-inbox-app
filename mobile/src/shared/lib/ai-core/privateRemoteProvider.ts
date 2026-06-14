@@ -297,12 +297,34 @@ function mapPrivateRemoteListModelsError(err: unknown): string {
   return i18n.t('aiSettings.privateProvider.modelList.loadFailed');
 }
 
+function mapPrivateRemoteHttpStatusMessage(status: number): string | null {
+  if (isAuthFailureStatus(status)) {
+    return i18n.t('aiSettings.privateProvider.healthCheck.authFailed');
+  }
+  if (status >= 500) {
+    return i18n.t('aiSettings.privateProvider.healthCheck.serverUnavailable');
+  }
+  return null;
+}
+
 function mapPrivateRemoteError(err: unknown): string {
   if (isPrivateRemoteFetchTimeout(err)) {
     return i18n.t('ai.privateRemoteServerTimeout');
   }
+  if (isPrivateRemoteNoNetwork(err)) {
+    return i18n.t('aiSettings.privateProvider.modelList.noNetwork');
+  }
+  if (isPrivateRemoteConnectionFailed(err)) {
+    return i18n.t('aiSettings.privateProvider.healthCheck.serverUnavailable');
+  }
   const mapped = mapPrivateRemoteUserFacingError(err);
   if (mapped) return mapped;
+  const message = err instanceof Error ? err.message : String(err);
+  const httpStatus = /(?:HTTP|status)\s*[: ]?\s*(\d{3})/i.exec(message)?.[1];
+  if (httpStatus) {
+    const statusMessage = mapPrivateRemoteHttpStatusMessage(Number.parseInt(httpStatus, 10));
+    if (statusMessage) return statusMessage;
+  }
   return mapLocalError(err);
 }
 

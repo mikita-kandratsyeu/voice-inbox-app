@@ -7,11 +7,18 @@ import { RetryErrorState } from '@/shared/ui';
 type ErrorStateProps = {
   color: Colors;
   onRetry: () => void;
+  errorMessage?: string | null;
   showPrivateModeCta?: boolean;
 };
 
-export const ErrorState = ({ color, onRetry, showPrivateModeCta = false }: ErrorStateProps) => {
+export const ErrorState = ({
+  color,
+  onRetry,
+  errorMessage,
+  showPrivateModeCta = false,
+}: ErrorStateProps) => {
   const { t } = useTranslation();
+  const trimmedError = errorMessage?.trim();
 
   return (
     <RetryErrorState
@@ -19,9 +26,10 @@ export const ErrorState = ({ color, onRetry, showPrivateModeCta = false }: Error
       onRetry={onRetry}
       title={t('recordingDetail.askError')}
       message={
-        showPrivateModeCta
+        trimmedError ||
+        (showPrivateModeCta
           ? t('recordingDetail.privateModeErrorHint')
-          : t('recordingDetail.askErrorContinueHint')
+          : t('recordingDetail.askErrorContinueHint'))
       }
       retryLabel={t('recordingDetail.summaryRetry')}
     />

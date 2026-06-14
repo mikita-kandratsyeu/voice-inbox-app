@@ -9,6 +9,7 @@ import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
 import { AnswerContent } from './AnswerContent';
 import { EmptyState } from './EmptyState';
 import { ErrorState } from './ErrorState';
+import { ErrorWithHistoryState } from './ErrorWithHistoryState';
 import { LoadingState } from './LoadingState';
 import { NoTranscriptState } from './NoTranscriptState';
 import { SessionRestoringSkeleton } from './SessionRestoringSkeleton';
@@ -87,10 +88,28 @@ export const AskMainContent = ({
   }
 
   if (error && !answer) {
+    const showAskHistoryWithError = history.length > 0 || Boolean(question?.trim());
+    if (showAskHistoryWithError) {
+      return (
+        <ErrorWithHistoryState
+          color={color}
+          record={liveRecord}
+          history={history}
+          question={question}
+          errorMessage={error}
+          aiExecutionMode={aiExecutionMode}
+          onRetry={onRetry}
+          onCopy={onCopy}
+          onShare={onShare}
+          showPrivateModeCta={aiExecutionMode === 'private_experimental'}
+        />
+      );
+    }
     return (
       <ErrorState
         color={color}
         onRetry={onRetry}
+        errorMessage={error}
         showPrivateModeCta={aiExecutionMode === 'private_experimental'}
       />
     );

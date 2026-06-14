@@ -1,3 +1,10 @@
+jest.mock('@/shared/lib', () => ({
+  i18n: {
+    language: 'en',
+    t: (key: string) => key,
+  },
+}));
+
 import type { VoiceRecord } from '@/entities/record';
 
 import { parseNoteDocumentAsync, shouldUseAsyncParsing } from '../parseNoteDocumentAsync';
