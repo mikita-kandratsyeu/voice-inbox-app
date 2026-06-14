@@ -12,6 +12,10 @@ import {
 } from '@/shared/ui/filterChipMetrics';
 
 import type { GraphExportBackgroundId } from '../lib/graphExportBackground';
+import {
+  getGraphExportControlTone,
+  GRAPH_EXPORT_CONTROL_HEIGHT,
+} from '../lib/graphExportControlTone';
 import { CROP_ASPECT_TEMPLATES, type CropAspectTemplateId } from '../lib/graphExportCrop';
 import { GraphExportBackgroundSelector } from './GraphExportBackgroundSelector';
 
@@ -41,7 +45,7 @@ const TEMPLATE_LABEL_KEYS: Record<
   '9:16': 'cropTemplateStory',
 };
 
-const RESET_BUTTON_SIZE = FILTER_CHIP_MIN_HEIGHT;
+const RESET_BUTTON_SIZE = GRAPH_EXPORT_CONTROL_HEIGHT;
 
 export function GraphExportCropTemplates({
   color,
@@ -54,7 +58,11 @@ export function GraphExportCropTemplates({
   onSelect,
 }: GraphExportCropTemplatesProps) {
   const { t } = useTranslation();
-  const controlsDisabled = disabled || !canReset;
+  const resetTone = getGraphExportControlTone(color, {
+    isActive: canReset,
+    disabled,
+  });
+  const resetInteractionDisabled = disabled || !canReset;
 
   return (
     <View
@@ -68,8 +76,8 @@ export function GraphExportCropTemplates({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={t('notesGraph.export.resetCrop')}
-        accessibilityState={{ disabled: controlsDisabled }}
-        disabled={controlsDisabled}
+        accessibilityState={{ disabled: resetInteractionDisabled }}
+        disabled={resetInteractionDisabled}
         hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
         onPress={() => {
           hapticLight();
@@ -77,21 +85,17 @@ export function GraphExportCropTemplates({
         }}
         style={{
           alignItems: 'center',
-          backgroundColor: canReset ? color.background.card : color.background.tertiary,
-          borderColor: color.border.default,
+          backgroundColor: resetTone.backgroundColor,
+          borderColor: resetTone.borderColor,
           borderRadius: RESET_BUTTON_SIZE / 2,
           borderWidth: 1,
           height: RESET_BUTTON_SIZE,
           justifyContent: 'center',
-          opacity: controlsDisabled ? 0.45 : 1,
+          opacity: resetTone.opacity,
           width: RESET_BUTTON_SIZE,
         }}
       >
-        <RotateCcw
-          color={canReset ? color.accent.primary : color.text.muted}
-          size={15}
-          strokeWidth={2.2}
-        />
+        <RotateCcw color={resetTone.iconColor} size={15} strokeWidth={2.2} />
       </Pressable>
 
       <GraphExportBackgroundSelector

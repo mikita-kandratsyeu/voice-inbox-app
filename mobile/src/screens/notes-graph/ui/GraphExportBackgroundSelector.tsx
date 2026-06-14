@@ -7,7 +7,7 @@ import { Pressable, Text } from 'react-native';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { hapticSelection, inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
-import { FILTER_CHIP_LABEL_STYLE, FILTER_CHIP_MIN_HEIGHT } from '@/shared/ui/filterChipMetrics';
+import { FILTER_CHIP_LABEL_STYLE } from '@/shared/ui/filterChipMetrics';
 
 import {
   GRAPH_EXPORT_CANVAS_BACKGROUND_ID,
@@ -16,6 +16,10 @@ import {
   graphExportBackgroundLabelKey,
   isGraphExportBackgroundId,
 } from '../lib/graphExportBackground';
+import {
+  getGraphExportControlTone,
+  GRAPH_EXPORT_CONTROL_HEIGHT,
+} from '../lib/graphExportControlTone';
 
 type GraphExportBackgroundSelectorProps = {
   value: GraphExportBackgroundId;
@@ -37,6 +41,10 @@ export function GraphExportBackgroundSelector({
   const label = t(`notesGraph.export.${graphExportBackgroundLabelKey(value)}`);
   const accessibilityLabel = `${t('notesGraph.export.backgroundLabel')}: ${label}`;
   const isDefaultBackground = value === GRAPH_EXPORT_CANVAS_BACKGROUND_ID;
+  const tone = getGraphExportControlTone(color, {
+    isActive: !isDefaultBackground,
+    disabled,
+  });
 
   const menuActions = useMemo<NativeMenuAction[]>(
     () => [
@@ -85,37 +93,33 @@ export function GraphExportBackgroundSelector({
         hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
         style={{
           alignItems: 'center',
-          backgroundColor: isDefaultBackground ? color.background.tertiary : color.background.card,
-          borderColor: color.border.default,
-          borderRadius: FILTER_CHIP_MIN_HEIGHT / 2,
+          backgroundColor: tone.backgroundColor,
+          borderColor: tone.borderColor,
+          borderRadius: GRAPH_EXPORT_CONTROL_HEIGHT / 2,
           borderWidth: 1,
           flex: 1,
           flexDirection: 'row',
           gap: 6,
-          height: FILTER_CHIP_MIN_HEIGHT,
+          height: GRAPH_EXPORT_CONTROL_HEIGHT,
           justifyContent: 'center',
           maxWidth: '100%',
           minWidth: 0,
-          opacity: disabled ? 0.45 : 1,
+          opacity: tone.opacity,
           paddingHorizontal: 12,
         }}
       >
-        <Palette
-          color={isDefaultBackground ? color.text.muted : color.accent.primary}
-          size={15}
-          strokeWidth={2.2}
-        />
+        <Palette color={tone.iconColor} size={15} strokeWidth={2.2} />
         <Text
           numberOfLines={1}
           style={{
             ...FILTER_CHIP_LABEL_STYLE,
-            color: isDefaultBackground ? color.text.muted : color.text.primary,
+            color: tone.textColor,
             flexShrink: 1,
           }}
         >
           {label}
         </Text>
-        <ChevronDown color={color.text.secondary} size={15} strokeWidth={2.2} />
+        <ChevronDown color={tone.chevronColor} size={15} strokeWidth={2.2} />
       </Pressable>
     </MenuView>
   );
