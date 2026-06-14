@@ -22,10 +22,10 @@ export async function CtaStoreQr(): Promise<React.ReactElement> {
   return (
     <a
       href={scanUrl}
-      className="group hidden shrink-0 flex-col items-center gap-2 border-white/10 text-center md:flex md:border-l md:pl-7 lg:pl-8"
+      className="hidden shrink-0 flex-col items-center gap-2 border-white/10 text-center md:flex md:border-l md:pl-7 lg:pl-8"
       aria-label={t('qrAria')}
     >
-      <div className="relative rounded-2xl bg-linear-to-br from-white via-white to-slate-100 p-2.5 shadow-[0_10px_28px_rgba(0,0,0,0.28)] ring-1 ring-white/30 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-[0_14px_36px_rgba(0,0,0,0.34)]">
+      <div className="relative rounded-2xl bg-linear-to-br from-white via-white to-slate-100 p-2.5 shadow-[0_10px_28px_rgba(0,0,0,0.28)] ring-1 ring-white/30">
         <div
           className="pointer-events-none absolute inset-2 rounded-xl border border-slate-900/6"
           aria-hidden
@@ -40,7 +40,7 @@ export async function CtaStoreQr(): Promise<React.ReactElement> {
           decoding="async"
         />
       </div>
-      <span className="max-w-28 text-[0.7rem] leading-snug text-white/55 transition-colors group-hover:text-white/80 sm:text-xs">
+      <span className="max-w-28 text-[0.7rem] leading-snug text-white/55 sm:text-xs">
         {t('qrCaption')}
       </span>
     </a>

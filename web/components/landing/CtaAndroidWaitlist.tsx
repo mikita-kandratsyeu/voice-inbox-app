@@ -28,7 +28,6 @@ export function CtaAndroidWaitlist(): React.ReactElement | null {
           className={[
             'inline-flex min-h-[44px] items-center justify-center rounded-lg px-2 py-1.5 text-center text-sm font-medium text-white/80',
             'underline decoration-white/35 underline-offset-[5px]',
-            'transition-colors hover:text-white hover:decoration-white/60',
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/55 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950',
           ].join(' ')}
           target="_blank"
