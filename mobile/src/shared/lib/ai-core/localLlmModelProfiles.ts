@@ -1,6 +1,7 @@
 import type { CompletionParams, ContextParams } from 'llama.rn';
 
 import type { LocalAiModelId } from '@/entities/settings';
+import type { DeviceCapabilities } from '@/shared/lib/deviceCapabilities';
 
 export type LocalLlmCompletionIntent = 'json' | 'chat';
 
@@ -15,19 +16,6 @@ export const LOCAL_LLM_N_CTX_COMPACT = 10_240;
 
 /** Gemma 2 2B — slightly larger window for sliding-window attention. */
 export const LOCAL_LLM_N_CTX_GEMMA = 14_336;
-
-/**
- * Shared initLlama context params.
- * n_batch/n_ubatch are raised vs the old 512/256: on iOS the GPU pipeline can
- * saturate larger batches during the prefill phase without RAM pressure because
- * Metal manages buffer reuse. On Android (CPU-only) llama.rn caps n_batch at the
- * smaller value anyway, so this is safe cross-platform.
- */
-const SHARED_CONTEXT: Partial<ContextParams> = {
-  n_parallel: 1,
-  n_batch: 1024,
-  n_ubatch: 512,
-};
 
 type LocalLlmModelProfile = {
   /** KV context for initLlama; omit to use DEFAULT_LOCAL_LLM_N_CTX. */
@@ -122,8 +110,16 @@ export function getLocalLlmAskTemperature(modelId: LocalAiModelId, fallback: num
   return v ?? fallback;
 }
 
-export function getLocalLlmContextParams(): Partial<ContextParams> {
-  return { ...SHARED_CONTEXT };
+/**
+ * Returns context params optimized for device capabilities.
+ * Batch sizes scale with device tier for optimal throughput.
+ */
+export function getLocalLlmContextParams(capabilities: DeviceCapabilities): Partial<ContextParams> {
+  return {
+    n_parallel: 1,
+    n_batch: capabilities.llmBatchSize,
+    n_ubatch: capabilities.llmUbatchSize,
+  };
 }
 
 export function mergeLocalLlmCompletionParams(

@@ -16,9 +16,19 @@ const ALL_LOCAL_IDS: LocalAiModelId[] = [
   'local/gemma-2-2b-it-q4_k_m',
 ];
 
+// Mock device capabilities to provide consistent test environment
+jest.mock('@/shared/lib/deviceCapabilities', () => ({
+  getDeviceCapabilities: () => ({
+    memoryTier: 'medium',
+    llmBatchSize: 1024,
+    llmUbatchSize: 512,
+  }),
+}));
+
 describe('localLlmModelProfiles', () => {
-  it('uses single parallel slot and GPU-optimised batches', () => {
-    expect(getLocalLlmContextParams()).toMatchObject({
+  it('uses single parallel slot and device-optimized batches', () => {
+    const capabilities = { llmBatchSize: 1024, llmUbatchSize: 512 } as any;
+    expect(getLocalLlmContextParams(capabilities)).toMatchObject({
       n_parallel: 1,
       n_batch: 1024,
       n_ubatch: 512,
