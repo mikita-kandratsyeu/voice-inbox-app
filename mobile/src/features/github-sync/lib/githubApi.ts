@@ -1,3 +1,4 @@
+import { calculateOptimalConcurrency } from '@/features/git-remote-sync';
 import { nitroFetch } from '@/shared/lib/fetch';
 import { isArray, isRecord, isString } from '@/shared/lib/type-guards';
 
@@ -448,7 +449,7 @@ async function createBlobsParallel(
   owner: string,
   repo: string,
   files: Map<string, string>,
-  concurrency = 4,
+  concurrency: number,
   onBlobUploaded?: (uploaded: number, total: number) => void,
 ): Promise<Map<string, string>> {
   const entries = [...files.entries()];
@@ -479,7 +480,8 @@ async function createBlobsParallel(
     }
   }
 
-  const workers = Array.from({ length: Math.min(concurrency, entries.length) }, () => worker());
+  const effectiveConcurrency = Math.min(concurrency, entries.length);
+  const workers = Array.from({ length: effectiveConcurrency }, () => worker());
   await Promise.all(workers);
 
   if (firstError) {
@@ -658,12 +660,13 @@ async function createGithubCommitWithFilesInternal(
     relativeFiles.set(rel, content);
   }
 
+  const optimalConcurrency = calculateOptimalConcurrency(relativeFiles.size);
   const blobShas = await createBlobsParallel(
     accessToken,
     owner,
     repo,
     relativeFiles,
-    4,
+    optimalConcurrency,
     onUploadProgress,
   );
 

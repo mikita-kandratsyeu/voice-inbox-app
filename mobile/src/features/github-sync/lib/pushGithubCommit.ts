@@ -29,6 +29,7 @@ import {
   setGithubSyncLastSyncedAt,
 } from './githubSyncState';
 import {
+  calculateGithubSyncTimeout,
   GITHUB_SYNC_TIMEOUT_ERROR,
   isGithubSyncTimeoutError,
   withGithubSyncTimeout,
@@ -98,13 +99,21 @@ export async function pushGithubCommit(params: {
   const { secrets, folders, reportProgress = false } = params;
   const records = params.records ?? (await loadRecordsForRemoteSync());
 
+  const snapshot = await buildGithubSnapshot({
+    records,
+    folders,
+    basePath: secrets.basePath,
+  });
+  const fileCount = snapshot.files.size;
+  const dynamicTimeout = calculateGithubSyncTimeout(fileCount);
+
   return pushRemoteCommit({
     records,
     folders,
     reportProgress,
     adapter: createGithubPushAdapter(secrets, reportProgress),
     isProActive: isProActiveFromStorageSync,
-    withTimeout: withGithubSyncTimeout,
+    withTimeout: <T>(promise: Promise<T>) => withGithubSyncTimeout(promise, dynamicTimeout),
     isTimeoutError: isGithubSyncTimeoutError,
     timeoutErrorMessage: GITHUB_SYNC_TIMEOUT_ERROR,
   });

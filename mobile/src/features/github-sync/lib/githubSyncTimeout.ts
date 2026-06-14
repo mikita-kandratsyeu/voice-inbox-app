@@ -1,3 +1,5 @@
+import { calculateSyncTimeout } from '@/features/git-remote-sync';
+
 import { GITHUB_SYNC_TIMEOUT_MS } from './constants';
 
 export const GITHUB_SYNC_TIMEOUT_ERROR = 'github_sync_timeout';
@@ -10,16 +12,15 @@ export function isGithubSyncTimeoutError(err: unknown): boolean {
   );
 }
 
-export function withGithubSyncTimeout<T>(
-  promise: Promise<T>,
-  timeoutMs: number = GITHUB_SYNC_TIMEOUT_MS,
-): Promise<T> {
+export function withGithubSyncTimeout<T>(promise: Promise<T>, timeoutMs?: number): Promise<T> {
+  const effectiveTimeout = timeoutMs ?? GITHUB_SYNC_TIMEOUT_MS;
+
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => {
       reject(
         Object.assign(new Error(GITHUB_SYNC_TIMEOUT_ERROR), { code: GITHUB_SYNC_TIMEOUT_ERROR }),
       );
-    }, timeoutMs);
+    }, effectiveTimeout);
 
     promise.then(
       (value) => {
@@ -32,4 +33,8 @@ export function withGithubSyncTimeout<T>(
       },
     );
   });
+}
+
+export function calculateGithubSyncTimeout(fileCount: number): number {
+  return calculateSyncTimeout(fileCount);
 }

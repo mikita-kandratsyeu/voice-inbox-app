@@ -29,6 +29,7 @@ import {
   setGitlabSyncLastSyncedAt,
 } from './gitlabSyncState';
 import {
+  calculateGitlabSyncTimeout,
   GITLAB_SYNC_TIMEOUT_ERROR,
   isGitlabSyncTimeoutError,
   withGitlabSyncTimeout,
@@ -98,13 +99,21 @@ export async function pushGitlabCommit(params: {
   const { secrets, folders, reportProgress = false } = params;
   const records = params.records ?? (await loadRecordsForRemoteSync());
 
+  const snapshot = await buildGitlabSnapshot({
+    records,
+    folders,
+    basePath: secrets.basePath,
+  });
+  const fileCount = snapshot.files.size;
+  const dynamicTimeout = calculateGitlabSyncTimeout(fileCount);
+
   return pushRemoteCommit({
     records,
     folders,
     reportProgress,
     adapter: createGitlabPushAdapter(secrets, reportProgress),
     isProActive: isProActiveFromStorageSync,
-    withTimeout: withGitlabSyncTimeout,
+    withTimeout: <T>(promise: Promise<T>) => withGitlabSyncTimeout(promise, dynamicTimeout),
     isTimeoutError: isGitlabSyncTimeoutError,
     timeoutErrorMessage: GITLAB_SYNC_TIMEOUT_ERROR,
   });

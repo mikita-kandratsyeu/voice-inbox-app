@@ -61,6 +61,7 @@ export {
   type RemoteSyncNowController,
   type RemoteSyncNowResult,
 } from './lib/runRemoteSyncNow';
+export { calculateOptimalConcurrency, calculateSyncTimeout } from './lib/syncOptimization';
 export type {
   GitRemoteProvider,
   RemoteBranchSummary,
