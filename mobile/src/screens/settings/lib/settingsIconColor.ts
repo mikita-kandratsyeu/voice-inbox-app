@@ -59,7 +59,7 @@ const SETTINGS_ICON_COLOR: Record<SettingsIconId, (color: Colors) => string> = {
   lockKeyhole: (c) => c.onboarding.lock.color,
   mic: (c) => c.accent.transcript,
   moon: (c) => c.accent.transcript,
-  newspaper: (c) => c.accent.transcript,
+  newspaper: (c) => c.accent.archive,
   refreshCw: (c) => c.accent.success,
   rotateCcw: (c) => c.accent.cache,
   scanFace: (c) => c.accent.success,
