@@ -25,7 +25,9 @@ export function resolveGraphEdgeEmphasis(
   const touchesActive =
     activeNodeId != null && (edge.sourceId === activeNodeId || edge.targetId === activeNodeId);
 
-  if (touchesActive) return 'highlighted';
+  if (activeNodeId != null) {
+    return touchesActive ? 'highlighted' : 'dimmed';
+  }
 
   if (matchedNodeIds && matchedNodeIds.size > 0) {
     const sourceMatch = matchedNodeIds.has(edge.sourceId);

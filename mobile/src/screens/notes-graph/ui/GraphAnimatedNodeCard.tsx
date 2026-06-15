@@ -7,7 +7,7 @@ import {
   ListChecks,
   Tag as TagIcon,
 } from 'lucide-react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
@@ -201,6 +201,7 @@ type AnimatedNodeCardShellProps = {
   color: Colors;
   dimmed: boolean;
   active: boolean;
+  neighbor: boolean;
   highlighted: boolean;
   width: number;
   minHeight: number;
@@ -217,6 +218,7 @@ function AnimatedNodeCardShell({
   color,
   dimmed,
   active,
+  neighbor,
   highlighted,
   width,
   minHeight,
@@ -227,9 +229,19 @@ function AnimatedNodeCardShell({
   children,
   taskStyle = false,
 }: AnimatedNodeCardShellProps) {
-  const idleBorderWidth = active ? 2.5 : highlighted ? 2 : 1;
-  const idleOpacity = dimmed ? 0.32 : 1;
+  const idleBorderWidth = active ? 2.5 : neighbor ? 2 : highlighted ? 2 : 1;
+  const idleOpacity = dimmed ? 0.18 : 1;
   const hasStripe = accentStripeColor != null;
+  const selectionAccent = color.accent.primary;
+  const neighborBorderColor = useMemo(() => withAlphaHex(selectionAccent, 0.72), [selectionAccent]);
+  const selectionGlowBorderColor = useMemo(
+    () => withAlphaHex(selectionAccent, 0.48),
+    [selectionAccent],
+  );
+  const selectionGlowBackgroundColor = useMemo(
+    () => withAlphaHex(selectionAccent, 0.1),
+    [selectionAccent],
+  );
 
   const animatedShellStyle = useAnimatedStyle(() => {
     const phase = Math.round(interactionPhase.value);
@@ -238,47 +250,75 @@ function AnimatedNodeCardShell({
       phase >= GRAPH_NODE_INTERACTION_PRESSING && phase < GRAPH_NODE_INTERACTION_DRAGGING ? 1 : 0;
     const interactive = dragging > 0 || pressing > 0;
 
-    // When active or highlighted, always show full opacity even if dimmed
-    const shouldOverrideDimming = active || highlighted;
-    const opacity = interactive || shouldOverrideDimming ? 1 : dimmed ? idleOpacity : idleOpacity;
+    const shouldOverrideDimming = active || neighbor || highlighted;
+    const opacity = interactive || shouldOverrideDimming ? 1 : idleOpacity;
 
-    const borderWidth = dragging > 0 ? 2.5 : pressing > 0 ? 2 : idleBorderWidth;
+    const borderWidth = dragging > 0 ? 2.5 : pressing > 0 ? 2.5 : idleBorderWidth;
 
-    const shadowOpacity = dragging
-      ? color.shadow.opacity * 2.4
-      : pressing
-        ? color.shadow.opacity * 1.1
-        : taskStyle
-          ? color.shadow.opacity * 0.8
-          : color.shadow.opacity * 1.1;
+    const shadowOpacity = active
+      ? dragging
+        ? color.shadow.opacity * 2
+        : color.shadow.opacity * 2.8
+      : dragging
+        ? color.shadow.opacity * 2.4
+        : pressing
+          ? color.shadow.opacity * 1.1
+          : taskStyle
+            ? color.shadow.opacity * 0.8
+            : color.shadow.opacity * 1.1;
 
-    const shadowRadius = dragging > 0 ? 10 : pressing > 0 ? 6 : taskStyle ? 6 : 9;
-    const elevation = dragging > 0 ? 6 : pressing > 0 ? 3 : taskStyle ? 2 : 4;
+    const shadowRadius = active
+      ? dragging
+        ? 12
+        : 14
+      : dragging > 0
+        ? 10
+        : pressing > 0
+          ? 6
+          : taskStyle
+            ? 6
+            : 9;
+    const elevation = active
+      ? dragging
+        ? 8
+        : 10
+      : dragging > 0
+        ? 6
+        : pressing > 0
+          ? 3
+          : taskStyle
+            ? 2
+            : 4;
 
     return {
       opacity,
       borderWidth,
-      borderColor: interactive
-        ? color.accent.primary
-        : active || highlighted
-          ? color.accent.primary
-          : color.border.default,
-      shadowColor: color.shadow.color,
+      borderColor:
+        interactive || active
+          ? selectionAccent
+          : neighbor
+            ? neighborBorderColor
+            : highlighted
+              ? selectionAccent
+              : color.border.default,
+      shadowColor: active ? selectionAccent : color.shadow.color,
       shadowOpacity,
       shadowRadius,
-      shadowOffset: { width: 0, height: dragging > 0 ? 4 : pressing > 0 ? 2 : 3 },
+      shadowOffset: { width: 0, height: dragging > 0 ? 4 : active ? 0 : pressing > 0 ? 2 : 3 },
       elevation,
     };
   }, [
     active,
-    highlighted,
-    color.accent.primary,
     color.border.default,
     color.shadow.color,
     color.shadow.opacity,
     dimmed,
+    highlighted,
     idleBorderWidth,
     idleOpacity,
+    neighbor,
+    neighborBorderColor,
+    selectionAccent,
     taskStyle,
   ]);
 
@@ -291,37 +331,55 @@ function AnimatedNodeCardShell({
   );
 
   return (
-    <Animated.View
-      style={[
-        {
-          width,
-          minHeight,
-          borderRadius,
-          backgroundColor,
-          overflow: 'hidden',
-          flexDirection: hasStripe ? 'row' : undefined,
-          alignItems: hasStripe ? 'stretch' : undefined,
-          paddingHorizontal: hasStripe ? 0 : taskStyle ? 10 : 0,
-          paddingVertical: hasStripe ? 0 : taskStyle ? 8 : 0,
-        },
-        animatedShellStyle,
-      ]}
-    >
-      {hasStripe ? (
+    <View style={{ width, minHeight, overflow: 'visible' }}>
+      {active ? (
         <View
+          pointerEvents="none"
           style={{
-            width: 3,
-            alignSelf: 'stretch',
-            backgroundColor: accentStripeColor,
+            position: 'absolute',
+            top: -6,
+            left: -6,
+            right: -6,
+            bottom: -6,
+            borderRadius: borderRadius + 6,
+            borderWidth: 1.5,
+            borderColor: selectionGlowBorderColor,
+            backgroundColor: selectionGlowBackgroundColor,
           }}
         />
       ) : null}
-      {hasStripe ? (
-        <View style={{ flex: 1, paddingHorizontal: 10, paddingVertical: 9 }}>{content}</View>
-      ) : (
-        content
-      )}
-    </Animated.View>
+      <Animated.View
+        style={[
+          {
+            width,
+            minHeight,
+            borderRadius,
+            backgroundColor,
+            overflow: 'hidden',
+            flexDirection: hasStripe ? 'row' : undefined,
+            alignItems: hasStripe ? 'stretch' : undefined,
+            paddingHorizontal: hasStripe ? 0 : taskStyle ? 10 : 0,
+            paddingVertical: hasStripe ? 0 : taskStyle ? 8 : 0,
+          },
+          animatedShellStyle,
+        ]}
+      >
+        {hasStripe ? (
+          <View
+            style={{
+              width: 3,
+              alignSelf: 'stretch',
+              backgroundColor: accentStripeColor,
+            }}
+          />
+        ) : null}
+        {hasStripe ? (
+          <View style={{ flex: 1, paddingHorizontal: 10, paddingVertical: 9 }}>{content}</View>
+        ) : (
+          content
+        )}
+      </Animated.View>
+    </View>
   );
 }
 
@@ -548,6 +606,7 @@ export function GraphAnimatedNodeCard({
   color,
   dimmed,
   active,
+  neighbor,
   highlighted,
   nodeKind,
   accentStripeColor,
@@ -558,6 +617,7 @@ export function GraphAnimatedNodeCard({
   color: Colors;
   dimmed: boolean;
   active: boolean;
+  neighbor: boolean;
   highlighted: boolean;
   nodeKind: GraphNode['kind'];
   accentStripeColor?: string;
@@ -574,6 +634,7 @@ export function GraphAnimatedNodeCard({
       color={color}
       dimmed={dimmed}
       active={active}
+      neighbor={neighbor}
       highlighted={highlighted}
       width={width}
       minHeight={minHeight}

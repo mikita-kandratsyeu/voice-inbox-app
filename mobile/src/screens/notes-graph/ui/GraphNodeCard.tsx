@@ -54,6 +54,7 @@ export function GraphNodeCard({
   highlighted,
   dimmed = false,
   active = false,
+  neighbor = false,
   interactionPhase,
   onPress,
   connectionCount = 0,
@@ -61,6 +62,7 @@ export function GraphNodeCard({
   folderIcon?: string;
   dimmed?: boolean;
   active?: boolean;
+  neighbor?: boolean;
   connectionCount?: number;
 }) {
   const { t } = useTranslation();
@@ -79,6 +81,7 @@ export function GraphNodeCard({
         color={color}
         dimmed={dimmed}
         active={isActive}
+        neighbor={neighbor}
         highlighted={highlighted}
         nodeKind="task"
         onPress={onPress}
@@ -129,6 +132,7 @@ export function GraphNodeCard({
         color={color}
         dimmed={dimmed}
         active={isActive}
+        neighbor={neighbor}
         highlighted={highlighted}
         nodeKind="record"
         accentStripeColor={accentColor}

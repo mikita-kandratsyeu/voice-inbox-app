@@ -17,6 +17,11 @@ import { buildGraphNodeConnectionCounts } from '../lib/countGraphNodeConnections
 import { snapGraphPointToGrid } from '../lib/graphSnapGrid';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
 import { RECORD_NODE_WIDTH, TASK_NODE_WIDTH } from '../lib/graphTypes';
+import {
+  buildGraphActiveNeighborIds,
+  graphNodeStackOrder,
+  resolveGraphNodeVisualState,
+} from '../lib/resolveGraphNodeVisualState';
 import { GraphNodeCard } from './GraphNodeCard';
 import {
   GRAPH_NODE_INTERACTION_DRAGGING,
@@ -44,20 +49,11 @@ type GraphNodeLayerProps = {
   onNodeFocus: (nodeId: string) => void;
 };
 
-function nodeIsDimmed(
-  nodeId: string,
-  matchedNodeIds: ReadonlySet<string> | null,
-  activeNodeId: string | null,
-): boolean {
-  if (!matchedNodeIds || matchedNodeIds.size === 0) return false;
-  if (nodeId === activeNodeId) return false;
-  return !matchedNodeIds.has(nodeId);
-}
-
 function DraggableNodeShell({
   node,
   canvasScale,
   layoutRestoreToken,
+  stackOrder = 0,
   onDragStart,
   onDragEnd,
   onDragCancel,
@@ -68,6 +64,7 @@ function DraggableNodeShell({
   node: GraphNode;
   canvasScale: SharedValue<number>;
   layoutRestoreToken: number;
+  stackOrder?: number;
   onDragStart: () => void;
   onDragEnd: (nodeId: string, x: number, y: number) => void;
   onDragCancel: () => void;
@@ -221,18 +218,21 @@ function DraggableNodeShell({
     nodeTop,
   ]);
 
-  const shellStyle = useAnimatedStyle(() => ({
-    position: 'absolute',
-    left: nodeLeft.value + dragOffsetX.value,
-    top: nodeTop.value + dragOffsetY.value,
-    width: nodeWidth,
-    zIndex:
-      interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING
-        ? 20
-        : interactionPhase.value >= GRAPH_NODE_INTERACTION_PRESSING
-          ? 10
-          : 0,
-  }));
+  const shellStyle = useAnimatedStyle(
+    () => ({
+      position: 'absolute',
+      left: nodeLeft.value + dragOffsetX.value,
+      top: nodeTop.value + dragOffsetY.value,
+      width: nodeWidth,
+      zIndex:
+        interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING
+          ? 20
+          : interactionPhase.value >= GRAPH_NODE_INTERACTION_PRESSING
+            ? 10
+            : stackOrder,
+    }),
+    [stackOrder],
+  );
 
   return (
     <GestureDetector gesture={dragGesture}>
@@ -251,6 +251,7 @@ type GraphNodeItemProps = {
   dimmed: boolean;
   active: boolean;
   highlighted: boolean;
+  neighbor: boolean;
   connectionCount: number;
   onRecordPress: (recordId: string) => void;
   onTaskPress: (recordId: string, taskId: string) => void;
@@ -270,6 +271,7 @@ const GraphNodeItem = React.memo(function GraphNodeItem({
   dimmed,
   active,
   highlighted,
+  neighbor,
   connectionCount,
   onRecordPress,
   onTaskPress,
@@ -310,6 +312,7 @@ const GraphNodeItem = React.memo(function GraphNodeItem({
       node={node}
       canvasScale={canvasScale}
       layoutRestoreToken={layoutRestoreToken}
+      stackOrder={graphNodeStackOrder({ active, neighbor, dimmed, highlighted })}
       onDragStart={onNodeDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={onNodeDragCancel}
@@ -327,6 +330,7 @@ const GraphNodeItem = React.memo(function GraphNodeItem({
           highlighted={highlighted}
           dimmed={dimmed}
           active={active}
+          neighbor={neighbor}
           connectionCount={connectionCount}
           interactionPhase={interactionPhase}
         />
@@ -354,6 +358,10 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
   layoutRestoreToken = 0,
 }: GraphNodeLayerProps) {
   const connectionCountByNodeId = useMemo(() => buildGraphNodeConnectionCounts(edges), [edges]);
+  const activeNeighborIds = useMemo(
+    () => (activeNodeId ? buildGraphActiveNeighborIds(activeNodeId, edges) : new Set<string>()),
+    [activeNodeId, edges],
+  );
 
   const sortedNodes = useMemo(() => {
     const tasks = nodes.filter((n) => n.kind === 'task');
@@ -369,9 +377,12 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
       {sortedNodes.map((node) => {
         const folder =
           node.record?.folderId != null ? foldersById.get(node.record.folderId) : undefined;
-        const dimmed = nodeIsDimmed(node.id, matchedNodeIds, activeNodeId);
-        const active = activeNodeId === node.id;
-        const highlighted = active || (matchedNodeIds?.has(node.id) ?? false);
+        const visualState = resolveGraphNodeVisualState(
+          node.id,
+          activeNodeId,
+          activeNeighborIds,
+          matchedNodeIds,
+        );
 
         return (
           <GraphNodeItem
@@ -380,9 +391,10 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
             color={color}
             folder={folder}
             isProActive={isProActive}
-            dimmed={dimmed}
-            active={active}
-            highlighted={highlighted}
+            dimmed={visualState.dimmed}
+            active={visualState.active}
+            neighbor={visualState.neighbor}
+            highlighted={visualState.highlighted}
             connectionCount={connectionCountByNodeId.get(node.id) ?? 0}
             onRecordPress={onRecordPress}
             onTaskPress={onTaskPress}

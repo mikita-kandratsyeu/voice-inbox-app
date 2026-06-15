@@ -26,6 +26,10 @@ describe('resolveGraphEdgeEmphasis', () => {
     expect(resolveGraphEdgeEmphasis(edge, null, 'record:a')).toBe('highlighted');
   });
 
+  it('dims edges not connected to the active node', () => {
+    expect(resolveGraphEdgeEmphasis(edge, null, 'record:c')).toBe('dimmed');
+  });
+
   it('highlights edges between matched search nodes', () => {
     expect(resolveGraphEdgeEmphasis(edge, new Set(['record:a', 'record:b']), null)).toBe(
       'highlighted',
