@@ -10,7 +10,7 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
-import Animated, { interpolate, type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 
 import { FolderLucideIcon } from '@/entities/folder/lib/folderLucideIcons';
 import type { Colors } from '@/shared/config';
@@ -232,7 +232,7 @@ function AnimatedNodeCardShell({
   const hasStripe = accentStripeColor != null;
 
   const animatedShellStyle = useAnimatedStyle(() => {
-    const phase = interactionPhase.value;
+    const phase = Math.round(interactionPhase.value);
     const dragging = phase >= GRAPH_NODE_INTERACTION_DRAGGING ? 1 : 0;
     const pressing =
       phase >= GRAPH_NODE_INTERACTION_PRESSING && phase < GRAPH_NODE_INTERACTION_DRAGGING ? 1 : 0;
@@ -240,26 +240,20 @@ function AnimatedNodeCardShell({
 
     // When active or highlighted, always show full opacity even if dimmed
     const shouldOverrideDimming = active || highlighted;
-    const opacity = shouldOverrideDimming
-      ? 1
-      : dimmed
-        ? interpolate(phase, [0, 1, 2], [idleOpacity, 0.5, 1])
-        : idleOpacity;
+    const opacity = interactive || shouldOverrideDimming ? 1 : dimmed ? idleOpacity : idleOpacity;
 
     const borderWidth = dragging > 0 ? 2.5 : pressing > 0 ? 2 : idleBorderWidth;
 
     const shadowOpacity = dragging
-      ? color.shadow.opacity * 3.2
+      ? color.shadow.opacity * 2.4
       : pressing
-        ? color.shadow.opacity * 1.2
+        ? color.shadow.opacity * 1.1
         : taskStyle
           ? color.shadow.opacity * 0.8
           : color.shadow.opacity * 1.1;
 
-    const shadowRadius = dragging > 0 ? 14 : pressing > 0 ? 8 : taskStyle ? 6 : 9;
-    const elevation = dragging > 0 ? 8 : pressing > 0 ? 4 : taskStyle ? 2 : 4;
-
-    const scale = dragging > 0 ? 1.05 : pressing > 0 ? 0.98 : 1;
+    const shadowRadius = dragging > 0 ? 10 : pressing > 0 ? 6 : taskStyle ? 6 : 9;
+    const elevation = dragging > 0 ? 6 : pressing > 0 ? 3 : taskStyle ? 2 : 4;
 
     return {
       opacity,
@@ -272,9 +266,8 @@ function AnimatedNodeCardShell({
       shadowColor: color.shadow.color,
       shadowOpacity,
       shadowRadius,
-      shadowOffset: { width: 0, height: dragging > 0 ? 6 : pressing > 0 ? 1 : 3 },
+      shadowOffset: { width: 0, height: dragging > 0 ? 4 : pressing > 0 ? 2 : 3 },
       elevation,
-      transform: [{ scale }],
     };
   }, [
     active,

@@ -141,9 +141,7 @@ function DraggableNodeShell({
       .onBegin(() => {
         'worklet';
         scheduleOnRN(handleFocus);
-        interactionPhase.value = withTiming(1, {
-          duration: 120,
-        });
+        interactionPhase.value = GRAPH_NODE_INTERACTION_PRESSING;
       })
       .onFinalize(() => {
         'worklet';
