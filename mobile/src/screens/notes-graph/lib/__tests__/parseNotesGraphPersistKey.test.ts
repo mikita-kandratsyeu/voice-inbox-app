@@ -104,6 +104,7 @@ describe('parseNotesGraphPersistKey', () => {
       folderId: 'folder-1',
       tags: ['beta', 'alpha'],
       showTasks: true,
+      showCompletedTasks: true,
       showArchived: false,
       edgeVisibility: {
         contains: true,

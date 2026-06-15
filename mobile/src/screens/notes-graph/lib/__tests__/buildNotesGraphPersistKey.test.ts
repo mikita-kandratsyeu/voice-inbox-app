@@ -31,6 +31,7 @@ const filters: GraphFilters = {
   folderId: null,
   tags: [],
   showTasks: false,
+  showCompletedTasks: false,
   showArchived: false,
   edgeVisibility: {
     ...DEFAULT_EDGE_VISIBILITY,

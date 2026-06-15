@@ -666,7 +666,20 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       translateY.value = withTiming(clamped.translateY, timing);
     });
 
-  const canvasGesture = Gesture.Simultaneous(Gesture.Simultaneous(pinch, pan), doubleTap);
+  const singleTap = Gesture.Tap()
+    .numberOfTaps(1)
+    .maxDuration(250)
+    .maxDistance(PAN_ACTIVATION_DISTANCE)
+    .onEnd(() => {
+      'worklet';
+      if (onResetView) {
+        scheduleOnRN(onResetView);
+      }
+    });
+
+  const tapGestures = Gesture.Exclusive(doubleTap, singleTap);
+
+  const canvasGesture = Gesture.Simultaneous(Gesture.Simultaneous(pinch, pan), tapGestures);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [

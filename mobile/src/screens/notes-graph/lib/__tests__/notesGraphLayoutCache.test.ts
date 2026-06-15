@@ -34,6 +34,7 @@ function makeRecord(id: string, title: string): VoiceRecord {
 const filters = {
   ...DEFAULT_NOTES_GRAPH_FILTERS,
   showTasks: false,
+  showCompletedTasks: false,
 };
 
 describe('notesGraphLayoutCache', () => {

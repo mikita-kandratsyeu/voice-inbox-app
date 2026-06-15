@@ -28,6 +28,7 @@ const filters = {
   folderId: null,
   tags: [] as string[],
   showTasks: false,
+  showCompletedTasks: false,
   showArchived: false,
   edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY, contains: false },
   layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
@@ -91,6 +92,7 @@ describe('buildNotesGraphLayout', () => {
     const fullTasks = {
       ...filters,
       showTasks: true,
+      showCompletedTasks: true,
       edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
     };
     const simplified = buildNotesGraphLayout(records, fullTasks, 200, null, 390, 800);

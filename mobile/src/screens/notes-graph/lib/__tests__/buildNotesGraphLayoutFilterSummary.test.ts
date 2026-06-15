@@ -15,6 +15,7 @@ const baseFilters: GraphFilters = {
   folderId: null,
   tags: [],
   showTasks: true,
+  showCompletedTasks: true,
   showArchived: false,
   edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
   layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
