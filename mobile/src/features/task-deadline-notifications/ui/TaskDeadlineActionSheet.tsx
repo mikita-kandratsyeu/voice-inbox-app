@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { CheckCircle2, Clock3, FileText, Sun } from 'lucide-react-native';
+import { CheckCircle2, Clock3, FileText } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -132,12 +132,7 @@ export function TaskDeadlineActionSheet({
       ? SNOOZE_PRESETS.map((preset) => ({
           key: preset,
           label: snoozeLabel(preset),
-          icon:
-            preset === 'tomorrow' ? (
-              <Sun size={iconSize} color={color.accent.cache} strokeWidth={2} />
-            ) : (
-              <Clock3 size={iconSize} color={color.accent.primary} strokeWidth={2} />
-            ),
+          icon: null,
           onPress: () => handleSnooze(preset),
         }))
       : [
