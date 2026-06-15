@@ -3,13 +3,13 @@ import type { PanGestureHandlerEventPayload } from 'react-native-gesture-handler
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
-  runOnJS,
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { ANIMATION_DURATIONS, GESTURE_THRESHOLDS, SPRING_CONFIGS } from '@/shared/config';
 import { hapticMedium } from '@/shared/lib';
@@ -54,23 +54,19 @@ export const SwipeableListRow = memo(function SwipeableListRow({
 
   const contextValue = useMemo<SwipeableListRowContextValue>(() => ({ isSwiping }), [isSwiping]);
 
-  const collapseAndExecute = () => {
-    collapseOpacity.value = withTiming(
-      0,
-      { duration: ANIMATION_DURATIONS.collapse },
-      (finished) => {
-        if (finished) {
-          runOnJS(onSwipeAction)();
-        }
-      },
-    );
-  };
-
   useAnimatedReaction(
     () => shouldExecute.value,
     (current, previous) => {
       if (!current || current === previous) return;
-      collapseAndExecute();
+      collapseOpacity.value = withTiming(
+        0,
+        { duration: ANIMATION_DURATIONS.collapse },
+        (finished) => {
+          if (finished) {
+            scheduleOnRN(onSwipeAction);
+          }
+        },
+      );
       shouldExecute.value = false;
     },
   );
@@ -80,7 +76,7 @@ export const SwipeableListRow = memo(function SwipeableListRow({
     .failOffsetY([-GESTURE_THRESHOLDS.failOffset, GESTURE_THRESHOLDS.failOffset])
     .onStart(() => {
       cancelAnimation(translateX);
-      runOnJS(setIsSwiping)(true);
+      scheduleOnRN(setIsSwiping, true);
     })
     .onUpdate((e: PanGestureHandlerEventPayload) => {
       translateX.value = Math.min(0, e.translationX);
@@ -89,7 +85,7 @@ export const SwipeableListRow = memo(function SwipeableListRow({
       const threshold = -swipeThreshold;
       if (e.translationX < threshold) {
         if (hapticFeedback) {
-          runOnJS(hapticMedium)();
+          scheduleOnRN(hapticMedium);
         }
         translateX.value = withTiming(-flyDistance, { duration: 220 }, (finished) => {
           if (finished) {
@@ -99,10 +95,10 @@ export const SwipeableListRow = memo(function SwipeableListRow({
       } else {
         translateX.value = withSpring(0, SPRING_CONFIGS.gentle);
       }
-      runOnJS(setIsSwiping)(false);
+      scheduleOnRN(setIsSwiping, false);
     })
     .onFinalize(() => {
-      runOnJS(setIsSwiping)(false);
+      scheduleOnRN(setIsSwiping, false);
     });
 
   const rowStyle = useAnimatedStyle(
