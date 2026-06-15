@@ -1,6 +1,5 @@
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useFolderStore } from '@/entities/folder';
@@ -8,9 +7,9 @@ import type { TaskItem } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 
 import { applyTaskCompletion, applyTaskReopen, patchTaskInList } from '../lib/applyTaskCompletion';
-import { buildFollowUpNoteDraft } from '../lib/buildFollowUpNoteDraft';
 import type { TaskCompletionTarget } from '../lib/types';
-import { usePendingTaskFollowUpStore } from './pendingTaskFollowUpStore';
+import { useFollowUpNavigation } from './useFollowUpNavigation';
+import { useTaskPersistence } from './useTaskPersistence';
 
 type UseTaskCompletionFlowOptions = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
@@ -23,28 +22,23 @@ export function useTaskCompletionFlow({
   onUpdateError,
   onTaskCompleted,
 }: UseTaskCompletionFlowOptions) {
-  const { t } = useTranslation();
   const records = useRecordStore((s) => s.records);
   const folders = useFolderStore((s) => s.folders);
-  const updateTasks = useRecordStore((s) => s.updateTasks);
-  const setPendingFollowUp = usePendingTaskFollowUpStore((s) => s.setPending);
 
   const [target, setTarget] = useState<TaskCompletionTarget | null>(null);
+
+  const { persistTasks } = useTaskPersistence({ onUpdateError });
+  const { startFollowUp: navigateToFollowUp } = useFollowUpNavigation({
+    navigation,
+    onTaskCompleted: async (taskId, _outcomeText) => {
+      onTaskCompleted?.(taskId);
+      setTarget(null);
+    },
+  });
 
   const closeOutcomeSheet = useCallback(() => {
     setTarget(null);
   }, []);
-
-  const persistTasks = useCallback(
-    async (recordId: string, tasks: TaskItem[]) => {
-      try {
-        await updateTasks(recordId, tasks);
-      } catch {
-        onUpdateError?.();
-      }
-    },
-    [onUpdateError, updateTasks],
-  );
 
   const requestTaskToggle = useCallback(
     (recordId: string, task: TaskItem) => {
@@ -90,46 +84,26 @@ export function useTaskCompletionFlow({
   );
 
   const startFollowUp = useCallback(
-    (mode: 'voice' | 'text', outcomeText?: string | null) => {
+    async (mode: 'voice' | 'text', outcomeText?: string | null) => {
       if (!target) return;
 
-      const draft = buildFollowUpNoteDraft(target.record, target.task, {
-        titlePrefix: t('taskOutcome.followUpTitlePrefix'),
-        seedHeading: t('taskOutcome.followUpSeedHeading'),
-      });
+      await completeTask({ outcomeText });
 
-      setPendingFollowUp({
-        sourceRecordId: target.recordId,
-        taskId: target.task.id,
-        outcomeText: outcomeText ?? null,
-        draft,
-        mode,
-      });
-
-      void completeTask({ outcomeText });
-
-      setTarget(null);
-
-      if (mode === 'voice') {
-        navigation.navigate('RecordModal');
-        return;
-      }
-
-      navigation.navigate('TextNoteModal');
+      await navigateToFollowUp(mode, target.recordId, target.record, target.task, outcomeText);
     },
-    [completeTask, navigation, setPendingFollowUp, t, target],
+    [completeTask, navigateToFollowUp, target],
   );
 
   const startVoiceFollowUp = useCallback(
     (outcomeText?: string | null) => {
-      startFollowUp('voice', outcomeText);
+      void startFollowUp('voice', outcomeText);
     },
     [startFollowUp],
   );
 
   const startTextFollowUp = useCallback(
     (outcomeText?: string | null) => {
-      startFollowUp('text', outcomeText);
+      void startFollowUp('text', outcomeText);
     },
     [startFollowUp],
   );

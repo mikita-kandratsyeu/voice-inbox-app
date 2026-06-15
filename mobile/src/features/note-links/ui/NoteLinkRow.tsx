@@ -1,16 +1,16 @@
 import { ChevronRight, Inbox, Link2Off } from 'lucide-react-native';
-import React, { useContext, useMemo } from 'react';
+import React, { memo, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 import type { Folder } from '@/entities/folder';
-import { resolveFolderListRowChrome } from '@/entities/folder/lib/folderListRowChrome';
 import { FolderLucideIcon } from '@/entities/folder/lib/folderLucideIcons';
 import type { VoiceRecord } from '@/entities/record';
-import { useProEntitlement } from '@/features/pro-license';
-import { type Colors, useAppTheme } from '@/shared/config';
-import { formatRelativeTime, hapticSelection, withAlphaHex } from '@/shared/lib';
+import { type Colors } from '@/shared/config';
+import { hapticSelection, withAlphaHex } from '@/shared/lib';
 import { SwipeableListRow, SwipeableListRowContext } from '@/shared/ui';
+
+import { useNoteLinkRowData } from '../lib/useNoteLinkRowData';
 
 type NoteLinkRowProps = {
   record: VoiceRecord;
@@ -23,40 +23,26 @@ type NoteLinkRowProps = {
 
 type NoteLinkRowContentProps = Omit<NoteLinkRowProps, 'onUnlink'>;
 
-function NoteLinkRowContent({ record, folder, color, isLast, onPress }: NoteLinkRowContentProps) {
-  const { t, i18n } = useTranslation();
-  const scheme = useAppTheme();
-  const { isProActive } = useProEntitlement();
+const NoteLinkRowContent = memo(function NoteLinkRowContent({
+  record,
+  folder,
+  color,
+  isLast,
+  onPress,
+}: NoteLinkRowContentProps) {
   const { isSwiping } = useContext(SwipeableListRowContext);
 
-  const classificationLabel =
-    record.classification && !record.folderId ? t(`classification.${record.classification}`) : null;
-
-  const { folderTintHex, locationLabel, leadingFolderIconId, showInboxIcon } = useMemo(
-    () =>
-      resolveFolderListRowChrome({
-        folder,
-        folderId: record.folderId,
-        classification: record.classification,
-        isProActive,
-        scheme,
-        labels: {
-          inbox: t('tabs.inbox'),
-          folderRemoved: t('folders.detailFolderRemoved'),
-          classificationLabel,
-        },
-      }),
-    [classificationLabel, folder, isProActive, record.classification, record.folderId, scheme, t],
-  );
-
-  const leadingIconColor = folderTintHex ?? color.text.secondary;
-  const stripeColor = folderTintHex ?? color.border.default;
-  const dateLabel = record.createdAt ? formatRelativeTime(record.createdAt, i18n.language) : null;
-  const summaryPreview = record.summary?.replace(/\s+/g, ' ').trim();
-
-  const accessibilityLabel = [record.title, locationLabel, dateLabel, summaryPreview]
-    .filter(Boolean)
-    .join(', ');
+  const {
+    folderTintHex,
+    locationLabel,
+    leadingFolderIconId,
+    showInboxIcon,
+    leadingIconColor,
+    stripeColor,
+    dateLabel,
+    summaryPreview,
+    accessibilityLabel,
+  } = useNoteLinkRowData({ record, folder, color });
 
   return (
     <Pressable
@@ -161,7 +147,7 @@ function NoteLinkRowContent({ record, folder, color, isLast, onPress }: NoteLink
       </View>
     </Pressable>
   );
-}
+});
 
 export function NoteLinkRow({
   record,

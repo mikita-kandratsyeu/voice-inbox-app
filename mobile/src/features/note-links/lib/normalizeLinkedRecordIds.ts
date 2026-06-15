@@ -4,13 +4,20 @@ const MAX_LINKED_RECORD_IDS = 200;
 
 export function normalizeLinkedRecordIds(raw: unknown): string[] | undefined {
   if (!Array.isArray(raw)) return undefined;
+  if (raw.length === 0) return undefined;
 
+  const seen = new Set<string>();
   const out: string[] = [];
+
   for (const item of raw) {
     if (!isString(item)) continue;
+
     const trimmed = item.trim();
-    if (!trimmed || out.includes(trimmed)) continue;
+    if (!trimmed || seen.has(trimmed)) continue;
+
+    seen.add(trimmed);
     out.push(trimmed);
+
     if (out.length >= MAX_LINKED_RECORD_IDS) break;
   }
 
@@ -26,10 +33,16 @@ export function appendLinkedRecordId(
   if (!trimmed || trimmed === selfId) return current;
 
   const base = current ?? [];
-  if (base.includes(trimmed)) return base.length > 0 ? base : undefined;
 
-  const next = [...base, trimmed];
-  return next.length > MAX_LINKED_RECORD_IDS ? next.slice(0, MAX_LINKED_RECORD_IDS) : next;
+  if (base.includes(trimmed)) {
+    return base.length > 0 ? base : undefined;
+  }
+
+  if (base.length >= MAX_LINKED_RECORD_IDS) {
+    return base;
+  }
+
+  return [...base, trimmed];
 }
 
 export function removeLinkedRecordId(
