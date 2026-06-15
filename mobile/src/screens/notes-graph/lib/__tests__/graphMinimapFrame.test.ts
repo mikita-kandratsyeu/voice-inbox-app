@@ -1,6 +1,8 @@
 import {
   clipMinimapViewportRect,
+  computeMinimapContentBounds,
   computeMinimapViewportRect,
+  computeMinimapViewportRectFromBounds,
   computeStaticMinimapFrame,
   getMinimapCanvasSize,
   GRAPH_MINIMAP_VIEWPORT_STROKE,
@@ -129,5 +131,38 @@ describe('computeMinimapViewportRect', () => {
     expect(
       minimapToWorldPoint(2, canvas.height + 1, frame, canvas.width, canvas.height),
     ).toBeNull();
+  });
+
+  it('matches computeMinimapViewportRect when using precomputed bounds', () => {
+    const nodes = [recordNode('a', 120, 140), recordNode('b', 420, 360)];
+    const canvas = getMinimapCanvasSize(120, 120);
+    const frame = computeStaticMinimapFrame(nodes, 1200, 1400, canvas.width, canvas.height);
+    const bounds = computeMinimapContentBounds(nodes);
+
+    expect(
+      computeMinimapViewportRectFromBounds(
+        frame,
+        bounds,
+        canvas.width,
+        canvas.height,
+        390,
+        700,
+        -240,
+        -180,
+        1,
+      ),
+    ).toEqual(
+      computeMinimapViewportRect(
+        frame,
+        nodes,
+        canvas.width,
+        canvas.height,
+        390,
+        700,
+        -240,
+        -180,
+        1,
+      ),
+    );
   });
 });

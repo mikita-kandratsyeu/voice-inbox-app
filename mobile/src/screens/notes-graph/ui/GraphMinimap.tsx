@@ -1,26 +1,38 @@
+import {
+  Canvas,
+  Circle,
+  Group,
+  LinearGradient,
+  RoundedRect,
+  vec,
+} from '@shopify/react-native-skia';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import type { SharedValue } from 'react-native-reanimated';
 import Animated, {
   Easing,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Circle, Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import type { Colors } from '@/shared/config';
-import { hapticSelection } from '@/shared/lib';
+import { hapticSelection, withAlphaHex } from '@/shared/lib';
 
+import { buildMinimapNodeItems } from '../lib/buildMinimapNodeItems';
+import { computeMinimapViewportRectWorklet } from '../lib/graphMinimapViewportWorklet';
 import {
-  computeMinimapViewportRect,
+  computeMinimapContentBounds,
   computeStaticMinimapFrame,
   getMinimapCanvasSize,
   GRAPH_MINIMAP_VIEWPORT_STROKE,
+  type GraphMinimapContentBounds,
+  type GraphMinimapFrame,
   minimapToWorldPoint,
-  worldToMinimapPoint,
 } from '../lib/graphMinimapFrame';
 import {
   clampGraphMinimapSize,
@@ -29,10 +41,10 @@ import {
   isGraphMinimapAvailable,
   setGraphMinimapSize,
 } from '../lib/graphMinimapPreferences';
-import { nodeBounds } from '../lib/graphNodeMetrics';
 import type { GraphNode } from '../lib/graphTypes';
 
 const RESIZE_HANDLE_SIZE = 28;
+const VIEWPORT_STROKE_WIDTH = GRAPH_MINIMAP_VIEWPORT_STROKE * 1.4;
 
 type GraphMinimapProps = {
   color: Colors;
@@ -41,9 +53,9 @@ type GraphMinimapProps = {
   worldHeight: number;
   viewportWidth: number;
   viewportHeight: number;
-  translateX: number;
-  translateY: number;
-  scale: number;
+  translateX: SharedValue<number>;
+  translateY: SharedValue<number>;
+  scale: SharedValue<number>;
   disabled?: boolean;
   onNavigate: (translateX: number, translateY: number) => void;
 };
@@ -77,6 +89,155 @@ function MinimapResizeHandle({ color, label }: { color: Colors; label: string })
         }}
       />
     </View>
+  );
+}
+
+type MinimapViewportIndicatorProps = {
+  frame: GraphMinimapFrame;
+  contentBounds: GraphMinimapContentBounds | null;
+  canvasWidth: number;
+  canvasHeight: number;
+  viewportWidth: number;
+  viewportHeight: number;
+  translateX: SharedValue<number>;
+  translateY: SharedValue<number>;
+  scale: SharedValue<number>;
+  accentColor: string;
+};
+
+function MinimapViewportIndicator({
+  frame,
+  contentBounds,
+  canvasWidth,
+  canvasHeight,
+  viewportWidth,
+  viewportHeight,
+  translateX,
+  translateY,
+  scale,
+  accentColor,
+}: MinimapViewportIndicatorProps) {
+  const viewportRect = useDerivedValue(() =>
+    computeMinimapViewportRectWorklet(
+      frame,
+      contentBounds,
+      canvasWidth,
+      canvasHeight,
+      viewportWidth,
+      viewportHeight,
+      translateX.value,
+      translateY.value,
+      scale.value,
+    ),
+  );
+
+  const viewportX = useDerivedValue(() => viewportRect.value.x);
+  const viewportY = useDerivedValue(() => viewportRect.value.y);
+  const viewportWidthSV = useDerivedValue(() => viewportRect.value.width);
+  const viewportHeightSV = useDerivedValue(() => viewportRect.value.height);
+
+  return (
+    <Group>
+      <RoundedRect
+        x={viewportX}
+        y={viewportY}
+        width={viewportWidthSV}
+        height={viewportHeightSV}
+        r={2}
+        color={accentColor}
+        opacity={0.12}
+      />
+      <RoundedRect
+        x={viewportX}
+        y={viewportY}
+        width={viewportWidthSV}
+        height={viewportHeightSV}
+        r={2}
+        style="stroke"
+        strokeWidth={VIEWPORT_STROKE_WIDTH}
+        color={accentColor}
+      />
+    </Group>
+  );
+}
+
+type GraphMinimapCanvasProps = {
+  color: Colors;
+  nodeItems: ReturnType<typeof buildMinimapNodeItems>;
+  frame: GraphMinimapFrame;
+  contentBounds: GraphMinimapContentBounds | null;
+  canvasWidth: number;
+  canvasHeight: number;
+  viewportWidth: number;
+  viewportHeight: number;
+  translateX: SharedValue<number>;
+  translateY: SharedValue<number>;
+  scale: SharedValue<number>;
+};
+
+function GraphMinimapCanvas({
+  color,
+  nodeItems,
+  frame,
+  contentBounds,
+  canvasWidth,
+  canvasHeight,
+  viewportWidth,
+  viewportHeight,
+  translateX,
+  translateY,
+  scale,
+}: GraphMinimapCanvasProps) {
+  const nodeGradientStart = color.accent.primary;
+  const nodeGradientEnd = withAlphaHex(color.accent.primary, 0.6);
+
+  return (
+    <Canvas style={{ width: canvasWidth, height: canvasHeight }}>
+      <RoundedRect x={0} y={0} width={canvasWidth} height={canvasHeight} r={0}>
+        <LinearGradient
+          start={vec(0, 0)}
+          end={vec(0, canvasHeight)}
+          colors={[
+            withAlphaHex(color.background.secondary, 0.85),
+            withAlphaHex(color.background.tertiary, 0.75),
+          ]}
+        />
+      </RoundedRect>
+
+      {nodeItems.map((item) => (
+        <Group key={item.id}>
+          {item.showGlow ? (
+            <Circle
+              cx={item.glowCx}
+              cy={item.glowCy}
+              r={item.glowRadius}
+              color={color.accent.primary}
+              opacity={0.15}
+            />
+          ) : null}
+          <RoundedRect x={item.x} y={item.y} width={item.width} height={item.height} r={2}>
+            <LinearGradient
+              start={vec(item.x, item.y)}
+              end={vec(item.x + item.width, item.y + item.height)}
+              colors={[nodeGradientStart, nodeGradientEnd]}
+            />
+          </RoundedRect>
+        </Group>
+      ))}
+
+      <MinimapViewportIndicator
+        frame={frame}
+        contentBounds={contentBounds}
+        canvasWidth={canvasWidth}
+        canvasHeight={canvasHeight}
+        viewportWidth={viewportWidth}
+        viewportHeight={viewportHeight}
+        translateX={translateX}
+        translateY={translateY}
+        scale={scale}
+        accentColor={color.accent.primary}
+      />
+    </Canvas>
   );
 }
 
@@ -116,46 +277,43 @@ export function GraphMinimap({
     [canvasHeight, canvasWidth, nodes, worldHeight, worldWidth],
   );
 
-  const viewportMinimap = useMemo(
-    () =>
-      computeMinimapViewportRect(
+  const contentBounds = useMemo(() => computeMinimapContentBounds(nodes), [nodes]);
+
+  const nodeItems = useMemo(
+    () => buildMinimapNodeItems(nodes, minimapFrame),
+    [minimapFrame, nodes],
+  );
+
+  const handlePress = useCallback(
+    (event: { nativeEvent: { locationX: number; locationY: number } }) => {
+      if (disabled) return;
+
+      const worldPoint = minimapToWorldPoint(
+        event.nativeEvent.locationX,
+        event.nativeEvent.locationY,
         minimapFrame,
-        nodes,
         canvasWidth,
         canvasHeight,
-        viewportWidth,
-        viewportHeight,
-        translateX,
-        translateY,
-        scale,
-      ),
+      );
+      if (!worldPoint) return;
+
+      const currentScale = scale.value;
+      onNavigate(
+        viewportWidth / 2 - worldPoint.x * currentScale,
+        viewportHeight / 2 - worldPoint.y * currentScale,
+      );
+    },
     [
       canvasHeight,
       canvasWidth,
+      disabled,
       minimapFrame,
-      nodes,
+      onNavigate,
       scale,
-      translateX,
-      translateY,
       viewportHeight,
       viewportWidth,
     ],
   );
-
-  const handlePress = (event: { nativeEvent: { locationX: number; locationY: number } }) => {
-    if (disabled) return;
-    const worldPoint = minimapToWorldPoint(
-      event.nativeEvent.locationX,
-      event.nativeEvent.locationY,
-      minimapFrame,
-      canvasWidth,
-      canvasHeight,
-    );
-    if (!worldPoint) return;
-    const nextTranslateX = viewportWidth / 2 - worldPoint.x * scale;
-    const nextTranslateY = viewportHeight / 2 - worldPoint.y * scale;
-    onNavigate(nextTranslateX, nextTranslateY);
-  };
 
   const applyResize = useCallback(
     (nextWidth: number, nextHeight: number) => {
@@ -262,71 +420,19 @@ export function GraphMinimap({
           elevation: isPressed ? 8 : 6,
         }}
       >
-        <Svg width={canvasWidth} height={canvasHeight}>
-          <Defs>
-            <LinearGradient id="minimap-bg" x1="0%" y1="0%" x2="0%" y2="100%">
-              <Stop offset="0%" stopColor={color.background.secondary} stopOpacity={0.85} />
-              <Stop offset="100%" stopColor={color.background.tertiary} stopOpacity={0.75} />
-            </LinearGradient>
-            <LinearGradient id="node-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <Stop offset="0%" stopColor={color.accent.primary} stopOpacity={0.9} />
-              <Stop offset="100%" stopColor={color.accent.primary} stopOpacity={0.6} />
-            </LinearGradient>
-          </Defs>
-          <Rect x={0} y={0} width={canvasWidth} height={canvasHeight} fill="url(#minimap-bg)" />
-          {nodes.map((node) => {
-            const bounds = nodeBounds(node);
-            const topLeft = worldToMinimapPoint(bounds.left, bounds.top, minimapFrame);
-            const nodeWidth = Math.max(3, (bounds.right - bounds.left) * minimapFrame.scale);
-            const nodeHeight = Math.max(3, (bounds.bottom - bounds.top) * minimapFrame.scale);
-            const isLarge = nodeWidth > 5 && nodeHeight > 5;
-            return (
-              <React.Fragment key={node.id}>
-                {isLarge && (
-                  <Circle
-                    cx={topLeft.x + nodeWidth / 2}
-                    cy={topLeft.y + nodeHeight / 2}
-                    r={Math.max(nodeWidth, nodeHeight) * 0.8}
-                    fill={color.accent.primary}
-                    opacity={0.15}
-                  />
-                )}
-                <Rect
-                  x={topLeft.x}
-                  y={topLeft.y}
-                  width={nodeWidth}
-                  height={nodeHeight}
-                  fill="url(#node-gradient)"
-                  rx={2}
-                />
-              </React.Fragment>
-            );
-          })}
-          {viewportMinimap.width > 0 && viewportMinimap.height > 0 ? (
-            <>
-              <Rect
-                x={viewportMinimap.x}
-                y={viewportMinimap.y}
-                width={viewportMinimap.width}
-                height={viewportMinimap.height}
-                fill={color.accent.primary}
-                opacity={0.12}
-                rx={2}
-              />
-              <Rect
-                x={viewportMinimap.x}
-                y={viewportMinimap.y}
-                width={viewportMinimap.width}
-                height={viewportMinimap.height}
-                stroke={color.accent.primary}
-                strokeWidth={GRAPH_MINIMAP_VIEWPORT_STROKE * 1.4}
-                fill="transparent"
-                opacity={1}
-                rx={2}
-              />
-            </>
-          ) : null}
-        </Svg>
+        <GraphMinimapCanvas
+          color={color}
+          nodeItems={nodeItems}
+          frame={minimapFrame}
+          contentBounds={contentBounds}
+          canvasWidth={canvasWidth}
+          canvasHeight={canvasHeight}
+          viewportWidth={viewportWidth}
+          viewportHeight={viewportHeight}
+          translateX={translateX}
+          translateY={translateY}
+          scale={scale}
+        />
       </Pressable>
 
       <GestureDetector gesture={resizeGesture}>

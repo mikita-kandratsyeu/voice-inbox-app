@@ -804,9 +804,9 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
           worldHeight={worldHeight}
           viewportWidth={viewportWidth}
           viewportHeight={viewportHeight}
-          translateX={viewportTransform.translateX}
-          translateY={viewportTransform.translateY}
-          scale={viewportTransform.scale}
+          translateX={translateX}
+          translateY={translateY}
+          scale={scale}
           disabled={isReconciling || exportBusy}
           onNavigate={(nextTranslateX, nextTranslateY) => {
             if (isReconciling || exportBusy) return;
