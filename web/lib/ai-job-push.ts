@@ -49,6 +49,7 @@ export async function notifyAiJobComplete(params: {
       { type: 'ai_complete', recordId },
       data.locale,
       count,
+      deviceId,
     );
     console.log(`[Push] ${logLabel}:`, sent ? 'sent' : 'failed', { deviceId, count });
   } else {
