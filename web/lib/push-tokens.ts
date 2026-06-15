@@ -252,6 +252,16 @@ export async function getPushTokenWithLocale(deviceId: string): Promise<{
     : null;
 }
 
+/**
+ * Remove push token for a device (e.g., when FCM returns invalid token error).
+ * This prevents repeated failed send attempts.
+ */
+export async function cleanupInvalidPushToken(deviceId: string): Promise<void> {
+  const key = getPushTokenKey(deviceId);
+  await redis.del(key);
+  console.log('[Push] cleaned up invalid token', { deviceId, key });
+}
+
 export async function sendLimitExceededPush(deviceId: string): Promise<void> {
   const debounceKey = `${LIMIT_PUSH_DEBOUNCE_KEY_PREFIX}${deviceId}`;
   const acquired = await redis.setIfNotExists(debounceKey, '1', {
@@ -272,6 +282,12 @@ export async function sendLimitExceededPush(deviceId: string): Promise<void> {
     return;
   }
 
-  const sent = await sendPushNotification(data.token, { type: 'limit_exceeded' }, data.locale);
+  const sent = await sendPushNotification(
+    data.token,
+    { type: 'limit_exceeded' },
+    data.locale,
+    undefined,
+    deviceId,
+  );
   console.log('[Push] limit exceeded:', sent ? 'sent' : 'failed', { deviceId });
 }
