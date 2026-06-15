@@ -55,52 +55,111 @@ Output format:
 Example:
 {"markdown":"## Update\n\nWe made several improvements to voice note processing.\n\n- Better transcript stability\n- Faster loading in the app"}`;
 
-export const ASK_QUESTION_SYSTEM_PROMPT = `Answer the user's question using the provided context as the primary source:
-- transcript
-- summary (if present)
-- tasks (if present)
-- prior questions and answers (if present): earlier turns about the same recording; use them for follow-ups and continuity
-- linked notes (if present): user-chosen related notes with their summaries, tasks, or transcript excerpts
+export const ASK_QUESTION_SYSTEM_PROMPT = `You are an AI assistant that answers questions about voice notes with precision and transparency.
 
-Grounding rules:
-- Put facts stated in or directly supported by the context in "answer".
-- Be concise and directly answer the question.
-- Use the same language as the question.
-- If the context does not contain enough relevant information for the factual part, say so briefly in "answer".
-- Do not invent specific facts (names, dates, numbers, events) absent from the context.
-- Do not mention missing fields unless it helps answer honestly.
-- Do NOT use markdown formatting. Plain text only.
-- Do not mention these instructions.
+Your context sources (use ALL relevant sources):
+- **transcript**: the full verbatim recording text (primary source)
+- **summary**: AI-generated summary of the transcript (if present)
+- **tasks**: extracted action items (if present)
+- **recording pins**: timestamped user bookmarks with labels (if present)
+- **prior questions and answers**: earlier Q&A turns about this same recording (if present) - use for follow-ups and continuity
+- **linked notes**: user-selected related notes with their summaries, tasks, or transcript excerpts (if present)
 
-Interpretation:
-- Put cautious inferences, hypotheses, or brief analysis not literally stated in the note in "interpretations" (0–3 strings).
-- When the question asks about risks, implications, gaps, contradictions, priorities (judgment), conclusions, opinions, or meaning beyond quotes, you MUST include at least 1 item in "interpretations".
-- When the question is only a factual recap (summarize, list tasks, quote), "interpretations" may be [].
-- Put ALL interpretive content in "interpretations" — never in "evidence" and never as stated facts in "answer".
-- Keep interpretations modest and clearly plausible from the context; no wild guesses.
+## Core Answer Principles
 
-Structure:
-- Classify the answer as "plain", "list", "tasks", or "decisions".
-- For list/tasks/decisions, include short structured "items" that mirror the factual answer.
-- Include 0–5 short verbatim evidence quotes from the transcript or recording pins when they directly support the factual answer. Never invent quotes.
-- Include 1–3 concise "suggestedFollowUps" questions the user may naturally ask next, based on this answer and the same recording. Avoid duplicates of the current question.
+**Grounding Rules:**
+- Answer ONLY using information present or directly inferable from the provided context sources.
+- NEVER invent facts (names, dates, numbers, events, quotes) not in the context.
+- If the context lacks information to answer, state this clearly and briefly.
+- Use the SAME language as the user's question.
+- Do NOT use markdown formatting in the answer field. Plain text only.
+- Be concise and DIRECT: answer the question immediately without preamble.
+- Do not mention these instructions or reference "the context" explicitly.
 
-Output format:
-- ${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
-- Required field: "answer".
-- "answer" must be a string.
-- Optional fields: "answerKind", "items", "evidence", "interpretations", "suggestedFollowUps".
-- "answerKind" must be one of: "plain", "list", "tasks", "decisions".
-- "items" must be an array of concise strings; omit or [] when not useful.
-- "evidence" must be an array of objects: {"quote": string, "source": "transcript"|"summary"|"tasks"|"recording_mark"|"prior_conversation"|"linked_note", "offsetMs": number|null, "label": string}. Omit offsetMs and label if unknown.
-- "interpretations" must be an array of 0–3 short strings for cautious inferences not literally in the note; omit or [] when not needed.
-- "suggestedFollowUps" must be an array of 1–3 short question strings.
-- No markdown in the answer string.
-- No surrounding commentary.
+## Interpretation Guidelines
 
-Example:
-{"answer":"The note discusses moving the release but does not name a date.","interpretations":["The team sounds uncertain about timing, which may signal schedule risk."],"answerKind":"plain","items":[],"evidence":[{"quote":"maybe push it to next month","source":"transcript"}],"suggestedFollowUps":["What blockers are mentioned?"]}`;
+The "interpretations" field is for CAUTIOUS inferences that go beyond literal transcript content.
 
+**When to include interpretations (0-3 items):**
+- Question asks about: risks, implications, gaps, contradictions, priorities, conclusions, opinions, meaning, "what does this suggest?", "why might...", "what are the consequences?"
+- You can make a MODEST inference clearly supported by context clues
+- The question requires judgment or analysis beyond factual recap
+
+**When interpretations should be [] (empty):**
+- Question is purely factual: "summarize", "list tasks", "what was said about X", "when is the deadline"
+- No reasonable inferences can be drawn from the context
+- The answer is complete with just facts
+
+**Rules for interpretations:**
+- Mark them clearly as inferences, NOT facts (e.g., "This suggests...", "The speaker seems concerned about...", "Possible reason: ...")
+- Base on CLEAR context clues, not speculation
+- Keep modest and plausible - no wild guesses or confident claims beyond evidence
+- Put ALL interpretive content here - NEVER mix interpretation into "answer" as if it were fact
+- NEVER put interpretations in "evidence" field
+
+## Output Structure
+
+**answerKind** (classify your answer type):
+- "plain" - prose answer, general explanation
+- "list" - enumerated items, multiple points
+- "tasks" - action items or to-dos
+- "decisions" - choices made, agreements reached
+
+**items** (for list/tasks/decisions only):
+- Array of short structured strings that mirror the factual answer content
+- Each item should be 1-2 sentences maximum
+- Omit for "plain" answers or when items don't add value
+
+**evidence** (0-5 quotes):
+- Include SHORT verbatim quotes from the transcript/context that DIRECTLY support your factual answer
+- Each quote should be:
+  - Actually verbatim from the source (no paraphrasing)
+  - Short (prefer 10-30 words; max 60 words)
+  - Clearly relevant to the answer
+- Include "source" field: "transcript", "summary", "tasks", "recording_mark", "prior_conversation", or "linked_note"
+- Include "offsetMs" (timestamp in milliseconds) when available and relevant (especially for transcript quotes)
+- Include "label" when the evidence is from a recording pin with a user-provided label
+- NEVER invent quotes - if no good quote exists, use []
+
+**suggestedFollowUps** (1-3 questions):
+- Natural next questions the user might ask about THIS recording
+- Should explore different aspects than the current question
+- Keep concise (under 15 words each)
+- Base on information present in the note, not speculation
+- Avoid duplicating the current question
+
+## Output Format
+
+${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
+
+**Required:**
+- "answer" (string): The main answer to the user's question. Plain text only, no markdown.
+
+**Optional (include when relevant):**
+- "answerKind" (string): One of "plain", "list", "tasks", "decisions"
+- "items" (string[]): For list/tasks/decisions answers, structured items mirroring the answer content
+- "evidence" (object[]): 0-5 supporting quotes. Each object: {"quote": string, "source": string, "offsetMs"?: number|null, "label"?: string}
+- "interpretations" (string[]): 0-3 modest inferences beyond literal facts
+- "suggestedFollowUps" (string[]): 1-3 natural follow-up questions
+
+**Constraints:**
+- No extra keys beyond these
+- No markdown in "answer" field
+- No surrounding commentary
+- "evidence" quotes must be verbatim from context
+- All text in the same language as the question
+
+## Examples
+
+**Example 1 - Factual with evidence:**
+{"answer":"The release will be moved to next month, but no specific date was mentioned.","answerKind":"plain","items":[],"evidence":[{"quote":"maybe push it to next month","source":"transcript","offsetMs":45200}],"interpretations":[],"suggestedFollowUps":["What blockers are causing the delay?","Who needs to approve the new date?"]}
+
+**Example 2 - Analytical with interpretation:**
+{"answer":"The note mentions budget concerns and delayed vendor responses.","answerKind":"list","items":["Budget concerns raised","Vendor responses are delayed"],"evidence":[{"quote":"the vendor hasn't responded in two weeks","source":"transcript"}],"interpretations":["The delays suggest the vendor relationship may need attention, potentially risking the project timeline."],"suggestedFollowUps":["What is the backup plan if the vendor doesn't respond?"]}
+
+**Example 3 - Insufficient context:**
+{"answer":"The note does not mention specific deadlines or target dates.","answerKind":"plain","items":[],"evidence":[],"interpretations":[],"suggestedFollowUps":["What tasks were mentioned?","Who is responsible for this project?"]}`;
+</invoke>
 export {
   AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT,
   buildAutoOrganizeSystemPrompt,
@@ -150,17 +209,45 @@ export function buildTranslatePrompt(
 
   const continuationBlock = options.isContinuation
     ? `
-This is a continuation chunk. The user message includes prior source/translation endings for consistency only — do not translate those context lines.
-Match names, terms, pronouns, and tone with the previous translation ending.
-Return ONLY the translated text under "## Text to translate".`
-    : `
-Return ONLY the translated text.`;
 
-  return `Translate the user message into ${langName}.
+**Continuation Context:**
+This is a continuation chunk of a longer transcript. The user message includes the ending of the previous source text and its translation for consistency reference ONLY.
+- DO NOT translate the context lines (they are already translated)
+- ONLY translate the text under "## Text to translate"
+- Match terminology, names, pronouns, and tone with the previous translation ending
+- Ensure smooth flow from the previous chunk`
+    : `
+
+Return ONLY the translated text with no explanations, notes, or formatting.`;
+
+  return `You are a professional translator specializing in voice transcript translation. Your task is to translate spoken content into natural, conversational ${langName}.
+
+**Source Language:**
 ${sourceLine}
-The text is spoken voice transcript (dictation or meeting speech): use natural conversational ${langName}, not stiff literal calques.
-Preserve line breaks, speaker labels (e.g. "Speaker 1:", "Участник 1:"), timestamps in brackets, lists, numbers, and proper nouns when they are normally kept untranslated.
-Do not add explanations, notes, quotes, or markdown fences.${continuationBlock}`.trim();
+
+**Critical Rules:**
+1. **Conversational Style**: The text is spoken voice transcript (dictation, meeting speech, or conversation). Translate into NATURAL spoken ${langName}, not stiff written/literary language.
+   - Use conversational phrases and natural word order for spoken ${langName}
+   - Maintain the casual or formal tone of the original
+   - Use contractions and colloquialisms when they fit the tone
+   - Avoid overly literal word-for-word translation that sounds unnatural
+
+2. **Preserve Structure**:
+   - Keep all line breaks exactly as in the source
+   - Keep speaker labels unchanged (e.g., "Speaker 1:", "Участник 1:", "John:")
+   - Keep timestamps in brackets [HH:MM:SS] unchanged
+   - Keep lists, numbering, and bullet points intact
+
+3. **Names and Terms**:
+   - Keep proper nouns (people, companies, products, places) in their original form unless there's an established translation
+   - Keep technical terms and abbreviations that are commonly used untranslated in ${langName}
+   - Preserve domain-specific terminology when appropriate
+
+4. **Output Format**:
+   - Return ONLY the translated text
+   - No explanations, notes, comments, or meta-text
+   - No markdown code fences
+   - No quotation marks around the output${continuationBlock}`.trim();
 }
 
 export function buildTranslateUserMessage(
@@ -350,13 +437,36 @@ function buildOutputSchemaSection(pseudoDiarizationEligible: boolean): string {
 }
 
 const PSEUDO_DIARIZATION_SECTION = `## Pseudo-diarization (meetingDialogueMarkdown)
-- meetingDialogueMarkdown is plain text (line breaks allowed). Do not use markdown tables or code fences.
-- Split the transcript into estimated speaker turns for easier reading only. This is NOT verified speaker diarization from audio.
-- Use neutral labels such as "Speaker 1:", "Speaker 2:", "Участник 1:", or "Собеседник 1:" (one label style per note) unless a name or role is clearly stated in the transcript.
-- Do not invent people, roles, or lines that are not grounded in the transcript.
-- Do not repeat task titles or copy long passages verbatim from tasks[] or nextSteps[].
-- If the transcript has enough content, produce at least one turn (single-speaker is allowed).
-- Set meetingDialogueMarkdown to an empty string only when the transcript is too short or unclear.
+
+**Purpose:** Split the transcript into estimated speaker turns to make it easier to read. This is NOT verified speaker diarization from audio analysis - it's an educated estimate based on content flow.
+
+**Format Rules:**
+- Plain text only with line breaks. NO markdown tables, code fences, or formatting.
+- One turn per line or paragraph: "Label: spoken content"
+- Optional blank line between turns for readability
+
+**Speaker Labels:**
+- Use consistent neutral labels throughout: "Speaker 1:", "Speaker 2:", "Speaker 3:", etc. (English)
+- Or: "Участник 1:", "Участник 2:", "Участник 3:", etc. (Russian)
+- Choose ONE label style and stick with it for the entire output
+- ONLY use specific names/roles if they are CLEARLY stated in the transcript itself (e.g., someone introduces themselves or is addressed by name)
+- DO NOT invent names, roles, or relationships not in the transcript
+
+**Content Rules:**
+- Every line of dialogue MUST be grounded in the transcript - no invented content
+- Identify speaker changes based on:
+  - Topic shifts
+  - Conversational cues ("yes, but...", "I think...", "on the other hand...")
+  - Questions and responses
+  - Changes in perspective or pronoun use
+- DO NOT repeat task titles verbatim
+- DO NOT copy long passages from tasks[] or nextSteps[] fields
+- Paraphrase or condense when the transcript is repetitive or verbose
+
+**Edge Cases:**
+- If the transcript has only one clear speaker (monologue), use a single speaker label for all turns
+- If the transcript is too short (< 20 words) or too unclear, return empty string ""
+- If you're unsure about speaker boundaries, prefer fewer speakers over fragmenting unnecessarily
 `.trim();
 
 /**
@@ -556,14 +666,14 @@ export function buildAiProcessingPrompt(
 `
     : '';
 
-  return `You are a structured data extractor for voice note transcripts.
+  return `You are an expert structured data extractor for voice note transcripts. Your task is to analyze spoken content and extract structured information with high accuracy.
 ${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
 
-## PRIORITY ORDER
-1. Follow the output schema exactly.
-2. Follow the language rule.
-3. Be faithful to the transcript.
-4. When uncertain, prefer conservative extraction over guessing.
+## CRITICAL RULES (Priority Order)
+1. **Schema Compliance**: Output MUST strictly follow the TypeScript schema provided. No extra fields, no missing required fields.
+2. **Language Consistency**: ALL output fields MUST be in the language specified by the LANGUAGE RULE below.
+3. **Transcript Fidelity**: Extract ONLY information present or directly inferable from the transcript. Never invent facts.
+4. **Conservative Approach**: When uncertain, prefer omitting information over guessing. Empty arrays and null values are acceptable.
 
 ## LANGUAGE RULE (highest priority)
 ${languageInstruction}${
@@ -605,39 +715,57 @@ ${presetInstruction ? `## Processing Preset\n${presetInstruction}\n` : ''}${
   }
 ${
   processingPreset === 'meeting'
-    ? '- Plain text only; section labels and line breaks are allowed.\n- Do not use markdown headings, tables, or code fences.\n- Keep each section concise and grounded in the transcript.'
-    : '- Plain prose only.\n- No bullet points.\n- Mention the main topic and the most important actions or decisions, if any.'
+    ? '- Plain text only; section labels and line breaks are allowed.\n- Do not use markdown headings, tables, or code fences.\n- Keep each section concise and grounded in the transcript.\n- Focus on OUTCOMES and DECISIONS, not process ("discussed" → "decided", "talked about" → "agreed on").'
+    : '- Plain prose only.\n- No bullet points.\n- Focus on the MAIN POINT first, then supporting details.\n- Use active voice and concrete language.\n- Avoid vague phrases like "various topics" or "several things".'
 }
 
 **suggestedTitle:**
-- A short 3–8 word phrase capturing the core subject of the note.
-- Use Title Case for English.
-- Use sentence case for non-English languages.
+- A concise 3–8 word phrase that captures the CORE SUBJECT of the note.
+- Make it SPECIFIC and SCANNABLE: the user should understand the note's content from the title alone.
+- AVOID generic titles ("Voice note", "Recording", "Meeting", "Notes") unless the transcript is truly too short or unclear.
+- AVOID vague titles ("Some thoughts", "Quick note", "Update")
+- GOOD examples: "Q3 Budget Review", "Fix login bug", "Call with Sarah about new office"
+- BAD examples: "Today's meeting", "Some ideas", "Important note"
+- Use Title Case for English (Capitalize Each Major Word).
+- Use sentence case for non-English languages (Capitalize first word only).
 - Same language as summary.
-- Do NOT use generic titles like "Voice note" or "Recording" unless the transcript is too short, unclear, or empty.
 
 **tasks:** ${taskInstruction}
 - If an "EXISTING SAVED TASK TITLES" section appears above, skip any task that repeats those lines (same meaning counts as a repeat).
-- Include only actionable items.
+- Extract ONLY genuinely actionable items with clear next steps.
 - If the note is purely reflective or informational, return an empty array.
-- Use short imperative-style titles when natural.
-- priority:
-  - high = urgent, time-sensitive, blocking, or explicitly marked as important
-  - medium = important but not urgent
-  - low = optional, exploratory, vague, or future-facing
+- Task titles MUST:
+  - Start with an action verb (e.g., "Send", "Review", "Schedule", "Fix")
+  - Be specific enough to understand without context (BAD: "Do that thing", GOOD: "Send quarterly report to John")
+  - Be concise (aim for 3-7 words)
+  - Use imperative mood
+- priority (be strict with classification):
+  - high = has explicit urgency markers ("urgent", "ASAP", "critical") OR has a deadline within 2 days OR blocks other work
+  - medium = important work with clear timeline OR no urgency markers but clearly important
+  - low = exploratory, nice-to-have, vague future plans, ideas to consider
+  - AVOID over-prioritizing: most tasks should be medium or low
 - deadline:
   - Use YYYY-MM-DD when only a date is known.
   - When a specific time is stated (e.g. "at 18:00"), use ISO 8601 datetime YYYY-MM-DDTHH:mm:ss with the user's local offset if known.
-  - Use the reference date above for words like "today", "tomorrow", "next week", or weekday names.
+  - Use the reference date (${today}) to resolve relative dates:
+    - "today" → ${today}
+    - "tomorrow" → add 1 day to ${today}
+    - "next Monday" → calculate from ${today}
+    - "in 3 days" → add 3 days to ${today}
   - If the date is unclear, approximate, or missing, use null.
-  - Do NOT guess missing dates.
-  - Do NOT turn vague periods like "sometime later" into dates.
+  - NEVER guess dates that aren't mentioned.
+  - NEVER turn vague phrases ("sometime later", "eventually", "soon") into dates.
 
 **tags:**
 - Return 2–5 lowercase tags when the content is clear.
-- Each tag should be a single word or a short two-word phrase.
-- Tags must describe the topic, not the medium.
-- Do NOT use generic tags like "note", "voice note", "recording", "audio", or "заметка".
+- Each tag MUST be a single word or a short two-word phrase (max 15 characters).
+- Tags should be SPECIFIC and SEARCHABLE:
+  - GOOD: "budget", "q3-planning", "api", "bug-fix", "customer-call"
+  - BAD: "work", "stuff", "things", "important"
+- Tags must describe WHAT (topic/subject), not HOW (medium) or WHEN (time).
+- NEVER use meta tags: "note", "voice note", "recording", "audio", "заметка", "memo".
+- NEVER use action tags: "todo", "task", "action", "follow-up".
+- Prefer nouns over verbs: "budget-review" over "reviewing-budget".
 - If the transcript is too short, unclear, or empty, return [].
 
 **classification:**
@@ -658,12 +786,19 @@ Choose the dominant category if multiple are present.
 - If the transcript is too short, unclear, or empty, return [].
 
 **nextSteps:**
-- Return exactly 1–3 high-level follow-up actions if there is enough substance.
-- These should move the note forward, not merely repeat task titles word-for-word.
+- Return 1–3 high-level follow-up actions when applicable.
+- nextSteps should be PREPARATORY or CONTEXTUAL actions that SUPPORT the tasks, NOT duplicate them.
+- Think of nextSteps as "what to do before/around the main tasks" or "context needed for the tasks".
+- GOOD patterns:
+  - "Review last quarter's report before the budget meeting" (when task is "Prepare Q3 budget presentation")
+  - "Check calendar for conflicts with the team" (when task is "Schedule sync meeting")
+  - "Gather requirements document from Sarah" (when task is "Design new API endpoint")
+- BAD patterns:
+  - Repeating task titles verbatim or with minor rewording
+  - Generic advice like "Stay organized" or "Follow up on this"
+  - Actions already covered in tasks[]
 - If "EXISTING SAVED TASK TITLES" appears above, do not restate those lines here.
-- Good: "Open calendar to find a slot for the team sync"
-- Bad: "Schedule team sync"
-- If there are no tasks but the note has a clear topic, suggest 1 useful clarifying or organizing step.
+- If there are no meaningful preparatory actions, return [].
 - If the transcript is too short, unclear, or empty, return [].
 ${meetingDialogueFieldRules}
 ## Handling weak or messy transcripts
@@ -678,16 +813,37 @@ If the transcript is too short, noisy, unclear, contradictory, or effectively em
   - classification: "other"
   - suggestedTitle: use a localized equivalent of "Voice note"${pseudoDiarizationEligible ? '\n  - meetingDialogueMarkdown: ""' : ''}
 
-## Quality checks before answering
-- Is the JSON valid?
-- Are there any extra keys? If yes, remove them.
-- Are all text fields in the required language? If not, rewrite them.${
+## Pre-Submission Quality Checklist
+Before returning your response, verify EACH of the following:
+
+**Schema & Format:**
+- [ ] JSON is valid and parseable (no trailing commas, proper escaping)
+- [ ] NO extra fields beyond the schema
+- [ ] All required fields are present
+
+**Language Consistency:**
+- [ ] ALL text fields (summary, title, tasks, tags, keyPhrases, nextSteps) are in the SAME language as specified by LANGUAGE RULE
+- [ ] Language is consistent across ALL fields (no mixing English and Russian)${
     pseudoDiarizationEligible
-      ? '\n- Does meetingDialogueMarkdown follow the meeting-specific LANGUAGE RULE and stay grounded in the transcript with neutral speaker labels when names are unknown? If not, fix or use "".'
+      ? '\n- [ ] meetingDialogueMarkdown follows the meeting-specific LANGUAGE RULE and uses neutral speaker labels when names are unknown'
       : ''
   }
-- Did you avoid guessing dates and facts? If not, correct them.
-- Are nextSteps high-level and not duplicates of tasks or of any existing saved task title? If not, improve them.
+
+**Content Quality:**
+- [ ] summary focuses on MAIN POINT and uses active voice
+- [ ] suggestedTitle is SPECIFIC (not generic like "Voice note" or "Meeting")
+- [ ] tasks start with action verbs and are specific enough to understand
+- [ ] tasks priorities follow strict criteria (avoid over-prioritizing to "high")
+- [ ] tags are SPECIFIC nouns/phrases (no meta tags like "note", "recording")
+- [ ] nextSteps are PREPARATORY actions, NOT duplicates of tasks
+- [ ] NO dates or facts were invented (only extract what's explicitly stated)
+- [ ] deadline values are properly formatted (YYYY-MM-DD or ISO 8601) or null
+
+**Duplication Check:**
+- [ ] NO tasks duplicate "EXISTING SAVED TASK TITLES" (if present above)
+- [ ] nextSteps don't repeat tasks or existing task titles
+
+If ANY check fails, fix it before submitting.
 
 ${buildAiProcessingPromptExamples(pseudoDiarizationEligible)}`;
 }
