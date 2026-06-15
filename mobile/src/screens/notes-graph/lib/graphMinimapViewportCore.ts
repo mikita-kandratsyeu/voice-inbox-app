@@ -3,7 +3,7 @@ import type {
   GraphMinimapFrame,
   GraphMinimapViewportRect,
 } from './graphMinimapFrame';
-import { GRAPH_MINIMAP_VIEWPORT_STROKE } from './graphMinimapFrame';
+import { GRAPH_MINIMAP_VIEWPORT_STROKE, worldToMinimapPoint } from './graphMinimapFrame';
 
 function viewportContainsContentBounds(
   content: GraphMinimapContentBounds | null,
@@ -54,17 +54,6 @@ export function clipMinimapViewportRect(
     y: y1,
     width: Math.max(0, x2 - x1),
     height: Math.max(0, y2 - y1),
-  };
-}
-
-function worldToMinimapPoint(
-  worldX: number,
-  worldY: number,
-  frame: GraphMinimapFrame,
-): { x: number; y: number } {
-  return {
-    x: frame.offsetX + (worldX - frame.minX) * frame.scale,
-    y: frame.offsetY + (worldY - frame.minY) * frame.scale,
   };
 }
 

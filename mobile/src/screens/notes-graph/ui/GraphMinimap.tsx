@@ -24,7 +24,6 @@ import type { Colors } from '@/shared/config';
 import { hapticSelection, withAlphaHex } from '@/shared/lib';
 
 import { buildMinimapNodeItems } from '../lib/buildMinimapNodeItems';
-import { computeMinimapViewportRectWorklet } from '../lib/graphMinimapViewportWorklet';
 import {
   computeMinimapContentBounds,
   computeStaticMinimapFrame,
@@ -41,6 +40,7 @@ import {
   isGraphMinimapAvailable,
   setGraphMinimapSize,
 } from '../lib/graphMinimapPreferences';
+import { computeMinimapViewportRectWorklet } from '../lib/graphMinimapViewportWorklet';
 import type { GraphNode } from '../lib/graphTypes';
 
 const RESIZE_HANDLE_SIZE = 28;
@@ -131,27 +131,22 @@ function MinimapViewportIndicator({
     ),
   );
 
-  const viewportX = useDerivedValue(() => viewportRect.value.x);
-  const viewportY = useDerivedValue(() => viewportRect.value.y);
-  const viewportWidthSV = useDerivedValue(() => viewportRect.value.width);
-  const viewportHeightSV = useDerivedValue(() => viewportRect.value.height);
-
   return (
     <Group>
       <RoundedRect
-        x={viewportX}
-        y={viewportY}
-        width={viewportWidthSV}
-        height={viewportHeightSV}
+        x={useDerivedValue(() => viewportRect.value.x)}
+        y={useDerivedValue(() => viewportRect.value.y)}
+        width={useDerivedValue(() => viewportRect.value.width)}
+        height={useDerivedValue(() => viewportRect.value.height)}
         r={2}
         color={accentColor}
         opacity={0.12}
       />
       <RoundedRect
-        x={viewportX}
-        y={viewportY}
-        width={viewportWidthSV}
-        height={viewportHeightSV}
+        x={useDerivedValue(() => viewportRect.value.x)}
+        y={useDerivedValue(() => viewportRect.value.y)}
+        width={useDerivedValue(() => viewportRect.value.width)}
+        height={useDerivedValue(() => viewportRect.value.height)}
         r={2}
         style="stroke"
         strokeWidth={VIEWPORT_STROKE_WIDTH}

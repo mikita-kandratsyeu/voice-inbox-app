@@ -6,11 +6,13 @@ import {
   TASK_NODE_WIDTH,
 } from './graphTypes';
 
+const dimensionsCache = new Map<GraphNode['kind'], { width: number; height: number }>([
+  ['task', { width: TASK_NODE_WIDTH, height: TASK_NODE_HEIGHT }],
+  ['record', { width: RECORD_NODE_WIDTH, height: RECORD_NODE_HEIGHT }],
+]);
+
 export function nodeDimensions(kind: GraphNode['kind']): { width: number; height: number } {
-  if (kind === 'task') {
-    return { width: TASK_NODE_WIDTH, height: TASK_NODE_HEIGHT };
-  }
-  return { width: RECORD_NODE_WIDTH, height: RECORD_NODE_HEIGHT };
+  return dimensionsCache.get(kind)!;
 }
 
 export function nodeCenter(node: GraphNode): { x: number; y: number } {

@@ -49,9 +49,9 @@ function prepareEdgePaths(
     const skiaPath = getCachedSkiaPath(`${edge.id}:${path}`, path);
     if (!skiaPath) continue;
 
-    const style = getGraphEdgeStrokeStyle(edge.kind, color, emphasis);
     const glow = emphasis === 'highlighted' ? getGraphEdgeGlowStyle(edge.kind, color) : null;
-    const useGradient = Boolean(style.strokeGradient && emphasis !== 'dimmed');
+    const style = getGraphEdgeStrokeStyle(edge.kind, color, emphasis);
+    const useGradient = emphasis !== 'dimmed' && Boolean(style.strokeGradient);
 
     items.push({
       edgeId: edge.id,

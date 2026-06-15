@@ -85,6 +85,12 @@ export function buildGraphRenderedEdges(
   viewportCull?: GraphViewportCull | null,
 ): GraphRenderedEdge[] {
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  const nodeCenters = new Map<string, { x: number; y: number }>();
+
+  for (const node of nodes) {
+    nodeCenters.set(node.id, nodeCenter(node));
+  }
+
   const bendLayout = buildParallelEdgeBendLayout(edges);
   const visibleRect = viewportCull ? computeGraphVisibleWorldRect(viewportCull) : null;
   const items: GraphRenderedEdge[] = [];
@@ -94,8 +100,8 @@ export function buildGraphRenderedEdges(
     const target = nodeById.get(edge.targetId);
     if (!source || !target) continue;
 
-    const targetCenter = nodeCenter(target);
-    const sourceCenter = nodeCenter(source);
+    const sourceCenter = nodeCenters.get(edge.sourceId)!;
+    const targetCenter = nodeCenters.get(edge.targetId)!;
     const from = nodeBorderAnchor(source, targetCenter);
     const to = nodeBorderAnchor(target, sourceCenter);
 
