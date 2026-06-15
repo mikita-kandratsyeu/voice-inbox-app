@@ -72,9 +72,9 @@ export function LinkNoteAddRow({ color, hasLinks, isLast, onPress }: LinkNoteAdd
         <View style={{ flex: 1, flexShrink: 1, minWidth: 0 }}>
           <Text
             style={{
-              color: color.text.primary,
+              color: hasLinks ? color.text.secondary : color.text.primary,
               fontSize: hasLinks ? 15 : 16,
-              fontWeight: '600',
+              fontWeight: hasLinks ? '400' : '600',
               lineHeight: hasLinks ? 20 : 21,
             }}
             numberOfLines={1}
