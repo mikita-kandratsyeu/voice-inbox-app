@@ -1,5 +1,5 @@
-import { nodeBounds } from './graphNodeMetrics';
 import { computeMinimapViewportRectFromBounds } from './graphMinimapViewportCore';
+import { nodeBounds } from './graphNodeMetrics';
 import type { GraphNode } from './graphTypes';
 
 export const GRAPH_MINIMAP_FRAME_PADDING = 48;
@@ -133,7 +133,10 @@ export function computeStaticMinimapFrame(
   );
 }
 
-export { clipMinimapViewportRect, computeMinimapViewportRectFromBounds } from './graphMinimapViewportCore';
+export {
+  clipMinimapViewportRect,
+  computeMinimapViewportRectFromBounds,
+} from './graphMinimapViewportCore';
 
 export function computeMinimapViewportRect(
   frame: GraphMinimapFrame,
