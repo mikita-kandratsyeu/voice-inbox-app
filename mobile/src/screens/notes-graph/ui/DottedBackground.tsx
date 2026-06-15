@@ -1,5 +1,6 @@
-import React from 'react';
-import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
+import { Canvas, Group, Path, Skia } from '@shopify/react-native-skia';
+import React, { useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { GRAPH_SNAP_GRID_SPACING } from '../lib/graphSnapGrid';
 
@@ -20,27 +21,37 @@ export function DottedBackground({
   dotRadius = 1.2,
   opacity = 0.42,
 }: DottedBackgroundProps) {
-  const patternId = 'notes-graph-dot-pattern';
+  const dotPath = useMemo(() => {
+    if (width <= 0 || height <= 0) return null;
+
+    const path = Skia.Path.Make();
+    for (let y = spacing / 2; y < height; y += spacing) {
+      for (let x = spacing / 2; x < width; x += spacing) {
+        path.addCircle(x, y, dotRadius);
+      }
+    }
+    return path;
+  }, [dotRadius, height, spacing, width]);
+
+  if (!dotPath) {
+    return null;
+  }
 
   return (
-    <Svg
-      width={width}
-      height={height}
-      style={{ position: 'absolute', left: 0, top: 0 }}
-      pointerEvents="none"
-    >
-      <Defs>
-        <Pattern id={patternId} width={spacing} height={spacing} patternUnits="userSpaceOnUse">
-          <Circle
-            cx={spacing / 2}
-            cy={spacing / 2}
-            r={dotRadius}
-            fill={dotColor}
-            opacity={opacity}
-          />
-        </Pattern>
-      </Defs>
-      <Rect x={0} y={0} width={width} height={height} fill={`url(#${patternId})`} />
-    </Svg>
+    <View pointerEvents="none" style={[styles.layer, { width, height }]}>
+      <Canvas style={{ width, height }}>
+        <Group opacity={opacity}>
+          <Path path={dotPath} color={dotColor} style="fill" />
+        </Group>
+      </Canvas>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  layer: {
+    left: 0,
+    position: 'absolute',
+    top: 0,
+  },
+});

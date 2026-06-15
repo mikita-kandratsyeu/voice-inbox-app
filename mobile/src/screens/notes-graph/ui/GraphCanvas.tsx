@@ -25,6 +25,7 @@ import type { Folder } from '@/entities/folder';
 import { useSettingsStore } from '@/entities/settings';
 import { type Colors, DEFAULT_ACCENT_COLOR_ID } from '@/shared/config';
 
+import type { GraphViewportCull } from '../lib/buildGraphRenderedEdges';
 import {
   computeGraphExportLayout,
   getGraphExportViewShotMaxDimension,
@@ -702,6 +703,25 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
   const clusters = useMemo(() => buildGraphClusters(displayNodes, edges), [displayNodes, edges]);
 
+  const edgeViewportCull = useMemo<GraphViewportCull | null>(() => {
+    if (edges.length < 48) return null;
+
+    return {
+      translateX: viewportTransform.translateX,
+      translateY: viewportTransform.translateY,
+      scale: viewportTransform.scale,
+      viewportWidth,
+      viewportHeight,
+    };
+  }, [
+    edges.length,
+    viewportHeight,
+    viewportTransform.scale,
+    viewportTransform.translateX,
+    viewportTransform.translateY,
+    viewportWidth,
+  ]);
+
   return (
     <View
       style={{ flex: 1, overflow: 'hidden', backgroundColor: color.background.secondary }}
@@ -739,6 +759,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               height={worldHeight}
               matchedNodeIds={matchedNodeIds}
               activeNodeId={activeNodeId}
+              viewportCull={edgeViewportCull}
             />
             <GraphNodeLayer
               nodes={displayNodes}

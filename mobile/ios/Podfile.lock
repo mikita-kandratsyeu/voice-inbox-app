@@ -2042,6 +2042,29 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-skia (2.6.4):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React
+    - React-callinvoker
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - react-native-slider (5.2.0):
     - hermes-engine
     - RCTRequired
@@ -3192,6 +3215,7 @@ DEPENDENCIES:
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-quick-base64 (from `../node_modules/react-native-quick-base64`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - "react-native-skia (from `../node_modules/@shopify/react-native-skia`)"
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
   - react-native-view-shot (from `../node_modules/react-native-view-shot`)
   - react-native-webview (from `../node_modules/react-native-webview`)
@@ -3430,6 +3454,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-quick-base64"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-skia:
+    :path: "../node_modules/@shopify/react-native-skia"
   react-native-slider:
     :path: "../node_modules/@react-native-community/slider"
   react-native-view-shot:
@@ -3665,6 +3691,7 @@ SPEC CHECKSUMS:
   react-native-netinfo: c9fa0172bba6414449ea5b67fc92f2c99c20cb1d
   react-native-quick-base64: d141c938c88e6c2e6199d5f7c515fe8dc0c0120d
   react-native-safe-area-context: c20a2b66c37a6fd0e6d448dbec5b6fe0cc53bb11
+  react-native-skia: 4bcfd88537b0c859314d0a033f4507d6519c0c45
   react-native-slider: 04f5b66cb796c23d256c1a842fa801fe1768e2cd
   react-native-view-shot: d642ea5e117fbf4a0ea910093b9d5156d0e518d1
   react-native-webview: 2ba9d8b5ac7b0c0678b5d255b0c73a5b80bf4677

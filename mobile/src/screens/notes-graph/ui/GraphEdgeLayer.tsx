@@ -1,36 +1,22 @@
+import type { SkPath } from '@shopify/react-native-skia';
+import {
+  Canvas,
+  DashPathEffect,
+  Group,
+  LinearGradient,
+  Path,
+  vec,
+} from '@shopify/react-native-skia';
 import React, { useMemo } from 'react';
-import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import { StyleSheet, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 
-import {
-  buildParallelEdgeBendLayout,
-  computeCubicEdgePath,
-  computeEdgeCurvature,
-  computeQuadraticEdgePath,
-} from '../lib/graphEdgePath';
-import {
-  getGraphEdgeGlowStyle,
-  getGraphEdgeStrokeStyle,
-  type GraphEdgeEmphasis,
-  resolveGraphEdgeEmphasis,
-} from '../lib/graphEdgeStyles';
-import { nodeBorderAnchor, nodeCenter } from '../lib/graphNodeMetrics';
-import type { GraphEdge, GraphEdgeKind, GraphNode } from '../lib/graphTypes';
-
-const EDGE_KIND_DRAW_ORDER: Record<GraphEdgeKind, number> = {
-  sameFolder: 0,
-  sharedTag: 1,
-  contains: 2,
-  linked: 3,
-  similar: 4,
-};
-
-const EDGE_EMPHASIS_DRAW_ORDER: Record<GraphEdgeEmphasis, number> = {
-  dimmed: 0,
-  default: 1,
-  highlighted: 2,
-};
+import { buildGraphRenderedEdges, type GraphViewportCull } from '../lib/buildGraphRenderedEdges';
+import { getGraphEdgeGlowStyle, getGraphEdgeStrokeStyle } from '../lib/graphEdgeStyles';
+import { getCachedSkiaPath } from '../lib/graphSkiaUtils';
+import { parseStrokeDashIntervals } from '../lib/graphStrokeDash';
+import type { GraphEdge, GraphNode } from '../lib/graphTypes';
 
 type GraphEdgeLayerProps = {
   nodes: GraphNode[];
@@ -40,14 +26,71 @@ type GraphEdgeLayerProps = {
   height: number;
   matchedNodeIds: ReadonlySet<string> | null;
   activeNodeId: string | null;
+  viewportCull?: GraphViewportCull | null;
 };
 
-type RenderedEdge = {
-  edge: GraphEdge;
-  path: string;
-  emphasis: GraphEdgeEmphasis;
-  shouldAnimate: boolean;
+type PreparedEdgePath = {
+  edgeId: string;
+  path: SkPath;
+  glow: ReturnType<typeof getGraphEdgeGlowStyle>;
+  style: ReturnType<typeof getGraphEdgeStrokeStyle>;
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+  useGradient: boolean;
 };
+
+function prepareEdgePaths(
+  renderedEdges: ReturnType<typeof buildGraphRenderedEdges>,
+  color: Colors,
+): PreparedEdgePath[] {
+  const items: PreparedEdgePath[] = [];
+
+  for (const { edge, path, from, to, emphasis } of renderedEdges) {
+    const skiaPath = getCachedSkiaPath(`${edge.id}:${path}`, path);
+    if (!skiaPath) continue;
+
+    const style = getGraphEdgeStrokeStyle(edge.kind, color, emphasis);
+    const glow = emphasis === 'highlighted' ? getGraphEdgeGlowStyle(edge.kind, color) : null;
+    const useGradient = Boolean(style.strokeGradient && emphasis !== 'dimmed');
+
+    items.push({
+      edgeId: edge.id,
+      path: skiaPath,
+      glow,
+      style,
+      from,
+      to,
+      useGradient,
+    });
+  }
+
+  return items;
+}
+
+function GraphEdgeStroke({ prepared }: { prepared: PreparedEdgePath }) {
+  const dashIntervals = parseStrokeDashIntervals(prepared.style.strokeDasharray);
+  const strokeCap = prepared.style.strokeLinecap ?? 'round';
+
+  return (
+    <Path
+      path={prepared.path}
+      style="stroke"
+      strokeWidth={prepared.style.strokeWidth}
+      color={prepared.useGradient ? undefined : prepared.style.stroke}
+      opacity={prepared.style.opacity}
+      strokeCap={strokeCap}
+    >
+      {prepared.useGradient && prepared.style.strokeGradient ? (
+        <LinearGradient
+          start={vec(prepared.from.x, prepared.from.y)}
+          end={vec(prepared.to.x, prepared.to.y)}
+          colors={prepared.style.strokeGradient.colors}
+        />
+      ) : null}
+      {dashIntervals ? <DashPathEffect intervals={dashIntervals} /> : null}
+    </Path>
+  );
+}
 
 export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
   nodes,
@@ -57,133 +100,52 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
   height,
   matchedNodeIds,
   activeNodeId,
+  viewportCull = null,
 }: GraphEdgeLayerProps) {
-  const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
-  const bendLayout = useMemo(() => buildParallelEdgeBendLayout(edges), [edges]);
+  const renderedEdges = useMemo(
+    () => buildGraphRenderedEdges(nodes, edges, matchedNodeIds, activeNodeId, viewportCull),
+    [activeNodeId, edges, matchedNodeIds, nodes, viewportCull],
+  );
 
-  const edgePaths = useMemo(() => {
-    const pathsMap = new Map<string, string>();
+  const preparedEdges = useMemo(
+    () => prepareEdgePaths(renderedEdges, color),
+    [color, renderedEdges],
+  );
 
-    for (const edge of edges) {
-      const source = nodeById.get(edge.sourceId);
-      const target = nodeById.get(edge.targetId);
-      if (!source || !target) continue;
-
-      const targetCenter = nodeCenter(target);
-      const sourceCenter = nodeCenter(source);
-      const from = nodeBorderAnchor(source, targetCenter);
-      const to = nodeBorderAnchor(target, sourceCenter);
-      const bend = bendLayout.get(edge.id) ?? { index: 0, total: 1 };
-      const distance = Math.hypot(to.x - from.x, to.y - from.y);
-      const curvature = computeEdgeCurvature(distance, edge.id, bend, edge.kind);
-
-      const useCubic = edge.kind === 'similar' || edge.kind === 'contains';
-      const path = useCubic
-        ? computeCubicEdgePath(from, to, curvature)
-        : computeQuadraticEdgePath(from, to, curvature);
-
-      pathsMap.set(edge.id, path);
-    }
-
-    return pathsMap;
-  }, [bendLayout, edges, nodeById]);
-
-  const edgeEmphases = useMemo(() => {
-    const emphases = new Map<string, GraphEdgeEmphasis>();
-    for (const edge of edges) {
-      emphases.set(edge.id, resolveGraphEdgeEmphasis(edge, matchedNodeIds, activeNodeId));
-    }
-    return emphases;
-  }, [edges, matchedNodeIds, activeNodeId]);
-
-  const renderedEdges = useMemo(() => {
-    const items: RenderedEdge[] = [];
-
-    for (const edge of edges) {
-      const path = edgePaths.get(edge.id);
-      if (!path) continue;
-
-      const emphasis = edgeEmphases.get(edge.id) ?? 'default';
-      const shouldAnimate =
-        emphasis === 'highlighted' && (edge.kind === 'similar' || edge.kind === 'contains');
-
-      items.push({ edge, path, emphasis, shouldAnimate });
-    }
-
-    items.sort((a, b) => {
-      const emphasisDelta =
-        EDGE_EMPHASIS_DRAW_ORDER[a.emphasis] - EDGE_EMPHASIS_DRAW_ORDER[b.emphasis];
-      if (emphasisDelta !== 0) return emphasisDelta;
-
-      const kindDelta = EDGE_KIND_DRAW_ORDER[a.edge.kind] - EDGE_KIND_DRAW_ORDER[b.edge.kind];
-      return kindDelta !== 0 ? kindDelta : a.edge.id.localeCompare(b.edge.id);
-    });
-
-    return items;
-  }, [edgeEmphases, edgePaths, edges]);
+  if (preparedEdges.length === 0) {
+    return null;
+  }
 
   return (
-    <Svg
-      width={width}
-      height={height}
-      style={{ position: 'absolute', left: 0, top: 0 }}
-      pointerEvents="none"
-    >
-      <Defs>
-        {renderedEdges.map(({ edge }) => {
-          const style = getGraphEdgeStrokeStyle(edge.kind, color, 'default');
-          if (style.strokeGradient) {
-            return (
-              <LinearGradient
-                key={style.strokeGradient.id + edge.id}
-                id={`${style.strokeGradient.id}-${edge.id}`}
-                x1="0%"
-                y1="0%"
-                x2="100%"
-                y2="0%"
-              >
-                {style.strokeGradient.colors.map((c, i) => (
-                  <Stop
-                    key={i}
-                    offset={`${(i * 100) / (style.strokeGradient!.colors.length - 1)}%`}
-                    stopColor={c}
-                  />
-                ))}
-              </LinearGradient>
-            );
-          }
-          return null;
-        })}
-      </Defs>
-      {renderedEdges.map(({ edge, path, emphasis }) => {
-        const style = getGraphEdgeStrokeStyle(edge.kind, color, emphasis);
-        const glow = emphasis === 'highlighted' ? getGraphEdgeGlowStyle(edge.kind, color) : null;
-        const useGradient = style.strokeGradient && emphasis !== 'dimmed';
-
-        return (
-          <React.Fragment key={edge.id}>
-            {glow ? (
+    <View pointerEvents="none" style={[styles.layer, { width, height }]}>
+      <Canvas style={{ width, height }}>
+        <Group>
+          {preparedEdges.map((prepared) =>
+            prepared.glow ? (
               <Path
-                d={path}
-                stroke={glow.stroke}
-                strokeWidth={glow.strokeWidth}
-                strokeLinecap={glow.strokeLinecap ?? 'round'}
-                opacity={glow.opacity}
-                fill="none"
+                key={`${prepared.edgeId}-glow`}
+                path={prepared.path}
+                style="stroke"
+                strokeWidth={prepared.glow.strokeWidth}
+                color={prepared.glow.stroke}
+                opacity={prepared.glow.opacity}
+                strokeCap={prepared.glow.strokeLinecap ?? 'round'}
               />
-            ) : null}
-            <Path
-              d={path}
-              stroke={useGradient ? `url(#${style.strokeGradient!.id}-${edge.id})` : style.stroke}
-              strokeWidth={style.strokeWidth}
-              strokeDasharray={style.strokeDasharray}
-              strokeLinecap={style.strokeLinecap ?? 'round'}
-              opacity={style.opacity}
-              fill="none"
-            />
-          </React.Fragment>
-        );
-      })}
-    </Svg>
+            ) : null,
+          )}
+          {preparedEdges.map((prepared) => (
+            <GraphEdgeStroke key={prepared.edgeId} prepared={prepared} />
+          ))}
+        </Group>
+      </Canvas>
+    </View>
   );
+});
+
+const styles = StyleSheet.create({
+  layer: {
+    left: 0,
+    position: 'absolute',
+    top: 0,
+  },
 });
