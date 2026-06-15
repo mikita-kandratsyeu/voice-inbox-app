@@ -62,7 +62,11 @@ function buildForceAtlasSettings(nodeCount: number) {
   // For large graphs, reduce scalingRatio to keep nodes closer together
   const baseScalingRatio = Math.max(inferred.scalingRatio ?? 8, 8 + spreadFactor * 8.5);
   const scalingRatio =
-    nodeCount > 100 ? baseScalingRatio * 0.6 : nodeCount > 50 ? baseScalingRatio * 0.75 : baseScalingRatio;
+    nodeCount > 100
+      ? baseScalingRatio * 0.6
+      : nodeCount > 50
+        ? baseScalingRatio * 0.75
+        : baseScalingRatio;
 
   // Increase gravity for large graphs to pull nodes together
   let gravity: number;
