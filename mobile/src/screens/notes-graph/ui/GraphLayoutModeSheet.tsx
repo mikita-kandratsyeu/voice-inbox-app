@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { type Colors, useColors } from '@/shared/config';
-import { useIsTablet } from '@/shared/lib';
 import {
   AppBottomSheetContent,
   AppBottomSheetModal,
@@ -14,10 +13,7 @@ import {
   SheetHeader,
 } from '@/shared/ui';
 
-import {
-  getGraphLayoutModeSheetBottomPadding,
-  getGraphLayoutModeSheetSnapHeight,
-} from '../lib/graphLayoutModeSheetLayout';
+import { getGraphLayoutModeSheetBottomPadding } from '../lib/graphLayoutModeSheetLayout';
 import { GRAPH_LAYOUT_MODES, type GraphLayoutMode } from '../lib/graphTypes';
 
 type GraphLayoutModeSheetProps = {
@@ -65,15 +61,10 @@ export function GraphLayoutModeSheet({
   const color = useColors();
   const insets = useSafeAreaInsets();
   const subtitle = t('notesGraph.filters.layoutModePickerSubtitle');
-  const isTablet = useIsTablet();
 
   const bottomPadding = useMemo(
     () => getGraphLayoutModeSheetBottomPadding(insets.bottom),
     [insets.bottom],
-  );
-  const snapPoints = useMemo(
-    () => [getGraphLayoutModeSheetSnapHeight(insets.bottom) + (isTablet ? -18 : 18)],
-    [insets.bottom, isTablet],
   );
   const options = useMemo(
     () =>
@@ -95,7 +86,7 @@ export function GraphLayoutModeSheet({
     <AppBottomSheetModal
       visible={visible}
       onClose={onClose}
-      snapPoints={snapPoints}
+      enableDynamicSizing
       enableContentPanningGesture={false}
     >
       <AppBottomSheetContent style={{ flexGrow: 0, paddingBottom: bottomPadding }}>

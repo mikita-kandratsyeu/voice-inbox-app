@@ -1,8 +1,7 @@
 import { Check } from 'lucide-react-native';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   AUTO_ORGANIZE_TEMPLATES,
@@ -18,8 +17,6 @@ import {
   SheetFooterButtons,
   SheetHeader,
 } from '@/shared/ui';
-
-import { getAiOrganizeTemplateSheetSnapHeight } from '../lib/aiOrganizeSheetLayout';
 
 type AiOrganizeTemplateSheetProps = {
   visible: boolean;
@@ -44,17 +41,12 @@ export function AiOrganizeTemplateSheet({
 }: AiOrganizeTemplateSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const insets = useSafeAreaInsets();
-  const snapPoints = useMemo(
-    () => [getAiOrganizeTemplateSheetSnapHeight(insets.bottom, AUTO_ORGANIZE_TEMPLATES.length)],
-    [insets.bottom],
-  );
 
   return (
     <AppBottomSheetModal
       visible={visible}
       onClose={onClose}
-      snapPoints={snapPoints}
+      enableDynamicSizing
       enableContentPanningGesture={false}
     >
       <AppBottomSheetContent style={{ flexGrow: 0 }} bottomPadding={12}>

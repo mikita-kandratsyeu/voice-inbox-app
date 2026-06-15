@@ -2,10 +2,8 @@ import { Archive, FolderInput, FolderSync, FolderTree } from 'lucide-react-nativ
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
-  AUTO_ORGANIZE_MODES,
   type AutoOrganizeMode,
   isProAutoOrganizeMode,
 } from '@/entities/folder/lib/autoOrganizeTypes';
@@ -19,8 +17,6 @@ import {
   SheetFooterButtons,
   SheetHeader,
 } from '@/shared/ui';
-
-import { getAiOrganizeActionSheetSnapHeight } from '../lib/aiOrganizeSheetLayout';
 
 type AiOrganizeActionSheetProps = {
   visible: boolean;
@@ -115,13 +111,8 @@ export function AiOrganizeActionSheet({
 }: AiOrganizeActionSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const insets = useSafeAreaInsets();
 
   const actions = useMemo(() => buildActionRows(color, t), [color, t]);
-  const snapPoints = useMemo(
-    () => [getAiOrganizeActionSheetSnapHeight(insets.bottom, AUTO_ORGANIZE_MODES.length + 0.4)],
-    [insets.bottom],
-  );
 
   const subtitle = t('folders.aiOrganizeSheet.subtitle', {
     count: eligibleCount,
@@ -132,7 +123,7 @@ export function AiOrganizeActionSheet({
       visible={visible}
       presentRequestKey={presentRequestKey}
       onClose={onClose}
-      snapPoints={snapPoints}
+      enableDynamicSizing
       enableContentPanningGesture={false}
     >
       <AppBottomSheetContent style={{ flexGrow: 0 }} bottomPadding={12}>
