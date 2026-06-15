@@ -89,6 +89,7 @@ export const GraphFullExportCapture = forwardRef<ViewShotRef, GraphFullExportCap
             />
             <GraphNodeLayer
               nodes={nodes}
+              edges={edges}
               color={color}
               foldersById={foldersById}
               isProActive={isProActive}
@@ -101,6 +102,7 @@ export const GraphFullExportCapture = forwardRef<ViewShotRef, GraphFullExportCap
               onNodeDragStart={noop}
               onNodeDragEnd={noop}
               onNodeDragCancel={noop}
+              onNodeFocus={noop}
             />
           </View>
         </ViewShot>

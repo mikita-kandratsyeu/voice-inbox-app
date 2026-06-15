@@ -40,6 +40,8 @@ import {
   DEFAULT_EDGE_VISIBILITY,
   DEFAULT_GRAPH_LAYOUT_MODE,
   type GraphFilters,
+  recordNodeId,
+  taskNodeId,
 } from '../lib/graphTypes';
 import { estimateGraphSearchFocusBottomInset } from '../lib/graphViewportInsets';
 import {
@@ -152,6 +154,7 @@ export const NotesGraphScreenBody = () => {
   const pendingLayoutApplyVersionRef = useRef<NotesGraphLayoutVersionEntry | null>(null);
   const shouldFitAfterLayoutApplyRef = useRef(false);
   const [activeSearchNodeId, setActiveSearchNodeId] = useState<string | null>(null);
+  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
   const [editTaskTarget, setEditTaskTarget] = useState<{
     recordId: string;
     taskId: string;
@@ -383,6 +386,8 @@ export const NotesGraphScreenBody = () => {
     return new Set(searchMatchIds);
   }, [debouncedSearchQuery, searchMatchIds]);
 
+  const resolvedActiveNodeId = activeSearchNodeId ?? focusedNodeId;
+
   const handleFiltersChange = useCallback((patch: Partial<GraphFilters>) => {
     setFilters((prev) => ({ ...prev, ...patch }));
   }, []);
@@ -485,8 +490,13 @@ export const NotesGraphScreenBody = () => {
     focusSearchMatchAt(searchMatchIndex + 1, searchQuery);
   }, [flushDebouncedSearchQuery, focusSearchMatchAt, searchMatchIndex, searchQuery]);
 
+  const handleNodeFocus = useCallback((nodeId: string) => {
+    setFocusedNodeId(nodeId);
+  }, []);
+
   const handleRecordPress = useCallback(
     (recordId: string) => {
+      setFocusedNodeId(recordNodeId(recordId));
       const record = records.find((r) => r.id === recordId);
       if (record) {
         navigation.navigate('RecordingDetail', { record });
@@ -497,6 +507,7 @@ export const NotesGraphScreenBody = () => {
 
   const handleTaskPress = useCallback(
     (recordId: string, taskId: string) => {
+      setFocusedNodeId(taskNodeId(recordId, taskId));
       const record = records.find((r) => r.id === recordId);
       const task = record?.tasks?.find((item) => item.id === taskId);
       if (!task) return;
@@ -1023,11 +1034,12 @@ export const NotesGraphScreenBody = () => {
           foldersById={foldersById}
           isProActive={isProActive}
           matchedNodeIds={matchedNodeIds}
-          activeNodeId={activeSearchNodeId}
+          activeNodeId={resolvedActiveNodeId}
           bottomInset={insets.bottom}
           focusViewportInsets={focusViewportInsets}
           onRecordPress={handleRecordPress}
           onTaskPress={handleTaskPress}
+          onNodeFocus={handleNodeFocus}
           onReconcilingChange={setIsGraphReconciling}
           onLayoutPositionsChange={handleLayoutPositionsChange}
           onResetLayoutLongPress={handleDiscardUnsavedLayoutChanges}

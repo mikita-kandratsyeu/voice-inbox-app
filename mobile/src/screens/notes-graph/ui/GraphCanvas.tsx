@@ -97,6 +97,7 @@ type GraphCanvasProps = {
   focusViewportInsets?: GraphViewportInsets;
   onRecordPress: (recordId: string) => void;
   onTaskPress: (recordId: string, taskId: string) => void;
+  onNodeFocus: (nodeId: string) => void;
   onReconcilingChange?: (isReconciling: boolean) => void;
   onLayoutPositionsChange?: () => void;
   onResetLayoutLongPress?: () => void;
@@ -149,6 +150,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     focusViewportInsets,
     onRecordPress,
     onTaskPress,
+    onNodeFocus,
     onReconcilingChange,
     onLayoutPositionsChange,
     onResetLayoutLongPress,
@@ -708,6 +710,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
             />
             <GraphNodeLayer
               nodes={displayNodes}
+              edges={edges}
               color={color}
               foldersById={foldersById}
               isProActive={isProActive}
@@ -718,6 +721,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               interactionsEnabled={!isReconciling && !exportBusy}
               onRecordPress={onRecordPress}
               onTaskPress={onTaskPress}
+              onNodeFocus={onNodeFocus}
               onNodeDragStart={handleNodeDragStart}
               onNodeDragEnd={handleNodeDragEnd}
               onNodeDragCancel={handleNodeDragCancel}

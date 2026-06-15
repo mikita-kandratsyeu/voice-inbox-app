@@ -337,6 +337,7 @@ export function GraphRecordNodeCardContent({
   folderName,
   archivedLabel,
   openTasksLabel,
+  connectionsLabel,
   tags,
   accentColor,
   color,
@@ -348,6 +349,7 @@ export function GraphRecordNodeCardContent({
   folderName?: string;
   archivedLabel?: string;
   openTasksLabel?: string;
+  connectionsLabel?: string;
   tags: string[];
   accentColor: string;
   color: Colors;
@@ -373,6 +375,20 @@ export function GraphRecordNodeCardContent({
       >
         {title}
       </Text>
+      {connectionsLabel ? (
+        <Text
+          numberOfLines={1}
+          style={{
+            color: color.text.secondary,
+            fontSize: 10,
+            fontWeight: '500',
+            lineHeight: 13,
+            marginTop: 3,
+          }}
+        >
+          {connectionsLabel}
+        </Text>
+      ) : null}
       {hasMetaChips ? (
         <View
           style={{
@@ -443,12 +459,14 @@ export function GraphTaskNodeCardContent({
   priority,
   deadline,
   deadlineTime,
+  connectionsLabel,
 }: {
   text: string;
   color: Colors;
   priority?: 'high' | 'medium' | 'low';
   deadline?: string | null;
   deadlineTime?: string | null;
+  connectionsLabel?: string;
 }) {
   const { t, i18n } = useTranslation();
   const parsedDeadline = parseTaskDeadline(deadline);
@@ -481,6 +499,20 @@ export function GraphTaskNodeCardContent({
       >
         {text}
       </Text>
+      {connectionsLabel ? (
+        <Text
+          numberOfLines={1}
+          style={{
+            color: color.text.secondary,
+            fontSize: 10,
+            fontWeight: '500',
+            lineHeight: 13,
+            marginTop: 2,
+          }}
+        >
+          {connectionsLabel}
+        </Text>
+      ) : null}
       {hasMeta ? (
         <View
           style={{

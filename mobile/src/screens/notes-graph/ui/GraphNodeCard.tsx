@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SharedValue } from 'react-native-reanimated';
+import { useAnimatedReaction } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { resolveFolderListRowChrome } from '@/entities/folder/lib/folderListRowChrome';
 import type { Colors } from '@/shared/config';
@@ -14,6 +16,22 @@ import {
   GraphRecordNodeCardContent,
   GraphTaskNodeCardContent,
 } from './GraphAnimatedNodeCard';
+import { GRAPH_NODE_INTERACTION_PRESSING } from './graphNodeInteraction';
+
+function useGraphNodeInteracting(interactionPhase: SharedValue<number>): boolean {
+  const [interacting, setInteracting] = useState(false);
+
+  useAnimatedReaction(
+    () => interactionPhase.value >= GRAPH_NODE_INTERACTION_PRESSING,
+    (next, prev) => {
+      if (next !== prev) {
+        scheduleOnRN(setInteracting, next);
+      }
+    },
+  );
+
+  return interacting;
+}
 
 type GraphNodeCardProps = {
   node: GraphNode;
@@ -38,9 +56,21 @@ export function GraphNodeCard({
   active = false,
   interactionPhase,
   onPress,
-}: GraphNodeCardProps & { folderIcon?: string; dimmed?: boolean; active?: boolean }) {
+  connectionCount = 0,
+}: GraphNodeCardProps & {
+  folderIcon?: string;
+  dimmed?: boolean;
+  active?: boolean;
+  connectionCount?: number;
+}) {
   const { t } = useTranslation();
   const scheme = useAppTheme();
+  const interacting = useGraphNodeInteracting(interactionPhase);
+  const isActive = active || interacting;
+  const connectionsLabel =
+    isActive && connectionCount > 0
+      ? t('notesGraph.node.connections', { count: connectionCount })
+      : undefined;
 
   if (node.kind === 'task' && node.task) {
     return (
@@ -48,7 +78,7 @@ export function GraphNodeCard({
         interactionPhase={interactionPhase}
         color={color}
         dimmed={dimmed}
-        active={active}
+        active={isActive}
         highlighted={highlighted}
         nodeKind="task"
         onPress={onPress}
@@ -59,6 +89,7 @@ export function GraphNodeCard({
           priority={node.task.priority}
           deadline={node.task.deadline}
           deadlineTime={node.task.deadlineTime}
+          connectionsLabel={connectionsLabel}
         />
       </GraphAnimatedNodeCard>
     );
@@ -97,7 +128,7 @@ export function GraphNodeCard({
         interactionPhase={interactionPhase}
         color={color}
         dimmed={dimmed}
-        active={active}
+        active={isActive}
         highlighted={highlighted}
         nodeKind="record"
         accentStripeColor={accentColor}
@@ -116,6 +147,7 @@ export function GraphNodeCard({
           folderTintHex={chrome.folderTintHex}
           showInboxIcon={chrome.showInboxIcon}
           leadingFolderIconId={chrome.leadingFolderIconId}
+          connectionsLabel={connectionsLabel}
         />
       </GraphAnimatedNodeCard>
     );

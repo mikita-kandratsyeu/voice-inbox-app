@@ -13,8 +13,9 @@ import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
 import { hapticLight } from '@/shared/lib';
 
+import { buildGraphNodeConnectionCounts } from '../lib/countGraphNodeConnections';
 import { snapGraphPointToGrid } from '../lib/graphSnapGrid';
-import type { GraphNode } from '../lib/graphTypes';
+import type { GraphEdge, GraphNode } from '../lib/graphTypes';
 import { RECORD_NODE_WIDTH, TASK_NODE_WIDTH } from '../lib/graphTypes';
 import { GraphNodeCard } from './GraphNodeCard';
 import {
@@ -26,6 +27,7 @@ import {
 
 type GraphNodeLayerProps = {
   nodes: GraphNode[];
+  edges: GraphEdge[];
   color: Colors;
   foldersById: Map<string, Folder>;
   isProActive: boolean;
@@ -39,6 +41,7 @@ type GraphNodeLayerProps = {
   onNodeDragStart: () => void;
   onNodeDragEnd: (nodeId: string, x: number, y: number) => void;
   onNodeDragCancel: () => void;
+  onNodeFocus: (nodeId: string) => void;
 };
 
 function nodeIsDimmed(
@@ -59,6 +62,7 @@ function DraggableNodeShell({
   onDragEnd,
   onDragCancel,
   onPress,
+  onFocus,
   children,
 }: {
   node: GraphNode;
@@ -68,6 +72,7 @@ function DraggableNodeShell({
   onDragEnd: (nodeId: string, x: number, y: number) => void;
   onDragCancel: () => void;
   onPress: () => void;
+  onFocus: () => void;
   children: (interactionPhase: SharedValue<number>) => React.ReactNode;
 }) {
   const isDraggingRef = useRef(false);
@@ -118,6 +123,10 @@ function DraggableNodeShell({
     onPress();
   }, [onPress]);
 
+  const handleFocus = useCallback(() => {
+    onFocus();
+  }, [onFocus]);
+
   const dragGesture = useMemo(() => {
     const tap = Gesture.Tap()
       .maxDuration(GRAPH_NODE_LONG_PRESS_MS - 20)
@@ -131,6 +140,7 @@ function DraggableNodeShell({
       .minDuration(GRAPH_NODE_LONG_PRESS_MS)
       .onBegin(() => {
         'worklet';
+        scheduleOnRN(handleFocus);
         interactionPhase.value = withTiming(1, {
           duration: 120,
         });
@@ -147,6 +157,7 @@ function DraggableNodeShell({
       .activateAfterLongPress(GRAPH_NODE_LONG_PRESS_MS)
       .onStart(() => {
         'worklet';
+        scheduleOnRN(handleFocus);
         scheduleOnRN(handleCanvasDragStart);
         interactionPhase.value = 2;
         scheduleOnRN(hapticLight);
@@ -204,6 +215,7 @@ function DraggableNodeShell({
     handleCanvasDragStart,
     handleDragCancel,
     handleDragEndComplete,
+    handleFocus,
     handlePress,
     interactionPhase,
     nodeId,
@@ -241,11 +253,13 @@ type GraphNodeItemProps = {
   dimmed: boolean;
   active: boolean;
   highlighted: boolean;
+  connectionCount: number;
   onRecordPress: (recordId: string) => void;
   onTaskPress: (recordId: string, taskId: string) => void;
   onNodeDragStart: () => void;
   onNodeDragEnd: (nodeId: string, x: number, y: number) => void;
   onNodeDragCancel: () => void;
+  onNodeFocus: (nodeId: string) => void;
   canvasScale: SharedValue<number>;
   layoutRestoreToken?: number;
 };
@@ -258,11 +272,13 @@ const GraphNodeItem = React.memo(function GraphNodeItem({
   dimmed,
   active,
   highlighted,
+  connectionCount,
   onRecordPress,
   onTaskPress,
   onNodeDragStart,
   onNodeDragEnd,
   onNodeDragCancel,
+  onNodeFocus,
   canvasScale,
   layoutRestoreToken = 0,
 }: GraphNodeItemProps) {
@@ -299,6 +315,7 @@ const GraphNodeItem = React.memo(function GraphNodeItem({
       onDragStart={onNodeDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={onNodeDragCancel}
+      onFocus={() => onNodeFocus(node.id)}
       onPress={handlePress}
     >
       {(interactionPhase) => (
@@ -312,6 +329,7 @@ const GraphNodeItem = React.memo(function GraphNodeItem({
           highlighted={highlighted}
           dimmed={dimmed}
           active={active}
+          connectionCount={connectionCount}
           interactionPhase={interactionPhase}
         />
       )}
@@ -321,6 +339,7 @@ const GraphNodeItem = React.memo(function GraphNodeItem({
 
 export const GraphNodeLayer = React.memo(function GraphNodeLayer({
   nodes,
+  edges,
   color,
   foldersById,
   isProActive,
@@ -333,8 +352,11 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
   onNodeDragStart,
   onNodeDragEnd,
   onNodeDragCancel,
+  onNodeFocus,
   layoutRestoreToken = 0,
 }: GraphNodeLayerProps) {
+  const connectionCountByNodeId = useMemo(() => buildGraphNodeConnectionCounts(edges), [edges]);
+
   const sortedNodes = useMemo(() => {
     const tasks = nodes.filter((n) => n.kind === 'task');
     const records = nodes.filter((n) => n.kind === 'record');
@@ -363,11 +385,13 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
             dimmed={dimmed}
             active={active}
             highlighted={highlighted}
+            connectionCount={connectionCountByNodeId.get(node.id) ?? 0}
             onRecordPress={onRecordPress}
             onTaskPress={onTaskPress}
             onNodeDragStart={onNodeDragStart}
             onNodeDragEnd={onNodeDragEnd}
             onNodeDragCancel={onNodeDragCancel}
+            onNodeFocus={onNodeFocus}
             canvasScale={canvasScale}
             layoutRestoreToken={layoutRestoreToken}
           />

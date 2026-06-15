@@ -34,7 +34,7 @@ function getLayoutModeIconAccent(mode: GraphLayoutMode, color: Colors): string {
     case 'force':
       return color.accent.transcript;
     case 'circular':
-      return color.accent.aiData;
+      return color.accent.cache;
   }
 }
 
