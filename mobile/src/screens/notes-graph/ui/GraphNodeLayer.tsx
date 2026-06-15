@@ -55,6 +55,7 @@ function DraggableNodeShell({
   canvasScale,
   layoutRestoreToken,
   stackOrder = 0,
+  dimmed = false,
   onDragStart,
   onDragEnd,
   onDragCancel,
@@ -66,6 +67,7 @@ function DraggableNodeShell({
   canvasScale: SharedValue<number>;
   layoutRestoreToken: number;
   stackOrder?: number;
+  dimmed?: boolean;
   onDragStart: () => void;
   onDragEnd: (nodeId: string, x: number, y: number) => void;
   onDragCancel: () => void;
@@ -133,6 +135,10 @@ function DraggableNodeShell({
         if (!success) return;
         scheduleOnRN(handlePress);
       });
+
+    if (dimmed) {
+      return tap;
+    }
 
     const longPressHint = Gesture.LongPress()
       .minDuration(GRAPH_NODE_LONG_PRESS_MS)
@@ -207,6 +213,7 @@ function DraggableNodeShell({
     return Gesture.Simultaneous(Gesture.Exclusive(pan, tap), longPressHint);
   }, [
     canvasScale,
+    dimmed,
     dragOffsetX,
     dragOffsetY,
     handleCanvasDragStart,
@@ -265,81 +272,94 @@ type GraphNodeItemProps = {
   layoutRestoreToken?: number;
 };
 
-const GraphNodeItem = React.memo(function GraphNodeItem({
-  node,
-  color,
-  folder,
-  isProActive,
-  dimmed,
-  active,
-  highlighted,
-  neighbor,
-  connectionCount,
-  onRecordPress,
-  onTaskPress,
-  onNodeDragStart,
-  onNodeDragEnd,
-  onNodeDragCancel,
-  onNodeFocus,
-  canvasScale,
-  layoutRestoreToken = 0,
-}: GraphNodeItemProps) {
-  const skipNextPressRef = useRef(false);
+const GraphNodeItem = React.memo(
+  function GraphNodeItem({
+    node,
+    color,
+    folder,
+    isProActive,
+    dimmed,
+    active,
+    highlighted,
+    neighbor,
+    connectionCount,
+    onRecordPress,
+    onTaskPress,
+    onNodeDragStart,
+    onNodeDragEnd,
+    onNodeDragCancel,
+    onNodeFocus,
+    canvasScale,
+    layoutRestoreToken = 0,
+  }: GraphNodeItemProps) {
+    const skipNextPressRef = useRef(false);
 
-  const handlePress = useCallback(() => {
-    if (skipNextPressRef.current) {
-      skipNextPressRef.current = false;
-      return;
-    }
-    hapticLight();
-    if (node.kind === 'record' && node.record) {
-      onRecordPress(node.record.id);
-      return;
-    }
-    if (node.kind === 'task' && node.parentRecordId && node.task) {
-      onTaskPress(node.parentRecordId, node.task.id);
-    }
-  }, [node, onRecordPress, onTaskPress]);
+    const handlePress = useCallback(() => {
+      if (skipNextPressRef.current) {
+        skipNextPressRef.current = false;
+        return;
+      }
+      hapticLight();
+      if (node.kind === 'record' && node.record) {
+        onRecordPress(node.record.id);
+        return;
+      }
+      if (node.kind === 'task' && node.parentRecordId && node.task) {
+        onTaskPress(node.parentRecordId, node.task.id);
+      }
+    }, [node, onRecordPress, onTaskPress]);
 
-  const handleDragEnd = useCallback(
-    (nodeId: string, x: number, y: number) => {
-      skipNextPressRef.current = true;
-      onNodeDragEnd(nodeId, x, y);
-    },
-    [onNodeDragEnd],
-  );
+    const handleDragEnd = useCallback(
+      (nodeId: string, x: number, y: number) => {
+        skipNextPressRef.current = true;
+        onNodeDragEnd(nodeId, x, y);
+      },
+      [onNodeDragEnd],
+    );
 
-  return (
-    <DraggableNodeShell
-      node={node}
-      canvasScale={canvasScale}
-      layoutRestoreToken={layoutRestoreToken}
-      stackOrder={graphNodeStackOrder({ active, neighbor, dimmed, highlighted })}
-      onDragStart={onNodeDragStart}
-      onDragEnd={handleDragEnd}
-      onDragCancel={onNodeDragCancel}
-      onFocus={() => onNodeFocus(node.id)}
-      onPress={handlePress}
-    >
-      {(interactionPhase) => (
-        <GraphNodeCard
-          node={node}
-          color={color}
-          folderName={folder?.name}
-          folderColor={folder?.color}
-          folderIcon={folder?.icon}
-          isProActive={isProActive}
-          highlighted={highlighted}
-          dimmed={dimmed}
-          active={active}
-          neighbor={neighbor}
-          connectionCount={connectionCount}
-          interactionPhase={interactionPhase}
-        />
-      )}
-    </DraggableNodeShell>
-  );
-});
+    return (
+      <DraggableNodeShell
+        node={node}
+        canvasScale={canvasScale}
+        layoutRestoreToken={layoutRestoreToken}
+        stackOrder={graphNodeStackOrder({ active, neighbor, dimmed, highlighted })}
+        dimmed={dimmed}
+        onDragStart={onNodeDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={onNodeDragCancel}
+        onFocus={() => onNodeFocus(node.id)}
+        onPress={handlePress}
+      >
+        {(interactionPhase) => (
+          <GraphNodeCard
+            node={node}
+            color={color}
+            folderName={folder?.name}
+            folderColor={folder?.color}
+            folderIcon={folder?.icon}
+            isProActive={isProActive}
+            highlighted={highlighted}
+            dimmed={dimmed}
+            active={active}
+            neighbor={neighbor}
+            connectionCount={connectionCount}
+            interactionPhase={interactionPhase}
+          />
+        )}
+      </DraggableNodeShell>
+    );
+  },
+  (prev, next) => {
+    if (prev.node.id !== next.node.id) return false;
+    if (prev.dimmed !== next.dimmed) return false;
+    if (prev.active !== next.active) return false;
+    if (prev.neighbor !== next.neighbor) return false;
+    if (prev.highlighted !== next.highlighted) return false;
+    if (prev.layoutRestoreToken !== next.layoutRestoreToken) return false;
+    if (prev.node.x !== next.node.x || prev.node.y !== next.node.y) return false;
+    return true;
+  },
+);
 
 export const GraphNodeLayer = React.memo(function GraphNodeLayer({
   nodes,

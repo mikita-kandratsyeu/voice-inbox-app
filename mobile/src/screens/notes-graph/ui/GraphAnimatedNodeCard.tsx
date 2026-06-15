@@ -272,6 +272,19 @@ const AnimatedNodeCardShell = React.memo(function AnimatedNodeCardShell({
     const shouldOverrideDimming = active || neighbor || highlighted;
     const opacity = interactive || shouldOverrideDimming ? 1 : idleOpacity;
 
+    if (dimmed && !interactive) {
+      return {
+        opacity,
+        borderWidth: 1,
+        borderColor: color.border.default,
+        shadowColor: color.shadow.color,
+        shadowOpacity: 0,
+        shadowRadius: 0,
+        shadowOffset: { width: 0, height: 0 },
+        elevation: 0,
+      };
+    }
+
     const borderWidth = dragging > 0 ? 2.5 : pressing > 0 ? 2.5 : idleBorderWidth;
 
     const shadowOpacity = active

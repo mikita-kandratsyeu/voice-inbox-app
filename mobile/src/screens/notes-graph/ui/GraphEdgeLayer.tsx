@@ -1,11 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
-import Animated, {
-  Easing,
-  useAnimatedProps,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+import React, { useMemo } from 'react';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 
 import type { Colors } from '@/shared/config';
@@ -24,8 +17,6 @@ import {
 } from '../lib/graphEdgeStyles';
 import { nodeBorderAnchor, nodeCenter } from '../lib/graphNodeMetrics';
 import type { GraphEdge, GraphEdgeKind, GraphNode } from '../lib/graphTypes';
-
-const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const EDGE_KIND_DRAW_ORDER: Record<GraphEdgeKind, number> = {
   sameFolder: 0,
@@ -164,7 +155,7 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
           return null;
         })}
       </Defs>
-      {renderedEdges.map(({ edge, path, emphasis, shouldAnimate }) => {
+      {renderedEdges.map(({ edge, path, emphasis }) => {
         const style = getGraphEdgeStrokeStyle(edge.kind, color, emphasis);
         const glow = emphasis === 'highlighted' ? getGraphEdgeGlowStyle(edge.kind, color) : null;
         const useGradient = style.strokeGradient && emphasis !== 'dimmed';
@@ -172,103 +163,27 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
         return (
           <React.Fragment key={edge.id}>
             {glow ? (
-              shouldAnimate ? (
-                <AnimatedEdgePath
-                  path={path}
-                  stroke={glow.stroke}
-                  strokeWidth={glow.strokeWidth}
-                  strokeLinecap={glow.strokeLinecap ?? 'round'}
-                  opacity={glow.opacity}
-                  animate={shouldAnimate}
-                />
-              ) : (
-                <Path
-                  d={path}
-                  stroke={glow.stroke}
-                  strokeWidth={glow.strokeWidth}
-                  strokeLinecap={glow.strokeLinecap ?? 'round'}
-                  opacity={glow.opacity}
-                  fill="none"
-                />
-              )
-            ) : null}
-            {shouldAnimate ? (
-              <AnimatedEdgePath
-                path={path}
-                stroke={useGradient ? `url(#${style.strokeGradient!.id}-${edge.id})` : style.stroke}
-                strokeWidth={style.strokeWidth}
-                strokeDasharray={style.strokeDasharray}
-                strokeLinecap={style.strokeLinecap ?? 'round'}
-                opacity={style.opacity}
-                animate={shouldAnimate}
-              />
-            ) : (
               <Path
                 d={path}
-                stroke={useGradient ? `url(#${style.strokeGradient!.id}-${edge.id})` : style.stroke}
-                strokeWidth={style.strokeWidth}
-                strokeDasharray={style.strokeDasharray}
-                strokeLinecap={style.strokeLinecap ?? 'round'}
-                opacity={style.opacity}
+                stroke={glow.stroke}
+                strokeWidth={glow.strokeWidth}
+                strokeLinecap={glow.strokeLinecap ?? 'round'}
+                opacity={glow.opacity}
                 fill="none"
               />
-            )}
+            ) : null}
+            <Path
+              d={path}
+              stroke={useGradient ? `url(#${style.strokeGradient!.id}-${edge.id})` : style.stroke}
+              strokeWidth={style.strokeWidth}
+              strokeDasharray={style.strokeDasharray}
+              strokeLinecap={style.strokeLinecap ?? 'round'}
+              opacity={style.opacity}
+              fill="none"
+            />
           </React.Fragment>
         );
       })}
     </Svg>
-  );
-});
-
-type AnimatedEdgePathProps = {
-  path: string;
-  stroke: string;
-  strokeWidth: number;
-  strokeLinecap?: 'butt' | 'round' | 'square';
-  opacity: number;
-  strokeDasharray?: string;
-  animate: boolean;
-};
-
-const AnimatedEdgePath = React.memo(function AnimatedEdgePath({
-  path,
-  stroke,
-  strokeWidth,
-  strokeLinecap = 'round',
-  opacity,
-  strokeDasharray,
-  animate,
-}: AnimatedEdgePathProps) {
-  const animatedOpacity = useSharedValue(opacity);
-
-  useEffect(() => {
-    if (animate) {
-      animatedOpacity.value = withRepeat(
-        withTiming(opacity * 0.6, {
-          duration: 1200,
-          easing: Easing.inOut(Easing.ease),
-        }),
-        -1,
-        true,
-      );
-    } else {
-      animatedOpacity.value = opacity;
-    }
-  }, [animate, animatedOpacity, opacity]);
-
-  const animatedProps = useAnimatedProps(() => ({
-    opacity: animatedOpacity.value,
-  }));
-
-  return (
-    <AnimatedPath
-      d={path}
-      stroke={stroke}
-      strokeWidth={strokeWidth}
-      strokeDasharray={strokeDasharray}
-      strokeLinecap={strokeLinecap}
-      fill="none"
-      animatedProps={animatedProps}
-    />
   );
 });
