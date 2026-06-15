@@ -227,6 +227,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   const [isReconciling, setIsReconciling] = useState(false);
   const reconcilingTokenRef = useRef(0);
   const reconcileStartedAtRef = useRef(0);
+  const pendingDragReconcileRef = useRef<{ nodeId: string; x: number; y: number } | null>(null);
 
   const setReconciling = useCallback(
     (next: boolean) => {
@@ -460,17 +461,28 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       isNodeDragging.value = false;
       reconcilingTokenRef.current += 1;
       reconcileStartedAtRef.current = Date.now();
+      pendingDragReconcileRef.current = { nodeId, x, y };
       setReconciling(true);
-      setSessionNodePosition(nodeId, x, y);
-      setPositionOverrides((prev) => {
-        const next = new Map(prev);
-        next.set(nodeId, { x, y });
-        return next;
-      });
-      onLayoutPositionsChange?.();
     },
-    [isNodeDragging, onLayoutPositionsChange, setReconciling],
+    [isNodeDragging, setReconciling],
   );
+
+  useEffect(() => {
+    if (!isReconciling) return;
+
+    const pending = pendingDragReconcileRef.current;
+    if (!pending) return;
+
+    const { nodeId, x, y } = pending;
+    pendingDragReconcileRef.current = null;
+    setSessionNodePosition(nodeId, x, y);
+    setPositionOverrides((prev) => {
+      const next = new Map(prev);
+      next.set(nodeId, { x, y });
+      return next;
+    });
+    onLayoutPositionsChange?.();
+  }, [isReconciling, onLayoutPositionsChange]);
 
   useEffect(() => {
     const session = getSessionNodePositions();
