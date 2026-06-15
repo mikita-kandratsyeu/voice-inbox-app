@@ -2,7 +2,8 @@ import { nodeBounds } from './graphNodeMetrics';
 import type { GraphNode } from './graphTypes';
 
 export const GRAPH_PAN_OVERSCROLL = 40;
-export const GRAPH_VIEWPORT_MIN_SCALE = 0.3;
+// Min scale: 0.1 allows viewing much larger graphs (was 0.3, now 10x more zoom out)
+export const GRAPH_VIEWPORT_MIN_SCALE = 0.1;
 export const GRAPH_VIEWPORT_MAX_SCALE = 3;
 export const GRAPH_WORLD_CONTENT_PADDING = 80;
 
@@ -17,9 +18,10 @@ export type GraphContentBounds = {
  * Maximum visual extent of edge effects beyond the edge path:
  * - Highlighted edge glow: strokeWidth 9
  * - Edge curvature can extend perpendicular to the direct line
- * We add extra margin to account for curved paths and stroke effects
+ * - For large graphs with many edges, curved paths can extend further
+ * We add generous margin to ensure all edges are captured in exports
  */
-const EDGE_VISUAL_MARGIN = 24;
+const EDGE_VISUAL_MARGIN = 60;
 
 export function measureGraphContentBounds(nodes: GraphNode[]): GraphContentBounds | null {
   if (nodes.length === 0) return null;

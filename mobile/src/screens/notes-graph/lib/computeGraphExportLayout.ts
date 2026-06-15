@@ -18,7 +18,8 @@ export const GRAPH_EXPORT_MAX_DIMENSION = 8192;
 /** iOS drawViewHierarchy / renderInContext maximum safe dimension. */
 export const GRAPH_EXPORT_VIEW_SHOT_MAX_DIMENSION_IOS = 8192;
 export const GRAPH_EXPORT_MIN_DIMENSION = 720;
-export const GRAPH_EXPORT_FIT_PADDING = 80;
+// Increased padding to ensure edges (especially curved ones) are fully captured
+export const GRAPH_EXPORT_FIT_PADDING = 120;
 
 export function getGraphExportViewShotMaxDimension(): number {
   const capabilities = detectDeviceCapabilities();
