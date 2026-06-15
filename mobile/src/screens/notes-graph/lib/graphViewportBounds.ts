@@ -21,7 +21,7 @@ export type GraphContentBounds = {
  * - For large graphs with many edges, curved paths can extend further
  * We add generous margin to ensure all edges are captured in exports
  */
-const EDGE_VISUAL_MARGIN = 60;
+const EDGE_VISUAL_MARGIN = 48;
 
 export function measureGraphContentBounds(nodes: GraphNode[]): GraphContentBounds | null {
   if (nodes.length === 0) return null;
