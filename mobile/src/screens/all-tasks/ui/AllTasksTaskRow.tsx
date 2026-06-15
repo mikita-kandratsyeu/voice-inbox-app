@@ -39,6 +39,7 @@ type AllTasksTaskRowProps = {
   onOpenFollowUp?: (recordId: string) => void;
   onOpenNote: (recordId: string) => void;
   onEditTask: (recordId: string, taskId: string, text: string) => void;
+  onEditTaskOutcome: (recordId: string, taskId: string, outcomeText: string) => void;
   onQuickSchedule: (recordId: string, taskId: string, deadline: string) => void;
   onAddToCalendar: (item: TaskWithRecord) => void;
   onAddToReminder: (item: TaskWithRecord) => void;
@@ -55,6 +56,7 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
   onOpenFollowUp,
   onOpenNote,
   onEditTask,
+  onEditTaskOutcome,
   onQuickSchedule,
   onAddToCalendar,
   onAddToReminder,
@@ -129,6 +131,17 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
       imageColor: titleColor,
       titleColor,
     },
+    ...(task.isDone
+      ? [
+          {
+            id: 'editTaskOutcome',
+            title: t('tasks.editTaskOutcome'),
+            image: 'text.alignleft',
+            imageColor: titleColor,
+            titleColor,
+          },
+        ]
+      : []),
     inlineNativeMenuSection('integrationsSection', titleColor, [
       {
         id: 'addToReminder',
@@ -340,6 +353,8 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
                   onOpenNote(recordId);
                 } else if (nativeEvent.event === 'editTask') {
                   onEditTask(recordId, task.id, task.text);
+                } else if (nativeEvent.event === 'editTaskOutcome') {
+                  onEditTaskOutcome(recordId, task.id, task.outcomeText ?? '');
                 } else if (nativeEvent.event === 'addToReminder') {
                   onAddToReminder(item);
                 } else if (nativeEvent.event === 'addToCalendar') {

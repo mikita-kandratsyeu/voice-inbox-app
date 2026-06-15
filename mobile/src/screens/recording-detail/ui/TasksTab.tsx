@@ -66,6 +66,7 @@ type TasksTabProps = {
   onPromoteNextStepToTask: (step: string, stepIndex: number) => void;
   onDeleteTask: (taskId: string) => void;
   onEditTask: (taskId: string, value: TaskEditValue) => boolean;
+  onEditTaskOutcome: (taskId: string, outcomeText: string) => boolean;
   onDismissError?: () => void;
   showPrivateModeCta?: boolean;
   onSwitchToSmartMode?: () => void;
@@ -162,6 +163,7 @@ export const TasksTab = ({
   onPromoteNextStepToTask,
   onDeleteTask,
   onEditTask,
+  onEditTaskOutcome,
   onDismissError,
   onCancelProcessing,
   privateAiBatchPhase,
@@ -193,6 +195,10 @@ export const TasksTab = ({
   const [editTaskTarget, setEditTaskTarget] = useState<Pick<
     TaskItem,
     'id' | 'text' | 'deadline' | 'deadlineTime' | 'priority'
+  > | null>(null);
+  const [editOutcomeTarget, setEditOutcomeTarget] = useState<Pick<
+    TaskItem,
+    'id' | 'outcomeText'
   > | null>(null);
 
   const reextractSheet = useMemo(
@@ -227,6 +233,25 @@ export const TasksTab = ({
     [editTaskTarget, isArchived, onEditTask],
   );
 
+  const editOutcomeSheet = useMemo(
+    () => (
+      <TaskEditSheet
+        visible={editOutcomeTarget !== null}
+        initialText={editOutcomeTarget?.outcomeText ?? ''}
+        sheetTitleKey="taskOutcome.editOutcomeSheetTitle"
+        placeholderKey="taskOutcome.outcomePlaceholder"
+        textMaxChars={2000}
+        allowEmptySave
+        onClose={() => setEditOutcomeTarget(null)}
+        onSave={({ text }) => {
+          if (!editOutcomeTarget) return false;
+          return onEditTaskOutcome(editOutcomeTarget.id, text);
+        }}
+      />
+    ),
+    [editOutcomeTarget, onEditTaskOutcome],
+  );
+
   const showPermissionAlert = (_: string) => {
     Alert.alert(t('common.error'), t('tasks.permissionDenied'));
   };
@@ -252,6 +277,7 @@ export const TasksTab = ({
         />
         {reextractSheet}
         {editTaskSheet}
+        {editOutcomeSheet}
       </>
     );
   }
@@ -280,6 +306,7 @@ export const TasksTab = ({
         </View>
         {reextractSheet}
         {editTaskSheet}
+        {editOutcomeSheet}
       </>
     );
   }
@@ -304,6 +331,7 @@ export const TasksTab = ({
         </View>
         {reextractSheet}
         {editTaskSheet}
+        {editOutcomeSheet}
       </>
     );
   }
@@ -337,6 +365,7 @@ export const TasksTab = ({
         </View>
         {reextractSheet}
         {editTaskSheet}
+        {editOutcomeSheet}
       </>
     );
   }
@@ -368,6 +397,17 @@ export const TasksTab = ({
               imageColor: titleColor,
               titleColor,
             },
+            ...(task.isDone
+              ? [
+                  {
+                    id: 'editTaskOutcome',
+                    title: t('tasks.editTaskOutcome'),
+                    image: 'text.alignleft',
+                    imageColor: titleColor,
+                    titleColor,
+                  },
+                ]
+              : []),
             inlineNativeMenuSection('integrationsSection', titleColor, [
               {
                 id: 'addToCalendar',
@@ -472,6 +512,12 @@ export const TasksTab = ({
                           deadline: task.deadline,
                           deadlineTime: task.deadlineTime,
                           priority: task.priority,
+                        });
+                      }
+                      if (nativeEvent.event === 'editTaskOutcome') {
+                        setEditOutcomeTarget({
+                          id: task.id,
+                          outcomeText: task.outcomeText ?? '',
                         });
                       }
                       if (nativeEvent.event === 'addToCalendar') {
@@ -603,6 +649,7 @@ export const TasksTab = ({
       </View>
       {reextractSheet}
       {editTaskSheet}
+      {editOutcomeSheet}
     </>
   );
 };

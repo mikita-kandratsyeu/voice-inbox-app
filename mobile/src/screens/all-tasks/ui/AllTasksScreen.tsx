@@ -21,7 +21,11 @@ import { useAdsAllowed } from '@/features/app-storefront';
 import { DeferredInboxBannerAd, InboxBannerAd } from '@/features/inbox-banner';
 import { useManageFolders } from '@/features/manage-folders';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
-import { TaskOutcomeSheet, useTaskCompletionFlow } from '@/features/task-outcome';
+import {
+  normalizeOutcomeText,
+  TaskOutcomeSheet,
+  useTaskCompletionFlow,
+} from '@/features/task-outcome';
 import { TaskEditSheet } from '@/screens/recording-detail/ui/TaskEditSheet';
 import { useColors } from '@/shared/config';
 import {
@@ -81,6 +85,12 @@ export const AllTasksScreen = () => {
   };
 
   const [editTaskTarget, setEditTaskTarget] = useState<EditTaskTarget | null>(null);
+  type EditOutcomeTarget = {
+    recordId: string;
+    taskId: string;
+    outcomeText: string;
+  };
+  const [editOutcomeTarget, setEditOutcomeTarget] = useState<EditOutcomeTarget | null>(null);
 
   const openEditTaskSheet = useCallback((target: EditTaskTarget) => {
     setEditTaskTarget((current) => {
@@ -89,6 +99,18 @@ export const AllTasksScreen = () => {
       }
       requestAnimationFrame(() => {
         setEditTaskTarget(target);
+      });
+      return null;
+    });
+  }, []);
+
+  const openEditOutcomeSheet = useCallback((target: EditOutcomeTarget) => {
+    setEditOutcomeTarget((current) => {
+      if (current === null) {
+        return target;
+      }
+      requestAnimationFrame(() => {
+        setEditOutcomeTarget(target);
       });
       return null;
     });
@@ -473,6 +495,24 @@ export const AllTasksScreen = () => {
     [records, showTaskUpdateError, t, updateTasks],
   );
 
+  const onEditTaskOutcome = useCallback(
+    (recordId: string, taskId: string, outcomeText: string): boolean => {
+      const record = records.find((r) => r.id === recordId);
+      if (!record) return false;
+
+      const prev = record.tasks ?? [];
+      const next = prev.map((x) =>
+        x.id === taskId ? { ...x, outcomeText: normalizeOutcomeText(outcomeText) } : x,
+      );
+      void updateTasks(recordId, next).catch(() => {
+        showTaskUpdateError();
+      });
+
+      return true;
+    },
+    [records, showTaskUpdateError, updateTasks],
+  );
+
   const onQuickSchedule = useCallback(
     (recordId: string, taskId: string, deadline: string) => {
       const record = records.find((r) => r.id === recordId);
@@ -564,6 +604,25 @@ export const AllTasksScreen = () => {
       />
     ),
     [editTaskRecord?.status, editTaskTarget, onEditTask],
+  );
+
+  const editOutcomeSheet = useMemo(
+    () => (
+      <TaskEditSheet
+        visible={editOutcomeTarget !== null}
+        initialText={editOutcomeTarget?.outcomeText ?? ''}
+        sheetTitleKey="taskOutcome.editOutcomeSheetTitle"
+        placeholderKey="taskOutcome.outcomePlaceholder"
+        textMaxChars={2000}
+        allowEmptySave
+        onClose={() => setEditOutcomeTarget(null)}
+        onSave={({ text }) => {
+          if (!editOutcomeTarget) return false;
+          return onEditTaskOutcome(editOutcomeTarget.recordId, editOutcomeTarget.taskId, text);
+        }}
+      />
+    ),
+    [editOutcomeTarget, onEditTaskOutcome],
   );
 
   const createTaskLinkedNoteContext = useMemo(() => {
@@ -681,6 +740,9 @@ export const AllTasksScreen = () => {
               priority: item.row.task.priority,
             });
           }}
+          onEditTaskOutcome={(recordId, taskId, outcomeText) => {
+            openEditOutcomeSheet({ recordId, taskId, outcomeText });
+          }}
           onQuickSchedule={onQuickSchedule}
           onAddToReminder={onAddTaskToReminder}
           onAddToCalendar={onAddTaskToCalendar}
@@ -705,6 +767,7 @@ export const AllTasksScreen = () => {
       openFollowUpNote,
       openNote,
       openEditTaskSheet,
+      openEditOutcomeSheet,
       onAddTaskToReminder,
       onAddTaskToCalendar,
       t,
@@ -878,6 +941,7 @@ export const AllTasksScreen = () => {
         }}
       />
       {editTaskSheet}
+      {editOutcomeSheet}
       {createTaskSheet}
       <TaskOutcomeSheet
         visible={outcomeTarget !== null}

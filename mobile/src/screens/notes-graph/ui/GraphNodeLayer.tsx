@@ -137,22 +137,22 @@ function DraggableNodeShell({
       .minDuration(GRAPH_NODE_LONG_PRESS_MS)
       .onBegin(() => {
         'worklet';
-        scheduleOnRN(handleFocus);
         interactionPhase.value = GRAPH_NODE_INTERACTION_PRESSING;
       })
-      .onFinalize(() => {
+      .onFinalize((_event, success) => {
         'worklet';
-        if (interactionPhase.value >= 2) return;
+        if (interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING) return;
         interactionPhase.value = withTiming(0, {
           duration: 160,
         });
+        if (!success) return;
+        scheduleOnRN(handleFocus);
       });
 
     const pan = Gesture.Pan()
       .activateAfterLongPress(GRAPH_NODE_LONG_PRESS_MS)
       .onStart(() => {
         'worklet';
-        scheduleOnRN(handleFocus);
         scheduleOnRN(handleCanvasDragStart);
         interactionPhase.value = 2;
         scheduleOnRN(hapticLight);
@@ -190,6 +190,7 @@ function DraggableNodeShell({
           duration: 160,
         });
         scheduleOnRN(handleDragEndComplete, nodeId, finalX, finalY);
+        scheduleOnRN(handleFocus);
       })
       .onFinalize((_event, success) => {
         'worklet';

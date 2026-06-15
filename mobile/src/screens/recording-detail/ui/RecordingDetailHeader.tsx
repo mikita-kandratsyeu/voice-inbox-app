@@ -119,6 +119,26 @@ export const RecordingDetailHeader = ({
       titleColor,
     };
 
+    const linkNoteAction: NativeMenuAction = {
+      id: 'linkNote',
+      title: t('noteLinks.linkNoteMenu'),
+      image: 'link',
+      imageColor: titleColor,
+      titleColor,
+    };
+
+    const folderArchiveShareActions: NativeMenuAction[] = !isPrivateMode
+      ? [moveToFolderAction, archiveAction, shareAction]
+      : [archiveAction, shareAction];
+
+    const buildPinRenameLinkSection = (): NativeMenuAction[] => {
+      const section: NativeMenuAction[] = [];
+      if (showPin) section.push(togglePinAction);
+      section.push(renameAction);
+      if (showLinkNote) section.push(linkNoteAction);
+      return section;
+    };
+
     const actions: NativeMenuAction[] = [];
 
     if (showAllTasks) {
@@ -129,32 +149,22 @@ export const RecordingDetailHeader = ({
         imageColor: titleColor,
         titleColor,
       });
-      const pinRenameSection = showPin ? [togglePinAction, renameAction] : [renameAction];
-      actions.push(inlineNativeMenuSection('pinAndRenameSection', titleColor, pinRenameSection));
-    } else if (showPin) {
-      actions.push(togglePinAction, renameAction);
+      actions.push(
+        inlineNativeMenuSection('pinAndRenameSection', titleColor, buildPinRenameLinkSection()),
+      );
     } else {
-      actions.push(renameAction);
-    }
-
-    if (showLinkNote) {
-      actions.push({
-        id: 'linkNote',
-        title: t('noteLinks.linkNoteMenu'),
-        image: 'link',
-        imageColor: titleColor,
-        titleColor,
-      });
+      const pinRenameLinkSection = buildPinRenameLinkSection();
+      if (pinRenameLinkSection.length === 1) {
+        actions.push(pinRenameLinkSection[0]);
+      } else {
+        actions.push(
+          inlineNativeMenuSection('pinAndRenameSection', titleColor, pinRenameLinkSection),
+        );
+      }
     }
 
     actions.push(
-      inlineNativeMenuSection(
-        'folderAndArchiveSection',
-        titleColor,
-        !isPrivateMode
-          ? [moveToFolderAction, archiveAction, shareAction]
-          : [archiveAction, shareAction],
-      ),
+      inlineNativeMenuSection('folderAndArchiveSection', titleColor, folderArchiveShareActions),
     );
     actions.push(
       inlineNativeMenuSection('deleteSection', titleColor, [

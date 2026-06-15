@@ -51,6 +51,8 @@ type TaskEditSheetProps = {
   }) => boolean;
   sheetTitleKey?: string;
   placeholderKey?: string;
+  textMaxChars?: number;
+  allowEmptySave?: boolean;
   /** Secondary action in the footer row (left of Save). */
   onBack?: () => void;
   /** i18n key for the secondary footer label when `onBack` is set. @default common.goBack */
@@ -167,6 +169,8 @@ export function TaskEditSheet({
   onSave,
   sheetTitleKey = 'tasks.editTaskSheetTitle',
   placeholderKey = 'recordingDetail.addTaskPlaceholder',
+  textMaxChars = TASK_TEXT_MAX_CHARS,
+  allowEmptySave = false,
   onBack,
   footerSecondaryLabelKey = 'common.goBack',
   linkedNoteContext,
@@ -256,7 +260,7 @@ export function TaskEditSheet({
 
   const handleSave = useCallback(() => {
     const trimmed = draft.split('\0').join('').trim();
-    if (!trimmed) return;
+    if (!trimmed && !allowEmptySave) return;
     const deadline = deadlineDraft.split('\0').join('').trim();
     const deadlineTime = deadlineTimeDraft.split('\0').join('').trim();
     if (
@@ -269,7 +273,7 @@ export function TaskEditSheet({
     ) {
       bottomSheetRef.current?.dismiss();
     }
-  }, [deadlineDraft, deadlineTimeDraft, draft, onSave, priorityDraft]);
+  }, [allowEmptySave, deadlineDraft, deadlineTimeDraft, draft, onSave, priorityDraft]);
 
   return (
     <AppBottomSheetModal
@@ -295,7 +299,7 @@ export function TaskEditSheet({
         ) : null}
         <BottomSheetTextInput
           value={draft}
-          onChangeText={(text) => setDraft(text.split('\0').join('').slice(0, TASK_TEXT_MAX_CHARS))}
+          onChangeText={(text) => setDraft(text.split('\0').join('').slice(0, textMaxChars))}
           multiline
           textAlignVertical="top"
           placeholder={t(placeholderKey)}
@@ -313,7 +317,7 @@ export function TaskEditSheet({
         <Text className="mt-2 text-center text-[12px]" style={{ color: color.text.secondary }}>
           {t('recordingDetail.tasksReextractCharCount', {
             current: draft.length,
-            max: TASK_TEXT_MAX_CHARS,
+            max: textMaxChars,
           })}
         </Text>
         {showMetadataFields && (

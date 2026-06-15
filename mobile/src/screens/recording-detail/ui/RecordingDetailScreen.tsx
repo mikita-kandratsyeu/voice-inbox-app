@@ -40,7 +40,11 @@ import { useProEntitlement } from '@/features/pro-license';
 import { useRecordActions } from '@/features/record-actions';
 import type { ShareBriefTemplate, ShareRecordExportFormat } from '@/features/share-record';
 import { saveLastShareRecipientEmail, useShareRecord } from '@/features/share-record';
-import { TaskOutcomeSheet, useTaskCompletionFlow } from '@/features/task-outcome';
+import {
+  normalizeOutcomeText,
+  TaskOutcomeSheet,
+  useTaskCompletionFlow,
+} from '@/features/task-outcome';
 import { useTranscription } from '@/features/transcription';
 import { useAppTheme, useColors } from '@/shared/config';
 import {
@@ -341,6 +345,19 @@ export const RecordingDetailScreen = () => {
       return true;
     },
     [liveRecord.id, liveRecord.tasks, t, updateTasks],
+  );
+
+  const handleEditTaskOutcome = useCallback(
+    (taskId: string, outcomeText: string): boolean => {
+      const prev = liveRecord.tasks ?? [];
+      const next = prev.map((x) =>
+        x.id === taskId ? { ...x, outcomeText: normalizeOutcomeText(outcomeText) } : x,
+      );
+      updateTasks(liveRecord.id, next).catch(() => {});
+
+      return true;
+    },
+    [liveRecord.id, liveRecord.tasks, updateTasks],
   );
 
   const handlePromoteNextStepToTask = useCallback(
@@ -1079,6 +1096,7 @@ export const RecordingDetailScreen = () => {
                 onPromoteNextStepToTask={handlePromoteNextStepToTask}
                 onDeleteTask={handleDeleteTask}
                 onEditTask={handleEditTask}
+                onEditTaskOutcome={handleEditTaskOutcome}
                 onDismissError={handleDismissSummaryError}
                 showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                 onSwitchToSmartMode={handleSwitchToSmartMode}

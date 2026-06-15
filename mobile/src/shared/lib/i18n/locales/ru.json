@@ -2567,6 +2567,7 @@
     "deleteTask": "Удалить",
     "deleteTaskConfirm": "Удалить эту задачу из заметки?",
     "editTask": "Изменить",
+    "editTaskOutcome": "Редактировать итог",
     "editTaskA11y": "Изменить задачу: {{text}}",
     "editTaskSheetTitle": "Редактировать задачу",
     "createTaskSheetTitle": "Новая задача",
@@ -2632,6 +2633,7 @@
     "followUpSeedHeading": "Задача",
     "followUpRecordHint": "Заметка привяжется к задаче после сохранения записи.",
     "resultLabel": "Итог",
+    "editOutcomeSheetTitle": "Редактировать итог",
     "openFollowUp": "Заметка: {{title}}",
     "openFollowUpA11y": "Открыть заметку «{{title}}»"
   },
