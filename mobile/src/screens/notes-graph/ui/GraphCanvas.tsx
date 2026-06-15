@@ -98,6 +98,7 @@ type GraphCanvasProps = {
   onRecordPress: (recordId: string) => void;
   onTaskPress: (recordId: string, taskId: string) => void;
   onNodeFocus: (nodeId: string) => void;
+  onResetView?: () => void;
   onReconcilingChange?: (isReconciling: boolean) => void;
   onLayoutPositionsChange?: () => void;
   onResetLayoutLongPress?: () => void;
@@ -151,6 +152,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     onRecordPress,
     onTaskPress,
     onNodeFocus,
+    onResetView,
     onReconcilingChange,
     onLayoutPositionsChange,
     onResetLayoutLongPress,
@@ -373,7 +375,8 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
   const resetView = useCallback(() => {
     applyTransform({ scale: 1, translateX: 0, translateY: 0 });
-  }, [applyTransform]);
+    onResetView?.();
+  }, [applyTransform, onResetView]);
 
   const captureImage = useCallback(async () => {
     await new Promise<void>((resolve) => {

@@ -84,6 +84,8 @@ function waitForNextFrame(): Promise<void> {
   });
 }
 
+const GRAPH_SEARCH_MATCH_INDEX_NONE = -1;
+
 export const NotesGraphScreenBody = () => {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -434,7 +436,7 @@ export const NotesGraphScreenBody = () => {
   }, [debouncedSearchQuery]);
 
   useEffect(() => {
-    if (searchMatches.length === 0) {
+    if (searchMatches.length === 0 || searchMatchIndex < 0) {
       setActiveSearchNodeId(null);
       return;
     }
@@ -492,6 +494,11 @@ export const NotesGraphScreenBody = () => {
 
   const handleNodeFocus = useCallback((nodeId: string) => {
     setFocusedNodeId(nodeId);
+  }, []);
+
+  const handleClearNodeSelection = useCallback(() => {
+    setFocusedNodeId(null);
+    setSearchMatchIndex(GRAPH_SEARCH_MATCH_INDEX_NONE);
   }, []);
 
   const handleRecordPress = useCallback(
@@ -588,7 +595,14 @@ export const NotesGraphScreenBody = () => {
     replaceSessionNodePositions(positions);
     setLayoutRestoreToken((token) => token + 1);
     syncUnsavedLayoutState();
-  }, [hasUnsavedLayoutChanges, isGraphReconciling, isSavingLayout, syncUnsavedLayoutState]);
+    handleClearNodeSelection();
+  }, [
+    handleClearNodeSelection,
+    hasUnsavedLayoutChanges,
+    isGraphReconciling,
+    isSavingLayout,
+    syncUnsavedLayoutState,
+  ]);
 
   const handleOpenLayoutSaveSheet = useCallback(() => {
     if (isSavingLayout || isGraphReconciling || !hasUnsavedLayoutChanges) return;
@@ -612,11 +626,18 @@ export const NotesGraphScreenBody = () => {
         setActiveSavedVersion(entry);
         setHistoryRefreshToken((token) => token + 1);
         setLayoutSaveSheetVisible(false);
+        handleClearNodeSelection();
       } finally {
         setIsSavingLayout(false);
       }
     },
-    [hasUnsavedLayoutChanges, isGraphReconciling, isSavingLayout, persistKey],
+    [
+      handleClearNodeSelection,
+      hasUnsavedLayoutChanges,
+      isGraphReconciling,
+      isSavingLayout,
+      persistKey,
+    ],
   );
 
   const handleApplyLayoutVersion = useCallback(async (entry: NotesGraphLayoutVersionEntry) => {
@@ -1040,6 +1061,7 @@ export const NotesGraphScreenBody = () => {
           onRecordPress={handleRecordPress}
           onTaskPress={handleTaskPress}
           onNodeFocus={handleNodeFocus}
+          onResetView={handleClearNodeSelection}
           onReconcilingChange={setIsGraphReconciling}
           onLayoutPositionsChange={handleLayoutPositionsChange}
           onResetLayoutLongPress={handleDiscardUnsavedLayoutChanges}
@@ -1126,7 +1148,7 @@ export const NotesGraphScreenBody = () => {
             onChangeQuery={setSearchQuery}
             onSubmit={handleSearchSubmit}
             matchCount={searchMatches.length}
-            matchIndex={searchMatches.length > 0 ? searchMatchIndex : null}
+            matchIndex={searchMatches.length > 0 && searchMatchIndex >= 0 ? searchMatchIndex : null}
             onPreviousMatch={handleSearchPrevious}
             onNextMatch={handleSearchNext}
             color={color}
