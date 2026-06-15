@@ -13,13 +13,13 @@ import { InteractionManager, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import type { ViewShotRef } from 'react-native-view-shot';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import type { Folder } from '@/entities/folder';
 import { useSettingsStore } from '@/entities/settings';
@@ -301,7 +301,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       if (animated) {
         scale.value = withSpring(clamped.scale, GRAPH_VIEWPORT_SPRING, (finished) => {
           if (finished) {
-            runOnJS(commitViewportSync)();
+            scheduleOnRN(commitViewportSync);
           }
         });
         translateX.value = withSpring(clamped.translateX, GRAPH_VIEWPORT_SPRING);
@@ -543,7 +543,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     savedScale.value = scale.value;
     savedTranslateX.value = translateX.value;
     savedTranslateY.value = translateY.value;
-    runOnJS(syncViewportState)(scale.value, translateX.value, translateY.value);
+    scheduleOnRN(syncViewportState, scale.value, translateX.value, translateY.value);
   };
 
   const applyMapPinch = (pinchScale: number, focalX: number, focalY: number) => {
@@ -647,7 +647,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
       scale.value = withTiming(clampedScale, timing, (finished) => {
         if (finished) {
-          runOnJS(syncViewportState)(clampedScale, clamped.translateX, clamped.translateY);
+          scheduleOnRN(syncViewportState, clampedScale, clamped.translateX, clamped.translateY);
         }
       });
       translateX.value = withTiming(clamped.translateX, timing);

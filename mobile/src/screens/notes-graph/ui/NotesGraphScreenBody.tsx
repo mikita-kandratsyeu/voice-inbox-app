@@ -541,6 +541,28 @@ export const NotesGraphScreenBody = () => {
     [editTaskTarget, records, updateTasks],
   );
 
+  const editTaskRecord = useMemo(
+    () =>
+      editTaskTarget ? records.find((record) => record.id === editTaskTarget.recordId) : undefined,
+    [editTaskTarget, records],
+  );
+
+  const editTaskSheet = useMemo(
+    () => (
+      <TaskEditSheet
+        visible={editTaskTarget != null}
+        initialText={editTaskTarget?.text ?? ''}
+        initialDeadline={editTaskTarget?.deadline}
+        initialDeadlineTime={editTaskTarget?.deadlineTime}
+        initialPriority={editTaskTarget?.priority}
+        showMetadataFields={editTaskRecord?.status !== 'archived'}
+        onClose={() => setEditTaskTarget(null)}
+        onSave={handleSaveTask}
+      />
+    ),
+    [editTaskRecord?.status, editTaskTarget, handleSaveTask],
+  );
+
   const showLargeGraphHint = !isBuilding && filteredRecordCount > LARGE_GRAPH_RECORD_THRESHOLD;
 
   const handleLayoutPositionsChange = useCallback(() => {
@@ -1023,16 +1045,7 @@ export const NotesGraphScreenBody = () => {
         />
       )}
 
-      <TaskEditSheet
-        visible={editTaskTarget != null}
-        initialText={editTaskTarget?.text ?? ''}
-        initialDeadline={editTaskTarget?.deadline}
-        initialDeadlineTime={editTaskTarget?.deadlineTime}
-        initialPriority={editTaskTarget?.priority}
-        showMetadataFields
-        onClose={() => setEditTaskTarget(null)}
-        onSave={handleSaveTask}
-      />
+      {editTaskSheet}
 
       <GraphLayoutSaveSheet
         visible={layoutSaveSheetVisible}

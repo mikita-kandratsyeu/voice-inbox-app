@@ -541,6 +541,12 @@ export const AllTasksScreen = () => {
     [addTaskToCalendar, showPermissionAlert, t],
   );
 
+  const editTaskRecord = useMemo(
+    () =>
+      editTaskTarget ? records.find((record) => record.id === editTaskTarget.recordId) : undefined,
+    [editTaskTarget, records],
+  );
+
   const editTaskSheet = useMemo(
     () => (
       <TaskEditSheet
@@ -549,7 +555,7 @@ export const AllTasksScreen = () => {
         initialDeadline={editTaskTarget?.deadline}
         initialDeadlineTime={editTaskTarget?.deadlineTime}
         initialPriority={editTaskTarget?.priority}
-        showMetadataFields
+        showMetadataFields={editTaskRecord?.status !== 'archived'}
         onClose={() => setEditTaskTarget(null)}
         onSave={(value) => {
           if (!editTaskTarget) return false;
@@ -557,7 +563,7 @@ export const AllTasksScreen = () => {
         }}
       />
     ),
-    [editTaskTarget, onEditTask],
+    [editTaskRecord?.status, editTaskTarget, onEditTask],
   );
 
   const createTaskLinkedNoteContext = useMemo(() => {

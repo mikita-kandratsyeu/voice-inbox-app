@@ -1069,6 +1069,7 @@ export const RecordingDetailScreen = () => {
                 errorMessage={liveRecord.tasksError}
                 hasTranscript={Boolean(liveRecord.transcript)}
                 recordTitle={liveRecord.title}
+                isArchived={liveRecord.status === 'archived'}
                 color={color}
                 onTaskPress={handleTaskPress}
                 getFollowUpRecordTitle={getFollowUpRecordTitle}

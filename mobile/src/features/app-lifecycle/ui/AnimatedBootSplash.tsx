@@ -3,11 +3,11 @@ import { Image } from 'react-native';
 import BootSplash, { type Manifest } from 'react-native-bootsplash';
 import Animated, {
   Easing,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import bootsplashManifest from '@/shared/assets/bootsplash/manifest.json';
 import { ANIMATION_DURATIONS, SCALE_VALUES, TIMING_CONFIGS } from '@/shared/config';
@@ -35,7 +35,7 @@ export function AnimatedBootSplash({ ready, onAnimationEnd }: Props) {
       },
       (finished) => {
         if (finished) {
-          runOnJS(onAnimationEnd)();
+          scheduleOnRN(onAnimationEnd);
         }
       },
     );

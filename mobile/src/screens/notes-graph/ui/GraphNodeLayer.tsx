@@ -2,12 +2,12 @@ import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-  runOnJS,
   type SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
@@ -124,7 +124,7 @@ function DraggableNodeShell({
       .onEnd((_event, success) => {
         'worklet';
         if (!success) return;
-        runOnJS(handlePress)();
+        scheduleOnRN(handlePress);
       });
 
     const longPressHint = Gesture.LongPress()
@@ -147,9 +147,9 @@ function DraggableNodeShell({
       .activateAfterLongPress(GRAPH_NODE_LONG_PRESS_MS)
       .onStart(() => {
         'worklet';
-        runOnJS(handleCanvasDragStart)();
+        scheduleOnRN(handleCanvasDragStart);
         interactionPhase.value = 2;
-        runOnJS(hapticLight)();
+        scheduleOnRN(hapticLight);
       })
       .onUpdate((event) => {
         'worklet';
@@ -183,13 +183,13 @@ function DraggableNodeShell({
         interactionPhase.value = withTiming(0, {
           duration: 160,
         });
-        runOnJS(handleDragEndComplete)(nodeId, finalX, finalY);
+        scheduleOnRN(handleDragEndComplete, nodeId, finalX, finalY);
       })
       .onFinalize((_event, success) => {
         'worklet';
         if (success) return;
         if (interactionPhase.value >= 2) {
-          runOnJS(handleDragCancel)();
+          scheduleOnRN(handleDragCancel);
         }
         interactionPhase.value = withTiming(0, {
           duration: 160,

@@ -5,12 +5,12 @@ import { Pressable, Text, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
-  runOnJS,
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { getAnimationDuration, useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
@@ -81,7 +81,7 @@ export function useAnimatedCounter(rawValue: number, animationKey: string): numb
     () => Math.round(sv.value),
     (current, previous) => {
       if (current !== previous) {
-        runOnJS(updateDisplay)(current);
+        scheduleOnRN(updateDisplay, current);
       }
     },
   );

@@ -76,6 +76,7 @@ type TasksTabProps = {
   privateAiBatchStartedAt?: number;
   transcriptCharCount?: number;
   cloudMeetingDialogueExtra?: boolean;
+  isArchived?: boolean;
 };
 
 const ManualTaskAddRow = ({
@@ -171,6 +172,7 @@ export const TasksTab = ({
   onSwitchToSmartMode: _onSwitchToSmartMode,
   isPrivateMode = false,
   isPrivateCustomServer = false,
+  isArchived = false,
 }: TasksTabProps) => {
   const theme = useAppTheme();
   const isDark = theme === 'dark';
@@ -212,7 +214,7 @@ export const TasksTab = ({
         initialDeadline={editTaskTarget?.deadline}
         initialDeadlineTime={editTaskTarget?.deadlineTime}
         initialPriority={editTaskTarget?.priority}
-        showMetadataFields
+        showMetadataFields={!isArchived}
         onClose={() => setEditTaskTarget(null)}
         onSave={(value) => {
           if (!editTaskTarget) return false;
@@ -220,7 +222,7 @@ export const TasksTab = ({
         }}
       />
     ),
-    [editTaskTarget, onEditTask],
+    [editTaskTarget, isArchived, onEditTask],
   );
 
   const showPermissionAlert = (_: string) => {

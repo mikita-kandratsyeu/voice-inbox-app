@@ -158,7 +158,7 @@ export function TaskDeadlineActionSheet({
           {
             key: 'snooze',
             label: t('taskDeadlineNotifications.sheet.snooze'),
-            icon: <Clock3 size={iconSize} color={color.accent.primary} strokeWidth={2} />,
+            icon: <Clock3 size={iconSize} color={color.accent.cache} strokeWidth={2} />,
             onPress: () => {
               hapticSelection();
               setMode('snooze');

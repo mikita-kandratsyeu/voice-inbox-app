@@ -4,12 +4,12 @@ import { Pressable, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Circle, Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
@@ -181,14 +181,15 @@ export function GraphMinimap({
         })
         .onUpdate((event) => {
           'worklet';
-          runOnJS(applyResize)(
+          scheduleOnRN(
+            applyResize,
             resizeStartWidthSV.value - event.translationX,
             resizeStartHeightSV.value + event.translationY,
           );
         })
         .onEnd(() => {
           'worklet';
-          runOnJS(persistResize)(minimapWidthSV.value, minimapHeightSV.value);
+          scheduleOnRN(persistResize, minimapWidthSV.value, minimapHeightSV.value);
         }),
     [
       applyResize,
