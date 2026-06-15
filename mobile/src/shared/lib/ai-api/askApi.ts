@@ -82,6 +82,7 @@ export type AskMessageResult =
         answerKind?: AskAnswerKind;
         items?: string[];
         suggestedFollowUps?: string[];
+        interpretations?: string[];
         evidence?: AskEvidence[];
         model?: string;
       };
@@ -97,6 +98,7 @@ type AskResponse =
       answerKind?: AskAnswerKind;
       items?: string[];
       suggestedFollowUps?: string[];
+      interpretations?: string[];
       evidence?: AskEvidence[];
       model?: string;
     }
@@ -187,6 +189,7 @@ export async function pollAskResult(
     answerKind?: AskAnswerKind;
     items?: string[];
     suggestedFollowUps?: string[];
+    interpretations?: string[];
     evidence?: AskEvidence[];
     model?: string;
   }>(
@@ -203,6 +206,7 @@ export async function pollAskResult(
             ...(msg.suggestedFollowUps?.length
               ? { suggestedFollowUps: msg.suggestedFollowUps }
               : {}),
+            ...(msg.interpretations?.length ? { interpretations: msg.interpretations } : {}),
             ...(msg.evidence?.length ? { evidence: msg.evidence } : {}),
             ...(isString(msg.model) && msg.model.trim() ? { model: msg.model.trim() } : {}),
           },

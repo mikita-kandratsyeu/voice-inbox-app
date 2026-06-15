@@ -116,6 +116,27 @@ const SCHEMAS: Record<
       type: 'object',
       properties: {
         answer: { type: 'string' },
+        answerKind: {
+          type: 'string',
+          enum: ['plain', 'list', 'tasks', 'decisions'],
+        },
+        items: { type: 'array', items: { type: 'string' } },
+        evidence: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              quote: { type: 'string' },
+              source: { type: 'string' },
+              offsetMs: { type: 'number' },
+              label: { type: 'string' },
+            },
+            required: ['quote'],
+            additionalProperties: true,
+          },
+        },
+        interpretations: { type: 'array', items: { type: 'string' } },
+        suggestedFollowUps: { type: 'array', items: { type: 'string' } },
       },
       required: ['answer'],
       additionalProperties: true,

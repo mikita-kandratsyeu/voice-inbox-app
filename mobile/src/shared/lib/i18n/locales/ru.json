@@ -874,6 +874,8 @@
     "askEvidenceRowSubtitle": "Цитаты из этой заметки",
     "askEvidenceSheetTitle": "Источники ответа",
     "askEvidenceSheetSubtitle": "Цитаты, на которых основан ответ.",
+    "askInterpretationsTitle": "Не из заметки",
+    "askInterpretationsSubtitle": "Осторожные выводы ИИ — перепроверьте по записи.",
     "askUsage": "Генераций: {{used}} из {{limit}} на этой неделе",
     "continueViewing": "Продолжить",
     "keyPhrases": "Ключевые фразы",

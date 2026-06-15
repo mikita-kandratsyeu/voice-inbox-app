@@ -211,6 +211,7 @@ type AskAnswerResult = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  interpretations?: string[];
   suggestedFollowUps?: string[];
 };
 
@@ -222,6 +223,8 @@ const ASK_EVIDENCE_QUOTE_MAX_CHARS = 500;
 const ASK_EVIDENCE_LABEL_MAX_CHARS = 120;
 const ASK_FOLLOW_UP_MAX = 3;
 const ASK_FOLLOW_UP_MAX_CHARS = 180;
+const ASK_INTERPRETATIONS_MAX = 3;
+const ASK_INTERPRETATION_MAX_CHARS = 400;
 
 function sanitizeAskAnswerKind(value: unknown): AskAnswerKind | undefined {
   return typeof value === 'string' && ASK_ANSWER_KINDS.has(value as AskAnswerKind)
@@ -246,6 +249,16 @@ function sanitizeAskFollowUps(value: unknown): string[] | undefined {
     .filter(Boolean)
     .slice(0, ASK_FOLLOW_UP_MAX)
     .map((item) => item.slice(0, ASK_FOLLOW_UP_MAX_CHARS));
+  return out.length ? out : undefined;
+}
+
+function sanitizeAskInterpretations(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const out = value
+    .map((item) => (typeof item === 'string' ? item.replace(/\s+/g, ' ').trim() : ''))
+    .filter(Boolean)
+    .slice(0, ASK_INTERPRETATIONS_MAX)
+    .map((item) => item.slice(0, ASK_INTERPRETATION_MAX_CHARS));
   return out.length ? out : undefined;
 }
 
@@ -296,12 +309,14 @@ function extractAnswerFromResponse(responseContent: string): AskAnswerResult {
             const answerKind = sanitizeAskAnswerKind(obj.answerKind);
             const items = sanitizeAskItems(obj.items);
             const evidence = sanitizeAskEvidence(obj.evidence);
+            const interpretations = sanitizeAskInterpretations(obj.interpretations);
             const suggestedFollowUps = sanitizeAskFollowUps(obj.suggestedFollowUps);
             return {
               answer: val,
               ...(answerKind ? { answerKind } : {}),
               ...(items ? { items } : {}),
               ...(evidence ? { evidence } : {}),
+              ...(interpretations ? { interpretations } : {}),
               ...(suggestedFollowUps ? { suggestedFollowUps } : {}),
             };
           }

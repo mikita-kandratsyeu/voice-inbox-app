@@ -855,6 +855,8 @@
     "askEvidenceRowSubtitle": "Quotes from this note",
     "askEvidenceSheetTitle": "Answer sources",
     "askEvidenceSheetSubtitle": "Quotes used to ground this answer.",
+    "askInterpretationsTitle": "Not from the note",
+    "askInterpretationsSubtitle": "Cautious AI inferences — verify against the recording.",
     "askUsage": "Generations: {{used}} of {{limit}} this week",
     "continueViewing": "Continue",
     "keyPhrases": "Key phrases",

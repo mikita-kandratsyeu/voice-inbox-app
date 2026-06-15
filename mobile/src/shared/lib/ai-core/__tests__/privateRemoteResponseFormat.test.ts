@@ -62,4 +62,15 @@ describe('buildPrivateRemoteJsonSchemaResponseFormat', () => {
     const schema = (format.json_schema as { schema: Record<string, unknown> }).schema;
     expect((schema.required as string[]) ?? []).toEqual(['merges', 'deleteEmptyFolderNames']);
   });
+
+  it('ask schema exposes interpretations for private remote structured output', () => {
+    const format = buildPrivateRemoteJsonSchemaResponseFormat('ask');
+    const schema = (format.json_schema as { schema: Record<string, unknown> }).schema;
+    const properties = schema.properties as Record<string, unknown>;
+    expect(properties).toHaveProperty('answer');
+    expect(properties).toHaveProperty('interpretations');
+    expect(properties).toHaveProperty('evidence');
+    expect(properties).toHaveProperty('suggestedFollowUps');
+    expect(collectTypeFields(schema)).toEqual([]);
+  });
 });

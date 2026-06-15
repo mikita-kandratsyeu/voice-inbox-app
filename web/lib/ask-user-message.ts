@@ -7,6 +7,7 @@ import {
   buildRecordingMarksPromptBlock,
   type RecordingMarkForPrompt,
 } from '@/lib/recording-marks-prompt';
+import { buildAskInterpretationUserHintBlock } from '@/lib/ask-interpretation-hint';
 
 const ASK_PRIOR_TURNS_MAX = 20;
 const ASK_PRIOR_QUESTION_MAX_CHARS = 6000;
@@ -83,6 +84,10 @@ export function buildAskUserMessageContent(
     );
   }
   parts.push('\n\nQuestion: ', question);
+  const interpretationHint = buildAskInterpretationUserHintBlock(question);
+  if (interpretationHint) {
+    parts.push(interpretationHint);
+  }
   return parts.join('');
 }
 

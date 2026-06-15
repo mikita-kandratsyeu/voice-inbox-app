@@ -96,6 +96,7 @@ export type AskMessage =
       answerKind?: 'plain' | 'list' | 'tasks' | 'decisions';
       items?: string[];
       suggestedFollowUps?: string[];
+      interpretations?: string[];
       evidence?: Array<{
         quote: string;
         source?:

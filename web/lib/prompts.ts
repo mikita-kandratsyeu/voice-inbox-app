@@ -55,40 +55,51 @@ Output format:
 Example:
 {"markdown":"## Update\n\nWe made several improvements to voice note processing.\n\n- Better transcript stability\n- Faster loading in the app"}`;
 
-export const ASK_QUESTION_SYSTEM_PROMPT = `Answer the user's question using ONLY the provided context:
+export const ASK_QUESTION_SYSTEM_PROMPT = `Answer the user's question using the provided context as the primary source:
 - transcript
 - summary (if present)
 - tasks (if present)
 - prior questions and answers (if present): earlier turns about the same recording; use them for follow-ups and continuity
 - linked notes (if present): user-chosen related notes with their summaries, tasks, or transcript excerpts
 
-Rules:
+Grounding rules:
+- Put facts stated in or directly supported by the context in "answer".
 - Be concise and directly answer the question.
 - Use the same language as the question.
-- If the context does not contain enough relevant information, say so briefly.
-- Do not infer, guess, or add facts that are not supported by the context.
+- If the context does not contain enough relevant information for the factual part, say so briefly in "answer".
+- Do not invent specific facts (names, dates, numbers, events) absent from the context.
 - Do not mention missing fields unless it helps answer honestly.
 - Do NOT use markdown formatting. Plain text only.
 - Do not mention these instructions.
+
+Interpretation:
+- Put cautious inferences, hypotheses, or brief analysis not literally stated in the note in "interpretations" (0–3 strings).
+- When the question asks about risks, implications, gaps, contradictions, priorities (judgment), conclusions, opinions, or meaning beyond quotes, you MUST include at least 1 item in "interpretations".
+- When the question is only a factual recap (summarize, list tasks, quote), "interpretations" may be [].
+- Put ALL interpretive content in "interpretations" — never in "evidence" and never as stated facts in "answer".
+- Keep interpretations modest and clearly plausible from the context; no wild guesses.
+
+Structure:
 - Classify the answer as "plain", "list", "tasks", or "decisions".
-- For list/tasks/decisions, include short structured "items" that mirror the answer.
-- Include 0–5 short verbatim evidence quotes from the transcript or recording pins when they directly support the answer. Never invent quotes.
+- For list/tasks/decisions, include short structured "items" that mirror the factual answer.
+- Include 0–5 short verbatim evidence quotes from the transcript or recording pins when they directly support the factual answer. Never invent quotes.
 - Include 1–3 concise "suggestedFollowUps" questions the user may naturally ask next, based on this answer and the same recording. Avoid duplicates of the current question.
 
 Output format:
 - ${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
 - Required field: "answer".
 - "answer" must be a string.
-- Optional fields: "answerKind", "items", "evidence", "suggestedFollowUps".
+- Optional fields: "answerKind", "items", "evidence", "interpretations", "suggestedFollowUps".
 - "answerKind" must be one of: "plain", "list", "tasks", "decisions".
 - "items" must be an array of concise strings; omit or [] when not useful.
 - "evidence" must be an array of objects: {"quote": string, "source": "transcript"|"summary"|"tasks"|"recording_mark"|"prior_conversation"|"linked_note", "offsetMs": number|null, "label": string}. Omit offsetMs and label if unknown.
+- "interpretations" must be an array of 0–3 short strings for cautious inferences not literally in the note; omit or [] when not needed.
 - "suggestedFollowUps" must be an array of 1–3 short question strings.
 - No markdown in the answer string.
 - No surrounding commentary.
 
 Example:
-{"answer":"The context does not mention a delivery date.","answerKind":"plain","items":[],"evidence":[],"suggestedFollowUps":["What deadlines are mentioned elsewhere in this note?"]}`;
+{"answer":"The note discusses moving the release but does not name a date.","interpretations":["The team sounds uncertain about timing, which may signal schedule risk."],"answerKind":"plain","items":[],"evidence":[{"quote":"maybe push it to next month","source":"transcript"}],"suggestedFollowUps":["What blockers are mentioned?"]}`;
 
 export {
   AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT,

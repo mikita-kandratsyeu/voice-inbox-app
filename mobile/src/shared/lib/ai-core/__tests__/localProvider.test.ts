@@ -446,6 +446,17 @@ describe('parseLocalAskResponse', () => {
     });
   });
 
+  it('reads cautious interpretations separately from grounded answer', () => {
+    expect(
+      parseLocalAskResponse(
+        '{"answer":"The note mentions a delay but no date.","interpretations":["The tone suggests schedule risk."],"evidence":[]}',
+      ),
+    ).toEqual({
+      answer: 'The note mentions a delay but no date.',
+      interpretations: ['The tone suggests schedule risk.'],
+    });
+  });
+
   it('reads answer from code fence', () => {
     expect(parseLocalAskResponse('```json\n{"answer":"from fence"}\n```')).toEqual({
       answer: 'from fence',

@@ -56,6 +56,7 @@ export const AskAIScreen = () => {
     answerKind,
     items,
     evidence,
+    interpretations,
     suggestedFollowUps,
     history,
     privateAskProgress,
@@ -275,6 +276,7 @@ export const AskAIScreen = () => {
               answerKind={answerKind}
               items={items}
               evidence={evidence}
+              interpretations={interpretations}
               suggestedFollowUps={suggestedFollowUps}
               history={history}
               privateAskProgress={privateAskProgress}

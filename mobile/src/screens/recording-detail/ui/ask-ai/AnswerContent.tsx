@@ -1,5 +1,5 @@
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { ChevronRight, Copy, FileText, ShareIcon } from 'lucide-react-native';
+import { ChevronRight, Copy, FileText, Lightbulb, ShareIcon } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -95,6 +95,7 @@ type AnswerTurnBlockProps = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  interpretations?: string[];
   suggestedFollowUps?: string[];
   recordTitle: string;
   showDivider: boolean;
@@ -154,6 +155,52 @@ const AnswerStructuredItems = ({
               {item}
             </Text>
           </View>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+const AnswerInterpretations = ({
+  color,
+  interpretations,
+}: {
+  color: Colors;
+  interpretations?: string[];
+}) => {
+  const { t } = useTranslation();
+  if (!interpretations?.length) return null;
+
+  return (
+    <View
+      className="mt-1 gap-2 rounded-xl px-3 py-3"
+      style={{
+        backgroundColor: color.background.tertiary,
+        borderWidth: 1,
+        borderColor: color.border.default,
+        borderStyle: 'dashed',
+      }}
+    >
+      <View className="flex-row items-start gap-2">
+        <Lightbulb size={16} color={color.text.secondary} strokeWidth={2} />
+        <View className="min-w-0 flex-1 gap-1">
+          <Text className="text-xs font-semibold" style={{ color: color.text.secondary }}>
+            {t('recordingDetail.askInterpretationsTitle')}
+          </Text>
+          <Text className="text-[12px] leading-[17px]" style={{ color: color.text.secondary }}>
+            {t('recordingDetail.askInterpretationsSubtitle')}
+          </Text>
+        </View>
+      </View>
+      <View className="gap-2">
+        {interpretations.map((item, index) => (
+          <Text
+            key={`${index}-${item}`}
+            className="text-[15px] leading-[22px]"
+            style={{ color: color.text.primary }}
+          >
+            {item}
+          </Text>
         ))}
       </View>
     </View>
@@ -338,6 +385,7 @@ export const AnswerTurnBlock = ({
   answer,
   answerKind,
   items,
+  interpretations,
   evidence,
   recordTitle,
   showDivider,
@@ -345,8 +393,14 @@ export const AnswerTurnBlock = ({
   onShare,
 }: AnswerTurnBlockProps) => {
   const { t } = useTranslation();
-  const clipboardText = formatAskTurnForClipboard(question, answer);
-  const shareText = formatAskTurnForShare(question, answer, recordTitle);
+  const clipboardText = formatAskTurnForClipboard(question, answer, {
+    interpretations,
+    interpretationsHeading: t('recordingDetail.askInterpretationsTitle'),
+  });
+  const shareText = formatAskTurnForShare(question, answer, recordTitle, {
+    interpretations,
+    interpretationsHeading: t('recordingDetail.askInterpretationsTitle'),
+  });
 
   return (
     <View
@@ -365,6 +419,7 @@ export const AnswerTurnBlock = ({
       <AskTurnQuestion color={color} question={question} />
       <AskAiAnswerMarkdown color={color}>{answer}</AskAiAnswerMarkdown>
       <AnswerStructuredItems color={color} answerKind={answerKind} items={items} />
+      <AnswerInterpretations color={color} interpretations={interpretations} />
       <AnswerEvidence color={color} evidence={evidence} />
       <View className="mt-1 flex-row flex-wrap gap-2">
         <AskCopyTurnButton color={color} clipboardText={clipboardText} onCopy={onCopy} />
@@ -408,6 +463,7 @@ type AnswerContentProps = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  interpretations?: string[];
   suggestedFollowUps?: string[];
   aiExecutionMode: AiExecutionMode;
   onCopy: (text: string) => void;
@@ -423,6 +479,7 @@ export const AnswerContent = ({
   answer,
   answerKind,
   items,
+  interpretations,
   evidence,
   suggestedFollowUps,
   aiExecutionMode,
@@ -448,12 +505,13 @@ export const AnswerContent = ({
         answer,
         ...(answerKind ? { answerKind } : {}),
         ...(items?.length ? { items } : {}),
+        ...(interpretations?.length ? { interpretations } : {}),
         ...(evidence?.length ? { evidence } : {}),
         ...(suggestedFollowUps?.length ? { suggestedFollowUps } : {}),
       } satisfies AskAIHistoryItem);
     }
     return completedTurns;
-  }, [answer, answerKind, evidence, history, items, question, suggestedFollowUps]);
+  }, [answer, answerKind, evidence, history, interpretations, items, question, suggestedFollowUps]);
 
   return (
     <View className="gap-4 pb-4">
@@ -475,8 +533,8 @@ export const AnswerContent = ({
           answer={item.answer}
           answerKind={item.answerKind}
           items={item.items}
+          interpretations={item.interpretations}
           evidence={item.evidence}
-          suggestedFollowUps={item.suggestedFollowUps}
           recordTitle={record.title}
           showDivider={index < turns.length - 1}
           onCopy={onCopy}

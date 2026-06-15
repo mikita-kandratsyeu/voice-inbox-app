@@ -26,6 +26,7 @@ type AskMainContentProps = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  interpretations?: string[];
   suggestedFollowUps?: string[];
   history: AskAIHistoryItem[];
   privateAskProgress: number;
@@ -52,6 +53,7 @@ export const AskMainContent = ({
   answerKind,
   items,
   evidence,
+  interpretations,
   suggestedFollowUps,
   history,
   privateAskProgress,
@@ -126,6 +128,7 @@ export const AskMainContent = ({
         answerKind={answerKind}
         items={items}
         evidence={evidence}
+        interpretations={interpretations}
         suggestedFollowUps={suggestedFollowUps}
         aiExecutionMode={aiExecutionMode}
         onCopy={onCopy}

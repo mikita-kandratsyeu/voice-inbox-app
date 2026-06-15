@@ -95,6 +95,8 @@ export type AskAnswerResult = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  /** Cautious inferences not literally stated in the note. */
+  interpretations?: string[];
   suggestedFollowUps?: string[];
   model?: string;
 };

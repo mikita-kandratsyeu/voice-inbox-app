@@ -2,6 +2,7 @@ import type { MeetingSummaryTemplate } from '@/entities/record';
 import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
 
 import { buildLinkedNotesPromptBlock } from '../linkedNotesForPrompt';
+import { buildAskInterpretationUserHintBlock } from '../askInterpretationHint';
 import {
   buildRecordingMarksPromptBlock,
   type RecordingMarkForPrompt,
@@ -210,22 +211,28 @@ export function buildLocalAskUserContent(request: AskRequest, transcript: string
   }
 
   blocks.push(`Question:\n${request.question.trim()}`);
+  const interpretationHint = buildAskInterpretationUserHintBlock(request.question);
+  if (interpretationHint) {
+    blocks.push(interpretationHint.trim());
+  }
 
   return blocks.join('\n\n');
 }
 
 export function buildLocalAskSystemPrompt(): string {
   return [
-    'Use ONLY the provided blocks (Transcript; optional Summary, Tasks, Recording pins, Linked notes, Prior conversation; and the current Question).',
+    'Use the provided blocks (Transcript; optional Summary, Tasks, Recording pins, Linked notes, Prior conversation; and the current Question) as the primary source.',
     'Prior conversation is earlier Q&A about the same transcript; use it for follow-ups and continuity.',
     'Answer concisely in the SAME language as the current Question.',
-    'If the context does not support an answer, say so in one short sentence. Do not invent facts.',
+    'Put facts stated in or directly supported by the context in answer. If the context does not support the factual part, say so in one short sentence.',
+    'Do not invent specific facts (names, dates, numbers, events) absent from the context.',
+    'You MAY add cautious inferences, hypotheses, or brief analysis not literally in the note. Put ALL such content in interpretations (0-3 short strings). When the question asks about risks, implications, gaps, priorities (judgment), conclusions, or meaning beyond quotes, include at least 1 interpretation. Never put interpretations in evidence or as stated facts in answer.',
     'Classify the answer as answerKind: plain, list, tasks, or decisions. Use list for enumerations, tasks for action items, decisions for agreements/decisions, otherwise plain.',
-    'For list/tasks/decisions, include items: an array of concise strings that mirror the answer. For plain, omit items unless a short list is clearly helpful.',
-    'Include evidence: 0-5 short verbatim quotes from Transcript or Recording pins that support the answer. Do not invent quotes. If no direct support exists, use [].',
+    'For list/tasks/decisions, include items: an array of concise strings that mirror the factual answer. For plain, omit items unless a short list is clearly helpful.',
+    'Include evidence: 0-5 short verbatim quotes from Transcript or Recording pins that support the factual answer. Do not invent quotes. If no direct support exists, use [].',
     'Evidence items: {quote, source, offsetMs, label}. source is transcript, recording_mark, summary, tasks, linked_note, or prior_conversation. offsetMs only when supported by a recording pin.',
     'Include suggestedFollowUps: 1-3 concise follow-up questions the user may naturally ask next, based on this answer and the same recording. Avoid duplicates of the current question.',
-    'No markdown. Return exactly one JSON object with answer plus optional answerKind, items, evidence, suggestedFollowUps.',
+    'No markdown. Return exactly one JSON object with answer plus optional answerKind, items, evidence, interpretations, suggestedFollowUps.',
     'The answer value must be plain text only (no nested JSON, no code fences).',
   ].join(' ');
 }
