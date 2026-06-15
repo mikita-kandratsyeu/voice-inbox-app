@@ -54,19 +54,21 @@ export function LinkNoteAddRow({ color, hasLinks, isLast, onPress }: LinkNoteAdd
           width: '100%',
         }}
       >
-        <View
-          style={{
-            alignItems: 'center',
-            backgroundColor: iconBackground,
-            borderRadius: 10,
-            flexShrink: 0,
-            height: 36,
-            justifyContent: 'center',
-            width: 36,
-          }}
-        >
-          <Link2 size={18} color={accent} strokeWidth={2.2} />
-        </View>
+        {!hasLinks && (
+          <View
+            style={{
+              alignItems: 'center',
+              backgroundColor: iconBackground,
+              borderRadius: 10,
+              flexShrink: 0,
+              height: 36,
+              justifyContent: 'center',
+              width: 36,
+            }}
+          >
+            <Link2 size={18} color={accent} strokeWidth={2.2} />
+          </View>
+        )}
         <View style={{ flex: 1, flexShrink: 1, minWidth: 0 }}>
           <Text
             style={{

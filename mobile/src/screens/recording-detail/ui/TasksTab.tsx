@@ -41,6 +41,8 @@ import { PrivateModeTranscriptLimitNotice } from './PrivateModeTranscriptLimitNo
 import { TaskEditSheet } from './TaskEditSheet';
 import { TaskReextractHintSheet } from './TaskReextractHintSheet';
 
+const TASK_CARD_RADIUS = 16;
+
 type TaskEditValue = {
   text: string;
   deadline?: string | null;
@@ -339,9 +341,17 @@ export const TasksTab = ({
     );
   }
 
+  const taskCardShadowStyle = {
+    shadowColor: color.shadow.color,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: color.shadow.opacity,
+    shadowRadius: 4,
+    elevation: 2,
+  };
+
   return (
     <>
-      <View className="gap-3.5 p-4">
+      <View className="gap-3 p-4">
         {showBanner && (
           <AiTabErrorBanner
             message={t('recordingDetail.tasksErrorBanner')}
@@ -387,32 +397,68 @@ export const TasksTab = ({
           ];
 
           return (
-            <View key={task.id} className="py-1">
-              <View className="flex-row items-center gap-2">
+            <View
+              key={task.id}
+              style={[
+                taskCardShadowStyle,
+                { borderRadius: TASK_CARD_RADIUS, backgroundColor: color.background.card },
+              ]}
+            >
+              <View
+                className="flex-row items-stretch"
+                style={{ borderRadius: TASK_CARD_RADIUS, overflow: 'hidden' }}
+              >
                 <Pressable
-                  className="min-w-0 flex-1 flex-row items-center gap-4 py-0.5"
+                  className="items-center justify-center px-3.5 py-3.5"
                   onPress={() => onTaskPress(task)}
-                  style={{ minWidth: 0 }}
                   accessibilityRole="checkbox"
                   accessibilityLabel={task.text}
                   accessibilityState={{ checked: task.isDone }}
+                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                 >
                   {task.isDone ? (
-                    <CheckCircle2 size={20} color={color.accent.success} strokeWidth={2} />
+                    <CheckCircle2 size={22} color={color.accent.success} strokeWidth={2} />
                   ) : (
-                    <Circle size={20} color={color.icon.muted} strokeWidth={2} />
+                    <Circle size={22} color={color.icon.muted} strokeWidth={2} />
                   )}
-                  <Text
-                    className="min-w-0 flex-1 text-sm leading-5"
-                    style={{
-                      color: task.isDone ? color.text.secondary : color.text.primary,
-                      textDecorationLine: task.isDone ? 'line-through' : undefined,
-                    }}
-                  >
-                    {task.text}
-                  </Text>
                 </Pressable>
-                <View style={{ flexShrink: 0 }}>
+
+                <View className="min-w-0 flex-1 flex-col py-3 pr-1">
+                  <Pressable
+                    onPress={() => onTaskPress(task)}
+                    accessibilityRole="checkbox"
+                    accessibilityLabel={task.text}
+                    accessibilityState={{ checked: task.isDone }}
+                  >
+                    <Text
+                      className="text-[15px] leading-5"
+                      style={{
+                        color: task.isDone ? color.text.secondary : color.text.primary,
+                        textDecorationLine: task.isDone ? 'line-through' : undefined,
+                      }}
+                      numberOfLines={4}
+                    >
+                      {task.text}
+                    </Text>
+                  </Pressable>
+                  <TaskOutcomePreview
+                    task={task}
+                    color={color}
+                    indent={false}
+                    followUpTitle={
+                      task.outcomeRecordId && getFollowUpRecordTitle
+                        ? getFollowUpRecordTitle(task.outcomeRecordId)
+                        : null
+                    }
+                    onOpenFollowUp={
+                      task.outcomeRecordId && onOpenFollowUp
+                        ? () => onOpenFollowUp(task.outcomeRecordId!)
+                        : undefined
+                    }
+                  />
+                </View>
+
+                <View className="justify-center px-1 pr-1.5" style={{ zIndex: 10 }}>
                   <MenuView
                     key={`task-menu-${task.id}-${theme}`}
                     title=""
@@ -458,30 +504,16 @@ export const TasksTab = ({
                     actions={menuActions}
                   >
                     <Pressable
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      style={{ padding: 4 }}
+                      hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+                      style={{ padding: 8 }}
                       accessibilityRole="button"
                       accessibilityLabel={t('tasks.taskMenu')}
                     >
-                      <MoreHorizontal size={18} color={color.icon.muted} strokeWidth={2} />
+                      <MoreHorizontal size={20} color={color.icon.muted} strokeWidth={2} />
                     </Pressable>
                   </MenuView>
                 </View>
               </View>
-              <TaskOutcomePreview
-                task={task}
-                color={color}
-                followUpTitle={
-                  task.outcomeRecordId && getFollowUpRecordTitle
-                    ? getFollowUpRecordTitle(task.outcomeRecordId)
-                    : null
-                }
-                onOpenFollowUp={
-                  task.outcomeRecordId && onOpenFollowUp
-                    ? () => onOpenFollowUp(task.outcomeRecordId!)
-                    : undefined
-                }
-              />
             </View>
           );
         })}
