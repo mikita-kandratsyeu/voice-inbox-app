@@ -503,10 +503,14 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   },
 
   updateTasks: async (id, tasks) => {
+    const prevTasks = get().records.find((record) => record.id === id)?.tasks;
     await recordRepository.updateTasks(id, tasks);
     set((s) => ({
       records: updateRecord(s.records, id, { tasks, tasksStatus: 'done', tasksError: undefined }),
     }));
+    const { syncTaskDeadlineSnoozeForTasks } =
+      await import('@/features/task-deadline-notifications/lib/syncTaskDeadlineSnoozeForTasks');
+    syncTaskDeadlineSnoozeForTasks(prevTasks, tasks);
     scheduleTaskDeadlineNotificationSync();
   },
 

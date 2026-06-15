@@ -1,4 +1,5 @@
 import { useRecordStore } from '@/entities/record';
+import { taskDeadlineFieldsFromTimestamp } from '@/shared/lib/taskDeadlineFieldsFromTimestamp';
 
 import {
   getTaskDeadlineSnoozeTriggerAt,
@@ -7,7 +8,7 @@ import {
   TASK_DEADLINE_SNOOZE_15M_MS,
 } from './resolveTaskDeadlineTriggerAt';
 import { scheduleTaskDeadlineNotificationSync } from './syncTaskDeadlineNotifications';
-import { clearTaskDeadlineSnooze, setTaskDeadlineSnooze } from './taskDeadlineSnoozeStorage';
+import { clearTaskDeadlineSnooze } from './taskDeadlineSnoozeStorage';
 
 export type TaskDeadlineSnoozePreset = '15m' | '1h' | 'tomorrow';
 
@@ -24,11 +25,16 @@ export async function markTaskDeadlineNotificationDone(
   scheduleTaskDeadlineNotificationSync();
 }
 
-export function snoozeTaskDeadlineNotification(
+export async function snoozeTaskDeadlineNotification(
+  recordId: string,
   taskId: string,
   preset: TaskDeadlineSnoozePreset,
   nowMs: number = Date.now(),
-): void {
+): Promise<void> {
+  const record = useRecordStore.getState().records.find((item) => item.id === recordId);
+  const task = record?.tasks?.find((item) => item.id === taskId);
+  if (!record?.tasks || !task || task.isDone) return;
+
   const triggerAt =
     preset === '15m'
       ? getTaskDeadlineSnoozeTriggerAt(TASK_DEADLINE_SNOOZE_15M_MS, nowMs)
@@ -36,6 +42,10 @@ export function snoozeTaskDeadlineNotification(
         ? getTaskDeadlineSnoozeTriggerAt(TASK_DEADLINE_SNOOZE_1H_MS, nowMs)
         : getTaskDeadlineTomorrowMorningTriggerAt(nowMs);
 
-  setTaskDeadlineSnooze(taskId, triggerAt);
-  scheduleTaskDeadlineNotificationSync();
+  const { deadline, deadlineTime } = taskDeadlineFieldsFromTimestamp(triggerAt);
+  const nextTasks = record.tasks.map((item) =>
+    item.id === taskId ? { ...item, deadline, deadlineTime } : item,
+  );
+
+  await useRecordStore.getState().updateTasks(recordId, nextTasks);
 }

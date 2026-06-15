@@ -101,8 +101,9 @@ export function TaskDeadlineActionSheet({
     (preset: TaskDeadlineSnoozePreset) => {
       if (!payload) return;
       hapticSelection();
-      snoozeTaskDeadlineNotification(payload.taskId, preset);
-      closeSheet();
+      void snoozeTaskDeadlineNotification(payload.recordId, payload.taskId, preset).finally(() => {
+        closeSheet();
+      });
     },
     [closeSheet, payload],
   );
