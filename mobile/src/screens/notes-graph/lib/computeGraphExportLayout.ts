@@ -38,7 +38,7 @@ export function getGraphExportViewShotMaxDimension(): number {
   return getDeviceCapabilities().maxExportDimension;
 }
 
-/** Lets the off-screen export tree paint native nodes and SVG edges before ViewShot. */
+/** Lets the off-screen export tree paint native nodes and SVG edges before ViewShot. Skia layers are not captured. */
 export async function waitForGraphExportCaptureReady(edgeCount: number): Promise<void> {
   await waitAnimationFrames(3);
   await new Promise<void>((resolve) => {

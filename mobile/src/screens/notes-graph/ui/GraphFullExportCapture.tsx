@@ -12,7 +12,7 @@ import {
   getGraphExportViewShotMaxDimension,
 } from '../lib/computeGraphExportLayout';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
-import { GraphEdgeLayer } from './GraphEdgeLayer';
+import { GraphEdgeLayerSvg } from './GraphEdgeLayerSvg';
 import { GraphNodeLayer } from './GraphNodeLayer';
 
 type GraphFullExportCaptureProps = {
@@ -79,7 +79,7 @@ export const GraphFullExportCapture = forwardRef<ViewShotRef, GraphFullExportCap
               width: layout.worldWidth,
             }}
           >
-            <GraphEdgeLayer
+            <GraphEdgeLayerSvg
               nodes={nodes}
               edges={edges}
               color={color}
