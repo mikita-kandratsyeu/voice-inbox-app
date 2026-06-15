@@ -160,10 +160,7 @@ ${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
 **Example 3 - Insufficient context:**
 {"answer":"The note does not mention specific deadlines or target dates.","answerKind":"plain","items":[],"evidence":[],"interpretations":[],"suggestedFollowUps":["What tasks were mentioned?","Who is responsible for this project?"]}`;
 
-export {
-  AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT,
-  buildAutoOrganizeSystemPrompt,
-} from '@/lib/auto-organize-prompt';
+export { buildAutoOrganizeSystemPrompt } from '@/lib/auto-organize-prompt';
 
 export const VALID_LANGUAGES = ['ru', 'en', 'de', 'fr', 'es', 'zh', 'ja'] as const;
 

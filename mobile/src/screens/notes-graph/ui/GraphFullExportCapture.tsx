@@ -50,8 +50,7 @@ export const GraphFullExportCapture = forwardRef<ViewShotRef, GraphFullExportCap
         pointerEvents="none"
         style={{
           height: layout.exportHeight,
-          left: 0,
-          opacity: 0,
+          left: -(layout.exportWidth + 64),
           position: 'absolute',
           top: 0,
           width: layout.exportWidth,
@@ -72,9 +71,9 @@ export const GraphFullExportCapture = forwardRef<ViewShotRef, GraphFullExportCap
               height: layout.worldHeight,
               overflow: 'visible',
               transform: [
+                { scale: layout.transform.scale },
                 { translateX: layout.transform.translateX },
                 { translateY: layout.transform.translateY },
-                { scale: layout.transform.scale },
               ],
               transformOrigin: 'left top',
               width: layout.worldWidth,

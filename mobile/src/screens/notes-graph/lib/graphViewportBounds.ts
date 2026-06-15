@@ -2,9 +2,9 @@ import { nodeBounds } from './graphNodeMetrics';
 import type { GraphNode } from './graphTypes';
 
 export const GRAPH_PAN_OVERSCROLL = 40;
-export const GRAPH_VIEWPORT_MIN_SCALE = 0.275;
+export const GRAPH_VIEWPORT_MIN_SCALE = 0.225;
 export const GRAPH_VIEWPORT_MAX_SCALE = 3;
-export const GRAPH_WORLD_CONTENT_PADDING = 80;
+export const GRAPH_WORLD_CONTENT_PADDING = 120;
 
 export type GraphContentBounds = {
   minX: number;
@@ -82,6 +82,30 @@ export function computeWorldDimensionsForNodes(
     viewportHeight,
     minScale,
   );
+}
+
+/** Tight world bounds for off-screen export capture (no pan/zoom min-world floor). */
+export function computeExportWorldDimensionsForNodes(
+  nodes: GraphNode[],
+  graphWidth: number,
+  graphHeight: number,
+  contentPadding = GRAPH_WORLD_CONTENT_PADDING,
+): { width: number; height: number } {
+  const bounds = measureGraphContentBounds(nodes);
+  if (!bounds) {
+    return {
+      width: Math.max(graphWidth, 1),
+      height: Math.max(graphHeight, 1),
+    };
+  }
+
+  const spanWidth = bounds.maxX - bounds.minX + contentPadding;
+  const spanHeight = bounds.maxY - bounds.minY + contentPadding;
+
+  return {
+    width: Math.max(spanWidth, graphWidth, 1),
+    height: Math.max(spanHeight, graphHeight, 1),
+  };
 }
 
 export function clampViewportScaleValue(value: number, minScale: number, maxScale: number): number {

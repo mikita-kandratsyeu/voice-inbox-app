@@ -45,9 +45,6 @@ export function AccountProIconCalendar({ className, ...rest }: IconProps) {
   );
 }
 
-/** @deprecated Use AccountProIconCalendar */
-export const AccountProIconCalendarClock = AccountProIconCalendar;
-
 export function AccountProIconCrown({ className, ...rest }: IconProps) {
   return (
     <LucideStrokeIcon className={className} {...rest}>

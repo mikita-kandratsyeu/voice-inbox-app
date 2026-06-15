@@ -1,13 +1,27 @@
+import { InteractionManager } from 'react-native';
+
+import { getDeviceCapabilities } from '@/shared/lib/deviceCapabilities';
 import { IS_IOS } from '@/shared/lib/platform';
 
-import { detectDeviceCapabilities } from './deviceCapabilities';
 import type { GraphNode } from './graphTypes';
 import {
-  computeWorldDimensionsForNodes,
-  GRAPH_VIEWPORT_MIN_SCALE,
+  computeExportWorldDimensionsForNodes,
   measureGraphContentBounds,
 } from './graphViewportBounds';
 import { computeFitTransform } from './runForceLayout';
+
+function waitAnimationFrames(frameCount: number): Promise<void> {
+  return new Promise((resolve) => {
+    const tick = (remaining: number) => {
+      if (remaining <= 0) {
+        resolve();
+        return;
+      }
+      requestAnimationFrame(() => tick(remaining - 1));
+    };
+    tick(frameCount);
+  });
+}
 
 /**
  * Maximum texture size supported by most modern mobile GPUs.
@@ -21,8 +35,21 @@ export const GRAPH_EXPORT_MIN_DIMENSION = 720;
 export const GRAPH_EXPORT_FIT_PADDING = 120;
 
 export function getGraphExportViewShotMaxDimension(): number {
-  const capabilities = detectDeviceCapabilities();
-  return capabilities.maxExportDimension;
+  return getDeviceCapabilities().maxExportDimension;
+}
+
+/** Lets the off-screen export tree paint native nodes and SVG edges before ViewShot. */
+export async function waitForGraphExportCaptureReady(edgeCount: number): Promise<void> {
+  await waitAnimationFrames(3);
+  await new Promise<void>((resolve) => {
+    InteractionManager.runAfterInteractions(() => resolve());
+  });
+
+  if (edgeCount > 150) {
+    const delayMs = Math.min(600, 80 + Math.round(edgeCount * 0.75));
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    await waitAnimationFrames(1);
+  }
 }
 
 export function getGraphExportViewShotCaptureOptions(): {
@@ -61,7 +88,7 @@ export function computeGraphExportLayout(
   if (!bounds) return null;
 
   // Detect device capabilities dynamically
-  const capabilities = detectDeviceCapabilities();
+  const capabilities = getDeviceCapabilities();
   const deviceMaxDimension = maxDimension ?? capabilities.maxExportDimension;
 
   // measureGraphContentBounds already includes EDGE_VISUAL_MARGIN
@@ -103,13 +130,10 @@ export function computeGraphExportLayout(
     wasScaledDown = true;
   }
 
-  const { width: worldWidth, height: worldHeight } = computeWorldDimensionsForNodes(
+  const { width: worldWidth, height: worldHeight } = computeExportWorldDimensionsForNodes(
     nodes,
     graphWidth,
     graphHeight,
-    exportWidth,
-    exportHeight,
-    GRAPH_VIEWPORT_MIN_SCALE,
   );
 
   const transform = computeFitTransform(

@@ -123,37 +123,3 @@ function simpleHash(str: string): string {
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
-/**
- * Legacy class-based API for backward compatibility.
- * Internally uses Redis-based implementation.
- */
-export class RequestDeduplicator {
-  private readonly defaultTtlMs: number;
-
-  constructor(defaultTtlMs = 5000) {
-    this.defaultTtlMs = defaultTtlMs;
-  }
-
-  async execute<T>(key: string, fn: () => Promise<T>, ttlMs?: number): Promise<T> {
-    return withDeduplication(key, fn, ttlMs ?? this.defaultTtlMs);
-  }
-
-  isPending(): boolean {
-    // Not supported in Redis-based version
-    return false;
-  }
-
-  getPendingCount(): number {
-    // Not supported in Redis-based version
-    return 0;
-  }
-
-  clear(): void {
-    // Not needed - Redis TTL handles cleanup
-  }
-
-  clearAll(): void {
-    // Not needed - Redis TTL handles cleanup
-  }
-}

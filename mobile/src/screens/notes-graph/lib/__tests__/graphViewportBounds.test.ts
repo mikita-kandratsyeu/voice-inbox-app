@@ -3,6 +3,7 @@ import { RECORD_NODE_WIDTH } from '../graphTypes';
 import {
   clampViewportScaleValue,
   clampViewportTranslation,
+  computeExportWorldDimensionsForNodes,
   computeWorldDimensions,
   computeWorldDimensionsForNodes,
   GRAPH_PAN_OVERSCROLL,
@@ -51,6 +52,17 @@ describe('computeWorldDimensionsForNodes', () => {
       2100 + RECORD_NODE_WIDTH + GRAPH_WORLD_CONTENT_PADDING,
     );
     expect(world.width).toBeGreaterThan(1800);
+  });
+});
+
+describe('computeExportWorldDimensionsForNodes', () => {
+  it('does not inflate world to the interactive pan zoom floor', () => {
+    const nodes = [recordNode('main', 100, 100), recordNode('shelf', 2100, 120)];
+    const exportWorld = computeExportWorldDimensionsForNodes(nodes, 1800, 900);
+    const panWorld = computeWorldDimensionsForNodes(nodes, 1800, 900, 8192, 8192, 0.275);
+
+    expect(exportWorld.width).toBeLessThan(panWorld.width);
+    expect(exportWorld.width).toBeLessThan(Math.ceil(8192 / 0.275));
   });
 });
 

@@ -437,8 +437,6 @@ const FULL_PROMPT_BLOCKS = [
   AUTO_ORGANIZE_DECISION_STRATEGY,
 ];
 
-export const AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT = FULL_PROMPT_BLOCKS.join('\n\n');
-
 export function buildAutoOrganizeSystemPrompt(
   mode: AutoOrganizeMode,
   template: AutoOrganizeTemplate = 'general',

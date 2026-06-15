@@ -1,13 +1,18 @@
-jest.mock('../deviceCapabilities', () => ({
-  detectDeviceCapabilities: () => ({
+jest.mock('@/shared/lib/deviceCapabilities', () => ({
+  getDeviceCapabilities: () => ({
     memoryTier: 'ultra',
     maxExportDimension: 8192,
     maxSafeExportPixels: 8192 * 8192,
-    canHandleLargeExport: true,
+    canHandleLargeOperations: true,
+    markdownEditorLimit: 20_000,
+    llmGpuLayers: 99,
+    llmBatchSize: 2048,
+    llmUbatchSize: 1024,
   }),
 }));
 
 import { computeGraphExportLayout, GRAPH_EXPORT_MAX_DIMENSION } from '../computeGraphExportLayout';
+import { GRAPH_VIEWPORT_MIN_SCALE } from '../graphViewportBounds';
 import type { GraphNode } from '../graphTypes';
 
 function recordNode(id: string, x: number, y: number): GraphNode {
@@ -46,5 +51,18 @@ describe('computeGraphExportLayout', () => {
     expect(layout!.exportHeight).toBeLessThanOrEqual(GRAPH_EXPORT_MAX_DIMENSION);
     expect(layout!.exportHeight).toBeGreaterThan(2000);
     expect(layout!.exportWidth).toBeLessThan(layout!.exportHeight);
+  });
+
+  it('keeps export world near content instead of pan zoom floor on large graphs', () => {
+    const nodes = Array.from({ length: 200 }, (_, index) =>
+      recordNode(`n${index}`, 100 + (index % 20) * 180, 80 + Math.floor(index / 20) * 160),
+    );
+
+    const layout = computeGraphExportLayout(nodes, 4000, 3200);
+    expect(layout).not.toBeNull();
+
+    const panFloor = Math.ceil(layout!.exportWidth / GRAPH_VIEWPORT_MIN_SCALE);
+    expect(layout!.worldWidth).toBeLessThan(panFloor * 0.5);
+    expect(layout!.worldHeight).toBeLessThan(panFloor * 0.5);
   });
 });

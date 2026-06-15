@@ -28,6 +28,7 @@ import { type Colors, DEFAULT_ACCENT_COLOR_ID } from '@/shared/config';
 import {
   computeGraphExportLayout,
   getGraphExportViewShotMaxDimension,
+  waitForGraphExportCaptureReady,
 } from '../lib/computeGraphExportLayout';
 import {
   computeMapDoubleTapTransform,
@@ -386,11 +387,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   }, [applyTransform, onResetView]);
 
   const captureImage = useCallback(async () => {
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => resolve());
-      });
-    });
+    await waitForGraphExportCaptureReady(edges.length);
 
     const layout = computeGraphExportLayout(
       displayNodes,
@@ -409,7 +406,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       wasScaledDown: layout.wasScaledDown,
       deviceMemoryTier: layout.deviceMemoryTier,
     };
-  }, [displayNodes, graphHeight, graphWidth]);
+  }, [displayNodes, edges.length, graphHeight, graphWidth]);
 
   useImperativeHandle(
     ref,
