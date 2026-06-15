@@ -14,6 +14,7 @@ import {
   pickOpenTasksForCardPreview,
   resolveRecordCardNoteKind,
 } from '@/entities/record/lib/recordCardExpandedPreview';
+import { useRecordLinkNeighborCount } from '@/features/note-links';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
@@ -161,8 +162,13 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
         : 0,
     [item.meetingDialogue, item.meetingSpeakerLabels, noteKind],
   );
+  const linkNeighborCount = useRecordLinkNeighborCount(item.id, item.linkedRecordIds);
   const showMetaStrip =
-    hasAudio || noteKind === 'text' || (item.tasks?.length ?? 0) > 0 || meetingParticipantCount > 0;
+    hasAudio ||
+    noteKind === 'text' ||
+    (item.tasks?.length ?? 0) > 0 ||
+    meetingParticipantCount > 0 ||
+    linkNeighborCount > 0;
   const showFooter = hasTags || categoryLabel != null;
 
   const menuActions = useMemo(() => {
@@ -483,6 +489,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
             textFragmentCount={textFragmentCount}
             tasks={item.tasks}
             meetingParticipantCount={meetingParticipantCount}
+            linkNeighborCount={linkNeighborCount}
           />
         ) : null}
 

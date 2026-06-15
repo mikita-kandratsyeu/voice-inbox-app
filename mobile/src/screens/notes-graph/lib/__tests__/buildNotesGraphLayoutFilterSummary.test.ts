@@ -36,6 +36,7 @@ describe('buildNotesGraphLayoutFilterSummary', () => {
       'folder',
       'tags',
       'showTasks',
+      'showCompletedTasks',
       'showArchived',
       'links',
       'layoutMode',
@@ -43,10 +44,13 @@ describe('buildNotesGraphLayoutFilterSummary', () => {
     ]);
     expect(rows[0]?.value).toBe('notesGraph.filters.allFolders');
     expect(rows[1]?.value).toBe('notesGraph.history.filters.tagsNone');
+    expect(rows.find((row) => row.id === 'showCompletedTasks')?.value).toBe('settings.on');
     expect(rows.find((row) => row.id === 'layoutMode')?.value).toBe(
       'notesGraph.filters.layoutMode.cluster',
     );
-    expect(rows[6]?.value).toBe('notesGraph.history.filters.viewFull');
+    expect(rows.find((row) => row.id === 'view')?.value).toBe(
+      'notesGraph.history.filters.viewFull',
+    );
   });
 
   it.each([

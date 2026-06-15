@@ -1,4 +1,4 @@
-import { Check, Clock, FileText, ListChecks, UsersRound } from 'lucide-react-native';
+import { Check, Clock, FileText, Link2, ListChecks, UsersRound } from 'lucide-react-native';
 import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
@@ -20,9 +20,10 @@ type RecordCardMetaStripProps = {
   textFragmentCount?: number;
   tasks?: TaskItem[];
   meetingParticipantCount?: number;
+  linkNeighborCount?: number;
 };
 
-type IconBadgeTone = 'info' | 'success' | 'neutral' | 'transcript';
+type IconBadgeTone = 'info' | 'success' | 'neutral' | 'transcript' | 'link';
 type LayoutDensity = 'regular' | 'compact' | 'dense';
 
 function MetaStripDivider({ color, dense }: { color: Colors; dense: boolean }) {
@@ -56,7 +57,9 @@ function MetaIconBadge({
         ? withAlphaHex(color.accent.success, 0.16)
         : tone === 'transcript'
           ? withAlphaHex(color.accent.transcript, 0.16)
-          : color.background.tertiary;
+          : tone === 'link'
+            ? withAlphaHex(color.accent.primary, 0.16)
+            : color.background.tertiary;
 
   return (
     <View
@@ -219,6 +222,7 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
   textFragmentCount = 0,
   tasks = [],
   meetingParticipantCount = 0,
+  linkNeighborCount = 0,
 }: RecordCardMetaStripProps) {
   const { t } = useTranslation();
   const { width: windowWidth } = useWindowDimensions();
@@ -229,8 +233,15 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
   const showDuration = noteKind !== 'text';
   const showTextFragments = noteKind === 'text' && textFragmentCount > 0;
   const showMeetingParticipants = meetingParticipantCount > 0;
+  const showLinkedNotes = linkNeighborCount > 0;
 
-  if (!showDuration && !showTextFragments && !hasTasks && !showMeetingParticipants) {
+  if (
+    !showDuration &&
+    !showTextFragments &&
+    !hasTasks &&
+    !showMeetingParticipants &&
+    !showLinkedNotes
+  ) {
     return null;
   }
 
@@ -259,6 +270,11 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
       ? t('inbox.cardLayout.meetingParticipantsShort')
       : t('inbox.cardLayout.meetingParticipantsLabel');
   const textFragmentsLabel = dense ? undefined : t('inbox.cardLayout.textFragmentsShort');
+  const linkedNotesLabel = dense
+    ? undefined
+    : compact
+      ? t('inbox.cardLayout.linkedNotesShort')
+      : t('inbox.cardLayout.linkedNotesLabel');
 
   const statSegments: Array<{ key: string; node: React.ReactNode }> = [];
 
@@ -343,6 +359,29 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
           accessibilityLabel={t('inbox.cardLayout.meetingParticipants', {
             count: meetingParticipantCount,
           })}
+        />
+      ),
+    });
+  }
+
+  if (showLinkedNotes) {
+    statSegments.push({
+      key: 'links',
+      node: (
+        <MetaStat
+          color={color}
+          density={density}
+          iconBadgeTone="link"
+          icon={
+            <Link2
+              size={dense ? 13 : compact ? 14 : 15}
+              color={color.accent.primary}
+              strokeWidth={2}
+            />
+          }
+          value={String(linkNeighborCount)}
+          label={linkedNotesLabel}
+          accessibilityLabel={t('inbox.cardLayout.linkedNotes', { count: linkNeighborCount })}
         />
       ),
     });
