@@ -43,6 +43,30 @@ describe('parseMeetingRecapSummary', () => {
     ]);
   });
 
+  it('parses section labels without trailing colons', () => {
+    const sections = parseMeetingRecapSummary(
+      [
+        'Коротко',
+        'Обсудили проблему на странице и шаги в системе.',
+        '',
+        'Решения',
+        'Согласовали клонировать страницу для anti-tune.',
+        '',
+        'Открытые вопросы',
+        'Нужно уточнить, какие страницы затронуты на стороне infant/child.',
+      ].join('\n'),
+    );
+
+    expect(sections.map((section) => section.kind)).toEqual([
+      'brief',
+      'decisions',
+      'openQuestions',
+    ]);
+    expect(sections[0]?.body).toBe('Обсудили проблему на странице и шаги в системе.');
+    expect(sections[1]?.body).toBe('Согласовали клонировать страницу для anti-tune.');
+    expect(sections[2]?.body).toContain('infant/child');
+  });
+
   it('parses inline sections returned as a dense paragraph', () => {
     const sections = parseMeetingRecapSummary(
       'Коротко: Обсуждение переноса сроков. Решения: 1. Сроки переносятся. 2. Список будет доработан. Задачи: None Открытые вопросы: 1. Как реализовать RFID? Следующие шаги: 1. Переслать итоги встречи.',

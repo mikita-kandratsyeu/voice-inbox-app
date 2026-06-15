@@ -56,6 +56,16 @@ function normalizeHeading(raw: string): string {
     .toLowerCase();
 }
 
+function extractSectionTitle(raw: string): string {
+  return raw
+    .replace(/^#{1,4}\s*/, '')
+    .replace(/^\d+[.)]\s*/, '')
+    .replace(/^[-*]\s*/, '')
+    .replace(/\*\*/g, '')
+    .replace(/:$/, '')
+    .trim();
+}
+
 function parseSectionStart(
   line: string,
 ): { kind: MeetingRecapSectionKind; title: string; body: string } | null {
@@ -69,11 +79,13 @@ function parseSectionStart(
     return kind ? { kind, title, body: inlineMatch[2]?.trim() ?? '' } : null;
   }
 
-  const headingCandidate =
-    trimmed.match(/^#{1,4}\s+(.+)$/)?.[1] ?? trimmed.match(/^\*\*(.+?)\*\*:?\s*$/)?.[1];
-  if (!headingCandidate) return null;
-  const kind = LABEL_TO_KIND.get(normalizeHeading(headingCandidate));
-  return kind ? { kind, title: headingCandidate.trim(), body: '' } : null;
+  const normalized = normalizeHeading(trimmed);
+  const exactKind = LABEL_TO_KIND.get(normalized);
+  if (exactKind) {
+    return { kind: exactKind, title: extractSectionTitle(trimmed), body: '' };
+  }
+
+  return null;
 }
 
 function normalizeInlineSections(summary: string): string {
