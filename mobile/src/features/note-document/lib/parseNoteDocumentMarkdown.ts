@@ -170,47 +170,123 @@ function parseTaskMetaSuffix(
   return result;
 }
 
+function localizedTaskOutcomeLabel(label: string): 'result' | 'followUp' | null {
+  const normalized = label.trim().toLowerCase();
+  const resultLabels = [
+    i18n.t('taskOutcome.resultLabel').toLowerCase(),
+    i18n.t('taskOutcome.outcomeLabel').toLowerCase(),
+    'result',
+    'итог',
+  ];
+  if (resultLabels.includes(normalized)) {
+    return 'result';
+  }
+
+  const followUpLabels = [
+    i18n.t('taskOutcome.followUpSectionTitle').toLowerCase(),
+    'linked note',
+    'связанная заметка',
+  ];
+  if (followUpLabels.includes(normalized)) {
+    return 'followUp';
+  }
+
+  return null;
+}
+
+function parseTaskSubline(label: string, value: string): Pick<TaskItem, 'outcomeText'> {
+  const kind = localizedTaskOutcomeLabel(label);
+  const trimmed = value.trim();
+
+  if (kind === 'result') {
+    return { outcomeText: trimmed.length > 0 ? trimmed : null };
+  }
+
+  return {};
+}
+
 function parseTasksSection(body: string, record: VoiceRecord): TaskItem[] {
   const existing = record.tasks ?? [];
   const tasks: TaskItem[] = [];
+
+  let draft: {
+    text: string;
+    isDone: boolean;
+    meta: Pick<TaskItem, 'deadline' | 'deadlineTime' | 'priority'>;
+    outcomeText?: string | null;
+    hasOutcomeLine: boolean;
+  } | null = null;
+
+  const flushDraft = () => {
+    if (!draft) return;
+
+    const existingTask = existing.find(
+      (task) => task.text.trim().toLowerCase() === draft!.text.toLowerCase(),
+    );
+
+    const outcomeText = draft.hasOutcomeLine
+      ? (draft.outcomeText ?? null)
+      : (existingTask?.outcomeText ?? null);
+
+    tasks.push({
+      id:
+        existingTask?.id ??
+        `${record.id}-manual-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      text: draft.text,
+      isDone: draft.isDone,
+      deadline: draft.meta.deadline ?? existingTask?.deadline ?? null,
+      deadlineTime: draft.meta.deadlineTime ?? existingTask?.deadlineTime ?? null,
+      priority: draft.meta.priority ?? existingTask?.priority,
+      source: existingTask?.source,
+      completedAt: existingTask?.completedAt ?? (draft.isDone ? new Date().toISOString() : null),
+      outcomeText,
+      outcomeRecordId: existingTask?.outcomeRecordId ?? null,
+    });
+    draft = null;
+  };
 
   for (const line of body.split('\n')) {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
     const match = trimmed.match(TASK_CHECKBOX_RE);
-    if (!match) continue;
+    if (match) {
+      flushDraft();
 
-    const isDone = match[1].toLowerCase() === 'x';
-    let remainder = match[2].trim();
-    let meta: Pick<TaskItem, 'deadline' | 'deadlineTime' | 'priority'> = {};
+      const isDone = match[1].toLowerCase() === 'x';
+      let remainder = match[2].trim();
+      let meta: Pick<TaskItem, 'deadline' | 'deadlineTime' | 'priority'> = {};
 
-    const metaMatch = remainder.match(/\(([^)]+)\)\s*$/);
-    if (metaMatch) {
-      meta = parseTaskMetaSuffix(metaMatch[1]);
-      remainder = remainder.slice(0, -metaMatch[0].length).trim();
+      const metaMatch = remainder.match(/\(([^)]+)\)\s*$/);
+      if (metaMatch) {
+        meta = parseTaskMetaSuffix(metaMatch[1]);
+        remainder = remainder.slice(0, -metaMatch[0].length).trim();
+      }
+
+      draft = {
+        text: remainder,
+        isDone,
+        meta,
+        hasOutcomeLine: false,
+      };
+      continue;
     }
 
-    const existingTask = existing.find(
-      (task) => task.text.trim().toLowerCase() === remainder.toLowerCase(),
-    );
+    if (!draft || !/^\s+[-*]/.test(line)) {
+      continue;
+    }
 
-    tasks.push({
-      id:
-        existingTask?.id ??
-        `${record.id}-manual-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-      text: remainder,
-      isDone,
-      deadline: meta.deadline ?? existingTask?.deadline ?? null,
-      deadlineTime: meta.deadlineTime ?? existingTask?.deadlineTime ?? null,
-      priority: meta.priority ?? existingTask?.priority,
-      source: existingTask?.source,
-      completedAt: existingTask?.completedAt ?? (isDone ? new Date().toISOString() : null),
-      outcomeText: existingTask?.outcomeText ?? null,
-      outcomeRecordId: existingTask?.outcomeRecordId ?? null,
-    });
+    const subline = trimmed.match(/^[-*]\s+\*\*(.+?):\*\*\s*(.*)$/);
+    if (!subline?.[1]) continue;
+
+    const parsed = parseTaskSubline(subline[1], subline[2] ?? '');
+    if (parsed.outcomeText !== undefined) {
+      draft.hasOutcomeLine = true;
+      draft.outcomeText = parsed.outcomeText;
+    }
   }
 
+  flushDraft();
   return tasks;
 }
 

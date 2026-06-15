@@ -9,7 +9,7 @@ import { formatTaskDeadlineTimeForDisplay } from '@/shared/lib/taskDeadlineTimeD
 import {
   formatMeetingDialogueForShareMarkdown,
   formatPlainTranscriptWithTimestamps,
-  formatTaskLineForShare,
+  formatTaskLinesForShare,
   formatTranscriptBodyForShare,
 } from './formatShareMarkdown';
 import { resolveShareExportContext, type ShareExportContext } from './shareExportContext';
@@ -265,7 +265,7 @@ const pushKeyPhrases = (lines: string[], record: VoiceRecord, ctx: ShareExportCo
   }
 };
 
-const formatTaskForShare = (task: NonNullable<VoiceRecord['tasks']>[number]): string => {
+const formatTaskMetaSuffix = (task: NonNullable<VoiceRecord['tasks']>[number]): string => {
   const meta: string[] = [];
   if (task.deadline) {
     const timeLabel =
@@ -278,8 +278,16 @@ const formatTaskForShare = (task: NonNullable<VoiceRecord['tasks']>[number]): st
   if (task.priority) {
     meta.push(`${i18n.t('tasks.priorityLabel')}: ${i18n.t(`tasks.priority.${task.priority}`)}`);
   }
-  const suffix = meta.length > 0 ? ` (${meta.join(', ')})` : '';
-  return formatTaskLineForShare(task, suffix);
+  return meta.length > 0 ? ` (${meta.join(', ')})` : '';
+};
+
+const resolveTaskFollowUpTitle = (
+  task: NonNullable<VoiceRecord['tasks']>[number],
+  ctx: ShareExportContext,
+): string | null => {
+  const recordId = task.outcomeRecordId?.trim();
+  if (!recordId) return null;
+  return ctx.recordTitleById?.[recordId]?.trim() || null;
 };
 
 const pushTasks = (lines: string[], record: VoiceRecord, ctx: ShareExportContext): void => {
@@ -288,7 +296,9 @@ const pushTasks = (lines: string[], record: VoiceRecord, ctx: ShareExportContext
     lines.push('');
     lines.push(`## ${i18n.t('recordingDetail.tasks')}`);
     record.tasks.forEach((t) => {
-      lines.push(formatTaskForShare(t));
+      formatTaskLinesForShare(t, formatTaskMetaSuffix(t), {
+        followUpTitle: resolveTaskFollowUpTitle(t, ctx),
+      }).forEach((line) => lines.push(line));
     });
   }
 };

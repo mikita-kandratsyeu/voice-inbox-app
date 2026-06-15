@@ -4,6 +4,7 @@ import {
   normalizeMeetingDialogueMarkdownParagraphs,
   parseMeetingDialogue,
 } from '@/screens/recording-detail/lib/parseMeetingDialogue';
+import { i18n } from '@/shared/lib';
 
 const TRANSCRIPT_TIMESTAMP_RE = /\[\d{1,2}:\d{2}(?::\d{2})?\]/;
 
@@ -55,6 +56,32 @@ export function formatTaskLineForShare(
   suffix: string,
 ): string {
   return `- [${task.isDone ? 'x' : ' '}] ${task.text}${suffix}`;
+}
+
+const TASK_OUTCOME_SUBLINE_INDENT = '  ';
+
+/** Main task checkbox line plus optional indented outcome / follow-up sub-lines. */
+export function formatTaskLinesForShare(
+  task: NonNullable<VoiceRecord['tasks']>[number],
+  suffix: string,
+  options?: { followUpTitle?: string | null },
+): string[] {
+  const lines = [formatTaskLineForShare(task, suffix)];
+  const outcome = task.outcomeText?.trim();
+  if (outcome) {
+    lines.push(
+      `${TASK_OUTCOME_SUBLINE_INDENT}- **${i18n.t('taskOutcome.resultLabel')}:** ${outcome}`,
+    );
+  }
+
+  const followUpTitle = options?.followUpTitle?.trim();
+  if (followUpTitle) {
+    lines.push(
+      `${TASK_OUTCOME_SUBLINE_INDENT}- **${i18n.t('taskOutcome.followUpSectionTitle')}:** ${followUpTitle}`,
+    );
+  }
+
+  return lines;
 }
 
 export function formatMeetingDialogueForShareMarkdown(

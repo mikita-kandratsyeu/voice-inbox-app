@@ -10,6 +10,7 @@ jest.mock('@/shared/lib', () => ({
         'tasks.priority.high': 'High',
         'tasks.priority.medium': 'Medium',
         'tasks.priority.low': 'Low',
+        'taskOutcome.resultLabel': 'Result',
       };
       return labels[key] ?? key;
     },
@@ -296,6 +297,34 @@ describe('note document markdown', () => {
 
     expect(parsed.patch.tags).toEqual(expect.arrayContaining(['ideas', 'draft']));
     expect(parsed.patch.tasks?.[0]?.isDone).toBe(true);
+  });
+
+  it('round-trips task outcome text in the tasks section', () => {
+    const record = makeRecord({
+      tasks: [
+        {
+          id: 'rec_note_doc-task-0',
+          text: 'Follow up with the team',
+          isDone: true,
+          priority: 'medium',
+          outcomeText: 'Team confirmed the plan',
+        },
+      ],
+    });
+    const markdown = [
+      `# ${record.title}`,
+      '',
+      '<!-- vi:section:tasks -->',
+      '## Tasks',
+      '- [x] Follow up with the team (Priority: Medium)',
+      '  - **Result:** Team confirmed the plan',
+    ].join('\n');
+
+    const parsed = parseNoteDocumentMarkdown(markdown, record);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    expect(parsed.patch.tasks?.[0]?.outcomeText).toBe('Team confirmed the plan');
   });
 
   it('restores meeting summary sections after document markdown round-trip', () => {
