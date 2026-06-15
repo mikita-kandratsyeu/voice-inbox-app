@@ -66,7 +66,11 @@ export function computeGraphExportLayout(
 
   // measureGraphContentBounds already includes EDGE_VISUAL_MARGIN
   // Add additional padding for export frame
-  const paddingExtra = GRAPH_EXPORT_FIT_PADDING * 2;
+  // For large graphs (>50 nodes), increase padding to ensure curved edges are fully captured
+  const basePadding = GRAPH_EXPORT_FIT_PADDING * 2;
+  const extraPaddingForLargeGraphs = nodes.length > 50 ? Math.min(nodes.length * 0.5, 100) : 0;
+  const paddingExtra = basePadding + extraPaddingForLargeGraphs;
+
   const contentWidth = Math.max(bounds.maxX - bounds.minX + paddingExtra, 1);
   const contentHeight = Math.max(bounds.maxY - bounds.minY + paddingExtra, 1);
   const aspect = contentWidth / contentHeight;

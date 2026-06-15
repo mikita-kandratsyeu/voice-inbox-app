@@ -64,11 +64,13 @@ export const GraphFullExportCapture = forwardRef<ViewShotRef, GraphFullExportCap
           style={{
             height: layout.exportHeight,
             width: layout.exportWidth,
+            overflow: 'visible',
           }}
         >
           <View
             style={{
               height: layout.worldHeight,
+              overflow: 'visible',
               transform: [
                 { translateX: layout.transform.translateX },
                 { translateY: layout.transform.translateY },

@@ -39,10 +39,13 @@ export function measureGraphContentBounds(nodes: GraphNode[]): GraphContentBound
   }
 
   // Add margin for edge effects (curvature, stroke width, glow)
-  minX -= EDGE_VISUAL_MARGIN;
-  minY -= EDGE_VISUAL_MARGIN;
-  maxX += EDGE_VISUAL_MARGIN;
-  maxY += EDGE_VISUAL_MARGIN;
+  // For large graphs with many edges, increase margin to ensure all curved edges are captured
+  const edgeMargin = nodes.length > 100 ? EDGE_VISUAL_MARGIN * 1.5 : EDGE_VISUAL_MARGIN;
+
+  minX -= edgeMargin;
+  minY -= edgeMargin;
+  maxX += edgeMargin;
+  maxY += edgeMargin;
 
   return { minX, minY, maxX, maxY };
 }
