@@ -9,6 +9,11 @@ import { layoutNodesWithGlobalForce } from './runGlobalForceLayout';
 
 const GRAPH_BOUNDS_PADDING = 80;
 
+/**
+ * Compute layout dimensions with scale-awareness.
+ * For large graphs (>50 nodes), we reduce per-node spacing to keep the graph
+ * within reasonable zoom limits (MIN_SCALE = 0.225).
+ */
 function computeLayoutMetrics(
   nodeCount: number,
   viewportWidth: number,
@@ -19,9 +24,19 @@ function computeLayoutMetrics(
   const cols = Math.max(1, Math.ceil(Math.sqrt(Math.max(nodeCount, 1) * aspect)));
   const rows = Math.max(1, Math.ceil(nodeCount / cols));
 
+  // For large graphs, reduce spacing to keep within scale bounds
+  let effectiveSpan = avgNodeSpan;
+  if (nodeCount > 100) {
+    // 100+ nodes: 70% spacing
+    effectiveSpan = avgNodeSpan * 0.7;
+  } else if (nodeCount > 50) {
+    // 50-100 nodes: 85% spacing
+    effectiveSpan = avgNodeSpan * 0.85;
+  }
+
   return {
-    width: Math.max(viewportWidth, cols * avgNodeSpan),
-    height: Math.max(viewportHeight, rows * avgNodeSpan),
+    width: Math.max(viewportWidth, cols * effectiveSpan),
+    height: Math.max(viewportHeight, rows * effectiveSpan),
   };
 }
 

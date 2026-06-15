@@ -6,9 +6,24 @@ import type { GraphEdge, GraphNode } from './graphTypes';
 import { recordNodeId } from './graphTypes';
 
 const NODE_LAYOUT_PADDING = 24;
-const CLUSTER_GRID_GAP = 180;
-const CLUSTER_PADDING = 32;
 const AVG_NODE_SPAN = 188;
+
+/**
+ * Adaptive cluster spacing that scales down for large graphs to keep them within viewport bounds.
+ * Large graphs (>50 nodes) get tighter spacing to prevent excessive zoom-out requirements.
+ */
+function getClusterGridGap(totalNodeCount: number): number {
+  if (totalNodeCount <= 20) return 180; // Spacious for small graphs
+  if (totalNodeCount <= 50) return 140; // Medium spacing
+  if (totalNodeCount <= 100) return 100; // Compact for large graphs
+  return 80; // Very compact for huge graphs (100+)
+}
+
+function getClusterPadding(totalNodeCount: number): number {
+  if (totalNodeCount <= 20) return 32; // Comfortable for small graphs
+  if (totalNodeCount <= 50) return 24; // Tighter for medium graphs
+  return 16; // Minimal for large graphs
+}
 
 export type GraphClusterType = 'folder' | 'tag' | 'group' | 'solo';
 
@@ -210,11 +225,24 @@ function clusterForceIterations(nodeCount: number): number {
   return Math.min(600, 150 + nodeCount * 12);
 }
 
-function buildClusterForceAtlasSettings(nodeCount: number, clusterType?: GraphClusterType) {
+function buildClusterForceAtlasSettings(
+  nodeCount: number,
+  clusterType?: GraphClusterType,
+  totalGraphNodeCount?: number,
+) {
   const inferred = forceAtlas2.inferSettings(nodeCount);
 
   const isSmall = nodeCount <= 8;
   const isTightCluster = clusterType === 'folder' || clusterType === 'tag';
+
+  // For large graphs (100+ total nodes), reduce scaling ratio to keep clusters compact
+  const isLargeGraph = (totalGraphNodeCount ?? nodeCount) > 100;
+  const baseScalingRatio = Math.max(inferred.scalingRatio ?? 8, 12 + Math.sqrt(nodeCount) * 6);
+  const scalingRatio = isLargeGraph ? baseScalingRatio * 0.7 : baseScalingRatio;
+
+  // Increase gravity for large graphs to pull nodes together
+  const baseGravity = isSmall ? 0.22 : nodeCount > 16 ? 0.12 : 0.18;
+  const gravity = isLargeGraph ? baseGravity * 1.5 : baseGravity;
 
   return {
     ...inferred,
@@ -222,9 +250,9 @@ function buildClusterForceAtlasSettings(nodeCount: number, clusterType?: GraphCl
     barnesHutOptimize: nodeCount > 28,
     barnesHutTheta: 0.4,
     edgeWeightInfluence: isTightCluster ? 0.75 : 0.62,
-    gravity: isSmall ? 0.22 : nodeCount > 16 ? 0.12 : 0.18,
+    gravity,
     linLogMode: !isTightCluster,
-    scalingRatio: Math.max(inferred.scalingRatio ?? 8, 12 + Math.sqrt(nodeCount) * 6),
+    scalingRatio,
     slowDown: nodeCount > 32 ? 5 : 7,
     strongGravityMode: isTightCluster && nodeCount <= 12,
     weighted: true,
@@ -246,6 +274,7 @@ function layoutClusterSubgraph(
   nodes: GraphNode[],
   edges: GraphEdge[],
   cluster: GraphCluster,
+  totalGraphNodeCount: number,
   fixedPositions?: Map<string, { x: number; y: number }>,
 ): Map<string, { x: number; y: number }> {
   const positions = new Map<string, { x: number; y: number }>();
@@ -307,7 +336,11 @@ function layoutClusterSubgraph(
 
   forceAtlas2.assign(graph, {
     iterations: clusterForceIterations(cluster.nodeIds.length),
-    settings: buildClusterForceAtlasSettings(cluster.nodeIds.length, cluster.type),
+    settings: buildClusterForceAtlasSettings(
+      cluster.nodeIds.length,
+      cluster.type,
+      totalGraphNodeCount,
+    ),
   });
 
   for (const nodeId of cluster.nodeIds) {
@@ -374,6 +407,8 @@ function computeClusterGridColumns(
   layoutWidth: number,
   layoutHeight: number,
   entries: ClusterLayoutEntry[],
+  totalNodeCount: number,
+  clusterGridGap: number,
 ): number {
   if (clusterCount <= 1) return 1;
   if (clusterCount === 2) return 2;
@@ -382,7 +417,7 @@ function computeClusterGridColumns(
   const maxClusterWidth = Math.max(...entries.map((e) => e.bounds.width), AVG_NODE_SPAN * 0.75);
 
   const widthBasedCols = Math.floor(
-    (layoutWidth + CLUSTER_GRID_GAP) / (maxClusterWidth + CLUSTER_GRID_GAP),
+    (layoutWidth + clusterGridGap) / (maxClusterWidth + clusterGridGap),
   );
 
   const aspect = layoutWidth / Math.max(layoutHeight, 320);
@@ -390,10 +425,20 @@ function computeClusterGridColumns(
 
   let columns = Math.min(clusterCount, Math.max(2, widthBasedCols, aspectCols));
 
-  if (clusterCount >= 4 && clusterCount <= 6) {
-    columns = Math.min(3, columns);
-  } else if (clusterCount > 6 && clusterCount <= 9) {
-    columns = Math.min(3, columns);
+  // For large graphs (>50 nodes), use more columns to create wider, less tall layouts
+  if (totalNodeCount > 100) {
+    // 100+ nodes: prefer wide layout (4-6 columns)
+    columns = Math.max(columns, Math.min(6, Math.ceil(Math.sqrt(clusterCount * 1.5))));
+  } else if (totalNodeCount > 50) {
+    // 50-100 nodes: moderately wide (3-4 columns)
+    columns = Math.max(columns, Math.min(4, Math.ceil(Math.sqrt(clusterCount * 1.2))));
+  } else {
+    // Small graphs: existing logic
+    if (clusterCount >= 4 && clusterCount <= 6) {
+      columns = Math.min(3, columns);
+    } else if (clusterCount > 6 && clusterCount <= 9) {
+      columns = Math.min(3, columns);
+    }
   }
 
   return columns;
@@ -403,11 +448,22 @@ function placeClustersOnViewportGrid(
   entries: ClusterLayoutEntry[],
   layoutWidth: number,
   layoutHeight: number,
+  totalNodeCount: number,
 ): Map<string, { x: number; y: number }> {
   const mergedPositions = new Map<string, { x: number; y: number }>();
   if (entries.length === 0) return mergedPositions;
 
-  const columns = computeClusterGridColumns(entries.length, layoutWidth, layoutHeight, entries);
+  const clusterGridGap = getClusterGridGap(totalNodeCount);
+  const clusterPadding = getClusterPadding(totalNodeCount);
+
+  const columns = computeClusterGridColumns(
+    entries.length,
+    layoutWidth,
+    layoutHeight,
+    entries,
+    totalNodeCount,
+    clusterGridGap,
+  );
   const rowCount = Math.ceil(entries.length / columns);
 
   const columnWidths = Array.from({ length: columns }, (_, col) => {
@@ -415,7 +471,7 @@ function placeClustersOnViewportGrid(
     for (let i = col; i < entries.length; i += columns) {
       const entry = entries[i];
       if (entry) {
-        maxWidth = Math.max(maxWidth, entry.bounds.width + CLUSTER_PADDING * 2);
+        maxWidth = Math.max(maxWidth, entry.bounds.width + clusterPadding * 2);
       }
     }
     return maxWidth;
@@ -426,19 +482,19 @@ function placeClustersOnViewportGrid(
     const row = Math.floor(index / columns);
     rowHeights[row] = Math.max(
       rowHeights[row]!,
-      entry.bounds.height + CLUSTER_PADDING * 2,
+      entry.bounds.height + clusterPadding * 2,
       AVG_NODE_SPAN * 0.55,
     );
   });
 
   const columnOffsets = Array.from({ length: columns }, () => 0);
   for (let col = 1; col < columns; col++) {
-    columnOffsets[col] = columnOffsets[col - 1]! + columnWidths[col - 1]! + CLUSTER_GRID_GAP;
+    columnOffsets[col] = columnOffsets[col - 1]! + columnWidths[col - 1]! + clusterGridGap;
   }
 
   const rowOffsets = Array.from({ length: rowCount }, () => 0);
   for (let row = 1; row < rowCount; row++) {
-    rowOffsets[row] = rowOffsets[row - 1]! + rowHeights[row - 1]! + CLUSTER_GRID_GAP;
+    rowOffsets[row] = rowOffsets[row - 1]! + rowHeights[row - 1]! + clusterGridGap;
   }
 
   entries.forEach((entry, index) => {
@@ -454,13 +510,13 @@ function placeClustersOnViewportGrid(
 
     const offsetX =
       cellLeft +
-      CLUSTER_PADDING +
-      Math.max(0, (cellWidth - CLUSTER_PADDING * 2 - clusterWidth) / 2) -
+      clusterPadding +
+      Math.max(0, (cellWidth - clusterPadding * 2 - clusterWidth) / 2) -
       entry.bounds.minX;
     const offsetY =
       cellTop +
-      CLUSTER_PADDING +
-      Math.max(0, (cellHeight - CLUSTER_PADDING * 2 - clusterHeight) / 2) -
+      clusterPadding +
+      Math.max(0, (cellHeight - clusterPadding * 2 - clusterHeight) / 2) -
       entry.bounds.minY;
 
     for (const [nodeId, position] of entry.positions) {
@@ -483,16 +539,22 @@ export function layoutNodesByClusters(
 ): GraphNode[] {
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
   const clusters = buildGraphClusters(nodes, edges);
+  const totalNodeCount = nodes.length;
 
   const clusterLayouts: ClusterLayoutEntry[] = clusters.map((cluster) => {
-    const positions = layoutClusterSubgraph(nodes, edges, cluster, fixedPositions);
+    const positions = layoutClusterSubgraph(nodes, edges, cluster, totalNodeCount, fixedPositions);
     return {
       positions,
       bounds: measureClusterBounds(positions, nodeById),
     };
   });
 
-  const mergedPositions = placeClustersOnViewportGrid(clusterLayouts, layoutWidth, layoutHeight);
+  const mergedPositions = placeClustersOnViewportGrid(
+    clusterLayouts,
+    layoutWidth,
+    layoutHeight,
+    totalNodeCount,
+  );
 
   return nodes.map((node) => {
     const position = mergedPositions.get(node.id) ?? { x: 0, y: 0 };

@@ -35,10 +35,22 @@ function computeGlobalLayoutMetrics(
   viewportHeight: number,
 ): { width: number; height: number; spread: number } {
   const avgNodeSpan = 188;
-  const gridSide = Math.ceil(Math.sqrt(Math.max(nodeCount, 1))) * avgNodeSpan;
+
+  // For large graphs, reduce per-node spacing to keep within scale bounds
+  let effectiveSpan = avgNodeSpan;
+  if (nodeCount > 100) {
+    effectiveSpan = avgNodeSpan * 0.65; // 100+ nodes: 65% spacing
+  } else if (nodeCount > 50) {
+    effectiveSpan = avgNodeSpan * 0.8; // 50-100 nodes: 80% spacing
+  }
+
+  const gridSide = Math.ceil(Math.sqrt(Math.max(nodeCount, 1))) * effectiveSpan;
   const width = Math.max(viewportWidth, gridSide);
   const height = Math.max(viewportHeight, gridSide);
-  const spread = Math.max(width, height) * 0.48;
+
+  // Reduce spread for large graphs to keep them compact
+  const spreadFactor = nodeCount > 100 ? 0.4 : nodeCount > 50 ? 0.44 : 0.48;
+  const spread = Math.max(width, height) * spreadFactor;
 
   return { width, height, spread };
 }
@@ -47,14 +59,33 @@ function buildForceAtlasSettings(nodeCount: number) {
   const inferred = forceAtlas2.inferSettings(nodeCount);
   const spreadFactor = Math.sqrt(Math.max(nodeCount, 1));
 
+  // For large graphs, reduce scalingRatio to keep nodes closer together
+  const baseScalingRatio = Math.max(inferred.scalingRatio ?? 8, 8 + spreadFactor * 8.5);
+  const scalingRatio =
+    nodeCount > 100 ? baseScalingRatio * 0.6 : nodeCount > 50 ? baseScalingRatio * 0.75 : baseScalingRatio;
+
+  // Increase gravity for large graphs to pull nodes together
+  let gravity: number;
+  if (nodeCount > 100) {
+    gravity = 0.05; // Higher gravity for 100+ nodes
+  } else if (nodeCount > 64) {
+    gravity = 0.04;
+  } else if (nodeCount > 24) {
+    gravity = 0.06;
+  } else if (nodeCount > 10) {
+    gravity = 0.12;
+  } else {
+    gravity = 0.24;
+  }
+
   return {
     ...inferred,
     adjustSizes: true,
     barnesHutOptimize: nodeCount > 48,
     edgeWeightInfluence: 0.72,
-    gravity: nodeCount > 64 ? 0.03 : nodeCount > 24 ? 0.06 : nodeCount > 10 ? 0.12 : 0.24,
+    gravity,
     linLogMode: false,
-    scalingRatio: Math.max(inferred.scalingRatio ?? 8, 8 + spreadFactor * 8.5),
+    scalingRatio,
     slowDown: nodeCount > 96 ? 4 : nodeCount > 48 ? 6 : 8,
     weighted: true,
   };
