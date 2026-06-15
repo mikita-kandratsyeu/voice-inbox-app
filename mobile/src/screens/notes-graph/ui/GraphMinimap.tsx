@@ -131,22 +131,27 @@ function MinimapViewportIndicator({
     ),
   );
 
+  const viewportX = useDerivedValue(() => viewportRect.value.x);
+  const viewportY = useDerivedValue(() => viewportRect.value.y);
+  const viewportWidthSV = useDerivedValue(() => viewportRect.value.width);
+  const viewportHeightSV = useDerivedValue(() => viewportRect.value.height);
+
   return (
     <Group>
       <RoundedRect
-        x={useDerivedValue(() => viewportRect.value.x)}
-        y={useDerivedValue(() => viewportRect.value.y)}
-        width={useDerivedValue(() => viewportRect.value.width)}
-        height={useDerivedValue(() => viewportRect.value.height)}
+        x={viewportX}
+        y={viewportY}
+        width={viewportWidthSV}
+        height={viewportHeightSV}
         r={2}
         color={accentColor}
         opacity={0.12}
       />
       <RoundedRect
-        x={useDerivedValue(() => viewportRect.value.x)}
-        y={useDerivedValue(() => viewportRect.value.y)}
-        width={useDerivedValue(() => viewportRect.value.width)}
-        height={useDerivedValue(() => viewportRect.value.height)}
+        x={viewportX}
+        y={viewportY}
+        width={viewportWidthSV}
+        height={viewportHeightSV}
         r={2}
         style="stroke"
         strokeWidth={VIEWPORT_STROKE_WIDTH}
