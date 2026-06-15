@@ -2,7 +2,7 @@ import { nodeBounds } from './graphNodeMetrics';
 import type { GraphNode } from './graphTypes';
 
 export const GRAPH_PAN_OVERSCROLL = 40;
-export const GRAPH_VIEWPORT_MIN_SCALE = 0.3;
+export const GRAPH_VIEWPORT_MIN_SCALE = 0.2;
 export const GRAPH_VIEWPORT_MAX_SCALE = 3;
 export const GRAPH_WORLD_CONTENT_PADDING = 80;
 
