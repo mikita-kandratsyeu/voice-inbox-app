@@ -37,7 +37,7 @@ const GRAPH_CHIP_FONT_SIZE = 10;
 const GRAPH_CHIP_PAD_X = 6;
 const GRAPH_CHIP_PAD_Y = 2;
 
-function GraphNodeLocationChip({
+const GraphNodeLocationChip = React.memo(function GraphNodeLocationChip({
   label,
   color,
   accentColor,
@@ -96,9 +96,15 @@ function GraphNodeLocationChip({
       </Text>
     </View>
   );
-}
+});
 
-function GraphNodeArchivedChip({ label, color }: { label: string; color: Colors }) {
+const GraphNodeArchivedChip = React.memo(function GraphNodeArchivedChip({
+  label,
+  color,
+}: {
+  label: string;
+  color: Colors;
+}) {
   return (
     <View
       style={{
@@ -121,9 +127,15 @@ function GraphNodeArchivedChip({ label, color }: { label: string; color: Colors 
       </Text>
     </View>
   );
-}
+});
 
-function GraphNodeOpenTasksChip({ label, color }: { label: string; color: Colors }) {
+const GraphNodeOpenTasksChip = React.memo(function GraphNodeOpenTasksChip({
+  label,
+  color,
+}: {
+  label: string;
+  color: Colors;
+}) {
   return (
     <View
       style={{
@@ -146,9 +158,15 @@ function GraphNodeOpenTasksChip({ label, color }: { label: string; color: Colors
       </Text>
     </View>
   );
-}
+});
 
-function GraphNodeTagsRow({ tags, color }: { tags: string[]; color: Colors }) {
+const GraphNodeTagsRow = React.memo(function GraphNodeTagsRow({
+  tags,
+  color,
+}: {
+  tags: string[];
+  color: Colors;
+}) {
   const { t } = useTranslation();
   if (tags.length === 0) return null;
 
@@ -195,7 +213,7 @@ function GraphNodeTagsRow({ tags, color }: { tags: string[]; color: Colors }) {
       ) : null}
     </View>
   );
-}
+});
 
 type AnimatedNodeCardShellProps = {
   interactionPhase: SharedValue<number>;
@@ -214,7 +232,7 @@ type AnimatedNodeCardShellProps = {
   taskStyle?: boolean;
 };
 
-function AnimatedNodeCardShell({
+const AnimatedNodeCardShell = React.memo(function AnimatedNodeCardShell({
   interactionPhase,
   color,
   dimmed,
@@ -382,9 +400,9 @@ function AnimatedNodeCardShell({
       </Animated.View>
     </View>
   );
-}
+});
 
-export function GraphRecordNodeCardContent({
+export const GraphRecordNodeCardContent = React.memo(function GraphRecordNodeCardContent({
   title,
   folderName,
   archivedLabel,
@@ -471,9 +489,9 @@ export function GraphRecordNodeCardContent({
       ) : null}
     </View>
   );
-}
+});
 
-function GraphTaskMetaChip({
+const GraphTaskMetaChip = React.memo(function GraphTaskMetaChip({
   color,
   icon,
   label,
@@ -503,9 +521,9 @@ function GraphTaskMetaChip({
       </Text>
     </View>
   );
-}
+});
 
-export function GraphTaskNodeCardContent({
+export const GraphTaskNodeCardContent = React.memo(function GraphTaskNodeCardContent({
   text,
   color,
   isDone = false,
@@ -612,9 +630,9 @@ export function GraphTaskNodeCardContent({
       ) : null}
     </View>
   );
-}
+});
 
-export function GraphAnimatedNodeCard({
+export const GraphAnimatedNodeCard = React.memo(function GraphAnimatedNodeCard({
   interactionPhase,
   color,
   dimmed,
@@ -660,7 +678,7 @@ export function GraphAnimatedNodeCard({
       {children}
     </AnimatedNodeCardShell>
   );
-}
+});
 
 export function useGraphNodeWrapperStyle(
   node: GraphNode,

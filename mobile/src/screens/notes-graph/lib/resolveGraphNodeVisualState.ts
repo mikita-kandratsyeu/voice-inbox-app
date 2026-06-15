@@ -7,17 +7,27 @@ export type GraphNodeVisualState = {
   highlighted: boolean;
 };
 
+const neighborCache = new WeakMap<GraphEdge[], Map<string, Set<string>>>();
+
 export function buildGraphActiveNeighborIds(activeNodeId: string, edges: GraphEdge[]): Set<string> {
-  const neighbors = new Set<string>();
-  for (const edge of edges) {
-    if (edge.sourceId === activeNodeId) {
-      neighbors.add(edge.targetId);
+  let cache = neighborCache.get(edges);
+
+  if (!cache) {
+    cache = new Map();
+    for (const edge of edges) {
+      if (!cache.has(edge.sourceId)) {
+        cache.set(edge.sourceId, new Set());
+      }
+      if (!cache.has(edge.targetId)) {
+        cache.set(edge.targetId, new Set());
+      }
+      cache.get(edge.sourceId)!.add(edge.targetId);
+      cache.get(edge.targetId)!.add(edge.sourceId);
     }
-    if (edge.targetId === activeNodeId) {
-      neighbors.add(edge.sourceId);
-    }
+    neighborCache.set(edges, cache);
   }
-  return neighbors;
+
+  return cache.get(activeNodeId) ?? new Set();
 }
 
 export function resolveGraphNodeVisualState(

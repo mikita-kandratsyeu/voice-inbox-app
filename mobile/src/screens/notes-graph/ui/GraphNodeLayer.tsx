@@ -20,6 +20,7 @@ import { RECORD_NODE_WIDTH, TASK_NODE_WIDTH } from '../lib/graphTypes';
 import {
   buildGraphActiveNeighborIds,
   graphNodeStackOrder,
+  type GraphNodeVisualState,
   resolveGraphNodeVisualState,
 } from '../lib/resolveGraphNodeVisualState';
 import { GraphNodeCard } from './GraphNodeCard';
@@ -370,6 +371,17 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
     return [...records, ...tasks];
   }, [nodes]);
 
+  const visualStatesById = useMemo(() => {
+    const states = new Map<string, GraphNodeVisualState>();
+    for (const node of nodes) {
+      states.set(
+        node.id,
+        resolveGraphNodeVisualState(node.id, activeNodeId, activeNeighborIds, matchedNodeIds),
+      );
+    }
+    return states;
+  }, [nodes, activeNodeId, activeNeighborIds, matchedNodeIds]);
+
   return (
     <View
       pointerEvents={interactionsEnabled ? 'box-none' : 'none'}
@@ -378,12 +390,7 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
       {sortedNodes.map((node) => {
         const folder =
           node.record?.folderId != null ? foldersById.get(node.record.folderId) : undefined;
-        const visualState = resolveGraphNodeVisualState(
-          node.id,
-          activeNodeId,
-          activeNeighborIds,
-          matchedNodeIds,
-        );
+        const visualState = visualStatesById.get(node.id)!;
 
         return (
           <GraphNodeItem

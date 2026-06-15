@@ -44,7 +44,7 @@ type GraphNodeCardProps = {
   onPress?: () => void;
 };
 
-export function GraphNodeCard({
+export const GraphNodeCard = React.memo(function GraphNodeCard({
   node,
   color,
   folderName,
@@ -159,6 +159,6 @@ export function GraphNodeCard({
   }
 
   return null;
-}
+});
 
 export { GraphNodeCardWrapper };

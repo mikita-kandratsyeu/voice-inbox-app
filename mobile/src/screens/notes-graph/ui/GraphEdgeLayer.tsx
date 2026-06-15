@@ -70,8 +70,8 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
   const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
   const bendLayout = useMemo(() => buildParallelEdgeBendLayout(edges), [edges]);
 
-  const renderedEdges = useMemo(() => {
-    const items: RenderedEdge[] = [];
+  const edgePaths = useMemo(() => {
+    const pathsMap = new Map<string, string>();
 
     for (const edge of edges) {
       const source = nodeById.get(edge.sourceId);
@@ -91,7 +91,28 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
         ? computeCubicEdgePath(from, to, curvature)
         : computeQuadraticEdgePath(from, to, curvature);
 
-      const emphasis = resolveGraphEdgeEmphasis(edge, matchedNodeIds, activeNodeId);
+      pathsMap.set(edge.id, path);
+    }
+
+    return pathsMap;
+  }, [bendLayout, edges, nodeById]);
+
+  const edgeEmphases = useMemo(() => {
+    const emphases = new Map<string, GraphEdgeEmphasis>();
+    for (const edge of edges) {
+      emphases.set(edge.id, resolveGraphEdgeEmphasis(edge, matchedNodeIds, activeNodeId));
+    }
+    return emphases;
+  }, [edges, matchedNodeIds, activeNodeId]);
+
+  const renderedEdges = useMemo(() => {
+    const items: RenderedEdge[] = [];
+
+    for (const edge of edges) {
+      const path = edgePaths.get(edge.id);
+      if (!path) continue;
+
+      const emphasis = edgeEmphases.get(edge.id) ?? 'default';
       const shouldAnimate =
         emphasis === 'highlighted' && (edge.kind === 'similar' || edge.kind === 'contains');
 
@@ -108,7 +129,7 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
     });
 
     return items;
-  }, [activeNodeId, bendLayout, edges, matchedNodeIds, nodeById]);
+  }, [edgeEmphases, edgePaths, edges]);
 
   return (
     <Svg

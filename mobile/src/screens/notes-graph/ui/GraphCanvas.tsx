@@ -121,19 +121,26 @@ function mergeNodePositions(
   nodes: GraphNode[],
   overrides: Map<string, { x: number; y: number }>,
 ): GraphNode[] {
-  if (overrides.size === 0) {
-    const session = getSessionNodePositions();
-    if (session.size === 0) return nodes;
-    return nodes.map((node) => {
-      const pos = session.get(node.id);
-      return pos ? { ...node, x: pos.x, y: pos.y } : node;
-    });
-  }
   const session = getSessionNodePositions();
-  return nodes.map((node) => {
+
+  if (overrides.size === 0 && session.size === 0) {
+    return nodes;
+  }
+
+  let hasChanges = false;
+  const result: GraphNode[] = [];
+
+  for (const node of nodes) {
     const override = overrides.get(node.id) ?? session.get(node.id);
-    return override ? { ...node, x: override.x, y: override.y } : node;
-  });
+    if (override && (node.x !== override.x || node.y !== override.y)) {
+      result.push({ ...node, x: override.x, y: override.y });
+      hasChanges = true;
+    } else {
+      result.push(node);
+    }
+  }
+
+  return hasChanges ? result : nodes;
 }
 
 export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function GraphCanvas(
