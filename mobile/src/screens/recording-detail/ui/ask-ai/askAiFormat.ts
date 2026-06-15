@@ -3,10 +3,7 @@ type AskTurnFormatOptions = {
   interpretationsHeading?: string;
 };
 
-function appendInterpretationsBlock(
-  parts: string[],
-  options?: AskTurnFormatOptions,
-): void {
+function appendInterpretationsBlock(parts: string[], options?: AskTurnFormatOptions): void {
   const interpretations = options?.interpretations?.map((line) => line.trim()).filter(Boolean);
   if (!interpretations?.length) return;
 

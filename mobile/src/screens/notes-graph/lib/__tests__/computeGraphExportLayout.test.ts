@@ -12,8 +12,8 @@ jest.mock('@/shared/lib/deviceCapabilities', () => ({
 }));
 
 import { computeGraphExportLayout, GRAPH_EXPORT_MAX_DIMENSION } from '../computeGraphExportLayout';
-import { GRAPH_VIEWPORT_MIN_SCALE } from '../graphViewportBounds';
 import type { GraphNode } from '../graphTypes';
+import { GRAPH_VIEWPORT_MIN_SCALE } from '../graphViewportBounds';
 
 function recordNode(id: string, x: number, y: number): GraphNode {
   return {

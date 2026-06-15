@@ -350,9 +350,7 @@ export function saveAskAiSession(
       ...(snapshot.answerKind ? { answerKind: snapshot.answerKind } : {}),
       ...(snapshot.items?.length ? { items: snapshot.items } : {}),
       ...(snapshot.evidence?.length ? { evidence: snapshot.evidence } : {}),
-      ...(snapshot.interpretations?.length
-        ? { interpretations: snapshot.interpretations }
-        : {}),
+      ...(snapshot.interpretations?.length ? { interpretations: snapshot.interpretations } : {}),
       ...(snapshot.suggestedFollowUps?.length
         ? { suggestedFollowUps: snapshot.suggestedFollowUps }
         : {}),

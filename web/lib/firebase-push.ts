@@ -13,14 +13,25 @@ export type PushPayload = {
   message?: string;
 };
 
+type FcmSendError = {
+  code?: string;
+  errorInfo?: { code?: string };
+};
+
+function getFcmErrorCode(err: unknown): string {
+  if (!err || typeof err !== 'object') return 'unknown';
+  const record = err as FcmSendError;
+  return record.code || record.errorInfo?.code || 'unknown';
+}
+
 /**
  * Check if FCM error indicates invalid/expired token.
  * These tokens should be removed from our database.
  */
-function isTokenInvalidError(err: any): boolean {
+function isTokenInvalidError(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false;
 
-  const errorCode = err.code || err.errorInfo?.code;
+  const errorCode = getFcmErrorCode(err);
 
   // FCM error codes for invalid tokens that should be cleaned up:
   // - messaging/invalid-registration-token: malformed token
@@ -75,8 +86,8 @@ export async function sendPushViaFirebase(
     const response = await admin.messaging().send(message);
     console.log('[FCM] send ok', { type: payload.type, responseId: response });
     return true;
-  } catch (err: any) {
-    const errorCode = err?.code || err?.errorInfo?.code || 'unknown';
+  } catch (err: unknown) {
+    const errorCode = getFcmErrorCode(err);
 
     console.error(
       '[FCM] send failed:',
