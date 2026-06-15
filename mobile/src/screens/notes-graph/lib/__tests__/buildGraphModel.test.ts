@@ -73,7 +73,7 @@ describe('countFilteredGraphRecords', () => {
 });
 
 describe('countGraphNodes', () => {
-  it('counts open tasks when showTasks is enabled', () => {
+  it('counts all tasks when showTasks is enabled', () => {
     const records = [
       makeRecord('a', 'A', {
         tasks: [
@@ -83,7 +83,7 @@ describe('countGraphNodes', () => {
       }),
     ];
 
-    expect(countGraphNodes(records, defaultFilters)).toBe(2);
+    expect(countGraphNodes(records, defaultFilters)).toBe(3);
     expect(countGraphNodes(records, { ...defaultFilters, showTasks: false })).toBe(1);
   });
 });
@@ -122,6 +122,34 @@ describe('buildGraphModel', () => {
       kind: 'contains',
       sourceId: recordNodeId('a'),
       targetId: taskNodeId('a', 't1'),
+    });
+  });
+
+  it('includes completed tasks as nodes', () => {
+    const model = buildGraphModel(
+      [
+        makeRecord('a', 'A', {
+          tasks: [
+            { id: 't1', text: 'Open', isDone: false },
+            { id: 't2', text: 'Done', isDone: true },
+          ],
+        }),
+      ],
+      defaultFilters,
+    );
+
+    expect(model.nodes).toHaveLength(3);
+    expect(model.nodes.find((node) => node.id === taskNodeId('a', 't2'))).toMatchObject({
+      kind: 'task',
+      searchText: 'done',
+      task: { id: 't2', text: 'Done', isDone: true },
+      parentRecordId: 'a',
+    });
+    expect(model.edges).toContainEqual({
+      id: `contains:${taskNodeId('a', 't2')}`,
+      kind: 'contains',
+      sourceId: recordNodeId('a'),
+      targetId: taskNodeId('a', 't2'),
     });
   });
 

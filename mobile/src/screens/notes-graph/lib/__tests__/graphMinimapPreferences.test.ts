@@ -7,7 +7,9 @@ import {
   GRAPH_MINIMAP_MAX_HEIGHT,
   GRAPH_MINIMAP_MAX_WIDTH,
   GRAPH_MINIMAP_MIN_HEIGHT,
+  GRAPH_MINIMAP_MIN_NODE_COUNT,
   GRAPH_MINIMAP_MIN_WIDTH,
+  isGraphMinimapAvailable,
   setGraphMinimapSize,
   setGraphMinimapVisible,
 } from '../graphMinimapPreferences';
@@ -22,6 +24,13 @@ jest.mock('@/shared/lib/async-storage/mmkv', () => ({
     },
   },
 }));
+
+describe('isGraphMinimapAvailable', () => {
+  it('requires at least GRAPH_MINIMAP_MIN_NODE_COUNT nodes', () => {
+    expect(isGraphMinimapAvailable(GRAPH_MINIMAP_MIN_NODE_COUNT - 1)).toBe(false);
+    expect(isGraphMinimapAvailable(GRAPH_MINIMAP_MIN_NODE_COUNT)).toBe(true);
+  });
+});
 
 describe('clampGraphMinimapSize', () => {
   it('clamps and rounds width and height', () => {

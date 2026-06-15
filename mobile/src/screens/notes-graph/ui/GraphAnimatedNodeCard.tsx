@@ -2,6 +2,7 @@ import dayjs from 'dayjs';
 import {
   Archive,
   CalendarDays,
+  CheckCircle2,
   Flag,
   Inbox,
   ListChecks,
@@ -507,6 +508,7 @@ function GraphTaskMetaChip({
 export function GraphTaskNodeCardContent({
   text,
   color,
+  isDone = false,
   priority,
   deadline,
   deadlineTime,
@@ -514,6 +516,7 @@ export function GraphTaskNodeCardContent({
 }: {
   text: string;
   color: Colors;
+  isDone?: boolean;
   priority?: 'high' | 'medium' | 'low';
   deadline?: string | null;
   deadlineTime?: string | null;
@@ -522,30 +525,32 @@ export function GraphTaskNodeCardContent({
   const { t, i18n } = useTranslation();
   const parsedDeadline = parseTaskDeadline(deadline);
   const deadlineText =
-    parsedDeadline !== null
+    !isDone && parsedDeadline !== null
       ? `${dayjs(parsedDeadline).locale(resolveDayjsLocale(i18n.language)).format('D MMM')}${
           deadlineTime ? `, ${formatTaskDeadlineTimeForDisplay(deadlineTime)}` : ''
         }`
       : null;
-  const isOverdue = parsedDeadline !== null && dayjs(parsedDeadline).isBefore(dayjs(), 'day');
+  const isOverdue =
+    !isDone && parsedDeadline !== null && dayjs(parsedDeadline).isBefore(dayjs(), 'day');
   const priorityColor =
     priority === 'high'
       ? color.accent.delete
       : priority === 'medium'
         ? color.accent.cache
         : color.text.secondary;
-  const hasMeta = Boolean(deadlineText || priority);
+  const hasMeta = Boolean(isDone || deadlineText || priority);
 
   return (
     <View style={{ flex: 1, minWidth: 0 }}>
       <Text
         numberOfLines={2}
         style={{
-          color: color.text.primary,
+          color: isDone ? color.text.secondary : color.text.primary,
           fontSize: 11,
           fontWeight: '600',
           lineHeight: 14.3,
           letterSpacing: -0.08,
+          textDecorationLine: isDone ? 'line-through' : undefined,
         }}
       >
         {text}
@@ -573,6 +578,14 @@ export function GraphTaskNodeCardContent({
             marginTop: 3,
           }}
         >
+          {isDone ? (
+            <GraphTaskMetaChip
+              color={color}
+              icon={<CheckCircle2 size={9} color={color.accent.success} strokeWidth={2} />}
+              label={t('allTasks.sections.done')}
+              labelColor={color.accent.success}
+            />
+          ) : null}
           {deadlineText ? (
             <GraphTaskMetaChip
               color={color}
@@ -587,7 +600,7 @@ export function GraphTaskNodeCardContent({
               labelColor={isOverdue ? color.accent.delete : color.text.secondary}
             />
           ) : null}
-          {priority ? (
+          {!isDone && priority ? (
             <GraphTaskMetaChip
               color={color}
               icon={<Flag size={9} color={priorityColor} strokeWidth={2} />}

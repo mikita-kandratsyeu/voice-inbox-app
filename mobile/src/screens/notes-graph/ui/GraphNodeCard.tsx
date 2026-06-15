@@ -89,6 +89,7 @@ export function GraphNodeCard({
         <GraphTaskNodeCardContent
           text={node.task.text}
           color={color}
+          isDone={node.task.isDone}
           priority={node.task.priority}
           deadline={node.task.deadline}
           deadlineTime={node.task.deadlineTime}

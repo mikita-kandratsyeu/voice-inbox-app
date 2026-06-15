@@ -3,6 +3,12 @@ import { storage } from '@/shared/lib/async-storage/mmkv';
 const SIZE_STORAGE_KEY = 'notesGraph.minimapSize';
 const VISIBLE_STORAGE_KEY = 'notesGraph.minimapVisible';
 
+export const GRAPH_MINIMAP_MIN_NODE_COUNT = 12;
+
+export function isGraphMinimapAvailable(nodeCount: number): boolean {
+  return nodeCount >= GRAPH_MINIMAP_MIN_NODE_COUNT;
+}
+
 export const GRAPH_MINIMAP_DEFAULT_WIDTH = 104;
 export const GRAPH_MINIMAP_DEFAULT_HEIGHT = 72;
 export const GRAPH_MINIMAP_MIN_WIDTH = 80;

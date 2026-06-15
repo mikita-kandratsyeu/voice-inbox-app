@@ -405,7 +405,7 @@ export const TasksTab = ({
               ]}
             >
               <View
-                className="flex-row items-stretch"
+                className="flex-row items-center"
                 style={{ borderRadius: TASK_CARD_RADIUS, overflow: 'hidden' }}
               >
                 <Pressable

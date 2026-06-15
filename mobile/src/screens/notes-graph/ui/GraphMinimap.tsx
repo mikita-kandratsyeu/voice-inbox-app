@@ -26,6 +26,7 @@ import {
   clampGraphMinimapSize,
   getGraphMinimapSize,
   type GraphMinimapSize,
+  isGraphMinimapAvailable,
   setGraphMinimapSize,
 } from '../lib/graphMinimapPreferences';
 import { nodeBounds } from '../lib/graphNodeMetrics';
@@ -224,7 +225,7 @@ export function GraphMinimap({
     });
   }, [scaleAnimation]);
 
-  if (nodes.length < 12) return null;
+  if (!isGraphMinimapAvailable(nodes.length)) return null;
 
   return (
     <Animated.View

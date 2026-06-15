@@ -31,7 +31,11 @@ import {
   getGraphFolderHighlightsVisible,
   setGraphFolderHighlightsVisible,
 } from '../lib/graphFolderHighlightsPreferences';
-import { getGraphMinimapVisible, setGraphMinimapVisible } from '../lib/graphMinimapPreferences';
+import {
+  getGraphMinimapVisible,
+  isGraphMinimapAvailable,
+  setGraphMinimapVisible,
+} from '../lib/graphMinimapPreferences';
 import { findGraphSearchMatchIds, type GraphSearchIndexEntry } from '../lib/graphSearch';
 import { getSessionNodePositions, replaceSessionNodePositions } from '../lib/graphSessionLayout';
 import { shouldAutoSimplifyGraph } from '../lib/graphSimplifyMode';
@@ -851,14 +855,16 @@ export const NotesGraphScreenBody = () => {
       });
     }
 
-    actions.push({
-      id: 'toggleMinimap',
-      title: t('notesGraph.controls.toggleMinimap'),
-      image: 'map',
-      imageColor: titleColor,
-      titleColor,
-      state: minimapVisible ? 'on' : 'off',
-    });
+    if (isGraphMinimapAvailable(layoutNodes.length)) {
+      actions.push({
+        id: 'toggleMinimap',
+        title: t('notesGraph.controls.toggleMinimap'),
+        image: 'map',
+        imageColor: titleColor,
+        titleColor,
+        state: minimapVisible ? 'on' : 'off',
+      });
+    }
 
     actions.push({
       id: 'toggleShowArchived',
@@ -894,6 +900,7 @@ export const NotesGraphScreenBody = () => {
     filters.showArchived,
     folderHighlightsVisible,
     foldersEnabled,
+    layoutNodes.length,
     minimapVisible,
     t,
   ]);
