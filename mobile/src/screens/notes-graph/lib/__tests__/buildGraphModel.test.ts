@@ -37,6 +37,7 @@ const defaultFilters: GraphFilters = {
   folderId: null,
   tags: [],
   showTasks: true,
+  showCompletedTasks: true,
   showArchived: false,
   edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
   layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
@@ -211,6 +212,7 @@ describe('buildGraphModel', () => {
         linked: false,
       },
       showTasks: false,
+      showCompletedTasks: false,
     };
 
     const model = buildGraphModel(records, filters);

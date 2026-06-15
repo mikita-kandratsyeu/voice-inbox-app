@@ -106,6 +106,7 @@ export const NotesGraphScreenBody = () => {
     folderId: route.params?.folderId ?? null,
     tags: route.params?.tag ? [route.params.tag] : [],
     showTasks: true,
+    showCompletedTasks: true,
     showArchived: getGraphShowArchived(),
     edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
     layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,

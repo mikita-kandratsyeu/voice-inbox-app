@@ -283,6 +283,7 @@
         "tags": "Tags",
         "tagsNone": "None",
         "showTasks": "Tasks",
+        "showCompletedTasks": "Completed tasks",
         "showArchived": "Include archive",
         "links": "Connection lines",
         "linksNone": "Hidden",
@@ -335,6 +336,7 @@
     "filters": {
       "allFolders": "All folders",
       "showTasks": "Show tasks",
+      "showCompletedTasks": "Show completed tasks",
       "similar": "Related",
       "tags": "Shared tags",
       "folders": "Same folder",

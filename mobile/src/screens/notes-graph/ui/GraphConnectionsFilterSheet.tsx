@@ -18,10 +18,17 @@ import type { GraphEdgeVisibility } from '../lib/graphTypes';
 
 const CONNECTION_FILTER_ROW_HEIGHT = 52;
 
-type ConnectionFilterKey = 'showTasks' | 'similar' | 'sharedTag' | 'sameFolder' | 'linked';
+type ConnectionFilterKey =
+  | 'showTasks'
+  | 'showCompletedTasks'
+  | 'similar'
+  | 'sharedTag'
+  | 'sameFolder'
+  | 'linked';
 
 type ConnectionFilterDraft = {
   showTasks: boolean;
+  showCompletedTasks: boolean;
   similar: boolean;
   sharedTag: boolean;
   sameFolder: boolean;
@@ -31,10 +38,12 @@ type ConnectionFilterDraft = {
 type GraphConnectionsFilterSheetProps = {
   visible: boolean;
   showTasks: boolean;
+  showCompletedTasks: boolean;
   edgeVisibility: GraphEdgeVisibility;
   onClose: () => void;
   onApply: (value: {
     showTasks: boolean;
+    showCompletedTasks: boolean;
     edgeVisibility: Pick<GraphEdgeVisibility, 'similar' | 'sharedTag' | 'sameFolder' | 'linked'>;
   }) => void;
 };
@@ -42,6 +51,8 @@ type GraphConnectionsFilterSheetProps = {
 function getConnectionFilterAccent(key: ConnectionFilterKey, color: Colors): string {
   switch (key) {
     case 'showTasks':
+      return color.accent.success;
+    case 'showCompletedTasks':
       return color.accent.success;
     case 'similar':
       return color.accent.primary;
@@ -70,6 +81,8 @@ function ConnectionFilterIcon({
   switch (filterKey) {
     case 'showTasks':
       return <ListChecks {...iconProps} />;
+    case 'showCompletedTasks':
+      return <Check {...iconProps} />;
     case 'similar':
       return <Waypoints {...iconProps} />;
     case 'sharedTag':
@@ -156,9 +169,14 @@ function ConnectionFilterRow({
   );
 }
 
-function toDraft(showTasks: boolean, edgeVisibility: GraphEdgeVisibility): ConnectionFilterDraft {
+function toDraft(
+  showTasks: boolean,
+  showCompletedTasks: boolean,
+  edgeVisibility: GraphEdgeVisibility,
+): ConnectionFilterDraft {
   return {
     showTasks,
+    showCompletedTasks,
     similar: edgeVisibility.similar,
     sharedTag: edgeVisibility.sharedTag,
     sameFolder: edgeVisibility.sameFolder,
@@ -169,6 +187,7 @@ function toDraft(showTasks: boolean, edgeVisibility: GraphEdgeVisibility): Conne
 export function GraphConnectionsFilterSheet({
   visible,
   showTasks,
+  showCompletedTasks,
   edgeVisibility,
   onClose,
   onApply,
@@ -176,18 +195,19 @@ export function GraphConnectionsFilterSheet({
   const { t } = useTranslation();
   const color = useColors();
   const [draft, setDraft] = useState<ConnectionFilterDraft>(() =>
-    toDraft(showTasks, edgeVisibility),
+    toDraft(showTasks, showCompletedTasks, edgeVisibility),
   );
 
   useEffect(() => {
     if (!visible) return;
-    setDraft(toDraft(showTasks, edgeVisibility));
-  }, [edgeVisibility, showTasks, visible]);
+    setDraft(toDraft(showTasks, showCompletedTasks, edgeVisibility));
+  }, [edgeVisibility, showCompletedTasks, showTasks, visible]);
 
   const options = useMemo(
     () =>
       [
         { key: 'showTasks' as const, label: t('notesGraph.filters.showTasks') },
+        { key: 'showCompletedTasks' as const, label: t('notesGraph.filters.showCompletedTasks') },
         { key: 'similar' as const, label: t('notesGraph.filters.similar') },
         { key: 'sharedTag' as const, label: t('notesGraph.filters.tags') },
         { key: 'sameFolder' as const, label: t('notesGraph.filters.folders') },
@@ -207,6 +227,7 @@ export function GraphConnectionsFilterSheet({
   const handleApply = useCallback(() => {
     onApply({
       showTasks: draft.showTasks,
+      showCompletedTasks: draft.showCompletedTasks,
       edgeVisibility: {
         similar: draft.similar,
         sharedTag: draft.sharedTag,
@@ -220,6 +241,7 @@ export function GraphConnectionsFilterSheet({
   const handleClear = useCallback(() => {
     setDraft({
       showTasks: false,
+      showCompletedTasks: false,
       similar: false,
       sharedTag: false,
       sameFolder: false,
@@ -230,6 +252,7 @@ export function GraphConnectionsFilterSheet({
   const draftActiveCount = useMemo(
     () =>
       Number(draft.showTasks) +
+      Number(draft.showCompletedTasks) +
       Number(draft.similar) +
       Number(draft.sharedTag) +
       Number(draft.sameFolder) +

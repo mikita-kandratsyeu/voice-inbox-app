@@ -292,6 +292,7 @@
         "tags": "Теги",
         "tagsNone": "Нет",
         "showTasks": "Задачи",
+        "showCompletedTasks": "Выполненные задачи",
         "showArchived": "Показывать архив",
         "links": "Линии связей",
         "linksNone": "Скрыты",
@@ -350,6 +351,7 @@
     "filters": {
       "allFolders": "Все папки",
       "showTasks": "Показать задачи",
+      "showCompletedTasks": "Показать выполненные задачи",
       "similar": "Похожие",
       "tags": "Общие теги",
       "folders": "В одной папке",

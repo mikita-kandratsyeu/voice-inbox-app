@@ -28,6 +28,7 @@ export function buildNotesGraphPersistKey(
     filters.folderId ?? '',
     tagKey,
     filters.showTasks ? 1 : 0,
+    filters.showCompletedTasks ? 1 : 0,
     filters.showArchived ? 1 : 0,
     edgeKey,
     filters.layoutMode,

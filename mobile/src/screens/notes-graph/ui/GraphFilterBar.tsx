@@ -25,11 +25,12 @@ import { GraphConnectionsFilterSheet } from './GraphConnectionsFilterSheet';
 import { GraphLayoutModeSheet } from './GraphLayoutModeSheet';
 import { TagPickerSheet } from './TagPickerSheet';
 
-const CONNECTION_FILTER_COUNT = 5;
+const CONNECTION_FILTER_COUNT = 6;
 
 function countActiveConnectionFilters(filters: GraphFilters): number {
   return (
     Number(filters.showTasks) +
+    Number(filters.showCompletedTasks) +
     Number(filters.edgeVisibility.similar) +
     Number(filters.edgeVisibility.sharedTag) +
     Number(filters.edgeVisibility.sameFolder) +
@@ -290,11 +291,13 @@ export function GraphFilterBar({
       <GraphConnectionsFilterSheet
         visible={connectionsPickerVisible}
         showTasks={filters.showTasks}
+        showCompletedTasks={filters.showCompletedTasks}
         edgeVisibility={filters.edgeVisibility}
         onClose={() => setConnectionsPickerVisible(false)}
-        onApply={({ showTasks, edgeVisibility }) =>
+        onApply={({ showTasks, showCompletedTasks, edgeVisibility }) =>
           onFiltersChange({
             showTasks,
+            showCompletedTasks,
             edgeVisibility: {
               ...filters.edgeVisibility,
               ...edgeVisibility,

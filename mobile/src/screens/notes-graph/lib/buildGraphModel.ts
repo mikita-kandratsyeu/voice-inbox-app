@@ -51,7 +51,11 @@ export function countGraphNodes(allRecords: VoiceRecord[], filters: GraphFilters
 
   if (filters.showTasks) {
     for (const record of filtered) {
-      count += record.tasks?.length ?? 0;
+      if (filters.showCompletedTasks) {
+        count += record.tasks?.length ?? 0;
+      } else {
+        count += record.tasks?.filter((task) => !task.isDone).length ?? 0;
+      }
     }
   }
 
@@ -216,6 +220,10 @@ export function buildGraphModel(allRecords: VoiceRecord[], filters: GraphFilters
 
     if (filters.showTasks) {
       for (const task of record.tasks ?? []) {
+        if (!filters.showCompletedTasks && task.isDone) {
+          continue;
+        }
+
         const nodeId = taskNodeId(record.id, task.id);
         nodes.push({
           id: nodeId,

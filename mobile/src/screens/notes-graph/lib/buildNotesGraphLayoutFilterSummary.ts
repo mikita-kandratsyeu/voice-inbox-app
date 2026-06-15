@@ -81,6 +81,12 @@ export function buildNotesGraphLayoutFilterSummary({
   });
 
   rows.push({
+    id: 'showCompletedTasks',
+    label: t('notesGraph.history.filters.showCompletedTasks'),
+    value: filters.showCompletedTasks ? t('settings.on') : t('settings.off'),
+  });
+
+  rows.push({
     id: 'showArchived',
     label: t('notesGraph.history.filters.showArchived'),
     value: filters.showArchived ? t('settings.on') : t('settings.off'),
