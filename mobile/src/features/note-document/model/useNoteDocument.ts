@@ -4,7 +4,6 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { stripLinkedNotesSectionFromSourceEditor } from '@/features/note-links/lib/appendLinkedNotesSectionForReading';
 import type { WikiLinkResolvableRecord } from '@/features/note-links/lib/resolveWikiLinkTarget';
 import { resolveShareExportContext } from '@/features/share-record/lib/shareExportContext';
 import runAfterInteractions from '@/shared/lib/runAfterInteractions';
@@ -15,6 +14,7 @@ import {
   getCachedNoteDocumentMarkdown,
   setCachedNoteDocumentMarkdown,
 } from '../lib/noteDocumentMarkdownCache';
+import { finalizeNoteDocumentFromSourceEditor } from '../lib/noteDocumentSourceEditorMarkdown';
 import { parseNoteDocumentAsync } from '../lib/parseNoteDocumentAsync';
 import { parseTasksFromNoteDocumentMarkdown } from '../lib/parseNoteDocumentMarkdown';
 import { patchTaskDoneInNoteDocumentMarkdown } from '../lib/patchTaskDoneInNoteDocumentMarkdown';
@@ -230,7 +230,7 @@ export function useNoteDocument({
 
         await Promise.all(updates);
         const persistedMarkdown = options?.syncLinkedNotes
-          ? stripLinkedNotesSectionFromSourceEditor(markdown)
+          ? finalizeNoteDocumentFromSourceEditor(markdown, liveRecord)
           : markdown;
         setDocumentMarkdown(persistedMarkdown);
         setSavedMarkdown(persistedMarkdown);

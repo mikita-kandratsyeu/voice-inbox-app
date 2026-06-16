@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ChevronRight, Inbox, Link2 } from 'lucide-react-native';
+import { ChevronRight, Inbox } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
@@ -189,7 +189,6 @@ function RelatedNoteRow({
                   paddingVertical: 6,
                 }}
               >
-                <Link2 size={12} color={color.accent.primary} strokeWidth={2.2} />
                 <Text
                   style={{
                     color: color.accent.primary,

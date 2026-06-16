@@ -6,6 +6,7 @@ import {
 import { formatShortDate, formatTime, i18n } from '@/shared/lib';
 import { formatTaskDeadlineTimeForDisplay } from '@/shared/lib/taskDeadlineTimeDisplay';
 
+import { buildDocumentMetadataMarkdownLines } from './documentMetadataMarkdown';
 import {
   formatMeetingDialogueForShareMarkdown,
   formatPlainTranscriptWithTimestamps,
@@ -106,35 +107,8 @@ function formatPlainTranscriptForShare(text: string, forDocument = false): strin
   return blocks.map((b) => wrapParagraphToWidth(b, SHARE_WRAP_WIDTH)).join('\n\n');
 }
 
-function folderNameFor(record: VoiceRecord, ctx: ShareExportContext): string | null {
-  const id = record.folderId;
-  if (!id) return null;
-  return ctx.folderNameById?.[id] ?? null;
-}
-
 function pushMeta(lines: string[], record: VoiceRecord, ctx: ShareExportContext): void {
-  const locale = i18n.language ?? 'en';
-  const dateLabel = i18n.t('share.dateLabel');
-  const durationLabel = i18n.t('share.durationLabel');
-  const dateValue = record.createdAt ? formatShortDate(record.createdAt, locale) : record.createdAt;
-
-  lines.push(`**${dateLabel}:** ${dateValue}`);
-  lines.push(`**${durationLabel}:** ${record.duration}`);
-
-  const folder = folderNameFor(record, ctx);
-  if (folder) {
-    lines.push(`**${i18n.t('share.folderLabel')}:** ${folder}`);
-  }
-
-  if (record.classification) {
-    lines.push(
-      `**${i18n.t('share.classificationLabel')}:** ${i18n.t(`classification.${record.classification}`)}`,
-    );
-  }
-
-  if (!ctx.forDocument) {
-    lines.push(`**${i18n.t('share.recordIdLabel')}:** \`${record.id}\``);
-  }
+  lines.push(...buildDocumentMetadataMarkdownLines(record, ctx));
 }
 
 function pushDocumentSectionMarker(
@@ -156,7 +130,8 @@ function pushEmailMeta(lines: string[], record: VoiceRecord, ctx: ShareExportCon
   lines.push(`**${i18n.t('share.dateLabel')}:** ${dateValue}`);
   lines.push(`**${i18n.t('share.durationLabel')}:** ${record.duration}`);
 
-  const folder = folderNameFor(record, ctx);
+  const folderId = record.folderId;
+  const folder = folderId ? (ctx.folderNameById?.[folderId] ?? null) : null;
   if (folder) {
     lines.push(`**${i18n.t('share.folderLabel')}:** ${folder}`);
   }

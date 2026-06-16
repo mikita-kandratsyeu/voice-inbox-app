@@ -13,20 +13,19 @@ import { useShallow } from 'zustand/react/shallow';
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
 import {
+  finalizeNoteDocumentFromSourceEditor,
   NOTE_DOCUMENT_CONTENT_MAX_WIDTH,
   NOTE_DOCUMENT_TABLET_HORIZONTAL_PADDING,
   NoteDocumentPreparingState,
   NoteDocumentReadingBody,
   NoteDocumentSavingOverlay,
   NoteDocumentSourceEditor,
+  prepareNoteDocumentForSourceEditor,
   shouldWarnNoteDocumentEditorSize,
   useNoteDocument,
 } from '@/features/note-document';
 import type { WikiLinkResolvableRecord } from '@/features/note-links';
-import {
-  appendLinkedNotesSectionForSourceEditor,
-  stripLinkedNotesSectionFromSourceEditor,
-} from '@/features/note-links';
+import { appendLinkedNotesSectionForSourceEditor } from '@/features/note-links';
 import { TaskOutcomeSheet, useTaskCompletionFlow } from '@/features/task-outcome';
 import { useColors } from '@/shared/config';
 import { hapticSuccess, useIsTablet } from '@/shared/lib';
@@ -98,7 +97,7 @@ export const NoteDocumentScreen = () => {
   const sourceEditorMarkdown = useMemo(
     () =>
       appendLinkedNotesSectionForSourceEditor(
-        documentMarkdown,
+        prepareNoteDocumentForSourceEditor(documentMarkdown),
         linkedRecordIds,
         wikiLinkRecords,
         t('noteLinks.linked'),
@@ -224,8 +223,10 @@ export const NoteDocumentScreen = () => {
 
   const flushEditorMarkdown = useCallback(async () => {
     const markdown = await getSourceEditorMarkdown();
-    return mode === 'source' ? stripLinkedNotesSectionFromSourceEditor(markdown) : markdown;
-  }, [getSourceEditorMarkdown, mode]);
+    return mode === 'source'
+      ? finalizeNoteDocumentFromSourceEditor(markdown, liveRecord)
+      : markdown;
+  }, [getSourceEditorMarkdown, liveRecord, mode]);
 
   const saveFromEditor = useCallback(async () => {
     const markdown = await getSourceEditorMarkdown();

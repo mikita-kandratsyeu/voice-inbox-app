@@ -16,6 +16,10 @@ export {
   listNoteDocumentSectionIds,
   stripNoteDocumentMarkers,
 } from './lib/noteDocumentSectionMarkers';
+export {
+  finalizeNoteDocumentFromSourceEditor,
+  prepareNoteDocumentForSourceEditor,
+} from './lib/noteDocumentSourceEditorMarkdown';
 export { parseNoteDocumentAsync, shouldUseAsyncParsing } from './lib/parseNoteDocumentAsync';
 export {
   type NoteDocumentPatch,
