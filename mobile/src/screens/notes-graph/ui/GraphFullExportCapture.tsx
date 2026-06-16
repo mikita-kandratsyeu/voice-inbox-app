@@ -1,6 +1,5 @@
 import React, { forwardRef, useMemo } from 'react';
 import { View } from 'react-native';
-import { useSharedValue } from 'react-native-reanimated';
 import ViewShot, { type ViewShotRef } from 'react-native-view-shot';
 
 import type { Folder } from '@/entities/folder';
@@ -13,7 +12,7 @@ import {
 } from '../lib/computeGraphExportLayout';
 import type { GraphEdge, GraphNode, GraphNodeDisplayMode } from '../lib/graphTypes';
 import { GraphEdgeLayerSvg } from './GraphEdgeLayerSvg';
-import { GraphNodeLayer } from './GraphNodeLayer';
+import { GraphExportNodeLayer } from './GraphExportNodeLayer';
 
 type GraphFullExportCaptureProps = {
   nodes: GraphNode[];
@@ -46,13 +45,10 @@ export const GraphFullExportCapture = forwardRef<ViewShotRef, GraphFullExportCap
       () => computeGraphExportLayout(nodes, graphWidth, graphHeight, viewShotMaxDimension),
       [graphHeight, graphWidth, nodes, viewShotMaxDimension],
     );
-    const canvasScale = useSharedValue(1);
 
     if (!layout) {
       return null;
     }
-
-    const noop = () => {};
 
     return (
       <View
@@ -99,23 +95,12 @@ export const GraphFullExportCapture = forwardRef<ViewShotRef, GraphFullExportCap
               activeNodeId={null}
               nodeDisplayMode={nodeDisplayMode}
             />
-            <GraphNodeLayer
+            <GraphExportNodeLayer
               nodes={nodes}
-              edges={edges}
               color={color}
               foldersById={foldersById}
               isProActive={isProActive}
-              matchedNodeIds={null}
-              activeNodeId={null}
-              canvasScale={canvasScale}
-              interactionsEnabled={false}
               nodeDisplayMode={nodeDisplayMode}
-              onRecordPress={noop}
-              onTaskPress={noop}
-              onNodeDragStart={noop}
-              onNodeDragEnd={noop}
-              onNodeDragCancel={noop}
-              onNodeFocus={noop}
             />
           </View>
         </ViewShot>
