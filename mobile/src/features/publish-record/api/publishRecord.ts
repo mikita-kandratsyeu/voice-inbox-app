@@ -78,7 +78,11 @@ export async function publishRecord(input: PublishRecordInput): Promise<PublishR
     const text = await response.text();
     const json = readJson(text);
     if (!response.ok) {
-      return { ok: false, error: (json as { error?: string }).error ?? 'Publish failed', status: response.status };
+      return {
+        ok: false,
+        error: (json as { error?: string }).error ?? 'Publish failed',
+        status: response.status,
+      };
     }
     const template = normalizeTemplate(json.template);
     if (
@@ -123,7 +127,11 @@ export async function fetchPublishedRecordStatus(
     const text = await response.text();
     const json = readJson(text);
     if (!response.ok) {
-      return { ok: false, error: (json as { error?: string }).error ?? 'Status check failed', status: response.status };
+      return {
+        ok: false,
+        error: (json as { error?: string }).error ?? 'Status check failed',
+        status: response.status,
+      };
     }
     const template = normalizeTemplate(json.template);
     if (
@@ -167,7 +175,11 @@ export async function unpublishRecord(
     const text = await response.text();
     if (!response.ok) {
       const json = readJson(text);
-      return { ok: false, error: (json as { error?: string }).error ?? 'Unpublish failed', status: response.status };
+      return {
+        ok: false,
+        error: (json as { error?: string }).error ?? 'Unpublish failed',
+        status: response.status,
+      };
     }
     return { ok: true };
   } catch (e) {

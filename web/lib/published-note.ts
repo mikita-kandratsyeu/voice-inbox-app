@@ -26,7 +26,10 @@ export function computePublishedNoteHash(markdown: string): string {
   return createHash('sha256').update(markdown).digest('hex');
 }
 
-export function isPublishedNoteActive(params: { expiresAt?: Date | null; revokedAt?: Date | null }): boolean {
+export function isPublishedNoteActive(params: {
+  expiresAt?: Date | null;
+  revokedAt?: Date | null;
+}): boolean {
   if (params.revokedAt) return false;
   if (params.expiresAt && params.expiresAt.getTime() <= Date.now()) return false;
   return true;

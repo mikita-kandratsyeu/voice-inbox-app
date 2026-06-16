@@ -15,7 +15,6 @@ import {
   AiOrganizeTemplateSheet,
   AutoOrganizeProgressOverlay,
 } from '@/features/manage-folders';
-import { InboxShareRecordSheet } from './InboxShareRecordSheet';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { BlockingProgressModal } from '@/shared/ui';
 
@@ -24,6 +23,7 @@ import { InboxHeader } from './InboxHeader';
 import { InboxScreenEmptyLibrary } from './InboxScreenEmptyLibrary';
 import { InboxScreenHeaderRight } from './InboxScreenHeaderRight';
 import { InboxScreenLoadedBody } from './InboxScreenLoadedBody';
+import { InboxShareRecordSheet } from './InboxShareRecordSheet';
 import { InboxSkeleton } from './InboxSkeleton';
 
 export const InboxScreen = () => {

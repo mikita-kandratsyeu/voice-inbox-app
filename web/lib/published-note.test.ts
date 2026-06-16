@@ -26,8 +26,12 @@ describe('published-note helpers', () => {
 
   test('marks active state correctly', () => {
     expect(isPublishedNoteActive({ revokedAt: new Date(), expiresAt: null })).toBe(false);
-    expect(isPublishedNoteActive({ expiresAt: new Date(Date.now() - 1000), revokedAt: null })).toBe(false);
-    expect(isPublishedNoteActive({ expiresAt: new Date(Date.now() + 1000), revokedAt: null })).toBe(true);
+    expect(isPublishedNoteActive({ expiresAt: new Date(Date.now() - 1000), revokedAt: null })).toBe(
+      false,
+    );
+    expect(isPublishedNoteActive({ expiresAt: new Date(Date.now() + 1000), revokedAt: null })).toBe(
+      true,
+    );
   });
 
   test('hash is deterministic', () => {

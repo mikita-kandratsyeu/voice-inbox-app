@@ -45,9 +45,7 @@ const shareNoteMarkdownComponents: Components = {
   strong: ({ children }) => (
     <strong className="font-semibold text-black dark:text-white">{children}</strong>
   ),
-  em: ({ children }) => (
-    <em className="text-black/65 italic dark:text-white/65">{children}</em>
-  ),
+  em: ({ children }) => <em className="text-black/65 italic dark:text-white/65">{children}</em>,
   a: ({ href, children }) => (
     <a
       href={href}
@@ -98,9 +96,7 @@ const shareNoteMarkdownComponents: Components = {
   code: ({ className, children }) => {
     const isBlock = Boolean(className?.includes('language-'));
     if (isBlock) {
-      return (
-        <code className="font-mono text-sm text-black/85 dark:text-white/85">{children}</code>
-      );
+      return <code className="font-mono text-sm text-black/85 dark:text-white/85">{children}</code>;
     }
     return (
       <code className="rounded-md border border-black/10 bg-black/4 px-1.5 py-0.5 font-mono text-[0.9em] text-black/85 dark:border-white/12 dark:bg-white/8 dark:text-white/85">
@@ -120,11 +116,11 @@ const shareNoteMarkdownComponents: Components = {
       </table>
     </div>
   ),
-  thead: ({ children }) => (
-    <thead className="bg-black/3 dark:bg-white/6">{children}</thead>
-  ),
+  thead: ({ children }) => <thead className="bg-black/3 dark:bg-white/6">{children}</thead>,
   tbody: ({ children }) => <tbody>{children}</tbody>,
-  tr: ({ children }) => <tr className="border-b border-black/8 dark:border-white/10">{children}</tr>,
+  tr: ({ children }) => (
+    <tr className="border-b border-black/8 dark:border-white/10">{children}</tr>
+  ),
   th: ({ children }) => (
     <th className="border border-black/10 px-3 py-2 text-left font-semibold text-black dark:border-white/12 dark:text-white">
       {children}
