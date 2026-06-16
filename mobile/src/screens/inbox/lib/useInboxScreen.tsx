@@ -410,13 +410,6 @@ export function useInboxScreen() {
     [isProActive, navigation],
   );
 
-  const handleLinkNoteForRecord = useCallback(
-    (record: VoiceRecord) => {
-      navigation.navigate('RecordingDetail', { record, openLinkPicker: true });
-    },
-    [navigation],
-  );
-
   const handleCloseNotesGraphProSheet = useCallback(() => {
     setNotesGraphProSheetVisible(false);
   }, []);
@@ -930,7 +923,6 @@ export function useInboxScreen() {
         onRecordDelete={handleRecordDelete}
         onOpenAllTasksForNote={handleOpenAllTasksForNote}
         onOpenNotesGraphForRecord={handleOpenNotesGraphForRecord}
-        onLinkNoteForRecord={handleLinkNoteForRecord}
       />
     ),
     [
@@ -956,7 +948,6 @@ export function useInboxScreen() {
       handleRecordDelete,
       handleOpenAllTasksForNote,
       handleOpenNotesGraphForRecord,
-      handleLinkNoteForRecord,
       batchSelect,
     ],
   );

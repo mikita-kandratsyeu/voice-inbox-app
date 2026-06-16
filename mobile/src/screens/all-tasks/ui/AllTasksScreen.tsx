@@ -833,7 +833,7 @@ export const AllTasksScreen = () => {
             }}
           >
             <View
-              className="min-w-0 flex-1 flex-row items-center rounded-xl px-3 py-2"
+              className="min-w-0 flex-1 flex-row items-center rounded-xl px-3 py-4"
               style={{ backgroundColor: color.background.tertiary }}
             >
               <Text
