@@ -5,7 +5,6 @@ import { getTranslations } from 'next-intl/server';
 
 import { SharedNoteArticle } from '@/components/share/SharedNoteArticle';
 import { BASE_URL_OR_FALLBACK } from '@/config/constants';
-import { routing } from '@/lib/i18n';
 import {
   buildSharedNotePublicPath,
   formatSharedNoteDateTime,
@@ -16,9 +15,8 @@ type Props = {
   params: Promise<{ locale: string; token: string }>;
 };
 
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
+/** Tokens are created at runtime; each request loads the note from Postgres. */
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, token } = await params;
