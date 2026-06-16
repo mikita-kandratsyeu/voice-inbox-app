@@ -21,9 +21,10 @@ export function buildWikiLinkIndex(records: readonly WikiLinkResolvableRecord[])
   const byNormalizedTitle = new Map<string, WikiLinkResolvableRecord[]>();
 
   for (const record of records) {
-    if (record.status === 'archived') continue;
-
+    // Explicit [[rec_…|label]] links must stay clickable even for archived targets.
     byId.set(record.id, record);
+
+    if (record.status === 'archived') continue;
 
     const key = normalizeTitle(record.title ?? '');
     if (!key) continue;

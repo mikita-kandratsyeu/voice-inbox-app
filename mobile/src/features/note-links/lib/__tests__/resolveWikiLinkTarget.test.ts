@@ -28,9 +28,9 @@ describe('resolveWikiLinkTarget', () => {
     expect(resolveWikiLinkTarget('Meeting Notes', index)).toBe('rec_1_aaa');
   });
 
-  it('returns null for archived records', () => {
+  it('resolves archived records by explicit id only', () => {
     const index = buildWikiLinkIndex([baseRecord({ status: 'archived' })]);
-    expect(resolveWikiLinkTarget('rec_1_aaa', index)).toBeNull();
+    expect(resolveWikiLinkTarget('rec_1_aaa', index)).toBe('rec_1_aaa');
     expect(resolveWikiLinkTarget('Meeting Notes', index)).toBeNull();
   });
 

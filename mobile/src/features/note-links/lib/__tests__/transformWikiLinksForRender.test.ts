@@ -30,4 +30,20 @@ describe('transformWikiLinksForRender', () => {
     const input = 'Unknown [[Missing Note]] stays.';
     expect(transformWikiLinksForRender(input, records)).toBe(input);
   });
+
+  it('transforms explicit id links for archived records', () => {
+    const archivedRecords = [
+      {
+        id: 'rec_1774517044783_7a9eu',
+        title: 'Archived target',
+        status: 'archived',
+        createdAt: '2026-01-01T10:00:00.000Z',
+      },
+    ];
+    const input = '- [[rec_1774517044783_7a9eu|Обмен тикетами]]';
+
+    expect(transformWikiLinksForRender(input, archivedRecords)).toBe(
+      `- [Обмен тикетами](${buildNoteInternalLinkUrl('rec_1774517044783_7a9eu')})`,
+    );
+  });
 });

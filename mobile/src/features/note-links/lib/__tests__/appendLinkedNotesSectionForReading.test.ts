@@ -31,7 +31,7 @@ describe('appendLinkedNotesSectionForReading', () => {
 
     expect(result).toContain('## Linked notes');
     expect(result).toContain('- [[rec_1_aaa|Alpha Note]]');
-    expect(result).not.toContain('rec_2_bbb');
+    expect(result).toContain('- [[rec_2_bbb|Beta Note]]');
     expect(result).not.toContain('missing');
   });
 

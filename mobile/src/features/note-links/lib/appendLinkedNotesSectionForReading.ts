@@ -18,7 +18,7 @@ export function buildLinkedNotesReadingMarkdown(
 
   for (const id of linkedRecordIds) {
     const record = byId.get(id);
-    if (!record || record.status === 'archived') continue;
+    if (!record) continue;
 
     const title = record.title?.trim() || id;
     lines.push(`- [[${id}|${title}]]`);

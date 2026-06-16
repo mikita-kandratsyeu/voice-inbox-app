@@ -1,7 +1,4 @@
-import {
-  ChevronDown,
-  type LucideIcon,
-} from 'lucide-react-native';
+import { ChevronDown, type LucideIcon } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
@@ -49,7 +46,7 @@ export const NoteDocumentCollapsibleSection = React.memo(function NoteDocumentCo
   const isReading = variant === 'reading';
   const isDark = isDarkSurfaceColor(color);
   const iconChipBackground = withAlphaHex(color.text.secondary, isDark ? 0.16 : 0.09);
-  const iconColor = isReading ? color.text.secondary : color.accent.primary;
+  const iconColor = color.accent.primary;
   const iconChipAccentBackground = withAlphaHex(color.accent.primary, isDark ? 0.14 : 0.1);
 
   useEffect(() => {
