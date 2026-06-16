@@ -10,6 +10,7 @@ import {
   GRAPH_VIEWPORT_MAX_SCALE,
   GRAPH_VIEWPORT_MIN_SCALE,
   GRAPH_WORLD_CONTENT_PADDING,
+  resolveGraphPanOverscroll,
 } from '../graphViewportBounds';
 
 function recordNode(id: string, x: number, y: number): GraphNode {
@@ -52,6 +53,24 @@ describe('computeWorldDimensionsForNodes', () => {
       2100 + RECORD_NODE_WIDTH + GRAPH_WORLD_CONTENT_PADDING,
     );
     expect(world.width).toBeGreaterThan(1800);
+    expect(world.contentBounds).not.toBeNull();
+  });
+
+  it('includes negative node coordinates in content bounds', () => {
+    const nodes = [recordNode('left', -240, 80), recordNode('right', 1600, 80)];
+    const world = computeWorldDimensionsForNodes(nodes, 1800, 900, 390, 700, 0.3);
+
+    expect(world.contentBounds?.minX).toBeLessThan(0);
+    expect(world.width).toBeGreaterThan(1800);
+  });
+});
+
+describe('resolveGraphPanOverscroll', () => {
+  it('scales overscroll with viewport size', () => {
+    expect(resolveGraphPanOverscroll(400, 800)).toBeGreaterThanOrEqual(GRAPH_PAN_OVERSCROLL);
+    expect(resolveGraphPanOverscroll(1200, 900)).toBeGreaterThan(
+      resolveGraphPanOverscroll(400, 800),
+    );
   });
 });
 
@@ -69,6 +88,7 @@ describe('computeExportWorldDimensionsForNodes', () => {
 describe('clampViewportTranslation', () => {
   const world = { width: 1200, height: 900 };
   const viewport = { width: 400, height: 600 };
+  const overscroll = 160;
 
   it('centers world when it is smaller than the viewport', () => {
     const result = clampViewportTranslation(
@@ -79,26 +99,26 @@ describe('clampViewportTranslation', () => {
       world.height,
       viewport.width,
       viewport.height,
-      GRAPH_PAN_OVERSCROLL,
+      overscroll,
     );
     expect(result.translateX).toBe((viewport.width - world.width * 0.25) / 2);
     expect(result.translateY).toBe((viewport.height - world.height * 0.25) / 2);
   });
 
-  it('limits panning beyond canvas edges with small overscroll', () => {
+  it('limits panning beyond canvas edges with overscroll', () => {
     const scale = 1;
-    const minX = viewport.width - world.width * scale - GRAPH_PAN_OVERSCROLL;
-    const minY = viewport.height - world.height * scale - GRAPH_PAN_OVERSCROLL;
+    const minX = viewport.width - world.width * scale - overscroll;
+    const minY = viewport.height - world.height * scale - overscroll;
 
     const tooFarLeft = clampViewportTranslation(
-      -900,
+      -1200,
       0,
       scale,
       world.width,
       world.height,
       viewport.width,
       viewport.height,
-      GRAPH_PAN_OVERSCROLL,
+      overscroll,
     );
     expect(tooFarLeft.translateX).toBe(minX);
 
@@ -110,7 +130,7 @@ describe('clampViewportTranslation', () => {
       world.height,
       viewport.width,
       viewport.height,
-      GRAPH_PAN_OVERSCROLL,
+      overscroll,
     );
     expect(tooFarTop.translateY).toBe(minY);
 
@@ -122,9 +142,9 @@ describe('clampViewportTranslation', () => {
       world.height,
       viewport.width,
       viewport.height,
-      GRAPH_PAN_OVERSCROLL,
+      overscroll,
     );
-    expect(tooFarRight.translateX).toBe(GRAPH_PAN_OVERSCROLL);
+    expect(tooFarRight.translateX).toBe(overscroll);
 
     const tooFarBottom = clampViewportTranslation(
       0,
@@ -134,8 +154,33 @@ describe('clampViewportTranslation', () => {
       world.height,
       viewport.width,
       viewport.height,
-      GRAPH_PAN_OVERSCROLL,
+      overscroll,
     );
-    expect(tooFarBottom.translateY).toBe(GRAPH_PAN_OVERSCROLL);
+    expect(tooFarBottom.translateY).toBe(overscroll);
+  });
+
+  it('allows panning to nodes placed left of the origin', () => {
+    const scale = 1;
+    const contentMinX = -300;
+    const contentMaxX = 1500;
+
+    const revealLeft = clampViewportTranslation(
+      500,
+      0,
+      scale,
+      world.width,
+      world.height,
+      viewport.width,
+      viewport.height,
+      overscroll,
+      contentMinX,
+      0,
+      contentMaxX,
+      world.height,
+    );
+
+    const maxTranslateX = -(contentMinX - overscroll / scale) * scale;
+    expect(revealLeft.translateX).toBe(maxTranslateX);
+    expect(-revealLeft.translateX / scale).toBeLessThanOrEqual(contentMinX + overscroll / scale);
   });
 });

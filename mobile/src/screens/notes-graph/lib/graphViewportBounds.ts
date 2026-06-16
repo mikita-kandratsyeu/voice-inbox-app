@@ -1,10 +1,25 @@
 import { nodeBounds } from './graphNodeMetrics';
 import type { GraphNode } from './graphTypes';
 
-export const GRAPH_PAN_OVERSCROLL = 40;
+export const GRAPH_PAN_OVERSCROLL = 160;
+export const GRAPH_PAN_OVERSCROLL_VIEWPORT_RATIO = 0.22;
 export const GRAPH_VIEWPORT_MIN_SCALE = 0.225;
 export const GRAPH_VIEWPORT_MAX_SCALE = 3;
 export const GRAPH_WORLD_CONTENT_PADDING = 120;
+
+export function resolveGraphPanOverscroll(viewportWidth: number, viewportHeight: number): number {
+  const viewportMin = Math.min(Math.max(viewportWidth, 1), Math.max(viewportHeight, 1));
+  return Math.max(
+    GRAPH_PAN_OVERSCROLL,
+    Math.round(viewportMin * GRAPH_PAN_OVERSCROLL_VIEWPORT_RATIO),
+  );
+}
+
+export type GraphWorldDimensions = {
+  width: number;
+  height: number;
+  contentBounds: GraphContentBounds | null;
+};
 
 export type GraphContentBounds = {
   minX: number;
@@ -58,30 +73,38 @@ export function computeWorldDimensionsForNodes(
   viewportHeight: number,
   minScale: number,
   contentPadding = GRAPH_WORLD_CONTENT_PADDING,
-): { width: number; height: number } {
+): GraphWorldDimensions {
   const bounds = measureGraphContentBounds(nodes);
-  let contentWidth = graphWidth;
-  let contentHeight = graphHeight;
+  let layoutWidth = graphWidth;
+  let layoutHeight = graphHeight;
 
   if (bounds) {
-    contentWidth = Math.max(bounds.maxX + contentPadding, graphWidth);
-    contentHeight = Math.max(bounds.maxY + contentPadding, graphHeight);
-
-    if (bounds.minX < 0) {
-      contentWidth = Math.max(contentWidth, bounds.maxX - bounds.minX + contentPadding);
-    }
-    if (bounds.minY < 0) {
-      contentHeight = Math.max(contentHeight, bounds.maxY - bounds.minY + contentPadding);
-    }
+    const spanWidth = bounds.maxX - bounds.minX;
+    const spanHeight = bounds.maxY - bounds.minY;
+    layoutWidth = Math.max(
+      layoutWidth,
+      spanWidth + contentPadding * 2,
+      bounds.maxX + contentPadding,
+    );
+    layoutHeight = Math.max(
+      layoutHeight,
+      spanHeight + contentPadding * 2,
+      bounds.maxY + contentPadding,
+    );
   }
 
-  return computeWorldDimensions(
-    contentWidth,
-    contentHeight,
+  const dimensions = computeWorldDimensions(
+    layoutWidth,
+    layoutHeight,
     viewportWidth,
     viewportHeight,
     minScale,
   );
+
+  return {
+    ...dimensions,
+    contentBounds: bounds,
+  };
 }
 
 /** Tight world bounds for off-screen export capture (no pan/zoom min-world floor). */
@@ -138,29 +161,38 @@ export function clampViewportTranslation(
   viewportWidth: number,
   viewportHeight: number,
   overscroll: number,
+  contentMinX = 0,
+  contentMinY = 0,
+  contentMaxX = worldWidth,
+  contentMaxY = worldHeight,
 ): { translateX: number; translateY: number } {
   'worklet';
-  const edgeOverscroll = overscroll > 0 ? overscroll : 40;
-  const scaledWorldWidth = worldWidth * scale;
-  const scaledWorldHeight = worldHeight * scale;
+  const edgeOverscroll = overscroll > 0 ? overscroll : GRAPH_PAN_OVERSCROLL;
+  const safeScale = Math.max(scale, 0.001);
+  const padWorld = edgeOverscroll / safeScale;
+
+  const contentWidth = Math.max(contentMaxX - contentMinX, 1);
+  const contentHeight = Math.max(contentMaxY - contentMinY, 1);
+  const scaledContentWidth = contentWidth * safeScale;
+  const scaledContentHeight = contentHeight * safeScale;
 
   let nextX = translateX;
   let nextY = translateY;
 
-  if (scaledWorldWidth <= viewportWidth) {
-    nextX = (viewportWidth - scaledWorldWidth) / 2;
+  if (scaledContentWidth <= viewportWidth) {
+    nextX = (viewportWidth - scaledContentWidth) / 2 - contentMinX * safeScale;
   } else {
-    const minX = viewportWidth - scaledWorldWidth - edgeOverscroll;
-    const maxX = edgeOverscroll;
-    nextX = Math.min(maxX, Math.max(minX, translateX));
+    const maxTranslateX = -(contentMinX - padWorld) * safeScale;
+    const minTranslateX = viewportWidth - (contentMaxX + padWorld) * safeScale;
+    nextX = Math.min(maxTranslateX, Math.max(minTranslateX, translateX));
   }
 
-  if (scaledWorldHeight <= viewportHeight) {
-    nextY = (viewportHeight - scaledWorldHeight) / 2;
+  if (scaledContentHeight <= viewportHeight) {
+    nextY = (viewportHeight - scaledContentHeight) / 2 - contentMinY * safeScale;
   } else {
-    const minY = viewportHeight - scaledWorldHeight - edgeOverscroll;
-    const maxY = edgeOverscroll;
-    nextY = Math.min(maxY, Math.max(minY, translateY));
+    const maxTranslateY = -(contentMinY - padWorld) * safeScale;
+    const minTranslateY = viewportHeight - (contentMaxY + padWorld) * safeScale;
+    nextY = Math.min(maxTranslateY, Math.max(minTranslateY, translateY));
   }
 
   return { translateX: nextX, translateY: nextY };
@@ -175,8 +207,13 @@ export function clampViewportTransform(
   minScale: number,
   maxScale: number,
   overscroll: number = GRAPH_PAN_OVERSCROLL,
+  contentBounds: GraphContentBounds | null = null,
 ): { scale: number; translateX: number; translateY: number } {
   const scale = Math.min(maxScale, Math.max(minScale, transform.scale));
+  const contentMinX = contentBounds?.minX ?? 0;
+  const contentMinY = contentBounds?.minY ?? 0;
+  const contentMaxX = contentBounds?.maxX ?? worldWidth;
+  const contentMaxY = contentBounds?.maxY ?? worldHeight;
   const { translateX, translateY } = clampViewportTranslation(
     transform.translateX,
     transform.translateY,
@@ -186,6 +223,10 @@ export function clampViewportTransform(
     viewportWidth,
     viewportHeight,
     overscroll,
+    contentMinX,
+    contentMinY,
+    contentMaxX,
+    contentMaxY,
   );
 
   return { scale, translateX, translateY };

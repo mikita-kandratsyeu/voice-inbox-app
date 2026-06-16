@@ -48,9 +48,9 @@ import {
   clampViewportTransform,
   clampViewportTranslation,
   computeWorldDimensionsForNodes,
-  GRAPH_PAN_OVERSCROLL,
   GRAPH_VIEWPORT_MAX_SCALE,
   GRAPH_VIEWPORT_MIN_SCALE,
+  resolveGraphPanOverscroll,
 } from '../lib/graphViewportBounds';
 import type { GraphViewportInsets } from '../lib/graphViewportInsets';
 import { computeFitTransform, computeFocusTransform } from '../lib/runForceLayout';
@@ -250,7 +250,11 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     setViewportTransform({ scale: nextScale, translateX: nextX, translateY: nextY });
   }, []);
 
-  const { width: worldWidth, height: worldHeight } = useMemo(
+  const {
+    width: worldWidth,
+    height: worldHeight,
+    contentBounds,
+  } = useMemo(
     () =>
       computeWorldDimensionsForNodes(
         displayNodes,
@@ -263,11 +267,20 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     [displayNodes, graphHeight, graphWidth, viewportHeight, viewportWidth],
   );
 
+  const panOverscroll = useMemo(
+    () => resolveGraphPanOverscroll(viewportWidth, viewportHeight),
+    [viewportHeight, viewportWidth],
+  );
+
   const worldWidthSV = useSharedValue(worldWidth);
   const worldHeightSV = useSharedValue(worldHeight);
   const viewportWidthSV = useSharedValue(viewportWidth);
   const viewportHeightSV = useSharedValue(viewportHeight);
-  const panOverscrollSV = useSharedValue(GRAPH_PAN_OVERSCROLL);
+  const panOverscrollSV = useSharedValue(panOverscroll);
+  const contentMinXSV = useSharedValue(contentBounds?.minX ?? 0);
+  const contentMinYSV = useSharedValue(contentBounds?.minY ?? 0);
+  const contentMaxXSV = useSharedValue(contentBounds?.maxX ?? worldWidth);
+  const contentMaxYSV = useSharedValue(contentBounds?.maxY ?? worldHeight);
   const minScaleSV = useSharedValue(MIN_SCALE);
   const maxScaleSV = useSharedValue(MAX_SCALE);
   const doubleTapZoomSV = useSharedValue(DOUBLE_TAP_ZOOM_FACTOR);
@@ -278,7 +291,14 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     worldHeightSV.value = worldHeight;
     viewportWidthSV.value = viewportWidth;
     viewportHeightSV.value = viewportHeight;
+    panOverscrollSV.value = panOverscroll;
+    contentMinXSV.value = contentBounds?.minX ?? 0;
+    contentMinYSV.value = contentBounds?.minY ?? 0;
+    contentMaxXSV.value = contentBounds?.maxX ?? worldWidth;
+    contentMaxYSV.value = contentBounds?.maxY ?? worldHeight;
   }, [
+    contentBounds,
+    panOverscroll,
     worldHeight,
     worldWidth,
     viewportHeight,
@@ -287,6 +307,11 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     worldWidthSV,
     viewportHeightSV,
     viewportWidthSV,
+    panOverscrollSV,
+    contentMinXSV,
+    contentMinYSV,
+    contentMaxXSV,
+    contentMaxYSV,
   ]);
 
   const clampTransform = useCallback(
@@ -299,8 +324,10 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         viewportHeight,
         MIN_SCALE,
         MAX_SCALE,
+        panOverscroll,
+        contentBounds,
       ),
-    [viewportHeight, viewportWidth, worldHeight, worldWidth],
+    [contentBounds, panOverscroll, viewportHeight, viewportWidth, worldHeight, worldWidth],
   );
 
   const applyTransform = useCallback(
@@ -560,6 +587,10 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       viewportWidthSV.value,
       viewportHeightSV.value,
       panOverscrollSV.value,
+      contentMinXSV.value,
+      contentMinYSV.value,
+      contentMaxXSV.value,
+      contentMaxYSV.value,
     );
   };
 
