@@ -4,6 +4,8 @@ export type GraphNodeKind = 'record' | 'task';
 
 export type GraphEdgeKind = 'contains' | 'similar' | 'sharedTag' | 'sameFolder' | 'linked';
 
+export type GraphNodeDisplayMode = 'cards' | 'dots';
+
 export type GraphNode = {
   id: string;
   kind: GraphNodeKind;
@@ -44,6 +46,7 @@ export type GraphFilters = {
   showArchived: boolean;
   edgeVisibility: GraphEdgeVisibility;
   layoutMode: GraphLayoutMode;
+  nodeDisplayMode: GraphNodeDisplayMode;
 };
 
 export type GraphModel = {
@@ -61,6 +64,8 @@ export const DEFAULT_EDGE_VISIBILITY: GraphEdgeVisibility = {
 };
 
 export const DEFAULT_GRAPH_LAYOUT_MODE: GraphLayoutMode = 'cluster';
+
+export const DEFAULT_NODE_DISPLAY_MODE: GraphNodeDisplayMode = 'cards';
 
 export function isGraphLayoutMode(value: string): value is GraphLayoutMode {
   return (GRAPH_LAYOUT_MODES as readonly string[]).includes(value);

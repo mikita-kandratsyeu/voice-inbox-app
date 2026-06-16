@@ -402,6 +402,7 @@
       "zoomOut": "Отдалить",
       "reset": "Сбросить вид",
       "resetLayoutLongPressHint": "Удерживайте, чтобы сбросить все несохранённые перемещения узлов",
+      "toggleNodeDisplayMode": "Вид точками",
       "toggleFolderHighlights": "Области папок",
       "toggleFolderHighlightsHintOn": "Скрыть выделение папок на графе",
       "toggleFolderHighlightsHintOff": "Показать выделение папок на графе",
