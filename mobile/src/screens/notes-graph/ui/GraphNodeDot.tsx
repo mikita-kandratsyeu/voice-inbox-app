@@ -7,11 +7,14 @@ import type { Colors } from '@/shared/config';
 import { withAlphaHex } from '@/shared/lib';
 
 import type { GraphNode } from '../lib/graphTypes';
-import { GRAPH_NODE_INTERACTION_DRAGGING, GRAPH_NODE_INTERACTION_PRESSING } from './graphNodeInteraction';
+import {
+  GRAPH_NODE_INTERACTION_DRAGGING,
+  GRAPH_NODE_INTERACTION_PRESSING,
+} from './graphNodeInteraction';
 
-const DOT_SIZE = 12;
-const DOT_SIZE_ACTIVE = 16;
-const DOT_SIZE_NEIGHBOR = 14;
+export const DOT_SIZE = 20;
+export const DOT_SIZE_ACTIVE = 28;
+export const DOT_SIZE_NEIGHBOR = 24;
 
 type GraphNodeDotProps = {
   node: GraphNode;
@@ -90,10 +93,10 @@ export const GraphNodeDot = React.memo(function GraphNodeDot({
         },
       ],
       shadowColor: color.shadow.color,
-      shadowOpacity: (active || isInteracting) ? color.shadow.opacity * 0.4 : 0,
-      shadowRadius: (active || isInteracting) ? 4 : 0,
+      shadowOpacity: active || isInteracting ? color.shadow.opacity * 0.4 : 0,
+      shadowRadius: active || isInteracting ? 4 : 0,
       shadowOffset: { width: 0, height: 2 },
-      elevation: (active || isInteracting) ? 3 : 0,
+      elevation: active || isInteracting ? 3 : 0,
     };
   }, [active, neighbor, dimmed, dotColor, color]);
 
@@ -103,9 +106,9 @@ export const GraphNodeDot = React.memo(function GraphNodeDot({
 
     return {
       position: 'absolute',
-      width: DOT_SIZE_ACTIVE + 8,
-      height: DOT_SIZE_ACTIVE + 8,
-      borderRadius: (DOT_SIZE_ACTIVE + 8) / 2,
+      width: DOT_SIZE_ACTIVE + 12,
+      height: DOT_SIZE_ACTIVE + 12,
+      borderRadius: (DOT_SIZE_ACTIVE + 12) / 2,
       borderWidth: 2,
       borderColor: withAlphaHex(color.accent.primary, 0.6),
       opacity: withTiming(shouldShow ? 1 : 0, { duration: 200 }),
@@ -120,16 +123,14 @@ export const GraphNodeDot = React.memo(function GraphNodeDot({
   return (
     <View
       style={{
-        width: DOT_SIZE_ACTIVE + 8,
-        height: DOT_SIZE_ACTIVE + 8,
+        width: DOT_SIZE_ACTIVE + 12,
+        height: DOT_SIZE_ACTIVE + 12,
         alignItems: 'center',
         justifyContent: 'center',
       }}
       pointerEvents="none"
     >
-      {(highlighted || active) ? (
-        <Animated.View style={highlightRingStyle} />
-      ) : null}
+      {highlighted || active ? <Animated.View style={highlightRingStyle} /> : null}
       <Animated.View style={containerStyle} />
     </View>
   );

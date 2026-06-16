@@ -763,6 +763,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               matchedNodeIds={matchedNodeIds}
               activeNodeId={activeNodeId}
               viewportCull={edgeViewportCull}
+              nodeDisplayMode={nodeDisplayMode}
             />
             <GraphNodeLayer
               nodes={displayNodes}
