@@ -24,13 +24,13 @@ export function DottedBackground({
   const dotPath = useMemo(() => {
     if (width <= 0 || height <= 0) return null;
 
-    const path = Skia.Path.Make();
+    const builder = Skia.PathBuilder.Make();
     for (let y = spacing / 2; y < height; y += spacing) {
       for (let x = spacing / 2; x < width; x += spacing) {
-        path.addCircle(x, y, dotRadius);
+        builder.addCircle(x, y, dotRadius);
       }
     }
-    return path;
+    return builder.build();
   }, [dotRadius, height, spacing, width]);
 
   if (!dotPath) {

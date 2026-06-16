@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LayoutChangeEvent } from 'react-native';
-import { InteractionManager, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -24,6 +24,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import type { Folder } from '@/entities/folder';
 import { useSettingsStore } from '@/entities/settings';
 import { type Colors, DEFAULT_ACCENT_COLOR_ID } from '@/shared/config';
+import runAfterInteractions from '@/shared/lib/runAfterInteractions';
 
 import type { GraphViewportCull } from '../lib/buildGraphRenderedEdges';
 import {
@@ -518,7 +519,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     let cancelled = false;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    const interactionHandle = InteractionManager.runAfterInteractions(() => {
+    const interactionHandle = runAfterInteractions(() => {
       const elapsed = Date.now() - reconcileStartedAtRef.current;
       const delay = Math.max(0, GRAPH_DRAG_RECONCILE_MIN_MS - elapsed);
       timeoutId = setTimeout(() => {

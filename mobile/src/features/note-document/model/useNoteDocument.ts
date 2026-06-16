@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { InteractionManager } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -8,6 +7,7 @@ import { useRecordStore } from '@/entities/record';
 import { stripLinkedNotesSectionFromSourceEditor } from '@/features/note-links/lib/appendLinkedNotesSectionForReading';
 import type { WikiLinkResolvableRecord } from '@/features/note-links/lib/resolveWikiLinkTarget';
 import { resolveShareExportContext } from '@/features/share-record/lib/shareExportContext';
+import runAfterInteractions from '@/shared/lib/runAfterInteractions';
 
 import { buildNoteDocumentMarkdown } from '../lib/buildNoteDocumentMarkdown';
 import {
@@ -91,7 +91,7 @@ export function useNoteDocument({
 
     setIsPreparing(true);
 
-    const interactionHandle = InteractionManager.runAfterInteractions(() => {
+    const interactionHandle = runAfterInteractions(() => {
       requestAnimationFrame(() => {
         if (cancelled) return;
         const built = buildNoteDocumentMarkdown(liveRecordRef.current, ctx);
@@ -116,7 +116,7 @@ export function useNoteDocument({
     const ctx = resolveShareExportContext();
     const cacheKey = buildNoteDocumentCacheKey(liveRecord, i18n.language, ctx);
 
-    const interactionHandle = InteractionManager.runAfterInteractions(() => {
+    const interactionHandle = runAfterInteractions(() => {
       if (cancelled) return;
       const built = buildNoteDocumentMarkdown(liveRecord, ctx);
       setCachedNoteDocumentMarkdown(cacheKey, built);

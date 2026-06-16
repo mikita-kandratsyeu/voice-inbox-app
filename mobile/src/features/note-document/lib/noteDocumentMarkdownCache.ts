@@ -1,7 +1,6 @@
-import { InteractionManager } from 'react-native';
-
 import type { VoiceRecord } from '@/entities/record';
 import { resolveShareExportContext } from '@/features/share-record/lib/shareExportContext';
+import runAfterInteractions from '@/shared/lib/runAfterInteractions';
 
 import { buildNoteDocumentMarkdown } from './buildNoteDocumentMarkdown';
 import { buildNoteDocumentCacheKey } from './noteDocumentCacheKey';
@@ -27,7 +26,7 @@ export function warmNoteDocumentMarkdown(record: VoiceRecord, language: string):
   }
 
   warmScheduledKeys.add(key);
-  InteractionManager.runAfterInteractions(() => {
+  runAfterInteractions(() => {
     warmScheduledKeys.delete(key);
     if (hasCachedNoteDocumentMarkdown(key)) return;
 

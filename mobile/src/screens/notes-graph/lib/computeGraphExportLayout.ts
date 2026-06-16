@@ -1,7 +1,6 @@
-import { InteractionManager } from 'react-native';
-
 import { getDeviceCapabilities } from '@/shared/lib/deviceCapabilities';
 import { IS_IOS } from '@/shared/lib/platform';
+import runAfterInteractions from '@/shared/lib/runAfterInteractions';
 
 import type { GraphNode } from './graphTypes';
 import {
@@ -42,7 +41,7 @@ export function getGraphExportViewShotMaxDimension(): number {
 export async function waitForGraphExportCaptureReady(edgeCount: number): Promise<void> {
   await waitAnimationFrames(3);
   await new Promise<void>((resolve) => {
-    InteractionManager.runAfterInteractions(() => resolve());
+    runAfterInteractions(() => resolve());
   });
 
   if (edgeCount > 150) {
