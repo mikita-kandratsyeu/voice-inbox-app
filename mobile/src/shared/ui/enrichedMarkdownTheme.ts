@@ -8,6 +8,31 @@ import {
   NOTE_DOCUMENT_BODY_LINE_HEIGHT,
 } from './documentMarkdownTheme';
 
+type NoteDocumentReadingTypographyOptions = {
+  isTablet?: boolean;
+};
+
+function resolveNoteDocumentReadingTypography(options?: NoteDocumentReadingTypographyOptions) {
+  const isTablet = options?.isTablet ?? false;
+
+  return {
+    bodyFontSize: isTablet ? 19 : 18,
+    bodyLineHeight: isTablet ? 32 : 30,
+    sectionBodyFontSize: isTablet ? 18 : 17,
+    sectionBodyLineHeight: isTablet ? 30 : 28,
+    h1Size: isTablet ? 30 : 28,
+    h1LineHeight: isTablet ? 36 : 34,
+    h2Size: isTablet ? 23 : 22,
+    h2LineHeight: isTablet ? 31 : 30,
+    h3Size: isTablet ? 20 : 19,
+    h3LineHeight: isTablet ? 29 : 28,
+    sectionH2Size: isTablet ? 19 : 18,
+    sectionH2LineHeight: isTablet ? 27 : 26,
+    sectionH3Size: isTablet ? 18 : 17,
+    sectionH3LineHeight: isTablet ? 25 : 24,
+  };
+}
+
 export function buildNoteDocumentEnrichedMarkdownStyle(color: Colors): MarkdownStyle {
   const accent = color.accent.primary;
 
@@ -111,34 +136,38 @@ export function buildNoteDocumentEnrichedMarkdownStyle(color: Colors): MarkdownS
 }
 
 /** Article-style typography for note document reading mode. */
-export function buildNoteDocumentReadingMarkdownStyle(color: Colors): MarkdownStyle {
+export function buildNoteDocumentReadingMarkdownStyle(
+  color: Colors,
+  options?: NoteDocumentReadingTypographyOptions,
+): MarkdownStyle {
   const accent = color.accent.primary;
+  const typography = resolveNoteDocumentReadingTypography(options);
 
   return {
     paragraph: {
-      fontSize: 18,
-      lineHeight: 30,
+      fontSize: typography.bodyFontSize,
+      lineHeight: typography.bodyLineHeight,
       color: color.text.primary,
       marginBottom: 16,
     },
     h1: {
-      fontSize: 28,
-      lineHeight: 34,
+      fontSize: typography.h1Size,
+      lineHeight: typography.h1LineHeight,
       fontWeight: '700',
       color: color.text.primary,
       marginBottom: 12,
     },
     h2: {
-      fontSize: 22,
-      lineHeight: 30,
+      fontSize: typography.h2Size,
+      lineHeight: typography.h2LineHeight,
       fontWeight: '700',
       color: color.text.primary,
       marginTop: 28,
       marginBottom: 12,
     },
     h3: {
-      fontSize: 19,
-      lineHeight: 28,
+      fontSize: typography.h3Size,
+      lineHeight: typography.h3LineHeight,
       fontWeight: '600',
       color: color.text.primary,
       marginTop: 20,
@@ -166,8 +195,8 @@ export function buildNoteDocumentReadingMarkdownStyle(color: Colors): MarkdownSt
       marginBottom: 32,
     },
     list: {
-      fontSize: 18,
-      lineHeight: 30,
+      fontSize: typography.bodyFontSize,
+      lineHeight: typography.bodyLineHeight,
       color: color.text.primary,
       bulletColor: accent,
       markerColor: color.text.secondary,
@@ -214,35 +243,39 @@ export function buildNoteDocumentReadingMarkdownStyle(color: Colors): MarkdownSt
 }
 
 /** Compact typography inside collapsible sections (section title is in the header). */
-export function buildNoteDocumentSectionBodyMarkdownStyle(color: Colors): MarkdownStyle {
-  const reading = buildNoteDocumentReadingMarkdownStyle(color);
+export function buildNoteDocumentSectionBodyMarkdownStyle(
+  color: Colors,
+  options?: NoteDocumentReadingTypographyOptions,
+): MarkdownStyle {
+  const reading = buildNoteDocumentReadingMarkdownStyle(color, options);
+  const typography = resolveNoteDocumentReadingTypography(options);
 
   return {
     ...reading,
     h2: {
       ...reading.h2,
-      fontSize: 18,
-      lineHeight: 26,
+      fontSize: typography.sectionH2Size,
+      lineHeight: typography.sectionH2LineHeight,
       marginTop: 12,
       marginBottom: 8,
     },
     h3: {
       ...reading.h3,
-      fontSize: 17,
-      lineHeight: 24,
+      fontSize: typography.sectionH3Size,
+      lineHeight: typography.sectionH3LineHeight,
       marginTop: 10,
       marginBottom: 6,
     },
     paragraph: {
       ...reading.paragraph,
-      fontSize: 17,
-      lineHeight: 28,
+      fontSize: typography.sectionBodyFontSize,
+      lineHeight: typography.sectionBodyLineHeight,
       marginBottom: 14,
     },
     list: {
       ...reading.list,
-      fontSize: 17,
-      lineHeight: 28,
+      fontSize: typography.sectionBodyFontSize,
+      lineHeight: typography.sectionBodyLineHeight,
       marginBottom: 14,
     },
   };

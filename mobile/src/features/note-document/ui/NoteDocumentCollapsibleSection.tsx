@@ -1,13 +1,5 @@
 import {
-  CheckSquare,
   ChevronDown,
-  FileText,
-  Languages,
-  Link2,
-  ListChecks,
-  MessageSquareText,
-  Sparkles,
-  Tag,
   type LucideIcon,
 } from 'lucide-react-native';
 import React, { useEffect } from 'react';
@@ -22,7 +14,9 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
-import { hapticSelection, withAlphaHex } from '@/shared/lib';
+import { hapticSelection, isDarkSurfaceColor, withAlphaHex } from '@/shared/lib';
+
+import { resolveNoteDocumentSectionIcon } from '../lib/noteDocumentSectionIconUi';
 
 type NoteDocumentCollapsibleSectionVariant = 'card' | 'reading';
 
@@ -37,30 +31,7 @@ type NoteDocumentCollapsibleSectionProps = {
 };
 
 function resolveSectionIcon(sectionId?: string): LucideIcon | null {
-  switch (sectionId) {
-    case 'tags':
-      return Tag;
-    case 'summary':
-      return Sparkles;
-    case 'key-phrases':
-      return Sparkles;
-    case 'tasks':
-      return CheckSquare;
-    case 'next-steps':
-      return ListChecks;
-    case 'transcript':
-      return FileText;
-    case 'translation':
-      return Languages;
-    case 'meeting-dialogue':
-      return MessageSquareText;
-    case 'speaker-turns':
-      return MessageSquareText;
-    case 'linked':
-      return Link2;
-    default:
-      return null;
-  }
+  return resolveNoteDocumentSectionIcon(sectionId);
 }
 
 export const NoteDocumentCollapsibleSection = React.memo(function NoteDocumentCollapsibleSection({
@@ -76,6 +47,10 @@ export const NoteDocumentCollapsibleSection = React.memo(function NoteDocumentCo
   const chevronRotation = useSharedValue(0);
   const SectionIcon = resolveSectionIcon(sectionId);
   const isReading = variant === 'reading';
+  const isDark = isDarkSurfaceColor(color);
+  const iconChipBackground = withAlphaHex(color.text.secondary, isDark ? 0.16 : 0.09);
+  const iconColor = isReading ? color.text.secondary : color.accent.primary;
+  const iconChipAccentBackground = withAlphaHex(color.accent.primary, isDark ? 0.14 : 0.1);
 
   useEffect(() => {
     chevronRotation.value = withTiming(expanded ? 0 : -90, {
@@ -125,14 +100,14 @@ export const NoteDocumentCollapsibleSection = React.memo(function NoteDocumentCo
             <View
               style={{
                 alignItems: 'center',
-                backgroundColor: withAlphaHex(color.accent.primary, 0.1),
+                backgroundColor: isReading ? iconChipBackground : iconChipAccentBackground,
                 borderRadius: 8,
                 height: 28,
                 justifyContent: 'center',
                 width: 28,
               }}
             >
-              <SectionIcon size={15} color={color.accent.primary} strokeWidth={2.2} />
+              <SectionIcon size={15} color={iconColor} strokeWidth={2.1} />
             </View>
           ) : null}
           <Text

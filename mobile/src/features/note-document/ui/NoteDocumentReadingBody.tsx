@@ -5,6 +5,7 @@ import type { TaskListItemPressEvent } from 'react-native-enriched-markdown';
 import type { TaskItem } from '@/entities/record';
 import type { WikiLinkResolvableRecord } from '@/features/note-links';
 import type { Colors } from '@/shared/config';
+import { useIsTablet } from '@/shared/lib';
 
 import {
   buildNoteDocumentReadingMarkdownStyle,
@@ -107,13 +108,14 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
   onOpenRecord,
   onToggleTask,
 }: NoteDocumentReadingBodyProps) {
+  const isTablet = useIsTablet();
   const readingMarkdownStyle = useMemo(
-    () => buildNoteDocumentReadingMarkdownStyle(color),
-    [color],
+    () => buildNoteDocumentReadingMarkdownStyle(color, { isTablet }),
+    [color, isTablet],
   );
   const sectionMarkdownStyle = useMemo(
-    () => buildNoteDocumentSectionBodyMarkdownStyle(color),
-    [color],
+    () => buildNoteDocumentSectionBodyMarkdownStyle(color, { isTablet }),
+    [color, isTablet],
   );
   const layout = useMemo(() => splitNoteDocumentForReading(documentMarkdown), [documentMarkdown]);
   const flatMarkdown = useMemo(

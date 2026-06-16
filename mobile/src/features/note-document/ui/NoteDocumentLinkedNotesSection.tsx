@@ -6,6 +6,7 @@ import {
   type WikiLinkResolvableRecord,
 } from '@/features/note-links';
 import type { Colors } from '@/shared/config';
+import { useIsTablet } from '@/shared/lib';
 
 import {
   buildNoteDocumentSectionBodyMarkdownStyle,
@@ -27,8 +28,12 @@ export const NoteDocumentLinkedNotesSection = React.memo(function NoteDocumentLi
   onOpenRecord,
 }: NoteDocumentLinkedNotesSectionProps) {
   const { t } = useTranslation();
+  const isTablet = useIsTablet();
   const [expanded, setExpanded] = useState(true);
-  const markdownStyle = useMemo(() => buildNoteDocumentSectionBodyMarkdownStyle(color), [color]);
+  const markdownStyle = useMemo(
+    () => buildNoteDocumentSectionBodyMarkdownStyle(color, { isTablet }),
+    [color, isTablet],
+  );
 
   const linkedNotesMarkdown = useMemo(
     () =>
