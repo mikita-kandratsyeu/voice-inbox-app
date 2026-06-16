@@ -385,6 +385,7 @@
       "zoomOut": "Zoom out",
       "reset": "Reset view",
       "resetLayoutLongPressHint": "Long press to discard all unsaved node moves",
+      "toggleNodeDisplayMode": "Display as dots",
       "toggleFolderHighlights": "Folder areas",
       "toggleFolderHighlightsHintOn": "Hide folder highlights on the graph",
       "toggleFolderHighlightsHintOff": "Show folder highlights on the graph",

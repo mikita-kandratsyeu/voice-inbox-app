@@ -42,7 +42,7 @@ import { GRAPH_DRAG_RECONCILE_MIN_MS } from '../lib/graphDragReconcile';
 import type { GraphExportBackgroundId } from '../lib/graphExportBackground';
 import { resolveGraphExportColors } from '../lib/graphExportColors';
 import { getSessionNodePositions, setSessionNodePosition } from '../lib/graphSessionLayout';
-import type { GraphEdge, GraphNode } from '../lib/graphTypes';
+import type { GraphEdge, GraphNode, GraphNodeDisplayMode } from '../lib/graphTypes';
 import {
   clampViewportScaleValue,
   clampViewportTransform,
@@ -98,6 +98,7 @@ type GraphCanvasProps = {
   activeNodeId: string | null;
   bottomInset: number;
   focusViewportInsets?: GraphViewportInsets;
+  nodeDisplayMode?: GraphNodeDisplayMode;
   onRecordPress: (recordId: string) => void;
   onTaskPress: (recordId: string, taskId: string) => void;
   onNodeFocus: (nodeId: string) => void;
@@ -159,6 +160,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     activeNodeId,
     bottomInset,
     focusViewportInsets,
+    nodeDisplayMode = 'cards',
     onRecordPress,
     onTaskPress,
     onNodeFocus,
@@ -773,6 +775,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               canvasScale={scale}
               layoutRestoreToken={layoutRestoreToken}
               interactionsEnabled={!isReconciling && !exportBusy}
+              nodeDisplayMode={nodeDisplayMode}
               onRecordPress={onRecordPress}
               onTaskPress={onTaskPress}
               onNodeFocus={onNodeFocus}

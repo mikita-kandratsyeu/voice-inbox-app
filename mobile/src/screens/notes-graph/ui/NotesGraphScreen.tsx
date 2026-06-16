@@ -14,6 +14,7 @@ import { useColors } from '@/shared/config';
 import { ScreenHeader } from '@/shared/ui';
 
 import { getGraphShowArchived } from '../lib/graphArchivePreferences';
+import { getGraphNodeDisplayMode } from '../lib/graphNodeDisplayModePreferences';
 import {
   DEFAULT_EDGE_VISIBILITY,
   DEFAULT_GRAPH_LAYOUT_MODE,
@@ -51,6 +52,7 @@ export const NotesGraphScreen = () => {
       showArchived: getGraphShowArchived(),
       edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
       layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
+      nodeDisplayMode: getGraphNodeDisplayMode(),
     }),
     [route.params?.folderId, route.params?.tag],
   );

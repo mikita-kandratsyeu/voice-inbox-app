@@ -38,6 +38,10 @@ import {
   isGraphMinimapAvailable,
   setGraphMinimapVisible,
 } from '../lib/graphMinimapPreferences';
+import {
+  getGraphNodeDisplayMode,
+  setGraphNodeDisplayMode,
+} from '../lib/graphNodeDisplayModePreferences';
 import { findGraphSearchMatchIds, type GraphSearchIndexEntry } from '../lib/graphSearch';
 import { getSessionNodePositions, replaceSessionNodePositions } from '../lib/graphSessionLayout';
 import { shouldAutoSimplifyGraph } from '../lib/graphSimplifyMode';
@@ -122,6 +126,7 @@ export const NotesGraphScreenBody = () => {
       showArchived: getGraphShowArchived(),
       edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
       layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
+      nodeDisplayMode: getGraphNodeDisplayMode(),
     };
   });
 
@@ -161,6 +166,7 @@ export const NotesGraphScreenBody = () => {
     getGraphFolderHighlightsVisible(),
   );
   const [minimapVisible, setMinimapVisible] = useState(() => getGraphMinimapVisible());
+  const [nodeDisplayMode, setNodeDisplayMode] = useState(() => getGraphNodeDisplayMode());
   const exportCaptureTokenRef = useRef(0);
   const exportPreviewBackgroundIdRef = useRef<GraphExportBackgroundId>('canvas');
   const [activeSavedVersion, setActiveSavedVersion] = useState<NotesGraphLayoutVersionEntry | null>(
@@ -913,6 +919,15 @@ export const NotesGraphScreenBody = () => {
     const titleColor = color.text.primary;
     const actions: NativeMenuAction[] = [];
 
+    actions.push({
+      id: 'toggleNodeDisplayMode',
+      title: t('notesGraph.controls.toggleNodeDisplayMode'),
+      image: nodeDisplayMode === 'dots' ? 'square.grid.2x2' : 'circle.fill',
+      imageColor: titleColor,
+      titleColor,
+      state: nodeDisplayMode === 'dots' ? 'on' : 'off',
+    });
+
     if (foldersEnabled) {
       actions.push({
         id: 'toggleFolderHighlights',
@@ -971,6 +986,7 @@ export const NotesGraphScreenBody = () => {
     foldersEnabled,
     layoutNodes.length,
     minimapVisible,
+    nodeDisplayMode,
     t,
   ]);
 
@@ -1021,6 +1037,15 @@ export const NotesGraphScreenBody = () => {
           onPressAction={({ nativeEvent }) => {
             if (nativeEvent.event === 'layoutHistory') {
               setHistorySheetVisible(true);
+              return;
+            }
+            if (nativeEvent.event === 'toggleNodeDisplayMode') {
+              hapticSelection();
+              setNodeDisplayMode((value) => {
+                const next = value === 'dots' ? 'cards' : 'dots';
+                setGraphNodeDisplayMode(next);
+                return next;
+              });
               return;
             }
             if (nativeEvent.event === 'toggleFolderHighlights') {
@@ -1142,6 +1167,7 @@ export const NotesGraphScreenBody = () => {
           activeNodeId={resolvedActiveNodeId}
           bottomInset={insets.bottom}
           focusViewportInsets={focusViewportInsets}
+          nodeDisplayMode={nodeDisplayMode}
           onRecordPress={handleRecordPress}
           onTaskPress={handleTaskPress}
           onNodeFocus={handleNodeFocus}

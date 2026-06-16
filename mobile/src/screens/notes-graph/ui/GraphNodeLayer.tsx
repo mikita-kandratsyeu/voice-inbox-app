@@ -15,7 +15,7 @@ import { hapticLight } from '@/shared/lib';
 
 import { buildGraphNodeConnectionCounts } from '../lib/countGraphNodeConnections';
 import { snapGraphPointToGrid } from '../lib/graphSnapGrid';
-import type { GraphEdge, GraphNode } from '../lib/graphTypes';
+import type { GraphEdge, GraphNode, GraphNodeDisplayMode } from '../lib/graphTypes';
 import { RECORD_NODE_WIDTH, TASK_NODE_WIDTH } from '../lib/graphTypes';
 import {
   buildGraphActiveNeighborIds,
@@ -24,6 +24,7 @@ import {
   resolveGraphNodeVisualState,
 } from '../lib/resolveGraphNodeVisualState';
 import { GraphNodeCard } from './GraphNodeCard';
+import { GraphNodeDot } from './GraphNodeDot';
 import {
   GRAPH_NODE_INTERACTION_DRAGGING,
   GRAPH_NODE_INTERACTION_IDLE,
@@ -42,6 +43,7 @@ type GraphNodeLayerProps = {
   canvasScale: SharedValue<number>;
   layoutRestoreToken?: number;
   interactionsEnabled?: boolean;
+  nodeDisplayMode?: GraphNodeDisplayMode;
   onRecordPress: (recordId: string) => void;
   onTaskPress: (recordId: string, taskId: string) => void;
   onNodeDragStart: () => void;
@@ -262,6 +264,7 @@ type GraphNodeItemProps = {
   highlighted: boolean;
   neighbor: boolean;
   connectionCount: number;
+  nodeDisplayMode?: GraphNodeDisplayMode;
   onRecordPress: (recordId: string) => void;
   onTaskPress: (recordId: string, taskId: string) => void;
   onNodeDragStart: () => void;
@@ -283,6 +286,7 @@ const GraphNodeItem = React.memo(
     highlighted,
     neighbor,
     connectionCount,
+    nodeDisplayMode = 'cards',
     onRecordPress,
     onTaskPress,
     onNodeDragStart,
@@ -330,22 +334,35 @@ const GraphNodeItem = React.memo(
         onFocus={() => onNodeFocus(node.id)}
         onPress={handlePress}
       >
-        {(interactionPhase) => (
-          <GraphNodeCard
-            node={node}
-            color={color}
-            folderName={folder?.name}
-            folderColor={folder?.color}
-            folderIcon={folder?.icon}
-            isProActive={isProActive}
-            highlighted={highlighted}
-            dimmed={dimmed}
-            active={active}
-            neighbor={neighbor}
-            connectionCount={connectionCount}
-            interactionPhase={interactionPhase}
-          />
-        )}
+        {(interactionPhase) =>
+          nodeDisplayMode === 'dots' ? (
+            <GraphNodeDot
+              node={node}
+              color={color}
+              folderColor={folder?.color}
+              highlighted={highlighted}
+              dimmed={dimmed}
+              active={active}
+              neighbor={neighbor}
+              interactionPhase={interactionPhase}
+            />
+          ) : (
+            <GraphNodeCard
+              node={node}
+              color={color}
+              folderName={folder?.name}
+              folderColor={folder?.color}
+              folderIcon={folder?.icon}
+              isProActive={isProActive}
+              highlighted={highlighted}
+              dimmed={dimmed}
+              active={active}
+              neighbor={neighbor}
+              connectionCount={connectionCount}
+              interactionPhase={interactionPhase}
+            />
+          )
+        }
       </DraggableNodeShell>
     );
   },
@@ -355,6 +372,7 @@ const GraphNodeItem = React.memo(
     if (prev.active !== next.active) return false;
     if (prev.neighbor !== next.neighbor) return false;
     if (prev.highlighted !== next.highlighted) return false;
+    if (prev.nodeDisplayMode !== next.nodeDisplayMode) return false;
     if (prev.layoutRestoreToken !== next.layoutRestoreToken) return false;
     if (prev.node.x !== next.node.x || prev.node.y !== next.node.y) return false;
     return true;
@@ -371,6 +389,7 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
   activeNodeId,
   canvasScale,
   interactionsEnabled = true,
+  nodeDisplayMode = 'cards',
   onRecordPress,
   onTaskPress,
   onNodeDragStart,
@@ -424,6 +443,7 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
             neighbor={visualState.neighbor}
             highlighted={visualState.highlighted}
             connectionCount={connectionCountByNodeId.get(node.id) ?? 0}
+            nodeDisplayMode={nodeDisplayMode}
             onRecordPress={onRecordPress}
             onTaskPress={onTaskPress}
             onNodeDragStart={onNodeDragStart}

@@ -1,3 +1,4 @@
+import { getGraphNodeDisplayMode } from './graphNodeDisplayModePreferences';
 import type { GraphFilters } from './graphTypes';
 import { DEFAULT_GRAPH_LAYOUT_MODE } from './graphTypes';
 
@@ -16,6 +17,7 @@ export function buildLocalGraphFilters(): GraphFilters {
       contains: false,
     },
     layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
+    nodeDisplayMode: getGraphNodeDisplayMode(),
   };
 }
 
