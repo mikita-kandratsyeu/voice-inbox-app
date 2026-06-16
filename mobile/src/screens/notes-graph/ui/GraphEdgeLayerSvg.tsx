@@ -5,7 +5,7 @@ import type { Colors } from '@/shared/config';
 
 import { buildGraphRenderedEdges } from '../lib/buildGraphRenderedEdges';
 import { getGraphEdgeGlowStyle, getGraphEdgeStrokeStyle } from '../lib/graphEdgeStyles';
-import type { GraphEdge, GraphNode } from '../lib/graphTypes';
+import type { GraphEdge, GraphNode, GraphNodeDisplayMode } from '../lib/graphTypes';
 
 type GraphEdgeLayerSvgProps = {
   nodes: GraphNode[];
@@ -15,6 +15,7 @@ type GraphEdgeLayerSvgProps = {
   height: number;
   matchedNodeIds: ReadonlySet<string> | null;
   activeNodeId: string | null;
+  nodeDisplayMode?: GraphNodeDisplayMode;
 };
 
 /**
@@ -28,10 +29,12 @@ export const GraphEdgeLayerSvg = React.memo(function GraphEdgeLayerSvg({
   height,
   matchedNodeIds,
   activeNodeId,
+  nodeDisplayMode = 'cards',
 }: GraphEdgeLayerSvgProps) {
   const renderedEdges = useMemo(
-    () => buildGraphRenderedEdges(nodes, edges, matchedNodeIds, activeNodeId, null),
-    [activeNodeId, edges, matchedNodeIds, nodes],
+    () =>
+      buildGraphRenderedEdges(nodes, edges, matchedNodeIds, activeNodeId, null, nodeDisplayMode),
+    [activeNodeId, edges, matchedNodeIds, nodes, nodeDisplayMode],
   );
 
   if (renderedEdges.length === 0) {

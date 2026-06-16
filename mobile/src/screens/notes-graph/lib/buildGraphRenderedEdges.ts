@@ -6,7 +6,7 @@ import {
 } from './graphEdgePath';
 import { type GraphEdgeEmphasis, resolveGraphEdgeEmphasis } from './graphEdgeStyles';
 import { nodeBorderAnchor, nodeCenter } from './graphNodeMetrics';
-import type { GraphEdge, GraphEdgeKind, GraphNode } from './graphTypes';
+import type { GraphEdge, GraphEdgeKind, GraphNode, GraphNodeDisplayMode } from './graphTypes';
 
 const EDGE_KIND_DRAW_ORDER: Record<GraphEdgeKind, number> = {
   sameFolder: 0,
@@ -83,12 +83,13 @@ export function buildGraphRenderedEdges(
   matchedNodeIds: ReadonlySet<string> | null,
   activeNodeId: string | null,
   viewportCull?: GraphViewportCull | null,
+  displayMode?: GraphNodeDisplayMode,
 ): GraphRenderedEdge[] {
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
   const nodeCenters = new Map<string, { x: number; y: number }>();
 
   for (const node of nodes) {
-    nodeCenters.set(node.id, nodeCenter(node));
+    nodeCenters.set(node.id, nodeCenter(node, displayMode));
   }
 
   const bendLayout = buildParallelEdgeBendLayout(edges);
@@ -102,8 +103,8 @@ export function buildGraphRenderedEdges(
 
     const sourceCenter = nodeCenters.get(edge.sourceId)!;
     const targetCenter = nodeCenters.get(edge.targetId)!;
-    const from = nodeBorderAnchor(source, targetCenter);
-    const to = nodeBorderAnchor(target, sourceCenter);
+    const from = nodeBorderAnchor(source, targetCenter, displayMode);
+    const to = nodeBorderAnchor(target, sourceCenter, displayMode);
 
     if (visibleRect && !segmentIntersectsRect(from, to, visibleRect)) {
       continue;

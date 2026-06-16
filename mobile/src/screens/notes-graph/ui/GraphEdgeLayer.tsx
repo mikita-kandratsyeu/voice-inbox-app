@@ -16,7 +16,7 @@ import { buildGraphRenderedEdges, type GraphViewportCull } from '../lib/buildGra
 import { getGraphEdgeGlowStyle, getGraphEdgeStrokeStyle } from '../lib/graphEdgeStyles';
 import { getCachedSkiaPath } from '../lib/graphSkiaUtils';
 import { parseStrokeDashIntervals } from '../lib/graphStrokeDash';
-import type { GraphEdge, GraphNode } from '../lib/graphTypes';
+import type { GraphEdge, GraphNode, GraphNodeDisplayMode } from '../lib/graphTypes';
 
 type GraphEdgeLayerProps = {
   nodes: GraphNode[];
@@ -27,6 +27,7 @@ type GraphEdgeLayerProps = {
   matchedNodeIds: ReadonlySet<string> | null;
   activeNodeId: string | null;
   viewportCull?: GraphViewportCull | null;
+  nodeDisplayMode?: GraphNodeDisplayMode;
 };
 
 type PreparedEdgePath = {
@@ -101,10 +102,19 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
   matchedNodeIds,
   activeNodeId,
   viewportCull = null,
+  nodeDisplayMode = 'cards',
 }: GraphEdgeLayerProps) {
   const renderedEdges = useMemo(
-    () => buildGraphRenderedEdges(nodes, edges, matchedNodeIds, activeNodeId, viewportCull),
-    [activeNodeId, edges, matchedNodeIds, nodes, viewportCull],
+    () =>
+      buildGraphRenderedEdges(
+        nodes,
+        edges,
+        matchedNodeIds,
+        activeNodeId,
+        viewportCull,
+        nodeDisplayMode,
+      ),
+    [activeNodeId, edges, matchedNodeIds, nodes, viewportCull, nodeDisplayMode],
   );
 
   const preparedEdges = useMemo(

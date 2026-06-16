@@ -1,4 +1,4 @@
-import type { GraphNode } from './graphTypes';
+import type { GraphNode, GraphNodeDisplayMode } from './graphTypes';
 import {
   RECORD_NODE_HEIGHT,
   RECORD_NODE_WIDTH,
@@ -15,7 +15,14 @@ export function nodeDimensions(kind: GraphNode['kind']): { width: number; height
   return dimensionsCache.get(kind)!;
 }
 
-export function nodeCenter(node: GraphNode): { x: number; y: number } {
+export function nodeCenter(
+  node: GraphNode,
+  displayMode: GraphNodeDisplayMode = 'cards',
+): { x: number; y: number } {
+  if (displayMode === 'dots') {
+    const dotContainerSize = 40;
+    return { x: node.x + dotContainerSize / 2, y: node.y + dotContainerSize / 2 };
+  }
   const { width, height } = nodeDimensions(node.kind);
   return { x: node.x + width / 2, y: node.y + height / 2 };
 }
@@ -24,7 +31,27 @@ export function nodeCenter(node: GraphNode): { x: number; y: number } {
 export function nodeBorderAnchor(
   node: GraphNode,
   toward: { x: number; y: number },
+  displayMode: GraphNodeDisplayMode = 'cards',
 ): { x: number; y: number } {
+  if (displayMode === 'dots') {
+    const dotContainerSize = 40;
+    const dotRadius = 28 / 2;
+    const cx = node.x + dotContainerSize / 2;
+    const cy = node.y + dotContainerSize / 2;
+    const dx = toward.x - cx;
+    const dy = toward.y - cy;
+    const distance = Math.hypot(dx, dy);
+
+    if (distance < 0.001) {
+      return { x: cx, y: cy };
+    }
+
+    return {
+      x: cx + (dx / distance) * dotRadius,
+      y: cy + (dy / distance) * dotRadius,
+    };
+  }
+
   const { width, height } = nodeDimensions(node.kind);
   const cx = node.x + width / 2;
   const cy = node.y + height / 2;
