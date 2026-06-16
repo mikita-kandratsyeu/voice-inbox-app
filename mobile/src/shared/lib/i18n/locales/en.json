@@ -216,11 +216,11 @@
     }
   },
   "notesGraph": {
-    "title": "Note map",
-    "menuTitle": "Note map",
+    "title": "Notes graph",
+    "menuTitle": "Notes graph",
     "proTitle": "See how your notes connect",
-    "proBody": "Explore a zoomable map of your notes — linked by tags, folders, similar content, and open tasks.",
-    "building": "Mapping your notes…",
+    "proBody": "Explore a zoomable graph of your notes — linked by tags, folders, similar content, and open tasks.",
+    "building": "Building your notes graph…",
     "reconciling": "Updating connections…",
     "saveChangesA11y": "Save layout changes",
     "saveLayoutBar": {
@@ -232,17 +232,17 @@
       "title": "Save layout",
       "namePlaceholder": "Layout name (optional)",
       "nameInputHint": "Enter a name or leave blank.",
-      "autoName": "Map layout",
+      "autoName": "Graph layout",
       "movedNodes_one": "{{count}} node moved",
       "movedNodes_other": "{{count}} nodes moved"
     },
     "export": {
       "title": "Share",
-      "subtitle": "The full map is captured — drag the frame or pull handles to crop before sharing.",
+      "subtitle": "The full graph is captured — drag the frame or pull handles to crop before sharing.",
       "share": "Share",
-      "shareTitle": "Note map",
+      "shareTitle": "Notes graph",
       "resetCrop": "Reset crop",
-      "capturingPreview": "Preparing map…",
+      "capturingPreview": "Preparing graph…",
       "moveCropA11y": "Move crop area",
       "resizeCornerA11y": "Resize crop from corner",
       "resizeEdgeA11y": "Resize crop from edge",
@@ -254,7 +254,7 @@
       "cropTemplateStory": "9:16",
       "backgroundLabel": "Background",
       "backgroundHint": "Choose a background for the exported image",
-      "backgroundCanvas": "As on map",
+      "backgroundCanvas": "As on graph",
       "backgroundWhite": "White",
       "backgroundLight": "Light",
       "backgroundDark": "Dark",
@@ -266,7 +266,7 @@
       "backgroundRose": "Rose",
       "backgroundNavy": "Navy",
       "backgroundTransparent": "Transparent",
-      "failed": "Could not export the map image. Try again.",
+      "failed": "Could not export the graph image. Try again.",
       "scaledDownTitle": "Export Adjusted",
       "scaledDownMessage": "The export was scaled to {{width}}×{{height}}px to fit your device's {{tier}} memory. The image quality remains high."
     },
@@ -292,12 +292,12 @@
         "links": "Connection lines",
         "linksNone": "Hidden",
         "layoutMode": "Layout",
-        "view": "Map view",
+        "view": "Graph view",
         "viewFull": "All connections",
         "viewSimplified": "Simplified",
         "viewSimplifiedAuto": "Simplified (auto)"
       },
-      "empty": "No saved layouts yet. Move nodes on the map and tap Save.",
+      "empty": "No saved layouts yet. Move nodes on the graph and tap Save.",
       "versionLabel": "Version {{version}}",
       "appliedOnMapA11y": "Applied layout {{name}}, saved {{date}}",
       "nodeCount_one": "{{count}} node moved",
@@ -311,20 +311,20 @@
       "deleteAllConfirm": "Delete all"
     },
     "loadingTips": {
-      "pinchPan": "Pinch to zoom and drag with one finger to move around the map.",
+      "pinchPan": "Pinch to zoom and drag with one finger to move around the graph.",
       "doubleTap": "Double-tap an area to zoom in quickly.",
-      "dragNode": "Long-press a note card and drag to rearrange it on the map.",
+      "dragNode": "Long-press a note card and drag to rearrange it on the graph.",
       "filters": "Use folder and tag filters at the top to focus on part of your library.",
       "search": "Tap the search icon to jump between matching notes and tasks.",
       "legend": "Tap ⓘ in the corner to see what the connection lines mean.",
-      "minimap": "Use the minimap in the corner to jump to another area of the map."
+      "minimap": "Use the minimap in the corner to jump to another area of the graph."
     },
     "minimap": {
       "resizeA11y": "Resize minimap"
     },
-    "emptyTitle": "Nothing to map yet",
+    "emptyTitle": "Nothing in the graph yet",
     "emptyDescription": "Add a note or adjust filters — links appear from tags, folders, and similar content.",
-    "largeGraphHint": "That's a big library. Filter by folder or tag to keep the map easy to explore.",
+    "largeGraphHint": "That's a big library. Filter by folder or tag to keep the graph easy to explore.",
     "searchPlaceholder": "Search notes and tasks",
     "searchResultCount": "{{current}} of {{total}}",
     "searchNoResults": "No matches",
@@ -353,10 +353,10 @@
       "tagPickerSearchEmpty": "No tags match your search",
       "pickConnections": "All connections",
       "connectionsCount": "{{count}} connections",
-      "connectionsPickerTitle": "Map connections",
-      "connectionsPickerSubtitle": "Choose what to show on the map — tasks and connection lines.",
-      "layoutModePickerTitle": "Map layout",
-      "layoutModePickerSubtitle": "Choose how notes are arranged on the map.",
+      "connectionsPickerTitle": "Graph connections",
+      "connectionsPickerSubtitle": "Choose what to show on the graph — tasks and connection lines.",
+      "layoutModePickerTitle": "Graph layout",
+      "layoutModePickerSubtitle": "Choose how notes are arranged on the graph.",
       "layoutMode": {
         "cluster": "By groups",
         "force": "By links",
@@ -369,20 +369,20 @@
       }
     },
     "controls": {
-      "fit": "Fit map",
+      "fit": "Fit graph",
       "zoomIn": "Zoom in",
       "zoomOut": "Zoom out",
       "reset": "Reset view",
       "resetLayoutLongPressHint": "Long press to discard all unsaved node moves",
       "toggleFolderHighlights": "Folder areas",
-      "toggleFolderHighlightsHintOn": "Hide folder highlights on the map",
-      "toggleFolderHighlightsHintOff": "Show folder highlights on the map",
+      "toggleFolderHighlightsHintOn": "Hide folder highlights on the graph",
+      "toggleFolderHighlightsHintOff": "Show folder highlights on the graph",
       "toggleMinimap": "Minimap",
-      "toggleMinimapHintOn": "Hide the minimap on the map",
-      "toggleMinimapHintOff": "Show the minimap on the map",
+      "toggleMinimapHintOn": "Hide the minimap on the graph",
+      "toggleMinimapHintOff": "Show the minimap on the graph",
       "toggleShowArchived": "Include archive",
-      "toggleShowArchivedHintOn": "Exclude archived notes from the map",
-      "toggleShowArchivedHintOff": "Include archived notes on the map"
+      "toggleShowArchivedHintOn": "Exclude archived notes from the graph",
+      "toggleShowArchivedHintOff": "Include archived notes on the graph"
     },
     "legend": {
       "toggle": "What the lines mean",
@@ -1595,7 +1595,7 @@
         "extendedShareAndBatchExport": "Extended export",
         "aiFolderOrganize": "Advanced AI folder organization",
         "githubSync": "GitHub & GitLab backup & sync",
-        "notesGraph": "Note map",
+        "notesGraph": "Notes graph",
         "noAds": "No ads"
       }
     },
