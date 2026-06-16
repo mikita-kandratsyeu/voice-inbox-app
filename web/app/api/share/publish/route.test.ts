@@ -1,7 +1,11 @@
 import { DELETE, GET, POST } from '@/app/api/share/publish/route';
 
 jest.mock('@/lib/mobile-api-guard', () => ({
-  assertMobileAuthenticatedDevice: jest.fn(async () => ({ ok: true, deviceId: 'dev1', pathname: '/api/share/publish' })),
+  assertMobileAuthenticatedDevice: jest.fn(async () => ({
+    ok: true,
+    deviceId: 'dev1',
+    pathname: '/api/share/publish',
+  })),
 }));
 jest.mock('@/lib/pro-entitlement', () => ({
   isProDevice: jest.fn(async () => true),
@@ -9,7 +13,8 @@ jest.mock('@/lib/pro-entitlement', () => ({
 jest.mock('@/lib/api', () => {
   return {
     HttpStatus: { BAD_REQUEST: 400, FORBIDDEN: 403, NOT_FOUND: 404 },
-    apiError: (message: string, status: number) => new Response(JSON.stringify({ error: message }), { status }),
+    apiError: (message: string, status: number) =>
+      new Response(JSON.stringify({ error: message }), { status }),
     parseJsonBody: async (request: Request) => {
       try {
         return await request.json();
@@ -17,7 +22,7 @@ jest.mock('@/lib/api', () => {
         return null;
       }
     },
-    checkSupportRateLimit: jest.fn(async () => null),
+    checkPublishRateLimit: jest.fn(async () => null),
   };
 });
 jest.mock('@/lib/prisma', () => ({

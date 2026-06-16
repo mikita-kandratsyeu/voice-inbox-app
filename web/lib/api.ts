@@ -11,6 +11,9 @@ import {
   RATE_LIMIT_DEVICE_KEY_PREFIX,
   RATE_LIMIT_DEVICE_MAX_REQUESTS,
   RATE_LIMIT_DEVICE_WINDOW_SECONDS,
+  PUBLISH_RATE_LIMIT_KEY_PREFIX,
+  PUBLISH_RATE_LIMIT_MAX_REQUESTS,
+  PUBLISH_RATE_LIMIT_WINDOW_SECONDS,
   SUPPORT_RATE_LIMIT_KEY_PREFIX,
   SUPPORT_RATE_LIMIT_MAX_REQUESTS,
   SUPPORT_RATE_LIMIT_WINDOW_SECONDS,
@@ -155,6 +158,28 @@ export async function checkSupportRateLimit(deviceId: string): Promise<NextRespo
       {
         status: HttpStatus.TOO_MANY_REQUESTS,
         headers: { 'Retry-After': String(SUPPORT_RATE_LIMIT_WINDOW_SECONDS) },
+      },
+    );
+  }
+  return null;
+}
+
+export async function checkPublishRateLimit(deviceId: string): Promise<NextResponse | null> {
+  const window = Math.floor(Date.now() / 1000 / PUBLISH_RATE_LIMIT_WINDOW_SECONDS);
+  const key = `${PUBLISH_RATE_LIMIT_KEY_PREFIX}${deviceId}:${window}`;
+  const count = await redis.incr(key);
+  if (count === 1) {
+    await redis.expire(key, PUBLISH_RATE_LIMIT_WINDOW_SECONDS);
+  }
+  if (count > PUBLISH_RATE_LIMIT_MAX_REQUESTS) {
+    return NextResponse.json(
+      {
+        error: 'Too many publish requests. Try again later.',
+        code: ApiErrorCode.PublishRateLimited,
+      },
+      {
+        status: HttpStatus.TOO_MANY_REQUESTS,
+        headers: { 'Retry-After': String(PUBLISH_RATE_LIMIT_WINDOW_SECONDS) },
       },
     );
   }

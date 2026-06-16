@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 
-import { apiError, checkSupportRateLimit, HttpStatus, parseJsonBody } from '@/lib/api';
+import { apiError, checkPublishRateLimit, HttpStatus, parseJsonBody } from '@/lib/api';
 import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import {
   computePublishedNoteHash,
@@ -75,7 +75,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     return apiError('Pro is required', HttpStatus.FORBIDDEN, { pathname: gate.pathname });
   }
 
-  const limitError = await checkSupportRateLimit(gate.deviceId);
+  const limitError = await checkPublishRateLimit(gate.deviceId);
   if (limitError) return limitError;
 
   const body = await parseJsonBody<PublishNoteBody>(request);

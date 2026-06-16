@@ -19,6 +19,7 @@ export const ApiErrorCode = {
   /** Generic rate limit (e.g. pro license redeem). */
   RateLimit: 'rate_limit',
   SupportRateLimited: 'support_rate_limited',
+  PublishRateLimited: 'publish_rate_limited',
   DuplicateId: 'duplicate_id',
   NotFound: 'not_found',
   ServiceUnavailable: 'service_unavailable',
