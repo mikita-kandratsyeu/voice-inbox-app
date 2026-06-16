@@ -4,44 +4,13 @@ import type { SharedValue } from 'react-native-reanimated';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
-import { withAlphaHex } from '@/shared/lib';
+import { resolveDisplayFolderColor, withAlphaHex } from '@/shared/lib';
 
 import type { GraphNode } from '../lib/graphTypes';
 import {
   GRAPH_NODE_INTERACTION_DRAGGING,
   GRAPH_NODE_INTERACTION_PRESSING,
 } from './graphNodeInteraction';
-
-function adjustColorBrightness(hexColor: string): string {
-  if (!hexColor.startsWith('#')) return hexColor;
-
-  const hex = hexColor.replace('#', '');
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-
-  if (brightness < 60) {
-    return `#${Math.min(255, Math.floor(r * 1.8))
-      .toString(16)
-      .padStart(2, '0')}${Math.min(255, Math.floor(g * 1.8))
-      .toString(16)
-      .padStart(2, '0')}${Math.min(255, Math.floor(b * 1.8))
-      .toString(16)
-      .padStart(2, '0')}`;
-  }
-  if (brightness > 200) {
-    return `#${Math.floor(r * 0.7)
-      .toString(16)
-      .padStart(2, '0')}${Math.floor(g * 0.7)
-      .toString(16)
-      .padStart(2, '0')}${Math.floor(b * 0.7)
-      .toString(16)
-      .padStart(2, '0')}`;
-  }
-
-  return hexColor;
-}
 
 export const DOT_SIZE = 20;
 export const DOT_SIZE_ACTIVE = 28;
@@ -51,6 +20,7 @@ type GraphNodeDotProps = {
   node: GraphNode;
   color: Colors;
   folderColor?: string;
+  isProActive: boolean;
   dimmed: boolean;
   active: boolean;
   neighbor: boolean;
@@ -62,6 +32,7 @@ export const GraphNodeDot = React.memo(function GraphNodeDot({
   node,
   color,
   folderColor,
+  isProActive,
   dimmed,
   active,
   neighbor,
@@ -71,29 +42,29 @@ export const GraphNodeDot = React.memo(function GraphNodeDot({
   const dotColor = React.useMemo(() => {
     if (node.kind === 'task' && node.task) {
       if (node.task.isDone) {
-        return '#8E8E93';
+        return color.text.muted;
       }
       if (node.task.priority === 'high') {
-        return '#FF453A';
+        return color.accent.delete;
       }
       if (node.task.priority === 'medium') {
-        return '#FF9F0A';
+        return color.accent.cache;
       }
-      return '#0A84FF';
+      return color.accent.primary;
     }
 
     if (node.kind === 'record') {
       if (folderColor) {
-        return adjustColorBrightness(folderColor);
+        return resolveDisplayFolderColor(folderColor, isProActive);
       }
       if (node.record?.status === 'archived') {
-        return '#8E8E93';
+        return color.accent.archive;
       }
-      return '#0A84FF';
+      return color.accent.primary;
     }
 
-    return '#0A84FF';
-  }, [node, folderColor]);
+    return color.accent.primary;
+  }, [node, color, folderColor, isProActive]);
 
   const highlightRingBorderColor = React.useMemo(
     () => withAlphaHex(color.accent.primary, 0.6),

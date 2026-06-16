@@ -340,6 +340,7 @@ const GraphNodeItem = React.memo(
               node={node}
               color={color}
               folderColor={folder?.color}
+              isProActive={isProActive}
               highlighted={highlighted}
               dimmed={dimmed}
               active={active}

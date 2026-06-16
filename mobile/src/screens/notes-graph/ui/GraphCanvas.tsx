@@ -798,6 +798,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
           color={exportCaptureColors}
           foldersById={foldersById}
           isProActive={isProActive}
+          nodeDisplayMode={nodeDisplayMode}
         />
       ) : null}
 

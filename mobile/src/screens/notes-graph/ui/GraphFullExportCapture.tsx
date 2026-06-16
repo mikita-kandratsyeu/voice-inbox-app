@@ -11,7 +11,7 @@ import {
   getGraphExportViewShotCaptureOptions,
   getGraphExportViewShotMaxDimension,
 } from '../lib/computeGraphExportLayout';
-import type { GraphEdge, GraphNode } from '../lib/graphTypes';
+import type { GraphEdge, GraphNode, GraphNodeDisplayMode } from '../lib/graphTypes';
 import { GraphEdgeLayerSvg } from './GraphEdgeLayerSvg';
 import { GraphNodeLayer } from './GraphNodeLayer';
 
@@ -23,11 +23,21 @@ type GraphFullExportCaptureProps = {
   color: Colors;
   foldersById: Map<string, Folder>;
   isProActive: boolean;
+  nodeDisplayMode?: GraphNodeDisplayMode;
 };
 
 export const GraphFullExportCapture = forwardRef<ViewShotRef, GraphFullExportCaptureProps>(
   function GraphFullExportCapture(
-    { nodes, edges, graphWidth, graphHeight, color, foldersById, isProActive },
+    {
+      nodes,
+      edges,
+      graphWidth,
+      graphHeight,
+      color,
+      foldersById,
+      isProActive,
+      nodeDisplayMode = 'cards',
+    },
     ref,
   ) {
     const viewShotMaxDimension = useMemo(() => getGraphExportViewShotMaxDimension(), []);
@@ -87,6 +97,7 @@ export const GraphFullExportCapture = forwardRef<ViewShotRef, GraphFullExportCap
               height={layout.worldHeight}
               matchedNodeIds={null}
               activeNodeId={null}
+              nodeDisplayMode={nodeDisplayMode}
             />
             <GraphNodeLayer
               nodes={nodes}
@@ -98,6 +109,7 @@ export const GraphFullExportCapture = forwardRef<ViewShotRef, GraphFullExportCap
               activeNodeId={null}
               canvasScale={canvasScale}
               interactionsEnabled={false}
+              nodeDisplayMode={nodeDisplayMode}
               onRecordPress={noop}
               onTaskPress={noop}
               onNodeDragStart={noop}
