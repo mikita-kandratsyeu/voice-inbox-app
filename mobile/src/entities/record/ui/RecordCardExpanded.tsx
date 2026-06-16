@@ -516,6 +516,9 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
               {item.title}
             </Text>
           </View>
+          {!showStatusPill && item.isPublicPublished ? (
+            <RecordCardPublicChip color={color} />
+          ) : null}
           {showStatusPill ? (
             <View style={{ flexShrink: 0, maxWidth: '46%' }}>
               <AiStatusPill
@@ -550,7 +553,6 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
             linkNeighborCount={linkNeighborCount}
           />
         ) : null}
-        {item.isPublicPublished ? <RecordCardPublicChip color={color} /> : null}
         <RecordCardOpenTasksPreview tasks={openTaskPreview} color={color} />
         {showFooter ? (
           <>

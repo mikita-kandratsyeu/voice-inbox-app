@@ -144,8 +144,10 @@ export const RecordCard = memo(function RecordCard({
             >
               {item.title}
             </Text>
-            {item.isPublicPublished ? <RecordCardPublicChip color={color} /> : null}
           </View>
+          {!showStatusPill && item.isPublicPublished ? (
+            <RecordCardPublicChip color={color} />
+          ) : null}
           {showStatusPill && (
             <AiStatusPill
               aiStatus={item.aiStatus ?? 'done'}

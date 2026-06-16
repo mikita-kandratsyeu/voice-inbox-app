@@ -1073,7 +1073,7 @@
     "publishUnpublishedTitle": "Публикация снята",
     "publishUnpublishedBody": "По этой ссылке заметку больше не открыть.",
     "publishFailedTitle": "Не удалось опубликовать заметку",
-    "publicBadge": "Доступно по ссылке"
+    "publicBadge": "Общий доступ"
   },
   "settings": {
     "title": "Настройки",

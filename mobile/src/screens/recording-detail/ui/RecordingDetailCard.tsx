@@ -133,7 +133,6 @@ export const RecordingDetailCard = ({
           </View>
         )}
       </View>
-
       {!hideFolderPlacement && (
         <View
           style={{
@@ -220,7 +219,6 @@ export const RecordingDetailCard = ({
           ) : null}
         </View>
       )}
-
       {record.tags && record.tags.length > 0 && (
         <View className="flex-row flex-wrap gap-2">
           {record.tags.map((tag) => (
@@ -228,7 +226,11 @@ export const RecordingDetailCard = ({
           ))}
         </View>
       )}
-      {isPublicPublished ? <RecordCardPublicChip color={color} /> : null}
+      {isPublicPublished && (
+        <View className="flex-row gap-2">
+          <RecordCardPublicChip color={color} />
+        </View>
+      )}
       {record.createdAt && (
         <Text className="mt-0.5 text-xs" style={{ color: color.text.secondary }}>
           {formatRelativeTime(record.createdAt, i18n.language)}

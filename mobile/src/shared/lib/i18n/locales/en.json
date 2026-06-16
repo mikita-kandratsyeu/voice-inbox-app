@@ -1045,7 +1045,7 @@
     "publishUnpublishedTitle": "Unpublished",
     "publishUnpublishedBody": "Public link is no longer available.",
     "publishFailedTitle": "Could not publish note",
-    "publicBadge": "Available by link"
+    "publicBadge": "Shared note"
   },
   "settings": {
     "title": "Settings",
