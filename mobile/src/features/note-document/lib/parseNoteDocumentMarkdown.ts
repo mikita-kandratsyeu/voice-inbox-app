@@ -1,5 +1,8 @@
 import type { TaskItem, TranscriptSegment, VoiceRecord } from '@/entities/record';
 import { stripDocumentTranscriptMarkup } from '@/entities/record/lib/transcriptText';
+import type { WikiLinkResolvableRecord } from '@/features/note-links/lib/resolveWikiLinkTarget';
+import { stripLinkedNotesSectionFromSourceEditor } from '@/features/note-links/lib/appendLinkedNotesSectionForReading';
+import { parseLinkedNotesFromSourceEditor } from '@/features/note-links/lib/parseLinkedNotesFromSourceEditor';
 import { restoreMeetingSummaryFromDocumentMarkdown } from '@/screens/recording-detail/lib/parseMeetingRecapSummary';
 import { i18n } from '@/shared/lib';
 
@@ -19,11 +22,17 @@ export type NoteDocumentPatch = {
   keyPhrases?: string[];
   meetingDialogue?: string | null;
   translatedTranscript?: string | null;
+  linkedRecordIds?: string[];
+};
+
+export type ParseNoteDocumentMarkdownOptions = {
+  syncLinkedNotes?: boolean;
+  wikiLinkRecords?: readonly WikiLinkResolvableRecord[];
 };
 
 export type ParseNoteDocumentResult =
   | { ok: true; patch: NoteDocumentPatch }
-  | { ok: false; error: 'title_missing' };
+  | { ok: false; error: 'title_missing' | 'linked_notes_invalid' };
 
 const TASK_CHECKBOX_RE = /^[-*]\s+\[([ xX])\]\s+(.+)$/;
 const PRIORITY_VALUES = ['high', 'medium', 'low'] as const;
@@ -346,15 +355,33 @@ function hadSectionContent(record: VoiceRecord, sectionId: string): boolean {
 export function parseNoteDocumentMarkdown(
   markdown: string,
   record: VoiceRecord,
+  options?: ParseNoteDocumentMarkdownOptions,
 ): ParseNoteDocumentResult {
-  const title = parseTitleFromPreamble(markdown);
+  let workingMarkdown = markdown;
+  const patch: NoteDocumentPatch = {};
+
+  if (options?.syncLinkedNotes) {
+    const linkedParse = parseLinkedNotesFromSourceEditor(
+      markdown,
+      record.id,
+      options.wikiLinkRecords ?? [],
+    );
+    if (!linkedParse.ok) {
+      return { ok: false, error: 'linked_notes_invalid' };
+    }
+    patch.linkedRecordIds = linkedParse.linkedRecordIds;
+    workingMarkdown = stripLinkedNotesSectionFromSourceEditor(markdown);
+  }
+
+  const title = parseTitleFromPreamble(workingMarkdown);
   if (!title) {
     return { ok: false, error: 'title_missing' };
   }
 
-  const { sections } = splitDocumentSections(markdown);
-  const markerIds = listNoteDocumentSectionIds(markdown);
-  const patch: NoteDocumentPatch = { title };
+  patch.title = title;
+
+  const { sections } = splitDocumentSections(workingMarkdown);
+  const markerIds = listNoteDocumentSectionIds(workingMarkdown);
 
   if (markerIds.has('tags') || hadSectionContent(record, 'tags')) {
     patch.tags = markerIds.has('tags')

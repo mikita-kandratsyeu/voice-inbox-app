@@ -356,4 +356,56 @@ describe('note document markdown', () => {
     expect(parsed.patch.summary).toContain('Решения:');
     expect(parsed.patch.summary).toContain('Выпустить сборку.');
   });
+
+  it('syncs linked notes from source editor section on save', () => {
+    const record = makeRecord();
+    const markdown = [
+      `# ${record.title}`,
+      '',
+      '<!-- vi:section:linked -->',
+      '',
+      '## Linked notes',
+      '',
+      '- [[rec_1776094517413_target|Target note]]',
+    ].join('\n');
+
+    const wikiLinkRecords = [
+      {
+        id: 'rec_1776094517413_target',
+        title: 'Target note',
+        status: 'unread',
+        createdAt: '2026-01-01T10:00:00.000Z',
+      },
+    ];
+
+    const parsed = parseNoteDocumentMarkdown(markdown, record, {
+      syncLinkedNotes: true,
+      wikiLinkRecords,
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    expect(parsed.patch.linkedRecordIds).toEqual(['rec_1776094517413_target']);
+  });
+
+  it('rejects invalid linked notes section on save', () => {
+    const record = makeRecord();
+    const markdown = [
+      `# ${record.title}`,
+      '',
+      '<!-- vi:section:linked -->',
+      '',
+      '## Linked notes',
+      '',
+      '- [[broken',
+    ].join('\n');
+
+    const parsed = parseNoteDocumentMarkdown(markdown, record, {
+      syncLinkedNotes: true,
+      wikiLinkRecords: [],
+    });
+    expect(parsed.ok).toBe(false);
+    if (parsed.ok) return;
+    expect(parsed.error).toBe('linked_notes_invalid');
+  });
 });

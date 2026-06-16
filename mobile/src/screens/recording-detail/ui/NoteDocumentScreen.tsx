@@ -8,6 +8,7 @@ import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import type { EnrichedMarkdownTextInputInstance } from 'react-native-enriched-markdown';
 import { KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
@@ -22,11 +23,14 @@ import {
   useNoteDocument,
 } from '@/features/note-document';
 import type { WikiLinkResolvableRecord } from '@/features/note-links';
+import {
+  appendLinkedNotesSectionForSourceEditor,
+  stripLinkedNotesSectionFromSourceEditor,
+} from '@/features/note-links';
 import { TaskOutcomeSheet, useTaskCompletionFlow } from '@/features/task-outcome';
 import { useColors } from '@/shared/config';
 import { hapticSuccess, useIsTablet } from '@/shared/lib';
 import { HeaderIconButton } from '@/shared/ui';
-import { useShallow } from 'zustand/react/shallow';
 
 export const NoteDocumentScreen = () => {
   const { t } = useTranslation();
@@ -81,9 +85,30 @@ export const NoteDocumentScreen = () => {
     (recordId: string) => {
       const target = records.find((item) => item.id === recordId);
       if (!target) return;
-      navigation.push('RecordingDetail', { record: target });
+      navigation.replace('RecordingDetail', { record: target });
     },
     [navigation, records],
+  );
+
+  const linkedRecordIds = useMemo(
+    () => liveRecord.linkedRecordIds ?? [],
+    [liveRecord.linkedRecordIds],
+  );
+
+  const sourceEditorMarkdown = useMemo(
+    () =>
+      appendLinkedNotesSectionForSourceEditor(
+        documentMarkdown,
+        linkedRecordIds,
+        wikiLinkRecords,
+        t('noteLinks.linked'),
+      ),
+    [documentMarkdown, linkedRecordIds, t, wikiLinkRecords],
+  );
+
+  const sourceEditorDocumentKey = useMemo(
+    () => `${record.id}:${sourceEditorKey}:${linkedRecordIds.join(',')}`,
+    [linkedRecordIds, record.id, sourceEditorKey],
   );
 
   const showTaskUpdateError = useCallback(() => {
@@ -189,13 +214,26 @@ export const NoteDocumentScreen = () => {
     setMode,
   ]);
 
-  const flushEditorMarkdown = useCallback(async () => {
+  const getSourceEditorMarkdown = useCallback(async () => {
     if (mode !== 'source') {
       return documentMarkdown;
     }
     const markdown = await sourceInputRef.current?.getMarkdown();
-    return markdown ?? documentMarkdown;
-  }, [documentMarkdown, mode]);
+    return markdown ?? sourceEditorMarkdown;
+  }, [documentMarkdown, mode, sourceEditorMarkdown]);
+
+  const flushEditorMarkdown = useCallback(async () => {
+    const markdown = await getSourceEditorMarkdown();
+    return mode === 'source' ? stripLinkedNotesSectionFromSourceEditor(markdown) : markdown;
+  }, [getSourceEditorMarkdown, mode]);
+
+  const saveFromEditor = useCallback(async () => {
+    const markdown = await getSourceEditorMarkdown();
+    return save(markdown, {
+      syncLinkedNotes: mode === 'source',
+      wikiLinkRecords,
+    });
+  }, [getSourceEditorMarkdown, mode, save, wikiLinkRecords]);
 
   const close = useCallback(() => {
     KeyboardController.dismiss({ animated: false });
@@ -225,8 +263,7 @@ export const NoteDocumentScreen = () => {
           text: t('recordingDetail.document.save'),
           onPress: () => {
             void (async () => {
-              const markdown = await flushEditorMarkdown();
-              const result = await save(markdown);
+              const result = await saveFromEditor();
               if (result === 'parse_error') {
                 Alert.alert(
                   t('recordingDetail.document.parseErrorTitle'),
@@ -242,12 +279,11 @@ export const NoteDocumentScreen = () => {
         },
       ],
     );
-  }, [close, finishSaving, flushEditorMarkdown, hasUnsavedChanges, reset, save, t]);
+  }, [close, finishSaving, hasUnsavedChanges, reset, saveFromEditor, t]);
 
   const handleSave = useCallback(async () => {
     KeyboardController.dismiss({ animated: false });
-    const markdown = await flushEditorMarkdown();
-    const result = await save(markdown);
+    const result = await saveFromEditor();
     if (result === 'parse_error') {
       Alert.alert(
         t('recordingDetail.document.parseErrorTitle'),
@@ -264,7 +300,7 @@ export const NoteDocumentScreen = () => {
         finishSaving();
       });
     });
-  }, [finishSaving, flushEditorMarkdown, mode, save, setMode, t]);
+  }, [finishSaving, mode, saveFromEditor, setMode, t]);
 
   const handleToggleMode = useCallback(() => {
     if (mode === 'reading') {
@@ -412,6 +448,7 @@ export const NoteDocumentScreen = () => {
                   color={color}
                   documentMarkdown={documentMarkdown}
                   tasks={readingTasks}
+                  linkedRecordIds={linkedRecordIds}
                   wikiLinkRecords={wikiLinkRecords}
                   onOpenRecord={handleOpenLinkedRecord}
                   onToggleTask={handleToggleTaskInReading}
@@ -421,8 +458,8 @@ export const NoteDocumentScreen = () => {
           ) : (
             <NoteDocumentSourceEditor
               color={color}
-              documentKey={`${record.id}:${sourceEditorKey}`}
-              initialMarkdown={documentMarkdown}
+              documentKey={sourceEditorDocumentKey}
+              initialMarkdown={sourceEditorMarkdown}
               onDirty={markEditorDirty}
               editable={!isSaving}
               horizontalPadding={sourceHorizontalPadding}

@@ -2,6 +2,7 @@ import type { VoiceRecord } from '@/entities/record';
 
 import {
   parseNoteDocumentMarkdown,
+  type ParseNoteDocumentMarkdownOptions,
   type ParseNoteDocumentResult,
 } from './parseNoteDocumentMarkdown';
 
@@ -33,16 +34,17 @@ export function shouldUseAsyncParsing(markdownLength: number): boolean {
 export async function parseNoteDocumentAsync(
   markdown: string,
   record: VoiceRecord,
+  options?: ParseNoteDocumentMarkdownOptions,
 ): Promise<ParseNoteDocumentResult> {
   // Small documents: parse synchronously (faster, no overhead)
   if (!shouldUseAsyncParsing(markdown.length)) {
-    return parseNoteDocumentMarkdown(markdown, record);
+    return parseNoteDocumentMarkdown(markdown, record, options);
   }
 
   // Large documents: defer to next tick to avoid blocking UI
   return new Promise<ParseNoteDocumentResult>((resolve) => {
     setTimeout(() => {
-      const result = parseNoteDocumentMarkdown(markdown, record);
+      const result = parseNoteDocumentMarkdown(markdown, record, options);
       resolve(result);
     }, 0);
   });

@@ -5,6 +5,8 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
+import type { WikiLinkResolvableRecord } from '@/features/note-links/lib/resolveWikiLinkTarget';
+import { stripLinkedNotesSectionFromSourceEditor } from '@/features/note-links/lib/appendLinkedNotesSectionForReading';
 import { resolveShareExportContext } from '@/features/share-record/lib/shareExportContext';
 
 import { buildNoteDocumentMarkdown } from '../lib/buildNoteDocumentMarkdown';
@@ -18,6 +20,11 @@ import { parseTasksFromNoteDocumentMarkdown } from '../lib/parseNoteDocumentMark
 import { patchTaskDoneInNoteDocumentMarkdown } from '../lib/patchTaskDoneInNoteDocumentMarkdown';
 
 export type NoteDocumentMode = 'reading' | 'source';
+
+export type SaveNoteDocumentOptions = {
+  syncLinkedNotes?: boolean;
+  wikiLinkRecords?: readonly WikiLinkResolvableRecord[];
+};
 
 type UseNoteDocumentOptions = {
   recordId: string;
@@ -41,6 +48,7 @@ export function useNoteDocument({
   const updateTags = useRecordStore((s) => s.updateTags);
   const updateAiExtras = useRecordStore((s) => s.updateAiExtras);
   const updateTranslation = useRecordStore((s) => s.updateTranslation);
+  const setLinkedRecordIds = useRecordStore((s) => s.setLinkedRecordIds);
 
   const [savedMarkdown, setSavedMarkdown] = useState('');
   const [documentMarkdown, setDocumentMarkdown] = useState('');
@@ -155,14 +163,19 @@ export function useNoteDocument({
   }, [savedMarkdown]);
 
   const save = useCallback(
-    async (markdownToSave?: string): Promise<'ok' | 'parse_error'> => {
+    async (
+      markdownToSave?: string,
+      options?: SaveNoteDocumentOptions,
+    ): Promise<'ok' | 'parse_error'> => {
       const markdown = markdownToSave ?? documentMarkdown;
 
       setIsSaving(true);
 
       try {
-        // Use async parsing for large documents to avoid blocking UI
-        const parsed = await parseNoteDocumentAsync(markdown, liveRecord);
+        const parsed = await parseNoteDocumentAsync(markdown, liveRecord, {
+          syncLinkedNotes: options?.syncLinkedNotes,
+          wikiLinkRecords: options?.wikiLinkRecords,
+        });
 
         if (!parsed.ok) {
           setIsSaving(false);
@@ -185,6 +198,9 @@ export function useNoteDocument({
         }
         if (patch.tags !== undefined) {
           updates.push(updateTags(recordId, patch.tags));
+        }
+        if (patch.linkedRecordIds !== undefined) {
+          updates.push(setLinkedRecordIds(recordId, patch.linkedRecordIds));
         }
 
         const aiExtras: Parameters<typeof updateAiExtras>[1] = {};
@@ -213,13 +229,16 @@ export function useNoteDocument({
         }
 
         await Promise.all(updates);
-        setDocumentMarkdown(markdown);
-        setSavedMarkdown(markdown);
-        savedMarkdownRef.current = markdown;
+        const persistedMarkdown = options?.syncLinkedNotes
+          ? stripLinkedNotesSectionFromSourceEditor(markdown)
+          : markdown;
+        setDocumentMarkdown(persistedMarkdown);
+        setSavedMarkdown(persistedMarkdown);
+        savedMarkdownRef.current = persistedMarkdown;
         setIsEditorDirty(false);
         setCachedNoteDocumentMarkdown(
           buildNoteDocumentCacheKey(liveRecord, i18n.language, resolveShareExportContext()),
-          markdown,
+          persistedMarkdown,
         );
         suppressLiveRecordSyncRef.current = true;
         return 'ok';
@@ -234,6 +253,7 @@ export function useNoteDocument({
       liveRecord,
       recordId,
       renameRecord,
+      setLinkedRecordIds,
       updateAiExtras,
       updateSummary,
       updateTags,

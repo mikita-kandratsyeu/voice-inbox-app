@@ -14,11 +14,13 @@ import {
 } from '../lib/splitNoteDocumentForReading';
 import { NoteDocumentCollapsibleSection } from './NoteDocumentCollapsibleSection';
 import { NoteDocumentEnhancedMarkdown } from './NoteDocumentEnhancedMarkdown';
+import { NoteDocumentLinkedNotesSection } from './NoteDocumentLinkedNotesSection';
 
 type NoteDocumentReadingBodyProps = {
   color: Colors;
   documentMarkdown: string;
   tasks: TaskItem[];
+  linkedRecordIds?: string[];
   wikiLinkRecords?: readonly WikiLinkResolvableRecord[];
   onOpenRecord?: (recordId: string) => void;
   onToggleTask: (taskId: string) => void;
@@ -91,6 +93,7 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
   color,
   documentMarkdown,
   tasks,
+  linkedRecordIds = [],
   wikiLinkRecords,
   onOpenRecord,
   onToggleTask,
@@ -136,15 +139,27 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
     }));
   }, []);
 
+  const linkedNotesBlock = (
+    <NoteDocumentLinkedNotesSection
+      color={color}
+      linkedRecordIds={linkedRecordIds}
+      wikiLinkRecords={wikiLinkRecords}
+      onOpenRecord={onOpenRecord}
+    />
+  );
+
   if (!layout.hasSections) {
     return (
-      <NoteDocumentEnhancedMarkdown
-        color={color}
-        markdown={flatMarkdown}
-        markdownStyle={markdownStyle}
-        wikiLinkRecords={wikiLinkRecords}
-        onOpenRecord={onOpenRecord}
-      />
+      <View style={{ gap: 12 }}>
+        <NoteDocumentEnhancedMarkdown
+          color={color}
+          markdown={flatMarkdown}
+          markdownStyle={markdownStyle}
+          wikiLinkRecords={wikiLinkRecords}
+          onOpenRecord={onOpenRecord}
+        />
+        {linkedNotesBlock}
+      </View>
     );
   }
 
@@ -179,6 +194,7 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
           />
         );
       })}
+      {linkedNotesBlock}
     </View>
   );
 });

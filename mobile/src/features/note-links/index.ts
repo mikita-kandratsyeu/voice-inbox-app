@@ -1,3 +1,10 @@
+export {
+  appendLinkedNotesSectionForReading,
+  appendLinkedNotesSectionForSourceEditor,
+  buildLinkedNotesReadingMarkdown,
+  NOTE_DOCUMENT_LINKED_SECTION_MARKER,
+  stripLinkedNotesSectionFromSourceEditor,
+} from './lib/appendLinkedNotesSectionForReading';
 export { buildAskLinkedNotesForPrompt } from './lib/buildAskLinkedNotesForPrompt';
 export { buildBacklinkRecordIds } from './lib/buildBacklinksForRecord';
 export { countRecordLinkNeighbors } from './lib/countRecordLinkNeighbors';
@@ -17,6 +24,7 @@ export {
   resolveWikiLinkTarget,
   type WikiLinkResolvableRecord,
 } from './lib/resolveWikiLinkTarget';
+export { parseLinkedNotesFromSourceEditor } from './lib/parseLinkedNotesFromSourceEditor';
 export { transformWikiLinksForRender } from './lib/transformWikiLinksForRender';
 export { useRecordBacklinks } from './model/useRecordBacklinks';
 export { useRecordLinkNeighborCount } from './model/useRecordLinkNeighborCount';

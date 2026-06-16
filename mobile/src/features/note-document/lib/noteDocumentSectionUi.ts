@@ -11,6 +11,7 @@ export const NOTE_DOCUMENT_SECTION_LABEL_KEYS: Record<string, string> = {
   transcript: 'recordingDetail.transcript',
   'meeting-dialogue': 'recordingDetail.meetingDialogueTitle',
   'speaker-turns': 'share.speakerTurnsBrief',
+  linked: 'noteLinks.linked',
 };
 
 const COLLAPSED_SECTION_IDS = new Set([

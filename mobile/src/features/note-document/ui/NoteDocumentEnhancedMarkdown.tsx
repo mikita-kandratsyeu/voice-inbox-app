@@ -141,6 +141,8 @@ export const NoteDocumentEnhancedMarkdown = React.memo(function NoteDocumentEnha
     [browserScheme, onOpenRecord],
   );
 
+  const disableLinkPreview = Boolean(onOpenRecord);
+
   const segments = useMemo(
     () => splitMarkdownByCodeBlocksAndCallouts(renderedMarkdown),
     [renderedMarkdown],
@@ -155,6 +157,7 @@ export const NoteDocumentEnhancedMarkdown = React.memo(function NoteDocumentEnha
         markdownStyle={markdownStyle}
         selectionColor={color.accent.primary}
         onLinkPress={handleLinkPress}
+        enableLinkPreview={!disableLinkPreview}
         onTaskListItemPress={onTaskListItemPress}
         allowTrailingMargin
       />
@@ -201,6 +204,7 @@ export const NoteDocumentEnhancedMarkdown = React.memo(function NoteDocumentEnha
                 }}
                 selectionColor={color.accent.primary}
                 onLinkPress={handleLinkPress}
+                enableLinkPreview={!disableLinkPreview}
                 allowTrailingMargin={false}
               />
             </NoteDocumentCallout>
@@ -215,6 +219,7 @@ export const NoteDocumentEnhancedMarkdown = React.memo(function NoteDocumentEnha
             markdownStyle={markdownStyle}
             selectionColor={color.accent.primary}
             onLinkPress={handleLinkPress}
+            enableLinkPreview={!disableLinkPreview}
             onTaskListItemPress={onTaskListItemPress}
             allowTrailingMargin
           />

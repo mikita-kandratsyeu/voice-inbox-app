@@ -144,6 +144,7 @@ type RecordStore = {
   updateTags: (id: string, tags: string[]) => Promise<void>;
   linkRecord: (sourceId: string, targetId: string) => Promise<void>;
   unlinkRecord: (sourceId: string, targetId: string) => Promise<void>;
+  setLinkedRecordIds: (sourceId: string, linkedRecordIds: string[]) => Promise<void>;
   updateRecordingMarks: (id: string, marks: RecordingMark[]) => Promise<void>;
   updateAiExtras: (
     id: string,
@@ -544,6 +545,32 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     await recordRepository.updateLinkedRecordIds(sourceId, linkedRecordIds ?? []);
     set((s) => ({
       records: updateRecord(s.records, sourceId, { linkedRecordIds }),
+    }));
+  },
+
+  setLinkedRecordIds: async (sourceId, linkedRecordIds) => {
+    const source = get().records.find((record) => record.id === sourceId);
+    if (!source) return;
+
+    const seen = new Set<string>();
+    const next: string[] = [];
+    for (const targetId of linkedRecordIds) {
+      const trimmed = targetId.trim();
+      if (!trimmed || trimmed === sourceId || seen.has(trimmed)) continue;
+      seen.add(trimmed);
+      next.push(trimmed);
+    }
+
+    const current = source.linkedRecordIds ?? [];
+    if (current.length === next.length && current.every((id, index) => id === next[index])) {
+      return;
+    }
+
+    await recordRepository.updateLinkedRecordIds(sourceId, next);
+    set((s) => ({
+      records: updateRecord(s.records, sourceId, {
+        linkedRecordIds: next.length > 0 ? next : undefined,
+      }),
     }));
   },
 

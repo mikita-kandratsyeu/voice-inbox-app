@@ -19,7 +19,9 @@ export function transformWikiLinksForRender(
 
   return markdown.replace(WIKI_LINK_REGEX, (full, ref: string, alias?: string) => {
     const targetId = resolveWikiLinkTarget(ref, index);
-    if (!targetId) return full;
+    if (!targetId) {
+      return full;
+    }
 
     const label = escapeMarkdownLinkLabel(alias?.trim() || ref.trim());
     return `[${label}](${buildNoteInternalLinkUrl(targetId)})`;
