@@ -179,7 +179,17 @@
     "supportTitle": "Поддержка — Voice Inbox AI",
     "supportDescription": "Как получить помощь по Voice Inbox AI: контакты, конфиденциальность и условия.",
     "viewerTitle": "Просмотр резервной копии — Voice Inbox AI",
-    "viewerDescription": "Откройте ZIP резервной копии из приложения Voice Inbox AI в браузере. Файлы не загружаются на наши серверы."
+    "viewerDescription": "Откройте ZIP резервной копии из приложения Voice Inbox AI в браузере. Файлы не загружаются на наши серверы.",
+    "sharedNoteTitle": "{title} — Опубликованная заметка",
+    "sharedNoteDescription": "Заметка, опубликованная из Voice Inbox AI.",
+    "sharedNoteMissingTitle": "Опубликованная заметка недоступна — Voice Inbox AI",
+    "sharedNoteMissingDescription": "Ссылка недействительна, срок действия истёк или публикация снята."
+  },
+  "sharedNote": {
+    "visibilityHint": "Ссылка доступна всем, у кого она есть.",
+    "publishedOn": "Опубликовано {date}",
+    "expiresOn": "Ссылка действует до {date}",
+    "backHome": "← На главную"
   },
   "supportPage": {
     "heading": "Поддержка",

@@ -1,5 +1,14 @@
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { ClipboardList, FileText, Globe, ListChecks, Mail, Music, UsersRound } from 'lucide-react-native';
+import dayjs from 'dayjs';
+import {
+  ClipboardList,
+  FileText,
+  Globe,
+  ListChecks,
+  Mail,
+  Music,
+  UsersRound,
+} from 'lucide-react-native';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Keyboard, Text, TouchableOpacity, View } from 'react-native';
@@ -12,6 +21,7 @@ import {
 } from '@/features/share-record';
 import { EmailBodyFormatPicker } from '@/features/share-record/ui/EmailBodyFormatPicker';
 import { useColors } from '@/shared/config';
+import { resolveDayjsLocale } from '@/shared/lib/date';
 import {
   AppBottomSheetContent,
   AppBottomSheetModal,
@@ -52,7 +62,10 @@ type ShareRecordSheetProps = {
     stale?: boolean;
   };
   isPublishing?: boolean;
-  onPublishRecord?: (template: ShareBriefTemplate, expiresIn: '1d' | '7d' | '30d' | 'never') => void;
+  onPublishRecord?: (
+    template: ShareBriefTemplate,
+    expiresIn: '1d' | '7d' | '30d' | 'never',
+  ) => void;
   onUnpublishRecord?: () => void;
   onRefreshPublishStatus?: () => void;
   onSharePublishedLink?: (url: string) => void;
@@ -75,7 +88,7 @@ export const ShareRecordSheet = ({
   onRefreshPublishStatus,
   onSharePublishedLink,
 }: ShareRecordSheetProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const color = useColors();
   const [emailVisible, setEmailVisible] = useState(false);
   const [email, setEmail] = useState('');
@@ -85,8 +98,16 @@ export const ShareRecordSheet = ({
   const [publishExpiry, setPublishExpiry] = useState<'1d' | '7d' | '30d' | 'never'>('7d');
   const [exportFormat, setExportFormat] = useState<ShareRecordExportFormat>('markdown');
   const [sharingTemplate, setSharingTemplate] = useState<ShareBriefTemplate | null>(null);
+  const dayjsLocale = resolveDayjsLocale(i18n.language);
   const trimmedEmail = email.trim();
   const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail), [trimmedEmail]);
+
+  const formattedPublishExpiry = useMemo(() => {
+    if (!publishState?.expiresAt) return null;
+    const date = dayjs(publishState.expiresAt).locale(dayjsLocale);
+    if (!date.isValid()) return publishState.expiresAt;
+    return date.format('D MMM YYYY, HH:mm (UTCZ)');
+  }, [dayjsLocale, publishState?.expiresAt]);
 
   useEffect(() => {
     if (visible) return;
@@ -286,9 +307,11 @@ export const ShareRecordSheet = ({
 
   const handleOpenPublish = useCallback(() => {
     if (isSharing) return;
-    onRefreshPublishStatus?.();
+    if (publishState?.active) {
+      onRefreshPublishStatus?.();
+    }
     setPublishVisible(true);
-  }, [isSharing, onRefreshPublishStatus]);
+  }, [isSharing, onRefreshPublishStatus, publishState?.active]);
 
   const handlePublish = useCallback(() => {
     if (!onPublishRecord || isPublishing) return;
@@ -406,10 +429,18 @@ export const ShareRecordSheet = ({
           {publishState?.active ? (
             <>
               <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
-                {publishState.expiresAt
-                  ? t('share.publishActiveUntil', { date: publishState.expiresAt })
+                {formattedPublishExpiry
+                  ? t('share.publishActiveUntil', { date: formattedPublishExpiry })
                   : t('share.publishActiveNoExpiry')}
               </Text>
+              <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
+                {t('share.publishVisibilityHint')}
+              </Text>
+              {publishState.url ? (
+                <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
+                  {t('share.publishLinkLabel')}: {publishState.url}
+                </Text>
+              ) : null}
               {publishState.stale ? (
                 <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
                   {t('share.publishStaleHint')}
@@ -422,17 +453,16 @@ export const ShareRecordSheet = ({
                 onPrimaryPress={() => {
                   if (publishState.url) onSharePublishedLink?.(publishState.url);
                 }}
-                onPrimaryPressIn={() => {
-                  if (publishState.url) onSharePublishedLink?.(publishState.url);
-                }}
                 onSecondaryPress={handleUnpublish}
-                onSecondaryPressIn={handleUnpublish}
                 primaryDisabled={!publishState.url || isPublishing}
                 secondaryDisabled={isPublishing}
               />
             </>
           ) : (
             <>
+              <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
+                {t('share.publishVisibilityHint')}
+              </Text>
               <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
                 {t('batch.emailBodyFormatHint')}
               </Text>
@@ -480,10 +510,9 @@ export const ShareRecordSheet = ({
                 primaryLabel={t('share.publishNow')}
                 secondaryLabel={t('common.cancel')}
                 onPrimaryPress={handlePublish}
-                onPrimaryPressIn={handlePublish}
                 onSecondaryPress={handleClosePublish}
-                onSecondaryPressIn={handleClosePublish}
                 primaryDisabled={isPublishing}
+                primaryLoading={isPublishing}
                 secondaryDisabled={isPublishing}
               />
             </>

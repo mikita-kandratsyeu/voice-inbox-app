@@ -1,6 +1,5 @@
 import { randomBytes } from 'node:crypto';
 
-import { BASE_URL_OR_FALLBACK } from '@/config/constants';
 import { apiError, checkSupportRateLimit, HttpStatus, parseJsonBody } from '@/lib/api';
 import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import {
@@ -11,6 +10,7 @@ import {
 } from '@/lib/published-note';
 import { isProDevice } from '@/lib/pro-entitlement';
 import { prisma } from '@/lib/prisma';
+import { buildSharedNotePublicUrl } from '@/lib/shared-note-public';
 import { NextResponse } from 'next/server';
 
 const TITLE_MAX = 200;
@@ -46,10 +46,6 @@ function normalizeMarkdown(raw: unknown): string | null {
   return raw;
 }
 
-function buildPublicUrl(token: string): string {
-  return `${BASE_URL_OR_FALLBACK.replace(/\/$/, '')}/s/${token}`;
-}
-
 function tokenFromRandomBytes(): string {
   return randomBytes(18).toString('base64url');
 }
@@ -66,7 +62,7 @@ function toPublishPayload(note: {
     template: note.template,
     expiresAt: note.expiresAt?.toISOString() ?? null,
     publishedAt: note.publishedAt.toISOString(),
-    url: buildPublicUrl(note.token),
+    url: buildSharedNotePublicUrl(note.token),
   };
 }
 
@@ -104,7 +100,9 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const markdown = normalizeMarkdown(body.markdown);
   if (!markdown) {
-    return apiError('Invalid markdown payload', HttpStatus.BAD_REQUEST, { pathname: gate.pathname });
+    return apiError('Invalid markdown payload', HttpStatus.BAD_REQUEST, {
+      pathname: gate.pathname,
+    });
   }
 
   const expiresAt = normalizePublishedNoteExpiresIn(body.expiresIn);

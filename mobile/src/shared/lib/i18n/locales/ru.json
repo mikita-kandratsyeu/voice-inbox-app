@@ -1060,6 +1060,8 @@
     "publishActiveLabel": "Уже опубликовано",
     "publishActiveUntil": "Опубликовано до {{date}}",
     "publishActiveNoExpiry": "Опубликовано без срока",
+    "publishVisibilityHint": "Ссылка доступна всем, у кого она есть.",
+    "publishLinkLabel": "Публичная ссылка",
     "publishShareLink": "Поделиться ссылкой",
     "publishUnpublish": "Снять с публикации",
     "publishStaleHint": "Заметка изменилась после публикации. Обновите ссылку.",

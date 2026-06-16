@@ -1032,6 +1032,8 @@
     "publishActiveLabel": "Already published",
     "publishActiveUntil": "Published until {{date}}",
     "publishActiveNoExpiry": "Published with no expiration",
+    "publishVisibilityHint": "Anyone with this link can open the note.",
+    "publishLinkLabel": "Public link",
     "publishShareLink": "Share link",
     "publishUnpublish": "Unpublish",
     "publishStaleHint": "The note changed since publishing. Update to refresh the public page.",

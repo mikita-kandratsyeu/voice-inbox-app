@@ -179,7 +179,17 @@
     "supportTitle": "Support — Voice Inbox AI",
     "supportDescription": "How to get help with Voice Inbox AI: contact options, privacy, and terms.",
     "viewerTitle": "Backup viewer — Voice Inbox AI",
-    "viewerDescription": "Open a backup ZIP exported from the Voice Inbox AI app in your browser. Nothing is uploaded to our servers."
+    "viewerDescription": "Open a backup ZIP exported from the Voice Inbox AI app in your browser. Nothing is uploaded to our servers.",
+    "sharedNoteTitle": "{title} — Shared note",
+    "sharedNoteDescription": "A note shared from Voice Inbox AI.",
+    "sharedNoteMissingTitle": "Shared note unavailable — Voice Inbox AI",
+    "sharedNoteMissingDescription": "This shared note link is invalid, expired, or has been unpublished."
+  },
+  "sharedNote": {
+    "visibilityHint": "Anyone with this link can view this note.",
+    "publishedOn": "Published on {date}",
+    "expiresOn": "Link expires on {date}",
+    "backHome": "← Back to home"
   },
   "supportPage": {
     "heading": "Support",

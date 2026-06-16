@@ -49,6 +49,7 @@ function InboxShareRecordSheetWithPublish({
     (template: ShareBriefTemplate, expiresIn: '1d' | '7d' | '30d' | 'never') => {
       publish(template, expiresIn)
         .then((next) => {
+          if (!next) return;
           hapticSuccess();
           onPublishStateChanged?.(record.id, true, next.expiresAt);
           Alert.alert(t('share.publishSuccessTitle'), t('share.publishSuccessBody'));
