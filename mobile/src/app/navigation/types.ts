@@ -35,13 +35,20 @@ export type RootStackParamList = {
   Main: undefined | NavigatorScreenParams<BottomTabParamList>;
   RecordModal: undefined;
   TextNoteModal: undefined;
-  RecordingDetail: { record: VoiceRecord };
+  RecordingDetail: { record: VoiceRecord; openLinkPicker?: boolean };
   RecordingAskAI: { record: VoiceRecord };
   WhisperModelPickerRoot: undefined;
   EditTranscript: { record: VoiceRecord };
   NoteDocument: { record: VoiceRecord; initialMode?: 'reading' | 'source' };
   AllTasks: { recordId?: string } | undefined;
-  NotesGraph: { folderId?: string; tag?: string } | undefined;
+  NotesGraph:
+    | {
+        folderId?: string;
+        tag?: string;
+        focusRecordId?: string;
+        localDepth?: 1 | 2;
+      }
+    | undefined;
   InAppEventDetail: { eventId: string };
   Debug: undefined;
 };

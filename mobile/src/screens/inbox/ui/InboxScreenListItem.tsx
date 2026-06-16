@@ -49,6 +49,8 @@ export type InboxScreenListItemProps = {
   onRecordRename: (item: VoiceRecord) => void;
   onRecordDelete: (item: VoiceRecord) => void;
   onOpenAllTasksForNote: (recordId: string) => void;
+  onOpenNotesGraphForRecord: (recordId: string) => void;
+  onLinkNoteForRecord: (record: VoiceRecord) => void;
 };
 
 function InboxScreenListItemInner({
@@ -76,6 +78,8 @@ function InboxScreenListItemInner({
   onRecordRename,
   onRecordDelete,
   onOpenAllTasksForNote,
+  onOpenNotesGraphForRecord,
+  onLinkNoteForRecord,
 }: InboxScreenListItemProps) {
   const { t } = useTranslation();
 
@@ -135,6 +139,8 @@ function InboxScreenListItemInner({
           onUnarchive={isArchivedView ? () => unarchiveRecord(item.item.id) : undefined}
           onSelect={() => onRecordLongPress(item.item)}
           onShare={() => onRecordShare(item.item)}
+          onLinkNote={!isArchivedView ? () => onLinkNoteForRecord(item.item) : undefined}
+          onOpenInGraph={() => onOpenNotesGraphForRecord(item.item.id)}
           onOpenAllTasks={
             !isArchivedView && (item.item.tasks?.length ?? 0) > 0
               ? () => onOpenAllTasksForNote(item.item.id)

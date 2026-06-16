@@ -30,6 +30,7 @@ type RecordingDetailHeaderProps = {
   onDelete: () => void;
   onLinkNote?: () => void;
   onOpenAllTasksForNote?: () => void;
+  onOpenInGraph?: () => void;
 };
 
 export const RecordingDetailHeader = ({
@@ -50,6 +51,7 @@ export const RecordingDetailHeader = ({
   onDelete,
   onLinkNote,
   onOpenAllTasksForNote,
+  onOpenInGraph,
 }: RecordingDetailHeaderProps) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -68,6 +70,7 @@ export const RecordingDetailHeader = ({
     const titleColor = color.text.primary;
     const showAllTasks = Boolean(onOpenAllTasksForNote && !isArchived);
     const showLinkNote = Boolean(onLinkNote && !isArchived);
+    const showOpenInGraph = Boolean(onOpenInGraph);
 
     const showPin = !isArchived;
 
@@ -127,16 +130,39 @@ export const RecordingDetailHeader = ({
       titleColor,
     };
 
+    const openInGraphAction: NativeMenuAction = {
+      id: 'openInGraph',
+      title: t('notesGraph.openForNoteMenu'),
+      image: 'point.3.connected.trianglepath.dotted',
+      imageColor: titleColor,
+      titleColor,
+    };
+
     const folderArchiveShareActions: NativeMenuAction[] = !isPrivateMode
       ? [moveToFolderAction, archiveAction, shareAction]
       : [archiveAction, shareAction];
 
-    const buildPinRenameLinkSection = (): NativeMenuAction[] => {
+    const buildPinRenameSection = (): NativeMenuAction[] => {
       const section: NativeMenuAction[] = [];
       if (showPin) section.push(togglePinAction);
       section.push(renameAction);
-      if (showLinkNote) section.push(linkNoteAction);
       return section;
+    };
+
+    const buildNotesConnectionsSection = (): NativeMenuAction[] => {
+      const section: NativeMenuAction[] = [];
+      if (showLinkNote) section.push(linkNoteAction);
+      if (showOpenInGraph) section.push(openInGraphAction);
+      return section;
+    };
+
+    const appendInlineSection = (sectionId: string, subactions: NativeMenuAction[]) => {
+      if (subactions.length === 0) return;
+      if (subactions.length === 1) {
+        actions.push(subactions[0]!);
+        return;
+      }
+      actions.push(inlineNativeMenuSection(sectionId, titleColor, subactions));
     };
 
     const actions: NativeMenuAction[] = [];
@@ -149,18 +175,16 @@ export const RecordingDetailHeader = ({
         imageColor: titleColor,
         titleColor,
       });
-      actions.push(
-        inlineNativeMenuSection('pinAndRenameSection', titleColor, buildPinRenameLinkSection()),
-      );
+      appendInlineSection('pinAndRenameSection', buildPinRenameSection());
     } else {
-      const pinRenameLinkSection = buildPinRenameLinkSection();
-      if (pinRenameLinkSection.length === 1) {
-        actions.push(pinRenameLinkSection[0]);
-      } else {
-        actions.push(
-          inlineNativeMenuSection('pinAndRenameSection', titleColor, pinRenameLinkSection),
-        );
-      }
+      appendInlineSection('pinAndRenameSection', buildPinRenameSection());
+    }
+
+    const notesConnections = buildNotesConnectionsSection();
+    if (notesConnections.length > 0) {
+      actions.push(
+        inlineNativeMenuSection('notesConnectionsSection', titleColor, notesConnections),
+      );
     }
 
     actions.push(
@@ -188,6 +212,7 @@ export const RecordingDetailHeader = ({
     isPrivateMode,
     onLinkNote,
     onOpenAllTasksForNote,
+    onOpenInGraph,
     record.isPinned,
     t,
   ]);
@@ -267,6 +292,7 @@ export const RecordingDetailHeader = ({
             if (nativeEvent.event === 'share') onShare();
             if (nativeEvent.event === 'delete') onDelete();
             if (nativeEvent.event === 'linkNote') onLinkNote?.();
+            if (nativeEvent.event === 'openInGraph') onOpenInGraph?.();
             if (nativeEvent.event === 'allTasksForNote') onOpenAllTasksForNote?.();
           }}
           actions={menuActions}

@@ -46,6 +46,8 @@ import {
   useTaskCompletionFlow,
 } from '@/features/task-outcome';
 import { useTranscription } from '@/features/transcription';
+import { useOpenNotesGraphForRecord } from '@/screens/notes-graph';
+import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { useAppTheme, useColors } from '@/shared/config';
 import {
   hapticError,
@@ -145,6 +147,12 @@ export const RecordingDetailScreen = () => {
 
   const folders = useFolderStore(useShallow((s) => s.folders));
   const { isProActive } = useProEntitlement();
+  const {
+    openNotesGraphForRecord,
+    notesGraphProSheetVisible,
+    closeNotesGraphProSheet,
+    upgradeNotesGraphFromProSheet,
+  } = useOpenNotesGraphForRecord();
   const scheme = useAppTheme();
 
   const folderPlacement = useMemo(() => {
@@ -182,7 +190,9 @@ export const RecordingDetailScreen = () => {
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
   const [mountedTabs, setMountedTabs] = useState<Set<Tab>>(new Set(['transcript']));
   const [folderPickerVisible, setFolderPickerVisible] = useState(false);
-  const [linkNotePickerVisible, setLinkNotePickerVisible] = useState(false);
+  const [linkNotePickerVisible, setLinkNotePickerVisible] = useState(
+    () => route.params.openLinkPicker === true,
+  );
   const [shareSheetVisible, setShareSheetVisible] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
   const [renameTarget, setRenameTarget] = useState<{ id: string; title: string } | null>(null);
@@ -683,6 +693,10 @@ export const RecordingDetailScreen = () => {
     setLinkNotePickerVisible(true);
   }, []);
 
+  const onOpenInGraph = useCallback(() => {
+    openNotesGraphForRecord(liveRecord.id);
+  }, [liveRecord.id, openNotesGraphForRecord]);
+
   const onCloseLinkNotePicker = useCallback(() => {
     setLinkNotePickerVisible(false);
   }, []);
@@ -849,6 +863,7 @@ export const RecordingDetailScreen = () => {
         onUnarchive={onUnarchive}
         onDelete={onDelete}
         onLinkNote={liveRecord.status !== 'archived' ? onOpenLinkNotePicker : undefined}
+        onOpenInGraph={onOpenInGraph}
         onOpenAllTasksForNote={
           (liveRecord.tasks?.length ?? 0) > 0
             ? () => navigation.navigate('AllTasks', { recordId: liveRecord.id })
@@ -865,6 +880,12 @@ export const RecordingDetailScreen = () => {
         onShareText={handleShare}
         onEmailRecord={handleEmailRecord}
         onShareAudio={handleShareAudio}
+      />
+      <AutomationComingSoonSheet
+        visible={notesGraphProSheetVisible}
+        feature="notesGraph"
+        onClose={closeNotesGraphProSheet}
+        onUpgradePress={upgradeNotesGraphFromProSheet}
       />
       <BlockingProgressModal
         visible={isGeneratingSharePdf && !shareSheetVisible}

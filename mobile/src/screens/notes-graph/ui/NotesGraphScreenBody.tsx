@@ -22,6 +22,8 @@ import { hapticSelection, inlineNativeMenuSection, type NativeMenuAction } from 
 import { EmptyState, HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 import { collectUniqueTags, countFilteredGraphRecords } from '../lib/buildGraphModel';
+import { buildLocalGraphFilters, resolveLocalGraphDepth } from '../lib/buildLocalGraphFilters';
+import { buildLocalGraphNeighborhood } from '../lib/buildLocalGraphNeighborhood';
 import { buildNotesGraphPersistKey } from '../lib/buildNotesGraphPersistKey';
 import { formatGraphAppliedLayoutHeaderSubtitle } from '../lib/formatGraphAppliedLayoutHeaderSubtitle';
 import { getGraphShowArchived, setGraphShowArchived } from '../lib/graphArchivePreferences';
@@ -100,17 +102,27 @@ export const NotesGraphScreenBody = () => {
   const isDark = theme === 'dark';
   const insets = useSafeAreaInsets();
   const { isProActive } = useProEntitlement();
+  const focusRecordId = route.params?.focusRecordId;
+  const localDepth = resolveLocalGraphDepth(route.params?.localDepth);
+  const isLocalGraphMode = Boolean(focusRecordId);
   const canvasRef = useRef<GraphCanvasHandle>(null);
+  const hasFocusedLocalNodeRef = useRef(false);
 
-  const [filters, setFilters] = useState<GraphFilters>(() => ({
-    folderId: route.params?.folderId ?? null,
-    tags: route.params?.tag ? [route.params.tag] : [],
-    showTasks: true,
-    showCompletedTasks: true,
-    showArchived: getGraphShowArchived(),
-    edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
-    layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
-  }));
+  const [filters, setFilters] = useState<GraphFilters>(() => {
+    if (route.params?.focusRecordId) {
+      return buildLocalGraphFilters();
+    }
+
+    return {
+      folderId: route.params?.folderId ?? null,
+      tags: route.params?.tag ? [route.params.tag] : [],
+      showTasks: true,
+      showCompletedTasks: true,
+      showArchived: getGraphShowArchived(),
+      edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
+      layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
+    };
+  });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -174,6 +186,30 @@ export const NotesGraphScreenBody = () => {
   const records = useRecordStore((s) => s.records);
   const updateTasks = useRecordStore((s) => s.updateTasks);
 
+  const localNeighborhood = useMemo(() => {
+    if (!focusRecordId) return null;
+
+    return buildLocalGraphNeighborhood(focusRecordId, records, {
+      maxHops: localDepth,
+      includeSimilar: true,
+      similarLimitPerHop: 3,
+    });
+  }, [focusRecordId, localDepth, records]);
+
+  const graphRecords = useMemo(() => {
+    if (!localNeighborhood) return records;
+
+    const recordsById = new Map(records.map((record) => [record.id, record]));
+    return localNeighborhood.recordIds
+      .map((recordId) => recordsById.get(recordId))
+      .filter((record): record is NonNullable<typeof record> => record != null);
+  }, [localNeighborhood, records]);
+
+  const focusRecordTitle = useMemo(() => {
+    if (!focusRecordId) return null;
+    return records.find((record) => record.id === focusRecordId)?.title ?? null;
+  }, [focusRecordId, records]);
+
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const foldersEnabled = areFoldersEnabledInAiMode(aiExecutionMode, privateAiProvider, isProActive);
@@ -186,11 +222,11 @@ export const NotesGraphScreenBody = () => {
 
   const foldersById = useMemo(() => new Map(folders.map((f) => [f.id, f])), [folders]);
 
-  const availableTags = useMemo(() => collectUniqueTags(records), [records]);
+  const availableTags = useMemo(() => collectUniqueTags(graphRecords), [graphRecords]);
 
   const filteredRecordCount = useMemo(
-    () => countFilteredGraphRecords(records, filters),
-    [records, filters],
+    () => countFilteredGraphRecords(graphRecords, filters),
+    [graphRecords, filters],
   );
 
   const simplifyActive = useMemo(
@@ -207,13 +243,19 @@ export const NotesGraphScreenBody = () => {
 
   const layoutCacheKey = useMemo(
     () =>
-      buildNotesGraphLayoutCacheKey(records, filters, simplifyOverride, windowWidth, windowHeight),
-    [filters, records, simplifyOverride, windowHeight, windowWidth],
+      buildNotesGraphLayoutCacheKey(
+        graphRecords,
+        filters,
+        simplifyOverride,
+        windowWidth,
+        windowHeight,
+      ),
+    [filters, graphRecords, simplifyOverride, windowHeight, windowWidth],
   );
 
   const persistKey = useMemo(
-    () => buildNotesGraphPersistKey(records, filters, simplifyOverride),
-    [filters, records, simplifyOverride],
+    () => buildNotesGraphPersistKey(graphRecords, filters, simplifyOverride),
+    [filters, graphRecords, simplifyOverride],
   );
 
   const syncUnsavedLayoutState = useCallback(() => {
@@ -223,6 +265,17 @@ export const NotesGraphScreenBody = () => {
 
   useEffect(() => {
     let cancelled = false;
+
+    if (isLocalGraphMode) {
+      replaceSessionNodePositions({});
+      savedLayoutSnapshotRef.current = serializeNotesGraphPositions(new Map());
+      setActiveSavedVersion(null);
+      setHasUnsavedLayoutChanges(false);
+      setPersistHydrated(true);
+      return () => {
+        cancelled = true;
+      };
+    }
 
     void (async () => {
       setPersistHydrated(false);
@@ -271,7 +324,7 @@ export const NotesGraphScreenBody = () => {
     return () => {
       cancelled = true;
     };
-  }, [persistKey]);
+  }, [isLocalGraphMode, persistKey]);
 
   useEffect(() => {
     if (!persistHydrated) return;
@@ -317,7 +370,7 @@ export const NotesGraphScreenBody = () => {
       if (cancelled) return;
 
       const built = buildAndCacheNotesGraphLayout(
-        records,
+        graphRecords,
         filters,
         filteredRecordCount,
         simplifyOverride,
@@ -336,11 +389,29 @@ export const NotesGraphScreenBody = () => {
     filters,
     layoutCacheKey,
     persistHydrated,
-    records,
+    graphRecords,
     simplifyOverride,
     windowHeight,
     windowWidth,
   ]);
+
+  useEffect(() => {
+    hasFocusedLocalNodeRef.current = false;
+  }, [focusRecordId, layoutCacheKey]);
+
+  useEffect(() => {
+    if (!isLocalGraphMode || !focusRecordId || isBuilding || layoutNodes.length === 0) return;
+    if (hasFocusedLocalNodeRef.current) return;
+
+    const centerNode = layoutNodes.find((node) => node.record?.id === focusRecordId);
+    if (!centerNode) return;
+
+    hasFocusedLocalNodeRef.current = true;
+
+    void waitForNextFrame().then(() => {
+      canvasRef.current?.focusNode(centerNode);
+    });
+  }, [focusRecordId, isBuilding, isLocalGraphMode, layoutNodes]);
 
   useEffect(() => {
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
@@ -1003,7 +1074,11 @@ export const NotesGraphScreenBody = () => {
   if (isBuilding || !persistHydrated) {
     return (
       <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-        <ScreenHeader title={t('notesGraph.title')} onBack={handleBack} />
+        <ScreenHeader
+          title={isLocalGraphMode ? t('notesGraph.localTitle') : t('notesGraph.title')}
+          subtitle={focusRecordTitle ?? undefined}
+          onBack={handleBack}
+        />
         <GraphBuildingState label={t('notesGraph.building')} />
       </View>
     );
@@ -1012,8 +1087,12 @@ export const NotesGraphScreenBody = () => {
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader
-        title={t('notesGraph.title')}
-        subtitle={appliedLayoutHeaderSubtitle}
+        title={isLocalGraphMode ? t('notesGraph.localTitle') : t('notesGraph.title')}
+        subtitle={
+          isLocalGraphMode
+            ? (focusRecordTitle ?? t('notesGraph.localSubtitle'))
+            : appliedLayoutHeaderSubtitle
+        }
         onBack={handleBack}
         rightSlot={headerRightSlot}
       />

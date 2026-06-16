@@ -218,6 +218,9 @@
   "notesGraph": {
     "title": "Notes graph",
     "menuTitle": "Notes graph",
+    "localTitle": "Note connections",
+    "localSubtitle": "Connections around this note",
+    "openForNoteMenu": "Open in notes graph",
     "proTitle": "See how your notes connect",
     "proBody": "Explore a zoomable graph of your notes — linked by tags, folders, similar content, and open tasks.",
     "building": "Building your notes graph…",
@@ -320,7 +323,14 @@
       "minimap": "Use the minimap in the corner to jump to another area of the graph."
     },
     "minimap": {
-      "resizeA11y": "Resize minimap"
+      "navigateA11y": "Minimap navigation",
+      "resizeA11y": "Resize minimap, current size {{size}}",
+      "resizeHint": "Drag to resize the minimap",
+      "longPressSizeHint": "Tap to jump on the graph. Long press to choose a size preset.",
+      "sizePresetsTitle": "Minimap size",
+      "sizeSmall": "Small",
+      "sizeMedium": "Medium",
+      "sizeLarge": "Large"
     },
     "emptyTitle": "Nothing in the graph yet",
     "emptyDescription": "Add a note or adjust filters — links appear from tags, folders, and similar content.",

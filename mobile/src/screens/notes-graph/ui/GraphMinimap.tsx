@@ -6,9 +6,10 @@ import {
   RoundedRect,
   vec,
 } from '@shopify/react-native-skia';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Maximize2 } from 'lucide-react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import type { SharedValue } from 'react-native-reanimated';
 import Animated, {
@@ -21,7 +22,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import type { Colors } from '@/shared/config';
-import { hapticSelection, withAlphaHex } from '@/shared/lib';
+import { hapticLight, hapticSelection, withAlphaHex } from '@/shared/lib';
 
 import { buildMinimapNodeItems } from '../lib/buildMinimapNodeItems';
 import {
@@ -35,15 +36,20 @@ import {
 } from '../lib/graphMinimapFrame';
 import {
   clampGraphMinimapSize,
+  getGraphMinimapPresetSize,
   getGraphMinimapSize,
   type GraphMinimapSize,
+  type GraphMinimapSizePreset,
   isGraphMinimapAvailable,
+  resolveGraphMinimapPreset,
+  resolveGraphMinimapResizeLimits,
   setGraphMinimapSize,
 } from '../lib/graphMinimapPreferences';
 import { computeMinimapViewportRectWorklet } from '../lib/graphMinimapViewportWorklet';
 import type { GraphNode } from '../lib/graphTypes';
 
-const RESIZE_HANDLE_SIZE = 28;
+const RESIZE_HANDLE_SIZE = 36;
+const MINIMAP_LONG_PRESS_MS = 400;
 const VIEWPORT_STROKE_WIDTH = GRAPH_MINIMAP_VIEWPORT_STROKE * 1.4;
 
 type GraphMinimapProps = {
@@ -60,34 +66,54 @@ type GraphMinimapProps = {
   onNavigate: (translateX: number, translateY: number) => void;
 };
 
-function MinimapResizeHandle({ color, label }: { color: Colors; label: string }) {
+type MinimapResizeHandleProps = {
+  color: Colors;
+  label: string;
+  hint: string;
+  active: boolean;
+};
+
+function MinimapResizeHandle({ color, label, hint, active }: MinimapResizeHandleProps) {
   return (
     <View
       accessibilityRole="adjustable"
       accessibilityLabel={label}
+      accessibilityHint={hint}
       style={{
         position: 'absolute',
-        left: 0,
+        right: 0,
         bottom: 0,
         width: RESIZE_HANDLE_SIZE,
         height: RESIZE_HANDLE_SIZE,
-        alignItems: 'flex-start',
-        justifyContent: 'flex-end',
-        paddingLeft: 6,
-        paddingBottom: 6,
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
     >
       <View
         style={{
-          width: 12,
-          height: 12,
-          borderLeftWidth: 2.5,
-          borderBottomWidth: 2.5,
-          borderColor: color.accent.primary,
-          opacity: 0.8,
-          borderRadius: 2,
+          width: 28,
+          height: 28,
+          borderRadius: 14,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: active
+            ? withAlphaHex(color.accent.primary, 0.14)
+            : color.background.primary,
+          borderWidth: 1.5,
+          borderColor: active ? color.accent.primary : color.border.default,
+          shadowColor: color.shadow.color,
+          shadowOpacity: color.shadow.opacity * 0.45,
+          shadowRadius: 4,
+          shadowOffset: { width: 0, height: 2 },
+          elevation: 3,
         }}
-      />
+      >
+        <Maximize2
+          size={15}
+          color={active ? color.accent.primary : color.text.secondary}
+          strokeWidth={2.2}
+        />
+      </View>
     </View>
   );
 }
@@ -256,10 +282,17 @@ export function GraphMinimap({
 }: GraphMinimapProps) {
   const { t } = useTranslation();
   const [minimapSize, setMinimapSize] = useState<GraphMinimapSize>(() => getGraphMinimapSize());
+  const [isResizing, setIsResizing] = useState(false);
   const minimapWidthSV = useSharedValue(minimapSize.width);
   const minimapHeightSV = useSharedValue(minimapSize.height);
   const resizeStartWidthSV = useSharedValue(minimapSize.width);
   const resizeStartHeightSV = useSharedValue(minimapSize.height);
+  const longPressHandledRef = useRef(false);
+  const resizeLimitHapticRef = useRef<{
+    width: 'min' | 'max' | null;
+    height: 'min' | 'max' | null;
+  }>({ width: null, height: null });
+  const resizePersistedRef = useRef(false);
 
   useEffect(() => {
     minimapWidthSV.value = minimapSize.width;
@@ -267,6 +300,7 @@ export function GraphMinimap({
   }, [minimapHeightSV, minimapSize.height, minimapSize.width, minimapWidthSV]);
 
   const { width: minimapWidth, height: minimapHeight } = minimapSize;
+  const activePreset = useMemo(() => resolveGraphMinimapPreset(minimapSize), [minimapSize]);
   const { width: canvasWidth, height: canvasHeight } = useMemo(
     () => getMinimapCanvasSize(minimapWidth, minimapHeight),
     [minimapHeight, minimapWidth],
@@ -284,9 +318,76 @@ export function GraphMinimap({
     [minimapFrame, nodes],
   );
 
+  const persistResize = useCallback((width: number, height: number) => {
+    setGraphMinimapSize({ width, height });
+    hapticSelection();
+  }, []);
+
+  const applyResize = useCallback(
+    (nextWidth: number, nextHeight: number, options?: { persist?: boolean }) => {
+      const limits = resolveGraphMinimapResizeLimits(nextWidth, nextHeight);
+      const clamped = clampGraphMinimapSize(nextWidth, nextHeight);
+
+      if (limits.width && resizeLimitHapticRef.current.width !== limits.width) {
+        hapticLight();
+        resizeLimitHapticRef.current.width = limits.width;
+      } else if (!limits.width) {
+        resizeLimitHapticRef.current.width = null;
+      }
+
+      if (limits.height && resizeLimitHapticRef.current.height !== limits.height) {
+        hapticLight();
+        resizeLimitHapticRef.current.height = limits.height;
+      } else if (!limits.height) {
+        resizeLimitHapticRef.current.height = null;
+      }
+
+      minimapWidthSV.value = clamped.width;
+      minimapHeightSV.value = clamped.height;
+      setMinimapSize(clamped);
+
+      if (options?.persist) {
+        persistResize(clamped.width, clamped.height);
+      }
+    },
+    [minimapHeightSV, minimapWidthSV, persistResize],
+  );
+
+  const applyPreset = useCallback(
+    (preset: GraphMinimapSizePreset) => {
+      const next = getGraphMinimapPresetSize(preset);
+      resizeLimitHapticRef.current = { width: null, height: null };
+      applyResize(next.width, next.height, { persist: true });
+    },
+    [applyResize],
+  );
+
+  const showSizePresets = useCallback(() => {
+    if (disabled) return;
+
+    Alert.alert(t('notesGraph.minimap.sizePresetsTitle'), undefined, [
+      {
+        text: t('notesGraph.minimap.sizeSmall'),
+        onPress: () => applyPreset('small'),
+      },
+      {
+        text: t('notesGraph.minimap.sizeMedium'),
+        onPress: () => applyPreset('medium'),
+      },
+      {
+        text: t('notesGraph.minimap.sizeLarge'),
+        onPress: () => applyPreset('large'),
+      },
+      { text: t('common.cancel'), style: 'destructive' },
+    ]);
+  }, [applyPreset, disabled, t]);
+
   const handlePress = useCallback(
     (event: { nativeEvent: { locationX: number; locationY: number } }) => {
-      if (disabled) return;
+      if (disabled || isResizing || longPressHandledRef.current) {
+        longPressHandledRef.current = false;
+        return;
+      }
 
       const worldPoint = minimapToWorldPoint(
         event.nativeEvent.locationX,
@@ -297,6 +398,7 @@ export function GraphMinimap({
       );
       if (!worldPoint) return;
 
+      hapticLight();
       const currentScale = scale.value;
       onNavigate(
         viewportWidth / 2 - worldPoint.x * currentScale,
@@ -307,6 +409,7 @@ export function GraphMinimap({
       canvasHeight,
       canvasWidth,
       disabled,
+      isResizing,
       minimapFrame,
       onNavigate,
       scale,
@@ -315,20 +418,22 @@ export function GraphMinimap({
     ],
   );
 
-  const applyResize = useCallback(
-    (nextWidth: number, nextHeight: number) => {
-      const clamped = clampGraphMinimapSize(nextWidth, nextHeight);
-      minimapWidthSV.value = clamped.width;
-      minimapHeightSV.value = clamped.height;
-      setMinimapSize(clamped);
-    },
-    [minimapHeightSV, minimapWidthSV],
-  );
-
-  const persistResize = useCallback((width: number, height: number) => {
-    setGraphMinimapSize({ width, height });
-    hapticSelection();
+  const handleResizeBegin = useCallback(() => {
+    resizeLimitHapticRef.current = { width: null, height: null };
+    resizePersistedRef.current = false;
+    setIsResizing(true);
   }, []);
+
+  const handleResizeEnd = useCallback(
+    (width: number, height: number) => {
+      resizeLimitHapticRef.current = { width: null, height: null };
+      setIsResizing(false);
+      if (resizePersistedRef.current) return;
+      resizePersistedRef.current = true;
+      persistResize(width, height);
+    },
+    [persistResize],
+  );
 
   const resizeGesture = useMemo(
     () =>
@@ -337,24 +442,26 @@ export function GraphMinimap({
           'worklet';
           resizeStartWidthSV.value = minimapWidthSV.value;
           resizeStartHeightSV.value = minimapHeightSV.value;
+          scheduleOnRN(handleResizeBegin);
         })
         .onUpdate((event) => {
           'worklet';
           scheduleOnRN(
             applyResize,
-            resizeStartWidthSV.value - event.translationX,
+            resizeStartWidthSV.value + event.translationX,
             resizeStartHeightSV.value + event.translationY,
           );
         })
         .onEnd(() => {
           'worklet';
-          scheduleOnRN(persistResize, minimapWidthSV.value, minimapHeightSV.value);
+          scheduleOnRN(handleResizeEnd, minimapWidthSV.value, minimapHeightSV.value);
         }),
     [
       applyResize,
+      handleResizeBegin,
+      handleResizeEnd,
       minimapHeightSV,
       minimapWidthSV,
-      persistResize,
       resizeStartHeightSV,
       resizeStartWidthSV,
     ],
@@ -368,12 +475,13 @@ export function GraphMinimap({
   }));
 
   const handlePressIn = useCallback(() => {
+    if (isResizing) return;
     setIsPressed(true);
     scaleAnimation.value = withTiming(0.98, {
       duration: 100,
       easing: Easing.out(Easing.ease),
     });
-  }, [scaleAnimation]);
+  }, [isResizing, scaleAnimation]);
 
   const handlePressOut = useCallback(() => {
     setIsPressed(false);
@@ -383,7 +491,21 @@ export function GraphMinimap({
     });
   }, [scaleAnimation]);
 
+  const handleLongPress = useCallback(() => {
+    if (disabled || isResizing) return;
+    longPressHandledRef.current = true;
+    hapticSelection();
+    showSizePresets();
+  }, [disabled, isResizing, showSizePresets]);
+
   if (!isGraphMinimapAvailable(nodes.length)) return null;
+
+  const presetLabelKey =
+    activePreset === 'small'
+      ? 'notesGraph.minimap.sizeSmall'
+      : activePreset === 'large'
+        ? 'notesGraph.minimap.sizeLarge'
+        : 'notesGraph.minimap.sizeMedium';
 
   return (
     <Animated.View
@@ -404,15 +526,20 @@ export function GraphMinimap({
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        disabled={disabled}
+        onLongPress={handleLongPress}
+        delayLongPress={MINIMAP_LONG_PRESS_MS}
+        disabled={disabled || isResizing}
         accessibilityRole="button"
+        accessibilityLabel={t('notesGraph.minimap.navigateA11y')}
+        accessibilityHint={t('notesGraph.minimap.longPressSizeHint')}
+        accessibilityState={{ disabled: disabled || isResizing }}
         style={{
           flex: 1,
           borderRadius: 16,
           overflow: 'hidden',
           backgroundColor: color.background.primary,
           borderWidth: 2,
-          borderColor: isPressed ? color.accent.primary : color.border.default,
+          borderColor: isPressed || isResizing ? color.accent.primary : color.border.default,
           shadowColor: color.shadow.color,
           shadowOpacity: isPressed ? color.shadow.opacity * 1.2 : color.shadow.opacity * 0.9,
           shadowRadius: isPressed ? 14 : 12,
@@ -436,8 +563,13 @@ export function GraphMinimap({
       </Pressable>
 
       <GestureDetector gesture={resizeGesture}>
-        <View collapsable={false}>
-          <MinimapResizeHandle color={color} label={t('notesGraph.minimap.resizeA11y')} />
+        <View collapsable={false} pointerEvents="box-only">
+          <MinimapResizeHandle
+            color={color}
+            active={isResizing}
+            label={t('notesGraph.minimap.resizeA11y', { size: t(presetLabelKey) })}
+            hint={t('notesGraph.minimap.resizeHint')}
+          />
         </View>
       </GestureDetector>
     </Animated.View>

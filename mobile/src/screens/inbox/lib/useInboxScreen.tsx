@@ -399,6 +399,24 @@ export function useInboxScreen() {
     setNotesGraphProSheetVisible(true);
   }, [isProActive, navigation]);
 
+  const handleOpenNotesGraphForRecord = useCallback(
+    (recordId: string) => {
+      if (isProActive) {
+        navigation.navigate('NotesGraph', { focusRecordId: recordId, localDepth: 2 });
+        return;
+      }
+      setNotesGraphProSheetVisible(true);
+    },
+    [isProActive, navigation],
+  );
+
+  const handleLinkNoteForRecord = useCallback(
+    (record: VoiceRecord) => {
+      navigation.navigate('RecordingDetail', { record, openLinkPicker: true });
+    },
+    [navigation],
+  );
+
   const handleCloseNotesGraphProSheet = useCallback(() => {
     setNotesGraphProSheetVisible(false);
   }, []);
@@ -911,6 +929,8 @@ export function useInboxScreen() {
         onRecordRename={handleRecordRename}
         onRecordDelete={handleRecordDelete}
         onOpenAllTasksForNote={handleOpenAllTasksForNote}
+        onOpenNotesGraphForRecord={handleOpenNotesGraphForRecord}
+        onLinkNoteForRecord={handleLinkNoteForRecord}
       />
     ),
     [
@@ -935,6 +955,8 @@ export function useInboxScreen() {
       handleRecordRename,
       handleRecordDelete,
       handleOpenAllTasksForNote,
+      handleOpenNotesGraphForRecord,
+      handleLinkNoteForRecord,
       batchSelect,
     ],
   );
