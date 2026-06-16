@@ -1,5 +1,5 @@
 import { BASE_URL_OR_FALLBACK } from '@/config/constants';
-import { apiError, checkSupportRateLimit, HttpStatus, parseJsonBody } from '@/lib/api';
+import { apiError, checkShareEmailRateLimit, HttpStatus, parseJsonBody } from '@/lib/api';
 import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import { isSmtpConfigured, sendTransactionalMail } from '@/lib/mailer';
 import {
@@ -102,7 +102,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     return gate.response;
   }
 
-  const rate = await checkSupportRateLimit(gate.deviceId);
+  const rate = await checkShareEmailRateLimit(gate.deviceId);
   if (rate) return rate;
 
   if (!isSmtpConfigured()) {

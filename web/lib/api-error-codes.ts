@@ -20,6 +20,7 @@ export const ApiErrorCode = {
   RateLimit: 'rate_limit',
   SupportRateLimited: 'support_rate_limited',
   PublishRateLimited: 'publish_rate_limited',
+  ShareEmailRateLimited: 'share_email_rate_limited',
   DuplicateId: 'duplicate_id',
   NotFound: 'not_found',
   ServiceUnavailable: 'service_unavailable',

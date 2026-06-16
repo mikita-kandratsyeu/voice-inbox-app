@@ -62,6 +62,11 @@ export const PUBLISH_RATE_LIMIT_KEY_PREFIX = 'rl_publish:';
 export const PUBLISH_RATE_LIMIT_WINDOW_SECONDS = 3600;
 export const PUBLISH_RATE_LIMIT_MAX_REQUESTS = 30;
 
+// Share note by email (mobile) — per device, rolling window
+export const SHARE_EMAIL_RATE_LIMIT_KEY_PREFIX = 'rl_share_email:';
+export const SHARE_EMAIL_RATE_LIMIT_WINDOW_SECONDS = 3600;
+export const SHARE_EMAIL_RATE_LIMIT_MAX_REQUESTS = 30;
+
 // Admin login rate limit (per IP)
 export const ADMIN_LOGIN_RATE_LIMIT_KEY_PREFIX = 'rl_admin_login:';
 export const ADMIN_LOGIN_RATE_LIMIT_WINDOW_SECONDS = 60;
