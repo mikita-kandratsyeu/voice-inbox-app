@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Share } from 'react-native';
+import { Alert } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import { usePublishRecord } from '@/features/publish-record';
@@ -42,8 +42,15 @@ function InboxShareRecordSheetWithPublish({
   onPublishStateChanged?: (recordId: string, active: boolean, expiresAt: string | null) => void;
 }) {
   const { t } = useTranslation();
-  const { published, isStale, publishLoading, publish, unpublish, refreshPublishStatus } =
-    usePublishRecord(record);
+  const {
+    published,
+    isStale,
+    publishLoading,
+    publish,
+    unpublish,
+    refreshPublishStatus,
+    shareLink,
+  } = usePublishRecord(record);
 
   const handlePublishRecord = useCallback(
     (template: ShareBriefTemplate, expiresIn: '1d' | '7d' | '30d' | 'never') => {
@@ -75,9 +82,10 @@ function InboxShareRecordSheetWithPublish({
       });
   }, [onPublishStateChanged, record.id, t, unpublish]);
 
-  const handleSharePublishedLink = useCallback((url: string) => {
-    Share.share({ message: url, url }).catch(() => {});
-  }, []);
+  const handleSharePublishedLink = useCallback(
+    () => shareLink(record.title),
+    [record.title, shareLink],
+  );
 
   return (
     <ShareRecordSheet

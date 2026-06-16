@@ -1,5 +1,5 @@
 import { BASE_URL_OR_FALLBACK } from '@/config/constants';
-import { prepareShareNoteEmailMarkdown } from '@/lib/prepareShareNoteEmailMarkdown';
+import { prepareShareNoteWebMarkdown } from '@/lib/prepareShareNoteWebMarkdown';
 import { isPublishedNoteActive } from '@/lib/published-note';
 import { prisma } from '@/lib/prisma';
 
@@ -42,7 +42,7 @@ export async function loadSharedNoteByToken(token: string): Promise<SharedNotePu
 
   return {
     title: note.title,
-    markdown: prepareShareNoteEmailMarkdown(note.markdown),
+    markdown: prepareShareNoteWebMarkdown(note.markdown),
     publishedAt: note.publishedAt,
     expiresAt: note.expiresAt,
   };

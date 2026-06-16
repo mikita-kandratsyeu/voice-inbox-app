@@ -186,7 +186,7 @@
     "sharedNoteMissingDescription": "Ссылка недействительна, срок действия истёк или публикация снята."
   },
   "sharedNote": {
-    "visibilityHint": "Ссылка доступна всем, у кого она есть.",
+    "visibilityHint": "Откроется у всех, у кого есть ссылка.",
     "publishedOn": "Опубликовано {date}",
     "expiresOn": "Ссылка действует до {date}",
     "backHome": "← На главную"

@@ -25,6 +25,7 @@ import { resolveDayjsLocale } from '@/shared/lib/date';
 import {
   AppBottomSheetContent,
   AppBottomSheetModal,
+  CopyableUserCodeCard,
   SheetFooterButtons,
   SheetHeader,
   SheetSelectionChip,
@@ -68,7 +69,7 @@ type ShareRecordSheetProps = {
   ) => void;
   onUnpublishRecord?: () => void;
   onRefreshPublishStatus?: () => void;
-  onSharePublishedLink?: (url: string) => void;
+  onSharePublishedLink?: () => void | Promise<void>;
 };
 
 export const ShareRecordSheet = ({
@@ -98,6 +99,7 @@ export const ShareRecordSheet = ({
   const [publishExpiry, setPublishExpiry] = useState<'1d' | '7d' | '30d' | 'never'>('7d');
   const [exportFormat, setExportFormat] = useState<ShareRecordExportFormat>('markdown');
   const [sharingTemplate, setSharingTemplate] = useState<ShareBriefTemplate | null>(null);
+  const [isSharingPublishedLink, setIsSharingPublishedLink] = useState(false);
   const dayjsLocale = resolveDayjsLocale(i18n.language);
   const trimmedEmail = email.trim();
   const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail), [trimmedEmail]);
@@ -117,6 +119,7 @@ export const ShareRecordSheet = ({
     setPublishVisible(false);
     setExportFormat('markdown');
     setSharingTemplate(null);
+    setIsSharingPublishedLink(false);
   }, [visible]);
 
   const isSharing = sharingTemplate != null;
@@ -324,9 +327,27 @@ export const ShareRecordSheet = ({
   }, [isPublishing, onUnpublishRecord]);
 
   const handleClosePublish = useCallback(() => {
-    if (isPublishing) return;
+    if (isPublishing || isSharingPublishedLink) return;
     setPublishVisible(false);
-  }, [isPublishing]);
+  }, [isPublishing, isSharingPublishedLink]);
+
+  const handleSharePublishedLinkPress = useCallback(() => {
+    if (!publishState?.url || isPublishing || isSharingPublishedLink || !onSharePublishedLink) {
+      return;
+    }
+
+    setIsSharingPublishedLink(true);
+    void (async () => {
+      try {
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() => resolve());
+        });
+        await onSharePublishedLink();
+      } finally {
+        setIsSharingPublishedLink(false);
+      }
+    })();
+  }, [isPublishing, isSharingPublishedLink, onSharePublishedLink, publishState?.url]);
 
   return (
     <AppBottomSheetModal visible={visible} onClose={handleClose}>
@@ -428,34 +449,67 @@ export const ShareRecordSheet = ({
 
           {publishState?.active ? (
             <>
-              <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
-                {formattedPublishExpiry
-                  ? t('share.publishActiveUntil', { date: formattedPublishExpiry })
-                  : t('share.publishActiveNoExpiry')}
-              </Text>
-              <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
-                {t('share.publishVisibilityHint')}
-              </Text>
-              {publishState.url ? (
-                <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
-                  {t('share.publishLinkLabel')}: {publishState.url}
-                </Text>
-              ) : null}
-              {publishState.stale ? (
+              <View
+                className="gap-2 rounded-2xl border px-4 py-3"
+                style={{
+                  borderColor: color.border.default,
+                  backgroundColor: color.background.tertiary,
+                }}
+              >
+                <View className="flex-row items-center gap-2">
+                  <Globe size={16} color={color.accent.primary} strokeWidth={2.2} />
+                  <Text className="text-[13px] font-semibold" style={{ color: color.text.primary }}>
+                    {t('share.publishActiveLabel')}
+                  </Text>
+                </View>
                 <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
-                  {t('share.publishStaleHint')}
+                  {formattedPublishExpiry
+                    ? t('share.publishActiveUntil', { date: formattedPublishExpiry })
+                    : t('share.publishActiveNoExpiry')}
                 </Text>
+                <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
+                  {t('share.publishVisibilityHint')}
+                </Text>
+              </View>
+
+              {publishState.url ? (
+                <CopyableUserCodeCard
+                  userCode={publishState.url}
+                  color={color}
+                  variant="link"
+                  disabled={isPublishing || isSharingPublishedLink}
+                  hint={t('share.publishLinkLabel')}
+                  copyLabel={t('share.publishCopyLink')}
+                  copiedLabel={t('share.publishLinkCopied')}
+                  copyAccessibilityLabel={t('share.publishCopyLink')}
+                />
               ) : null}
+
+              {publishState.stale ? (
+                <View
+                  className="rounded-xl border px-3 py-2.5"
+                  style={{
+                    borderColor: color.border.default,
+                    backgroundColor: color.background.secondary,
+                  }}
+                >
+                  <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
+                    {t('share.publishStaleHint')}
+                  </Text>
+                </View>
+              ) : null}
+
               <SheetFooterButtons
                 color={color}
                 primaryLabel={t('share.publishShareLink')}
-                secondaryLabel={t('share.publishUnpublish')}
-                onPrimaryPress={() => {
-                  if (publishState.url) onSharePublishedLink?.(publishState.url);
+                onPrimaryPress={handleSharePublishedLinkPress}
+                primaryDisabled={!publishState.url || isPublishing || isSharingPublishedLink}
+                primaryLoading={isSharingPublishedLink}
+                bottomAction={{
+                  label: t('share.publishUnpublish'),
+                  onPress: handleUnpublish,
+                  disabled: isPublishing || isSharingPublishedLink,
                 }}
-                onSecondaryPress={handleUnpublish}
-                primaryDisabled={!publishState.url || isPublishing}
-                secondaryDisabled={isPublishing}
               />
             </>
           ) : (

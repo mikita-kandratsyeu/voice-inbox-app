@@ -10,6 +10,7 @@ import {
   getPublishedNoteState,
   upsertPublishedNoteState,
 } from '../lib/publishedNoteStorage';
+import { sharePublishedNoteLink } from '../lib/sharePublishedNoteLink';
 import type { PublishedNoteState, PublishExpiryPreset } from './types';
 
 type PublishState = {
@@ -136,6 +137,17 @@ export function usePublishRecord(record: VoiceRecord) {
     }
   }, [record.id]);
 
+  const shareLink = useCallback(
+    async (title: string) => {
+      await refresh();
+      const local = await getPublishedNoteState(record.id);
+      const url = local?.shareUrl?.trim();
+      if (!url) return;
+      await sharePublishedNoteLink(url, title);
+    },
+    [record.id, refresh],
+  );
+
   return {
     published: state.current,
     publishLoading: state.loading,
@@ -143,5 +155,6 @@ export function usePublishRecord(record: VoiceRecord) {
     publish: doPublish,
     unpublish: doUnpublish,
     refreshPublishStatus: refresh,
+    shareLink,
   };
 }

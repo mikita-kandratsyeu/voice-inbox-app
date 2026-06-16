@@ -1034,6 +1034,8 @@
     "publishActiveNoExpiry": "Published with no expiration",
     "publishVisibilityHint": "Anyone with this link can open the note.",
     "publishLinkLabel": "Public link",
+    "publishCopyLink": "Copy link",
+    "publishLinkCopied": "Link copied",
     "publishShareLink": "Share link",
     "publishUnpublish": "Unpublish",
     "publishStaleHint": "The note changed since publishing. Update to refresh the public page.",

@@ -39,6 +39,9 @@ export {
 } from './bottom-sheet';
 export type { ButtonProps, ButtonShape, ButtonSize, ButtonVariant } from './Button';
 export { Button, BUTTON_BORDER_RADIUS } from './Button';
+export { CopyableLinkRow } from './CopyableLinkRow';
+export type { CopyableUserCodeCardProps } from './CopyableUserCodeCard';
+export { CopyableUserCodeCard } from './CopyableUserCodeCard';
 export {
   getDocumentSectionHeadingStyle,
   NOTE_DOCUMENT_BODY_FONT_SIZE,

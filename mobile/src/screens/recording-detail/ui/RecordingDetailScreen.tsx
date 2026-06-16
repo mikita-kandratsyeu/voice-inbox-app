@@ -8,7 +8,6 @@ import {
   LayoutAnimation,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
-  Share,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -251,8 +250,15 @@ export const RecordingDetailScreen = () => {
     cancelAiGeneration(liveRecord.id);
   }, [cancelAiGeneration, liveRecord.id]);
   const { shareRecord, shareAudio, emailRecord, isGeneratingSharePdf } = useShareRecord();
-  const { published, isStale, publishLoading, publish, unpublish, refreshPublishStatus } =
-    usePublishRecord(liveRecord);
+  const {
+    published,
+    isStale,
+    publishLoading,
+    publish,
+    unpublish,
+    refreshPublishStatus,
+    shareLink,
+  } = usePublishRecord(liveRecord);
   const onDeleted = useCallback(() => navigation.goBack(), [navigation]);
   const { promptDelete } = useRecordActions({ onDeleted });
 
@@ -552,9 +558,10 @@ export const RecordingDetailScreen = () => {
         Alert.alert(t('share.publishFailedTitle'), toUserFacingFetchErrorFromUnknown(err));
       });
   }, [t, unpublish]);
-  const handleSharePublishedLink = useCallback((url: string) => {
-    Share.share({ message: url, url }).catch(() => {});
-  }, []);
+  const handleSharePublishedLink = useCallback(
+    () => shareLink(liveRecord.title),
+    [liveRecord.title, shareLink],
+  );
 
   const scrollPadding = isTablet ? 24 : 16;
   const contentMaxWidth = useTabletContentMaxWidth('wide');

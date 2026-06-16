@@ -419,10 +419,10 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
             </View>
             {showSourceChip || item.isPublicPublished ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                {item.isPublicPublished ? <RecordCardPublicChip color={color} /> : null}
                 {showSourceChip ? (
                   <RecordCardSourceChip label={sourceChipLabel} color={color} />
                 ) : null}
-                {item.isPublicPublished ? <RecordCardPublicChip color={color} /> : null}
               </View>
             ) : null}
             {showTypeBadges ? (
