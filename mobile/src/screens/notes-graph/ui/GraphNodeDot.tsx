@@ -1,20 +1,31 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
 import { resolveDisplayFolderColor, withAlphaHex } from '@/shared/lib';
 
+import {
+  GRAPH_NODE_DOT_CONTAINER_SIZE,
+  GRAPH_NODE_DOT_LABEL_FONT_SIZE,
+  GRAPH_NODE_DOT_LABEL_GAP,
+  GRAPH_NODE_DOT_LABEL_MAX_WIDTH,
+  GRAPH_NODE_DOT_SIZE,
+  GRAPH_NODE_DOT_SIZE_ACTIVE,
+  GRAPH_NODE_DOT_SIZE_NEIGHBOR,
+} from '../lib/graphNodeDotLayout';
 import type { GraphNode } from '../lib/graphTypes';
+import { resolveGraphNodeDotLabel } from '../lib/resolveGraphNodeDotLabel';
 import {
   GRAPH_NODE_INTERACTION_DRAGGING,
   GRAPH_NODE_INTERACTION_PRESSING,
 } from './graphNodeInteraction';
 
-export const DOT_SIZE = 20;
-export const DOT_SIZE_ACTIVE = 28;
-export const DOT_SIZE_NEIGHBOR = 24;
+export const DOT_SIZE = GRAPH_NODE_DOT_SIZE;
+export const DOT_SIZE_ACTIVE = GRAPH_NODE_DOT_SIZE_ACTIVE;
+export const DOT_SIZE_NEIGHBOR = GRAPH_NODE_DOT_SIZE_NEIGHBOR;
+export const DOT_CONTAINER_SIZE = GRAPH_NODE_DOT_CONTAINER_SIZE;
 
 type GraphNodeDotProps = {
   node: GraphNode;
@@ -39,6 +50,8 @@ export const GraphNodeDot = React.memo(function GraphNodeDot({
   highlighted,
   interactionPhase,
 }: GraphNodeDotProps) {
+  const label = React.useMemo(() => resolveGraphNodeDotLabel(node), [node]);
+
   const dotColor = React.useMemo(() => {
     if (node.kind === 'task' && node.task) {
       if (node.task.isDone) {
@@ -125,18 +138,56 @@ export const GraphNodeDot = React.memo(function GraphNodeDot({
     };
   }, [highlighted, active, highlightRingBorderColor]);
 
+  const labelStyle = React.useMemo(
+    () => ({
+      marginTop: GRAPH_NODE_DOT_LABEL_GAP,
+      marginLeft: (GRAPH_NODE_DOT_CONTAINER_SIZE - GRAPH_NODE_DOT_LABEL_MAX_WIDTH) / 2,
+      width: GRAPH_NODE_DOT_LABEL_MAX_WIDTH,
+      fontSize: GRAPH_NODE_DOT_LABEL_FONT_SIZE,
+      fontWeight: '500' as const,
+      lineHeight: GRAPH_NODE_DOT_LABEL_FONT_SIZE + 3,
+      textAlign: 'center' as const,
+      color:
+        active || highlighted
+          ? color.text.primary
+          : neighbor
+            ? color.text.secondary
+            : color.text.muted,
+      opacity: dimmed ? 0.35 : active || highlighted || neighbor ? 1 : 0.88,
+      textShadowColor: withAlphaHex(color.background.primary, 0.92),
+      textShadowOffset: { width: 0, height: 0 },
+      textShadowRadius: 4,
+    }),
+    [
+      active,
+      color.background.primary,
+      color.text.muted,
+      color.text.primary,
+      color.text.secondary,
+      dimmed,
+      highlighted,
+      neighbor,
+    ],
+  );
+
   return (
-    <View
-      style={{
-        width: DOT_SIZE_ACTIVE + 12,
-        height: DOT_SIZE_ACTIVE + 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-      pointerEvents="none"
-    >
-      {highlighted || active ? <Animated.View style={highlightRingStyle} /> : null}
-      <Animated.View style={containerStyle} />
+    <View style={{ width: GRAPH_NODE_DOT_CONTAINER_SIZE }} pointerEvents="none">
+      <View
+        style={{
+          width: GRAPH_NODE_DOT_CONTAINER_SIZE,
+          height: GRAPH_NODE_DOT_CONTAINER_SIZE,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {highlighted || active ? <Animated.View style={highlightRingStyle} /> : null}
+        <Animated.View style={containerStyle} />
+      </View>
+      {label ? (
+        <Text style={labelStyle} numberOfLines={1} ellipsizeMode="tail">
+          {label}
+        </Text>
+      ) : null}
     </View>
   );
 });

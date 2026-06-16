@@ -1,3 +1,4 @@
+import { DOT_CONTAINER_SIZE, DOT_SIZE_ACTIVE } from '../ui/GraphNodeDot';
 import type { GraphNode, GraphNodeDisplayMode } from './graphTypes';
 import {
   RECORD_NODE_HEIGHT,
@@ -20,8 +21,7 @@ export function nodeCenter(
   displayMode: GraphNodeDisplayMode = 'cards',
 ): { x: number; y: number } {
   if (displayMode === 'dots') {
-    const dotContainerSize = 40;
-    return { x: node.x + dotContainerSize / 2, y: node.y + dotContainerSize / 2 };
+    return { x: node.x + DOT_CONTAINER_SIZE / 2, y: node.y + DOT_CONTAINER_SIZE / 2 };
   }
   const { width, height } = nodeDimensions(node.kind);
   return { x: node.x + width / 2, y: node.y + height / 2 };
@@ -34,10 +34,9 @@ export function nodeBorderAnchor(
   displayMode: GraphNodeDisplayMode = 'cards',
 ): { x: number; y: number } {
   if (displayMode === 'dots') {
-    const dotContainerSize = 40;
-    const dotRadius = 28 / 2;
-    const cx = node.x + dotContainerSize / 2;
-    const cy = node.y + dotContainerSize / 2;
+    const dotRadius = DOT_SIZE_ACTIVE / 2;
+    const cx = node.x + DOT_CONTAINER_SIZE / 2;
+    const cy = node.y + DOT_CONTAINER_SIZE / 2;
     const dx = toward.x - cx;
     const dy = toward.y - cy;
     const distance = Math.hypot(dx, dy);
