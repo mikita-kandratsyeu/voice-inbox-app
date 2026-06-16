@@ -339,8 +339,8 @@ export const NoteDocumentScreen = () => {
   const readingContentContainerStyle = useMemo(
     () => ({
       paddingHorizontal: readingHorizontalPadding,
-      paddingTop: 20,
-      paddingBottom: scrollPaddingBottom + 32,
+      paddingTop: 12,
+      paddingBottom: scrollPaddingBottom + 40,
       ...(isTablet && { alignItems: 'center' as const }),
     }),
     [isTablet, readingHorizontalPadding, scrollPaddingBottom],

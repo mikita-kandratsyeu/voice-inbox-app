@@ -239,7 +239,7 @@ export const RelatedNotesSection = ({
   };
 
   return (
-    <View style={{ gap: 10, marginTop: 8 }}>
+    <View style={{ gap: 10 }}>
       <Text
         style={{
           color: color.text.secondary,

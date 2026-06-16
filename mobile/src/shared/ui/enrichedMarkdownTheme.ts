@@ -1,6 +1,7 @@
 import type { MarkdownStyle, MarkdownTextInputStyle } from 'react-native-enriched-markdown';
 
 import type { Colors } from '@/shared/config';
+import { withAlphaHex } from '@/shared/lib';
 
 import {
   NOTE_DOCUMENT_BODY_FONT_SIZE,
@@ -105,6 +106,144 @@ export function buildNoteDocumentEnrichedMarkdownStyle(color: Colors): MarkdownS
       headerBackgroundColor: color.background.secondary,
       rowEvenBackgroundColor: color.background.primary,
       rowOddBackgroundColor: color.background.secondary,
+    },
+  };
+}
+
+/** Article-style typography for note document reading mode. */
+export function buildNoteDocumentReadingMarkdownStyle(color: Colors): MarkdownStyle {
+  const accent = color.accent.primary;
+
+  return {
+    paragraph: {
+      fontSize: 18,
+      lineHeight: 30,
+      color: color.text.primary,
+      marginBottom: 16,
+    },
+    h1: {
+      fontSize: 28,
+      lineHeight: 34,
+      fontWeight: '700',
+      color: color.text.primary,
+      marginBottom: 12,
+    },
+    h2: {
+      fontSize: 22,
+      lineHeight: 30,
+      fontWeight: '700',
+      color: color.text.primary,
+      marginTop: 28,
+      marginBottom: 12,
+    },
+    h3: {
+      fontSize: 19,
+      lineHeight: 28,
+      fontWeight: '600',
+      color: color.text.primary,
+      marginTop: 20,
+      marginBottom: 8,
+    },
+    strong: {
+      fontWeight: 'bold',
+      color: color.text.primary,
+    },
+    em: {
+      fontStyle: 'italic',
+      color: color.text.secondary,
+    },
+    strikethrough: {
+      color: color.text.muted,
+    },
+    link: {
+      color: accent,
+      underline: false,
+    },
+    thematicBreak: {
+      color: color.border.default,
+      height: 1,
+      marginTop: 32,
+      marginBottom: 32,
+    },
+    list: {
+      fontSize: 18,
+      lineHeight: 30,
+      color: color.text.primary,
+      bulletColor: accent,
+      markerColor: color.text.secondary,
+      marginBottom: 16,
+    },
+    blockquote: {
+      borderColor: withAlphaHex(accent, 0.35),
+      borderWidth: 3,
+      backgroundColor: withAlphaHex(color.background.secondary, 0.65),
+      marginBottom: 16,
+    },
+    code: {
+      fontFamily: 'Menlo',
+      fontSize: 15,
+      color: color.text.primary,
+      backgroundColor: color.background.tertiary,
+      borderColor: color.border.default,
+    },
+    codeBlock: {
+      fontFamily: 'Menlo',
+      fontSize: 14,
+      lineHeight: 22,
+      color: color.text.primary,
+      backgroundColor: color.background.secondary,
+      borderColor: color.border.default,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 16,
+    },
+    taskList: {
+      checkedColor: accent,
+      borderColor: color.border.default,
+      checkmarkColor: color.background.primary,
+      checkedTextColor: color.text.muted,
+      checkedStrikethrough: true,
+    },
+    table: {
+      borderColor: color.border.default,
+      headerBackgroundColor: color.background.secondary,
+      rowEvenBackgroundColor: color.background.primary,
+      rowOddBackgroundColor: color.background.secondary,
+    },
+  };
+}
+
+/** Compact typography inside collapsible sections (section title is in the header). */
+export function buildNoteDocumentSectionBodyMarkdownStyle(color: Colors): MarkdownStyle {
+  const reading = buildNoteDocumentReadingMarkdownStyle(color);
+
+  return {
+    ...reading,
+    h2: {
+      ...reading.h2,
+      fontSize: 18,
+      lineHeight: 26,
+      marginTop: 12,
+      marginBottom: 8,
+    },
+    h3: {
+      ...reading.h3,
+      fontSize: 17,
+      lineHeight: 24,
+      marginTop: 10,
+      marginBottom: 6,
+    },
+    paragraph: {
+      ...reading.paragraph,
+      fontSize: 17,
+      lineHeight: 28,
+      marginBottom: 14,
+    },
+    list: {
+      ...reading.list,
+      fontSize: 17,
+      lineHeight: 28,
+      marginBottom: 14,
     },
   };
 }

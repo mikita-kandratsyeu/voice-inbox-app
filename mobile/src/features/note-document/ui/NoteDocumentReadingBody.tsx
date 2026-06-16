@@ -6,15 +6,20 @@ import type { TaskItem } from '@/entities/record';
 import type { WikiLinkResolvableRecord } from '@/features/note-links';
 import type { Colors } from '@/shared/config';
 
-import { buildNoteDocumentEnrichedMarkdownStyle } from '../lib/enrichedMarkdownTheme';
+import {
+  buildNoteDocumentReadingMarkdownStyle,
+  buildNoteDocumentSectionBodyMarkdownStyle,
+} from '../lib/enrichedMarkdownTheme';
 import { stripNoteDocumentMarkers } from '../lib/noteDocumentSectionMarkers';
 import {
   type NoteDocumentReadingSectionSegment,
   splitNoteDocumentForReading,
 } from '../lib/splitNoteDocumentForReading';
+import { splitNoteDocumentPreamble } from '../lib/splitNoteDocumentPreamble';
 import { NoteDocumentCollapsibleSection } from './NoteDocumentCollapsibleSection';
 import { NoteDocumentEnhancedMarkdown } from './NoteDocumentEnhancedMarkdown';
 import { NoteDocumentLinkedNotesSection } from './NoteDocumentLinkedNotesSection';
+import { NoteDocumentReadingHero } from './NoteDocumentReadingHero';
 
 type NoteDocumentReadingBodyProps = {
   color: Colors;
@@ -28,7 +33,7 @@ type NoteDocumentReadingBodyProps = {
 
 type NoteDocumentReadingSectionRowProps = {
   color: Colors;
-  markdownStyle: ReturnType<typeof buildNoteDocumentEnrichedMarkdownStyle>;
+  markdownStyle: ReturnType<typeof buildNoteDocumentSectionBodyMarkdownStyle>;
   segment: NoteDocumentReadingSectionSegment;
   expanded: boolean;
   wikiLinkRecords?: readonly WikiLinkResolvableRecord[];
@@ -37,6 +42,8 @@ type NoteDocumentReadingSectionRowProps = {
   tasks: TaskItem[];
   onToggleTask: (taskId: string) => void;
 };
+
+const READING_SECTION_GAP = 20;
 
 function buildInitialExpandedState(
   sections: NoteDocumentReadingSectionSegment[],
@@ -76,6 +83,8 @@ const NoteDocumentReadingSectionRow = React.memo(function NoteDocumentReadingSec
       title={segment.title}
       expanded={expanded}
       onToggle={handleToggle}
+      variant="reading"
+      sectionId={segment.id}
     >
       <NoteDocumentEnhancedMarkdown
         color={color}
@@ -98,12 +107,20 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
   onOpenRecord,
   onToggleTask,
 }: NoteDocumentReadingBodyProps) {
-  const markdownStyle = useMemo(() => buildNoteDocumentEnrichedMarkdownStyle(color), [color]);
+  const readingMarkdownStyle = useMemo(
+    () => buildNoteDocumentReadingMarkdownStyle(color),
+    [color],
+  );
+  const sectionMarkdownStyle = useMemo(
+    () => buildNoteDocumentSectionBodyMarkdownStyle(color),
+    [color],
+  );
   const layout = useMemo(() => splitNoteDocumentForReading(documentMarkdown), [documentMarkdown]);
   const flatMarkdown = useMemo(
     () => stripNoteDocumentMarkers(documentMarkdown),
     [documentMarkdown],
   );
+  const flatPreamble = useMemo(() => splitNoteDocumentPreamble(flatMarkdown), [flatMarkdown]);
   const sectionSegments = useMemo(
     () =>
       layout.segments.filter(
@@ -150,32 +167,41 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
 
   if (!layout.hasSections) {
     return (
-      <View style={{ gap: 12 }}>
-        <NoteDocumentEnhancedMarkdown
-          color={color}
-          markdown={flatMarkdown}
-          markdownStyle={markdownStyle}
-          wikiLinkRecords={wikiLinkRecords}
-          onOpenRecord={onOpenRecord}
-        />
+      <View style={{ gap: READING_SECTION_GAP }}>
+        <NoteDocumentReadingHero color={color} parts={flatPreamble} />
+        {flatPreamble.bodyMarkdown ? (
+          <NoteDocumentEnhancedMarkdown
+            color={color}
+            markdown={flatPreamble.bodyMarkdown}
+            markdownStyle={readingMarkdownStyle}
+            wikiLinkRecords={wikiLinkRecords}
+            onOpenRecord={onOpenRecord}
+          />
+        ) : null}
         {linkedNotesBlock}
       </View>
     );
   }
 
   return (
-    <View style={{ gap: 12 }}>
+    <View style={{ gap: READING_SECTION_GAP }}>
       {layout.segments.map((segment) => {
         if (segment.kind === 'preamble') {
+          const preamble = splitNoteDocumentPreamble(segment.markdown);
+
           return (
-            <NoteDocumentEnhancedMarkdown
-              key="preamble"
-              color={color}
-              markdown={segment.markdown}
-              markdownStyle={markdownStyle}
-              wikiLinkRecords={wikiLinkRecords}
-              onOpenRecord={onOpenRecord}
-            />
+            <View key="preamble" style={{ gap: 12 }}>
+              <NoteDocumentReadingHero color={color} parts={preamble} />
+              {preamble.bodyMarkdown ? (
+                <NoteDocumentEnhancedMarkdown
+                  color={color}
+                  markdown={preamble.bodyMarkdown}
+                  markdownStyle={readingMarkdownStyle}
+                  wikiLinkRecords={wikiLinkRecords}
+                  onOpenRecord={onOpenRecord}
+                />
+              ) : null}
+            </View>
           );
         }
 
@@ -183,7 +209,7 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
           <NoteDocumentReadingSectionRow
             key={segment.id}
             color={color}
-            markdownStyle={markdownStyle}
+            markdownStyle={sectionMarkdownStyle}
             segment={segment}
             expanded={expandedBySectionId[segment.id] ?? segment.defaultExpanded}
             wikiLinkRecords={wikiLinkRecords}

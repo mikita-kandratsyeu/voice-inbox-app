@@ -35,7 +35,7 @@ import {
 import { resumeCloudSummarizeForRecord, useAiProcessing } from '@/features/ai-processing';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { warmNoteDocumentMarkdown } from '@/features/note-document';
-import { LinkNotePickerSheet, RecordLinksSection } from '@/features/note-links';
+import { LinkNotePickerSheet } from '@/features/note-links';
 import { useProEntitlement } from '@/features/pro-license';
 import { usePublishRecord } from '@/features/publish-record';
 import { useRecordActions } from '@/features/record-actions';
@@ -78,7 +78,7 @@ import { RecordingDetailHeader } from './RecordingDetailHeader';
 import { RecordingDetailTabBar } from './RecordingDetailTabBar';
 import { RecordingMarksSection } from './RecordingMarksSection';
 import { RecordingMeetingModeSection } from './RecordingMeetingModeSection';
-import { RelatedNotesSection } from './RelatedNotesSection';
+import { RecordNeighborSections } from './RecordNeighborSections';
 import { ShareRecordSheet } from './ShareRecordSheet';
 import { SummaryTab } from './SummaryTab';
 import { TaskEditSheet } from './TaskEditSheet';
@@ -1193,18 +1193,12 @@ export const RecordingDetailScreen = () => {
         </View>
 
         <View style={{ width: '100%', maxWidth: contentMaxWidth }}>
-          <RecordLinksSection
+          <RecordNeighborSections
             record={liveRecord}
             color={color}
             onLinkNote={onOpenLinkNotePicker}
             onUnlinkNote={onUnlinkNote}
-          />
-          <RelatedNotesSection
-            recordId={liveRecord.id}
-            color={color}
-            linkedRecordIds={liveRecord.linkedRecordIds ?? []}
-            canLink={liveRecord.status !== 'archived'}
-            onLinkToRecord={onLinkRelatedNote}
+            onLinkRelatedNote={onLinkRelatedNote}
           />
         </View>
 

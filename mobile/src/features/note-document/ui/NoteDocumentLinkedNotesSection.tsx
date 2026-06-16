@@ -7,7 +7,9 @@ import {
 } from '@/features/note-links';
 import type { Colors } from '@/shared/config';
 
-import { buildNoteDocumentEnrichedMarkdownStyle } from '../lib/enrichedMarkdownTheme';
+import {
+  buildNoteDocumentSectionBodyMarkdownStyle,
+} from '../lib/enrichedMarkdownTheme';
 import { NoteDocumentCollapsibleSection } from './NoteDocumentCollapsibleSection';
 import { NoteDocumentEnhancedMarkdown } from './NoteDocumentEnhancedMarkdown';
 
@@ -26,7 +28,7 @@ export const NoteDocumentLinkedNotesSection = React.memo(function NoteDocumentLi
 }: NoteDocumentLinkedNotesSectionProps) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
-  const markdownStyle = useMemo(() => buildNoteDocumentEnrichedMarkdownStyle(color), [color]);
+  const markdownStyle = useMemo(() => buildNoteDocumentSectionBodyMarkdownStyle(color), [color]);
 
   const linkedNotesMarkdown = useMemo(
     () =>
@@ -50,6 +52,8 @@ export const NoteDocumentLinkedNotesSection = React.memo(function NoteDocumentLi
       title={t('noteLinks.linked')}
       expanded={expanded}
       onToggle={handleToggle}
+      variant="reading"
+      sectionId="linked"
     >
       <NoteDocumentEnhancedMarkdown
         color={color}

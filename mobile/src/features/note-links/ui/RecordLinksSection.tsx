@@ -61,7 +61,7 @@ export function RecordLinksSection({
   if (!showLinkedSection && !backlinkRecords.length) return null;
 
   return (
-    <View style={{ gap: 14, marginTop: 8 }}>
+    <View style={{ gap: 18 }}>
       {showLinkedSection && (
         <LinkSectionBlock
           title={t('noteLinks.linked')}
