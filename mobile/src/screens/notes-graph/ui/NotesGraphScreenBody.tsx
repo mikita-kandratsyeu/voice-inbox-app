@@ -922,7 +922,7 @@ export const NotesGraphScreenBody = () => {
     actions.push({
       id: 'toggleNodeDisplayMode',
       title: t('notesGraph.controls.toggleNodeDisplayMode'),
-      image: nodeDisplayMode === 'dots' ? 'square.grid.2x2' : 'circle.fill',
+      image: 'dot.square',
       imageColor: titleColor,
       titleColor,
       state: nodeDisplayMode === 'dots' ? 'on' : 'off',
