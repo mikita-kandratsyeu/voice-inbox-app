@@ -5,8 +5,8 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import type { WikiLinkResolvableRecord } from '@/features/note-links/lib/resolveWikiLinkTarget';
 import { stripLinkedNotesSectionFromSourceEditor } from '@/features/note-links/lib/appendLinkedNotesSectionForReading';
+import type { WikiLinkResolvableRecord } from '@/features/note-links/lib/resolveWikiLinkTarget';
 import { resolveShareExportContext } from '@/features/share-record/lib/shareExportContext';
 
 import { buildNoteDocumentMarkdown } from '../lib/buildNoteDocumentMarkdown';

@@ -19,12 +19,12 @@ export {
   NOTE_LINK_SCHEME_PREFIX,
   parseNoteInternalLinkUrl,
 } from './lib/noteInternalLinkScheme';
+export { parseLinkedNotesFromSourceEditor } from './lib/parseLinkedNotesFromSourceEditor';
 export {
   buildWikiLinkIndex,
   resolveWikiLinkTarget,
   type WikiLinkResolvableRecord,
 } from './lib/resolveWikiLinkTarget';
-export { parseLinkedNotesFromSourceEditor } from './lib/parseLinkedNotesFromSourceEditor';
 export { transformWikiLinksForRender } from './lib/transformWikiLinksForRender';
 export { useRecordBacklinks } from './model/useRecordBacklinks';
 export { useRecordLinkNeighborCount } from './model/useRecordLinkNeighborCount';

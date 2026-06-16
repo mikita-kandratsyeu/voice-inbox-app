@@ -133,12 +133,15 @@ export const NoteDocumentEnhancedMarkdown = React.memo(function NoteDocumentEnha
   const browserScheme = useAppTheme();
   const renderedMarkdown = useRenderedMarkdown(markdown, wikiLinkRecords);
 
-  const handleLinkPress = useCallback(
-    createNoteMarkdownLinkPressHandler({
-      browserScheme,
-      onOpenRecord: onOpenRecord ?? (() => {}),
-    }),
-    [browserScheme, onOpenRecord],
+  const noopOnOpenRecord = useCallback(() => {}, []);
+
+  const handleLinkPress = useMemo(
+    () =>
+      createNoteMarkdownLinkPressHandler({
+        browserScheme,
+        onOpenRecord: onOpenRecord ?? noopOnOpenRecord,
+      }),
+    [browserScheme, onOpenRecord, noopOnOpenRecord],
   );
 
   const disableLinkPreview = Boolean(onOpenRecord);

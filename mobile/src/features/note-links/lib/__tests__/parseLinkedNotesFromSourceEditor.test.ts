@@ -69,7 +69,9 @@ describe('parseLinkedNotesFromSourceEditor', () => {
 
 - [[Missing Note]]
 `;
-    expect(parseLinkedNotesFromSourceEditor(unresolved, 'rec_self', records)).toEqual({ ok: false });
+    expect(parseLinkedNotesFromSourceEditor(unresolved, 'rec_self', records)).toEqual({
+      ok: false,
+    });
 
     const selfLink = `${NOTE_DOCUMENT_LINKED_SECTION_MARKER}
 

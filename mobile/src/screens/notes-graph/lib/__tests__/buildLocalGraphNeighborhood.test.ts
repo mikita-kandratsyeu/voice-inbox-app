@@ -1,11 +1,16 @@
-const mockRankSimilarRecords = jest.fn(() => [] as { id: string }[]);
-
 jest.mock('@/features/related-notes/lib/computeRecordSimilarity', () => ({
+  __esModule: true,
   buildSimilarityContext: () => ({ useEmbeddings: false, centroid: null }),
   MIN_HYBRID_SCORE: 0.35,
   MIN_LEXICAL_ONLY_SCORE: 0.08,
-  rankSimilarRecords: mockRankSimilarRecords,
+  rankSimilarRecords: jest.fn(() => [] as { id: string }[]),
 }));
+
+const { rankSimilarRecords: mockRankSimilarRecords } = jest.requireMock(
+  '@/features/related-notes/lib/computeRecordSimilarity',
+) as {
+  rankSimilarRecords: jest.Mock;
+};
 
 import type { VoiceRecord } from '@/entities/record';
 

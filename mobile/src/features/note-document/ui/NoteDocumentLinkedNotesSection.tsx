@@ -8,9 +8,7 @@ import {
 import type { Colors } from '@/shared/config';
 import { useIsTablet } from '@/shared/lib';
 
-import {
-  buildNoteDocumentSectionBodyMarkdownStyle,
-} from '../lib/enrichedMarkdownTheme';
+import { buildNoteDocumentSectionBodyMarkdownStyle } from '../lib/enrichedMarkdownTheme';
 import { NoteDocumentCollapsibleSection } from './NoteDocumentCollapsibleSection';
 import { NoteDocumentEnhancedMarkdown } from './NoteDocumentEnhancedMarkdown';
 

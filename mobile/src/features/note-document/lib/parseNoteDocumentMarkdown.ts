@@ -1,8 +1,8 @@
 import type { TaskItem, TranscriptSegment, VoiceRecord } from '@/entities/record';
 import { stripDocumentTranscriptMarkup } from '@/entities/record/lib/transcriptText';
-import type { WikiLinkResolvableRecord } from '@/features/note-links/lib/resolveWikiLinkTarget';
 import { stripLinkedNotesSectionFromSourceEditor } from '@/features/note-links/lib/appendLinkedNotesSectionForReading';
 import { parseLinkedNotesFromSourceEditor } from '@/features/note-links/lib/parseLinkedNotesFromSourceEditor';
+import type { WikiLinkResolvableRecord } from '@/features/note-links/lib/resolveWikiLinkTarget';
 import { restoreMeetingSummaryFromDocumentMarkdown } from '@/screens/recording-detail/lib/parseMeetingRecapSummary';
 import { i18n } from '@/shared/lib';
 
