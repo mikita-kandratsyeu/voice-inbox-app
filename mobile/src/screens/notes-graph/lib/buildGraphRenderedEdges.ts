@@ -110,14 +110,20 @@ export function buildGraphRenderedEdges(
       continue;
     }
 
-    const bend = bendLayout.get(edge.id) ?? { index: 0, total: 1 };
-    const distance = Math.hypot(to.x - from.x, to.y - from.y);
-    const curvature = computeEdgeCurvature(distance, edge.id, bend, edge.kind);
+    let path: string;
 
-    const useCubic = edge.kind === 'similar' || edge.kind === 'contains';
-    const path = useCubic
-      ? computeCubicEdgePath(from, to, curvature)
-      : computeQuadraticEdgePath(from, to, curvature);
+    if (displayMode === 'dots') {
+      path = `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
+    } else {
+      const bend = bendLayout.get(edge.id) ?? { index: 0, total: 1 };
+      const distance = Math.hypot(to.x - from.x, to.y - from.y);
+      const curvature = computeEdgeCurvature(distance, edge.id, bend, edge.kind);
+
+      const useCubic = edge.kind === 'similar' || edge.kind === 'contains';
+      path = useCubic
+        ? computeCubicEdgePath(from, to, curvature)
+        : computeQuadraticEdgePath(from, to, curvature);
+    }
 
     const emphasis = resolveGraphEdgeEmphasis(edge, matchedNodeIds, activeNodeId);
     const shouldAnimate =

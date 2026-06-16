@@ -12,6 +12,37 @@ import {
   GRAPH_NODE_INTERACTION_PRESSING,
 } from './graphNodeInteraction';
 
+function adjustColorBrightness(hexColor: string): string {
+  if (!hexColor.startsWith('#')) return hexColor;
+
+  const hex = hexColor.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+  if (brightness < 60) {
+    return `#${Math.min(255, Math.floor(r * 1.8))
+      .toString(16)
+      .padStart(2, '0')}${Math.min(255, Math.floor(g * 1.8))
+      .toString(16)
+      .padStart(2, '0')}${Math.min(255, Math.floor(b * 1.8))
+      .toString(16)
+      .padStart(2, '0')}`;
+  }
+  if (brightness > 200) {
+    return `#${Math.floor(r * 0.7)
+      .toString(16)
+      .padStart(2, '0')}${Math.floor(g * 0.7)
+      .toString(16)
+      .padStart(2, '0')}${Math.floor(b * 0.7)
+      .toString(16)
+      .padStart(2, '0')}`;
+  }
+
+  return hexColor;
+}
+
 export const DOT_SIZE = 20;
 export const DOT_SIZE_ACTIVE = 28;
 export const DOT_SIZE_NEIGHBOR = 24;
@@ -38,33 +69,31 @@ export const GraphNodeDot = React.memo(function GraphNodeDot({
   interactionPhase,
 }: GraphNodeDotProps) {
   const dotColor = React.useMemo(() => {
-    // Задачи - разные цвета в зависимости от статуса
     if (node.kind === 'task' && node.task) {
       if (node.task.isDone) {
-        return color.text.tertiary; // Серый для выполненных
+        return '#8E8E93';
       }
       if (node.task.priority === 'high') {
-        return '#FF3B30'; // Красный для высокого приоритета
+        return '#FF453A';
       }
       if (node.task.priority === 'medium') {
-        return '#FF9500'; // Оранжевый для среднего приоритета
+        return '#FF9F0A';
       }
-      return '#007AFF'; // Синий для обычных задач
+      return '#0A84FF';
     }
 
-    // Заметки - цвет папки или акцентный цвет
     if (node.kind === 'record') {
       if (folderColor) {
-        return folderColor;
+        return adjustColorBrightness(folderColor);
       }
       if (node.record?.status === 'archived') {
-        return color.text.tertiary;
+        return '#8E8E93';
       }
-      return color.accent.primary;
+      return '#0A84FF';
     }
 
-    return color.accent.primary;
-  }, [node, color, folderColor]);
+    return '#0A84FF';
+  }, [node, folderColor]);
 
   const highlightRingBorderColor = React.useMemo(
     () => withAlphaHex(color.accent.primary, 0.6),
