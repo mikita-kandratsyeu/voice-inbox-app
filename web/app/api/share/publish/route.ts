@@ -4,10 +4,14 @@ import { apiError, checkPublishRateLimit, HttpStatus, parseJsonBody } from '@/li
 import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import {
   computePublishedNoteHash,
-  isPublishedNoteActive,
   normalizePublishedNoteExpiresIn,
   normalizePublishedNoteTemplate,
 } from '@/lib/published-note';
+import {
+  deletePublishedNoteById,
+  purgeExpiredPublishedNotes,
+  purgePublishedNoteIfInactive,
+} from '@/lib/published-note-store';
 import { isProDevice } from '@/lib/pro-entitlement';
 import { prisma } from '@/lib/prisma';
 import { buildSharedNotePublicUrl } from '@/lib/shared-note-public';
@@ -78,6 +82,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const limitError = await checkPublishRateLimit(gate.deviceId);
   if (limitError) return limitError;
 
+  await purgeExpiredPublishedNotes();
+
   const body = await parseJsonBody<PublishNoteBody>(request);
   if (!body) {
     return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, { pathname: gate.pathname });
@@ -125,7 +131,6 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       markdown,
       contentHash,
       expiresAt,
-      revokedAt: null,
       publishedAt: new Date(),
     },
     create: {
@@ -158,9 +163,12 @@ export const GET = async (request: Request): Promise<NextResponse> => {
     return apiError('recordId is required', HttpStatus.BAD_REQUEST, { pathname: gate.pathname });
   }
 
+  await purgeExpiredPublishedNotes();
+
   const note = await prisma.publishedNote.findUnique({
     where: { deviceId_recordId: { deviceId: gate.deviceId, recordId } },
     select: {
+      id: true,
       token: true,
       template: true,
       expiresAt: true,
@@ -170,7 +178,11 @@ export const GET = async (request: Request): Promise<NextResponse> => {
     },
   });
 
-  if (!note || !isPublishedNoteActive({ expiresAt: note.expiresAt, revokedAt: note.revokedAt })) {
+  if (!note) {
+    return NextResponse.json({ active: false }, { status: HttpStatus.NOT_FOUND });
+  }
+
+  if (await purgePublishedNoteIfInactive(note)) {
     return NextResponse.json({ active: false }, { status: HttpStatus.NOT_FOUND });
   }
 
@@ -208,10 +220,7 @@ export const DELETE = async (request: Request): Promise<NextResponse> => {
     return NextResponse.json({ ok: true, active: false });
   }
 
-  await prisma.publishedNote.update({
-    where: { id: note.id },
-    data: { revokedAt: new Date() },
-  });
+  await deletePublishedNoteById(note.id);
 
   return NextResponse.json({ ok: true, active: false });
 };

@@ -37,6 +37,8 @@ jest.mock('@/lib/prisma', () => ({
         publishedAt: new Date('2026-01-01T00:00:00.000Z'),
       })),
       update: jest.fn(async () => ({})),
+      delete: jest.fn(async () => ({})),
+      deleteMany: jest.fn(async () => ({ count: 0 })),
     },
   },
 }));

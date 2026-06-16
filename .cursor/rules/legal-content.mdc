@@ -20,5 +20,6 @@ When editing legal pages (`privacy.*.md`, `terms.*.md`), keep statements aligned
   - `web/config/constants.ts` (TTL/rate-limit values)
   - `mobile/src/features/github-sync/` (optional Pro GitHub note sync — OAuth Device Flow, Keychain, direct GitHub API)
   - `mobile/src/features/gitlab-sync/` (optional Pro GitLab note sync on gitlab.com — OAuth Device Flow, separate Keychain, direct GitLab API)
+  - `web/app/api/share/publish/route.ts`, `web/lib/shared-note-public.ts`, `web/lib/published-note-store.ts` (optional Pro public note links — delete snapshot on unpublish or expiry)
 - If behavior changes materially, update the **Last updated** date in legal docs.
 - Avoid promising stricter guarantees than the code currently enforces.

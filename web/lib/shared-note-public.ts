@@ -1,6 +1,6 @@
 import { BASE_URL_OR_FALLBACK } from '@/config/constants';
 import { prepareShareNoteWebMarkdown } from '@/lib/prepareShareNoteWebMarkdown';
-import { isPublishedNoteActive } from '@/lib/published-note';
+import { purgePublishedNoteIfInactive } from '@/lib/published-note-store';
 import { prisma } from '@/lib/prisma';
 
 export type SharedNotePublicView = {
@@ -28,6 +28,7 @@ export async function loadSharedNoteByToken(token: string): Promise<SharedNotePu
   const note = await prisma.publishedNote.findUnique({
     where: { token: normalizedToken },
     select: {
+      id: true,
       title: true,
       markdown: true,
       publishedAt: true,
@@ -36,9 +37,9 @@ export async function loadSharedNoteByToken(token: string): Promise<SharedNotePu
     },
   });
 
-  if (!note || !isPublishedNoteActive({ expiresAt: note.expiresAt, revokedAt: note.revokedAt })) {
-    return null;
-  }
+  if (!note) return null;
+
+  if (await purgePublishedNoteIfInactive(note)) return null;
 
   return {
     title: note.title,
