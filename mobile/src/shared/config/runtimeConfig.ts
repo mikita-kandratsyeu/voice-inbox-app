@@ -4,13 +4,14 @@ import {
   GITLAB_OAUTH_CLIENT_ID,
   GOOGLE_PLAY_URL,
   PREVIEW_WEB_API_URL,
+  PREVIEW_WEBSITE_URL,
   PRO_LICENSE_KEY_ACTIVATION_ENABLED,
   REVENUECAT_AI_RESET_PRODUCT_ID,
   REVENUECAT_API_KEY_ANDROID,
   REVENUECAT_API_KEY_IOS,
   REVENUECAT_ENTITLEMENT_ID,
   REVENUECAT_PACKAGE_TYPE_PREFERRED,
-  SUBSCRIPTIONS_PUBLICLY_AVAILABLE,
+  WEB_API_TARGET,
   WEB_API_URL,
   WEBSITE_URL,
   YANDEX_BANNER_AD_UNIT_ID,
@@ -25,19 +26,24 @@ import {
   setConfigSettings,
   setDefaults,
 } from '@react-native-firebase/remote-config';
-import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
-import { isNumber, isString } from '@/shared/lib/type-guards';
-
-import { shouldUsePreviewWebApi } from './previewWebApiRouting';
 import { readTestflightWebApiUrlOverride } from './testflightWebApiOverride';
+import {
+  DEFAULT_WEB_API_TARGET,
+  parseWebApiTarget,
+  resolveUrlFromTarget,
+  resolveWebApiUrlFromTarget,
+  type WebApiTarget,
+} from './webApiTarget';
 
 type RemoteKey =
   | 'WEBSITE_URL'
+  | 'PREVIEW_WEBSITE_URL'
   | 'APP_STORE_URL'
   | 'GOOGLE_PLAY_URL'
   | 'WEB_API_URL'
   | 'PREVIEW_WEB_API_URL'
+  | 'WEB_API_TARGET'
   | 'YANDEX_REWARDED_AD_UNIT_ID'
   | 'YANDEX_BANNER_AD_UNIT_ID'
   | 'YANDEX_INTERSTITIAL_AD_UNIT_ID'
@@ -48,18 +54,18 @@ type RemoteKey =
   | 'REVENUECAT_AI_RESET_PRODUCT_ID'
   | 'GITHUB_OAUTH_CLIENT_ID'
   | 'GITLAB_OAUTH_CLIENT_ID'
-  | 'SUBSCRIPTIONS_PUBLICLY_AVAILABLE'
   | 'PRO_LICENSE_KEY_ACTIVATION_ENABLED';
 
 type RemoteConfigModule = ReturnType<typeof getRemoteConfig>;
 
 export type RuntimeConfigSnapshot = {
   websiteUrl: string;
+  previewWebsiteUrl: string;
   appStoreUrl: string;
   googlePlayUrl: string;
   webApiUrl: string;
-  /** TEMPORARY: staging/preview host; remove with previewWebApiRouting. */
   previewWebApiUrl: string;
+  webApiTarget: WebApiTarget;
   yandexRewardedAdUnitId: string;
   yandexBannerAdUnitId: string;
   yandexInterstitialAdUnitId: string;
@@ -70,7 +76,6 @@ export type RuntimeConfigSnapshot = {
   revenueCatAiResetProductId: string;
   githubOAuthClientId: string;
   gitlabOAuthClientId: string;
-  subscriptionsPubliclyAvailable: boolean;
   proLicenseKeyActivationEnabled: boolean;
 };
 
@@ -83,10 +88,12 @@ function isTruthyEnvFlag(v: string | undefined): boolean {
 function buildEmbedded(): RuntimeConfigSnapshot {
   return {
     websiteUrl: WEBSITE_URL?.trim() ?? '',
+    previewWebsiteUrl: PREVIEW_WEBSITE_URL?.trim() ?? '',
     appStoreUrl: APP_STORE_URL?.trim() ?? '',
     googlePlayUrl: GOOGLE_PLAY_URL?.trim() ?? '',
     webApiUrl: WEB_API_URL?.trim() ?? '',
     previewWebApiUrl: PREVIEW_WEB_API_URL?.trim() ?? '',
+    webApiTarget: parseWebApiTarget(WEB_API_TARGET),
     yandexRewardedAdUnitId: YANDEX_REWARDED_AD_UNIT_ID?.trim() ?? '',
     yandexBannerAdUnitId: YANDEX_BANNER_AD_UNIT_ID?.trim() ?? '',
     yandexInterstitialAdUnitId: YANDEX_INTERSTITIAL_AD_UNIT_ID?.trim() ?? '',
@@ -97,7 +104,6 @@ function buildEmbedded(): RuntimeConfigSnapshot {
     revenueCatAiResetProductId: REVENUECAT_AI_RESET_PRODUCT_ID?.trim() ?? '',
     githubOAuthClientId: GITHUB_OAUTH_CLIENT_ID?.trim() ?? '',
     gitlabOAuthClientId: GITLAB_OAUTH_CLIENT_ID?.trim() ?? '',
-    subscriptionsPubliclyAvailable: isTruthyEnvFlag(SUBSCRIPTIONS_PUBLICLY_AVAILABLE),
     proLicenseKeyActivationEnabled: isTruthyEnvFlag(PRO_LICENSE_KEY_ACTIVATION_ENABLED),
   };
 }
@@ -105,10 +111,12 @@ function buildEmbedded(): RuntimeConfigSnapshot {
 function toFirebaseDefaults(s: RuntimeConfigSnapshot): Record<string, string> {
   return {
     WEBSITE_URL: s.websiteUrl,
+    PREVIEW_WEBSITE_URL: s.previewWebsiteUrl,
     APP_STORE_URL: s.appStoreUrl,
     GOOGLE_PLAY_URL: s.googlePlayUrl,
     WEB_API_URL: s.webApiUrl,
     PREVIEW_WEB_API_URL: s.previewWebApiUrl,
+    WEB_API_TARGET: s.webApiTarget,
     YANDEX_REWARDED_AD_UNIT_ID: s.yandexRewardedAdUnitId,
     YANDEX_BANNER_AD_UNIT_ID: s.yandexBannerAdUnitId,
     YANDEX_INTERSTITIAL_AD_UNIT_ID: s.yandexInterstitialAdUnitId,
@@ -119,7 +127,6 @@ function toFirebaseDefaults(s: RuntimeConfigSnapshot): Record<string, string> {
     REVENUECAT_AI_RESET_PRODUCT_ID: s.revenueCatAiResetProductId,
     GITHUB_OAUTH_CLIENT_ID: s.githubOAuthClientId,
     GITLAB_OAUTH_CLIENT_ID: s.gitlabOAuthClientId,
-    SUBSCRIPTIONS_PUBLICLY_AVAILABLE: s.subscriptionsPubliclyAvailable ? '1' : '0',
     PRO_LICENSE_KEY_ACTIVATION_ENABLED: s.proLicenseKeyActivationEnabled ? '1' : '0',
   };
 }
@@ -134,9 +141,9 @@ function isValidAbsoluteHttpUrl(url: string): boolean {
   }
 }
 
-function readRemoteHttpApiUrl(
+function readRemoteHttpUrl(
   rc: RemoteConfigModule,
-  key: 'WEB_API_URL' | 'PREVIEW_WEB_API_URL',
+  key: 'WEB_API_URL' | 'PREVIEW_WEB_API_URL' | 'WEBSITE_URL' | 'PREVIEW_WEBSITE_URL',
   embeddedFallback: string,
 ): string {
   const raw = getValue(rc, key).asString().trim();
@@ -156,6 +163,16 @@ function readRemoteString(rc: RemoteConfigModule, key: RemoteKey, fallback: stri
   const v = getValue(rc, key).asString().trim();
 
   return v.length > 0 ? v : fallback;
+}
+
+function readRemoteWebApiTarget(rc: RemoteConfigModule, fallback: WebApiTarget): WebApiTarget {
+  const raw = getValue(rc, 'WEB_API_TARGET').asString().trim();
+
+  if (raw.length === 0) {
+    return fallback;
+  }
+
+  return parseWebApiTarget(raw);
 }
 
 function readRemoteBool(rc: RemoteConfigModule, key: RemoteKey, fallback: boolean): boolean {
@@ -195,11 +212,13 @@ function mergeRemote(
   embedded: RuntimeConfigSnapshot,
 ): RuntimeConfigSnapshot {
   return {
-    websiteUrl: readRemoteString(rc, 'WEBSITE_URL', embedded.websiteUrl),
+    websiteUrl: readRemoteHttpUrl(rc, 'WEBSITE_URL', embedded.websiteUrl),
+    previewWebsiteUrl: readRemoteHttpUrl(rc, 'PREVIEW_WEBSITE_URL', embedded.previewWebsiteUrl),
     appStoreUrl: readRemoteString(rc, 'APP_STORE_URL', embedded.appStoreUrl),
     googlePlayUrl: readRemoteString(rc, 'GOOGLE_PLAY_URL', embedded.googlePlayUrl),
-    webApiUrl: readRemoteHttpApiUrl(rc, 'WEB_API_URL', embedded.webApiUrl),
-    previewWebApiUrl: readRemoteHttpApiUrl(rc, 'PREVIEW_WEB_API_URL', embedded.previewWebApiUrl),
+    webApiUrl: readRemoteHttpUrl(rc, 'WEB_API_URL', embedded.webApiUrl),
+    previewWebApiUrl: readRemoteHttpUrl(rc, 'PREVIEW_WEB_API_URL', embedded.previewWebApiUrl),
+    webApiTarget: readRemoteWebApiTarget(rc, embedded.webApiTarget),
     yandexRewardedAdUnitId: readRemoteString(
       rc,
       'YANDEX_REWARDED_AD_UNIT_ID',
@@ -250,11 +269,6 @@ function mergeRemote(
       'GITLAB_OAUTH_CLIENT_ID',
       embedded.gitlabOAuthClientId,
     ),
-    subscriptionsPubliclyAvailable: readRemoteBool(
-      rc,
-      'SUBSCRIPTIONS_PUBLICLY_AVAILABLE',
-      embedded.subscriptionsPubliclyAvailable,
-    ),
     proLicenseKeyActivationEnabled: readRemoteBool(
       rc,
       'PRO_LICENSE_KEY_ACTIVATION_ENABLED',
@@ -293,7 +307,15 @@ export async function initRuntimeConfig(): Promise<void> {
 }
 
 export function getWebsiteUrl(): string {
-  return snapshot.websiteUrl;
+  return resolveUrlFromTarget({
+    target: snapshot.webApiTarget,
+    prodUrl: snapshot.websiteUrl,
+    previewUrl: snapshot.previewWebsiteUrl,
+  });
+}
+
+export function getPreviewWebsiteUrl(): string {
+  return snapshot.previewWebsiteUrl.trim();
 }
 
 export function getAppStoreUrl(): string {
@@ -304,37 +326,12 @@ export function getGooglePlayUrl(): string {
   return snapshot.googlePlayUrl;
 }
 
-function readNativeAppVersionAndBuild(): { appVersion: string; buildNumber: string } {
-  let appVersion = '';
-  let buildNumber = '';
-
-  try {
-    appVersion = String(DeviceInfoModule.version ?? '').trim();
-    const buildRaw =
-      'buildNumber' in DeviceInfoModule
-        ? (DeviceInfoModule as { buildNumber?: string | number }).buildNumber
-        : undefined;
-    buildNumber = isString(buildRaw) || isNumber(buildRaw) ? String(buildRaw).trim() : '';
-  } catch {
-    // Fall through with empty strings; routing stays on production WEB_API_URL.
-  }
-
-  return { appVersion, buildNumber };
-}
-
 function resolveWebApiUrlFromSnapshot(config: RuntimeConfigSnapshot): string {
-  const previewUrl = config.previewWebApiUrl.trim();
-
-  if (previewUrl.length > 0) {
-    const { appVersion, buildNumber } = readNativeAppVersionAndBuild();
-
-    // TEMPORARY: remove preview routing once staging is merged into WEB_API_URL.
-    if (shouldUsePreviewWebApi(appVersion, buildNumber)) {
-      return previewUrl;
-    }
-  }
-
-  return config.webApiUrl;
+  return resolveWebApiUrlFromTarget({
+    webApiTarget: config.webApiTarget,
+    webApiUrl: config.webApiUrl,
+    previewWebApiUrl: config.previewWebApiUrl,
+  });
 }
 
 export function getWebApiUrl(): string {
@@ -350,6 +347,12 @@ export function getWebApiUrl(): string {
 export function getPreviewWebApiUrl(): string {
   return snapshot.previewWebApiUrl.trim();
 }
+
+export function getWebApiTarget(): WebApiTarget {
+  return snapshot.webApiTarget;
+}
+
+export { DEFAULT_WEB_API_TARGET, type WebApiTarget };
 
 export function getYandexRewardedAdUnitId(): string {
   return snapshot.yandexRewardedAdUnitId;
@@ -389,10 +392,6 @@ export function getGithubOAuthClientId(): string {
 
 export function getGitlabOAuthClientId(): string {
   return snapshot.gitlabOAuthClientId;
-}
-
-export function getSubscriptionsPubliclyAvailable(): boolean {
-  return snapshot.subscriptionsPubliclyAvailable;
 }
 
 export function getProLicenseKeyActivationEnabled(): boolean {

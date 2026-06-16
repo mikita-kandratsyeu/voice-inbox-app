@@ -69,7 +69,7 @@ Banner (note detail), **rewarded** (bonus AI quota in Settings), and **interstit
 
 Push: `@react-native-firebase/messaging`. Crashlytics, Analytics, Remote Config, App Check ship in release builds with Firebase config files.
 
-**Remote Config (release):** after `initRuntimeConfig()` on cold start, parameters such as `WEB_API_URL`, RevenueCat keys, Yandex ad unit IDs, and **`GITHUB_OAUTH_CLIENT_ID`** override embedded `@env` defaults when non-empty. In `__DEV__`, only embedded `.env` is used (no RC fetch).
+**Remote Config (release):** after `initRuntimeConfig()` on cold start, parameters such as `WEB_API_URL`, `PREVIEW_WEB_API_URL`, `WEBSITE_URL`, `PREVIEW_WEBSITE_URL`, `WEB_API_TARGET` (`prod` \| `preview` — switches API and website together), RevenueCat keys, Yandex ad unit IDs, and **`GITHUB_OAUTH_CLIENT_ID`** override embedded `@env` defaults when non-empty. In `__DEV__`, only embedded `.env` is used (no RC fetch).
 
 **Crashlytics in debug:** set `CRASHLYTICS_DEBUG=1` in `.env` and keep `mobile/firebase.json` (`crashlytics_debug_enabled`). Restart Metro with a clean cache and rebuild native.
 

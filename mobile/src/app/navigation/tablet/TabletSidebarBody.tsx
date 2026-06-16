@@ -5,7 +5,6 @@ import { View } from 'react-native';
 import type { EdgeInsets } from 'react-native-safe-area-context';
 
 import type { Folder } from '@/entities/folder';
-import type { MonetizationMode } from '@/features/app-storefront';
 import { NotesGraphIcon } from '@/screens/notes-graph/ui/NotesGraphIcon';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
@@ -36,7 +35,6 @@ export type TabletSidebarBodyProps = {
   isSettingsTab: boolean;
   navDimmed: boolean;
   isProActive: boolean;
-  monetizationMode: MonetizationMode;
   folders: Folder[];
   folderCounts: TabletSidebarNavCounts['folderCounts'];
   foldersEnabled: boolean;
@@ -72,7 +70,6 @@ export function TabletSidebarBody({
   isSettingsTab,
   navDimmed,
   isProActive,
-  monetizationMode,
   folders,
   folderCounts,
   foldersEnabled,
@@ -315,11 +312,7 @@ export function TabletSidebarBody({
         <View style={{ gap: 8, opacity: navDimmed ? 0.62 : 1 }}>{overviewNav}</View>
 
         {!isProActive ? (
-          <TabletSidebarPlanAndUsageCard
-            color={color}
-            monetizationMode={monetizationMode}
-            onOpenPlanPaywall={onOpenPlanPaywall}
-          />
+          <TabletSidebarPlanAndUsageCard color={color} onOpenPlanPaywall={onOpenPlanPaywall} />
         ) : null}
 
         <TabletSidebarFooter

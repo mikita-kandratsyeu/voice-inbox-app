@@ -160,9 +160,8 @@ export const SettingsScreen = () => {
         >
           <SettingsPlanStatusCard
             color={settings.color}
-            monetizationMode={settings.monetizationMode}
             storeProEntitlementActive={
-              settings.proEntitlementActive && settings.monetizationMode === 'iap_public'
+              settings.proEntitlementActive
                 ? (settings.planCardStoreProActive ?? undefined)
                 : undefined
             }

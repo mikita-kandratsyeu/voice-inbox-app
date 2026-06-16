@@ -16,9 +16,6 @@ export { getStorefrontCountryCode, presentIosManageSubscriptionsSheet } from './
 export type { MonetizationMode } from './model/monetizationPublicConfig';
 export {
   getMonetizationMode,
-  getPaymentsEnabled,
-  getShowProUpsellHints,
-  getSubscriptionsPubliclyAvailable,
   isAutomationUiLockedForPublicStore,
 } from './model/monetizationPublicConfig';
 export { computeAdsAllowedForInterstitial, useAdsAllowed } from './model/useAdsAllowed';

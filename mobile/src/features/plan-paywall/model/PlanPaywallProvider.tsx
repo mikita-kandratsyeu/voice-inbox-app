@@ -62,10 +62,8 @@ export function PlanPaywallProvider({ children }: { children: React.ReactNode })
   const [freeWeeklyLimit, setFreeWeeklyLimit] = useState(FREE_WEEKLY_LIMIT);
 
   const open = useCallback(() => {
-    if (getMonetizationMode() === 'iap_public') {
-      setIapProPriceLoading(true);
-      setIapBilling(RESET_IAP_BILLING);
-    }
+    setIapProPriceLoading(true);
+    setIapBilling(RESET_IAP_BILLING);
     setVisible(true);
     void getAiWeeklyLimits().then((limits) => {
       if (limits?.proWeeklyLimit && limits.proWeeklyLimit > 0) {
@@ -87,7 +85,7 @@ export function PlanPaywallProvider({ children }: { children: React.ReactNode })
   }, [open, close]);
 
   useLayoutEffect(() => {
-    if (!visible || monetizationMode !== 'iap_public') {
+    if (!visible) {
       return;
     }
 
@@ -104,13 +102,9 @@ export function PlanPaywallProvider({ children }: { children: React.ReactNode })
     return () => {
       cancelled = true;
     };
-  }, [visible, monetizationMode, i18n.language]);
+  }, [visible, i18n.language]);
 
   const handleUpgradePress = useCallback(() => {
-    if (monetizationMode !== 'iap_public') {
-      return;
-    }
-
     setIapPaywallBusy(true);
     void (async () => {
       try {
@@ -134,13 +128,9 @@ export function PlanPaywallProvider({ children }: { children: React.ReactNode })
         setIapPaywallBusy(false);
       }
     })();
-  }, [close, monetizationMode, refreshProEntitlement, selectedIapPeriod, t]);
+  }, [close, refreshProEntitlement, selectedIapPeriod, t]);
 
   const handleRestorePurchasesPress = useCallback(() => {
-    if (monetizationMode !== 'iap_public') {
-      return;
-    }
-
     setIapPaywallBusy(true);
     void (async () => {
       try {
@@ -164,7 +154,7 @@ export function PlanPaywallProvider({ children }: { children: React.ReactNode })
         setIapPaywallBusy(false);
       }
     })();
-  }, [close, monetizationMode, refreshProEntitlement, t]);
+  }, [close, refreshProEntitlement, t]);
 
   const onIapBillingPeriodChange = useCallback((period: IapBillingPeriod) => {
     setSelectedIapPeriod(period);

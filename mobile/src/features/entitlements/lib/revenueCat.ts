@@ -19,7 +19,6 @@ import {
   getRevenueCatApiKeyIos,
   getRevenueCatEntitlementId,
   getRevenueCatPackageTypePreferred,
-  getSubscriptionsPubliclyAvailable,
 } from '@/shared/config/runtimeConfig';
 import { isRecord, isString } from '@/shared/lib';
 import {
@@ -51,7 +50,7 @@ export function getRevenueCatApiKeyForPlatform(): string | null {
 }
 
 export function getRevenueCatIntegrationEnabled(): boolean {
-  return getSubscriptionsPubliclyAvailable() && getRevenueCatApiKeyForPlatform() != null;
+  return getRevenueCatApiKeyForPlatform() != null;
 }
 
 function isPurchasesError(e: unknown): e is { code: PURCHASES_ERROR_CODE; message: string } {

@@ -22,11 +22,7 @@ import {
 import { type ProLimitResetSuccess, useResetProAiLimit } from '@/features/ai-limit-reset';
 import { usePrivateAiTaskQueueCount } from '@/features/ai-task-queue';
 import { openAppReviewFromSettings } from '@/features/app-review';
-import {
-  getMonetizationMode,
-  isAutomationUiLockedForPublicStore,
-  useAdsAllowed,
-} from '@/features/app-storefront';
+import { isAutomationUiLockedForPublicStore, useAdsAllowed } from '@/features/app-storefront';
 import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import {
@@ -97,12 +93,11 @@ export function useSettingsScreen() {
   } = useProEntitlement();
   const automationLocked = isAutomationUiLockedForPublicStore(proEntitlementActive);
   const privateAiQueueCount = usePrivateAiTaskQueueCount();
-  const monetizationMode = getMonetizationMode();
 
   const [planCardStoreProActive, setPlanCardStoreProActive] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!proEntitlementActive || monetizationMode !== 'iap_public') {
+    if (!proEntitlementActive) {
       setPlanCardStoreProActive(null);
       return;
     }
@@ -119,7 +114,7 @@ export function useSettingsScreen() {
     return () => {
       cancelled = true;
     };
-  }, [proEntitlementActive, monetizationMode, expiresAtMs]);
+  }, [proEntitlementActive, expiresAtMs]);
 
   useFocusEffect(
     useCallback(() => {
@@ -391,18 +386,16 @@ export function useSettingsScreen() {
   const handlePlanCardPress = useCallback(() => {
     if (proEntitlementActive) {
       void (async () => {
-        if (monetizationMode === 'iap_public') {
-          const storeEntitlementActive = await isStoreProEntitlementActiveNow();
+        const storeEntitlementActive = await isStoreProEntitlementActiveNow();
 
-          if (storeEntitlementActive) {
-            const ok = await openStoreSubscriptionManagement();
+        if (storeEntitlementActive) {
+          const ok = await openStoreSubscriptionManagement();
 
-            if (!ok) {
-              Alert.alert(t('common.error'), t('settings.subscriptionManagementOpenError'));
-            }
-
-            return;
+          if (!ok) {
+            Alert.alert(t('common.error'), t('settings.subscriptionManagementOpenError'));
           }
+
+          return;
         }
 
         const locale = i18n.language.toLowerCase().startsWith('ru') ? 'ru' : 'en';
@@ -419,7 +412,7 @@ export function useSettingsScreen() {
       return;
     }
     openPlanPaywall();
-  }, [i18n.language, monetizationMode, proEntitlementActive, resolvedColorScheme, t]);
+  }, [i18n.language, proEntitlementActive, resolvedColorScheme, t]);
 
   useEffect(() => {
     if (!route.params?.openPlanPaywall) {
@@ -441,7 +434,6 @@ export function useSettingsScreen() {
     t,
     color,
     navigation,
-    monetizationMode,
     planCardStoreProActive,
     proEntitlementActive,
     refreshProEntitlement,

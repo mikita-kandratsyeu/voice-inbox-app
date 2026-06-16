@@ -5,17 +5,20 @@ declare module '@env' {
   export const APP_STORE_URL: string | undefined;
   export const GOOGLE_PLAY_URL: string | undefined;
   export const WEBSITE_URL: string | undefined;
+  /** Staging/preview public site when WEB_API_TARGET=preview. */
+  export const PREVIEW_WEBSITE_URL: string | undefined;
   export const DATABASE_URL: string | undefined;
   export const DB_LOG: string | undefined;
   export const WEB_API_URL: string | undefined;
-  /** TEMPORARY: preview/staging API host; remove when folded into WEB_API_URL. */
+  /** Staging/preview API host when WEB_API_TARGET=preview. */
   export const PREVIEW_WEB_API_URL: string | undefined;
+  /** prod (default) or preview. Release: overridden by Firebase Remote Config key WEB_API_TARGET. */
+  export const WEB_API_TARGET: string | undefined;
   export const MOBILE_USER_AGENT: string | undefined;
   export const YANDEX_REWARDED_AD_UNIT_ID: string | undefined;
   export const YANDEX_BANNER_AD_UNIT_ID: string | undefined;
   export const YANDEX_INTERSTITIAL_AD_UNIT_ID: string | undefined;
   export const TESTFLIGHT_INTERNAL_BUILD: string | undefined;
-  export const SUBSCRIPTIONS_PUBLICLY_AVAILABLE: string | undefined;
   export const PRO_LICENSE_KEY_ACTIVATION_ENABLED: string | undefined;
   export const FIREBASE_APP_CHECK_DEBUG_TOKEN: string | undefined;
   /** Local dev: skip client App Check (`__DEV__` only). Keep in sync with web `SKIP_FIREBASE_APP_CHECK`. */

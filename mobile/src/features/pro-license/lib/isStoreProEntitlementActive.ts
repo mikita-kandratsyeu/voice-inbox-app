@@ -4,15 +4,10 @@ import {
   getRevenueCatApiKeyAndroid,
   getRevenueCatApiKeyIos,
   getRevenueCatEntitlementId,
-  getSubscriptionsPubliclyAvailable,
 } from '@/shared/config/runtimeConfig';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 
 export function isRevenueCatStoreBillingConfigured(): boolean {
-  if (!getSubscriptionsPubliclyAvailable()) {
-    return false;
-  }
-
   const ios = (getRevenueCatApiKeyIos() ?? '').trim();
   const android = (getRevenueCatApiKeyAndroid() ?? '').trim();
 

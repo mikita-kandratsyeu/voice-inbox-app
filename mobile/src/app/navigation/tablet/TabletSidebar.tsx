@@ -9,7 +9,6 @@ import { useShallow } from 'zustand/react/shallow';
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import { areFoldersEnabledInAiMode, useSettingsStore } from '@/entities/settings';
-import { getMonetizationMode } from '@/features/app-storefront';
 import { openPlanPaywall } from '@/features/plan-paywall';
 import { useProEntitlement } from '@/features/pro-license';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
@@ -45,7 +44,6 @@ export const TabletSidebar = () => {
   const currentTab = useTabletTabNavigationStore((s) => s.activeTab);
   const importAudioFile = useTabletShellImportAudio();
   const { isProActive } = useProEntitlement();
-  const monetizationMode = getMonetizationMode();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const foldersEnabled = areFoldersEnabledInAiMode(aiExecutionMode, privateAiProvider);
@@ -204,7 +202,6 @@ export const TabletSidebar = () => {
         isSettingsTab={isSettingsTab}
         navDimmed={navDimmed}
         isProActive={isProActive}
-        monetizationMode={monetizationMode}
         folders={folders}
         folderCounts={folderCounts}
         foldersEnabled={foldersEnabled}

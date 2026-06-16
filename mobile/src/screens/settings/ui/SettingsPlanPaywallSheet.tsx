@@ -46,7 +46,6 @@ const EMPTY_IAP_BILLING: IapBillingOptions = {
 
 export function SettingsPlanPaywallSheet({
   visible,
-  mode,
   freeAiLimit,
   proAiLimit,
   onClose,
@@ -73,8 +72,8 @@ export function SettingsPlanPaywallSheet({
     }
   }, [visible]);
 
-  const isComingSoon = mode === 'coming_soon';
-  const isIapPublic = mode === 'iap_public';
+  const isIapPublic = true;
+
   const iapMonthlyRow = iapBilling.monthly;
   const iapAnnualRow = iapBilling.annual;
   const iapSavePercent = iapBilling.savePercentVsMonthly;
@@ -86,13 +85,9 @@ export function SettingsPlanPaywallSheet({
   const iapDualBilling = Boolean(iapMonthlyRow && iapAnnualRow);
 
   const upgradeDisabled =
-    isComingSoon ||
-    iapBusy ||
-    (isIapPublic && Boolean(onIapBillingPeriodChange) && iapProPriceLoading);
+    iapBusy || (isIapPublic && Boolean(onIapBillingPeriodChange) && iapProPriceLoading);
 
-  const upgradeLabel = isComingSoon
-    ? t('settings.planPaywall.comingSoon')
-    : t('settings.planPaywall.upgrade');
+  const upgradeLabel = t('settings.planPaywall.upgrade');
 
   const handlePeriodChange = useCallback(
     (period: IapBillingPeriod) => {
