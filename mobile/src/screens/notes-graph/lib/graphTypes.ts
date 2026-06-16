@@ -24,6 +24,8 @@ export type GraphEdge = {
   sourceId: string;
   targetId: string;
   label?: string;
+  /** Layout-only multiplier (e.g. similar-score strength for ForceAtlas2). */
+  weight?: number;
 };
 
 export type GraphEdgeVisibility = {

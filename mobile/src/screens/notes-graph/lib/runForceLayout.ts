@@ -128,13 +128,14 @@ export function runForceLayout(
       fixedPositions,
     );
   } else if (isCircular) {
-    layoutNodes = layoutNodesInCircle(nodes, viewportWidth, viewportHeight, fixedPositions);
+    layoutNodes = layoutNodesInCircle(nodes, viewportWidth, viewportHeight, fixedPositions, edges);
   } else {
     layoutNodes = layoutNodesByClusters(nodes, edges, layoutWidth, layoutHeight, fixedPositions);
   }
 
-  if (layoutMode !== 'circular') {
-    layoutNodes = resolveNodeOverlaps(layoutNodes);
+  layoutNodes = resolveNodeOverlaps(layoutNodes, 22, layoutMode === 'circular' ? 28 : undefined);
+
+  if (layoutMode === 'force') {
     layoutNodes = layoutIsolatedRecordNodes(layoutNodes, edges, layoutWidth);
   }
 

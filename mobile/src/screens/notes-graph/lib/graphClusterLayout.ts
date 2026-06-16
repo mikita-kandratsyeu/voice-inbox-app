@@ -1,6 +1,7 @@
 import Graph from 'graphology';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 
+import { resolveLayoutEdgeWeight } from './graphEdgeWeight';
 import { nodeDimensions } from './graphNodeMetrics';
 import type { GraphEdge, GraphNode } from './graphTypes';
 import { recordNodeId } from './graphTypes';
@@ -44,21 +45,35 @@ function nodeSize(kind: GraphNode['kind']): number {
   return Math.max(width, height) + NODE_LAYOUT_PADDING;
 }
 
-function edgeWeight(kind: GraphEdge['kind']): number {
-  switch (kind) {
-    case 'contains':
-      return 4;
-    case 'similar':
-      return 3;
-    case 'sharedTag':
-      return 1.4;
-    case 'sameFolder':
-      return 2;
-    case 'linked':
-      return 3.5;
-    default:
-      return 1.5;
+function buildTagCooccurrenceCounts(nodes: GraphNode[]): Map<string, number> {
+  const counts = new Map<string, number>();
+
+  for (const node of nodes) {
+    if (node.kind !== 'record' || !node.record) continue;
+    const tags = [...new Set((node.record.tags ?? []).map(normalizeClusterTag).filter(Boolean))];
+    for (const tag of tags) {
+      counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }
   }
+
+  return counts;
+}
+
+function recordClusterSeed(node: GraphNode, tagCooccurrence: Map<string, number>): string {
+  if (!node.record) return `record:${node.id}`;
+
+  if (node.record.folderId) return `folder:${node.record.folderId}`;
+
+  const tags = (node.record.tags ?? []).map(normalizeClusterTag).filter(Boolean);
+  if (tags.length > 0) {
+    const primary = [...tags].sort((a, b) => {
+      const countDiff = (tagCooccurrence.get(b) ?? 0) - (tagCooccurrence.get(a) ?? 0);
+      return countDiff !== 0 ? countDiff : a.localeCompare(b);
+    })[0]!;
+    return `tag:${primary}`;
+  }
+
+  return `solo:${node.id}`;
 }
 
 class UnionFind {
@@ -89,17 +104,6 @@ class UnionFind {
     const rootB = this.find(b);
     if (rootA !== rootB) this.parent.set(rootB, rootA);
   }
-}
-
-function recordClusterSeed(node: GraphNode): string {
-  if (!node.record) return `record:${node.id}`;
-
-  if (node.record.folderId) return `folder:${node.record.folderId}`;
-
-  const tags = (node.record.tags ?? []).map(normalizeClusterTag).filter(Boolean).sort();
-  if (tags.length > 0) return `tag:${tags[0]}`;
-
-  return `solo:${node.id}`;
 }
 
 function parentRecordNodeId(node: GraphNode, edges: GraphEdge[]): string | null {
@@ -143,10 +147,11 @@ function extractClusterMetadata(
 export function buildGraphClusters(nodes: GraphNode[], edges: GraphEdge[]): GraphCluster[] {
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
   const clusterByNode = new Map<string, string>();
+  const tagCooccurrence = buildTagCooccurrenceCounts(nodes);
 
   for (const node of nodes) {
     if (node.kind === 'record') {
-      clusterByNode.set(node.id, recordClusterSeed(node));
+      clusterByNode.set(node.id, recordClusterSeed(node, tagCooccurrence));
     }
   }
 
@@ -309,7 +314,7 @@ function layoutClusterSubgraph(
     if (!clusterIds.has(edge.sourceId) || !clusterIds.has(edge.targetId)) continue;
     if (edge.sourceId === edge.targetId) continue;
 
-    const weight = edgeWeight(edge.kind);
+    const weight = resolveLayoutEdgeWeight(edge);
     if (graph.hasEdge(edge.sourceId, edge.targetId)) {
       const existingKey = graph.edge(edge.sourceId, edge.targetId);
       const currentWeight = graph.getEdgeAttribute(existingKey, 'weight') as number;
@@ -530,6 +535,70 @@ function placeClustersOnViewportGrid(
   return mergedPositions;
 }
 
+function orderClustersByConnectivity(clusters: GraphCluster[], edges: GraphEdge[]): GraphCluster[] {
+  if (clusters.length <= 2) return clusters;
+
+  const nodeToCluster = new Map<string, string>();
+  for (const cluster of clusters) {
+    for (const nodeId of cluster.nodeIds) {
+      nodeToCluster.set(nodeId, cluster.id);
+    }
+  }
+
+  const clusterById = new Map(clusters.map((cluster) => [cluster.id, cluster]));
+  const adjacency = new Map<string, Set<string>>();
+  for (const cluster of clusters) {
+    adjacency.set(cluster.id, new Set());
+  }
+
+  for (const edge of edges) {
+    if (edge.kind === 'contains') continue;
+    const sourceCluster = nodeToCluster.get(edge.sourceId);
+    const targetCluster = nodeToCluster.get(edge.targetId);
+    if (!sourceCluster || !targetCluster || sourceCluster === targetCluster) continue;
+    adjacency.get(sourceCluster)!.add(targetCluster);
+    adjacency.get(targetCluster)!.add(sourceCluster);
+  }
+
+  const ordered: GraphCluster[] = [];
+  const visited = new Set<string>();
+  const startCandidates = [...clusters].sort(
+    (a, b) => b.nodeIds.length - a.nodeIds.length || a.id.localeCompare(b.id),
+  );
+
+  const visitFrom = (startId: string) => {
+    const queue = [startId];
+    visited.add(startId);
+
+    while (queue.length > 0) {
+      const clusterId = queue.shift()!;
+      const cluster = clusterById.get(clusterId);
+      if (cluster) ordered.push(cluster);
+
+      const neighbors = [...(adjacency.get(clusterId) ?? [])]
+        .filter((id) => !visited.has(id))
+        .sort((a, b) => {
+          const sizeDiff =
+            (clusterById.get(b)?.nodeIds.length ?? 0) - (clusterById.get(a)?.nodeIds.length ?? 0);
+          return sizeDiff !== 0 ? sizeDiff : a.localeCompare(b);
+        });
+
+      for (const neighborId of neighbors) {
+        visited.add(neighborId);
+        queue.push(neighborId);
+      }
+    }
+  };
+
+  for (const cluster of startCandidates) {
+    if (!visited.has(cluster.id)) {
+      visitFrom(cluster.id);
+    }
+  }
+
+  return ordered;
+}
+
 export function layoutNodesByClusters(
   nodes: GraphNode[],
   edges: GraphEdge[],
@@ -538,7 +607,7 @@ export function layoutNodesByClusters(
   fixedPositions?: Map<string, { x: number; y: number }>,
 ): GraphNode[] {
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
-  const clusters = buildGraphClusters(nodes, edges);
+  const clusters = orderClustersByConnectivity(buildGraphClusters(nodes, edges), edges);
   const totalNodeCount = nodes.length;
 
   const clusterLayouts: ClusterLayoutEntry[] = clusters.map((cluster) => {

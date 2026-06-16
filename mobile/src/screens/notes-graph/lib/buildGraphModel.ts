@@ -7,6 +7,7 @@ import {
   shouldPrefilterSimilarityPair,
 } from '@/features/related-notes/lib/computeRecordSimilarity';
 
+import { similarEdgeLayoutWeight } from './graphEdgeWeight';
 import { graphNodeSearchText } from './graphNodeSearchText';
 import type { GraphEdge, GraphFilters, GraphModel, GraphNode } from './graphTypes';
 import { recordNodeId, taskNodeId } from './graphTypes';
@@ -82,7 +83,7 @@ function addSimilarEdges(records: VoiceRecord[], edges: GraphEdge[]): void {
       .sort((a, b) => b.score - a.score)
       .slice(0, MAX_SIMILAR_EDGES_PER_RECORD);
 
-    for (const { other } of scored) {
+    for (const { other, score } of scored) {
       const pairKey = [current.id, other.id].sort().join('|');
       if (addedPairs.has(pairKey)) continue;
 
@@ -100,6 +101,7 @@ function addSimilarEdges(records: VoiceRecord[], edges: GraphEdge[]): void {
         kind: 'similar',
         sourceId: recordNodeId(current.id),
         targetId: recordNodeId(other.id),
+        weight: similarEdgeLayoutWeight(score, minScore),
       });
     }
   }
@@ -151,6 +153,16 @@ function addSharedTagEdges(records: VoiceRecord[], edges: GraphEdge[]): void {
   }
 }
 
+function pickFolderHub(records: VoiceRecord[]): VoiceRecord {
+  return records.reduce((best, record) => {
+    const bestScore = (best.linkedRecordIds?.length ?? 0) + (best.tags?.length ?? 0);
+    const recordScore = (record.linkedRecordIds?.length ?? 0) + (record.tags?.length ?? 0);
+    if (recordScore > bestScore) return record;
+    if (recordScore < bestScore) return best;
+    return record.id.localeCompare(best.id) < 0 ? record : best;
+  });
+}
+
 function addSameFolderEdges(records: VoiceRecord[], edges: GraphEdge[]): void {
   const folderGroups = new Map<string, VoiceRecord[]>();
 
@@ -164,7 +176,27 @@ function addSameFolderEdges(records: VoiceRecord[], edges: GraphEdge[]): void {
   const addedPairs = new Set<string>();
 
   for (const group of folderGroups.values()) {
-    if (group.length < 2 || group.length > MAX_FOLDER_MESH_SIZE) continue;
+    if (group.length < 2) continue;
+
+    if (group.length > MAX_FOLDER_MESH_SIZE) {
+      const hub = pickFolderHub(group);
+      const hubNodeId = recordNodeId(hub.id);
+
+      for (const record of group) {
+        if (record.id === hub.id) continue;
+        const pairKey = [hub.id, record.id].sort().join('|');
+        if (addedPairs.has(pairKey)) continue;
+        addedPairs.add(pairKey);
+
+        edges.push({
+          id: `folder:${pairKey}`,
+          kind: 'sameFolder',
+          sourceId: hubNodeId,
+          targetId: recordNodeId(record.id),
+        });
+      }
+      continue;
+    }
 
     for (let i = 0; i < group.length; i++) {
       for (let j = i + 1; j < group.length; j++) {
@@ -187,13 +219,18 @@ function addSameFolderEdges(records: VoiceRecord[], edges: GraphEdge[]): void {
 
 function addLinkedEdges(records: VoiceRecord[], edges: GraphEdge[]): void {
   const idSet = new Set(records.map((record) => record.id));
+  const addedPairs = new Set<string>();
 
   for (const record of records) {
     for (const targetId of record.linkedRecordIds ?? []) {
       if (!idSet.has(targetId) || targetId === record.id) continue;
 
+      const pairKey = [record.id, targetId].sort().join('|');
+      if (addedPairs.has(pairKey)) continue;
+      addedPairs.add(pairKey);
+
       edges.push({
-        id: `linked:${record.id}->${targetId}`,
+        id: `linked:${pairKey}`,
         kind: 'linked',
         sourceId: recordNodeId(record.id),
         targetId: recordNodeId(targetId),

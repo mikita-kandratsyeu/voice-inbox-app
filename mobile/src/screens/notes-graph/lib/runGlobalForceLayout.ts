@@ -2,7 +2,9 @@ import Graph from 'graphology';
 import circular from 'graphology-layout/circular';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 
+import { resolveLayoutEdgeWeight } from './graphEdgeWeight';
 import { nodeDimensions } from './graphNodeMetrics';
+import { graphSeededJitter } from './graphSeededOffset';
 import type { GraphEdge, GraphNode } from './graphTypes';
 
 const NODE_LAYOUT_PADDING = 24;
@@ -10,23 +12,6 @@ const NODE_LAYOUT_PADDING = 24;
 function nodeSize(kind: GraphNode['kind']): number {
   const { width, height } = nodeDimensions(kind);
   return Math.max(width, height) + NODE_LAYOUT_PADDING;
-}
-
-function edgeWeight(kind: GraphEdge['kind']): number {
-  switch (kind) {
-    case 'contains':
-      return 4;
-    case 'similar':
-      return 3;
-    case 'sharedTag':
-      return 2;
-    case 'sameFolder':
-      return 1;
-    case 'linked':
-      return 3.5;
-    default:
-      return 1.5;
-  }
 }
 
 function computeGlobalLayoutMetrics(
@@ -106,8 +91,9 @@ function addInitialJitter(graph: Graph, spread: number): void {
   graph.forEachNode((nodeId) => {
     const x = graph.getNodeAttribute(nodeId, 'x') as number;
     const y = graph.getNodeAttribute(nodeId, 'y') as number;
-    graph.setNodeAttribute(nodeId, 'x', x + (Math.random() - 0.5) * jitter);
-    graph.setNodeAttribute(nodeId, 'y', y + (Math.random() - 0.5) * jitter);
+    const offset = graphSeededJitter(nodeId, jitter);
+    graph.setNodeAttribute(nodeId, 'x', x + offset.x);
+    graph.setNodeAttribute(nodeId, 'y', y + offset.y);
   });
 }
 
@@ -141,7 +127,7 @@ export function layoutNodesWithGlobalForce(
     if (!graph.hasNode(edge.sourceId) || !graph.hasNode(edge.targetId)) continue;
     if (edge.sourceId === edge.targetId) continue;
 
-    const weight = edgeWeight(edge.kind);
+    const weight = resolveLayoutEdgeWeight(edge);
     if (graph.hasEdge(edge.sourceId, edge.targetId)) {
       const existingKey = graph.edge(edge.sourceId, edge.targetId);
       const currentWeight = graph.getEdgeAttribute(existingKey, 'weight') as number;

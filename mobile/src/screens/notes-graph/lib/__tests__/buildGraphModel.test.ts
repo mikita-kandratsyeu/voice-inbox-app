@@ -185,16 +185,33 @@ describe('buildGraphModel', () => {
 
   it('creates explicit linked edges between records', () => {
     const model = buildGraphModel(
-      [makeRecord('a', 'A', { linkedRecordIds: ['b'] }), makeRecord('b', 'B')],
+      [
+        makeRecord('a', 'A', { linkedRecordIds: ['b'] }),
+        makeRecord('b', 'B', { linkedRecordIds: ['a'] }),
+      ],
       defaultFilters,
     );
 
-    expect(model.edges).toContainEqual({
-      id: 'linked:a->b',
+    const linkedEdges = model.edges.filter((edge) => edge.kind === 'linked');
+    expect(linkedEdges).toHaveLength(1);
+    expect(linkedEdges[0]).toMatchObject({
+      id: 'linked:a|b',
       kind: 'linked',
       sourceId: recordNodeId('a'),
       targetId: recordNodeId('b'),
     });
+  });
+
+  it('creates hub same-folder edges for large folder groups', () => {
+    const records = Array.from({ length: 21 }, (_, index) =>
+      makeRecord(`r${index}`, `Record ${index}`, { folderId: 'big-folder' }),
+    );
+    const model = buildGraphModel(records, defaultFilters);
+    const folderEdges = model.edges.filter((edge) => edge.kind === 'sameFolder');
+
+    expect(folderEdges.length).toBe(20);
+    const hubTouches = new Set(folderEdges.flatMap((edge) => [edge.sourceId, edge.targetId]));
+    expect(hubTouches.size).toBe(21);
   });
 
   it('respects edge visibility flags', () => {

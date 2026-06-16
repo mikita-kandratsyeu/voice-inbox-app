@@ -1,5 +1,6 @@
 import { nodeDimensions } from './graphNodeMetrics';
-import type { GraphNode } from './graphTypes';
+import type { GraphEdge, GraphNode } from './graphTypes';
+import { orderGraphNodesForCircularLayout } from './orderGraphNodesForCircularLayout';
 
 const CIRCULAR_EDGE_PADDING = 72;
 const CIRCULAR_NODE_GAP = 20;
@@ -23,14 +24,17 @@ export function layoutNodesInCircle(
   layoutWidth: number,
   layoutHeight: number,
   fixedPositions?: Map<string, { x: number; y: number }>,
+  edges: GraphEdge[] = [],
 ): GraphNode[] {
-  if (nodes.length === 0) return nodes;
+  const orderedNodes = orderGraphNodesForCircularLayout(nodes, edges);
+
+  if (orderedNodes.length === 0) return nodes;
 
   const centerX = layoutWidth / 2;
   const centerY = layoutHeight / 2;
 
-  if (nodes.length === 1) {
-    const node = nodes[0]!;
+  if (orderedNodes.length === 1) {
+    const node = orderedNodes[0]!;
     const { width, height } = nodeDimensions(node.kind);
     const fixed = fixedPositions?.get(node.id);
     return [
@@ -42,11 +46,11 @@ export function layoutNodesInCircle(
     ];
   }
 
-  const radius = computeCircularRadius(nodes.length, layoutWidth, layoutHeight);
-  const angleStep = (2 * Math.PI) / nodes.length;
+  const radius = computeCircularRadius(orderedNodes.length, layoutWidth, layoutHeight);
+  const angleStep = (2 * Math.PI) / orderedNodes.length;
   const startAngle = -Math.PI / 2;
 
-  return nodes.map((node, index) => {
+  return orderedNodes.map((node, index) => {
     const fixed = fixedPositions?.get(node.id);
     if (fixed) return { ...node, x: fixed.x, y: fixed.y };
 
