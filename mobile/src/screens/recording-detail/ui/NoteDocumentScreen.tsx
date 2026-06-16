@@ -10,6 +10,7 @@ import { KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { RootStackParamList } from '@/app/navigation/types';
+import { useRecordStore } from '@/entities/record';
 import {
   NOTE_DOCUMENT_CONTENT_MAX_WIDTH,
   NOTE_DOCUMENT_TABLET_HORIZONTAL_PADDING,
@@ -20,10 +21,12 @@ import {
   shouldWarnNoteDocumentEditorSize,
   useNoteDocument,
 } from '@/features/note-document';
+import type { WikiLinkResolvableRecord } from '@/features/note-links';
 import { TaskOutcomeSheet, useTaskCompletionFlow } from '@/features/task-outcome';
 import { useColors } from '@/shared/config';
 import { hapticSuccess, useIsTablet } from '@/shared/lib';
 import { HeaderIconButton } from '@/shared/ui';
+import { useShallow } from 'zustand/react/shallow';
 
 export const NoteDocumentScreen = () => {
   const { t } = useTranslation();
@@ -60,6 +63,28 @@ export const NoteDocumentScreen = () => {
     fallbackRecord: record,
     initialMode,
   });
+
+  const records = useRecordStore(useShallow((s) => s.records));
+
+  const wikiLinkRecords = useMemo<readonly WikiLinkResolvableRecord[]>(
+    () =>
+      records.map((item) => ({
+        id: item.id,
+        title: item.title ?? '',
+        status: item.status,
+        createdAt: item.createdAt,
+      })),
+    [records],
+  );
+
+  const handleOpenLinkedRecord = useCallback(
+    (recordId: string) => {
+      const target = records.find((item) => item.id === recordId);
+      if (!target) return;
+      navigation.push('RecordingDetail', { record: target });
+    },
+    [navigation, records],
+  );
 
   const showTaskUpdateError = useCallback(() => {
     Alert.alert(t('common.error'), t('allTasks.taskUpdateError'));
@@ -387,6 +412,8 @@ export const NoteDocumentScreen = () => {
                   color={color}
                   documentMarkdown={documentMarkdown}
                   tasks={readingTasks}
+                  wikiLinkRecords={wikiLinkRecords}
+                  onOpenRecord={handleOpenLinkedRecord}
                   onToggleTask={handleToggleTaskInReading}
                 />
               </View>

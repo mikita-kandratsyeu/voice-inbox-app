@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import type { TaskListItemPressEvent } from 'react-native-enriched-markdown';
 
 import type { TaskItem } from '@/entities/record';
+import type { WikiLinkResolvableRecord } from '@/features/note-links';
 import type { Colors } from '@/shared/config';
 
 import { buildNoteDocumentEnrichedMarkdownStyle } from '../lib/enrichedMarkdownTheme';
@@ -18,6 +19,8 @@ type NoteDocumentReadingBodyProps = {
   color: Colors;
   documentMarkdown: string;
   tasks: TaskItem[];
+  wikiLinkRecords?: readonly WikiLinkResolvableRecord[];
+  onOpenRecord?: (recordId: string) => void;
   onToggleTask: (taskId: string) => void;
 };
 
@@ -26,6 +29,8 @@ type NoteDocumentReadingSectionRowProps = {
   markdownStyle: ReturnType<typeof buildNoteDocumentEnrichedMarkdownStyle>;
   segment: NoteDocumentReadingSectionSegment;
   expanded: boolean;
+  wikiLinkRecords?: readonly WikiLinkResolvableRecord[];
+  onOpenRecord?: (recordId: string) => void;
   onToggle: (sectionId: string, defaultExpanded: boolean) => void;
   tasks: TaskItem[];
   onToggleTask: (taskId: string) => void;
@@ -42,6 +47,8 @@ const NoteDocumentReadingSectionRow = React.memo(function NoteDocumentReadingSec
   markdownStyle,
   segment,
   expanded,
+  wikiLinkRecords,
+  onOpenRecord,
   onToggle,
   tasks,
   onToggleTask,
@@ -72,6 +79,8 @@ const NoteDocumentReadingSectionRow = React.memo(function NoteDocumentReadingSec
         color={color}
         markdown={segment.bodyMarkdown}
         markdownStyle={markdownStyle}
+        wikiLinkRecords={wikiLinkRecords}
+        onOpenRecord={onOpenRecord}
         onTaskListItemPress={segment.id === 'tasks' ? handleTaskListItemPress : undefined}
       />
     </NoteDocumentCollapsibleSection>
@@ -82,6 +91,8 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
   color,
   documentMarkdown,
   tasks,
+  wikiLinkRecords,
+  onOpenRecord,
   onToggleTask,
 }: NoteDocumentReadingBodyProps) {
   const markdownStyle = useMemo(() => buildNoteDocumentEnrichedMarkdownStyle(color), [color]);
@@ -131,6 +142,8 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
         color={color}
         markdown={flatMarkdown}
         markdownStyle={markdownStyle}
+        wikiLinkRecords={wikiLinkRecords}
+        onOpenRecord={onOpenRecord}
       />
     );
   }
@@ -145,6 +158,8 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
               color={color}
               markdown={segment.markdown}
               markdownStyle={markdownStyle}
+              wikiLinkRecords={wikiLinkRecords}
+              onOpenRecord={onOpenRecord}
             />
           );
         }
@@ -156,6 +171,8 @@ export const NoteDocumentReadingBody = React.memo(function NoteDocumentReadingBo
             markdownStyle={markdownStyle}
             segment={segment}
             expanded={expandedBySectionId[segment.id] ?? segment.defaultExpanded}
+            wikiLinkRecords={wikiLinkRecords}
+            onOpenRecord={onOpenRecord}
             onToggle={toggleSection}
             tasks={tasks}
             onToggleTask={onToggleTask}

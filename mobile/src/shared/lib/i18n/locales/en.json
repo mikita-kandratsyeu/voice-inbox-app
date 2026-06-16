@@ -2598,6 +2598,8 @@
     "linkNoteHint": "Connect a related note to this one",
     "linkNoteAddAnother": "Link another note",
     "linkNoteMenu": "Link note",
+    "link": "Link",
+    "linkA11y": "Link {{title}}",
     "pickNoteTitle": "Link a note",
     "pickNoteSubtitle": "Choose a note to connect with this one.",
     "pickNoteSearchPlaceholder": "Search notes",

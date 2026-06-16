@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { View } from 'react-native';
 import {
   EnrichedMarkdownText,
@@ -6,7 +6,11 @@ import {
   type TaskListItemPressEvent,
 } from 'react-native-enriched-markdown';
 
-import { openInAppBrowser } from '@/features/in-app-browser';
+import {
+  createNoteMarkdownLinkPressHandler,
+  transformWikiLinksForRender,
+  type WikiLinkResolvableRecord,
+} from '@/features/note-links';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 
@@ -19,6 +23,8 @@ type NoteDocumentEnhancedMarkdownProps = {
   color: Colors;
   markdown: string;
   markdownStyle: MarkdownStyle;
+  wikiLinkRecords?: readonly WikiLinkResolvableRecord[];
+  onOpenRecord?: (recordId: string) => void;
   onTaskListItemPress?: (event: TaskListItemPressEvent) => void;
 };
 
@@ -106,32 +112,45 @@ function splitMarkdownByCodeBlocksAndCallouts(markdown: string): MarkdownSegment
   return segments.length > 0 ? segments : [{ type: 'text', content: markdown }];
 }
 
+function useRenderedMarkdown(
+  markdown: string,
+  wikiLinkRecords?: readonly WikiLinkResolvableRecord[],
+): string {
+  return useMemo(() => {
+    if (!wikiLinkRecords?.length) return markdown;
+    return transformWikiLinksForRender(markdown, wikiLinkRecords);
+  }, [markdown, wikiLinkRecords]);
+}
+
 export const NoteDocumentEnhancedMarkdown = React.memo(function NoteDocumentEnhancedMarkdown({
   color,
   markdown,
   markdownStyle,
+  wikiLinkRecords,
+  onOpenRecord,
   onTaskListItemPress,
 }: NoteDocumentEnhancedMarkdownProps) {
   const browserScheme = useAppTheme();
+  const renderedMarkdown = useRenderedMarkdown(markdown, wikiLinkRecords);
 
-  const segments = useMemo(() => splitMarkdownByCodeBlocksAndCallouts(markdown), [markdown]);
+  const handleLinkPress = useCallback(
+    createNoteMarkdownLinkPressHandler({
+      browserScheme,
+      onOpenRecord: onOpenRecord ?? (() => {}),
+    }),
+    [browserScheme, onOpenRecord],
+  );
 
-  const handleLinkPress = React.useCallback(
-    ({ url }: { url: string }) => {
-      const trimmed = url.trim();
-      if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
-        return;
-      }
-      void openInAppBrowser(trimmed, browserScheme);
-    },
-    [browserScheme],
+  const segments = useMemo(
+    () => splitMarkdownByCodeBlocksAndCallouts(renderedMarkdown),
+    [renderedMarkdown],
   );
 
   // If no code blocks, render normally
   if (segments.length === 0 || segments.every((s) => s.type === 'text')) {
     return (
       <EnrichedMarkdownText
-        markdown={markdown}
+        markdown={renderedMarkdown}
         flavor="github"
         markdownStyle={markdownStyle}
         selectionColor={color.accent.primary}
@@ -159,6 +178,10 @@ export const NoteDocumentEnhancedMarkdown = React.memo(function NoteDocumentEnha
         }
 
         if (segment.type === 'callout') {
+          const calloutMarkdown = wikiLinkRecords?.length
+            ? transformWikiLinksForRender(segment.callout.content, wikiLinkRecords)
+            : segment.callout.content;
+
           return (
             <NoteDocumentCallout
               key={`callout-${index}`}
@@ -167,7 +190,7 @@ export const NoteDocumentEnhancedMarkdown = React.memo(function NoteDocumentEnha
               color={color}
             >
               <EnrichedMarkdownText
-                markdown={segment.callout.content}
+                markdown={calloutMarkdown}
                 flavor="github"
                 markdownStyle={{
                   ...markdownStyle,

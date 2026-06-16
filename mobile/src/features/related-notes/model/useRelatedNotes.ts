@@ -9,7 +9,11 @@ import {
   rankSimilarRecords,
 } from '../lib/computeRecordSimilarity';
 
-export function useRelatedNotes(recordId: string, limit = 5) {
+export function useRelatedNotes(
+  recordId: string,
+  limit = 5,
+  excludeRecordIds: readonly string[] = [],
+) {
   const records = useRecordStore((s) => s.records);
 
   return useMemo(() => {
@@ -18,7 +22,10 @@ export function useRelatedNotes(recordId: string, limit = 5) {
 
     const context = buildSimilarityContext(records);
     const minScore = context.useEmbeddings ? MIN_HYBRID_SCORE : MIN_LEXICAL_ONLY_SCORE;
+    const exclude = new Set([recordId, ...excludeRecordIds]);
 
-    return rankSimilarRecords(current, records, context, limit, minScore);
-  }, [recordId, records, limit]);
+    return rankSimilarRecords(current, records, context, limit * 4, minScore)
+      .filter((record) => !exclude.has(record.id))
+      .slice(0, limit);
+  }, [excludeRecordIds, limit, recordId, records]);
 }

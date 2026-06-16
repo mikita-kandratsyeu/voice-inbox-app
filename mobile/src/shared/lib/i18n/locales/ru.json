@@ -2652,6 +2652,8 @@
     "linkNoteHint": "Свяжите с другой заметкой по теме",
     "linkNoteAddAnother": "Связать ещё",
     "linkNoteMenu": "Связать заметку",
+    "link": "Связать",
+    "linkA11y": "Связать «{{title}}»",
     "pickNoteTitle": "Связать заметку",
     "pickNoteSubtitle": "Выберите заметку, которую хотите связать с этой.",
     "pickNoteSearchPlaceholder": "Поиск заметок",

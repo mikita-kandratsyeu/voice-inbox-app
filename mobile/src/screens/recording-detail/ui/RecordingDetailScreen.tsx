@@ -754,6 +754,14 @@ export const RecordingDetailScreen = () => {
     },
     [liveRecord.id, unlinkRecord],
   );
+
+  const onLinkRelatedNote = useCallback(
+    async (targetId: string) => {
+      await linkRecord(liveRecord.id, targetId);
+      hapticSuccess();
+    },
+    [linkRecord, liveRecord.id],
+  );
   const onRename = useCallback(
     () => setRenameTarget({ id: liveRecord.id, title: liveRecord.title }),
     [liveRecord.id, liveRecord.title],
@@ -1191,7 +1199,13 @@ export const RecordingDetailScreen = () => {
             onLinkNote={onOpenLinkNotePicker}
             onUnlinkNote={onUnlinkNote}
           />
-          <RelatedNotesSection recordId={liveRecord.id} color={color} />
+          <RelatedNotesSection
+            recordId={liveRecord.id}
+            color={color}
+            linkedRecordIds={liveRecord.linkedRecordIds ?? []}
+            canLink={liveRecord.status !== 'archived'}
+            onLinkToRecord={onLinkRelatedNote}
+          />
         </View>
 
         <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
