@@ -66,6 +66,11 @@ export const GraphNodeDot = React.memo(function GraphNodeDot({
     return color.accent.primary;
   }, [node, color, folderColor]);
 
+  const highlightRingBorderColor = React.useMemo(
+    () => withAlphaHex(color.accent.primary, 0.6),
+    [color.accent.primary],
+  );
+
   const containerStyle = useAnimatedStyle(() => {
     'worklet';
     const isInteracting = interactionPhase.value >= GRAPH_NODE_INTERACTION_PRESSING;
@@ -110,7 +115,7 @@ export const GraphNodeDot = React.memo(function GraphNodeDot({
       height: DOT_SIZE_ACTIVE + 12,
       borderRadius: (DOT_SIZE_ACTIVE + 12) / 2,
       borderWidth: 2,
-      borderColor: withAlphaHex(color.accent.primary, 0.6),
+      borderColor: highlightRingBorderColor,
       opacity: withTiming(shouldShow ? 1 : 0, { duration: 200 }),
       transform: [
         {
@@ -118,7 +123,7 @@ export const GraphNodeDot = React.memo(function GraphNodeDot({
         },
       ],
     };
-  }, [highlighted, active, color]);
+  }, [highlighted, active, highlightRingBorderColor]);
 
   return (
     <View
