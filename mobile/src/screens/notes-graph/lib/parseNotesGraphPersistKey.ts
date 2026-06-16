@@ -2,6 +2,7 @@ import type { GraphEdgeVisibility, GraphFilters, GraphLayoutMode } from './graph
 import {
   DEFAULT_EDGE_VISIBILITY,
   DEFAULT_GRAPH_LAYOUT_MODE,
+  DEFAULT_NODE_DISPLAY_MODE,
   isGraphLayoutMode,
 } from './graphTypes';
 import { stripNotesGraphHistoryScopeFromLayoutKey } from './notesGraphHistoryScope';
@@ -214,5 +215,6 @@ export function parsedPersistKeyToGraphFilters(parsed: ParsedNotesGraphPersistKe
     showArchived: parsed.showArchived,
     edgeVisibility: { ...parsed.edgeVisibility },
     layoutMode: parsed.layoutMode,
+    nodeDisplayMode: DEFAULT_NODE_DISPLAY_MODE,
   };
 }

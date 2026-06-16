@@ -10,7 +10,11 @@ import type { VoiceRecord } from '@/entities/record';
 
 import { buildNotesGraphLayout } from '../buildNotesGraphLayout';
 import { clearGraphSessionLayout } from '../graphSessionLayout';
-import { DEFAULT_EDGE_VISIBILITY, DEFAULT_GRAPH_LAYOUT_MODE } from '../graphTypes';
+import {
+  DEFAULT_EDGE_VISIBILITY,
+  DEFAULT_GRAPH_LAYOUT_MODE,
+  DEFAULT_NODE_DISPLAY_MODE,
+} from '../graphTypes';
 import { recordNodeId } from '../graphTypes';
 
 function makeRecord(id: string, title: string): VoiceRecord {
@@ -32,6 +36,7 @@ const filters = {
   showArchived: false,
   edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY, contains: false },
   layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
+  nodeDisplayMode: DEFAULT_NODE_DISPLAY_MODE,
 };
 
 describe('buildNotesGraphLayout', () => {

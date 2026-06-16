@@ -35,7 +35,7 @@ describe('layoutNodesInCircle', () => {
     );
 
     const laidOut = layoutNodesInCircle(nodes, 900, 700);
-    const centers = laidOut.map(nodeCenter);
+    const centers = laidOut.map((node) => nodeCenter(node));
     const centroidX = centers.reduce((sum, point) => sum + point.x, 0) / centers.length;
     const centroidY = centers.reduce((sum, point) => sum + point.y, 0) / centers.length;
     const radii = centers.map((point) => Math.hypot(point.x - centroidX, point.y - centroidY));

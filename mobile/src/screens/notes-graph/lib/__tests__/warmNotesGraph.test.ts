@@ -1,6 +1,6 @@
 import type { VoiceRecord } from '@/entities/record';
 
-import { DEFAULT_GRAPH_LAYOUT_MODE } from '../graphTypes';
+import { DEFAULT_GRAPH_LAYOUT_MODE, DEFAULT_NODE_DISPLAY_MODE } from '../graphTypes';
 import { warmNotesGraphLayoutWithFilters } from '../notesGraphLayoutCache';
 import { prefetchNotesGraphScreenBody } from '../prefetchNotesGraphScreenBody';
 import { beginNotesGraphScreenWarm } from '../warmNotesGraph';
@@ -27,6 +27,7 @@ const filters = {
     linked: true,
   },
   layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
+  nodeDisplayMode: DEFAULT_NODE_DISPLAY_MODE,
 };
 
 function makeRecord(id: string): VoiceRecord {

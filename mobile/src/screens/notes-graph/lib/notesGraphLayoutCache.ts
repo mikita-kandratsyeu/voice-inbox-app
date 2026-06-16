@@ -5,6 +5,7 @@ import { buildNotesGraphLayout, type NotesGraphLayoutResult } from './buildNotes
 import {
   DEFAULT_EDGE_VISIBILITY,
   DEFAULT_GRAPH_LAYOUT_MODE,
+  DEFAULT_NODE_DISPLAY_MODE,
   type GraphFilters,
 } from './graphTypes';
 
@@ -16,6 +17,7 @@ export const DEFAULT_NOTES_GRAPH_FILTERS: GraphFilters = {
   showArchived: false,
   edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
   layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
+  nodeDisplayMode: DEFAULT_NODE_DISPLAY_MODE,
 };
 
 function buildRecordsRevision(records: VoiceRecord[]): string {

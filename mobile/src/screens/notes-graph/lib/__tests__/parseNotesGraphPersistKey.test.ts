@@ -114,6 +114,7 @@ describe('parseNotesGraphPersistKey', () => {
         linked: true,
       },
       layoutMode: 'circular',
+      nodeDisplayMode: 'cards',
     });
   });
 

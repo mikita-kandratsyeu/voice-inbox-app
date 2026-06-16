@@ -31,9 +31,9 @@ import {
 import { buildNotesGraphLayoutDetailRows } from '../lib/buildNotesGraphLayoutDetailRows';
 import { buildNotesGraphLayoutFilterSummaryFromParsed } from '../lib/buildNotesGraphLayoutFilterSummary';
 import { getNotesGraphLayoutVersionDisplayName } from '../lib/getNotesGraphLayoutVersionDisplayName';
+import type { NotesGraphHistoryScope } from '../lib/notesGraphHistoryScope';
 import type { NotesGraphLayoutVersionEntry } from '../lib/notesGraphLayoutDb';
 import { listNotesGraphLayoutHistoryByScope } from '../lib/notesGraphLayoutDb';
-import type { NotesGraphHistoryScope } from '../lib/notesGraphHistoryScope';
 import { parseNotesGraphPersistKey } from '../lib/parseNotesGraphPersistKey';
 
 const HISTORY_LIST_MAX_HEIGHT = 320;

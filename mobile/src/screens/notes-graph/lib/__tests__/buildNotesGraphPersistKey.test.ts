@@ -12,6 +12,7 @@ import { buildNotesGraphPersistKey } from '../buildNotesGraphPersistKey';
 import {
   DEFAULT_EDGE_VISIBILITY,
   DEFAULT_GRAPH_LAYOUT_MODE,
+  DEFAULT_NODE_DISPLAY_MODE,
   type GraphFilters,
 } from '../graphTypes';
 import { parseNotesGraphPersistKey } from '../parseNotesGraphPersistKey';
@@ -39,6 +40,7 @@ const filters: GraphFilters = {
     sharedTag: false,
   },
   layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
+  nodeDisplayMode: DEFAULT_NODE_DISPLAY_MODE,
 };
 
 describe('buildNotesGraphPersistKey', () => {

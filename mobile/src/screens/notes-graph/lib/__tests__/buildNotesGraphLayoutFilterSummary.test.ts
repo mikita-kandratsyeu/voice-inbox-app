@@ -5,6 +5,7 @@ import {
 import {
   DEFAULT_EDGE_VISIBILITY,
   DEFAULT_GRAPH_LAYOUT_MODE,
+  DEFAULT_NODE_DISPLAY_MODE,
   type GraphFilters,
 } from '../graphTypes';
 import { parseNotesGraphPersistKey } from '../parseNotesGraphPersistKey';
@@ -19,6 +20,7 @@ const baseFilters: GraphFilters = {
   showArchived: false,
   edgeVisibility: { ...DEFAULT_EDGE_VISIBILITY },
   layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
+  nodeDisplayMode: DEFAULT_NODE_DISPLAY_MODE,
 };
 
 describe('buildNotesGraphLayoutFilterSummary', () => {
