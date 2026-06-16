@@ -1,7 +1,13 @@
 import dayjs from 'dayjs';
-import { and, desc, eq, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, like, lt, not, or, sql } from 'drizzle-orm';
 
 import { isRecord, isString, notesGraphLayoutVersionTable, waitForDb } from '@/shared/lib';
+
+import type { NotesGraphHistoryScope } from './notesGraphHistoryScope';
+import {
+  buildNotesGraphHistoryScopePrefix,
+  resolveLayoutKeyLookupCandidates,
+} from './notesGraphHistoryScope';
 
 export type NotesGraphNodePosition = { x: number; y: number };
 
@@ -94,42 +100,47 @@ export async function getLatestNotesGraphLayoutVersion(
   (NotesGraphLayoutVersionEntry & { positions: Record<string, NotesGraphNodePosition> }) | null
 > {
   const db = await waitForDb();
-  const rows = await db
-    .select()
-    .from(notesGraphLayoutVersionTable)
-    .where(eq(notesGraphLayoutVersionTable.layoutKey, layoutKey))
-    .orderBy(desc(notesGraphLayoutVersionTable.versionNumber))
-    .limit(1);
 
-  const row = rows[0];
-  if (!row) return null;
+  for (const candidateKey of resolveLayoutKeyLookupCandidates(layoutKey)) {
+    const rows = await db
+      .select()
+      .from(notesGraphLayoutVersionTable)
+      .where(eq(notesGraphLayoutVersionTable.layoutKey, candidateKey))
+      .orderBy(desc(notesGraphLayoutVersionTable.versionNumber))
+      .limit(1);
 
-  const positions = parsePayload(row.payload);
-  if (!positions) return null;
+    const row = rows[0];
+    if (!row) continue;
 
-  return {
-    id: row.id,
-    layoutKey: row.layoutKey,
-    versionNumber: row.versionNumber,
-    createdAt: row.createdAt,
-    nodeCount: Object.keys(positions).length,
-    name: row.name ?? null,
-    positions,
-  };
+    const positions = parsePayload(row.payload);
+    if (!positions) continue;
+
+    return {
+      id: row.id,
+      layoutKey: row.layoutKey,
+      versionNumber: row.versionNumber,
+      createdAt: row.createdAt,
+      nodeCount: Object.keys(positions).length,
+      name: row.name ?? null,
+      positions,
+    };
+  }
+
+  return null;
 }
 
 const MAX_ALL_LAYOUT_HISTORY = 200;
 
-export async function listAllNotesGraphLayoutHistory(
-  limit = MAX_ALL_LAYOUT_HISTORY,
-): Promise<NotesGraphLayoutVersionEntry[]> {
-  const db = await waitForDb();
-  const rows = await db
-    .select()
-    .from(notesGraphLayoutVersionTable)
-    .orderBy(desc(notesGraphLayoutVersionTable.createdAt))
-    .limit(limit);
-
+function mapLayoutVersionRows(
+  rows: {
+    id: string;
+    layoutKey: string;
+    versionNumber: number;
+    createdAt: string;
+    name: string | null;
+    payload: string;
+  }[],
+): NotesGraphLayoutVersionEntry[] {
   return rows
     .map((row) => {
       const positions = parsePayload(row.payload);
@@ -144,6 +155,51 @@ export async function listAllNotesGraphLayoutHistory(
       };
     })
     .filter((entry): entry is NotesGraphLayoutVersionEntry => entry != null);
+}
+
+function layoutHistoryScopeWhere(scope: NotesGraphHistoryScope) {
+  if (scope.kind === 'local') {
+    return like(
+      notesGraphLayoutVersionTable.layoutKey,
+      `${buildNotesGraphHistoryScopePrefix(scope)};%`,
+    );
+  }
+
+  return or(
+    like(notesGraphLayoutVersionTable.layoutKey, 'global;%'),
+    and(
+      not(like(notesGraphLayoutVersionTable.layoutKey, 'local:%')),
+      not(like(notesGraphLayoutVersionTable.layoutKey, 'global;%')),
+    ),
+  );
+}
+
+export async function listNotesGraphLayoutHistoryByScope(
+  scope: NotesGraphHistoryScope,
+  limit = MAX_ALL_LAYOUT_HISTORY,
+): Promise<NotesGraphLayoutVersionEntry[]> {
+  const db = await waitForDb();
+  const rows = await db
+    .select()
+    .from(notesGraphLayoutVersionTable)
+    .where(layoutHistoryScopeWhere(scope))
+    .orderBy(desc(notesGraphLayoutVersionTable.createdAt))
+    .limit(limit);
+
+  return mapLayoutVersionRows(rows);
+}
+
+export async function listAllNotesGraphLayoutHistory(
+  limit = MAX_ALL_LAYOUT_HISTORY,
+): Promise<NotesGraphLayoutVersionEntry[]> {
+  const db = await waitForDb();
+  const rows = await db
+    .select()
+    .from(notesGraphLayoutVersionTable)
+    .orderBy(desc(notesGraphLayoutVersionTable.createdAt))
+    .limit(limit);
+
+  return mapLayoutVersionRows(rows);
 }
 
 export async function listNotesGraphLayoutHistory(
@@ -158,20 +214,7 @@ export async function listNotesGraphLayoutHistory(
     .orderBy(desc(notesGraphLayoutVersionTable.versionNumber))
     .limit(limit);
 
-  return rows
-    .map((row) => {
-      const positions = parsePayload(row.payload);
-      if (!positions) return null;
-      return {
-        id: row.id,
-        layoutKey: row.layoutKey,
-        versionNumber: row.versionNumber,
-        createdAt: row.createdAt,
-        nodeCount: Object.keys(positions).length,
-        name: row.name ?? null,
-      };
-    })
-    .filter((entry): entry is NotesGraphLayoutVersionEntry => entry != null);
+  return mapLayoutVersionRows(rows);
 }
 
 export async function getNotesGraphLayoutVersionPositions(
@@ -249,6 +292,21 @@ export async function deleteAllNotesGraphLayoutHistory(): Promise<number> {
   if (rows.length === 0) return 0;
 
   await db.delete(notesGraphLayoutVersionTable);
+  return rows.length;
+}
+
+export async function deleteNotesGraphLayoutHistoryByScope(
+  scope: NotesGraphHistoryScope,
+): Promise<number> {
+  const db = await waitForDb();
+  const rows = await db
+    .select({ id: notesGraphLayoutVersionTable.id })
+    .from(notesGraphLayoutVersionTable)
+    .where(layoutHistoryScopeWhere(scope));
+  if (rows.length === 0) return 0;
+
+  await db.delete(notesGraphLayoutVersionTable).where(layoutHistoryScopeWhere(scope));
+
   return rows.length;
 }
 

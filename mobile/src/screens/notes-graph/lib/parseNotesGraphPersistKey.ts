@@ -4,6 +4,7 @@ import {
   DEFAULT_GRAPH_LAYOUT_MODE,
   isGraphLayoutMode,
 } from './graphTypes';
+import { stripNotesGraphHistoryScopeFromLayoutKey } from './notesGraphHistoryScope';
 
 const PERSIST_KEY_TAIL_PARTS = 9;
 const LEGACY_PERSIST_KEY_TAIL_PARTS_V2 = 8;
@@ -158,7 +159,8 @@ function parseLegacyPersistKey(parts: string[]): ParsedNotesGraphPersistKey | nu
 }
 
 export function parseNotesGraphPersistKey(layoutKey: string): ParsedNotesGraphPersistKey | null {
-  const parts = layoutKey.split(';');
+  const { bodyKey } = stripNotesGraphHistoryScopeFromLayoutKey(layoutKey);
+  const parts = bodyKey.split(';');
   if (parts.length < PERSIST_KEY_TAIL_PARTS + 1) {
     const v2 = parseLegacyPersistKeyV2(parts);
     if (v2) return v2;

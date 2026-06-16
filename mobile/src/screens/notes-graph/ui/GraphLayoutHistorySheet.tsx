@@ -32,7 +32,8 @@ import { buildNotesGraphLayoutDetailRows } from '../lib/buildNotesGraphLayoutDet
 import { buildNotesGraphLayoutFilterSummaryFromParsed } from '../lib/buildNotesGraphLayoutFilterSummary';
 import { getNotesGraphLayoutVersionDisplayName } from '../lib/getNotesGraphLayoutVersionDisplayName';
 import type { NotesGraphLayoutVersionEntry } from '../lib/notesGraphLayoutDb';
-import { listAllNotesGraphLayoutHistory } from '../lib/notesGraphLayoutDb';
+import { listNotesGraphLayoutHistoryByScope } from '../lib/notesGraphLayoutDb';
+import type { NotesGraphHistoryScope } from '../lib/notesGraphHistoryScope';
 import { parseNotesGraphPersistKey } from '../lib/parseNotesGraphPersistKey';
 
 const HISTORY_LIST_MAX_HEIGHT = 320;
@@ -40,6 +41,7 @@ const HISTORY_ROW_HEIGHT = 68;
 
 type GraphLayoutHistorySheetProps = {
   visible: boolean;
+  historyScope: NotesGraphHistoryScope;
   folders: Folder[];
   foldersEnabled: boolean;
   activeVersionId: string | null;
@@ -348,6 +350,7 @@ function HistoryRow({
 
 export function GraphLayoutHistorySheet({
   visible,
+  historyScope,
   folders,
   foldersEnabled,
   activeVersionId,
@@ -369,7 +372,7 @@ export function GraphLayoutHistorySheet({
   const loadHistory = useCallback(async () => {
     setLoading(true);
     try {
-      const rows = await listAllNotesGraphLayoutHistory();
+      const rows = await listNotesGraphLayoutHistoryByScope(historyScope);
       setEntries(rows);
       setSelectedVersionId((current) => {
         if (current && rows.some((row) => row.id === current)) return current;
@@ -381,7 +384,7 @@ export function GraphLayoutHistorySheet({
     } finally {
       setLoading(false);
     }
-  }, [activeVersionId]);
+  }, [activeVersionId, historyScope]);
 
   useEffect(() => {
     if (!visible) return;

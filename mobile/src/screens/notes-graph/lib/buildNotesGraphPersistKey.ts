@@ -2,6 +2,10 @@ import type { VoiceRecord } from '@/entities/record';
 
 import { countFilteredGraphRecords } from './buildGraphModel';
 import type { GraphFilters } from './graphTypes';
+import {
+  buildNotesGraphHistoryScopePrefix,
+  type NotesGraphHistoryScope,
+} from './notesGraphHistoryScope';
 
 function buildRecordsRevision(records: VoiceRecord[]): string {
   if (records.length === 0) return '0';
@@ -16,6 +20,7 @@ export function buildNotesGraphPersistKey(
   records: VoiceRecord[],
   filters: GraphFilters,
   simplifyOverride: boolean | null,
+  scope: NotesGraphHistoryScope = { kind: 'global' },
 ): string {
   const filteredCount = countFilteredGraphRecords(records, filters);
   const tagKey = filters.tags.slice().sort().join('|');
@@ -23,7 +28,7 @@ export function buildNotesGraphPersistKey(
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([kind, visible]) => `${kind}:${visible ? 1 : 0}`)
     .join(',');
-  return [
+  const bodyKey = [
     buildRecordsRevision(records),
     filters.folderId ?? '',
     tagKey,
@@ -35,4 +40,6 @@ export function buildNotesGraphPersistKey(
     simplifyOverride === null ? 'auto' : simplifyOverride ? 1 : 0,
     filteredCount,
   ].join(';');
+
+  return `${buildNotesGraphHistoryScopePrefix(scope)};${bodyKey}`;
 }

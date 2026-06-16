@@ -47,6 +47,7 @@ describe('buildNotesGraphPersistKey', () => {
     const key = buildNotesGraphPersistKey(records, filters, null);
     const parsed = parseNotesGraphPersistKey(key);
 
+    expect(key.startsWith('global;')).toBe(true);
     expect(parsed).not.toBeNull();
     expect(parsed?.recordsRevision).toBe('2:a,b');
     expect(parsed?.folderId).toBeNull();
@@ -63,6 +64,16 @@ describe('buildNotesGraphPersistKey', () => {
     const key = buildNotesGraphPersistKey([makeRecord('a')], filters, true);
 
     expect(parseNotesGraphPersistKey(key)?.simplifyOverride).toBe(true);
+  });
+
+  it('prefixes local graph scope in persist keys', () => {
+    const key = buildNotesGraphPersistKey([makeRecord('a')], filters, null, {
+      kind: 'local',
+      focusRecordId: 'rec-1',
+    });
+
+    expect(key.startsWith('local:rec-1;')).toBe(true);
+    expect(parseNotesGraphPersistKey(key)?.recordsRevision).toBe('1:a');
   });
 
   it.each(['force', 'circular'] as const)(
