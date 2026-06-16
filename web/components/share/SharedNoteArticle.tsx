@@ -31,16 +31,29 @@ export function SharedNoteArticle({
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <div className="rounded-3xl border border-black/10 bg-white/85 p-8 shadow-[0_10px_36px_rgba(15,23,42,0.08)] dark:border-white/12 dark:bg-white/5 dark:shadow-[0_14px_44px_rgba(0,0,0,0.34)] sm:p-12">
             <header className="mb-8 border-b border-black/8 pb-6 dark:border-white/10">
-              <p className="text-sm text-black/55 dark:text-white/55">{visibilityHint}</p>
-              <h1 className="mt-3 text-2xl font-semibold tracking-tight text-black sm:text-3xl dark:text-white">
+              <span className="inline-flex items-center rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:border-blue-400/25 dark:bg-blue-500/14 dark:text-blue-300">
+                {visibilityHint}
+              </span>
+
+              <h1 className="mt-5 text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
                 {title}
               </h1>
-              <p className="mt-3 text-sm text-black/55 dark:text-white/55">{publishedOn}</p>
-              {expiresOn ? (
-                <p className="mt-1 text-sm text-black/55 dark:text-white/55">{expiresOn}</p>
-              ) : null}
+
+              <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
+                <span>{publishedOn}</span>
+                {expiresOn ? (
+                  <>
+                    <span className="text-slate-300 dark:text-slate-600" aria-hidden>
+                      ·
+                    </span>
+                    <span>{expiresOn}</span>
+                  </>
+                ) : null}
+              </div>
             </header>
+
             <SharedNoteMarkdown markdown={markdown} />
+
             <Link
               href="/"
               className="mt-10 inline-flex rounded-lg px-1 text-sm font-medium text-blue-600 transition-colors hover:text-blue-500 dark:text-blue-400"
