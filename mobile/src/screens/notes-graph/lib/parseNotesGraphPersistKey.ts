@@ -14,7 +14,7 @@ const LEGACY_PERSIST_KEY_TAIL_PARTS_NO_LAYOUT = 6;
 
 export type ParsedNotesGraphPersistKey = {
   recordsRevision: string;
-  folderId: string | null;
+  folderIds: string[];
   tags: string[];
   showTasks: boolean;
   showCompletedTasks: boolean;
@@ -24,6 +24,10 @@ export type ParsedNotesGraphPersistKey = {
   simplifyOverride: boolean | null;
   filteredCount: number;
 };
+
+function parseFolderIds(folderIdsRaw: string): string[] {
+  return folderIdsRaw ? folderIdsRaw.split('|').filter(Boolean) : [];
+}
 
 function parseEdgeVisibility(edgeKey: string): GraphEdgeVisibility | null {
   const edgeVisibility: GraphEdgeVisibility = { ...DEFAULT_EDGE_VISIBILITY };
@@ -72,7 +76,7 @@ function parseLegacyPersistKeyNoLayout(parts: string[]): ParsedNotesGraphPersist
 
   return {
     recordsRevision,
-    folderId: folderIdRaw || null,
+    folderIds: parseFolderIds(folderIdRaw),
     tags: tagKey ? tagKey.split('|').filter(Boolean) : [],
     showTasks,
     showCompletedTasks: true,
@@ -108,7 +112,7 @@ function parseLegacyPersistKeyV2(parts: string[]): ParsedNotesGraphPersistKey | 
 
   return {
     recordsRevision,
-    folderId: folderIdRaw || null,
+    folderIds: parseFolderIds(folderIdRaw),
     tags: tagKey ? tagKey.split('|').filter(Boolean) : [],
     showTasks,
     showCompletedTasks: true,
@@ -147,7 +151,7 @@ function parseLegacyPersistKey(parts: string[]): ParsedNotesGraphPersistKey | nu
 
   return {
     recordsRevision,
-    folderId: folderIdRaw || null,
+    folderIds: parseFolderIds(folderIdRaw),
     tags: tagKey ? tagKey.split('|').filter(Boolean) : [],
     showTasks,
     showCompletedTasks: true,
@@ -194,7 +198,7 @@ export function parseNotesGraphPersistKey(layoutKey: string): ParsedNotesGraphPe
 
   return {
     recordsRevision,
-    folderId: folderIdRaw || null,
+    folderIds: parseFolderIds(folderIdRaw),
     tags: tagKey ? tagKey.split('|').filter(Boolean) : [],
     showTasks,
     showCompletedTasks,
@@ -208,7 +212,7 @@ export function parseNotesGraphPersistKey(layoutKey: string): ParsedNotesGraphPe
 
 export function parsedPersistKeyToGraphFilters(parsed: ParsedNotesGraphPersistKey): GraphFilters {
   return {
-    folderId: parsed.folderId,
+    folderIds: parsed.folderIds,
     tags: parsed.tags,
     showTasks: parsed.showTasks,
     showCompletedTasks: parsed.showCompletedTasks,

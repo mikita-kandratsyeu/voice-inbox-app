@@ -119,7 +119,7 @@ export const NotesGraphScreenBody = () => {
     }
 
     return {
-      folderId: route.params?.folderId ?? null,
+      folderIds: route.params?.folderId ? [route.params.folderId] : [],
       tags: route.params?.tag ? [route.params.tag] : [],
       showTasks: true,
       showCompletedTasks: true,
@@ -817,57 +817,77 @@ export const NotesGraphScreenBody = () => {
     t,
   ]);
 
-  const handleOpenExportPreview = useCallback(async () => {
-    if (isCapturingExport) return;
+  const handleOpenExportPreview = useCallback(() => {
+    if (isCapturingExport || isRecapturingExport) return;
 
-    const captureToken = exportCaptureTokenRef.current + 1;
-    exportCaptureTokenRef.current = captureToken;
+    exportCaptureTokenRef.current += 1;
 
     setExportPreviewUri(null);
     setExportPreviewSize(null);
     setExportCaptureBackgroundId('canvas');
     exportPreviewBackgroundIdRef.current = 'canvas';
     setIsCapturingExport(true);
-    await waitForNextFrame();
-    if (captureToken !== exportCaptureTokenRef.current) return;
+  }, [isCapturingExport, isRecapturingExport]);
 
-    setIsExportCaptureMount(true);
-    await waitForNextFrame();
-    if (captureToken !== exportCaptureTokenRef.current) return;
-
-    try {
-      const captured = await canvasRef.current?.captureImage();
-      if (captureToken !== exportCaptureTokenRef.current) return;
-      if (!captured?.uri) {
-        throw new Error('capture returned empty uri');
-      }
-
-      // Warn user if export was scaled down due to device limitations
-      if (captured.wasScaledDown) {
-        const tierLabel = captured.deviceMemoryTier === 'low' ? 'limited' : 'available';
-        Alert.alert(
-          t('notesGraph.export.scaledDownTitle'),
-          t('notesGraph.export.scaledDownMessage', {
-            width: captured.width,
-            height: captured.height,
-            tier: tierLabel,
-          }),
-        );
-      }
-
-      setExportPreviewUri(captured.uri);
-      setExportPreviewSize({ width: captured.width, height: captured.height });
-      setExportSheetVisible(true);
-    } catch {
-      if (captureToken !== exportCaptureTokenRef.current) return;
-      Alert.alert(t('common.error'), t('notesGraph.export.failed'));
-    } finally {
-      if (captureToken === exportCaptureTokenRef.current) {
-        setIsExportCaptureMount(false);
-        setIsCapturingExport(false);
-      }
+  useEffect(() => {
+    if (!isCapturingExport || exportPreviewUri != null) {
+      return undefined;
     }
-  }, [isCapturingExport, t]);
+
+    const captureToken = exportCaptureTokenRef.current;
+    let cancelled = false;
+
+    void (async () => {
+      await waitForNextFrame();
+      if (cancelled || captureToken !== exportCaptureTokenRef.current) return;
+
+      await waitForNextFrame();
+      if (cancelled || captureToken !== exportCaptureTokenRef.current) return;
+
+      setIsExportCaptureMount(true);
+      await waitForNextFrame();
+      if (cancelled || captureToken !== exportCaptureTokenRef.current) return;
+
+      await waitForNextFrame();
+      if (cancelled || captureToken !== exportCaptureTokenRef.current) return;
+
+      try {
+        const captured = await canvasRef.current?.captureImage();
+        if (cancelled || captureToken !== exportCaptureTokenRef.current) return;
+        if (!captured?.uri) {
+          throw new Error('capture returned empty uri');
+        }
+
+        if (captured.wasScaledDown) {
+          const tierLabel = captured.deviceMemoryTier === 'low' ? 'limited' : 'available';
+          Alert.alert(
+            t('notesGraph.export.scaledDownTitle'),
+            t('notesGraph.export.scaledDownMessage', {
+              width: captured.width,
+              height: captured.height,
+              tier: tierLabel,
+            }),
+          );
+        }
+
+        setExportPreviewUri(captured.uri);
+        setExportPreviewSize({ width: captured.width, height: captured.height });
+        setExportSheetVisible(true);
+      } catch {
+        if (cancelled || captureToken !== exportCaptureTokenRef.current) return;
+        Alert.alert(t('common.error'), t('notesGraph.export.failed'));
+      } finally {
+        if (!cancelled && captureToken === exportCaptureTokenRef.current) {
+          setIsExportCaptureMount(false);
+          setIsCapturingExport(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [exportPreviewUri, isCapturingExport, t]);
 
   const handleExportBackgroundChange = useCallback(
     async (backgroundId: GraphExportBackgroundId) => {
@@ -1076,7 +1096,7 @@ export const NotesGraphScreenBody = () => {
               return;
             }
             if (nativeEvent.event === 'exportImage') {
-              void handleOpenExportPreview();
+              handleOpenExportPreview();
             }
           }}
         >
@@ -1124,6 +1144,7 @@ export const NotesGraphScreenBody = () => {
         filters={filters}
         folders={folders}
         foldersEnabled={foldersEnabled}
+        isLocalGraphMode={isLocalGraphMode}
         isProActive={isProActive}
         availableTags={availableTags}
         disabled={isGraphReconciling || isCapturingExport}
@@ -1154,39 +1175,44 @@ export const NotesGraphScreenBody = () => {
           description={t('notesGraph.emptyDescription')}
         />
       ) : (
-        <GraphCanvas
-          ref={canvasRef}
-          nodes={layoutNodes}
-          edges={layoutEdges}
-          graphWidth={graphSize.width}
-          graphHeight={graphSize.height}
-          color={color}
-          foldersById={foldersById}
-          isProActive={isProActive}
-          matchedNodeIds={matchedNodeIds}
-          activeNodeId={resolvedActiveNodeId}
-          bottomInset={insets.bottom}
-          focusViewportInsets={focusViewportInsets}
-          nodeDisplayMode={nodeDisplayMode}
-          onRecordPress={handleRecordPress}
-          onTaskPress={handleTaskPress}
-          onNodeFocus={handleNodeFocus}
-          onResetView={handleClearNodeSelection}
-          onReconcilingChange={setIsGraphReconciling}
-          onLayoutPositionsChange={handleLayoutPositionsChange}
-          onResetLayoutLongPress={handleDiscardUnsavedLayoutChanges}
-          resetLayoutLongPressEnabled={hasUnsavedLayoutChanges}
-          layoutRestoreToken={layoutRestoreToken}
-          hasUnsavedLayoutChanges={hasUnsavedLayoutChanges}
-          isSavingLayout={isSavingLayout}
-          onSaveLayout={handleOpenLayoutSaveSheet}
-          onDiscardLayout={handleDiscardUnsavedLayoutChanges}
-          exportCaptureActive={isExportCaptureMount}
-          exportCaptureBackgroundId={exportCaptureBackgroundId}
-          isExportCapturing={isCapturingExport || isRecapturingExport}
-          folderHighlightsVisible={folderHighlightsVisible}
-          minimapVisible={minimapVisible}
-        />
+        <View style={{ flex: 1 }}>
+          <GraphCanvas
+            ref={canvasRef}
+            nodes={layoutNodes}
+            edges={layoutEdges}
+            graphWidth={graphSize.width}
+            graphHeight={graphSize.height}
+            color={color}
+            foldersById={foldersById}
+            isProActive={isProActive}
+            matchedNodeIds={matchedNodeIds}
+            activeNodeId={resolvedActiveNodeId}
+            bottomInset={insets.bottom}
+            focusViewportInsets={focusViewportInsets}
+            nodeDisplayMode={nodeDisplayMode}
+            onRecordPress={handleRecordPress}
+            onTaskPress={handleTaskPress}
+            onNodeFocus={handleNodeFocus}
+            onResetView={handleClearNodeSelection}
+            onReconcilingChange={setIsGraphReconciling}
+            onLayoutPositionsChange={handleLayoutPositionsChange}
+            onResetLayoutLongPress={handleDiscardUnsavedLayoutChanges}
+            resetLayoutLongPressEnabled={hasUnsavedLayoutChanges}
+            layoutRestoreToken={layoutRestoreToken}
+            hasUnsavedLayoutChanges={hasUnsavedLayoutChanges}
+            isSavingLayout={isSavingLayout}
+            onSaveLayout={handleOpenLayoutSaveSheet}
+            onDiscardLayout={handleDiscardUnsavedLayoutChanges}
+            exportCaptureActive={isExportCaptureMount}
+            exportCaptureBackgroundId={exportCaptureBackgroundId}
+            isExportCapturing={isCapturingExport || isRecapturingExport}
+            folderHighlightsVisible={folderHighlightsVisible}
+            minimapVisible={minimapVisible}
+          />
+          {isCapturingExport && !exportSheetVisible ? (
+            <GraphBuildingState label={t('notesGraph.export.capturingPreview')} />
+          ) : null}
+        </View>
       )}
 
       {editTaskSheet}
@@ -1224,7 +1250,7 @@ export const NotesGraphScreenBody = () => {
         visible={exportSheetVisible}
         imageUri={exportPreviewUri}
         imagePixelSize={exportPreviewSize}
-        isLoadingPreview={isCapturingExport || isRecapturingExport}
+        isLoadingPreview={isRecapturingExport}
         onBackgroundChange={(backgroundId) => {
           void handleExportBackgroundChange(backgroundId);
         }}

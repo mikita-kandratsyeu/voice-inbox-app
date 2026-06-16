@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
-import { type Folder, FolderPickerSheet } from '@/entities/folder';
+import { type Folder } from '@/entities/folder';
 import { FolderLucideIcon } from '@/entities/folder/lib/folderLucideIcons';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
@@ -22,6 +22,7 @@ import {
 
 import type { GraphFilters } from '../lib/graphTypes';
 import { GraphConnectionsFilterSheet } from './GraphConnectionsFilterSheet';
+import { GraphFolderPickerSheet } from './GraphFolderPickerSheet';
 import { GraphLayoutModeSheet } from './GraphLayoutModeSheet';
 import { TagPickerSheet } from './TagPickerSheet';
 
@@ -43,6 +44,7 @@ type GraphFilterBarProps = {
   filters: GraphFilters;
   folders: Folder[];
   foldersEnabled: boolean;
+  isLocalGraphMode?: boolean;
   isProActive: boolean;
   availableTags: string[];
   disabled?: boolean;
@@ -126,6 +128,7 @@ export function GraphFilterBar({
   filters,
   folders,
   foldersEnabled,
+  isLocalGraphMode = false,
   isProActive,
   availableTags,
   disabled = false,
@@ -138,13 +141,21 @@ export function GraphFilterBar({
   const [connectionsPickerVisible, setConnectionsPickerVisible] = useState(false);
   const [layoutModePickerVisible, setLayoutModePickerVisible] = useState(false);
 
-  const activeFolder = useMemo(
-    () => (filters.folderId ? folders.find((f) => f.id === filters.folderId) : null),
-    [filters.folderId, folders],
+  const selectedFolders = useMemo(
+    () => folders.filter((folder) => filters.folderIds.includes(folder.id)),
+    [filters.folderIds, folders],
   );
 
-  const folderChipColor = activeFolder
-    ? resolveDisplayFolderColor(activeFolder.color, isProActive)
+  const foldersSelected = selectedFolders.length > 0;
+  const singleSelectedFolder = selectedFolders.length === 1 ? selectedFolders[0]! : null;
+  const foldersChipLabel = foldersSelected
+    ? selectedFolders.length === 1
+      ? singleSelectedFolder!.name
+      : t('notesGraph.filters.foldersCount', { count: selectedFolders.length })
+    : t('notesGraph.filters.allFolders');
+
+  const folderChipColor = singleSelectedFolder
+    ? resolveDisplayFolderColor(singleSelectedFolder.color, isProActive)
     : undefined;
   const activeFolderForeground = folderChipColor
     ? folderChipActiveForeground(color, folderChipColor)
@@ -165,13 +176,13 @@ export function GraphFilterBar({
   const tagsChipTone = pickerChipTone(color, tagsSelected, isDark);
   const connectionsChipTone = pickerChipTone(color, connectionsCustomized, isDark);
 
-  const folderChipTone: ChipTone = activeFolder
+  const folderChipTone: ChipTone = singleSelectedFolder
     ? {
         backgroundColor: folderChipColor!,
         borderColor: folderChipColor!,
         foregroundColor: activeFolderForeground,
       }
-    : pickerChipTone(color, false, isDark);
+    : pickerChipTone(color, foldersSelected, isDark);
 
   const pickerIconColor = (tone: ChipTone) =>
     tone.foregroundColor === color.text.primary ? color.text.secondary : tone.foregroundColor;
@@ -225,17 +236,17 @@ export function GraphFilterBar({
           }
         />
 
-        {foldersEnabled ? (
+        {foldersEnabled && !isLocalGraphMode && folders.length > 0 ? (
           <SelectorChip
-            label={activeFolder?.name ?? t('notesGraph.filters.allFolders')}
+            label={foldersChipLabel}
             tone={folderChipTone}
             disabled={disabled}
-            selected={activeFolder != null}
+            selected={foldersSelected}
             onPress={() => setFolderPickerVisible(true)}
             icon={
-              activeFolder ? (
+              singleSelectedFolder ? (
                 <FolderLucideIcon
-                  iconId={activeFolder.icon}
+                  iconId={singleSelectedFolder.icon}
                   size={FILTER_CHIP_ICON_SIZE}
                   color={folderChipTone.foregroundColor}
                   strokeWidth={2}
@@ -251,7 +262,7 @@ export function GraphFilterBar({
           />
         ) : null}
 
-        {availableTags.length > 0 ? (
+        {!isLocalGraphMode && availableTags.length > 0 ? (
           <SelectorChip
             label={tagsChipLabel}
             tone={tagsChipTone}
@@ -279,14 +290,16 @@ export function GraphFilterBar({
         }}
       />
 
-      <TagPickerSheet
-        visible={tagPickerVisible}
-        title={t('notesGraph.filters.tagPickerTitle')}
-        tags={availableTags}
-        selectedTags={filters.tags}
-        onClose={() => setTagPickerVisible(false)}
-        onApply={(tags) => onFiltersChange({ tags })}
-      />
+      {!isLocalGraphMode ? (
+        <TagPickerSheet
+          visible={tagPickerVisible}
+          title={t('notesGraph.filters.tagPickerTitle')}
+          tags={availableTags}
+          selectedTags={filters.tags}
+          onClose={() => setTagPickerVisible(false)}
+          onApply={(tags) => onFiltersChange({ tags })}
+        />
+      ) : null}
 
       <GraphConnectionsFilterSheet
         visible={connectionsPickerVisible}
@@ -306,18 +319,14 @@ export function GraphFilterBar({
         }
       />
 
-      {foldersEnabled ? (
-        <FolderPickerSheet
+      {foldersEnabled && !isLocalGraphMode && folders.length > 0 ? (
+        <GraphFolderPickerSheet
           visible={folderPickerVisible}
           title={t('notesGraph.filters.folderPickerTitle')}
           folders={folders}
-          currentFolderId={filters.folderId}
-          inboxLabel={t('notesGraph.filters.allFolders')}
+          selectedFolderIds={filters.folderIds}
           onClose={() => setFolderPickerVisible(false)}
-          onSelect={(folderId) => {
-            onFiltersChange({ folderId });
-            setFolderPickerVisible(false);
-          }}
+          onApply={(folderIds) => onFiltersChange({ folderIds })}
         />
       ) : null}
     </View>

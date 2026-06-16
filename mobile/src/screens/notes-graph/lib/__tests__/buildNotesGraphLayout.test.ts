@@ -29,7 +29,7 @@ function makeRecord(id: string, title: string): VoiceRecord {
 }
 
 const filters = {
-  folderId: null,
+  folderIds: [],
   tags: [] as string[],
   showTasks: false,
   showCompletedTasks: false,

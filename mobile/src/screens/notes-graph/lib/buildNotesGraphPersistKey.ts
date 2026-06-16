@@ -23,6 +23,7 @@ export function buildNotesGraphPersistKey(
   scope: NotesGraphHistoryScope = { kind: 'global' },
 ): string {
   const filteredCount = countFilteredGraphRecords(records, filters);
+  const folderKey = filters.folderIds.slice().sort().join('|');
   const tagKey = filters.tags.slice().sort().join('|');
   const edgeKey = Object.entries(filters.edgeVisibility)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -30,7 +31,7 @@ export function buildNotesGraphPersistKey(
     .join(',');
   const bodyKey = [
     buildRecordsRevision(records),
-    filters.folderId ?? '',
+    folderKey,
     tagKey,
     filters.showTasks ? 1 : 0,
     filters.showCompletedTasks ? 1 : 0,

@@ -1,5 +1,7 @@
 import type { TFunction } from 'i18next';
 
+import type { Folder } from '@/entities/folder';
+
 import { shouldAutoSimplifyGraph } from './graphSimplifyMode';
 import type { GraphEdgeVisibility, GraphFilters } from './graphTypes';
 import type { ParsedNotesGraphPersistKey } from './parseNotesGraphPersistKey';
@@ -13,12 +15,29 @@ export type NotesGraphLayoutFilterRow = {
 
 type BuildNotesGraphLayoutFilterSummaryParams = {
   filters: GraphFilters;
-  folderName: string | null;
+  folders: Folder[];
   foldersEnabled: boolean;
   simplifyActive: boolean;
   simplifyIsAuto: boolean;
   t: TFunction;
 };
+
+function formatFolderFilterValue(filters: GraphFilters, folders: Folder[], t: TFunction): string {
+  if (filters.folderIds.length === 0) {
+    return t('notesGraph.filters.allFolders');
+  }
+
+  const names = filters.folderIds
+    .map((folderId) => folders.find((folder) => folder.id === folderId)?.name)
+    .filter((name): name is string => Boolean(name?.trim()))
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+  if (names.length === 0) {
+    return t('notesGraph.filters.foldersCount', { count: filters.folderIds.length });
+  }
+
+  return names.join(', ');
+}
 
 function formatEdgeVisibility(edgeVisibility: GraphEdgeVisibility, t: TFunction): string {
   const enabled: string[] = [];
@@ -46,7 +65,7 @@ function formatSimplifyView(
 
 export function buildNotesGraphLayoutFilterSummary({
   filters,
-  folderName,
+  folders,
   foldersEnabled,
   simplifyActive,
   simplifyIsAuto,
@@ -58,7 +77,7 @@ export function buildNotesGraphLayoutFilterSummary({
     rows.push({
       id: 'folder',
       label: t('notesGraph.history.filters.folder'),
-      value: folderName ?? t('notesGraph.filters.allFolders'),
+      value: formatFolderFilterValue(filters, folders, t),
     });
   }
 
@@ -115,7 +134,7 @@ export function buildNotesGraphLayoutFilterSummary({
 
 export function buildNotesGraphLayoutFilterSummaryFromParsed(
   parsed: ParsedNotesGraphPersistKey,
-  folderName: string | null,
+  folders: Folder[],
   foldersEnabled: boolean,
   t: TFunction,
 ): NotesGraphLayoutFilterRow[] {
@@ -125,7 +144,7 @@ export function buildNotesGraphLayoutFilterSummaryFromParsed(
 
   return buildNotesGraphLayoutFilterSummary({
     filters: parsedPersistKeyToGraphFilters(parsed),
-    folderName,
+    folders,
     foldersEnabled,
     simplifyActive,
     simplifyIsAuto,

@@ -870,8 +870,6 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         onToggleLegend={() => setLegendVisible((v) => !v)}
         isReconciling={isReconciling}
         reconcilingLabel={t('notesGraph.reconciling')}
-        isExportCapturing={isExportCapturing}
-        exportCapturingLabel={t('notesGraph.export.capturingPreview')}
       />
 
       {hasUnsavedLayoutChanges && onSaveLayout && onDiscardLayout ? (

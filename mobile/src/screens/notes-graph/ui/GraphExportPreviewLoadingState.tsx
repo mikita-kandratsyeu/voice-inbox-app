@@ -7,40 +7,32 @@ import { ProgressStatusCard, RotatingTipText } from '@/shared/ui';
 
 import { useRotatingGraphLoadingTip } from '../lib/graphLoadingTips';
 
-type GraphBuildingStateProps = {
+type GraphExportPreviewLoadingStateProps = {
   label: string;
-  showTips?: boolean;
 };
 
-export function GraphBuildingState({ label, showTips = true }: GraphBuildingStateProps) {
+export function GraphExportPreviewLoadingState({ label }: GraphExportPreviewLoadingStateProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const tipKey = useRotatingGraphLoadingTip(showTips);
+  const tipKey = useRotatingGraphLoadingTip();
 
   return (
     <View
-      pointerEvents="box-none"
       style={{
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        top: 0,
-        bottom: 0,
+        flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 24,
+        paddingHorizontal: 12,
       }}
     >
       <ProgressStatusCard
         title={label}
         subtitle={
-          showTips ? (
-            <RotatingTipText
-              text={t(tipKey)}
-              color={color.text.secondary}
-              className="text-center text-[14px] leading-5"
-            />
-          ) : undefined
+          <RotatingTipText
+            text={t(tipKey)}
+            color={color.text.secondary}
+            className="text-center text-[14px] leading-5"
+          />
         }
       />
     </View>

@@ -23,8 +23,9 @@ function normalizeTag(tag: string): string {
 function filterRecords(records: VoiceRecord[], filters: GraphFilters): VoiceRecord[] {
   let result = records;
 
-  if (filters.folderId != null) {
-    result = result.filter((r) => r.folderId === filters.folderId);
+  if (filters.folderIds.length > 0) {
+    const wanted = new Set(filters.folderIds);
+    result = result.filter((r) => r.folderId != null && wanted.has(r.folderId));
   }
 
   if (filters.tags.length > 0) {

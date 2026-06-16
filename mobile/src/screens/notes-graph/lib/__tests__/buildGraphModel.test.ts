@@ -35,7 +35,7 @@ function makeRecord(id: string, title: string, extras: Partial<VoiceRecord> = {}
 }
 
 const defaultFilters: GraphFilters = {
-  folderId: null,
+  folderIds: [],
   tags: [],
   showTasks: true,
   showCompletedTasks: true,
@@ -46,13 +46,17 @@ const defaultFilters: GraphFilters = {
 };
 
 describe('countFilteredGraphRecords', () => {
-  it('filters by folder id', () => {
+  it('filters by folder ids', () => {
     const records = [
       makeRecord('a', 'A', { folderId: 'f1' }),
       makeRecord('b', 'B', { folderId: 'f2' }),
+      makeRecord('c', 'C', { folderId: 'f3' }),
     ];
 
-    expect(countFilteredGraphRecords(records, { ...defaultFilters, folderId: 'f1' })).toBe(1);
+    expect(countFilteredGraphRecords(records, { ...defaultFilters, folderIds: ['f1'] })).toBe(1);
+    expect(countFilteredGraphRecords(records, { ...defaultFilters, folderIds: ['f1', 'f2'] })).toBe(
+      2,
+    );
   });
 
   it('filters by tags case-insensitively', () => {

@@ -29,7 +29,7 @@ function makeRecord(id: string): VoiceRecord {
 }
 
 const filters: GraphFilters = {
-  folderId: null,
+  folderIds: [],
   tags: [],
   showTasks: false,
   showCompletedTasks: false,
@@ -52,7 +52,7 @@ describe('buildNotesGraphPersistKey', () => {
     expect(key.startsWith('global;')).toBe(true);
     expect(parsed).not.toBeNull();
     expect(parsed?.recordsRevision).toBe('2:a,b');
-    expect(parsed?.folderId).toBeNull();
+    expect(parsed?.folderIds).toEqual([]);
     expect(parsed?.tags).toEqual([]);
     expect(parsed?.showTasks).toBe(false);
     expect(parsed?.showArchived).toBe(false);

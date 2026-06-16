@@ -34,6 +34,7 @@ import {
 import { GraphExportBackgroundFill } from './GraphExportBackgroundFill';
 import { GraphExportCropOverlay } from './GraphExportCropOverlay';
 import { GraphExportCropTemplates } from './GraphExportCropTemplates';
+import { GraphExportPreviewLoadingState } from './GraphExportPreviewLoadingState';
 
 const PREVIEW_HEIGHT = 380;
 
@@ -227,9 +228,7 @@ export function GraphExportPreviewSheet({
   }, [backgroundId, crop, imageSize, imageUri, isExporting, isLoadingPreview, onClose, t]);
 
   const isPreviewBusy = isLoadingPreview || isExporting;
-  const loadingLabel = isLoadingPreview
-    ? t('notesGraph.export.capturingPreview')
-    : t('share.exportPreparing');
+  const loadingLabel = t('share.exportPreparing');
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>
@@ -257,6 +256,10 @@ export function GraphExportPreviewSheet({
             overflow: 'hidden',
           }}
         >
+          {isLoadingPreview ? (
+            <GraphExportPreviewLoadingState label={t('notesGraph.export.capturingPreview')} />
+          ) : null}
+
           {imageUri && containLayout ? (
             <View
               style={{
@@ -295,7 +298,7 @@ export function GraphExportPreviewSheet({
             />
           ) : null}
 
-          {isPreviewBusy ? <ExportSheetLoadingOverlay color={color} label={loadingLabel} /> : null}
+          {isExporting ? <ExportSheetLoadingOverlay color={color} label={loadingLabel} /> : null}
         </View>
 
         {imageSize && !isPreviewBusy ? (

@@ -24,8 +24,6 @@ type GraphControlsProps = {
   onToggleLegend: () => void;
   isReconciling?: boolean;
   reconcilingLabel?: string;
-  isExportCapturing?: boolean;
-  exportCapturingLabel?: string;
 };
 
 function ControlButton({
@@ -111,13 +109,11 @@ export function GraphControls({
   onToggleLegend,
   isReconciling = false,
   reconcilingLabel,
-  isExportCapturing = false,
-  exportCapturingLabel,
 }: GraphControlsProps) {
   const { t } = useTranslation();
   const bottomOffset = bottomInset + 16;
-  const showStatusLoader = isReconciling || isExportCapturing;
-  const statusLabel = isExportCapturing ? exportCapturingLabel : reconcilingLabel;
+  const showStatusLoader = isReconciling;
+  const statusLabel = reconcilingLabel;
 
   return (
     <>

@@ -4,7 +4,7 @@ import { DEFAULT_GRAPH_LAYOUT_MODE } from './graphTypes';
 
 export function buildLocalGraphFilters(): GraphFilters {
   return {
-    folderId: null,
+    folderIds: [],
     tags: [],
     showTasks: false,
     showCompletedTasks: true,

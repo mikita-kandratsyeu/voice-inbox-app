@@ -10,7 +10,7 @@ import {
 } from './graphTypes';
 
 export const DEFAULT_NOTES_GRAPH_FILTERS: GraphFilters = {
-  folderId: null,
+  folderIds: [],
   tags: [],
   showTasks: true,
   showCompletedTasks: true,
@@ -36,6 +36,7 @@ export function buildNotesGraphLayoutCacheKey(
   windowHeight: number,
 ): string {
   const filteredCount = countFilteredGraphRecords(records, filters);
+  const folderKey = filters.folderIds.slice().sort().join('|');
   const tagKey = filters.tags.slice().sort().join('|');
   const edgeKey = Object.entries(filters.edgeVisibility)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -43,7 +44,7 @@ export function buildNotesGraphLayoutCacheKey(
     .join(',');
   return [
     buildRecordsRevision(records),
-    filters.folderId ?? '',
+    folderKey,
     tagKey,
     filters.showTasks ? 1 : 0,
     filters.showCompletedTasks ? 1 : 0,

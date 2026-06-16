@@ -19,7 +19,7 @@ describe('parseNotesGraphPersistKey', () => {
 
     const parsed = parseNotesGraphPersistKey(layoutKey);
     expect(parsed).not.toBeNull();
-    expect(parsed?.folderId).toBe('folder-1');
+    expect(parsed?.folderIds).toEqual(['folder-1']);
     expect(parsed?.tags).toEqual(['beta', 'alpha']);
     expect(parsed?.showTasks).toBe(false);
     expect(parsed?.showArchived).toBe(false);
@@ -101,7 +101,7 @@ describe('parseNotesGraphPersistKey', () => {
     const parsed = parseNotesGraphPersistKey(layoutKey)!;
 
     expect(parsedPersistKeyToGraphFilters(parsed)).toEqual({
-      folderId: 'folder-1',
+      folderIds: ['folder-1'],
       tags: ['beta', 'alpha'],
       showTasks: true,
       showCompletedTasks: true,

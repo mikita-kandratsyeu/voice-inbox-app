@@ -37,6 +37,20 @@ export function getGraphExportViewShotMaxDimension(): number {
   return getDeviceCapabilities().maxExportDimension;
 }
 
+/** Lets Gorhom present the export sheet before ViewShot blocks the main thread. */
+export const GRAPH_EXPORT_SHEET_PRESENTATION_DELAY_MS = 380;
+
+export function waitForExportSheetPresentation(): Promise<void> {
+  return waitAnimationFrames(2).then(
+    () =>
+      new Promise((resolve) => {
+        runAfterInteractions(() => {
+          setTimeout(resolve, GRAPH_EXPORT_SHEET_PRESENTATION_DELAY_MS);
+        });
+      }),
+  );
+}
+
 /** Lets the off-screen export tree paint native nodes and SVG edges before ViewShot. Skia layers are not captured. */
 export async function waitForGraphExportCaptureReady(edgeCount: number): Promise<void> {
   await waitAnimationFrames(3);

@@ -14,7 +14,7 @@ jest.mock('../notesGraphLayoutCache', () => ({
 }));
 
 const filters = {
-  folderId: null,
+  folderIds: [],
   tags: [] as string[],
   showTasks: true,
   showCompletedTasks: true,

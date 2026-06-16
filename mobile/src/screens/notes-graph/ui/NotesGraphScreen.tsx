@@ -45,7 +45,7 @@ export const NotesGraphScreen = () => {
 
   const initialFilters = useMemo<GraphFilters>(
     () => ({
-      folderId: route.params?.folderId ?? null,
+      folderIds: route.params?.folderId ? [route.params.folderId] : [],
       tags: route.params?.tag ? [route.params.tag] : [],
       showTasks: true,
       showCompletedTasks: true,

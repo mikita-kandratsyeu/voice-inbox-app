@@ -41,7 +41,7 @@ export const GRAPH_LAYOUT_MODES = ['cluster', 'force', 'circular'] as const;
 export type GraphLayoutMode = (typeof GRAPH_LAYOUT_MODES)[number];
 
 export type GraphFilters = {
-  folderId: string | null;
+  folderIds: string[];
   tags: string[];
   showTasks: boolean;
   showCompletedTasks: boolean;

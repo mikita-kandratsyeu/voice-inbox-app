@@ -13,7 +13,7 @@ import {
 } from '../graphTypes';
 
 const baseFilters: GraphFilters = {
-  folderId: null,
+  folderIds: [],
   tags: ['work'],
   showTasks: true,
   showCompletedTasks: true,

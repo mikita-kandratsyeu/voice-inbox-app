@@ -409,20 +409,10 @@ export function GraphLayoutHistorySheet({
     [selectedEntry],
   );
 
-  const selectedFolderName = useMemo(() => {
-    if (!selectedParsed?.folderId) return null;
-    return folders.find((folder) => folder.id === selectedParsed.folderId)?.name ?? null;
-  }, [folders, selectedParsed]);
-
   const filterRows = useMemo(() => {
     if (!selectedParsed) return [];
-    return buildNotesGraphLayoutFilterSummaryFromParsed(
-      selectedParsed,
-      selectedFolderName,
-      foldersEnabled,
-      t,
-    );
-  }, [foldersEnabled, selectedFolderName, selectedParsed, t]);
+    return buildNotesGraphLayoutFilterSummaryFromParsed(selectedParsed, folders, foldersEnabled, t);
+  }, [folders, foldersEnabled, selectedParsed, t]);
 
   const detailRows = useMemo(() => {
     if (!selectedEntry) return [];

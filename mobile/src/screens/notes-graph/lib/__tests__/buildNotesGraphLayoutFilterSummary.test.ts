@@ -13,7 +13,7 @@ import { parseNotesGraphPersistKey } from '../parseNotesGraphPersistKey';
 const t = ((key: string) => key) as Parameters<typeof buildNotesGraphLayoutFilterSummary>[0]['t'];
 
 const baseFilters: GraphFilters = {
-  folderId: null,
+  folderIds: [],
   tags: [],
   showTasks: true,
   showCompletedTasks: true,
@@ -27,7 +27,7 @@ describe('buildNotesGraphLayoutFilterSummary', () => {
   it('includes folder, tags, tasks, links, and view rows', () => {
     const rows = buildNotesGraphLayoutFilterSummary({
       filters: baseFilters,
-      folderName: null,
+      folders: [],
       foldersEnabled: true,
       simplifyActive: false,
       simplifyIsAuto: false,
@@ -61,7 +61,7 @@ describe('buildNotesGraphLayoutFilterSummary', () => {
   ] as const)('maps %s layout mode to history label', (layoutMode, expectedValue) => {
     const rows = buildNotesGraphLayoutFilterSummary({
       filters: { ...baseFilters, layoutMode },
-      folderName: null,
+      folders: [],
       foldersEnabled: true,
       simplifyActive: false,
       simplifyIsAuto: false,
@@ -83,7 +83,7 @@ describe('buildNotesGraphLayoutFilterSummary', () => {
           linked: false,
         },
       },
-      folderName: null,
+      folders: [],
       foldersEnabled: true,
       simplifyActive: false,
       simplifyIsAuto: false,
@@ -98,7 +98,9 @@ describe('buildNotesGraphLayoutFilterSummary', () => {
   it('omits folder row when folders are disabled', () => {
     const rows = buildNotesGraphLayoutFilterSummary({
       filters: { ...baseFilters, tags: ['alpha', 'beta'] },
-      folderName: 'Work',
+      folders: [
+        { id: 'work', name: 'Work', color: 'blue', icon: 'briefcase', sortOrder: 0, createdAt: '' },
+      ],
       foldersEnabled: false,
       simplifyActive: true,
       simplifyIsAuto: true,
@@ -126,7 +128,7 @@ describe('buildNotesGraphLayoutFilterSummaryFromParsed', () => {
     ].join(';');
     const parsed = parseNotesGraphPersistKey(layoutKey)!;
 
-    const rows = buildNotesGraphLayoutFilterSummaryFromParsed(parsed, null, true, t);
+    const rows = buildNotesGraphLayoutFilterSummaryFromParsed(parsed, [], true, t);
 
     expect(rows.find((row) => row.id === 'view')?.value).toBe(
       'notesGraph.history.filters.viewSimplifiedAuto',
