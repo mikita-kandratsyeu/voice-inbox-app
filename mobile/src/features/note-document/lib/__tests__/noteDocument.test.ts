@@ -11,6 +11,7 @@ jest.mock('@/shared/lib', () => ({
         'tasks.priority.medium': 'Medium',
         'tasks.priority.low': 'Low',
         'taskOutcome.resultLabel': 'Result',
+        'taskOutcome.followUpSectionTitle': 'Linked note',
       };
       return labels[key] ?? key;
     },
@@ -325,6 +326,42 @@ describe('note document markdown', () => {
     if (!parsed.ok) return;
 
     expect(parsed.patch.tasks?.[0]?.outcomeText).toBe('Team confirmed the plan');
+  });
+
+  it('round-trips task follow-up note wiki link in the tasks section', () => {
+    const record = makeRecord({
+      tasks: [
+        {
+          id: 'rec_note_doc-task-0',
+          text: 'Send recap',
+          isDone: true,
+          outcomeRecordId: 'rec_follow_up',
+        },
+      ],
+    });
+    const markdown = [
+      `# ${record.title}`,
+      '',
+      '<!-- vi:section:tasks -->',
+      '## Tasks',
+      '- [x] Send recap',
+      '  - **Linked note:** [[rec_follow_up|Follow-up recap note]]',
+    ].join('\n');
+
+    const parsed = parseNoteDocumentMarkdown(markdown, record, {
+      wikiLinkRecords: [
+        {
+          id: 'rec_follow_up',
+          title: 'Follow-up recap note',
+          status: 'unread',
+          createdAt: '2026-01-01T10:00:00.000Z',
+        },
+      ],
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    expect(parsed.patch.tasks?.[0]?.outcomeRecordId).toBe('rec_follow_up');
   });
 
   it('restores meeting summary sections after document markdown round-trip', () => {

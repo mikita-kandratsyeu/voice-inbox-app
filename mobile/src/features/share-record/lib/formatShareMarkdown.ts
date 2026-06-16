@@ -64,7 +64,7 @@ const TASK_OUTCOME_SUBLINE_INDENT = '  ';
 export function formatTaskLinesForShare(
   task: NonNullable<VoiceRecord['tasks']>[number],
   suffix: string,
-  options?: { followUpTitle?: string | null },
+  options?: { followUpTitle?: string | null; followUpRecordId?: string | null },
 ): string[] {
   const lines = [formatTaskLineForShare(task, suffix)];
   const outcome = task.outcomeText?.trim();
@@ -74,8 +74,14 @@ export function formatTaskLinesForShare(
     );
   }
 
+  const followUpRecordId = options?.followUpRecordId?.trim();
   const followUpTitle = options?.followUpTitle?.trim();
-  if (followUpTitle) {
+  if (followUpRecordId) {
+    const linkLabel = followUpTitle || followUpRecordId;
+    lines.push(
+      `${TASK_OUTCOME_SUBLINE_INDENT}- **${i18n.t('taskOutcome.followUpSectionTitle')}:** [[${followUpRecordId}|${linkLabel}]]`,
+    );
+  } else if (followUpTitle) {
     lines.push(
       `${TASK_OUTCOME_SUBLINE_INDENT}- **${i18n.t('taskOutcome.followUpSectionTitle')}:** ${followUpTitle}`,
     );

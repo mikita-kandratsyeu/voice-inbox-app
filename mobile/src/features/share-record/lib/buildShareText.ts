@@ -298,6 +298,7 @@ const pushTasks = (lines: string[], record: VoiceRecord, ctx: ShareExportContext
     record.tasks.forEach((t) => {
       formatTaskLinesForShare(t, formatTaskMetaSuffix(t), {
         followUpTitle: resolveTaskFollowUpTitle(t, ctx),
+        followUpRecordId: t.outcomeRecordId,
       }).forEach((line) => lines.push(line));
     });
   }

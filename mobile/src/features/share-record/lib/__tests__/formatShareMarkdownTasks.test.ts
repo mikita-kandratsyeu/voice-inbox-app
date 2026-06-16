@@ -30,13 +30,30 @@ describe('formatTaskLinesForShare', () => {
     ]);
   });
 
-  it('appends linked follow-up note title when provided', () => {
+  it('appends linked follow-up note as a wiki link when record id is provided', () => {
     const lines = formatTaskLinesForShare(
       {
         id: 'task-1',
         text: 'Send recap',
         isDone: true,
         outcomeRecordId: 'rec_follow',
+      },
+      '',
+      { followUpTitle: 'Follow-up recap note', followUpRecordId: 'rec_follow' },
+    );
+
+    expect(lines).toEqual([
+      '- [x] Send recap',
+      '  - **Linked note:** [[rec_follow|Follow-up recap note]]',
+    ]);
+  });
+
+  it('falls back to plain follow-up title when record id is missing', () => {
+    const lines = formatTaskLinesForShare(
+      {
+        id: 'task-1',
+        text: 'Send recap',
+        isDone: true,
       },
       '',
       { followUpTitle: 'Follow-up recap note' },

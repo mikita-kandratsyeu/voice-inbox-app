@@ -2,7 +2,12 @@ import type { TaskItem, TranscriptSegment, VoiceRecord } from '@/entities/record
 import { stripDocumentTranscriptMarkup } from '@/entities/record/lib/transcriptText';
 import { stripLinkedNotesSectionFromSourceEditor } from '@/features/note-links/lib/appendLinkedNotesSectionForReading';
 import { parseLinkedNotesFromSourceEditor } from '@/features/note-links/lib/parseLinkedNotesFromSourceEditor';
-import type { WikiLinkResolvableRecord } from '@/features/note-links/lib/resolveWikiLinkTarget';
+import {
+  buildWikiLinkIndex,
+  resolveWikiLinkTarget,
+  WIKI_RECORD_ID_PATTERN,
+  type WikiLinkResolvableRecord,
+} from '@/features/note-links/lib/resolveWikiLinkTarget';
 import { restoreMeetingSummaryFromDocumentMarkdown } from '@/screens/recording-detail/lib/parseMeetingRecapSummary';
 import { i18n } from '@/shared/lib';
 
@@ -35,6 +40,7 @@ export type ParseNoteDocumentResult =
   | { ok: false; error: 'title_missing' | 'linked_notes_invalid' };
 
 const TASK_CHECKBOX_RE = /^[-*]\s+\[([ xX])\]\s+(.+)$/;
+const TASK_FOLLOW_UP_WIKI_LINK_RE = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/;
 const PRIORITY_VALUES = ['high', 'medium', 'low'] as const;
 const PRIORITY_VALUE_SET = new Set<string>(PRIORITY_VALUES);
 
@@ -203,7 +209,11 @@ function localizedTaskOutcomeLabel(label: string): 'result' | 'followUp' | null 
   return null;
 }
 
-function parseTaskSubline(label: string, value: string): Pick<TaskItem, 'outcomeText'> {
+function parseTaskSubline(
+  label: string,
+  value: string,
+  wikiLinkRecords?: readonly WikiLinkResolvableRecord[],
+): Pick<TaskItem, 'outcomeText' | 'outcomeRecordId'> & { hasFollowUpLine?: boolean } {
   const kind = localizedTaskOutcomeLabel(label);
   const trimmed = value.trim();
 
@@ -211,10 +221,33 @@ function parseTaskSubline(label: string, value: string): Pick<TaskItem, 'outcome
     return { outcomeText: trimmed.length > 0 ? trimmed : null };
   }
 
+  if (kind === 'followUp') {
+    const wikiMatch = trimmed.match(TASK_FOLLOW_UP_WIKI_LINK_RE);
+    if (wikiMatch?.[1]) {
+      const ref = wikiMatch[1].trim();
+      let outcomeRecordId: string | null = null;
+
+      if (wikiLinkRecords?.length) {
+        const index = buildWikiLinkIndex(wikiLinkRecords);
+        outcomeRecordId = resolveWikiLinkTarget(ref, index);
+      } else if (WIKI_RECORD_ID_PATTERN.test(ref)) {
+        outcomeRecordId = ref;
+      }
+
+      return { outcomeRecordId, hasFollowUpLine: true };
+    }
+
+    return { hasFollowUpLine: true };
+  }
+
   return {};
 }
 
-function parseTasksSection(body: string, record: VoiceRecord): TaskItem[] {
+function parseTasksSection(
+  body: string,
+  record: VoiceRecord,
+  wikiLinkRecords?: readonly WikiLinkResolvableRecord[],
+): TaskItem[] {
   const existing = record.tasks ?? [];
   const tasks: TaskItem[] = [];
 
@@ -223,7 +256,9 @@ function parseTasksSection(body: string, record: VoiceRecord): TaskItem[] {
     isDone: boolean;
     meta: Pick<TaskItem, 'deadline' | 'deadlineTime' | 'priority'>;
     outcomeText?: string | null;
+    outcomeRecordId?: string | null;
     hasOutcomeLine: boolean;
+    hasFollowUpLine: boolean;
   } | null = null;
 
   const flushDraft = () => {
@@ -236,6 +271,9 @@ function parseTasksSection(body: string, record: VoiceRecord): TaskItem[] {
     const outcomeText = draft.hasOutcomeLine
       ? (draft.outcomeText ?? null)
       : (existingTask?.outcomeText ?? null);
+    const outcomeRecordId = draft.hasFollowUpLine
+      ? (draft.outcomeRecordId ?? existingTask?.outcomeRecordId ?? null)
+      : (existingTask?.outcomeRecordId ?? null);
 
     tasks.push({
       id:
@@ -249,7 +287,7 @@ function parseTasksSection(body: string, record: VoiceRecord): TaskItem[] {
       source: existingTask?.source,
       completedAt: existingTask?.completedAt ?? (draft.isDone ? new Date().toISOString() : null),
       outcomeText,
-      outcomeRecordId: existingTask?.outcomeRecordId ?? null,
+      outcomeRecordId,
     });
     draft = null;
   };
@@ -277,6 +315,7 @@ function parseTasksSection(body: string, record: VoiceRecord): TaskItem[] {
         isDone,
         meta,
         hasOutcomeLine: false,
+        hasFollowUpLine: false,
       };
       continue;
     }
@@ -288,10 +327,16 @@ function parseTasksSection(body: string, record: VoiceRecord): TaskItem[] {
     const subline = trimmed.match(/^[-*]\s+\*\*(.+?):\*\*\s*(.*)$/);
     if (!subline?.[1]) continue;
 
-    const parsed = parseTaskSubline(subline[1], subline[2] ?? '');
+    const parsed = parseTaskSubline(subline[1], subline[2] ?? '', wikiLinkRecords);
     if (parsed.outcomeText !== undefined) {
       draft.hasOutcomeLine = true;
       draft.outcomeText = parsed.outcomeText;
+    }
+    if (parsed.hasFollowUpLine) {
+      draft.hasFollowUpLine = true;
+      if (parsed.outcomeRecordId !== undefined) {
+        draft.outcomeRecordId = parsed.outcomeRecordId;
+      }
     }
   }
 
@@ -415,7 +460,11 @@ export function parseNoteDocumentMarkdown(
 
   if (markerIds.has('tasks') || hadSectionContent(record, 'tasks')) {
     patch.tasks = markerIds.has('tasks')
-      ? parseTasksSection(normalizeSectionBody(sections.get('tasks') ?? ''), record)
+      ? parseTasksSection(
+          normalizeSectionBody(sections.get('tasks') ?? ''),
+          record,
+          options?.wikiLinkRecords,
+        )
       : [];
   }
 
