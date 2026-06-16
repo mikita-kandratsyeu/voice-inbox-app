@@ -108,7 +108,7 @@ export const NoteDocumentCollapsibleSection = React.memo(function NoteDocumentCo
             </View>
           ) : null}
           <Text
-            className="min-w-0 flex-1 font-semibold leading-5"
+            className="min-w-0 flex-1 font-semibold"
             style={{
               color: color.text.primary,
               fontSize: isReading ? 17 : 15,
