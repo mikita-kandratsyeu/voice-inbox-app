@@ -98,6 +98,24 @@ export const privateAiTaskQueueTable = sqliteTable(
   ],
 );
 
+export const recordPublishedShareTable = sqliteTable(
+  'record_published_share',
+  {
+    recordId: text('recordId').primaryKey(),
+    shareToken: text('shareToken').notNull(),
+    shareUrl: text('shareUrl').notNull(),
+    template: text('template').notNull(),
+    contentHash: text('contentHash').notNull(),
+    publishedAt: text('publishedAt').notNull(),
+    expiresAt: text('expiresAt'),
+    updatedAt: text('updatedAt').notNull(),
+  },
+  (t) => [
+    uniqueIndex('idx_record_published_share_token').on(t.shareToken),
+    index('idx_record_published_share_expires').on(t.expiresAt),
+  ],
+);
+
 /** Versioned note-map node positions (per filter layout key). */
 export const notesGraphLayoutVersionTable = sqliteTable(
   'notes_graph_layout_version',
@@ -122,4 +140,5 @@ export type FolderInsert = typeof foldersTable.$inferInsert;
 export type RecordAskAiRow = typeof recordAskAiTable.$inferSelect;
 export type CloudAiPendingRow = typeof cloudAiPendingTable.$inferSelect;
 export type PrivateAiTaskQueueRow = typeof privateAiTaskQueueTable.$inferSelect;
+export type RecordPublishedShareRow = typeof recordPublishedShareTable.$inferSelect;
 export type NotesGraphLayoutVersionRow = typeof notesGraphLayoutVersionTable.$inferSelect;

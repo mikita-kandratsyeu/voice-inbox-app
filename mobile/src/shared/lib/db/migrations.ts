@@ -127,6 +127,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS \`idx_private_ai_task_queue_record_task\` ON \
 
 const migration0023 = `ALTER TABLE \`records\` ADD \`linkedRecordIds\` text DEFAULT '[]';`;
 
+const migration0024 = `CREATE TABLE IF NOT EXISTS \`record_published_share\` (
+	\`recordId\` text PRIMARY KEY NOT NULL,
+	\`shareToken\` text NOT NULL,
+	\`shareUrl\` text NOT NULL,
+	\`template\` text NOT NULL,
+	\`contentHash\` text NOT NULL,
+	\`publishedAt\` text NOT NULL,
+	\`expiresAt\` text,
+	\`updatedAt\` text NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS \`idx_record_published_share_token\` ON \`record_published_share\` (\`shareToken\`);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS \`idx_record_published_share_expires\` ON \`record_published_share\` (\`expiresAt\`);`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -161,5 +176,6 @@ export const migrationsConfig = {
     m0021: migration0021,
     m0022: migration0022,
     m0023: migration0023,
+    m0024: migration0024,
   } as Record<string, string>,
 };

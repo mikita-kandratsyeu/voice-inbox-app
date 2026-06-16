@@ -1,5 +1,5 @@
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { ClipboardList, FileText, ListChecks, Mail, Music, UsersRound } from 'lucide-react-native';
+import { ClipboardList, FileText, Globe, ListChecks, Mail, Music, UsersRound } from 'lucide-react-native';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Keyboard, Text, TouchableOpacity, View } from 'react-native';
@@ -45,6 +45,17 @@ type ShareRecordSheetProps = {
     format: ShareRecordExportFormat,
   ) => void;
   onShareAudio: () => void;
+  publishState?: {
+    active: boolean;
+    url?: string;
+    expiresAt?: string | null;
+    stale?: boolean;
+  };
+  isPublishing?: boolean;
+  onPublishRecord?: (template: ShareBriefTemplate, expiresIn: '1d' | '7d' | '30d' | 'never') => void;
+  onUnpublishRecord?: () => void;
+  onRefreshPublishStatus?: () => void;
+  onSharePublishedLink?: (url: string) => void;
 };
 
 export const ShareRecordSheet = ({
@@ -57,12 +68,21 @@ export const ShareRecordSheet = ({
   onShareText,
   onEmailRecord,
   onShareAudio,
+  publishState,
+  isPublishing = false,
+  onPublishRecord,
+  onUnpublishRecord,
+  onRefreshPublishStatus,
+  onSharePublishedLink,
 }: ShareRecordSheetProps) => {
   const { t } = useTranslation();
   const color = useColors();
   const [emailVisible, setEmailVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [emailSendTemplate, setEmailSendTemplate] = useState<ShareBriefTemplate | null>(null);
+  const [publishVisible, setPublishVisible] = useState(false);
+  const [publishTemplate, setPublishTemplate] = useState<ShareBriefTemplate>('noteBrief');
+  const [publishExpiry, setPublishExpiry] = useState<'1d' | '7d' | '30d' | 'never'>('7d');
   const [exportFormat, setExportFormat] = useState<ShareRecordExportFormat>('markdown');
   const [sharingTemplate, setSharingTemplate] = useState<ShareBriefTemplate | null>(null);
   const trimmedEmail = email.trim();
@@ -73,6 +93,7 @@ export const ShareRecordSheet = ({
     setEmailVisible(false);
     setEmail('');
     setEmailSendTemplate(null);
+    setPublishVisible(false);
     setExportFormat('markdown');
     setSharingTemplate(null);
   }, [visible]);
@@ -263,6 +284,27 @@ export const ShareRecordSheet = ({
     onEmailRecord(trimmedEmail, resolvedEmailTemplate, exportFormat);
   }, [canSendEmail, exportFormat, isSharing, onEmailRecord, resolvedEmailTemplate, trimmedEmail]);
 
+  const handleOpenPublish = useCallback(() => {
+    if (isSharing) return;
+    onRefreshPublishStatus?.();
+    setPublishVisible(true);
+  }, [isSharing, onRefreshPublishStatus]);
+
+  const handlePublish = useCallback(() => {
+    if (!onPublishRecord || isPublishing) return;
+    onPublishRecord(publishTemplate, publishExpiry);
+  }, [isPublishing, onPublishRecord, publishExpiry, publishTemplate]);
+
+  const handleUnpublish = useCallback(() => {
+    if (!onUnpublishRecord || isPublishing) return;
+    onUnpublishRecord();
+  }, [isPublishing, onUnpublishRecord]);
+
+  const handleClosePublish = useCallback(() => {
+    if (isPublishing) return;
+    setPublishVisible(false);
+  }, [isPublishing]);
+
   return (
     <AppBottomSheetModal visible={visible} onClose={handleClose}>
       {emailVisible ? (
@@ -352,6 +394,101 @@ export const ShareRecordSheet = ({
             secondaryDisabled={isSendingEmail || isSharing}
           />
         </AppBottomSheetContent>
+      ) : publishVisible ? (
+        <AppBottomSheetContent scrollable style={{ paddingTop: 4, gap: 12 }}>
+          <SheetHeader
+            title={t('share.publishNote')}
+            subtitle={t('share.publishNoteDescription')}
+            color={color}
+            marginBottom={8}
+          />
+
+          {publishState?.active ? (
+            <>
+              <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
+                {publishState.expiresAt
+                  ? t('share.publishActiveUntil', { date: publishState.expiresAt })
+                  : t('share.publishActiveNoExpiry')}
+              </Text>
+              {publishState.stale ? (
+                <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
+                  {t('share.publishStaleHint')}
+                </Text>
+              ) : null}
+              <SheetFooterButtons
+                color={color}
+                primaryLabel={t('share.publishShareLink')}
+                secondaryLabel={t('share.publishUnpublish')}
+                onPrimaryPress={() => {
+                  if (publishState.url) onSharePublishedLink?.(publishState.url);
+                }}
+                onPrimaryPressIn={() => {
+                  if (publishState.url) onSharePublishedLink?.(publishState.url);
+                }}
+                onSecondaryPress={handleUnpublish}
+                onSecondaryPressIn={handleUnpublish}
+                primaryDisabled={!publishState.url || isPublishing}
+                secondaryDisabled={isPublishing}
+              />
+            </>
+          ) : (
+            <>
+              <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+                {t('batch.emailBodyFormatHint')}
+              </Text>
+              <EmailBodyFormatPicker
+                options={emailFormatTemplates}
+                selected={publishTemplate}
+                onSelect={setPublishTemplate}
+                color={color}
+              />
+              <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+                {t('share.publishExpiryLabel')}
+              </Text>
+              <View className="flex-row gap-3">
+                <SheetSelectionChip
+                  value="1d"
+                  selectedValue={publishExpiry}
+                  label={t('share.publishExpiry1d')}
+                  onSelect={(v) => setPublishExpiry(v as '1d' | '7d' | '30d' | 'never')}
+                  color={color}
+                />
+                <SheetSelectionChip
+                  value="7d"
+                  selectedValue={publishExpiry}
+                  label={t('share.publishExpiry7d')}
+                  onSelect={(v) => setPublishExpiry(v as '1d' | '7d' | '30d' | 'never')}
+                  color={color}
+                />
+                <SheetSelectionChip
+                  value="30d"
+                  selectedValue={publishExpiry}
+                  label={t('share.publishExpiry30d')}
+                  onSelect={(v) => setPublishExpiry(v as '1d' | '7d' | '30d' | 'never')}
+                  color={color}
+                />
+                <SheetSelectionChip
+                  value="never"
+                  selectedValue={publishExpiry}
+                  label={t('share.publishExpiryNever')}
+                  onSelect={(v) => setPublishExpiry(v as '1d' | '7d' | '30d' | 'never')}
+                  color={color}
+                />
+              </View>
+              <SheetFooterButtons
+                color={color}
+                primaryLabel={t('share.publishNow')}
+                secondaryLabel={t('common.cancel')}
+                onPrimaryPress={handlePublish}
+                onPrimaryPressIn={handlePublish}
+                onSecondaryPress={handleClosePublish}
+                onSecondaryPressIn={handleClosePublish}
+                primaryDisabled={isPublishing}
+                secondaryDisabled={isPublishing}
+              />
+            </>
+          )}
+        </AppBottomSheetContent>
       ) : (
         <AppBottomSheetContent bottomPadding={20} style={{ paddingTop: 4, gap: 10 }}>
           <SheetHeader title={t('share.shareAsTitle')} color={color} marginBottom={8} />
@@ -434,6 +571,17 @@ export const ShareRecordSheet = ({
             accessibilityLabel: t('share.emailNote'),
             onPress: handleOpenEmail,
             disabled: isSharing,
+          })}
+
+          {renderShareFormatRow({
+            icon: <Globe size={20} color={color.text.primary} strokeWidth={2.1} />,
+            title: t('share.publishNote'),
+            description: publishState?.active
+              ? t('share.publishActiveLabel')
+              : t('share.publishNoteDescription'),
+            accessibilityLabel: t('share.publishNote'),
+            onPress: handleOpenPublish,
+            disabled: isSharing || !onPublishRecord,
           })}
 
           {renderShareFormatRow({

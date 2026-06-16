@@ -50,6 +50,7 @@ import { useInboxFiltersReset } from '@/features/inbox-filters';
 import { useAutoOrganizeFolders, useManageFolders } from '@/features/manage-folders';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useProEntitlement } from '@/features/pro-license';
+import { getPublishedNoteMap } from '@/features/publish-record';
 import { useRecordActions } from '@/features/record-actions';
 import { useSearchRecords } from '@/features/search-records';
 import {
@@ -466,6 +467,9 @@ export function useInboxScreen() {
   const [shareTargetRecordId, setShareTargetRecordId] = useState<string | null>(null);
   const [renameTarget, setRenameTarget] = useState<{ id: string; title: string } | null>(null);
   const [shareEmailSending, setShareEmailSending] = useState(false);
+  const [publishedByRecordId, setPublishedByRecordId] = useState<
+    Map<string, { expiresAt: string | null }>
+  >(new Map());
   const {
     shareRecord,
     shareAudio,
@@ -783,10 +787,41 @@ export function useInboxScreen() {
     [records, shareTargetRecordId],
   );
 
+  useEffect(() => {
+    const ids = filtered.map((item) => item.id);
+    let cancelled = false;
+    void getPublishedNoteMap(ids).then((map) => {
+      if (cancelled) return;
+      const next = new Map<string, { expiresAt: string | null }>();
+      for (const [recordId, value] of map.entries()) {
+        next.set(recordId, { expiresAt: value.expiresAt });
+      }
+      setPublishedByRecordId(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [filtered]);
+
   const handleCloseShareSheet = useCallback(() => {
     setShareSheetVisible(false);
     setShareTargetRecordId(null);
   }, []);
+
+  const handlePublishStateChanged = useCallback(
+    (recordId: string, active: boolean, expiresAt: string | null) => {
+      setPublishedByRecordId((prev) => {
+        const next = new Map(prev);
+        if (active) {
+          next.set(recordId, { expiresAt });
+        } else {
+          next.delete(recordId);
+        }
+        return next;
+      });
+    },
+    [],
+  );
 
   const handleRecordShare = useCallback(
     (item: VoiceRecord) => {
@@ -896,35 +931,48 @@ export function useInboxScreen() {
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: FlattenedItem }) => (
-      <InboxScreenListItem
-        item={item}
-        color={color}
-        bannerMaxWidth={bannerMaxWidth}
-        batchSelect={batchSelect}
-        cardLayout={inboxCardLayout}
-        effectiveActiveFolderId={effectiveActiveFolderId}
-        foldersEnabled={foldersEnabled}
-        folderColorById={folderColorById}
-        folderIconById={folderIconById}
-        folderNameById={folderNameById}
-        isProActive={isProActive}
-        isArchivedView={isArchivedView}
-        dismissSwipeHint={dismissSwipeHint}
-        archiveRecord={archiveRecord}
-        unarchiveRecord={unarchiveRecord}
-        togglePin={togglePin}
-        listRef={listRef}
-        onRecordPress={handleRecordPress}
-        onStatusPress={handleStatusPress}
-        onRecordLongPress={handleRecordLongPress}
-        onRecordShare={handleRecordShare}
-        onRecordRename={handleRecordRename}
-        onRecordDelete={handleRecordDelete}
-        onOpenAllTasksForNote={handleOpenAllTasksForNote}
-        onOpenNotesGraphForRecord={handleOpenNotesGraphForRecord}
-      />
-    ),
+    ({ item }: { item: FlattenedItem }) => {
+      const resolvedItem =
+        item.type === 'record'
+          ? {
+              ...item,
+              item: {
+                ...item.item,
+                isPublicPublished: publishedByRecordId.has(item.item.id),
+                publicShareExpiresAt: publishedByRecordId.get(item.item.id)?.expiresAt ?? null,
+              },
+            }
+          : item;
+      return (
+        <InboxScreenListItem
+          item={resolvedItem}
+          color={color}
+          bannerMaxWidth={bannerMaxWidth}
+          batchSelect={batchSelect}
+          cardLayout={inboxCardLayout}
+          effectiveActiveFolderId={effectiveActiveFolderId}
+          foldersEnabled={foldersEnabled}
+          folderColorById={folderColorById}
+          folderIconById={folderIconById}
+          folderNameById={folderNameById}
+          isProActive={isProActive}
+          isArchivedView={isArchivedView}
+          dismissSwipeHint={dismissSwipeHint}
+          archiveRecord={archiveRecord}
+          unarchiveRecord={unarchiveRecord}
+          togglePin={togglePin}
+          listRef={listRef}
+          onRecordPress={handleRecordPress}
+          onStatusPress={handleStatusPress}
+          onRecordLongPress={handleRecordLongPress}
+          onRecordShare={handleRecordShare}
+          onRecordRename={handleRecordRename}
+          onRecordDelete={handleRecordDelete}
+          onOpenAllTasksForNote={handleOpenAllTasksForNote}
+          onOpenNotesGraphForRecord={handleOpenNotesGraphForRecord}
+        />
+      );
+    },
     [
       color,
       bannerMaxWidth,
@@ -949,6 +997,7 @@ export function useInboxScreen() {
       handleOpenAllTasksForNote,
       handleOpenNotesGraphForRecord,
       batchSelect,
+      publishedByRecordId,
     ],
   );
 
@@ -1193,6 +1242,7 @@ export function useInboxScreen() {
     handleShareRecordText,
     handleShareRecordAudio,
     handleEmailShareRecord,
+    handlePublishStateChanged,
     renameRecordSheet,
   };
 }

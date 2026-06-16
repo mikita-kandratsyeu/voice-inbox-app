@@ -145,6 +145,9 @@ export type VoiceRecord = {
   folderId?: string | null;
   /** Explicit links to other notes (outgoing). */
   linkedRecordIds?: string[];
+  /** Local publish metadata (public share link exists). */
+  isPublicPublished?: boolean;
+  publicShareExpiresAt?: string | null;
   detailsHydrated?: boolean;
 };
 

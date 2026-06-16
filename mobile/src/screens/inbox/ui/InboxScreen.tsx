@@ -15,7 +15,7 @@ import {
   AiOrganizeTemplateSheet,
   AutoOrganizeProgressOverlay,
 } from '@/features/manage-folders';
-import { ShareRecordSheet } from '@/screens/recording-detail/ui/ShareRecordSheet';
+import { InboxShareRecordSheet } from './InboxShareRecordSheet';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { BlockingProgressModal } from '@/shared/ui';
 
@@ -145,6 +145,7 @@ export const InboxScreen = () => {
     handleShareRecordText,
     handleShareRecordAudio,
     handleEmailShareRecord,
+    handlePublishStateChanged,
     renameRecordSheet,
     isProActive,
   } = inbox;
@@ -378,8 +379,9 @@ export const InboxScreen = () => {
         description={t('share.generatingPdfDescription')}
         total={0}
       />
-      <ShareRecordSheet
+      <InboxShareRecordSheet
         visible={shareSheetVisible}
+        record={shareTargetRecord}
         hasAudio={Boolean(shareTargetRecord?.audioPath?.trim())}
         isMeeting={shareTargetRecord?.classification === 'meeting'}
         showSpeakerTurnsExport={
@@ -392,6 +394,7 @@ export const InboxScreen = () => {
         onShareText={handleShareRecordText}
         onEmailRecord={handleEmailShareRecord}
         onShareAudio={handleShareRecordAudio}
+        onPublishStateChanged={handlePublishStateChanged}
       />
       {renameRecordSheet}
     </View>

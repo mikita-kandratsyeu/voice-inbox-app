@@ -126,6 +126,7 @@ function ClaimBonusPressableBody({
       </View>
       <View
         className="max-w-[42%] shrink-0 items-center justify-center rounded-xl px-3 py-2.5"
+        accessibilityRole="button"
         style={{
           minWidth: 76,
           backgroundColor: color.accent.primary,

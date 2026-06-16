@@ -8,6 +8,7 @@ import {
   LayoutAnimation,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  Share,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -37,6 +38,7 @@ import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { warmNoteDocumentMarkdown } from '@/features/note-document';
 import { LinkNotePickerSheet, RecordLinksSection } from '@/features/note-links';
 import { useProEntitlement } from '@/features/pro-license';
+import { usePublishRecord } from '@/features/publish-record';
 import { useRecordActions } from '@/features/record-actions';
 import type { ShareBriefTemplate, ShareRecordExportFormat } from '@/features/share-record';
 import { saveLastShareRecipientEmail, useShareRecord } from '@/features/share-record';
@@ -249,6 +251,8 @@ export const RecordingDetailScreen = () => {
     cancelAiGeneration(liveRecord.id);
   }, [cancelAiGeneration, liveRecord.id]);
   const { shareRecord, shareAudio, emailRecord, isGeneratingSharePdf } = useShareRecord();
+  const { published, isStale, publishLoading, publish, unpublish, refreshPublishStatus } =
+    usePublishRecord(liveRecord);
   const onDeleted = useCallback(() => navigation.goBack(), [navigation]);
   const { promptDelete } = useRecordActions({ onDeleted });
 
@@ -523,6 +527,34 @@ export const RecordingDetailScreen = () => {
     handleShare('noteBrief', 'markdown');
   }, [isProActive, handleShare]);
   const onCloseShareMenu = useCallback(() => setShareSheetVisible(false), []);
+  const handlePublishRecord = useCallback(
+    (template: ShareBriefTemplate, expiresIn: '1d' | '7d' | '30d' | 'never') => {
+      publish(template, expiresIn)
+        .then(() => {
+          hapticSuccess();
+          Alert.alert(t('share.publishSuccessTitle'), t('share.publishSuccessBody'));
+        })
+        .catch((err: unknown) => {
+          hapticError();
+          Alert.alert(t('share.publishFailedTitle'), toUserFacingFetchErrorFromUnknown(err));
+        });
+    },
+    [publish, t],
+  );
+  const handleUnpublishRecord = useCallback(() => {
+    unpublish()
+      .then(() => {
+        hapticSuccess();
+        Alert.alert(t('share.publishUnpublishedTitle'), t('share.publishUnpublishedBody'));
+      })
+      .catch((err: unknown) => {
+        hapticError();
+        Alert.alert(t('share.publishFailedTitle'), toUserFacingFetchErrorFromUnknown(err));
+      });
+  }, [t, unpublish]);
+  const handleSharePublishedLink = useCallback((url: string) => {
+    Share.share({ message: url, url }).catch(() => {});
+  }, []);
 
   const scrollPadding = isTablet ? 24 : 16;
   const contentMaxWidth = useTabletContentMaxWidth('wide');
@@ -880,6 +912,17 @@ export const RecordingDetailScreen = () => {
         onShareText={handleShare}
         onEmailRecord={handleEmailRecord}
         onShareAudio={handleShareAudio}
+        publishState={{
+          active: Boolean(published),
+          url: published?.shareUrl,
+          expiresAt: published?.expiresAt ?? null,
+          stale: isStale,
+        }}
+        isPublishing={publishLoading}
+        onPublishRecord={handlePublishRecord}
+        onUnpublishRecord={handleUnpublishRecord}
+        onRefreshPublishStatus={refreshPublishStatus}
+        onSharePublishedLink={handleSharePublishedLink}
       />
       <AutomationComingSoonSheet
         visible={notesGraphProSheetVisible}

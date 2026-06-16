@@ -1,5 +1,5 @@
 import { MenuView } from '@react-native-menu/menu';
-import { CalendarDays, MoreHorizontal, Pin } from 'lucide-react-native';
+import { CalendarDays, Globe, MoreHorizontal, Pin } from 'lucide-react-native';
 import React, { memo, useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -526,6 +526,26 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
             </View>
           ) : null}
         </View>
+        {item.isPublicPublished ? (
+          <View
+            style={{
+              marginBottom: 8,
+              alignSelf: 'flex-start',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 999,
+              backgroundColor: color.background.tertiary,
+            }}
+          >
+            <Globe size={12} color={color.accent.primary} strokeWidth={2} />
+            <Text style={[textSecondaryStyle, { fontSize: 11, fontWeight: '600' }]}>
+              {t('share.publicBadge')}
+            </Text>
+          </View>
+        ) : null}
 
         {hasPreview ? (
           <Text style={[textSecondaryStyle, { fontSize: 14, lineHeight: 21 }]} numberOfLines={4}>

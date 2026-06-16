@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, ListChecks, Pin } from 'lucide-react-native';
+import { CheckCircle2, Clock, Globe, ListChecks, Pin } from 'lucide-react-native';
 import React, { memo, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -207,6 +207,22 @@ export const RecordCard = memo(function RecordCard({
               <Text style={[textSecondaryStyle, { fontSize: 11 }]}>
                 {i18n.t(`classification.${item.classification}`)}
               </Text>
+            </View>
+          )}
+          {item.isPublicPublished && (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+                paddingHorizontal: 6,
+                paddingVertical: 2,
+                borderRadius: 6,
+                backgroundColor: color.background.tertiary,
+              }}
+            >
+              <Globe size={12} color={color.accent.primary} strokeWidth={2} />
+              <Text style={[textSecondaryStyle, { fontSize: 11 }]}>{t('share.publicBadge')}</Text>
             </View>
           )}
         </View>

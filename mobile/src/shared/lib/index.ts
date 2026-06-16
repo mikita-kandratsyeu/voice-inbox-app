@@ -31,6 +31,7 @@ export {
   notesGraphLayoutVersionTable,
   privateAiTaskQueueTable,
   recordAskAiTable,
+  recordPublishedShareTable,
   recordsTable,
 } from './db/schema';
 export type { DeviceCapabilities } from './deviceCapabilities';

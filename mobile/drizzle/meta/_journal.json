@@ -169,6 +169,13 @@
       "when": 1781300000000,
       "tag": "0023_linked_record_ids",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1781600000000,
+      "tag": "0024_record_published_share",
+      "breakpoints": true
     }
   ]
 }

@@ -88,6 +88,25 @@ model InAppEventPage {
   @@index([eventId, published])
 }
 
+model PublishedNote {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  deviceId    String
+  recordId    String
+  title       String
+  template    String
+  markdown    String    @db.Text
+  contentHash String
+  publishedAt DateTime  @default(now())
+  expiresAt   DateTime?
+  revokedAt   DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([deviceId, recordId])
+  @@index([token, revokedAt])
+  @@index([expiresAt])
+}
+
 model SupportIssue {
   id                       String    @id @default(cuid())
   referenceNumber          Int       @unique @default(autoincrement())
