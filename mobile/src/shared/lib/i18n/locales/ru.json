@@ -165,6 +165,7 @@
       "withoutSummary": "Без сводок",
       "withoutTasks": "Без задач",
       "withTasks": "С задачами",
+      "withPublicLink": "По ссылке",
       "meetingMode": "Режим встречи",
       "processingError": "Ошибка обработки",
       "moreFilters": "Фильтры",
@@ -1072,7 +1073,7 @@
     "publishUnpublishedTitle": "Публикация снята",
     "publishUnpublishedBody": "По этой ссылке заметку больше не открыть.",
     "publishFailedTitle": "Не удалось опубликовать заметку",
-    "publicBadge": "По ссылке"
+    "publicBadge": "Доступно по ссылке"
   },
   "settings": {
     "title": "Настройки",

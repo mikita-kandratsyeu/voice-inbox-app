@@ -118,7 +118,10 @@ function matchesQuery(record: VoiceRecord, query: string, searchText: string): b
   );
 }
 
-export const useSearchRecords = (records: VoiceRecord[]) => {
+export const useSearchRecords = (
+  records: VoiceRecord[],
+  options?: { publishedRecordIds?: ReadonlySet<string> },
+) => {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -133,7 +136,7 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
     sortOption,
     setSortOption,
     filterRecords,
-  } = useInboxFilters();
+  } = useInboxFilters({ publishedRecordIds: options?.publishedRecordIds });
 
   const searchTextById = useMemo(() => {
     const map = new Map<string, string>();

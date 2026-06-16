@@ -11,6 +11,7 @@ import {
   upsertPublishedNoteState,
 } from '../lib/publishedNoteStorage';
 import { sharePublishedNoteLink } from '../lib/sharePublishedNoteLink';
+import { notifyPublishedNoteInboxChanged } from './publishedNoteInboxSync';
 import type { PublishedNoteState, PublishExpiryPreset } from './types';
 
 type PublishState = {
@@ -52,12 +53,14 @@ export function usePublishRecord(record: VoiceRecord) {
             computeShareContentHash(buildShareText(record, next.template, { forEmail: true })) !==
             next.contentHash,
         }));
+        notifyPublishedNoteInboxChanged();
         return;
       }
 
       if (remote.ok && !remote.active) {
         await deletePublishedNoteStateByRecordId(record.id);
         setState((prev) => ({ ...prev, current: null, stale: false }));
+        notifyPublishedNoteInboxChanged();
         return;
       }
 
@@ -109,6 +112,7 @@ export function usePublishRecord(record: VoiceRecord) {
         };
         await upsertPublishedNoteState(next);
         setState({ current: next, loading: false, stale: false });
+        notifyPublishedNoteInboxChanged();
         return next;
       } catch (error) {
         setState((prev) => ({ ...prev, loading: false }));
@@ -129,6 +133,7 @@ export function usePublishRecord(record: VoiceRecord) {
       if (!result.ok) throw new Error(result.error);
       await deletePublishedNoteStateByRecordId(record.id);
       setState({ current: null, loading: false, stale: false });
+      notifyPublishedNoteInboxChanged();
     } catch (error) {
       setState((prev) => ({ ...prev, loading: false }));
       throw error;

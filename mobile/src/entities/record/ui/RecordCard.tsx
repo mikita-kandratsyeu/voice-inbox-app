@@ -108,11 +108,6 @@ export const RecordCard = memo(function RecordCard({
         />
       )}
       <View style={{ flex: 1, padding: 16 }}>
-        {item.isPublicPublished ? (
-          <View style={{ marginBottom: 8 }}>
-            <RecordCardPublicChip color={color} />
-          </View>
-        ) : null}
         <View
           style={{
             flexDirection: 'row',
@@ -149,6 +144,7 @@ export const RecordCard = memo(function RecordCard({
             >
               {item.title}
             </Text>
+            {item.isPublicPublished ? <RecordCardPublicChip color={color} /> : null}
           </View>
           {showStatusPill && (
             <AiStatusPill
@@ -228,7 +224,6 @@ export const RecordCard = memo(function RecordCard({
       </View>
     </>
   );
-
   if (hideAccessibilitySubtree) {
     return (
       <View

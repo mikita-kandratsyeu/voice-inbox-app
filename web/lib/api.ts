@@ -149,7 +149,7 @@ export async function checkSupportRateLimit(deviceId: string): Promise<NextRespo
   if (count > SUPPORT_RATE_LIMIT_MAX_REQUESTS) {
     return NextResponse.json(
       {
-        error: 'Too many support requests. Try again later.',
+        error: 'Too many requests. Please try again later.',
         code: ApiErrorCode.SupportRateLimited,
       },
       {

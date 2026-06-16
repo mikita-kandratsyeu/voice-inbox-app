@@ -165,6 +165,7 @@
       "withoutSummary": "Without summary",
       "withoutTasks": "Without tasks",
       "withTasks": "With tasks",
+      "withPublicLink": "Public link",
       "meetingMode": "Meeting mode",
       "processingError": "Processing error",
       "moreFilters": "Filters",
@@ -1044,7 +1045,7 @@
     "publishUnpublishedTitle": "Unpublished",
     "publishUnpublishedBody": "Public link is no longer available.",
     "publishFailedTitle": "Could not publish note",
-    "publicBadge": "Public"
+    "publicBadge": "Available by link"
   },
   "settings": {
     "title": "Settings",

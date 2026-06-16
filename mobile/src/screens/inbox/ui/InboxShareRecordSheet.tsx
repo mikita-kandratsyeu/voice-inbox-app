@@ -59,7 +59,6 @@ function InboxShareRecordSheetWithPublish({
           if (!next) return;
           hapticSuccess();
           onPublishStateChanged?.(record.id, true, next.expiresAt);
-          Alert.alert(t('share.publishSuccessTitle'), t('share.publishSuccessBody'));
         })
         .catch((err: unknown) => {
           hapticError();

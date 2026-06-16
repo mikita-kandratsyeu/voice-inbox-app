@@ -417,9 +417,8 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
                 {formatExpandedCardDate(item.createdAt, i18n.language, t)}
               </Text>
             </View>
-            {showSourceChip || item.isPublicPublished ? (
+            {showSourceChip ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                {item.isPublicPublished ? <RecordCardPublicChip color={color} /> : null}
                 {showSourceChip ? (
                   <RecordCardSourceChip label={sourceChipLabel} color={color} />
                 ) : null}
@@ -551,9 +550,8 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
             linkNeighborCount={linkNeighborCount}
           />
         ) : null}
-
+        {item.isPublicPublished ? <RecordCardPublicChip color={color} /> : null}
         <RecordCardOpenTasksPreview tasks={openTaskPreview} color={color} />
-
         {showFooter ? (
           <>
             <View

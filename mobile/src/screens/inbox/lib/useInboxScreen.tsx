@@ -50,7 +50,11 @@ import { useInboxFiltersReset } from '@/features/inbox-filters';
 import { useAutoOrganizeFolders, useManageFolders } from '@/features/manage-folders';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useProEntitlement } from '@/features/pro-license';
-import { getPublishedNoteMap } from '@/features/publish-record';
+import {
+  getPublishedNoteMap,
+  notifyPublishedNoteInboxChanged,
+  usePublishedNoteInboxSyncStore,
+} from '@/features/publish-record';
 import { useRecordActions } from '@/features/record-actions';
 import { useSearchRecords } from '@/features/search-records';
 import {
@@ -243,6 +247,52 @@ export function useInboxScreen() {
   const inboxCardLayout = useInboxCardLayoutStore((s) => s.layout);
   const setInboxCardLayout = useInboxCardLayoutStore((s) => s.setLayout);
 
+  const [publishedByRecordId, setPublishedByRecordId] = useState<
+    Map<string, { expiresAt: string | null }>
+  >(new Map());
+  const publishedMapRevision = usePublishedNoteInboxSyncStore((s) => s.revision);
+  const publishedMapRequestIdRef = useRef(0);
+
+  const folderRecordIds = useMemo(
+    () => folderFilteredRecords.map((record) => record.id),
+    [folderFilteredRecords],
+  );
+
+  const publishedRecordIds = useMemo(
+    () => new Set(publishedByRecordId.keys()),
+    [publishedByRecordId],
+  );
+
+  const refreshPublishedMap = useCallback(() => {
+    const requestId = ++publishedMapRequestIdRef.current;
+    if (folderRecordIds.length === 0) {
+      setPublishedByRecordId(new Map());
+      return;
+    }
+
+    void getPublishedNoteMap(folderRecordIds).then((map) => {
+      if (requestId !== publishedMapRequestIdRef.current) return;
+      const next = new Map<string, { expiresAt: string | null }>();
+      for (const [recordId, value] of map.entries()) {
+        next.set(recordId, { expiresAt: value.expiresAt });
+      }
+      setPublishedByRecordId(next);
+    });
+  }, [folderRecordIds]);
+
+  useEffect(() => {
+    refreshPublishedMap();
+  }, [publishedMapRevision, refreshPublishedMap]);
+
+  const wasInboxTabFocusedRef = useRef(isInboxTabFocused);
+  useEffect(() => {
+    const wasFocused = wasInboxTabFocusedRef.current;
+    wasInboxTabFocusedRef.current = isInboxTabFocused;
+    if (!wasFocused && isInboxTabFocused) {
+      refreshPublishedMap();
+    }
+  }, [isInboxTabFocused, refreshPublishedMap]);
+
   const {
     query,
     setQuery,
@@ -258,7 +308,7 @@ export function useInboxScreen() {
     sortOption,
     setSortOption,
     resetToDefault,
-  } = useSearchRecords(folderFilteredRecords);
+  } = useSearchRecords(folderFilteredRecords, { publishedRecordIds });
 
   const activeFolder = useMemo(
     () =>
@@ -467,9 +517,6 @@ export function useInboxScreen() {
   const [shareTargetRecordId, setShareTargetRecordId] = useState<string | null>(null);
   const [renameTarget, setRenameTarget] = useState<{ id: string; title: string } | null>(null);
   const [shareEmailSending, setShareEmailSending] = useState(false);
-  const [publishedByRecordId, setPublishedByRecordId] = useState<
-    Map<string, { expiresAt: string | null }>
-  >(new Map());
   const {
     shareRecord,
     shareAudio,
@@ -787,22 +834,6 @@ export function useInboxScreen() {
     [records, shareTargetRecordId],
   );
 
-  useEffect(() => {
-    const ids = filtered.map((item) => item.id);
-    let cancelled = false;
-    void getPublishedNoteMap(ids).then((map) => {
-      if (cancelled) return;
-      const next = new Map<string, { expiresAt: string | null }>();
-      for (const [recordId, value] of map.entries()) {
-        next.set(recordId, { expiresAt: value.expiresAt });
-      }
-      setPublishedByRecordId(next);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [filtered]);
-
   const handleCloseShareSheet = useCallback(() => {
     setShareSheetVisible(false);
     setShareTargetRecordId(null);
@@ -819,6 +850,7 @@ export function useInboxScreen() {
         }
         return next;
       });
+      notifyPublishedNoteInboxChanged();
     },
     [],
   );

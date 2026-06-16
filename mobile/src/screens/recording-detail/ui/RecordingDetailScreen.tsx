@@ -538,7 +538,6 @@ export const RecordingDetailScreen = () => {
       publish(template, expiresIn)
         .then(() => {
           hapticSuccess();
-          Alert.alert(t('share.publishSuccessTitle'), t('share.publishSuccessBody'));
         })
         .catch((err: unknown) => {
           hapticError();
@@ -551,7 +550,6 @@ export const RecordingDetailScreen = () => {
     unpublish()
       .then(() => {
         hapticSuccess();
-        Alert.alert(t('share.publishUnpublishedTitle'), t('share.publishUnpublishedBody'));
       })
       .catch((err: unknown) => {
         hapticError();
@@ -977,6 +975,7 @@ export const RecordingDetailScreen = () => {
             color={color}
             folderPlacement={folderPlacement}
             hideFolderPlacement={!foldersEnabled}
+            isPublicPublished={Boolean(published)}
             surfaceBackgroundColor={tabPanelBackgroundColor}
             onTitleLayout={handleTitleLayout}
           >

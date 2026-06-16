@@ -17,7 +17,12 @@ const sortFns: Record<InboxSortOption, (a: VoiceRecord, b: VoiceRecord) => numbe
   titleAsc: (a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }),
 };
 
-export const useInboxFilters = () => {
+type UseInboxFiltersOptions = {
+  publishedRecordIds?: ReadonlySet<string>;
+};
+
+export const useInboxFilters = (options?: UseInboxFiltersOptions) => {
+  const publishedRecordIds = options?.publishedRecordIds;
   const [filterStatus, setFilterStatus] = useState<InboxFilterStatus>('all');
   const [menuFilterStatus, setMenuFilterStatus] = useState<InboxMenuFilterStatus | null>(null);
   const [sortOption, setSortOption] = useState<InboxSortOption>('dateDesc');
@@ -48,6 +53,8 @@ export const useInboxFilters = () => {
         result = result.filter((r) => !r.tasks || r.tasks.length === 0);
       } else if (menuFilterStatus === 'withTasks') {
         result = result.filter((r) => Boolean(r.tasks && r.tasks.length > 0));
+      } else if (menuFilterStatus === 'withPublicLink') {
+        result = result.filter((r) => publishedRecordIds?.has(r.id) ?? false);
       } else if (menuFilterStatus === 'meetingMode') {
         result = result.filter((r) => r.classification === 'meeting');
       } else if (menuFilterStatus === 'processingError') {
@@ -62,7 +69,7 @@ export const useInboxFilters = () => {
 
       return [...result].sort(sortFns[sortOption]);
     },
-    [filterStatus, menuFilterStatus, sortOption],
+    [filterStatus, menuFilterStatus, publishedRecordIds, sortOption],
   );
 
   return {
