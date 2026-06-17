@@ -196,6 +196,7 @@ export const RecordingDetailScreen = () => {
     () => route.params.openLinkPicker === true,
   );
   const [shareSheetVisible, setShareSheetVisible] = useState(false);
+  const [shareSheetOpenToPublish, setShareSheetOpenToPublish] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
   const [renameTarget, setRenameTarget] = useState<{ id: string; title: string } | null>(null);
   const { currentPositionMs, onPositionUpdate } = usePlaybackPosition();
@@ -528,6 +529,16 @@ export const RecordingDetailScreen = () => {
   );
   const onOpenShareMenu = useCallback(() => {
     if (isProActive) {
+      setShareSheetOpenToPublish(false);
+      setShareSheetVisible(true);
+      return;
+    }
+
+    handleShare('noteBrief', 'markdown');
+  }, [isProActive, handleShare]);
+  const onOpenPublishSheet = useCallback(() => {
+    if (isProActive) {
+      setShareSheetOpenToPublish(true);
       setShareSheetVisible(true);
       return;
     }
@@ -923,6 +934,7 @@ export const RecordingDetailScreen = () => {
       />
       <ShareRecordSheet
         visible={shareSheetVisible}
+        openToPublish={shareSheetOpenToPublish}
         hasAudio={hasAudio}
         isMeeting={meetingPresetUiActive}
         showSpeakerTurnsExport={showSpeakerTurnsExport}
@@ -1035,7 +1047,7 @@ export const RecordingDetailScreen = () => {
               stale={isStale}
               color={color}
               surfaceBackgroundColor={tabPanelBackgroundColor}
-              onOpenShareSheet={onOpenShareMenu}
+              onOpenShareSheet={onOpenPublishSheet}
             />
           </View>
         ) : null}

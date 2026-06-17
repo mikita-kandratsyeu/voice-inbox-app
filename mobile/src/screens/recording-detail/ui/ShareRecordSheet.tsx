@@ -70,6 +70,7 @@ type ShareRecordSheetProps = {
   onUnpublishRecord?: () => void;
   onRefreshPublishStatus?: () => void;
   onSharePublishedLink?: () => void | Promise<void>;
+  openToPublish?: boolean;
 };
 
 export const ShareRecordSheet = ({
@@ -88,6 +89,7 @@ export const ShareRecordSheet = ({
   onUnpublishRecord,
   onRefreshPublishStatus,
   onSharePublishedLink,
+  openToPublish = false,
 }: ShareRecordSheetProps) => {
   const { t, i18n } = useTranslation();
   const color = useColors();
@@ -112,15 +114,24 @@ export const ShareRecordSheet = ({
   }, [dayjsLocale, publishState?.expiresAt]);
 
   useEffect(() => {
-    if (visible) return;
-    setEmailVisible(false);
-    setEmail('');
-    setEmailSendTemplate(null);
-    setPublishVisible(false);
-    setExportFormat('markdown');
-    setSharingTemplate(null);
-    setIsSharingPublishedLink(false);
-  }, [visible]);
+    if (!visible) {
+      setEmailVisible(false);
+      setEmail('');
+      setEmailSendTemplate(null);
+      setPublishVisible(false);
+      setExportFormat('markdown');
+      setSharingTemplate(null);
+      setIsSharingPublishedLink(false);
+      return;
+    }
+
+    if (openToPublish) {
+      if (publishState?.active) {
+        onRefreshPublishStatus?.();
+      }
+      setPublishVisible(true);
+    }
+  }, [onRefreshPublishStatus, openToPublish, publishState?.active, visible]);
 
   const isSharing = sharingTemplate != null;
 
