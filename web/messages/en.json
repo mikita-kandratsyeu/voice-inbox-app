@@ -186,8 +186,13 @@
     "sharedNoteMissingDescription": "This shared note link is invalid, expired, or has been unpublished."
   },
   "sharedNote": {
-    "publishedOn": "Published on {date}",
-    "expiresOn": "Link expires on {date}",
+    "publishedOn": "Published {date}",
+    "expiresOn": "Expires {date}",
+    "justNow": "just now",
+    "todayAt": "today at '{time}'",
+    "yesterdayAt": "yesterday at '{time}'",
+    "tomorrowAt": "tomorrow at '{time}'",
+    "expired": "expired",
     "backHome": "← Back to home"
   },
   "supportPage": {

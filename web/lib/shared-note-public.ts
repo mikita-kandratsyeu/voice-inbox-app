@@ -48,15 +48,3 @@ export async function loadSharedNoteByToken(token: string): Promise<SharedNotePu
     expiresAt: note.expiresAt,
   };
 }
-
-export function formatSharedNoteDateTime(date: Date, locale: string): string {
-  const intlLocale = locale === 'ru' ? 'ru-RU' : 'en-US';
-  return new Intl.DateTimeFormat(intlLocale, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZoneName: 'shortOffset',
-  }).format(date);
-}

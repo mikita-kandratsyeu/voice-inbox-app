@@ -1,21 +1,22 @@
 import { Footer } from '@/components/landing/Footer';
 import { Header } from '@/components/landing/Header';
 import { SharedNoteMarkdown } from '@/components/share/SharedNoteMarkdown';
+import { SharedNoteMetaDates } from '@/components/share/SharedNoteMetaDates';
 import { Link } from '@/lib/i18n';
 
 type SharedNoteArticleProps = {
   title: string;
   markdown: string;
-  publishedOn: string;
-  expiresOn?: string | null;
+  publishedAt: string;
+  expiresAt?: string | null;
   backHomeLabel: string;
 };
 
 export function SharedNoteArticle({
   title,
   markdown,
-  publishedOn,
-  expiresOn,
+  publishedAt,
+  expiresAt,
   backHomeLabel,
 }: SharedNoteArticleProps) {
   return (
@@ -33,17 +34,7 @@ export function SharedNoteArticle({
                 {title}
               </h1>
 
-              <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
-                <span>{publishedOn}</span>
-                {expiresOn ? (
-                  <>
-                    <span className="text-slate-300 dark:text-slate-600" aria-hidden>
-                      ·
-                    </span>
-                    <span>{expiresOn}</span>
-                  </>
-                ) : null}
-              </div>
+              <SharedNoteMetaDates publishedAt={publishedAt} expiresAt={expiresAt} />
             </header>
 
             <SharedNoteMarkdown markdown={markdown} />

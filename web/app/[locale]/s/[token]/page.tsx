@@ -5,11 +5,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { SharedNoteArticle } from '@/components/share/SharedNoteArticle';
 import { BASE_URL_OR_FALLBACK } from '@/config/constants';
-import {
-  buildSharedNotePublicPath,
-  formatSharedNoteDateTime,
-  loadSharedNoteByToken,
-} from '@/lib/shared-note-public';
+import { buildSharedNotePublicPath, loadSharedNoteByToken } from '@/lib/shared-note-public';
 
 type Props = {
   params: Promise<{ locale: string; token: string }>;
@@ -58,19 +54,13 @@ export default async function SharedNotePage({ params }: Props) {
   }
 
   const t = await getTranslations({ locale, namespace: 'sharedNote' });
-  const publishedOn = t('publishedOn', {
-    date: formatSharedNoteDateTime(note.publishedAt, locale),
-  });
-  const expiresOn = note.expiresAt
-    ? t('expiresOn', { date: formatSharedNoteDateTime(note.expiresAt, locale) })
-    : null;
 
   return (
     <SharedNoteArticle
       title={note.title}
       markdown={note.markdown}
-      publishedOn={publishedOn}
-      expiresOn={expiresOn}
+      publishedAt={note.publishedAt.toISOString()}
+      expiresAt={note.expiresAt?.toISOString() ?? null}
       backHomeLabel={t('backHome')}
     />
   );

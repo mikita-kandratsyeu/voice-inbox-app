@@ -187,7 +187,12 @@
   },
   "sharedNote": {
     "publishedOn": "Опубликовано {date}",
-    "expiresOn": "Ссылка действует до {date}",
+    "expiresOn": "Истекает {date}",
+    "justNow": "только что",
+    "todayAt": "сегодня в '{time}'",
+    "yesterdayAt": "вчера в '{time}'",
+    "tomorrowAt": "завтра в '{time}'",
+    "expired": "истекла",
     "backHome": "← На главную"
   },
   "supportPage": {
