@@ -155,7 +155,7 @@ Run from repo root with `yarn workspace voice-inbox-app <script>`, or `cd mobile
 
 | Script                            | Description                                |
 | --------------------------------- | ------------------------------------------ |
-| `start`                           | Metro (`NODE_ENV=development`)              |
+| `start`                           | Metro (`NODE_ENV=development`)             |
 | `ios` / `android`                 | Dev run on device/simulator                |
 | `ios:release` / `android:release` | Release mode on device                     |
 | `type:check`                      | `tsc --noEmit`                             |
