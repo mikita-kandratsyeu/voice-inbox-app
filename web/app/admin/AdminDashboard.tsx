@@ -7,13 +7,11 @@ import {
   LayoutDashboard,
   LifeBuoy,
   ExternalLink,
-  LogOut,
   Radio,
   Rocket,
   Sparkles,
   Settings,
   Shield,
-  User,
   Wallet,
   Wrench,
   Activity,
@@ -22,15 +20,9 @@ import {
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { adminHasPermission, type AdminPermission } from '@/lib/admin-permissions';
 import type { AppEnv } from '@/lib/app-env';
-import {
-  utilitiesGroupedActionBaseClass,
-  utilitiesGroupedActionClass,
-  utilitiesShellClass,
-  utilitiesShellDividerClass,
-} from '@/components/ui/utilities-shell';
+import { utilitiesShellClass } from '@/components/ui/utilities-shell';
 
 import {
   adminHeaderShellClass,
@@ -59,6 +51,7 @@ import { AdminInAppEventsPanel } from './AdminInAppEventsPanel';
 import { AdminMessagingPanel } from './AdminMessagingPanel';
 import { AdminReleasesPanel } from './AdminReleasesPanel';
 import { AdminSecurityPanel } from './AdminSecurityPanel';
+import { AdminSidebarUserPanel } from './AdminSidebarUserPanel';
 import { AdminSupportPanel } from './AdminSupportPanel';
 
 // Types remain the same
@@ -298,7 +291,7 @@ export function AdminDashboard({
   return (
     <div className="flex min-h-screen">
       {/* Enhanced Sidebar */}
-      <aside className="sticky top-0 z-20 hidden h-screen w-64 shrink-0 flex-col border-r border-zinc-200/80 bg-gradient-to-b from-white via-white to-zinc-50/50 py-6 backdrop-blur-md dark:border-zinc-800 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/50 md:flex">
+      <aside className="sticky top-0 z-20 hidden h-screen w-64 shrink-0 flex flex-col border-r border-zinc-200/80 bg-gradient-to-b from-white via-white to-zinc-50/50 pt-6 backdrop-blur-md dark:border-zinc-800 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/50 md:flex">
         <div className="px-5 pb-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-600/25 ring-1 ring-indigo-500/20 dark:from-indigo-500 dark:to-indigo-600">
@@ -331,26 +324,12 @@ export function AdminDashboard({
           })}
         </nav>
 
-        {/* Quick Stats in Sidebar */}
-        <div className="mt-auto border-t border-zinc-200/80 px-5 pt-4 dark:border-zinc-800">
-          <div className="space-y-2 rounded-xl bg-gradient-to-br from-zinc-50 to-zinc-100/50 p-3 text-xs dark:from-zinc-900/50 dark:to-zinc-800/30">
-            <div className="flex items-center justify-between">
-              <span className="text-zinc-600 dark:text-zinc-400">Status</span>
-              <AdminStatusBadge tone="success">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
-                Online
-              </AdminStatusBadge>
-            </div>
-            {typeof status?.app?.devicesWithPush === 'number' && (
-              <div className="flex items-center justify-between">
-                <span className="text-zinc-600 dark:text-zinc-400">Devices</span>
-                <span className="font-bold text-zinc-900 dark:text-zinc-100">
-                  {status.app.devicesWithPush}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+        <AdminSidebarUserPanel
+          className="mt-auto"
+          adminLogin={adminLogin}
+          isSuperadmin={isSuperadmin}
+          onLogout={handleLogout}
+        />
       </aside>
 
       <div className={`min-w-0 flex-1 ${adminMainGutterXClass}`}>
@@ -382,48 +361,21 @@ export function AdminDashboard({
                 </p>
               </div>
 
-              <div
-                className={`${utilitiesShellClass} shrink-0`}
-                role="group"
-                aria-label="Admin preferences"
-              >
-                <div className="flex items-center px-2 sm:px-2.5">
-                  <AdminAppEnvChip env={appEnv} />
+              <div className="flex shrink-0 flex-col items-end gap-2">
+                <div className={utilitiesShellClass} role="group" aria-label="Environment">
+                  <div className="flex items-center px-2 sm:px-2.5">
+                    <AdminAppEnvChip env={appEnv} />
+                  </div>
                 </div>
-                <span className={utilitiesShellDividerClass} aria-hidden />
-                <div
-                  className={`flex ${utilitiesGroupedActionBaseClass} max-w-36 items-center gap-2.5 px-2.5 sm:max-w-44 md:max-w-56 md:px-3`}
-                  title={adminLogin}
-                >
-                  <span
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/15 to-indigo-600/15 text-indigo-700 ring-1 ring-indigo-500/20 dark:from-indigo-400/20 dark:to-indigo-500/20 dark:text-indigo-200 dark:ring-indigo-400/25"
-                    aria-hidden
-                  >
-                    <User className="h-4 w-4" strokeWidth={2.5} />
-                  </span>
-                  <span className="hidden min-w-0 flex-col leading-tight min-[360px]:flex">
-                    <span className="truncate text-sm font-semibold text-black/90 dark:text-white/95">
-                      {adminLogin}
-                    </span>
-                    {isSuperadmin ? (
-                      <span className="truncate text-[9px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
-                        Superadmin
-                      </span>
-                    ) : null}
-                  </span>
+                <div className="md:hidden">
+                  <AdminSidebarUserPanel
+                    variant="compact"
+                    className="border-0 pt-0"
+                    adminLogin={adminLogin}
+                    isSuperadmin={isSuperadmin}
+                    onLogout={handleLogout}
+                  />
                 </div>
-                <span className={utilitiesShellDividerClass} aria-hidden />
-                <ThemeToggle variant="grouped" />
-                <span className={utilitiesShellDividerClass} aria-hidden />
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  aria-label="Log out"
-                  className={utilitiesGroupedActionClass}
-                >
-                  <LogOut className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-                  <span className="hidden md:inline">Log out</span>
-                </button>
               </div>
             </div>
 

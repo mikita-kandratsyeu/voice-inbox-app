@@ -41,8 +41,17 @@
     "uuid": "11.1.1",
     "fast-xml-parser": "5.8.0",
     "markdown-it": "14.2.0",
-    "esbuild": "0.25.12",
-    "@grpc/grpc-js": "1.14.4"
+    "esbuild": "0.28.1",
+    "@grpc/grpc-js": "1.14.4",
+    "form-data": "2.5.6",
+    "ws": "8.21.0",
+    "protobufjs": "7.6.4",
+    "hono": "4.12.25",
+    "@hono/node-server": "1.19.14",
+    "js-yaml": "4.2.0",
+    "tar": "7.5.16",
+    "@babel/core": "7.29.7",
+    "launch-editor": "2.14.1"
   },
   "engines": {
     "node": ">=24"

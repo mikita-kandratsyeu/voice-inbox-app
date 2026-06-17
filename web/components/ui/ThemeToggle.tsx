@@ -6,11 +6,14 @@ import { useEffect, useState } from 'react';
 
 import { utilitiesGroupedActionBaseClass } from '@/components/ui/utilities-shell';
 
-type ThemeToggleVariant = 'default' | 'grouped';
+type ThemeToggleVariant = 'default' | 'grouped' | 'compact';
 
 interface ThemeToggleProps {
   variant?: ThemeToggleVariant;
 }
+
+const compactBtn =
+  'flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100';
 
 const groupedBtn = `${utilitiesGroupedActionBaseClass} w-10 min-w-10 shadow-none ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 dark:focus-visible:ring-white/25`;
 
@@ -30,7 +33,9 @@ export function ThemeToggle({ variant = 'default' }: ThemeToggleProps): React.Re
   const btnClass =
     variant === 'grouped'
       ? `flex cursor-pointer items-center justify-center ${groupedBtn}`
-      : `flex cursor-pointer items-center justify-center ${defaultBtn}`;
+      : variant === 'compact'
+        ? compactBtn
+        : `flex cursor-pointer items-center justify-center ${defaultBtn}`;
 
   if (!mounted) {
     return (
