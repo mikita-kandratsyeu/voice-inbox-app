@@ -78,10 +78,20 @@ describe('isFirebaseAppCheckSkipped', () => {
 });
 
 describe('requireAppCheckForToken', () => {
+  let restoreEnv: () => void;
+
   beforeEach(() => {
     verifyToken.mockReset();
     recordAppCheckFailure.mockReset();
     verifyToken.mockResolvedValue({ appId: '1:828265085007:ios:1e2559c39ffa5bdbced23a' });
+    restoreEnv = setTestEnv({
+      APP_ENV: 'production',
+      SKIP_FIREBASE_APP_CHECK: undefined,
+    });
+  });
+
+  afterEach(() => {
+    restoreEnv();
   });
 
   it('skips verification in development when SKIP_FIREBASE_APP_CHECK=1', async () => {
