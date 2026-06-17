@@ -83,6 +83,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
   const isDark = theme === 'dark';
 
   const [bootstrapReady, setBootstrapReady] = useState(false);
+  const [webApiReady, setWebApiReady] = useState(false);
   const routeNameRef = useRef<string | undefined>(undefined);
 
   const onPushData = useCallback((data: PushNotificationData) => {
@@ -91,6 +92,10 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
 
   const onBootstrapReady = useCallback(() => {
     setBootstrapReady(true);
+  }, []);
+
+  const onWebApiReady = useCallback(() => {
+    setWebApiReady(true);
   }, []);
 
   const onBootSplashAnimationEnd = useCallback(() => {
@@ -109,8 +114,8 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
   useTaskDeadlineNotificationHandlers();
   useAndroidLayoutAnimation();
   useYandexMobileAdsInit();
-  useAppBootstrap(onPushData, { onBootstrapReady, onCriticalError });
-  useAppForegroundLifecycle();
+  useAppBootstrap(onPushData, { onBootstrapReady, onWebApiReady, onCriticalError });
+  useAppForegroundLifecycle(webApiReady);
   usePrivateAiTaskQueueBridge();
   useResetAccentWhenNotPro({ enabled: !bootSplashVisible });
   useResetProOnlyAiModelWhenNotPro({ enabled: !bootSplashVisible });

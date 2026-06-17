@@ -4,9 +4,15 @@ import { HEADER_FIREBASE_APP_CHECK } from '@/shared/lib/app-check/constants';
 import { shouldSkipFirebaseAppCheck } from '@/shared/lib/app-check/shouldSkipAppCheck';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { nitroFetch, type NitroFetchInit } from '@/shared/lib/fetch';
+import { isTransientNetworkError } from '@/shared/lib/fetch/isTransientNetworkError';
 
 import { isNumber, isString } from '../type-guards';
-import { WEB_API_FETCH_TIMEOUT_MS } from './constants';
+import {
+  TOKEN_FETCH_MAX_ATTEMPTS,
+  TOKEN_FETCH_RETRY_BASE_DELAY_MS,
+  WEB_API_FETCH_TIMEOUT_MS,
+  WEB_API_TOKEN_FETCH_TIMEOUT_MS,
+} from './constants';
 
 function getTokenUrl(): string {
   const base = getWebApiUrl().replace(/\/$/, '');
@@ -20,6 +26,12 @@ let cachedDeviceId: string | null = null;
 
 let tokenFetchInFlight: Promise<{ token: string; deviceId: string }> | null = null;
 
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 export function clearApiToken(): void {
   cachedToken = null;
   cachedExpiresAt = 0;
@@ -27,11 +39,10 @@ export function clearApiToken(): void {
   tokenFetchInFlight = null;
 }
 
-async function fetchToken(): Promise<{ token: string; deviceId: string }> {
-  const deviceId = await getOrCreateDeviceId();
-  const skipAppCheck = shouldSkipFirebaseAppCheck();
-  const appCheckToken = skipAppCheck ? null : await getFirebaseAppCheckToken();
-
+async function exchangeTokenOnce(
+  deviceId: string,
+  appCheckToken: string | null,
+): Promise<{ token: string; deviceId: string }> {
   const response = await nitroFetch(getTokenUrl(), {
     method: 'POST',
     headers: {
@@ -39,7 +50,7 @@ async function fetchToken(): Promise<{ token: string; deviceId: string }> {
       ...(appCheckToken ? { [HEADER_FIREBASE_APP_CHECK]: appCheckToken } : {}),
       'x-device-id': deviceId,
     },
-    timeoutMs: WEB_API_FETCH_TIMEOUT_MS,
+    timeoutMs: WEB_API_TOKEN_FETCH_TIMEOUT_MS,
   });
 
   if (!response.ok) {
@@ -59,6 +70,28 @@ async function fetchToken(): Promise<{ token: string; deviceId: string }> {
   cachedExpiresAt = Date.now() + expires_in * 1000;
   cachedDeviceId = deviceId;
   return { token: access_token, deviceId };
+}
+
+async function fetchToken(): Promise<{ token: string; deviceId: string }> {
+  const deviceId = await getOrCreateDeviceId();
+  const skipAppCheck = shouldSkipFirebaseAppCheck();
+  const appCheckToken = skipAppCheck ? null : await getFirebaseAppCheckToken();
+
+  let lastError: unknown;
+  for (let attempt = 0; attempt < TOKEN_FETCH_MAX_ATTEMPTS; attempt++) {
+    try {
+      return await exchangeTokenOnce(deviceId, appCheckToken);
+    } catch (err) {
+      lastError = err;
+      const hasRetriesLeft = attempt < TOKEN_FETCH_MAX_ATTEMPTS - 1;
+      if (!hasRetriesLeft || !isTransientNetworkError(err)) {
+        throw err;
+      }
+      await sleepMs(TOKEN_FETCH_RETRY_BASE_DELAY_MS * (attempt + 1));
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
 async function getTokenAndDeviceId(): Promise<{ token: string; deviceId: string }> {

@@ -1,4 +1,5 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
+import { WEB_API_FETCH_TIMEOUT_MS } from '@/shared/lib/api-auth/constants';
 import { diagWarn } from '@/shared/lib/appLogger';
 import { nitroFetch } from '@/shared/lib/fetch';
 
@@ -22,7 +23,11 @@ export async function fetchRemoteModelManifest(): Promise<void> {
     headers['If-None-Match'] = etag;
   }
 
-  const response = await nitroFetch(url, { method: 'GET', headers });
+  const response = await nitroFetch(url, {
+    method: 'GET',
+    headers,
+    timeoutMs: WEB_API_FETCH_TIMEOUT_MS,
+  });
   const now = Date.now();
 
   if (response.status === 304) {

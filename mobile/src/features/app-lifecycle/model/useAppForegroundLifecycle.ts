@@ -36,19 +36,20 @@ const isModelDownloading = (): boolean => {
   );
 };
 
-export function useAppForegroundLifecycle(): void {
+export function useAppForegroundLifecycle(webApiReady = false): void {
   useEffect(() => {
     let foregroundInterval: ReturnType<typeof setInterval> | null = null;
     let lastHeartbeatAt = 0;
     let lastForegroundAt = 0;
 
     const sendForegroundHeartbeat = () => {
-      if (!getHasSeenOnboarding()) return;
+      if (!webApiReady || !getHasSeenOnboarding()) return;
       lastHeartbeatAt = Date.now();
       notifyAppForeground();
     };
 
     const maybeNotifyForeground = () => {
+      if (!webApiReady) return;
       const isAiProcessing = useRecordStore.getState().hasActiveAiJobs;
       if (!isAiProcessing) return;
 
@@ -83,12 +84,13 @@ export function useAppForegroundLifecycle(): void {
 
       if (state === 'active') {
         syncPrivateCapabilityTier();
-        if (getHasSeenOnboarding()) {
+        if (webApiReady && getHasSeenOnboarding()) {
           ensurePushRegistered().catch(() => {});
         }
         const now = Date.now();
         const shouldSendForeground =
-          now - lastForegroundAt >= FOREGROUND_ON_ACTIVE_THROTTLE_MS || lastForegroundAt === 0;
+          webApiReady &&
+          (now - lastForegroundAt >= FOREGROUND_ON_ACTIVE_THROTTLE_MS || lastForegroundAt === 0);
         if (shouldSendForeground) {
           lastHeartbeatAt = 0;
           sendForegroundHeartbeat();
@@ -106,7 +108,7 @@ export function useAppForegroundLifecycle(): void {
           foregroundInterval = null;
         }
         if (state === 'background' || state === 'inactive') {
-          if (getHasSeenOnboarding()) {
+          if (webApiReady && getHasSeenOnboarding()) {
             notifyAppBackground();
           }
           lastForegroundAt = 0;
@@ -125,5 +127,5 @@ export function useAppForegroundLifecycle(): void {
       releaseWhisperContext().catch(() => {});
       releaseLocalLlmSession().catch(() => {});
     };
-  }, []);
+  }, [webApiReady]);
 }

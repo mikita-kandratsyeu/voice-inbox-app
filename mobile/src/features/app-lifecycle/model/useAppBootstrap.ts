@@ -15,6 +15,7 @@ import { initRuntimeConfig } from '@/shared/config/runtimeConfig';
 import { getWebApiEnvironmentStatus } from '@/shared/config/webApiEnvironment';
 import { initDB } from '@/shared/lib';
 import { syncAnalyticsUserId } from '@/shared/lib/analytics';
+import { warmWebApiAuth } from '@/shared/lib/api-auth/warmWebApiAuth';
 import { initFirebaseAppCheck } from '@/shared/lib/app-check/appCheckToken';
 import { diagInfo, diagWarn } from '@/shared/lib/appLogger';
 import { syncCrashlyticsUserId } from '@/shared/lib/crashlytics';
@@ -28,6 +29,7 @@ export type BootstrapCriticalError = 'db_init_failed';
 
 type UseAppBootstrapOptions = {
   onBootstrapReady?: () => void;
+  onWebApiReady?: () => void;
   onCriticalError?: (kind: BootstrapCriticalError) => void;
 };
 
@@ -35,11 +37,10 @@ export function useAppBootstrap(
   onInitialPushData: OnInitialPushData,
   options?: UseAppBootstrapOptions,
 ): void {
-  const { onBootstrapReady, onCriticalError } = options ?? {};
+  const { onBootstrapReady, onWebApiReady, onCriticalError } = options ?? {};
 
   useEffect(() => {
     let cancelled = false;
-    let deferredInitTimer: ReturnType<typeof setTimeout> | null = null;
 
     const notifyReady = () => {
       if (!cancelled) {
@@ -47,21 +48,26 @@ export function useAppBootstrap(
       }
     };
 
-    void initFirebaseAppCheck().catch((err) => {
-      diagWarn('[bootstrap] App Check init failed', err);
-    });
+    const notifyWebApiReady = () => {
+      if (!cancelled) {
+        onWebApiReady?.();
+      }
+    };
 
     const dbInit = initDB();
 
-    initRuntimeConfig()
-      .catch(() => {
+    Promise.all([
+      initRuntimeConfig().catch(() => {
         diagWarn('[bootstrap] failed to initialize remote config');
-      })
+      }),
+      initFirebaseAppCheck().catch((err) => {
+        diagWarn('[bootstrap] App Check init failed', err);
+      }),
+    ])
       .then(() => {
         diagInfo('[bootstrap] web API', {
           environment: getWebApiEnvironmentStatus(),
         });
-        prefetchModelManifest();
         return dbInit;
       })
       .then(async () => {
@@ -106,38 +112,49 @@ export function useAppBootstrap(
         notifyReady();
 
         void (async () => {
+          const warmed = await warmWebApiAuth();
+          if (!warmed) {
+            diagWarn('[bootstrap] Web API auth warm-up failed');
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          notifyWebApiReady();
+          prefetchModelManifest();
+
           try {
             const deviceId = await getOrCreateDeviceId();
             await Promise.all([syncCrashlyticsUserId(deviceId), syncAnalyticsUserId(deviceId)]);
-            void initRevenueCatWhenReady(deviceId);
+            if (!cancelled) {
+              void initRevenueCatWhenReady(deviceId);
+            }
           } catch {
             diagWarn('[bootstrap] failed to sync analytics/crashlytics user id');
+          }
+
+          try {
+            const initial = await getInitialNotification(getMessaging());
+            if (!cancelled && initial?.data) {
+              onInitialPushData(initial.data as unknown as PushNotificationData);
+            }
+          } catch {
+            diagWarn('[bootstrap] failed to read initial push notification');
+          }
+
+          if (!cancelled && getHasSeenOnboarding()) {
+            ensurePushRegistered().catch(() => {});
           }
         })();
 
         void checkAndFlagLegacyPinHash();
-
-        deferredInitTimer = setTimeout(() => {
-          void (async () => {
-            try {
-              const initial = await getInitialNotification(getMessaging());
-              if (!cancelled && initial?.data) {
-                onInitialPushData(initial.data as unknown as PushNotificationData);
-              }
-            } catch {
-              diagWarn('[bootstrap] failed to read initial push notification');
-            }
-
-            if (getHasSeenOnboarding()) {
-              ensurePushRegistered().catch(() => {});
-            }
-          })();
-        }, 0);
       })
       .catch((err) => {
         diagWarn('[bootstrap] critical failure', err);
 
         notifyReady();
+        notifyWebApiReady();
 
         if (!cancelled) {
           onCriticalError?.('db_init_failed');
@@ -146,9 +163,6 @@ export function useAppBootstrap(
 
     return () => {
       cancelled = true;
-      if (deferredInitTimer) {
-        clearTimeout(deferredInitTimer);
-      }
     };
-  }, [onBootstrapReady, onCriticalError, onInitialPushData]);
+  }, [onBootstrapReady, onCriticalError, onInitialPushData, onWebApiReady]);
 }
