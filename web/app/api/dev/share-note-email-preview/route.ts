@@ -1,5 +1,6 @@
 import { ApiErrorCode } from '@/lib/api-error-codes';
 import { apiError, HttpStatus } from '@/lib/api';
+import { isProductionLikeAppEnv } from '@/lib/app-env';
 import { buildShareNoteEmailHtml } from '@/lib/shareNoteMarkdownEmailHtml';
 import {
   getShareNoteEmailPreviewMarkdown,
@@ -19,7 +20,7 @@ const PATH = '/api/dev/share-note-email-preview';
  * - http://localhost:3000/api/dev/share-note-email-preview?variant=transcript&title=Demo
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  if (process.env.NODE_ENV === 'production') {
+  if (isProductionLikeAppEnv()) {
     return apiError('Not found', HttpStatus.NOT_FOUND, {
       pathname: PATH,
       code: ApiErrorCode.NotFound,

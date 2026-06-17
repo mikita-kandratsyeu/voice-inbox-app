@@ -26,7 +26,7 @@ yarn workspace voice-inbox-app android
 
 From `mobile/` you can still run `yarn start`, `yarn ios`, etc. after a root install.
 
-Release builds: `yarn ios:release` / `yarn android:release` (`APP_ENV=production`). Babel reads **`mobile/.env.production`** (not `.env`) when `NODE_ENV=production` for embedded `@env` defaults. **`GITHUB_OAUTH_CLIENT_ID`** for GitHub sync is typically set in **Firebase Remote Config** (key `GITHUB_OAUTH_CLIENT_ID`); optional fallback in `.env` / `.env.production` for dev or first launch before fetch.
+Release builds: `yarn ios:release` / `yarn android:release` (`APP_ENV=production`). Babel reads **`mobile/.env.production`** (not `.env`) when `APP_ENV=production` for embedded `@env` defaults. **`GITHUB_OAUTH_CLIENT_ID`** for GitHub sync is typically set in **Firebase Remote Config** (key `GITHUB_OAUTH_CLIENT_ID`); optional fallback in `.env` / `.env.production` for dev or first launch before fetch.
 
 ---
 

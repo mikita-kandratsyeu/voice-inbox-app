@@ -1,10 +1,12 @@
 import { getAdminAccessProfileFromRequestCookie } from '@/lib/admin-auth';
+import { getAppEnv } from '@/lib/app-env';
 
 import { AdminDashboard } from './AdminDashboard';
 import { AdminLogin } from './AdminLogin';
 
 export default async function AdminPage() {
   const dbConfigured = !!process.env.DATABASE_URL?.trim();
+  const appEnv = getAppEnv();
 
   if (!dbConfigured) {
     return (
@@ -49,8 +51,9 @@ export default async function AdminPage() {
         adminLogin={profile.login}
         isSuperadmin={profile.isSuperadmin}
         permissions={profile.permissions}
+        appEnv={appEnv}
       />
     );
   }
-  return <AdminLogin />;
+  return <AdminLogin appEnv={appEnv} />;
 }

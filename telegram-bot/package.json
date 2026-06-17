@@ -5,8 +5,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --import tsx src/index.ts",
-    "start": "NODE_ENV=production node --import tsx src/index.ts",
+    "dev": "APP_ENV=development node --import tsx src/index.ts",
+    "start": "APP_ENV=production node --import tsx src/index.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",

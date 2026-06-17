@@ -5,7 +5,7 @@
   "globalPassThroughEnv": [
     "DATABASE_URL",
     "DIRECT_URL",
-    "NODE_ENV",
+    "APP_ENV",
     "NODE_OPTIONS",
     "CI"
   ],

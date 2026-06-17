@@ -1,7 +1,8 @@
 import 'dotenv/config';
 import { defineConfig } from 'drizzle-kit';
 
-const isDev = process.env.NODE_ENV !== 'production';
+const appEnv = (process.env.APP_ENV ?? 'development').trim().toLowerCase();
+const isDev = appEnv === 'development';
 
 export default defineConfig({
   dialect: 'sqlite',

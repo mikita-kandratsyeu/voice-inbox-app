@@ -1,4 +1,6 @@
-/** Local-only HTML previews (`/api/dev/*`). Disabled when `NODE_ENV === 'production'`. */
+import { isDevelopmentAppEnv } from '@/lib/app-env';
+
+/** Local-only HTML previews (`/api/dev/*`). Disabled unless `APP_ENV=development`. */
 
 export type DevPreviewExample = {
   label: string;
@@ -63,7 +65,7 @@ export const DEV_PREVIEW_CATALOG: readonly DevPreviewEntry[] = [
 ] as const;
 
 export function isDevPreviewCatalogEnabled(): boolean {
-  return process.env.NODE_ENV !== 'production';
+  return isDevelopmentAppEnv();
 }
 
 export function buildDevPreviewUrl(origin: string, apiPath: string, query = ''): string {

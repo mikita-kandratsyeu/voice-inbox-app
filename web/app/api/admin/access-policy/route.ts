@@ -4,6 +4,7 @@ import {
   ADMIN_LOGIN_RATE_LIMIT_MAX_ATTEMPTS,
   ADMIN_LOGIN_RATE_LIMIT_WINDOW_SECONDS,
 } from '@/config/constants';
+import { isProductionLikeAppEnv } from '@/lib/app-env';
 import { getAdminCookieMaxAgeSeconds } from '@/lib/admin-cookie-max-age';
 import { getAdminSession } from '@/lib/admin-session';
 
@@ -33,6 +34,6 @@ export async function GET(): Promise<NextResponse> {
     adminJwtExpiresInEnv: process.env.ADMIN_JWT_EXPIRES_IN?.trim() || '24h (default)',
     cookieHttpOnly: true,
     cookieSameSite: 'lax' as const,
-    cookieSecureInProduction: process.env.NODE_ENV === 'production',
+    cookieSecureInProduction: isProductionLikeAppEnv(),
   });
 }

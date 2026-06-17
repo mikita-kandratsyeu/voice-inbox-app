@@ -1,4 +1,5 @@
 import { apiError, HttpStatus } from '@/lib/api';
+import { isDevelopmentAppEnv } from '@/lib/app-env';
 import { assertMobileTokenExchange } from '@/lib/mobile-api-guard';
 import { getExpiresInSeconds as getJwtExpiresInSeconds, signAppToken } from '@/lib/jwt';
 import { redis } from '@/lib/redis';
@@ -39,7 +40,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const expires_in = getJwtExpiresInSeconds();
     return NextResponse.json({ access_token, expires_in });
   } catch (err) {
-    if (process.env.NODE_ENV === 'development' && err instanceof Error) {
+    if (isDevelopmentAppEnv() && err instanceof Error) {
       console.error('[token] sign error', err.message);
     }
     return apiError('Server misconfiguration', 500, { pathname: path });

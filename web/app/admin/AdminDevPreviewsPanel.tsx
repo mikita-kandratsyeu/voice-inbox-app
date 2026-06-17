@@ -25,7 +25,7 @@ export function AdminDevPreviewsPanel() {
       <AdminAlert tone="info">
         Dev preview endpoints are only available when the web app runs with{' '}
         <code className="rounded bg-zinc-100 px-1 py-0.5 font-mono text-xs dark:bg-zinc-800">
-          NODE_ENV=development
+          APP_ENV=development
         </code>{' '}
         (local <code className="font-mono text-xs">yarn dev</code>).
       </AdminAlert>

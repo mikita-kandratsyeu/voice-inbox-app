@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
 
 import { HEADER_FIREBASE_APP_CHECK } from '@/config/constants';
+import { isDevelopmentAppEnv } from '@/lib/app-env';
 import { ApiErrorCode } from '@/lib/api-error-codes';
 import { recordAppCheckFailure } from '@/lib/api-telemetry';
 import { apiError, HttpStatus } from '@/lib/api/http-response';
 import { isAllowedFirebaseAppCheckAppId } from '@/lib/firebase-app-check-app-ids';
 import { getFirebaseAdmin, isFirebaseAdminConfigured } from '@/lib/firebase-admin';
 
-/** Local dev only: `SKIP_FIREBASE_APP_CHECK=1` with `NODE_ENV=development`. */
+/** Local dev only: `SKIP_FIREBASE_APP_CHECK=1` with `APP_ENV=development`. */
 export function isFirebaseAppCheckSkipped(): boolean {
-  return process.env.NODE_ENV === 'development' && process.env.SKIP_FIREBASE_APP_CHECK === '1';
+  return isDevelopmentAppEnv() && process.env.SKIP_FIREBASE_APP_CHECK === '1';
 }
 
 export async function verifyFirebaseAppCheckToken(token: string): Promise<void> {
@@ -48,7 +49,7 @@ export async function requireAppCheckForToken(request: Request): Promise<NextRes
     return null;
   } catch (err) {
     void recordAppCheckFailure('invalid');
-    if (process.env.NODE_ENV === 'development' && err instanceof Error) {
+    if (isDevelopmentAppEnv() && err instanceof Error) {
       console.error('[app-check] verify failed', err.message);
     }
     return apiError('Unauthorized', HttpStatus.UNAUTHORIZED, { code: ApiErrorCode.Unauthorized });

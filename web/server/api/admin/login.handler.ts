@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
 
 import { ADMIN_COOKIE_NAME } from '@/config/constants';
+import { isProductionLikeAppEnv } from '@/lib/app-env';
 import { ApiErrorCode } from '@/lib/api-error-codes';
 import { getAdminCookieMaxAgeSeconds } from '@/lib/admin-cookie-max-age';
 import { signAdminSessionToken } from '@/lib/admin-jwt';
@@ -15,7 +16,7 @@ const PATH = '/api/admin/login';
 function cookieOptions() {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProductionLikeAppEnv(),
     sameSite: 'lax' as const,
     path: '/',
     maxAge: getAdminCookieMaxAgeSeconds(),

@@ -1,5 +1,6 @@
 import { ApiErrorCode } from '@/lib/api-error-codes';
 import { apiError, HttpStatus } from '@/lib/api';
+import { isProductionLikeAppEnv } from '@/lib/app-env';
 import { parseAccountProPreviewOptions } from '@/lib/account-pro-preview-fixtures';
 import {
   renderAccountProPreviewExamplesIndexHtml,
@@ -21,7 +22,7 @@ const PATH = '/api/dev/account-pro-preview';
  * - http://localhost:3000/api/dev/account-pro-preview?variant=missing
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  if (process.env.NODE_ENV === 'production') {
+  if (isProductionLikeAppEnv()) {
     return apiError('Not found', HttpStatus.NOT_FOUND, {
       pathname: PATH,
       code: ApiErrorCode.NotFound,

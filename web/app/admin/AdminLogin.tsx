@@ -6,10 +6,12 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import type { AppEnv } from '@/lib/app-env';
 
+import { AdminAppEnvChip } from './AdminAppEnvChip';
 import { adminBtnPrimaryClass, adminInputClass, AdminAlert } from './admin-ui';
 
-export function AdminLogin() {
+export function AdminLogin({ appEnv }: { appEnv: AppEnv }) {
   const router = useRouter();
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
@@ -69,10 +71,13 @@ export function AdminLogin() {
           />
 
           <div className="mb-8 flex flex-col items-center text-center">
-            <p className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/8 px-3 py-1 text-[11px] font-semibold tracking-wide text-indigo-700 uppercase dark:border-indigo-400/25 dark:bg-indigo-500/12 dark:text-indigo-300">
-              <Lock className="h-3 w-3" strokeWidth={2.25} aria-hidden />
-              Admin panel
-            </p>
+            <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
+              <p className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/8 px-3 py-1 text-[11px] font-semibold tracking-wide text-indigo-700 uppercase dark:border-indigo-400/25 dark:bg-indigo-500/12 dark:text-indigo-300">
+                <Lock className="h-3 w-3" strokeWidth={2.25} aria-hidden />
+                Admin panel
+              </p>
+              <AdminAppEnvChip env={appEnv} />
+            </div>
             <Image
               src="/app-icon.svg"
               alt=""

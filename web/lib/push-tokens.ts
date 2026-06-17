@@ -10,6 +10,7 @@ import {
   PUSH_TOKEN_KEY_PREFIX,
   PUSH_TOKEN_TTL_SECONDS,
 } from '@/config/constants';
+import { isDevelopmentAppEnv } from '@/lib/app-env';
 import { sendPushNotification } from '@/lib/push';
 import { listKeysByPrefix, redis } from '@/lib/redis';
 
@@ -115,7 +116,7 @@ export async function savePushToken(
   };
   await redis.set(key, JSON.stringify(data), { ex: PUSH_TOKEN_TTL_SECONDS });
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (isDevelopmentAppEnv()) {
     console.log('[Push] savePushToken', {
       deviceId,
       key,
@@ -196,7 +197,7 @@ export async function getPushTokenWithLocale(deviceId: string): Promise<{
   const key = getPushTokenKey(deviceId);
   const value = await redis.get(key);
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (isDevelopmentAppEnv()) {
     console.log('[Push] getPushTokenWithLocale', {
       deviceId,
       key,
@@ -268,7 +269,7 @@ export async function sendLimitExceededPush(deviceId: string): Promise<void> {
     ex: LIMIT_PUSH_DEBOUNCE_SECONDS,
   });
   if (!acquired) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (isDevelopmentAppEnv()) {
       console.log('[Push] limit exceeded: skip (debounced)', { deviceId });
     }
     return;
@@ -276,7 +277,7 @@ export async function sendLimitExceededPush(deviceId: string): Promise<void> {
 
   const data = await getPushTokenWithLocale(deviceId);
   if (!data) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (isDevelopmentAppEnv()) {
       console.log('[Push] limit exceeded: no token', { deviceId });
     }
     return;

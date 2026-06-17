@@ -6,9 +6,9 @@
   "description": "Voice Inbox AI Web API",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "APP_ENV=development next dev",
     "build": "prisma generate && next build",
-    "start": "next start",
+    "start": "APP_ENV=production next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "type:check": "prisma generate && tsc --noEmit",

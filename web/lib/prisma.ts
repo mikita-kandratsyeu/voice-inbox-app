@@ -2,6 +2,7 @@ import { URL } from 'node:url';
 
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@/generated/prisma/client';
+import { isDevelopmentAppEnv } from '@/lib/app-env';
 import { normalizePostgresConnectionUrl } from '@/lib/direct-database-url';
 import { Pool } from 'pg';
 
@@ -99,19 +100,19 @@ function createPrismaClient(): PrismaClient {
       allowExitOnIdle: true, // Allow process to exit when all clients idle (serverless-friendly)
     });
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (isDevelopmentAppEnv()) {
     globalForPrisma.pgPool = pool;
   }
 
   const adapter = new PrismaPg(pool);
   return new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    log: isDevelopmentAppEnv() ? ['error', 'warn'] : ['error'],
   });
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
-if (process.env.NODE_ENV !== 'production') {
+if (isDevelopmentAppEnv()) {
   globalForPrisma.prisma = prisma;
 }

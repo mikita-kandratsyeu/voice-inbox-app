@@ -6,14 +6,14 @@ const verifyToken = jest.fn();
 const recordAppCheckFailure = jest.fn();
 
 type TestEnv = {
-  NODE_ENV?: string;
+  APP_ENV?: string;
   SKIP_FIREBASE_APP_CHECK?: string;
 };
 
 function setTestEnv(overrides: TestEnv): () => void {
   const env = process.env as TestEnv;
   const saved: TestEnv = {
-    NODE_ENV: env.NODE_ENV,
+    APP_ENV: env.APP_ENV,
     SKIP_FIREBASE_APP_CHECK: env.SKIP_FIREBASE_APP_CHECK,
   };
 
@@ -56,7 +56,7 @@ jest.mock('@/lib/firebase-app-check-app-ids', () => ({
 describe('isFirebaseAppCheckSkipped', () => {
   it('is true only in development with SKIP_FIREBASE_APP_CHECK=1', () => {
     const restore = setTestEnv({
-      NODE_ENV: 'development',
+      APP_ENV: 'development',
       SKIP_FIREBASE_APP_CHECK: '1',
     });
 
@@ -66,7 +66,10 @@ describe('isFirebaseAppCheckSkipped', () => {
       setTestEnv({ SKIP_FIREBASE_APP_CHECK: '0' });
       expect(isFirebaseAppCheckSkipped()).toBe(false);
 
-      setTestEnv({ NODE_ENV: 'production', SKIP_FIREBASE_APP_CHECK: '1' });
+      setTestEnv({ APP_ENV: 'production', SKIP_FIREBASE_APP_CHECK: '1' });
+      expect(isFirebaseAppCheckSkipped()).toBe(false);
+
+      setTestEnv({ APP_ENV: 'preview', SKIP_FIREBASE_APP_CHECK: '1' });
       expect(isFirebaseAppCheckSkipped()).toBe(false);
     } finally {
       restore();
@@ -83,7 +86,7 @@ describe('requireAppCheckForToken', () => {
 
   it('skips verification in development when SKIP_FIREBASE_APP_CHECK=1', async () => {
     const restore = setTestEnv({
-      NODE_ENV: 'development',
+      APP_ENV: 'development',
       SKIP_FIREBASE_APP_CHECK: '1',
     });
 

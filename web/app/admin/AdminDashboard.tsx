@@ -24,6 +24,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { adminHasPermission, type AdminPermission } from '@/lib/admin-permissions';
+import type { AppEnv } from '@/lib/app-env';
 import {
   utilitiesGroupedActionBaseClass,
   utilitiesGroupedActionClass,
@@ -50,6 +51,7 @@ import {
 } from './admin-ui';
 
 import { AdminBudgetPanel } from './AdminBudgetPanel';
+import { AdminAppEnvChip } from './AdminAppEnvChip';
 import { AdminChangePasswordForm } from './AdminChangePasswordForm';
 import { AdminConfigPanel } from './AdminConfigPanel';
 import { AdminOperationsPanel } from './AdminOperationsPanel';
@@ -210,9 +212,15 @@ type AdminDashboardProps = {
   adminLogin: string;
   isSuperadmin: boolean;
   permissions: AdminPermission[];
+  appEnv: AppEnv;
 };
 
-export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminDashboardProps) {
+export function AdminDashboard({
+  adminLogin,
+  isSuperadmin,
+  permissions,
+  appEnv,
+}: AdminDashboardProps) {
   const router = useRouter();
   const accessProfile = useMemo(() => ({ isSuperadmin, permissions }), [isSuperadmin, permissions]);
   const visibleTabs = useMemo(
@@ -379,6 +387,10 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
                 role="group"
                 aria-label="Admin preferences"
               >
+                <div className="flex items-center px-2 sm:px-2.5">
+                  <AdminAppEnvChip env={appEnv} />
+                </div>
+                <span className={utilitiesShellDividerClass} aria-hidden />
                 <div
                   className={`flex ${utilitiesGroupedActionBaseClass} max-w-36 items-center gap-2.5 px-2.5 sm:max-w-44 md:max-w-56 md:px-3`}
                   title={adminLogin}
