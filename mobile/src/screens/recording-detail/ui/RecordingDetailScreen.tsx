@@ -78,6 +78,7 @@ import { RecordingDetailHeader } from './RecordingDetailHeader';
 import { RecordingDetailTabBar } from './RecordingDetailTabBar';
 import { RecordingMarksSection } from './RecordingMarksSection';
 import { RecordingMeetingModeSection } from './RecordingMeetingModeSection';
+import { RecordingSharedAccessSection } from './RecordingSharedAccessSection';
 import { RecordNeighborSections } from './RecordNeighborSections';
 import { ShareRecordSheet } from './ShareRecordSheet';
 import { SummaryTab } from './SummaryTab';
@@ -583,6 +584,7 @@ export const RecordingDetailScreen = () => {
   const hasTranscript = Boolean(liveRecord.transcript?.trim());
   const hasAudio = Boolean(liveRecord.audioPath?.trim());
   const showMeetingModeToggle = isProActive && hasTranscript;
+  const showSharedAccessSection = Boolean(published);
 
   const applyMeetingModeOff = useCallback(() => {
     void updateAiExtras(liveRecord.id, {
@@ -887,7 +889,10 @@ export const RecordingDetailScreen = () => {
     ? color.background.secondary
     : color.background.card;
   const stickyTabIndex =
-    1 + (hasAudio && hasRecordingMarks ? 1 : 0) + (showMeetingModeToggle ? 1 : 0);
+    1 +
+    (hasAudio && hasRecordingMarks ? 1 : 0) +
+    (showMeetingModeToggle ? 1 : 0) +
+    (showSharedAccessSection ? 1 : 0);
 
   return (
     <View className="flex-1" style={{ backgroundColor: shellBackgroundColor }}>
@@ -983,7 +988,6 @@ export const RecordingDetailScreen = () => {
             color={color}
             folderPlacement={folderPlacement}
             hideFolderPlacement={!foldersEnabled}
-            isPublicPublished={Boolean(published)}
             surfaceBackgroundColor={tabPanelBackgroundColor}
             onTitleLayout={handleTitleLayout}
           >
@@ -1022,6 +1026,18 @@ export const RecordingDetailScreen = () => {
             />
           </View>
         )}
+
+        {showSharedAccessSection ? (
+          <View style={{ width: '100%', maxWidth: contentMaxWidth }}>
+            <RecordingSharedAccessSection
+              expiresAt={published?.expiresAt ?? null}
+              stale={isStale}
+              color={color}
+              surfaceBackgroundColor={tabPanelBackgroundColor}
+              onOpenShareSheet={onOpenShareMenu}
+            />
+          </View>
+        ) : null}
 
         {showMeetingModeToggle ? (
           <View style={{ width: '100%', maxWidth: contentMaxWidth }}>

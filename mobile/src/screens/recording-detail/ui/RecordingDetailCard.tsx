@@ -6,7 +6,6 @@ import { Text, View } from 'react-native';
 import type { Folder } from '@/entities/folder';
 import { FolderLucideIcon } from '@/entities/folder/lib/folderLucideIcons';
 import type { VoiceRecord } from '@/entities/record';
-import { RecordCardPublicChip } from '@/entities/record/ui/RecordCardPublicChip';
 import type { Colors } from '@/shared/config';
 import { formatRelativeTime, withAlphaHex } from '@/shared/lib';
 
@@ -22,7 +21,6 @@ type RecordingDetailCardProps = {
   color: Colors;
   folderPlacement: RecordingDetailFolderPlacement;
   hideFolderPlacement?: boolean;
-  isPublicPublished?: boolean;
   surfaceBackgroundColor?: string;
   onTitleLayout?: (layout: { y: number; height: number }) => void;
   children?: React.ReactNode;
@@ -33,7 +31,6 @@ export const RecordingDetailCard = ({
   color,
   folderPlacement,
   hideFolderPlacement = false,
-  isPublicPublished = false,
   surfaceBackgroundColor,
   onTitleLayout,
   children,
@@ -224,11 +221,6 @@ export const RecordingDetailCard = ({
           {record.tags.map((tag) => (
             <RecordDetailTag key={tag} label={tag} />
           ))}
-        </View>
-      )}
-      {isPublicPublished && (
-        <View className="flex-row gap-2">
-          <RecordCardPublicChip color={color} />
         </View>
       )}
       {record.createdAt && (
