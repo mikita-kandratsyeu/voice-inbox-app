@@ -159,6 +159,7 @@ type RecordStore = {
       summaryReasoning?: string | null;
       summaryAiModel?: string | null;
       summaryAiModelLabel?: string | null;
+      summaryAiModelMode?: 'manual' | 'auto' | null;
       summaryTokensPrompt?: number | null;
       summaryTokensCompletion?: number | null;
       summaryGenerationMs?: number | null;
@@ -618,6 +619,12 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
         patch.summaryAiModelLabel = data.summaryAiModelLabel?.trim()
           ? data.summaryAiModelLabel.trim()
           : undefined;
+      }
+      if (data.summaryAiModelMode !== undefined) {
+        patch.summaryAiModelMode =
+          data.summaryAiModelMode === 'auto' || data.summaryAiModelMode === 'manual'
+            ? data.summaryAiModelMode
+            : undefined;
       }
       if (data.summaryTokensPrompt !== undefined) {
         patch.summaryTokensPrompt = data.summaryTokensPrompt ?? undefined;

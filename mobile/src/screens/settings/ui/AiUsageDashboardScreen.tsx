@@ -40,6 +40,7 @@ import {
   getAiUsage,
   getAiUsageHistory,
 } from '@/shared/lib/ai-api';
+import { resolveAiModelRoutingDisplayLabel } from '@/shared/lib/aiModelRoutingDisplay';
 import { formatLocalizedLongDateWithTime } from '@/shared/lib/taskDeadlineTimeDisplay';
 import {
   HeaderIconButton,
@@ -385,10 +386,14 @@ export const AiUsageDashboardScreen = () => {
   const getHistorySubtitle = useCallback(
     (entry: AiUsageHistoryEntry) => {
       const date = formatLocalizedLongDateWithTime(entry.createdAt, i18n.language);
-      const model = entry.modelLabel?.trim() || entry.model?.trim();
+      const model = resolveAiModelRoutingDisplayLabel(t, {
+        modelMode: entry.modelMode,
+        model: entry.model,
+        modelLabel: entry.modelLabel,
+      });
       return model ? `${date}\n${model}` : date;
     },
-    [i18n.language],
+    [i18n.language, t],
   );
 
   const handleExportCsv = useCallback(async () => {

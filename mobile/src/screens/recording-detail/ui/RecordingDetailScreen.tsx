@@ -1153,6 +1153,7 @@ export const RecordingDetailScreen = () => {
                 summaryReasoning={liveRecord.summaryReasoning}
                 summaryAiModel={liveRecord.summaryAiModel}
                 summaryAiModelLabel={liveRecord.summaryAiModelLabel}
+                summaryAiModelMode={liveRecord.summaryAiModelMode}
                 summaryTokenUsage={
                   liveRecord.summaryTokensPrompt != null &&
                   liveRecord.summaryTokensCompletion != null

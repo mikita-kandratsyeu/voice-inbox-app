@@ -39,6 +39,7 @@ export const recordsTable = sqliteTable(
     summaryReasoning: text('summaryReasoning'),
     summaryAiModel: text('summaryAiModel'),
     summaryAiModelLabel: text('summaryAiModelLabel'),
+    summaryAiModelMode: text('summaryAiModelMode'),
     summaryTokensPrompt: integer('summaryTokensPrompt'),
     summaryTokensCompletion: integer('summaryTokensCompletion'),
     summaryGenerationMs: integer('summaryGenerationMs'),

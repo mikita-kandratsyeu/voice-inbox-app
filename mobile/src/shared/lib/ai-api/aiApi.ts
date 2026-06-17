@@ -279,6 +279,7 @@ export type AiUsageHistoryEntry = {
   description?: string;
   model?: string;
   modelLabel?: string;
+  modelMode?: 'manual' | 'auto';
 };
 
 export type AiUsageHistoryPage = {
@@ -316,6 +317,7 @@ function parseAiUsageHistoryEntry(raw: Record<string, unknown>): AiUsageHistoryE
     ...(isString(raw.description) ? { description: raw.description } : {}),
     ...(isString(raw.model) ? { model: raw.model } : {}),
     ...(isString(raw.modelLabel) ? { modelLabel: raw.modelLabel } : {}),
+    ...(raw.modelMode === 'auto' || raw.modelMode === 'manual' ? { modelMode: raw.modelMode } : {}),
   };
 }
 

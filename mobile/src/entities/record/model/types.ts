@@ -133,6 +133,8 @@ export type VoiceRecord = {
   summaryAiModel?: string;
   /** Server-provided display name for {@link summaryAiModel}. */
   summaryAiModelLabel?: string;
+  /** Cloud routing mode used for the last summary (`auto` hides resolved model in UI). */
+  summaryAiModelMode?: 'manual' | 'auto';
   summaryTokensPrompt?: number;
   summaryTokensCompletion?: number;
   /** Wall-clock ms for the last summary+tasks generation. */

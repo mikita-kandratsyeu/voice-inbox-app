@@ -91,6 +91,7 @@ const VoiceRecordSchema = z.looseObject({
   summaryReasoning: safeOptionalString,
   summaryAiModel: safeOptionalString,
   summaryAiModelLabel: safeOptionalString,
+  summaryAiModelMode: z.enum(['manual', 'auto']).optional().nullable(),
   summaryTokensPrompt: z.number().optional().nullable(),
   summaryTokensCompletion: z.number().optional().nullable(),
   summaryGenerationMs: z.number().optional().nullable(),

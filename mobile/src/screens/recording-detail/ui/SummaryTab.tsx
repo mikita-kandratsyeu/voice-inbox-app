@@ -15,13 +15,10 @@ import { Text, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { RecordingStatus } from '@/entities/record';
-import {
-  isPrivateCustomServerMode,
-  resolveAiModelDisplayLabel,
-  useSettingsStore,
-} from '@/entities/settings';
+import { isPrivateCustomServerMode, useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
+import { resolveAiModelRoutingDisplayLabel } from '@/shared/lib/aiModelRoutingDisplay';
 import type { SummaryTokenUsage } from '@/shared/lib/summaryMetaSubtitle';
 import { AiTabErrorBanner, AiTabHintIcon, Button, TabEmptyState } from '@/shared/ui';
 
@@ -62,6 +59,7 @@ type SummaryTabProps = {
   summaryReasoning?: string;
   summaryAiModel?: string;
   summaryAiModelLabel?: string;
+  summaryAiModelMode?: 'manual' | 'auto';
   summaryTokenUsage?: SummaryTokenUsage;
   summaryGenerationMs?: number;
 };
@@ -164,6 +162,7 @@ export const SummaryTab = ({
   summaryReasoning,
   summaryAiModel,
   summaryAiModelLabel,
+  summaryAiModelMode,
   summaryTokenUsage,
   summaryGenerationMs,
 }: SummaryTabProps) => {
@@ -197,8 +196,13 @@ export const SummaryTab = ({
   );
 
   const summaryModelLabel = useMemo(
-    () => resolveAiModelDisplayLabel(summaryAiModel, summaryAiModelLabel),
-    [summaryAiModel, summaryAiModelLabel],
+    () =>
+      resolveAiModelRoutingDisplayLabel(t, {
+        modelMode: summaryAiModelMode,
+        model: summaryAiModel,
+        modelLabel: summaryAiModelLabel,
+      }),
+    [summaryAiModel, summaryAiModelLabel, summaryAiModelMode, t],
   );
 
   const isSmartMode = aiExecutionMode === 'smart_hybrid';

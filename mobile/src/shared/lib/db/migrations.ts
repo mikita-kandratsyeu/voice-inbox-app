@@ -142,6 +142,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS \`idx_record_published_share_token\` ON \`reco
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS \`idx_record_published_share_expires\` ON \`record_published_share\` (\`expiresAt\`);`;
 
+const migration0025 = `ALTER TABLE \`records\` ADD \`summaryAiModelMode\` text;`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -177,5 +179,6 @@ export const migrationsConfig = {
     m0022: migration0022,
     m0023: migration0023,
     m0024: migration0024,
+    m0025: migration0025,
   } as Record<string, string>,
 };

@@ -29,6 +29,13 @@ import type {
   VoiceRecord,
 } from './types';
 
+function parseSummaryAiModelMode(
+  raw: string | null | undefined,
+): VoiceRecord['summaryAiModelMode'] {
+  const value = raw?.trim();
+  return value === 'auto' || value === 'manual' ? value : undefined;
+}
+
 function parseMeetingSpeakerLabelsJson(raw: string | null | undefined) {
   try {
     return sanitizeMeetingSpeakerLabels(JSON.parse(raw ?? 'null') as unknown);
@@ -128,6 +135,7 @@ type RecordListQueryRow = {
   summaryReasoning: string | null;
   summaryAiModel: string | null;
   summaryAiModelLabel: string | null;
+  summaryAiModelMode: string | null;
   summaryTokensPrompt: number | null;
   summaryTokensCompletion: number | null;
   summaryGenerationMs: number | null;
@@ -177,6 +185,7 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     summaryAiModelLabel: row.summaryAiModelLabel?.trim()
       ? row.summaryAiModelLabel.trim()
       : undefined,
+    summaryAiModelMode: parseSummaryAiModelMode(row.summaryAiModelMode),
     summaryTokensPrompt:
       row.summaryTokensPrompt != null && row.summaryTokensPrompt >= 0
         ? row.summaryTokensPrompt
@@ -239,6 +248,7 @@ const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
     summaryAiModelLabel: row.summaryAiModelLabel?.trim()
       ? row.summaryAiModelLabel.trim()
       : undefined,
+    summaryAiModelMode: parseSummaryAiModelMode(row.summaryAiModelMode),
     summaryTokensPrompt:
       row.summaryTokensPrompt != null && row.summaryTokensPrompt >= 0
         ? row.summaryTokensPrompt
@@ -295,6 +305,7 @@ const recordListColumns = {
   summaryReasoning: recordsTable.summaryReasoning,
   summaryAiModel: recordsTable.summaryAiModel,
   summaryAiModelLabel: recordsTable.summaryAiModelLabel,
+  summaryAiModelMode: recordsTable.summaryAiModelMode,
   summaryTokensPrompt: recordsTable.summaryTokensPrompt,
   summaryTokensCompletion: recordsTable.summaryTokensCompletion,
   summaryGenerationMs: recordsTable.summaryGenerationMs,
@@ -633,6 +644,7 @@ export const recordRepository = {
       summaryReasoning?: string | null;
       summaryAiModel?: string | null;
       summaryAiModelLabel?: string | null;
+      summaryAiModelMode?: 'manual' | 'auto' | null;
       summaryTokensPrompt?: number | null;
       summaryTokensCompletion?: number | null;
       summaryGenerationMs?: number | null;
@@ -677,6 +689,12 @@ export const recordRepository = {
       updates.summaryAiModelLabel = data.summaryAiModelLabel?.trim()
         ? data.summaryAiModelLabel.trim()
         : null;
+    }
+    if (data.summaryAiModelMode !== undefined) {
+      updates.summaryAiModelMode =
+        data.summaryAiModelMode === 'auto' || data.summaryAiModelMode === 'manual'
+          ? data.summaryAiModelMode
+          : null;
     }
     if (data.summaryTokensPrompt !== undefined) {
       updates.summaryTokensPrompt = data.summaryTokensPrompt;

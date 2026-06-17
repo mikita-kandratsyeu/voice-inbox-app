@@ -266,6 +266,7 @@ export const useAiProcessing = () => {
       await updateAiExtras(record.id, {
         summaryAiModel: null,
         summaryAiModelLabel: null,
+        summaryAiModelMode: null,
         summaryTokensPrompt: null,
         summaryTokensCompletion: null,
         summaryReasoning: null,
@@ -356,6 +357,7 @@ export const useAiProcessing = () => {
           recordIsMeeting,
           includeMeetingSpeakerBreakdown,
           aiExecutionMode,
+          aiModelRoutingMode,
           effectiveLocalAiModelId,
           generationStartedAt,
           updateSummary,
@@ -554,6 +556,7 @@ export const useAiProcessing = () => {
                   recordIsMeeting,
                   includeMeetingSpeakerBreakdown,
                   aiExecutionMode,
+                  aiModelRoutingMode,
                   effectiveLocalAiModelId,
                   generationStartedAt,
                   updateSummary,

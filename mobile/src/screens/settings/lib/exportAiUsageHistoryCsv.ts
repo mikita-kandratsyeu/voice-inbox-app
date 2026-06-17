@@ -3,6 +3,7 @@ import { Share } from 'react-native';
 
 import { isUserCancelledShare } from '@/features/share-record/lib/isUserCancelledShare';
 import { type AiUsageHistoryEntry, getAiUsageHistory } from '@/shared/lib/ai-api';
+import { resolveAiModelRoutingDisplayLabel } from '@/shared/lib/aiModelRoutingDisplay';
 import { diagWarn } from '@/shared/lib/appLogger';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 import { formatLocalizedLongDateWithTime } from '@/shared/lib/taskDeadlineTimeDisplay';
@@ -56,7 +57,11 @@ function buildAiUsageHistoryCsv(
     t(`settings.aiUsageDashboard.history.kinds.${entry.kind}`),
     t(`settings.aiUsageDashboard.history.operations.${entry.operation}`),
     String(entry.amount),
-    entry.modelLabel?.trim() || entry.model?.trim() || '',
+    resolveAiModelRoutingDisplayLabel(t, {
+      modelMode: entry.modelMode,
+      model: entry.model,
+      modelLabel: entry.modelLabel,
+    }),
     entry.description?.trim() || '',
     entry.jobId?.trim() || '',
   ]);
