@@ -71,7 +71,6 @@ export default async function SharedNotePage({ params }: Props) {
       markdown={note.markdown}
       publishedOn={publishedOn}
       expiresOn={expiresOn}
-      visibilityHint={t('visibilityHint')}
       backHomeLabel={t('backHome')}
     />
   );

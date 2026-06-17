@@ -186,7 +186,6 @@
     "sharedNoteMissingDescription": "This shared note link is invalid, expired, or has been unpublished."
   },
   "sharedNote": {
-    "visibilityHint": "Anyone with this link can view this note.",
     "publishedOn": "Published on {date}",
     "expiresOn": "Link expires on {date}",
     "backHome": "← Back to home"

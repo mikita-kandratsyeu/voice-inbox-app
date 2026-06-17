@@ -314,6 +314,7 @@ export function GraphFilterBar({
             edgeVisibility: {
               ...filters.edgeVisibility,
               ...edgeVisibility,
+              contains: showTasks,
             },
           })
         }

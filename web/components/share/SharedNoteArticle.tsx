@@ -8,7 +8,6 @@ type SharedNoteArticleProps = {
   markdown: string;
   publishedOn: string;
   expiresOn?: string | null;
-  visibilityHint: string;
   backHomeLabel: string;
 };
 
@@ -17,7 +16,6 @@ export function SharedNoteArticle({
   markdown,
   publishedOn,
   expiresOn,
-  visibilityHint,
   backHomeLabel,
 }: SharedNoteArticleProps) {
   return (
@@ -31,11 +29,7 @@ export function SharedNoteArticle({
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <div className="rounded-3xl border border-black/10 bg-white/85 p-8 shadow-[0_10px_36px_rgba(15,23,42,0.08)] dark:border-white/12 dark:bg-white/5 dark:shadow-[0_14px_44px_rgba(0,0,0,0.34)] sm:p-12">
             <header className="mb-8 border-b border-black/8 pb-6 dark:border-white/10">
-              <span className="inline-flex items-center rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:border-blue-400/25 dark:bg-blue-500/14 dark:text-blue-300">
-                {visibilityHint}
-              </span>
-
-              <h1 className="mt-5 text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
+              <h1 className="text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
                 {title}
               </h1>
 

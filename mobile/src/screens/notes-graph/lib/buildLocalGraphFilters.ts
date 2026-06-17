@@ -6,7 +6,7 @@ export function buildLocalGraphFilters(): GraphFilters {
   return {
     folderIds: [],
     tags: [],
-    showTasks: false,
+    showTasks: true,
     showCompletedTasks: true,
     showArchived: true,
     edgeVisibility: {
@@ -14,7 +14,7 @@ export function buildLocalGraphFilters(): GraphFilters {
       similar: true,
       sharedTag: false,
       sameFolder: false,
-      contains: false,
+      contains: true,
     },
     layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
     nodeDisplayMode: getGraphNodeDisplayMode(),

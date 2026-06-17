@@ -531,6 +531,7 @@ export const RecordingDetailScreen = () => {
       setShareSheetVisible(true);
       return;
     }
+
     handleShare('noteBrief', 'markdown');
   }, [isProActive, handleShare]);
   const onCloseShareMenu = useCallback(() => setShareSheetVisible(false), []);
