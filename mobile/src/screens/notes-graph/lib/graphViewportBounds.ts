@@ -5,7 +5,7 @@ export const GRAPH_PAN_OVERSCROLL = 240;
 export const GRAPH_PAN_OVERSCROLL_VIEWPORT_RATIO = 0.35;
 export const GRAPH_VIEWPORT_MIN_SCALE = 0.2;
 export const GRAPH_VIEWPORT_MAX_SCALE = 3.5;
-export const GRAPH_WORLD_CONTENT_PADDING = 200;
+export const GRAPH_WORLD_CONTENT_PADDING = 100;
 
 export function resolveGraphPanOverscroll(viewportWidth: number, viewportHeight: number): number {
   const viewportMin = Math.min(Math.max(viewportWidth, 1), Math.max(viewportHeight, 1));
@@ -32,10 +32,9 @@ export type GraphContentBounds = {
  * Maximum visual extent of edge effects beyond the edge path:
  * - Highlighted edge glow: strokeWidth 9
  * - Edge curvature can extend perpendicular to the direct line
- * - For large graphs with many edges, curved paths can extend further
- * We add generous margin to ensure all edges are captured in exports
+ * Keeping it minimal for tighter world bounds
  */
-const EDGE_VISUAL_MARGIN = 48;
+const EDGE_VISUAL_MARGIN = 30;
 
 export function measureGraphContentBounds(nodes: GraphNode[]): GraphContentBounds | null {
   if (nodes.length === 0) return null;
@@ -53,9 +52,8 @@ export function measureGraphContentBounds(nodes: GraphNode[]): GraphContentBound
     maxY = Math.max(maxY, bounds.bottom);
   }
 
-  // Add margin for edge effects (curvature, stroke width, glow)
-  // For large graphs with many edges, increase margin to ensure all curved edges are captured
-  const edgeMargin = nodes.length > 100 ? EDGE_VISUAL_MARGIN * 1.5 : EDGE_VISUAL_MARGIN;
+  // Add minimal margin for edge effects (curvature, stroke width, glow)
+  const edgeMargin = EDGE_VISUAL_MARGIN;
 
   minX -= edgeMargin;
   minY -= edgeMargin;
@@ -75,34 +73,27 @@ export function computeWorldDimensionsForNodes(
   contentPadding = GRAPH_WORLD_CONTENT_PADDING,
 ): GraphWorldDimensions {
   const bounds = measureGraphContentBounds(nodes);
-  let layoutWidth = graphWidth;
-  let layoutHeight = graphHeight;
 
-  if (bounds) {
-    const spanWidth = bounds.maxX - bounds.minX;
-    const spanHeight = bounds.maxY - bounds.minY;
-    layoutWidth = Math.max(
-      layoutWidth,
-      spanWidth + contentPadding * 2,
-      bounds.maxX + contentPadding,
-    );
-    layoutHeight = Math.max(
-      layoutHeight,
-      spanHeight + contentPadding * 2,
-      bounds.maxY + contentPadding,
-    );
+  if (!bounds) {
+    // No nodes - return minimal world size
+    return {
+      width: Math.max(viewportWidth, graphWidth, 800),
+      height: Math.max(viewportHeight, graphHeight, 600),
+      contentBounds: null,
+    };
   }
 
-  const dimensions = computeWorldDimensions(
-    layoutWidth,
-    layoutHeight,
-    viewportWidth,
-    viewportHeight,
-    minScale,
-  );
+  // Calculate world size based on actual content with padding
+  const spanWidth = bounds.maxX - bounds.minX;
+  const spanHeight = bounds.maxY - bounds.minY;
+
+  // World should fit content + padding, but not smaller than viewport
+  const layoutWidth = Math.max(spanWidth + contentPadding * 2, viewportWidth, graphWidth);
+  const layoutHeight = Math.max(spanHeight + contentPadding * 2, viewportHeight, graphHeight);
 
   return {
-    ...dimensions,
+    width: layoutWidth,
+    height: layoutHeight,
     contentBounds: bounds,
   };
 }
@@ -171,7 +162,7 @@ export function clampViewportTranslation(
   const safeScale = Math.max(scale, 0.001);
   const padWorld = edgeOverscroll / safeScale;
 
-  const extraPaddingForNodes = 150 / safeScale;
+  const extraPaddingForNodes = 50 / safeScale;
   const effectivePadWorld = padWorld + extraPaddingForNodes;
 
   const contentWidth = Math.max(contentMaxX - contentMinX, 1);
