@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { isDevelopmentAppEnv } from './app-env';
 
 const PRO_ENTITLEMENT_CACHE_TTL_MS = 60_000;
 
@@ -39,7 +40,9 @@ export async function getProExpiresAtUtc(deviceId: string): Promise<Date | null>
 
 export async function isProDevice(deviceId: string): Promise<boolean> {
   const expires = await getProExpiresAtUtc(deviceId);
-  return expires != null && expires.getTime() > Date.now();
+  const isDev = isDevelopmentAppEnv();
+
+  return isDev || (expires != null && expires.getTime() > Date.now());
 }
 
 export async function deviceHasActivatedLicenseKey(deviceId: string): Promise<boolean> {

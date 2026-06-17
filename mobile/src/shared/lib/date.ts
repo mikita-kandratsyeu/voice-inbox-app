@@ -42,6 +42,18 @@ export const formatRelativeTime = (isoDate: string, locale = 'en'): string => {
 
 const SHORT_DATE_SHOW_YEAR_SAME_YEAR_AFTER_DAYS = 90;
 
+/** Local date + time for share-link expiry (no timezone suffix — users expect device local time). */
+export const formatShareExpiresAt = (isoDate: string, locale = 'en'): string => {
+  const dayjsLocale = resolveDayjsLocale(locale);
+  const date = dayjs(isoDate).locale(dayjsLocale);
+
+  if (!date.isValid()) {
+    return isoDate;
+  }
+
+  return date.format('D MMM YYYY, HH:mm');
+};
+
 export const formatShortDate = (isoDate: string, locale = 'en'): string => {
   const dayjsLocale = resolveDayjsLocale(locale);
   const date = dayjs(isoDate).locale(dayjsLocale);

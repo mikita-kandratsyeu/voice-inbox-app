@@ -4,7 +4,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { buildShareText, type ShareBriefTemplate } from '@/features/share-record';
 
 import { fetchPublishedRecordStatus, publishRecord, unpublishRecord } from '../api/publishRecord';
-import { computeShareContentHash } from '../lib/computeShareContentHash';
+import { isPublishContentStale } from '../lib/isPublishContentStale';
 import {
   deletePublishedNoteStateByRecordId,
   getPublishedNoteState,
@@ -49,9 +49,7 @@ export function usePublishRecord(record: VoiceRecord) {
         setState((prev) => ({
           ...prev,
           current: next,
-          stale:
-            computeShareContentHash(buildShareText(record, next.template, { forEmail: true })) !==
-            next.contentHash,
+          stale: isPublishContentStale(record, next),
         }));
         notifyPublishedNoteInboxChanged();
         return;
@@ -77,9 +75,7 @@ export function usePublishRecord(record: VoiceRecord) {
       setState({
         current: local,
         loading: false,
-        stale:
-          computeShareContentHash(buildShareText(record, local.template, { forEmail: true })) !==
-          local.contentHash,
+        stale: isPublishContentStale(record, local),
       });
     })();
   }, [record]);

@@ -1,11 +1,10 @@
-import dayjs from 'dayjs';
 import { Globe } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, TouchableOpacity, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
-import { resolveDayjsLocale } from '@/shared/lib/date';
+import { formatShareExpiresAt, resolveDayjsLocale } from '@/shared/lib/date';
 
 type RecordingSharedAccessSectionProps = {
   expiresAt: string | null;
@@ -31,9 +30,7 @@ export const RecordingSharedAccessSection = ({
 
   const formattedExpiry = useMemo(() => {
     if (!expiresAt) return null;
-    const date = dayjs(expiresAt).locale(dayjsLocale);
-    if (!date.isValid()) return expiresAt;
-    return date.format('D MMM YYYY, HH:mm (UTCZ)');
+    return formatShareExpiresAt(expiresAt, dayjsLocale);
   }, [dayjsLocale, expiresAt]);
 
   const expiryHint = formattedExpiry

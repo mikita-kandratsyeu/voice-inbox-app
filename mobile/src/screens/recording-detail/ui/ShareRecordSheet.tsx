@@ -1,5 +1,4 @@
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import dayjs from 'dayjs';
 import {
   ClipboardList,
   FileText,
@@ -21,7 +20,7 @@ import {
 } from '@/features/share-record';
 import { EmailBodyFormatPicker } from '@/features/share-record/ui/EmailBodyFormatPicker';
 import { useColors } from '@/shared/config';
-import { resolveDayjsLocale } from '@/shared/lib/date';
+import { formatShareExpiresAt, resolveDayjsLocale } from '@/shared/lib/date';
 import {
   AppBottomSheetContent,
   AppBottomSheetModal,
@@ -108,9 +107,7 @@ export const ShareRecordSheet = ({
 
   const formattedPublishExpiry = useMemo(() => {
     if (!publishState?.expiresAt) return null;
-    const date = dayjs(publishState.expiresAt).locale(dayjsLocale);
-    if (!date.isValid()) return publishState.expiresAt;
-    return date.format('D MMM YYYY, HH:mm (UTCZ)');
+    return formatShareExpiresAt(publishState.expiresAt, dayjsLocale);
   }, [dayjsLocale, publishState?.expiresAt]);
 
   useEffect(() => {
