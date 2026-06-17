@@ -1,6 +1,12 @@
 module.exports = function (api) {
-  api.cache(() => process.env.APP_ENV);
-  const appEnv = (process.env.APP_ENV ?? 'development').trim().toLowerCase();
+  api.cache(() => `${process.env.APP_ENV ?? ''}|${process.env.NODE_ENV ?? ''}`);
+  const appEnv = (
+    process.env.APP_ENV ??
+    process.env.NODE_ENV ??
+    'development'
+  )
+    .trim()
+    .toLowerCase();
   const envFile = appEnv === 'production' ? '.env.production' : '.env';
 
   return {
