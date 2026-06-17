@@ -1,7 +1,12 @@
-import { BASE_URL_OR_FALLBACK } from '@/config/constants';
 import { apiError, checkShareEmailRateLimit, HttpStatus, parseJsonBody } from '@/lib/api';
 import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import { isSmtpConfigured, sendTransactionalMail } from '@/lib/mailer';
+import {
+  buildShareNoteEmailPlainText,
+  buildShareNoteEmailShellStrings,
+  defaultExportBody,
+  normalizeShareNoteEmailLocale,
+} from '@/lib/share-note-email-copy';
 import {
   buildShareNoteEmailHtml,
   buildShareNoteEmailShellHtml,
@@ -22,6 +27,7 @@ type ShareEmailBody = {
   title?: unknown;
   markdown?: unknown;
   attachMarkdown?: unknown;
+  locale?: unknown;
 };
 
 function escapeHtml(value: string): string {
@@ -65,33 +71,13 @@ function safeMarkdownAttachmentFilename(title: string): string {
   return base.toLowerCase().endsWith('.md') ? base : `${base}.md`;
 }
 
-function htmlParagraphFromText(text: string): string {
+function htmlParagraphFromText(text: string, fallback: string): string {
   const lines = escapeHtml(text)
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
-  const body = lines.length > 0 ? lines.join('<br>') : 'Your Voice Inbox export is attached.';
+  const body = lines.length > 0 ? lines.join('<br>') : escapeHtml(fallback);
   return `<p style="margin:0;font-size:15px;line-height:1.6;color:#374151;">${body}</p>`;
-}
-
-function buildShareEmailPlainText(params: {
-  title: string;
-  body: string;
-  attachmentLabel?: string;
-}): string {
-  return [
-    params.title,
-    '',
-    'A Voice Inbox AI user shared this note with you.',
-    params.attachmentLabel ? `Attachment: ${params.attachmentLabel}` : null,
-    '',
-    params.body.trim(),
-    '',
-    'This email was sent from Voice Inbox AI by an app user.',
-    BASE_URL_OR_FALLBACK,
-  ]
-    .filter((line): line is string => line != null)
-    .join('\n');
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -135,11 +121,13 @@ export async function POST(request: Request): Promise<NextResponse> {
       normalizeBoundedString(formData.get('subject'), SUBJECT_MAX) ??
       `Voice Inbox AI: ${title}`.slice(0, SUBJECT_MAX);
 
+    const locale = normalizeShareNoteEmailLocale(formData.get('locale'));
+
     const bodyTextRaw = formData.get('bodyText');
     const bodyText =
       typeof bodyTextRaw === 'string' && bodyTextRaw.trim().length > 0
         ? bodyTextRaw.trim().slice(0, BODY_TEXT_MAX)
-        : 'Your Voice Inbox export is attached.';
+        : defaultExportBody(locale);
 
     const file = formData.get('file');
     if (!(file instanceof File)) {
@@ -196,20 +184,30 @@ export async function POST(request: Request): Promise<NextResponse> {
             : 'voice-inbox-export.zip';
         })();
 
-    const attachmentLabel = looksPdf ? 'PDF export' : 'ZIP export';
-
     try {
-      const text = buildShareEmailPlainText({
+      const shell = buildShareNoteEmailShellStrings({
+        locale,
+        title,
+        kind: 'export',
+        attachmentKind,
+        attachmentFilename: attachmentFilename,
+      });
+      const text = buildShareNoteEmailPlainText({
+        locale,
         title,
         body: bodyText,
-        attachmentLabel,
+        kind: 'export',
+        attachmentKind,
+        attachmentFilename: attachmentFilename,
       });
       const html = buildShareNoteEmailShellHtml({
         title,
-        bodyInnerHtml: htmlParagraphFromText(bodyText),
-        preheader: `${attachmentLabel} from Voice Inbox AI: ${title}`,
-        intro: 'A Voice Inbox AI user shared an export with you.',
-        attachmentLabel: attachmentFilename,
+        bodyInnerHtml: htmlParagraphFromText(bodyText, defaultExportBody(locale)),
+        preheader: shell.preheader,
+        intro: shell.intro,
+        attachmentLabel: shell.attachmentLabel,
+        attachmentPrefix: shell.attachmentPrefix,
+        footerLine: shell.footerLine,
       });
 
       await sendTransactionalMail({
@@ -259,14 +257,31 @@ export async function POST(request: Request): Promise<NextResponse> {
     normalizeBoundedString(body.subject, SUBJECT_MAX) ??
     `Voice Inbox AI note: ${title}`.slice(0, SUBJECT_MAX);
   const attachMarkdown = body.attachMarkdown !== false;
+  const locale = normalizeShareNoteEmailLocale(body.locale);
 
   try {
     const markdownForDelivery = stripShareNoteSectionMarkers(markdown);
-    const html = await buildShareNoteEmailHtml(markdown, title);
-    const text = buildShareEmailPlainText({
+    const shell = buildShareNoteEmailShellStrings({
+      locale,
+      title,
+      kind: 'note',
+      attachmentKind: attachMarkdown ? 'markdown' : undefined,
+      attachmentFilename: attachMarkdown ? safeMarkdownAttachmentFilename(title) : undefined,
+    });
+    const html = await buildShareNoteEmailHtml(markdown, title, {
+      preheader: shell.preheader,
+      intro: shell.intro,
+      attachmentLabel: shell.attachmentLabel,
+      attachmentPrefix: shell.attachmentPrefix,
+      footerLine: shell.footerLine,
+    });
+    const text = buildShareNoteEmailPlainText({
+      locale,
       title,
       body: markdownForDelivery,
-      attachmentLabel: attachMarkdown ? 'Markdown export' : undefined,
+      kind: 'note',
+      attachmentKind: attachMarkdown ? 'markdown' : undefined,
+      attachmentFilename: attachMarkdown ? safeMarkdownAttachmentFilename(title) : undefined,
     });
     await sendTransactionalMail({
       to,

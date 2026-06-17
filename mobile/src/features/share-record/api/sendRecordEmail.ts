@@ -1,4 +1,5 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
+import { i18n } from '@/shared/lib';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
 import { isString } from '@/shared/lib/type-guards';
@@ -6,6 +7,13 @@ import { isString } from '@/shared/lib/type-guards';
 /** Keep in sync with `web/app/api/share/email/route.ts` */
 export const SHARE_EMAIL_MARKDOWN_MAX = 80_000;
 export const SHARE_EMAIL_ZIP_MAX_BYTES = 10 * 1024 * 1024;
+
+export type ShareEmailLocale = 'en' | 'ru';
+
+export function resolveShareEmailLocale(): ShareEmailLocale {
+  const lang = (i18n.language ?? 'en').split('-')[0]?.toLowerCase();
+  return lang === 'ru' ? 'ru' : 'en';
+}
 
 export type SendRecordEmailInput = {
   to: string;
@@ -32,6 +40,7 @@ export async function sendRecordEmail(input: SendRecordEmailInput): Promise<Send
         subject: input.subject.trim(),
         title: input.title.trim(),
         markdown: input.markdown,
+        locale: resolveShareEmailLocale(),
         ...(input.attachMarkdown === false ? { attachMarkdown: false } : {}),
       }),
     });
@@ -103,6 +112,7 @@ export async function sendShareEmailPdfAttachment(
   form.append('subject', input.subject.trim());
   form.append('title', input.title.trim());
   form.append('bodyText', input.bodyText);
+  form.append('locale', resolveShareEmailLocale());
   form.append('attachmentKind', 'pdf');
   form.append('pdfFileName', input.pdfDisplayName);
   form.append('file', {
@@ -160,6 +170,7 @@ export async function sendShareEmailZipAttachment(
   form.append('subject', input.subject.trim());
   form.append('title', input.title.trim());
   form.append('bodyText', input.bodyText);
+  form.append('locale', resolveShareEmailLocale());
   form.append('zipFileName', input.zipDisplayName);
   form.append('file', {
     uri,

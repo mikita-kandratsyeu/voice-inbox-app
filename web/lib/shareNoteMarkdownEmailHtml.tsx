@@ -400,6 +400,8 @@ export type ShareNoteEmailShellOptions = {
   preheader?: string;
   intro?: string;
   attachmentLabel?: string;
+  attachmentPrefix?: string;
+  footerLine?: string;
 };
 
 function escapeHtml(value: string): string {
@@ -450,10 +452,12 @@ export async function renderShareNoteMarkdownEmailInnerHtml(markdown: string): P
 
 export function buildShareNoteEmailShellHtml(options: ShareNoteEmailShellOptions): string {
   const escapedTitle = escapeHtml(options.title);
-  const preheader =
-    options.preheader?.trim() || `Shared from Voice Inbox AI: ${options.title}`.slice(0, 160);
-  const intro = options.intro?.trim() || 'A Voice Inbox AI user shared this note with you.';
+  const preheader = options.preheader?.trim() ?? '';
+  const intro = options.intro?.trim() ?? '';
   const attachmentLabel = options.attachmentLabel?.trim();
+  const attachmentPrefix = options.attachmentPrefix?.trim() || 'Attachment:';
+  const footerLine =
+    options.footerLine?.trim() || 'This email was sent from Voice Inbox AI by an app user.';
 
   return `<!doctype html>
 <html>
@@ -475,7 +479,7 @@ export function buildShareNoteEmailShellHtml(options: ShareNoteEmailShellOptions
                 <p style="margin:12px 0 0;font-size:15px;line-height:1.55;color:#475569;">${escapeHtml(intro)}</p>
                 ${
                   attachmentLabel
-                    ? `<p style="margin:10px 0 0;font-size:13px;line-height:1.45;color:#64748b;">Attachment: ${escapeHtml(attachmentLabel)}</p>`
+                    ? `<p style="margin:10px 0 0;font-size:13px;line-height:1.45;color:#64748b;">${escapeHtml(attachmentPrefix)} ${escapeHtml(attachmentLabel)}</p>`
                     : ''
                 }
               </td>
@@ -488,7 +492,7 @@ export function buildShareNoteEmailShellHtml(options: ShareNoteEmailShellOptions
             <tr>
               <td style="padding:8px 24px 24px;">
                 <div style="border-top:1px solid #e5e7eb;padding-top:16px;font-size:13px;line-height:1.55;color:#64748b;">
-                  <p style="margin:0 0 6px;">This email was sent from Voice Inbox AI by an app user.</p>
+                  <p style="margin:0 0 6px;">${escapeHtml(footerLine)}</p>
                   <p style="margin:0;">
                     <a href="${siteUrl}" style="color:#475569;text-decoration:underline;">voice-inbox.online</a>
                     <span style="color:#cbd5e1;"> · </span>
@@ -505,11 +509,15 @@ export function buildShareNoteEmailShellHtml(options: ShareNoteEmailShellOptions
 </html>`;
 }
 
-export async function buildShareNoteEmailHtml(markdown: string, title: string): Promise<string> {
+export async function buildShareNoteEmailHtml(
+  markdown: string,
+  title: string,
+  shell?: Omit<ShareNoteEmailShellOptions, 'title' | 'bodyInnerHtml'>,
+): Promise<string> {
   const inner = await renderShareNoteMarkdownEmailInnerHtml(markdown);
   return buildShareNoteEmailShellHtml({
     title,
     bodyInnerHtml: inner,
-    preheader: `Shared note from Voice Inbox AI: ${title}`,
+    ...shell,
   });
 }

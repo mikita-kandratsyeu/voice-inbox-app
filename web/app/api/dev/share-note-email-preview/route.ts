@@ -2,6 +2,7 @@ import { ApiErrorCode } from '@/lib/api-error-codes';
 import { apiError, HttpStatus } from '@/lib/api';
 import { isProductionLikeAppEnv } from '@/lib/app-env';
 import { buildShareNoteEmailHtml } from '@/lib/shareNoteMarkdownEmailHtml';
+import { buildShareNoteEmailShellStrings } from '@/lib/share-note-email-copy';
 import {
   getShareNoteEmailPreviewMarkdown,
   getShareNoteEmailPreviewTitle,
@@ -32,8 +33,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const titleParam = req.nextUrl.searchParams.get('title')?.trim();
   const title = titleParam || getShareNoteEmailPreviewTitle(variant);
   const markdown = getShareNoteEmailPreviewMarkdown(variant);
+  const locale = req.nextUrl.searchParams.get('locale') === 'ru' ? 'ru' : 'en';
+  const shell = buildShareNoteEmailShellStrings({ locale, title, kind: 'note' });
 
-  const html = await buildShareNoteEmailHtml(markdown, title);
+  const html = await buildShareNoteEmailHtml(markdown, title, {
+    preheader: shell.preheader,
+    intro: shell.intro,
+    footerLine: shell.footerLine,
+  });
 
   return new NextResponse(html, {
     headers: {
