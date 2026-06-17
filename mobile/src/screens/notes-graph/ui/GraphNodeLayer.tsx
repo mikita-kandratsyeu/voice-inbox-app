@@ -110,18 +110,20 @@ function DraggableNodeShell({
   const clampNodePosition = useCallback(
     (x: number, y: number): { x: number; y: number } => {
       'worklet';
-      // Use content bounds if available, otherwise use world dimensions with padding
-      const minX = contentBounds?.minX ?? 50;
-      const minY = contentBounds?.minY ?? 50;
-      const maxX = (contentBounds?.maxX ?? worldWidth) - nodeWidth - 50;
-      const maxY = (contentBounds?.maxY ?? worldHeight) - nodeHeight - 50;
+      // Allow nodes to move freely within the world dimensions
+      // Small padding to prevent nodes from being cut off at edges
+      const padding = 20;
+      const minX = padding;
+      const minY = padding;
+      const maxX = worldWidth - nodeWidth - padding;
+      const maxY = worldHeight - nodeHeight - padding;
 
       return {
         x: Math.max(minX, Math.min(maxX, x)),
         y: Math.max(minY, Math.min(maxY, y)),
       };
     },
-    [contentBounds, worldWidth, worldHeight, nodeWidth, nodeHeight],
+    [worldWidth, worldHeight, nodeWidth, nodeHeight],
   );
 
   const handleDragEndComplete = useCallback(
