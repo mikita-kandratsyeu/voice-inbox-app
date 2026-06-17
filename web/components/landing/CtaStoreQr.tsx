@@ -26,10 +26,7 @@ export async function CtaStoreQr(): Promise<React.ReactElement> {
       aria-label={t('qrAria')}
     >
       <div className="relative rounded-2xl bg-linear-to-br from-white via-white to-slate-100 p-2.5 shadow-[0_10px_28px_rgba(0,0,0,0.28)] ring-1 ring-white/30">
-        <div
-          className="pointer-events-none absolute inset-2 rounded-xl border border-slate-900/6"
-          aria-hidden
-        />
+        <div className="pointer-events-none absolute inset-2 rounded-xl" aria-hidden />
         {/* eslint-disable-next-line @next/next/no-img-element -- data URL from qrcode */}
         <img
           src={dataUrl}
