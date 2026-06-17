@@ -6,11 +6,11 @@ import {
 } from '../webApiTarget';
 
 describe('parseWebApiTarget', () => {
-  it('defaults to prod', () => {
-    expect(parseWebApiTarget(undefined)).toBe('prod');
-    expect(parseWebApiTarget('')).toBe('prod');
-    expect(parseWebApiTarget('production')).toBe('prod');
-    expect(parseWebApiTarget('invalid')).toBe('prod');
+  it('defaults to production', () => {
+    expect(parseWebApiTarget(undefined)).toBe('production');
+    expect(parseWebApiTarget('')).toBe('production');
+    expect(parseWebApiTarget('production')).toBe('production');
+    expect(parseWebApiTarget('invalid')).toBe('production');
   });
 
   it('parses preview', () => {
@@ -19,7 +19,7 @@ describe('parseWebApiTarget', () => {
   });
 
   it('documents default target', () => {
-    expect(DEFAULT_WEB_API_TARGET).toBe('prod');
+    expect(DEFAULT_WEB_API_TARGET).toBe('production');
   });
 });
 
@@ -27,10 +27,10 @@ describe('resolveUrlFromTarget', () => {
   const prodUrl = 'https://voiceinbox.ai';
   const previewUrl = 'https://preview.voiceinbox.ai';
 
-  it('uses production URL when target is prod', () => {
+  it('uses production URL when target is production', () => {
     expect(
       resolveUrlFromTarget({
-        target: 'prod',
+        target: 'production',
         prodUrl,
         previewUrl,
       }),
@@ -52,10 +52,10 @@ describe('resolveWebApiUrlFromTarget', () => {
   const prodUrl = 'https://api.voiceinbox.ai';
   const previewUrl = 'https://preview.voiceinbox.ai';
 
-  it('uses production URL when target is prod', () => {
+  it('uses production URL when target is production', () => {
     expect(
       resolveWebApiUrlFromTarget({
-        webApiTarget: 'prod',
+        webApiTarget: 'production',
         webApiUrl: prodUrl,
         previewWebApiUrl: previewUrl,
       }),

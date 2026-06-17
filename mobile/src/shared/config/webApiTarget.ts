@@ -1,6 +1,6 @@
-export type WebApiTarget = 'prod' | 'preview';
+export type WebApiTarget = 'production' | 'preview';
 
-export const DEFAULT_WEB_API_TARGET: WebApiTarget = 'prod';
+export const DEFAULT_WEB_API_TARGET: WebApiTarget = 'production';
 
 export function parseWebApiTarget(raw: string | undefined): WebApiTarget {
   const normalized = (raw ?? '').trim().toLowerCase();
@@ -9,7 +9,7 @@ export function parseWebApiTarget(raw: string | undefined): WebApiTarget {
     return 'preview';
   }
 
-  return 'prod';
+  return 'production';
 }
 
 export function resolveUrlFromTarget(config: {

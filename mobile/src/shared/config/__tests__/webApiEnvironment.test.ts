@@ -27,8 +27,8 @@ describe('getWebApiEnvironmentStatus', () => {
     getPreviewWebApiUrl.mockReturnValue('https://preview.voiceinbox.ai');
   });
 
-  it('returns prod for production API', () => {
-    expect(getWebApiEnvironmentStatus()).toBe('prod');
+  it('returns production for production API', () => {
+    expect(getWebApiEnvironmentStatus()).toBe('production');
   });
 
   it('returns preview when active URL matches preview host', () => {

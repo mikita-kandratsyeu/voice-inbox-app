@@ -1,6 +1,6 @@
 import { getPreviewWebApiUrl, getWebApiUrl } from './runtimeConfig';
 
-export type WebApiEnvironment = 'dev' | 'preview' | 'prod';
+export type WebApiEnvironment = 'dev' | 'preview' | 'production';
 
 function normalizeBaseUrl(url: string): string {
   return url.trim().replace(/\/+$/, '');
@@ -29,14 +29,14 @@ export function isLocalDevWebApiHost(hostname: string): boolean {
 export function getWebApiEnvironmentStatus(): WebApiEnvironment {
   const activeUrl = getWebApiUrl().trim();
   if (!activeUrl) {
-    return 'prod';
+    return 'production';
   }
 
   let host = '';
   try {
     host = new URL(activeUrl).hostname.toLowerCase();
   } catch {
-    return 'prod';
+    return 'production';
   }
 
   const previewUrl = getPreviewWebApiUrl().trim();
@@ -47,7 +47,7 @@ export function getWebApiEnvironmentStatus(): WebApiEnvironment {
         return 'preview';
       }
     } catch {
-      // Fall through to local-dev / prod checks.
+      // Fall through to local-dev / production checks.
     }
   }
 
@@ -55,7 +55,7 @@ export function getWebApiEnvironmentStatus(): WebApiEnvironment {
     return 'dev';
   }
 
-  return 'prod';
+  return 'production';
 }
 
 export function getWebApiHost(): string {

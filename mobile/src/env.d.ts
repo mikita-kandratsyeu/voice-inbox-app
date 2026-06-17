@@ -12,7 +12,7 @@ declare module '@env' {
   export const WEB_API_URL: string | undefined;
   /** Staging/preview API host when WEB_API_TARGET=preview. */
   export const PREVIEW_WEB_API_URL: string | undefined;
-  /** prod (default) or preview. Release: overridden by Firebase Remote Config key WEB_API_TARGET. */
+  /** production (default) or preview. Release: overridden by Firebase Remote Config key WEB_API_TARGET. */
   export const WEB_API_TARGET: string | undefined;
   export const MOBILE_USER_AGENT: string | undefined;
   export const YANDEX_REWARDED_AD_UNIT_ID: string | undefined;

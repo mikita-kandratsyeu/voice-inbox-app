@@ -275,7 +275,7 @@ export function AdminSecurityPanel() {
               <dt className="text-zinc-500">Cookie flags</dt>
               <dd className="text-right text-zinc-700 dark:text-zinc-300">
                 httpOnly={String(policy.cookieHttpOnly)} · sameSite={policy.cookieSameSite ?? '—'} ·
-                secure(prod)={String(policy.cookieSecureInProduction)}
+                secure(production)={String(policy.cookieSecureInProduction)}
               </dd>
             </div>
           </dl>
