@@ -543,8 +543,20 @@ export const RecordingDetailScreen = () => {
       return;
     }
 
+    if (published && !publishLoading) {
+      unpublish()
+        .then(() => {
+          hapticSuccess();
+        })
+        .catch((err: unknown) => {
+          hapticError();
+          Alert.alert(t('share.publishFailedTitle'), toUserFacingFetchErrorFromUnknown(err));
+        });
+      return;
+    }
+
     handleShare('noteBrief', 'markdown');
-  }, [isProActive, handleShare]);
+  }, [isProActive, handleShare, publishLoading, published, t, unpublish]);
   const onCloseShareMenu = useCallback(() => setShareSheetVisible(false), []);
   const handlePublishRecord = useCallback(
     (template: ShareBriefTemplate, expiresIn: '1d' | '7d' | '30d' | 'never') => {
@@ -1045,9 +1057,11 @@ export const RecordingDetailScreen = () => {
             <RecordingSharedAccessSection
               expiresAt={published?.expiresAt ?? null}
               stale={isStale}
+              disabled={publishLoading}
+              actionLabel={!isProActive ? t('share.publishUnpublish') : t('common.open')}
               color={color}
               surfaceBackgroundColor={tabPanelBackgroundColor}
-              onOpenShareSheet={onOpenPublishSheet}
+              onPressAction={onOpenPublishSheet}
             />
           </View>
         ) : null}

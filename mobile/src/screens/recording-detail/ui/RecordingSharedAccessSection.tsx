@@ -10,17 +10,21 @@ import { resolveDayjsLocale } from '@/shared/lib/date';
 type RecordingSharedAccessSectionProps = {
   expiresAt: string | null;
   stale?: boolean;
+  disabled?: boolean;
+  actionLabel?: string;
   color: Colors;
   surfaceBackgroundColor: string;
-  onOpenShareSheet: () => void;
+  onPressAction: () => void;
 };
 
 export const RecordingSharedAccessSection = ({
   expiresAt,
   stale = false,
+  disabled = false,
+  actionLabel,
   color,
   surfaceBackgroundColor,
-  onOpenShareSheet,
+  onPressAction,
 }: RecordingSharedAccessSectionProps) => {
   const { t, i18n } = useTranslation();
   const dayjsLocale = resolveDayjsLocale(i18n.language);
@@ -45,7 +49,9 @@ export const RecordingSharedAccessSection = ({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${t('share.publicBadge')}. ${expiryHint}`}
-          onPress={onOpenShareSheet}
+          accessibilityState={{ disabled }}
+          disabled={disabled}
+          onPress={onPressAction}
           className="min-w-0 flex-1 flex-row items-center gap-2.5"
         >
           <View
@@ -78,8 +84,9 @@ export const RecordingSharedAccessSection = ({
         </Pressable>
         <TouchableOpacity
           accessibilityRole="button"
-          accessibilityLabel={t('common.open')}
-          onPress={onOpenShareSheet}
+          accessibilityLabel={actionLabel ?? t('common.open')}
+          onPress={onPressAction}
+          disabled={disabled}
           activeOpacity={0.75}
           style={{
             alignSelf: 'center',
@@ -87,10 +94,11 @@ export const RecordingSharedAccessSection = ({
             paddingVertical: 7,
             borderRadius: 999,
             backgroundColor: color.background.tertiary,
+            opacity: disabled ? 0.5 : 1,
           }}
         >
           <Text className="text-[13px] font-semibold" style={{ color: color.accent.primary }}>
-            {t('common.open')}
+            {actionLabel ?? t('common.open')}
           </Text>
         </TouchableOpacity>
       </View>
