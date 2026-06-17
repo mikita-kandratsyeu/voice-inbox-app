@@ -17,6 +17,7 @@ const PATH = '/api/dev/share-note-email-preview';
  * Examples:
  * - http://localhost:3000/api/dev/share-note-email-preview
  * - http://localhost:3000/api/dev/share-note-email-preview?variant=meeting-brief
+ * - http://localhost:3000/api/dev/share-note-email-preview?variant=tasks
  * - http://localhost:3000/api/dev/share-note-email-preview?variant=transcript&title=Demo
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {

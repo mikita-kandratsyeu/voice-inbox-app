@@ -11,6 +11,7 @@ describe('parseShareNoteEmailPreviewVariant', () => {
     expect(parseShareNoteEmailPreviewVariant('short-note')).toBe('short-note');
     expect(parseShareNoteEmailPreviewVariant('long-meeting')).toBe('long-meeting');
     expect(parseShareNoteEmailPreviewVariant('en-meeting')).toBe('en-meeting');
+    expect(parseShareNoteEmailPreviewVariant('tasks')).toBe('tasks');
   });
 
   it('defaults to speaker-turns', () => {
@@ -27,6 +28,7 @@ describe('getShareNoteEmailPreviewTitle', () => {
     expect(getShareNoteEmailPreviewTitle('short-note')).toContain('заметка');
     expect(getShareNoteEmailPreviewTitle('long-meeting')).toContain('длинная');
     expect(getShareNoteEmailPreviewTitle('en-meeting')).toContain('onboarding');
+    expect(getShareNoteEmailPreviewTitle('tasks')).toContain('задачи');
   });
 });
 
@@ -57,5 +59,16 @@ describe('getShareNoteEmailPreviewMarkdown', () => {
     expect(markdown).toContain('## Participants');
     expect(markdown).toContain('Speaker 1:');
     expect(markdown).toContain('Created with Voice Inbox AI');
+  });
+
+  it('includes mixed task states for tasks variant', () => {
+    const markdown = getShareNoteEmailPreviewMarkdown('tasks');
+
+    expect(markdown).toContain('## Задачи');
+    expect(markdown).toContain('- [ ] Сверить макеты');
+    expect(markdown).toContain('- [x] Согласовать повестку');
+    expect(markdown).toContain('**Итог:**');
+    expect(markdown).toContain('**Отдельная заметка:**');
+    expect(markdown).toContain('[[rec_presentation|');
   });
 });

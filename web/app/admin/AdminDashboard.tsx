@@ -699,7 +699,7 @@ export function AdminDashboard({
           {adminTab === 'support' && <AdminSupportPanel />}
           {adminTab === 'releases' && <AdminReleasesPanel />}
           {adminTab === 'in_app_events' && <AdminInAppEventsPanel />}
-          {adminTab === 'operations' && <AdminOperationsPanel />}
+          {adminTab === 'operations' && <AdminOperationsPanel appEnv={appEnv} />}
           {adminTab === 'budget' && <AdminBudgetPanel />}
           {adminTab === 'security' && <AdminSecurityPanel />}
           {adminTab === 'messaging' && <AdminMessagingPanel />}

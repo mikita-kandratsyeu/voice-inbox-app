@@ -6,7 +6,8 @@ export type ShareNoteEmailPreviewVariant =
   | 'meeting-brief'
   | 'short-note'
   | 'long-meeting'
-  | 'en-meeting';
+  | 'en-meeting'
+  | 'tasks';
 
 const DISCLAIMER_RU =
   'Текст разбит на блоки, чтобы по встрече было проще ориентироваться. Подписи спикеров даёт ИИ. Воспринимайте их как ориентир.';
@@ -45,6 +46,31 @@ const SHORT_NOTE = `**Дата:** 12 июн. 2026
 ## Задачи
 
 - [ ] Купить батарейки (Дедлайн: сегодня, Приоритет: высокий)
+- [x] Отправить отчёт
+  - **Отдельная заметка:** [[rec_follow_up|Итог: отчёт отправлен]]
+
+${FOOTER_RU}`;
+
+const TASKS_MIXED = `**Дата:** 12 июн. 2026
+**Длительность:** 24:18
+**Тип:** Встреча
+
+## Сводка
+
+Согласовали запуск пилота и разобрали открытые задачи: часть уже закрыта, по остальным зафиксировали сроки.
+
+## Задачи
+
+- [ ] Сверить макеты с дизайном (Дедлайн: завтра, Приоритет: высокий)
+- [ ] Отправить договор юристам (Дедлайн: 2026-06-20, Приоритет: средний)
+- [x] Согласовать повестку встречи
+- [x] Заказать обед для команды
+  - **Итог:** Заказали на 12 человек, доставка к 13:00
+- [x] Подготовить презентацию для клиента
+  - **Отдельная заметка:** [[rec_presentation|Итог: слайды утверждены]]
+- [x] Обновить трекер в Jira
+  - **Итог:** Перенесли 4 задачи в спринт
+  - **Отдельная заметка:** [[rec_jira_sync|Детали синхронизации]]
 
 ${FOOTER_RU}`;
 
@@ -133,6 +159,8 @@ export function getShareNoteEmailPreviewTitle(variant: ShareNoteEmailPreviewVari
       return 'Проект Orion — длинная встреча';
     case 'en-meeting':
       return 'Customer onboarding recap';
+    case 'tasks':
+      return 'Совещание — задачи';
     case 'transcript':
       return 'Совещание — транскрипт';
     case 'meeting-brief':
@@ -146,6 +174,10 @@ export function getShareNoteEmailPreviewTitle(variant: ShareNoteEmailPreviewVari
 export function getShareNoteEmailPreviewMarkdown(variant: ShareNoteEmailPreviewVariant): string {
   if (variant === 'short-note') {
     return SHORT_NOTE;
+  }
+
+  if (variant === 'tasks') {
+    return TASKS_MIXED;
   }
 
   if (variant === 'en-meeting') {
@@ -178,7 +210,8 @@ export function parseShareNoteEmailPreviewVariant(
     raw === 'meeting-brief' ||
     raw === 'short-note' ||
     raw === 'long-meeting' ||
-    raw === 'en-meeting'
+    raw === 'en-meeting' ||
+    raw === 'tasks'
   ) {
     return raw;
   }

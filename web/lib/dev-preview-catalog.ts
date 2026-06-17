@@ -1,4 +1,4 @@
-import { isDevelopmentAppEnv } from '@/lib/app-env';
+import { type AppEnv, isDevelopmentAppEnv } from '@/lib/app-env';
 
 /** Local-only HTML previews (`/api/dev/*`). Disabled unless `APP_ENV=development`. */
 
@@ -28,6 +28,7 @@ export const DEV_PREVIEW_CATALOG: readonly DevPreviewEntry[] = [
       { label: 'Default (speaker turns)', query: '' },
       { label: 'Transcript', query: 'variant=transcript' },
       { label: 'Meeting brief', query: 'variant=meeting-brief' },
+      { label: 'Tasks (mixed status)', query: 'variant=tasks' },
       { label: 'Custom title', query: 'variant=meeting-brief&title=Demo' },
     ],
   },
@@ -64,6 +65,11 @@ export const DEV_PREVIEW_CATALOG: readonly DevPreviewEntry[] = [
   },
 ] as const;
 
+export function isDevPreviewCatalogEnabledForAppEnv(appEnv: AppEnv): boolean {
+  return appEnv === 'development';
+}
+
+/** Server-only; client components should use `isDevPreviewCatalogEnabledForAppEnv(appEnv)`. */
 export function isDevPreviewCatalogEnabled(): boolean {
   return isDevelopmentAppEnv();
 }

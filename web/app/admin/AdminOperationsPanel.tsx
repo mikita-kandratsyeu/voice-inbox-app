@@ -5,7 +5,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { AdminCard, AdminSubNav, adminBtnSecondaryClass } from './admin-ui';
 import { AdminDevPreviewsPanel } from './AdminDevPreviewsPanel';
 import { AdminExternalObservabilityLinks } from './AdminExternalObservabilityLinks';
-import { isDevPreviewCatalogEnabled } from '@/lib/dev-preview-catalog';
+import type { AppEnv } from '@/lib/app-env';
+import { isDevPreviewCatalogEnabledForAppEnv } from '@/lib/dev-preview-catalog';
 
 type SupportStats = {
   ok: boolean;
@@ -48,14 +49,14 @@ const OPS_SECTION_DEV = { id: 'dev-previews', label: 'Dev previews' } as const;
 type OpsSectionBase = (typeof OPS_SECTIONS_BASE)[number]['id'];
 type OpsSection = OpsSectionBase | typeof OPS_SECTION_DEV.id;
 
-function opsSectionsForEnv(): readonly { id: OpsSection; label: string }[] {
-  if (isDevPreviewCatalogEnabled()) {
+function opsSectionsForAppEnv(appEnv: AppEnv): readonly { id: OpsSection; label: string }[] {
+  if (isDevPreviewCatalogEnabledForAppEnv(appEnv)) {
     return [...OPS_SECTIONS_BASE, OPS_SECTION_DEV];
   }
   return OPS_SECTIONS_BASE;
 }
 
-export function AdminOperationsPanel() {
+export function AdminOperationsPanel({ appEnv }: { appEnv: AppEnv }) {
   const [section, setSection] = useState<OpsSection>('links');
   const [stats, setStats] = useState<SupportStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -126,7 +127,7 @@ export function AdminOperationsPanel() {
 
   return (
     <div className="space-y-6">
-      <AdminSubNav items={opsSectionsForEnv()} value={section} onChange={setSection} />
+      <AdminSubNav items={opsSectionsForAppEnv(appEnv)} value={section} onChange={setSection} />
 
       {section === 'links' ? <AdminExternalObservabilityLinks /> : null}
 
@@ -301,7 +302,7 @@ export function AdminOperationsPanel() {
         </AdminCard>
       ) : null}
 
-      {section === 'dev-previews' ? <AdminDevPreviewsPanel /> : null}
+      {section === 'dev-previews' ? <AdminDevPreviewsPanel appEnv={appEnv} /> : null}
     </div>
   );
 }

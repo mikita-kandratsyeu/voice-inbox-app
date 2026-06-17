@@ -1,3 +1,4 @@
+import { Children, type ReactNode } from 'react';
 import type { Components } from 'react-markdown';
 import { BASE_URL_OR_FALLBACK, SUPPORT_EMAIL } from '@/config/constants';
 import { prepareShareNoteEmailMarkdown } from '@/lib/prepareShareNoteEmailMarkdown';
@@ -18,6 +19,109 @@ const tableCellBaseStyle = {
   padding: '8px 10px',
   verticalAlign: 'top' as const,
 };
+
+const shareNoteEmailTaskCheckboxSizePx = 20;
+
+function ShareNoteEmailTaskCheckbox({ checked }: { checked?: boolean }): React.ReactElement {
+  const size = shareNoteEmailTaskCheckboxSizePx;
+
+  return (
+    <table
+      role="presentation"
+      border={0}
+      cellPadding={0}
+      cellSpacing={0}
+      aria-hidden="true"
+      width={size}
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        borderCollapse: 'collapse',
+        tableLayout: 'fixed',
+      }}
+    >
+      <tbody>
+        <tr>
+          <td
+            width={size}
+            height={size}
+            align="center"
+            valign="middle"
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              border: `2px solid ${checked ? '#10b981' : '#cbd5e1'}`,
+              borderRadius: '6px',
+              color: '#10b981',
+              fontSize: '14px',
+              lineHeight: '14px',
+              fontFamily: 'Arial, Helvetica, sans-serif',
+              fontWeight: 700,
+              padding: 0,
+            }}
+          >
+            {checked ? '✓' : '\u200B'}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}
+
+function ShareNoteEmailTaskCheckboxSlot({ checkbox }: { checkbox: ReactNode }): React.ReactElement {
+  return (
+    <table role="presentation" border={0} cellPadding={0} cellSpacing={0}>
+      <tbody>
+        <tr>
+          <td
+            width={shareNoteEmailTaskCheckboxSizePx}
+            height={shareNoteEmailTaskCheckboxSizePx}
+            valign="top"
+            style={{
+              width: `${shareNoteEmailTaskCheckboxSizePx}px`,
+              height: `${shareNoteEmailTaskCheckboxSizePx}px`,
+            }}
+          >
+            {checkbox}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}
+
+function renderEmailTaskListItem(children: ReactNode): React.ReactElement {
+  const items = Children.toArray(children);
+  const checkbox = items[0] ?? null;
+  const content = items.slice(1);
+
+  return (
+    <table
+      role="presentation"
+      cellPadding={0}
+      cellSpacing={0}
+      style={{ width: '100%', borderCollapse: 'collapse' }}
+    >
+      <tbody>
+        <tr>
+          <td
+            width={shareNoteEmailTaskCheckboxSizePx + 10}
+            valign="top"
+            style={{
+              width: `${shareNoteEmailTaskCheckboxSizePx + 10}px`,
+              verticalAlign: 'top',
+              paddingRight: '10px',
+              paddingTop: '2px',
+            }}
+          >
+            <ShareNoteEmailTaskCheckboxSlot checkbox={checkbox} />
+          </td>
+          <td style={{ verticalAlign: 'top' }}>{content}</td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}
 
 const emailMarkdownComponents: Components = {
   h1: ({ children }) => (
@@ -126,19 +230,23 @@ const emailMarkdownComponents: Components = {
       {children}
     </a>
   ),
-  ul: ({ children }) => (
-    <ul
-      style={{
-        margin: '0 0 12px',
-        paddingLeft: '22px',
-        fontSize: '15px',
-        lineHeight: 1.6,
-        color: '#374151',
-      }}
-    >
-      {children}
-    </ul>
-  ),
+  ul: ({ className, children }) => {
+    const isTaskList = className?.includes('contains-task-list');
+    return (
+      <ul
+        style={{
+          margin: '0 0 16px',
+          paddingLeft: isTaskList ? '0' : '22px',
+          listStyleType: isTaskList ? 'none' : 'disc',
+          fontSize: '15px',
+          lineHeight: 1.6,
+          color: '#374151',
+        }}
+      >
+        {children}
+      </ul>
+    );
+  },
   ol: ({ children }) => (
     <ol
       style={{
@@ -154,11 +262,18 @@ const emailMarkdownComponents: Components = {
   ),
   li: ({ className, children }) => {
     const isTask = className?.includes('task-list-item');
+    if (isTask) {
+      return (
+        <li style={{ marginBottom: '12px', listStyleType: 'none', padding: 0 }}>
+          {renderEmailTaskListItem(children)}
+        </li>
+      );
+    }
+
     return (
       <li
         style={{
           marginBottom: '4px',
-          ...(isTask ? { listStyleType: 'none', marginLeft: '-22px' } : {}),
         }}
       >
         {children}
@@ -275,21 +390,7 @@ const emailMarkdownComponents: Components = {
       return null;
     }
 
-    return (
-      <span
-        aria-hidden="true"
-        style={{
-          display: 'inline-block',
-          minWidth: '28px',
-          marginRight: '4px',
-          color: checked ? '#047857' : '#94a3b8',
-          fontWeight: 700,
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {checked ? '[x]' : '[ ]'}
-      </span>
-    );
+    return <ShareNoteEmailTaskCheckbox checked={checked} />;
   },
 };
 

@@ -7,13 +7,14 @@ import {
   buildDevPreviewPageUrl,
   buildDevPreviewUrl,
   DEV_PREVIEW_CATALOG,
-  isDevPreviewCatalogEnabled,
+  isDevPreviewCatalogEnabledForAppEnv,
 } from '@/lib/dev-preview-catalog';
+import type { AppEnv } from '@/lib/app-env';
 
 import { AdminAlert, AdminCard, adminBtnSecondaryClass } from './admin-ui';
 
-export function AdminDevPreviewsPanel() {
-  const enabled = isDevPreviewCatalogEnabled();
+export function AdminDevPreviewsPanel({ appEnv }: { appEnv: AppEnv }) {
+  const enabled = isDevPreviewCatalogEnabledForAppEnv(appEnv);
 
   const origin = useMemo(() => {
     if (typeof window === 'undefined') return '';

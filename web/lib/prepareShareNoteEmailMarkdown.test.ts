@@ -44,4 +44,14 @@ _Дисклеймер._
     expect(result).toContain('00:42');
     expect(result).toContain('Участник 1');
   });
+
+  it('strips wiki links to readable labels', () => {
+    const markdown = `- [x] Task
+  - **Linked note:** [[rec_follow|Follow-up recap note]]`;
+
+    const result = prepareShareNoteEmailMarkdown(markdown);
+
+    expect(result).toContain('Follow-up recap note');
+    expect(result).not.toContain('[[rec_follow');
+  });
 });
