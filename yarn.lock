@@ -18325,7 +18325,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "voice-inbox-app@workspace:mobile"
   dependencies:
-    "@babel/core": "npm:^7.29.0"
+    "@babel/core": "npm:^7.29.6"
     "@babel/plugin-transform-export-namespace-from": "npm:^7.27.1"
     "@babel/preset-env": "npm:^7.29.5"
     "@babel/runtime": "npm:^7.29.2"
