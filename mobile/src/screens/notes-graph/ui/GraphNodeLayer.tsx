@@ -17,7 +17,6 @@ import { buildGraphNodeConnectionCounts } from '../lib/countGraphNodeConnections
 import { snapGraphPointToGrid } from '../lib/graphSnapGrid';
 import type { GraphEdge, GraphNode, GraphNodeDisplayMode } from '../lib/graphTypes';
 import { RECORD_NODE_WIDTH, TASK_NODE_WIDTH } from '../lib/graphTypes';
-import type { GraphContentBounds } from '../lib/graphViewportBounds';
 import {
   buildGraphActiveNeighborIds,
   graphNodeStackOrder,
@@ -44,7 +43,6 @@ type GraphNodeLayerProps = {
   canvasScale: SharedValue<number>;
   worldWidth: number;
   worldHeight: number;
-  contentBounds: GraphContentBounds | null;
   layoutRestoreToken?: number;
   interactionsEnabled?: boolean;
   nodeDisplayMode?: GraphNodeDisplayMode;
@@ -61,7 +59,6 @@ function DraggableNodeShell({
   canvasScale,
   worldWidth,
   worldHeight,
-  contentBounds,
   layoutRestoreToken,
   stackOrder = 0,
   dimmed = false,
@@ -76,7 +73,6 @@ function DraggableNodeShell({
   canvasScale: SharedValue<number>;
   worldWidth: number;
   worldHeight: number;
-  contentBounds: GraphContentBounds | null;
   layoutRestoreToken: number;
   stackOrder?: number;
   dimmed?: boolean;
@@ -307,7 +303,6 @@ type GraphNodeItemProps = {
   canvasScale: SharedValue<number>;
   worldWidth: number;
   worldHeight: number;
-  contentBounds: GraphContentBounds | null;
   layoutRestoreToken?: number;
 };
 
@@ -332,7 +327,6 @@ const GraphNodeItem = React.memo(
     canvasScale,
     worldWidth,
     worldHeight,
-    contentBounds,
     layoutRestoreToken = 0,
   }: GraphNodeItemProps) {
     const skipNextPressRef = useRef(false);
@@ -366,7 +360,6 @@ const GraphNodeItem = React.memo(
         canvasScale={canvasScale}
         worldWidth={worldWidth}
         worldHeight={worldHeight}
-        contentBounds={contentBounds}
         layoutRestoreToken={layoutRestoreToken}
         stackOrder={graphNodeStackOrder({ active, neighbor, dimmed, highlighted })}
         dimmed={dimmed}
@@ -433,7 +426,6 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
   canvasScale,
   worldWidth,
   worldHeight,
-  contentBounds,
   interactionsEnabled = true,
   nodeDisplayMode = 'cards',
   onRecordPress,
@@ -499,7 +491,6 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
             canvasScale={canvasScale}
             worldWidth={worldWidth}
             worldHeight={worldHeight}
-            contentBounds={contentBounds}
             layoutRestoreToken={layoutRestoreToken}
           />
         );

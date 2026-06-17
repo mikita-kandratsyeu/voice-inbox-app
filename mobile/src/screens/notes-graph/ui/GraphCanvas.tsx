@@ -886,7 +886,6 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               canvasScale={scale}
               worldWidth={worldWidth}
               worldHeight={worldHeight}
-              contentBounds={contentBounds}
               layoutRestoreToken={layoutRestoreToken}
               interactionsEnabled={!isReconciling && !exportBusy}
               nodeDisplayMode={nodeDisplayMode}
