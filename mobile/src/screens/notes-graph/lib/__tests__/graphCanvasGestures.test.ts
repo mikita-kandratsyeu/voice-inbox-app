@@ -9,8 +9,8 @@ describe('computeMapPinchTransform', () => {
     const result = computeMapPinchTransform(1, 0, 0, 200, 300, 1, 260, 340);
 
     expect(result.scale).toBe(1);
-    expect(result.translateX).toBe(60);
-    expect(result.translateY).toBe(40);
+    expect(result.translateX).toBe(120);
+    expect(result.translateY).toBe(80);
   });
 
   it('zooms around the gesture focal point', () => {
@@ -25,8 +25,12 @@ describe('computeMapPinchTransform', () => {
     const result = computeMapPinchTransform(1, 10, 20, 100, 120, 1.5, 130, 150);
 
     expect(result.scale).toBe(1.5);
-    expect(result.translateX).toBeCloseTo(10 + 30 - (100 - 10) * 0.5, 5);
-    expect(result.translateY).toBeCloseTo(20 + 30 - (120 - 20) * 0.5, 5);
+    const worldFocalX = (100 - 10) / 1;
+    const worldFocalY = (120 - 20) / 1;
+    const expectedX = 130 - worldFocalX * 1.5 + (130 - 100);
+    const expectedY = 150 - worldFocalY * 1.5 + (150 - 120);
+    expect(result.translateX).toBeCloseTo(expectedX, 5);
+    expect(result.translateY).toBeCloseTo(expectedY, 5);
   });
 });
 

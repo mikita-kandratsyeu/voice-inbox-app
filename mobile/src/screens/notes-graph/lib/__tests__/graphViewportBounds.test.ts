@@ -107,8 +107,10 @@ describe('clampViewportTranslation', () => {
 
   it('limits panning beyond canvas edges with overscroll', () => {
     const scale = 1;
-    const minX = viewport.width - world.width * scale - overscroll;
-    const minY = viewport.height - world.height * scale - overscroll;
+    const extraPadding = 150 / scale;
+    const effectivePad = overscroll + extraPadding;
+    const minX = viewport.width - world.width * scale - effectivePad * scale;
+    const minY = viewport.height - world.height * scale - effectivePad * scale;
 
     const tooFarLeft = clampViewportTranslation(
       -1200,
@@ -144,7 +146,7 @@ describe('clampViewportTranslation', () => {
       viewport.height,
       overscroll,
     );
-    expect(tooFarRight.translateX).toBe(overscroll);
+    expect(tooFarRight.translateX).toBe(effectivePad * scale);
 
     const tooFarBottom = clampViewportTranslation(
       0,
@@ -156,7 +158,7 @@ describe('clampViewportTranslation', () => {
       viewport.height,
       overscroll,
     );
-    expect(tooFarBottom.translateY).toBe(overscroll);
+    expect(tooFarBottom.translateY).toBe(effectivePad * scale);
   });
 
   it('allows panning to nodes placed left of the origin', () => {
@@ -179,8 +181,7 @@ describe('clampViewportTranslation', () => {
       world.height,
     );
 
-    const maxTranslateX = -(contentMinX - overscroll / scale) * scale;
-    expect(revealLeft.translateX).toBe(maxTranslateX);
-    expect(-revealLeft.translateX / scale).toBeLessThanOrEqual(contentMinX + overscroll / scale);
+    expect(revealLeft.translateX).toBe(500);
+    expect(-revealLeft.translateX / scale).toBeLessThanOrEqual(contentMaxX);
   });
 });

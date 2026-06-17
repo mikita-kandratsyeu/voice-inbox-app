@@ -15,6 +15,7 @@ import Animated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
+  withDecay,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
@@ -67,7 +68,7 @@ import { GraphNodeLayer } from './GraphNodeLayer';
 const MIN_SCALE = GRAPH_VIEWPORT_MIN_SCALE;
 const MAX_SCALE = GRAPH_VIEWPORT_MAX_SCALE;
 const PAN_ACTIVATION_DISTANCE = 8;
-const DOUBLE_TAP_ZOOM_FACTOR = 1.35;
+const DOUBLE_TAP_ZOOM_FACTOR = 1.5;
 
 export type GraphCaptureResult = {
   uri: string;
@@ -635,12 +636,36 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       if (isNodeDragging.value) return;
       applyMapPinch(event.scale, event.focalX, event.focalY);
     })
-    .onFinalize(() => {
+    .onEnd(() => {
       'worklet';
-      if (!isPinching.value) return;
+      if (!isPinching.value || isNodeDragging.value) return;
       isPinching.value = false;
+
+      const finalScale = clampViewportScale(scale.value);
+      if (Math.abs(finalScale - scale.value) > 0.01) {
+        const centerX = viewportWidthSV.value / 2;
+        const centerY = viewportHeightSV.value / 2;
+        const worldCenterX = (centerX - translateX.value) / scale.value;
+        const worldCenterY = (centerY - translateY.value) / scale.value;
+
+        const adjustedTranslateX = centerX - worldCenterX * finalScale;
+        const adjustedTranslateY = centerY - worldCenterY * finalScale;
+        const clamped = clampTranslationWorklet(adjustedTranslateX, adjustedTranslateY, finalScale);
+
+        scale.value = withSpring(finalScale, GRAPH_VIEWPORT_SPRING);
+        translateX.value = withSpring(clamped.translateX, GRAPH_VIEWPORT_SPRING);
+        translateY.value = withSpring(clamped.translateY, GRAPH_VIEWPORT_SPRING);
+
+        savedScale.value = finalScale;
+        savedTranslateX.value = clamped.translateX;
+        savedTranslateY.value = clamped.translateY;
+      }
+
       commitViewportFromGesture();
     });
+
+  const panVelocityX = useSharedValue(0);
+  const panVelocityY = useSharedValue(0);
 
   const pan = Gesture.Pan()
     .minDistance(PAN_ACTIVATION_DISTANCE)
@@ -655,6 +680,8 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       'worklet';
       if (isNodeDragging.value || isPinching.value) return;
       syncGestureBaseline();
+      panVelocityX.value = 0;
+      panVelocityY.value = 0;
     })
     .onUpdate((event) => {
       'worklet';
@@ -668,11 +695,57 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       const clamped = clampTranslationWorklet(next.translateX, next.translateY, scale.value);
       translateX.value = clamped.translateX;
       translateY.value = clamped.translateY;
+      panVelocityX.value = event.velocityX;
+      panVelocityY.value = event.velocityY;
     })
-    .onFinalize(() => {
+    .onEnd(() => {
       'worklet';
       if (isNodeDragging.value || isPinching.value) return;
-      commitViewportFromGesture();
+
+      const velocityThreshold = 100;
+      const hasSignificantVelocity =
+        Math.abs(panVelocityX.value) > velocityThreshold ||
+        Math.abs(panVelocityY.value) > velocityThreshold;
+
+      if (hasSignificantVelocity) {
+        savedTranslateX.value = translateX.value;
+        savedTranslateY.value = translateY.value;
+
+        translateX.value = withDecay(
+          {
+            velocity: panVelocityX.value,
+            clamp: [
+              viewportWidthSV.value - (contentMaxXSV.value + panOverscrollSV.value) * scale.value,
+              -(contentMinXSV.value - panOverscrollSV.value) * scale.value,
+            ],
+            deceleration: 0.997,
+          },
+          (finished) => {
+            if (finished) {
+              savedTranslateX.value = translateX.value;
+              scheduleOnRN(syncViewportState, scale.value, translateX.value, translateY.value);
+            }
+          },
+        );
+
+        translateY.value = withDecay(
+          {
+            velocity: panVelocityY.value,
+            clamp: [
+              viewportHeightSV.value - (contentMaxYSV.value + panOverscrollSV.value) * scale.value,
+              -(contentMinYSV.value - panOverscrollSV.value) * scale.value,
+            ],
+            deceleration: 0.997,
+          },
+          (finished) => {
+            if (finished) {
+              savedTranslateY.value = translateY.value;
+            }
+          },
+        );
+      } else {
+        commitViewportFromGesture();
+      }
     });
 
   const doubleTap = Gesture.Tap()

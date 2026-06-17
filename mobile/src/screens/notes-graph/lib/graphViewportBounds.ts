@@ -1,11 +1,11 @@
 import { nodeBounds } from './graphNodeMetrics';
 import type { GraphNode } from './graphTypes';
 
-export const GRAPH_PAN_OVERSCROLL = 160;
-export const GRAPH_PAN_OVERSCROLL_VIEWPORT_RATIO = 0.22;
-export const GRAPH_VIEWPORT_MIN_SCALE = 0.225;
-export const GRAPH_VIEWPORT_MAX_SCALE = 3;
-export const GRAPH_WORLD_CONTENT_PADDING = 120;
+export const GRAPH_PAN_OVERSCROLL = 240;
+export const GRAPH_PAN_OVERSCROLL_VIEWPORT_RATIO = 0.35;
+export const GRAPH_VIEWPORT_MIN_SCALE = 0.2;
+export const GRAPH_VIEWPORT_MAX_SCALE = 3.5;
+export const GRAPH_WORLD_CONTENT_PADDING = 200;
 
 export function resolveGraphPanOverscroll(viewportWidth: number, viewportHeight: number): number {
   const viewportMin = Math.min(Math.max(viewportWidth, 1), Math.max(viewportHeight, 1));
@@ -171,6 +171,9 @@ export function clampViewportTranslation(
   const safeScale = Math.max(scale, 0.001);
   const padWorld = edgeOverscroll / safeScale;
 
+  const extraPaddingForNodes = 150 / safeScale;
+  const effectivePadWorld = padWorld + extraPaddingForNodes;
+
   const contentWidth = Math.max(contentMaxX - contentMinX, 1);
   const contentHeight = Math.max(contentMaxY - contentMinY, 1);
   const scaledContentWidth = contentWidth * safeScale;
@@ -182,16 +185,16 @@ export function clampViewportTranslation(
   if (scaledContentWidth <= viewportWidth) {
     nextX = (viewportWidth - scaledContentWidth) / 2 - contentMinX * safeScale;
   } else {
-    const maxTranslateX = -(contentMinX - padWorld) * safeScale;
-    const minTranslateX = viewportWidth - (contentMaxX + padWorld) * safeScale;
+    const maxTranslateX = -(contentMinX - effectivePadWorld) * safeScale;
+    const minTranslateX = viewportWidth - (contentMaxX + effectivePadWorld) * safeScale;
     nextX = Math.min(maxTranslateX, Math.max(minTranslateX, translateX));
   }
 
   if (scaledContentHeight <= viewportHeight) {
     nextY = (viewportHeight - scaledContentHeight) / 2 - contentMinY * safeScale;
   } else {
-    const maxTranslateY = -(contentMinY - padWorld) * safeScale;
-    const minTranslateY = viewportHeight - (contentMaxY + padWorld) * safeScale;
+    const maxTranslateY = -(contentMinY - effectivePadWorld) * safeScale;
+    const minTranslateY = viewportHeight - (contentMaxY + effectivePadWorld) * safeScale;
     nextY = Math.min(maxTranslateY, Math.max(minTranslateY, translateY));
   }
 

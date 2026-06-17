@@ -11,14 +11,20 @@ export function computeMapPinchTransform(
 ): { scale: number; translateX: number; translateY: number } {
   'worklet';
   const nextScale = savedScale * pinchScale;
-  const scaleRatio = nextScale / savedScale;
+
+  const worldFocalX = (savedFocalX - savedTranslateX) / savedScale;
+  const worldFocalY = (savedFocalY - savedTranslateY) / savedScale;
+
+  const focalOffsetX = focalX - savedFocalX;
+  const focalOffsetY = focalY - savedFocalY;
+
+  const nextTranslateX = focalX - worldFocalX * nextScale + focalOffsetX;
+  const nextTranslateY = focalY - worldFocalY * nextScale + focalOffsetY;
 
   return {
     scale: nextScale,
-    translateX:
-      savedTranslateX + (focalX - savedFocalX) - (savedFocalX - savedTranslateX) * (scaleRatio - 1),
-    translateY:
-      savedTranslateY + (focalY - savedFocalY) - (savedFocalY - savedTranslateY) * (scaleRatio - 1),
+    translateX: nextTranslateX,
+    translateY: nextTranslateY,
   };
 }
 
