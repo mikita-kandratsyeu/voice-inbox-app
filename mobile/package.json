@@ -151,7 +151,7 @@
     "react": "19.2.3",
     "react-test-renderer": "19.2.3",
     "fast-xml-parser": "5.8.0",
-    "markdown-it": "12.3.2",
+    "markdown-it": "14.2.0",
     "esbuild": "0.25.12",
     "picomatch": "4.0.4",
     "brace-expansion": "1.1.13",
