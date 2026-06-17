@@ -1,6 +1,5 @@
 import {
   ANALYTICS_DEBUG,
-  APP_ENV,
   CRASHLYTICS_DEBUG,
   DATABASE_URL,
   DB_LOG,
@@ -54,8 +53,15 @@ function isTruthyBuildEnvFlag(v: string | undefined): boolean {
   return raw === '1' || raw === 'true' || raw === 'yes';
 }
 
-export function getAppEnv(): string {
-  return trimBuildEnv(APP_ENV);
+export type NodeEnv = 'production' | 'development';
+
+/** Embedded at bundle time from `NODE_ENV` / `__DEV__` (production | development only). */
+export function getNodeEnv(): NodeEnv {
+  if (__DEV__) {
+    return 'development';
+  }
+
+  return 'production';
 }
 
 export function getDatabaseUrl(): string {

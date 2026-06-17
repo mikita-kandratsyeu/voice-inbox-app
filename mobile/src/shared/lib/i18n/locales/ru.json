@@ -1701,7 +1701,7 @@
       "websiteUrl": "Сайт (WEBSITE_URL)",
       "userAgent": "User-Agent клиента (MOBILE_USER_AGENT)",
       "databaseUrl": "URL базы (пароль скрыт)",
-      "appEnv": "APP_ENV",
+      "nodeEnv": "NODE_ENV",
       "appVersion": "Версия / сборка",
       "deviceModel": "Устройство",
       "deviceId": "ID устройства",

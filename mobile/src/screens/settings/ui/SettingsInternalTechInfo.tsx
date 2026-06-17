@@ -7,9 +7,9 @@ import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
 import { getWebsiteUrl, useColors } from '@/shared/config';
 import {
-  getAppEnv,
   getDatabaseUrl,
   getMobileUserAgent,
+  getNodeEnv,
   isTestflightInternalBuild,
 } from '@/shared/config/buildEnv';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
@@ -301,7 +301,7 @@ export const SettingsInternalTechInfo = () => {
   const userAgent = getMobileUserAgent().trim();
   const dbRaw = getDatabaseUrl().trim();
   const dbDisplay = dbRaw ? redactCredentialsInUrl(dbRaw) : '';
-  const appEnv = getAppEnv().trim();
+  const nodeEnv = getNodeEnv();
 
   const ver = String(DeviceInfoModule.version ?? '');
   const build = buildNumberDisplay();
@@ -436,9 +436,9 @@ export const SettingsInternalTechInfo = () => {
         color={color}
       />
       <TechRow
-        label={t('settings.internalTech.appEnv')}
-        value={appEnv || empty}
-        copyText={appEnv}
+        label={t('settings.internalTech.nodeEnv')}
+        value={nodeEnv || empty}
+        copyText={nodeEnv}
         onCopy={onCopy}
         color={color}
       />

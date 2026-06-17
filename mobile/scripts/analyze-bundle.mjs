@@ -45,7 +45,7 @@ function run(cmd, args, options = {}) {
   const r = spawnSync(cmd, args, {
     cwd: mobileRoot,
     stdio: 'inherit',
-    env: { ...process.env, APP_ENV: 'production', ...options.env },
+    env: { ...process.env, NODE_ENV: 'production', ...options.env },
     ...options,
   });
   if (r.error) throw r.error;
@@ -58,7 +58,7 @@ function runAllowFail(cmd, args, options = {}) {
   const r = spawnSync(cmd, args, {
     cwd: mobileRoot,
     stdio: 'inherit',
-    env: { ...process.env, APP_ENV: 'production', ...options.env },
+    env: { ...process.env, NODE_ENV: 'production', ...options.env },
     ...options,
   });
   if (r.error) {
@@ -73,7 +73,7 @@ function runCaptureAllowFail(cmd, args) {
     cwd: mobileRoot,
     encoding: 'utf8',
     maxBuffer: 256 * 1024 * 1024,
-    env: { ...process.env, APP_ENV: 'production' },
+    env: { ...process.env, NODE_ENV: 'production' },
   });
   if (r.error) {
     console.warn('[analyze-bundle]', r.error.message);

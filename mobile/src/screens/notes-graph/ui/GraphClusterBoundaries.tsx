@@ -210,7 +210,7 @@ export const GraphClusterBoundaries = React.memo(function GraphClusterBoundaries
                   height={rectHeight}
                   r={CLUSTER_BORDER_RADIUS}
                   style="stroke"
-                  strokeWidth={2.5}
+                  strokeWidth={2}
                   color={clusterColor}
                 >
                   {dashIntervals ? <DashPathEffect intervals={dashIntervals} /> : null}

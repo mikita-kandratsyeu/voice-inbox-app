@@ -20,13 +20,13 @@ cp mobile/.env.example mobile/.env
 
 ```bash
 yarn workspace voice-inbox-app start
-yarn workspace voice-inbox-app ios       # APP_ENV=development
+yarn workspace voice-inbox-app ios       # NODE_ENV=development
 yarn workspace voice-inbox-app android
 ```
 
 From `mobile/` you can still run `yarn start`, `yarn ios`, etc. after a root install.
 
-Release builds: `yarn ios:release` / `yarn android:release` (`APP_ENV=production`). Babel reads **`mobile/.env.production`** (not `.env`) when `APP_ENV=production` for embedded `@env` defaults. **`GITHUB_OAUTH_CLIENT_ID`** for GitHub sync is typically set in **Firebase Remote Config** (key `GITHUB_OAUTH_CLIENT_ID`); optional fallback in `.env` / `.env.production` for dev or first launch before fetch.
+Release builds: `yarn ios:release` / `yarn android:release` (`NODE_ENV=production`). Babel reads **`mobile/.env.production`** (not `.env`) when `NODE_ENV=production` for embedded `@env` defaults. **`GITHUB_OAUTH_CLIENT_ID`** for GitHub sync is typically set in **Firebase Remote Config** (key `GITHUB_OAUTH_CLIENT_ID`); optional fallback in `.env` / `.env.production` for dev or first launch before fetch.
 
 ---
 
@@ -155,7 +155,7 @@ Run from repo root with `yarn workspace voice-inbox-app <script>`, or `cd mobile
 
 | Script                            | Description                                |
 | --------------------------------- | ------------------------------------------ |
-| `start`                           | Metro (`APP_ENV=development`)              |
+| `start`                           | Metro (`NODE_ENV=development`)              |
 | `ios` / `android`                 | Dev run on device/simulator                |
 | `ios:release` / `android:release` | Release mode on device                     |
 | `type:check`                      | `tsc --noEmit`                             |

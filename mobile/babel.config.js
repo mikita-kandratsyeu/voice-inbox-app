@@ -1,9 +1,7 @@
 module.exports = function (api) {
-  api.cache(() => `${process.env.APP_ENV ?? ''}|${process.env.NODE_ENV ?? ''}`);
-  const appEnv = (process.env.APP_ENV ?? process.env.NODE_ENV ?? 'development')
-    .trim()
-    .toLowerCase();
-  const envFile = appEnv === 'production' ? '.env.production' : '.env';
+  api.cache(() => process.env.NODE_ENV ?? '');
+  const nodeEnv = (process.env.NODE_ENV ?? 'development').trim().toLowerCase();
+  const envFile = nodeEnv === 'production' ? '.env.production' : '.env';
 
   return {
     presets: ['module:@react-native/babel-preset', 'nativewind/babel'],

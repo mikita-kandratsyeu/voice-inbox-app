@@ -1657,7 +1657,7 @@
       "websiteUrl": "Website (WEBSITE_URL)",
       "userAgent": "Mobile user-agent (MOBILE_USER_AGENT)",
       "databaseUrl": "Database URL (password hidden)",
-      "appEnv": "APP_ENV",
+      "nodeEnv": "NODE_ENV",
       "appVersion": "App version / build",
       "deviceModel": "Device",
       "deviceId": "Device ID",
