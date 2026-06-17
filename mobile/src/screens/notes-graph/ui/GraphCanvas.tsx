@@ -461,9 +461,15 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     [graphHeight, graphWidth, nodes],
   );
 
+  const hasInitiallyFittedRef = useRef(false);
+
   useEffect(() => {
     if (nodes.length > 0 && viewportSize.width > 0 && viewportSize.height > 0) {
-      fitToScreen(false);
+      // Only fit to screen once on initial mount
+      if (!hasInitiallyFittedRef.current) {
+        hasInitiallyFittedRef.current = true;
+        fitToScreen(false);
+      }
     }
   }, [layoutSignature, fitToScreen, nodes.length, viewportSize.height, viewportSize.width]);
 
@@ -878,6 +884,9 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               matchedNodeIds={matchedNodeIds}
               activeNodeId={activeNodeId}
               canvasScale={scale}
+              worldWidth={worldWidth}
+              worldHeight={worldHeight}
+              contentBounds={contentBounds}
               layoutRestoreToken={layoutRestoreToken}
               interactionsEnabled={!isReconciling && !exportBusy}
               nodeDisplayMode={nodeDisplayMode}

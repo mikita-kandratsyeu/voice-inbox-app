@@ -17,6 +17,7 @@ import { buildGraphNodeConnectionCounts } from '../lib/countGraphNodeConnections
 import { snapGraphPointToGrid } from '../lib/graphSnapGrid';
 import type { GraphEdge, GraphNode, GraphNodeDisplayMode } from '../lib/graphTypes';
 import { RECORD_NODE_WIDTH, TASK_NODE_WIDTH } from '../lib/graphTypes';
+import type { GraphContentBounds } from '../lib/graphViewportBounds';
 import {
   buildGraphActiveNeighborIds,
   graphNodeStackOrder,
@@ -41,6 +42,9 @@ type GraphNodeLayerProps = {
   matchedNodeIds: ReadonlySet<string> | null;
   activeNodeId: string | null;
   canvasScale: SharedValue<number>;
+  worldWidth: number;
+  worldHeight: number;
+  contentBounds: GraphContentBounds | null;
   layoutRestoreToken?: number;
   interactionsEnabled?: boolean;
   nodeDisplayMode?: GraphNodeDisplayMode;
@@ -55,6 +59,9 @@ type GraphNodeLayerProps = {
 function DraggableNodeShell({
   node,
   canvasScale,
+  worldWidth,
+  worldHeight,
+  contentBounds,
   layoutRestoreToken,
   stackOrder = 0,
   dimmed = false,
@@ -67,6 +74,9 @@ function DraggableNodeShell({
 }: {
   node: GraphNode;
   canvasScale: SharedValue<number>;
+  worldWidth: number;
+  worldHeight: number;
+  contentBounds: GraphContentBounds | null;
   layoutRestoreToken: number;
   stackOrder?: number;
   dimmed?: boolean;
@@ -87,6 +97,7 @@ function DraggableNodeShell({
   const dragOffsetY = useSharedValue(0);
 
   const nodeWidth = node.kind === 'task' ? TASK_NODE_WIDTH : RECORD_NODE_WIDTH;
+  const nodeHeight = 96; // Approximate node height for boundary checks
 
   useLayoutEffect(() => {
     if (isDraggingRef.current) return;
@@ -95,6 +106,23 @@ function DraggableNodeShell({
     dragOffsetX.value = 0;
     dragOffsetY.value = 0;
   }, [dragOffsetX, dragOffsetY, layoutRestoreToken, node.x, node.y, nodeLeft, nodeTop]);
+
+  const clampNodePosition = useCallback(
+    (x: number, y: number): { x: number; y: number } => {
+      'worklet';
+      // Use content bounds if available, otherwise use world dimensions with padding
+      const minX = contentBounds?.minX ?? 50;
+      const minY = contentBounds?.minY ?? 50;
+      const maxX = (contentBounds?.maxX ?? worldWidth) - nodeWidth - 50;
+      const maxY = (contentBounds?.maxY ?? worldHeight) - nodeHeight - 50;
+
+      return {
+        x: Math.max(minX, Math.min(maxX, x)),
+        y: Math.max(minY, Math.min(maxY, y)),
+      };
+    },
+    [contentBounds, worldWidth, worldHeight, nodeWidth, nodeHeight],
+  );
 
   const handleDragEndComplete = useCallback(
     (nodeId: string, x: number, y: number) => {
@@ -175,8 +203,9 @@ function DraggableNodeShell({
           baseLeft + event.translationX / viewportScale,
           baseTop + event.translationY / viewportScale,
         );
-        dragOffsetX.value = snapped.x - baseLeft;
-        dragOffsetY.value = snapped.y - baseTop;
+        const clamped = clampNodePosition(snapped.x, snapped.y);
+        dragOffsetX.value = clamped.x - baseLeft;
+        dragOffsetY.value = clamped.y - baseTop;
       })
       .onEnd((event) => {
         'worklet';
@@ -187,8 +216,9 @@ function DraggableNodeShell({
           baseLeft + event.translationX / viewportScale,
           baseTop + event.translationY / viewportScale,
         );
-        const finalX = snapped.x;
-        const finalY = snapped.y;
+        const clamped = clampNodePosition(snapped.x, snapped.y);
+        const finalX = clamped.x;
+        const finalY = clamped.y;
 
         nodeLeft.value = finalX;
         nodeTop.value = finalY;
@@ -215,6 +245,7 @@ function DraggableNodeShell({
     return Gesture.Simultaneous(Gesture.Exclusive(pan, tap), longPressHint);
   }, [
     canvasScale,
+    clampNodePosition,
     dimmed,
     dragOffsetX,
     dragOffsetY,
@@ -272,6 +303,9 @@ type GraphNodeItemProps = {
   onNodeDragCancel: () => void;
   onNodeFocus: (nodeId: string) => void;
   canvasScale: SharedValue<number>;
+  worldWidth: number;
+  worldHeight: number;
+  contentBounds: GraphContentBounds | null;
   layoutRestoreToken?: number;
 };
 
@@ -294,6 +328,9 @@ const GraphNodeItem = React.memo(
     onNodeDragCancel,
     onNodeFocus,
     canvasScale,
+    worldWidth,
+    worldHeight,
+    contentBounds,
     layoutRestoreToken = 0,
   }: GraphNodeItemProps) {
     const skipNextPressRef = useRef(false);
@@ -325,6 +362,9 @@ const GraphNodeItem = React.memo(
       <DraggableNodeShell
         node={node}
         canvasScale={canvasScale}
+        worldWidth={worldWidth}
+        worldHeight={worldHeight}
+        contentBounds={contentBounds}
         layoutRestoreToken={layoutRestoreToken}
         stackOrder={graphNodeStackOrder({ active, neighbor, dimmed, highlighted })}
         dimmed={dimmed}
@@ -389,6 +429,9 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
   matchedNodeIds,
   activeNodeId,
   canvasScale,
+  worldWidth,
+  worldHeight,
+  contentBounds,
   interactionsEnabled = true,
   nodeDisplayMode = 'cards',
   onRecordPress,
@@ -452,6 +495,9 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
             onNodeDragCancel={onNodeDragCancel}
             onNodeFocus={onNodeFocus}
             canvasScale={canvasScale}
+            worldWidth={worldWidth}
+            worldHeight={worldHeight}
+            contentBounds={contentBounds}
             layoutRestoreToken={layoutRestoreToken}
           />
         );
