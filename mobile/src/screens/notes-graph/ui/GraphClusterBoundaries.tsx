@@ -19,8 +19,9 @@ import { resolveDisplayFolderColor, withAlphaHex } from '@/shared/lib';
 import type { GraphCluster } from '../lib/graphClusterLayout';
 import { nodeDimensions } from '../lib/graphNodeMetrics';
 import type { GraphNode } from '../lib/graphTypes';
+import { GRAPH_CLUSTER_BOUNDARY_PADDING } from '../lib/graphViewportBounds';
 
-const CLUSTER_PADDING = 32;
+const CLUSTER_PADDING = GRAPH_CLUSTER_BOUNDARY_PADDING;
 const CLUSTER_LABEL_OFFSET = 16;
 const CLUSTER_BORDER_RADIUS = 16;
 

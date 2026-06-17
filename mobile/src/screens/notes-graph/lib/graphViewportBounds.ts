@@ -6,6 +6,8 @@ export const GRAPH_PAN_OVERSCROLL_VIEWPORT_RATIO = 0.35;
 export const GRAPH_VIEWPORT_MIN_SCALE = 0.2;
 export const GRAPH_VIEWPORT_MAX_SCALE = 3.5;
 export const GRAPH_WORLD_CONTENT_PADDING = 100;
+/** Matches folder/tag cluster highlight padding in GraphClusterBoundaries. */
+export const GRAPH_CLUSTER_BOUNDARY_PADDING = 32;
 
 export function resolveGraphPanOverscroll(viewportWidth: number, viewportHeight: number): number {
   const viewportMin = Math.min(Math.max(viewportWidth, 1), Math.max(viewportHeight, 1));
@@ -63,6 +65,37 @@ export function measureGraphContentBounds(nodes: GraphNode[]): GraphContentBound
   return { minX, minY, maxX, maxY };
 }
 
+function expandBoundsForClusterHighlights(
+  bounds: GraphContentBounds,
+  padding = GRAPH_CLUSTER_BOUNDARY_PADDING,
+): GraphContentBounds {
+  return {
+    minX: bounds.minX - padding,
+    minY: bounds.minY - padding,
+    maxX: bounds.maxX + padding,
+    maxY: bounds.maxY + padding,
+  };
+}
+
+/**
+ * World canvas starts at (0, 0). Size must cover absolute content extents, not just span,
+ * otherwise folder highlights and nodes shifted right/bottom get clipped.
+ */
+function computeWorldExtentFromBounds(
+  bounds: GraphContentBounds,
+  contentPadding: number,
+): { width: number; height: number } {
+  const spanWidth = bounds.maxX - bounds.minX;
+  const spanHeight = bounds.maxY - bounds.minY;
+  const originMinX = Math.min(bounds.minX, 0);
+  const originMinY = Math.min(bounds.minY, 0);
+
+  return {
+    width: Math.max(bounds.maxX + contentPadding - originMinX, spanWidth + contentPadding * 2),
+    height: Math.max(bounds.maxY + contentPadding - originMinY, spanHeight + contentPadding * 2),
+  };
+}
+
 export function computeWorldDimensionsForNodes(
   nodes: GraphNode[],
   graphWidth: number,
@@ -72,28 +105,36 @@ export function computeWorldDimensionsForNodes(
   minScale: number,
   contentPadding = GRAPH_WORLD_CONTENT_PADDING,
 ): GraphWorldDimensions {
-  const bounds = measureGraphContentBounds(nodes);
+  const measuredBounds = measureGraphContentBounds(nodes);
 
-  if (!bounds) {
-    // No nodes - return minimal world size
+  if (!measuredBounds) {
+    const zoomFloor = computeWorldDimensions(
+      graphWidth,
+      graphHeight,
+      viewportWidth,
+      viewportHeight,
+      minScale,
+    );
     return {
-      width: Math.max(viewportWidth, graphWidth, 800),
-      height: Math.max(viewportHeight, graphHeight, 600),
+      width: Math.max(viewportWidth, graphWidth, zoomFloor.width, 800),
+      height: Math.max(viewportHeight, graphHeight, zoomFloor.height, 600),
       contentBounds: null,
     };
   }
 
-  // Calculate world size based on actual content with padding
-  const spanWidth = bounds.maxX - bounds.minX;
-  const spanHeight = bounds.maxY - bounds.minY;
-
-  // World should fit content + padding, but not smaller than viewport
-  const layoutWidth = Math.max(spanWidth + contentPadding * 2, viewportWidth, graphWidth);
-  const layoutHeight = Math.max(spanHeight + contentPadding * 2, viewportHeight, graphHeight);
+  const bounds = expandBoundsForClusterHighlights(measuredBounds);
+  const extent = computeWorldExtentFromBounds(bounds, contentPadding);
+  const zoomFloor = computeWorldDimensions(
+    graphWidth,
+    graphHeight,
+    viewportWidth,
+    viewportHeight,
+    minScale,
+  );
 
   return {
-    width: layoutWidth,
-    height: layoutHeight,
+    width: Math.max(extent.width, viewportWidth, graphWidth, zoomFloor.width),
+    height: Math.max(extent.height, viewportHeight, graphHeight, zoomFloor.height),
     contentBounds: bounds,
   };
 }
@@ -113,12 +154,12 @@ export function computeExportWorldDimensionsForNodes(
     };
   }
 
-  const spanWidth = bounds.maxX - bounds.minX + contentPadding;
-  const spanHeight = bounds.maxY - bounds.minY + contentPadding;
+  const expanded = expandBoundsForClusterHighlights(bounds);
+  const extent = computeWorldExtentFromBounds(expanded, contentPadding);
 
   return {
-    width: Math.max(spanWidth, graphWidth, 1),
-    height: Math.max(spanHeight, graphHeight, 1),
+    width: Math.max(extent.width, graphWidth, 1),
+    height: Math.max(extent.height, graphHeight, 1),
   };
 }
 

@@ -6,6 +6,7 @@ import {
   computeExportWorldDimensionsForNodes,
   computeWorldDimensions,
   computeWorldDimensionsForNodes,
+  GRAPH_CLUSTER_BOUNDARY_PADDING,
   GRAPH_PAN_OVERSCROLL,
   GRAPH_VIEWPORT_MAX_SCALE,
   GRAPH_VIEWPORT_MIN_SCALE,
@@ -63,6 +64,23 @@ describe('computeWorldDimensionsForNodes', () => {
     expect(world.contentBounds?.minX).toBeLessThan(0);
     expect(world.width).toBeGreaterThan(1800);
   });
+
+  it('keeps folder highlights inside world when content is offset from the origin', () => {
+    const nodes = [recordNode('shifted', 900, 120), recordNode('far', 2400, 120)];
+    const world = computeWorldDimensionsForNodes(nodes, 1800, 900, 390, 700, 0.3);
+
+    const rightEdge =
+      2400 + RECORD_NODE_WIDTH + 30 + GRAPH_CLUSTER_BOUNDARY_PADDING + GRAPH_WORLD_CONTENT_PADDING;
+    expect(world.width).toBeGreaterThanOrEqual(rightEdge);
+  });
+
+  it('provides a zoom-floor world large enough to pan across the map', () => {
+    const nodes = [recordNode('solo', 120, 120)];
+    const world = computeWorldDimensionsForNodes(nodes, 600, 400, 390, 700, 0.2);
+
+    expect(world.width).toBeGreaterThanOrEqual(Math.ceil(390 / 0.2));
+    expect(world.height).toBeGreaterThanOrEqual(Math.ceil(700 / 0.2));
+  });
 });
 
 describe('resolveGraphPanOverscroll', () => {
@@ -107,7 +125,7 @@ describe('clampViewportTranslation', () => {
 
   it('limits panning beyond canvas edges with overscroll', () => {
     const scale = 1;
-    const extraPadding = 150 / scale;
+    const extraPadding = 50 / scale;
     const effectivePad = overscroll + extraPadding;
     const minX = viewport.width - world.width * scale - effectivePad * scale;
     const minY = viewport.height - world.height * scale - effectivePad * scale;

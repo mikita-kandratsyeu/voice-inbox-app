@@ -17,6 +17,7 @@ import { buildGraphNodeConnectionCounts } from '../lib/countGraphNodeConnections
 import { snapGraphPointToGrid } from '../lib/graphSnapGrid';
 import type { GraphEdge, GraphNode, GraphNodeDisplayMode } from '../lib/graphTypes';
 import { RECORD_NODE_WIDTH, TASK_NODE_WIDTH } from '../lib/graphTypes';
+import { GRAPH_CLUSTER_BOUNDARY_PADDING } from '../lib/graphViewportBounds';
 import {
   buildGraphActiveNeighborIds,
   graphNodeStackOrder,
@@ -106,12 +107,11 @@ function DraggableNodeShell({
   const clampNodePosition = useCallback(
     (x: number, y: number): { x: number; y: number } => {
       'worklet';
-      // Allow nodes to move within the full world space (0,0 to worldWidth,worldHeight)
-      // This gives maximum freedom while preventing nodes from going completely off-canvas
-      const minX = 0;
-      const minY = 0;
-      const maxX = worldWidth - nodeWidth;
-      const maxY = worldHeight - nodeHeight;
+      const edgePadding = GRAPH_CLUSTER_BOUNDARY_PADDING;
+      const minX = edgePadding;
+      const minY = edgePadding;
+      const maxX = worldWidth - nodeWidth - edgePadding;
+      const maxY = worldHeight - nodeHeight - edgePadding;
 
       return {
         x: Math.max(minX, Math.min(maxX, x)),
