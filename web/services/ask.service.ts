@@ -1,11 +1,17 @@
 import { sendLimitExceededPush } from '@/lib/push-tokens';
 import { MESSAGE_TTL_SECONDS } from '@/config/constants';
 import { checkAndIncrement, type AiLimitContext } from '@/lib/ai-rate-limit';
+import type { AiModelMode } from '@/lib/ai-model-router';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
 import { saveJobMetadata, getJobMetadata } from '@/lib/job-metadata';
 import { enrichWithPollingHints, operationToJobType } from '@/lib/polling-hints';
-import { aiModelResponseFields, enrichMessageWithModelLabel } from '@/lib/ai-model-display';
+import {
+  aiModelLedgerMetadata,
+  aiModelResponseFields,
+  enrichMessageWithModelLabel,
+  sanitizeAiModelFieldsForClient,
+} from '@/lib/ai-model-display';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
 import type { AskLinkedNoteForPrompt } from '@/lib/linked-notes-prompt';
@@ -35,6 +41,7 @@ export const createAsk = async (
   recordingMarks?: RecordingMarkForPrompt[],
   linkedNotes?: AskLinkedNoteForPrompt[],
   aiLimitContext?: AiLimitContext,
+  modelMode?: AiModelMode,
 ): Promise<CreateAskResult> => {
   const ttl = messageTtlSeconds;
 
@@ -47,6 +54,7 @@ export const createAsk = async (
       id,
       status: 'processing',
       ...aiModelResponseFields(model),
+      ...(modelMode ? { modelMode } : {}),
     } as unknown as Message,
     ttl,
   );
@@ -58,7 +66,7 @@ export const createAsk = async (
   const limitResult = await checkAndIncrement(deviceId, aiLimitContext, 1, {
     operation: 'transcript_ask',
     jobId: id,
-    metadata: aiModelResponseFields(model),
+    metadata: aiModelLedgerMetadata(model, modelMode),
   });
 
   if (!limitResult.allowed) {
@@ -89,6 +97,7 @@ export const createAsk = async (
     clientUserAgent,
     recordingMarks,
     linkedNotes,
+    ...(modelMode ? { modelMode } : {}),
   };
 
   await saveJobPayload(jobPayload);
@@ -112,6 +121,7 @@ export const getAskById = async (id: string, syncToken?: string): Promise<AskMes
     status?: string;
     model?: string;
     modelLabel?: string;
+    modelMode?: 'manual' | 'auto';
     answer?: string;
     answerKind?: unknown;
     items?: unknown;
@@ -123,6 +133,10 @@ export const getAskById = async (id: string, syncToken?: string): Promise<AskMes
   if (!msg?.id || !msg?.status) return null;
 
   const enriched = enrichMessageWithModelLabel(msg);
+  const modelMode =
+    enriched.modelMode === 'auto' || enriched.modelMode === 'manual'
+      ? enriched.modelMode
+      : undefined;
   const modelField =
     typeof enriched.model === 'string' && enriched.model.trim() ? enriched.model.trim() : undefined;
   const modelLabelField =
@@ -134,8 +148,11 @@ export const getAskById = async (id: string, syncToken?: string): Promise<AskMes
       ? {
           model: modelField,
           ...(modelLabelField ? { modelLabel: modelLabelField } : {}),
+          ...(modelMode ? { modelMode } : {}),
         }
-      : {};
+      : modelMode
+        ? { modelMode }
+        : {};
 
   if (msg.status === 'processing') {
     const base = { id: msg.id, status: 'processing', ...modelFields } as const;
@@ -143,10 +160,12 @@ export const getAskById = async (id: string, syncToken?: string): Promise<AskMes
     // Add adaptive polling hints
     const metadata = await getJobMetadata(msg.id);
     if (metadata) {
-      return enrichWithPollingHints(base, metadata.jobType, metadata.startedAt) as AskMessage;
+      return sanitizeAiModelFieldsForClient(
+        enrichWithPollingHints(base, metadata.jobType, metadata.startedAt) as AskMessage,
+      );
     }
 
-    return base as AskMessage;
+    return sanitizeAiModelFieldsForClient(base as AskMessage);
   }
   if (msg.status === 'done' && typeof msg.answer === 'string') {
     const answerKind =
@@ -194,9 +213,9 @@ export const getAskById = async (id: string, syncToken?: string): Promise<AskMes
           .filter((item): item is AskEvidenceMessageItem => item !== null)
           .slice(0, 5)
       : undefined;
-    return {
+    return sanitizeAiModelFieldsForClient({
       id: msg.id,
-      status: 'done',
+      status: 'done' as const,
       answer: msg.answer,
       ...(answerKind ? { answerKind } : {}),
       ...(items?.length ? { items } : {}),
@@ -204,15 +223,15 @@ export const getAskById = async (id: string, syncToken?: string): Promise<AskMes
       ...(interpretations?.length ? { interpretations } : {}),
       ...(evidence?.length ? { evidence } : {}),
       ...modelFields,
-    };
+    } as AskMessage);
   }
   if (msg.status === 'error' && typeof msg.error === 'string') {
-    return {
+    return sanitizeAiModelFieldsForClient({
       id: msg.id,
-      status: 'error',
+      status: 'error' as const,
       error: msg.error,
       ...modelFields,
-    };
+    } as AskMessage);
   }
 
   return null;

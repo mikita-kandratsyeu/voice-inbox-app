@@ -13,7 +13,7 @@ import { logAiRequest } from '@/lib/ai-operation';
 import { estimateAskRoutingChars, parseAskPriorTurns } from '@/lib/ask-user-message';
 import { parseAskLinkedNotes } from '@/lib/linked-notes-prompt';
 import { sanitizeRecordingMarksForPrompt } from '@/lib/recording-marks-prompt';
-import { aiModelResponseFields } from '@/lib/ai-model-display';
+import { aiModelClientResponseFields } from '@/lib/ai-model-display';
 import { withDeduplication, getAskDeduplicationKey } from '@/lib/request-deduplication';
 import {
   estimateSummaryTasksRoutingChars,
@@ -183,6 +183,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         recordingMarksList,
         linkedNotesList,
         aiLimitContext,
+        modelMode,
       ),
     60000,
   );
@@ -201,7 +202,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const response = NextResponse.json({
     id,
     status: 'processing',
-    ...aiModelResponseFields(resolvedModel),
+    ...aiModelClientResponseFields(resolvedModel, modelMode),
     ...(result.syncToken && { syncToken: result.syncToken }),
   });
 

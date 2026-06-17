@@ -3,11 +3,17 @@ import { MESSAGE_TTL_SECONDS } from '@/config/constants';
 import { checkAndIncrement, type AiLimitContext } from '@/lib/ai-rate-limit';
 import { resolveTranscriptSummarizeLedgerOperation } from '@/lib/ai-usage-ledger';
 import { clearAiJobCancelled } from '@/lib/ai-job-cancel';
+import type { AiModelMode } from '@/lib/ai-model-router';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
 import { releaseJobLock } from '@/lib/ai-job-lock';
 import { dispatchMeetingDialogueJob } from '@/lib/meeting-dialogue-dispatch';
-import { aiModelResponseFields, enrichMessageWithModelLabel } from '@/lib/ai-model-display';
+import {
+  aiModelLedgerMetadata,
+  aiModelResponseFields,
+  enrichMessageWithModelLabel,
+  sanitizeAiModelFieldsForClient,
+} from '@/lib/ai-model-display';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import { saveJobMetadata, getJobMetadata } from '@/lib/job-metadata';
 import { enrichWithPollingHints, operationToJobType } from '@/lib/polling-hints';
@@ -37,6 +43,7 @@ export const createMessage = async (
   meetingDialogueSystemPrompt?: string,
   meetingDialogueAux?: MeetingDialogueAuxPayload,
   aiLimitContext?: AiLimitContext,
+  modelMode?: AiModelMode,
 ): Promise<CreateMessageResult> => {
   const ttl = messageTtlSeconds;
   const chargedUsageUnits =
@@ -44,7 +51,12 @@ export const createMessage = async (
   const summarizeLedgerOperation = resolveTranscriptSummarizeLedgerOperation(chargedUsageUnits);
   const created = await saveMessageIfNotExists(
     id,
-    { id, status: 'processing', ...aiModelResponseFields(model) },
+    {
+      id,
+      status: 'processing',
+      ...aiModelResponseFields(model),
+      ...(modelMode ? { modelMode } : {}),
+    },
     ttl,
   );
   if (!created) {
@@ -54,7 +66,7 @@ export const createMessage = async (
   const limitResult = await checkAndIncrement(deviceId, aiLimitContext, chargedUsageUnits, {
     operation: summarizeLedgerOperation,
     jobId: id,
-    metadata: { ...aiModelResponseFields(model), chargedUsageUnits },
+    metadata: { ...aiModelLedgerMetadata(model, modelMode), chargedUsageUnits },
   });
   if (!limitResult.allowed) {
     await saveMessage(
@@ -87,6 +99,7 @@ export const createMessage = async (
     meetingDialogueSystemPrompt,
     meetingDialogueAux,
     chargedUsageUnits,
+    ...(modelMode ? { modelMode } : {}),
   };
 
   await saveJobPayload(jobPayload);
@@ -116,11 +129,13 @@ export const getMessageById = async (id: string, syncToken?: string): Promise<Me
     const metadata = await getJobMetadata(id);
 
     if (metadata) {
-      return enrichWithPollingHints(enriched, metadata.jobType, metadata.startedAt);
+      return sanitizeAiModelFieldsForClient(
+        enrichWithPollingHints(enriched, metadata.jobType, metadata.startedAt),
+      );
     }
   }
 
-  return enriched;
+  return sanitizeAiModelFieldsForClient(enriched);
 };
 
 type RetryMeetingDialogueResult =

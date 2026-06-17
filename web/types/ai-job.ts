@@ -1,4 +1,5 @@
 import type { AiOperation } from '@/lib/ai-operation';
+import type { AiModelMode } from '@/lib/ai-model-router';
 import type { MeetingDialogueTranscriptSegment } from '@/lib/meeting-dialogue-user-prompt';
 import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
 import type { AskLinkedNoteForPrompt } from '@/lib/linked-notes-prompt';
@@ -23,6 +24,7 @@ export type SummarizeJobPayload = {
   messageTtlSeconds: number;
   transcript: string;
   model: string;
+  modelMode?: AiModelMode;
   systemPrompt: string;
   clientUserAgent?: string | null;
   pseudoDiarizationEligible: boolean;
@@ -40,6 +42,7 @@ export type AskJobPayload = {
   transcript: string;
   question: string;
   model: string;
+  modelMode?: AiModelMode;
   summary?: string;
   tasks?: { text: string }[];
   priorTurns?: { question: string; answer: string }[];

@@ -127,6 +127,7 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
         id,
         status: 'done',
         ...aiModelResponseFields(model),
+        ...(payload.modelMode ? { modelMode: payload.modelMode } : {}),
         summary: result.summary,
         suggestedTitle: result.suggestedTitle,
         tasks: result.tasks,
@@ -196,6 +197,7 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
           status: 'error',
           error: err instanceof Error ? err.message : 'Unknown error',
           ...aiModelResponseFields(model),
+          ...(payload.modelMode ? { modelMode: payload.modelMode } : {}),
         },
         ttl,
       );

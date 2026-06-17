@@ -1,5 +1,6 @@
 import type { Prisma } from '@/generated/prisma/client';
 
+import type { AiModelMode } from '@/lib/ai-model-router';
 import { prisma } from '@/lib/prisma';
 import type { AiOperation } from './ai-operation';
 
@@ -36,6 +37,7 @@ export type AiUsageHistoryEntry = {
   description?: string;
   model?: string;
   modelLabel?: string;
+  modelMode?: AiModelMode;
 };
 
 export type AiUsageHistoryPage = {
@@ -58,6 +60,11 @@ const readTrimmedString = (metadata: unknown, key: string): string | undefined =
   if (!isRecord(metadata)) return undefined;
   const value = metadata[key];
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+};
+
+const readModelMode = (metadata: unknown): AiModelMode | undefined => {
+  const value = readTrimmedString(metadata, 'modelMode');
+  return value === 'auto' || value === 'manual' ? value : undefined;
 };
 
 /** Ledger operation for summarize jobs that include meeting-mode speaker breakdown (2 credits). */
@@ -195,21 +202,26 @@ export async function getAiUsageHistory(params: {
   const nextCursor = rows.length > limit ? (pageRows[pageRows.length - 1]?.id ?? null) : null;
 
   return {
-    items: pageRows.map((row) => ({
-      id: row.id,
-      createdAt: row.createdAt.toISOString(),
-      kind: row.kind as AiUsageLedgerKind,
-      operation: row.operation as AiUsageOperation,
-      amount: row.amount,
-      ...(row.jobId ? { jobId: row.jobId } : {}),
-      ...(row.description ? { description: row.description } : {}),
-      ...(readTrimmedString(row.metadata, 'model')
-        ? { model: readTrimmedString(row.metadata, 'model') }
-        : {}),
-      ...(readTrimmedString(row.metadata, 'modelLabel')
-        ? { modelLabel: readTrimmedString(row.metadata, 'modelLabel') }
-        : {}),
-    })),
+    items: pageRows.map((row) => {
+      const modelMode = readModelMode(row.metadata);
+      const includeResolvedModel = modelMode !== 'auto';
+      return {
+        id: row.id,
+        createdAt: row.createdAt.toISOString(),
+        kind: row.kind as AiUsageLedgerKind,
+        operation: row.operation as AiUsageOperation,
+        amount: row.amount,
+        ...(row.jobId ? { jobId: row.jobId } : {}),
+        ...(row.description ? { description: row.description } : {}),
+        ...(includeResolvedModel && readTrimmedString(row.metadata, 'model')
+          ? { model: readTrimmedString(row.metadata, 'model') }
+          : {}),
+        ...(includeResolvedModel && readTrimmedString(row.metadata, 'modelLabel')
+          ? { modelLabel: readTrimmedString(row.metadata, 'modelLabel') }
+          : {}),
+        ...(modelMode ? { modelMode } : {}),
+      };
+    }),
     nextCursor,
   };
 }

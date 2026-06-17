@@ -12,7 +12,11 @@ import {
 import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { logAiRequest } from '@/lib/ai-operation';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
-import { aiModelResponseFields } from '@/lib/ai-model-display';
+import {
+  aiModelClientResponseFields,
+  aiModelLedgerMetadata,
+  aiModelResponseFields,
+} from '@/lib/ai-model-display';
 import { updateAiUsageLedgerMetadata } from '@/lib/ai-usage-ledger';
 import { resolveAutoAiModel, type AiModelMode } from '@/lib/ai-model-router';
 import { setAppForeground } from '@/lib/push-tokens';
@@ -83,7 +87,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const limitResult = await checkAndIncrement(deviceIdTrimmed, undefined, 1, {
     operation: 'digest',
-    metadata: aiModelResponseFields(resolvedModel),
+    metadata: aiModelLedgerMetadata(resolvedModel, modelMode),
   });
   if (!limitResult.allowed) {
     return weeklyAiLimitExceededResponse(limitResult.usage);
@@ -101,7 +105,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       entryId: limitResult.ledgerEntryId,
       metadata: aiModelResponseFields(resolvedModel),
     });
-    return NextResponse.json({ ...result, ...aiModelResponseFields(resolvedModel) });
+    return NextResponse.json({
+      ...result,
+      ...aiModelClientResponseFields(resolvedModel, modelMode),
+    });
   } catch (err) {
     await decrement(deviceIdTrimmed, {
       operation: 'digest',

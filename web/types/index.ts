@@ -5,6 +5,8 @@ import type {
   AutoOrganizeMode,
 } from '@/lib/auto-organize-types';
 
+import type { AiModelMode } from '@/lib/ai-model-router';
+
 export type MessageStatus = 'processing' | 'done' | 'error';
 
 /** Async meeting-dialogue pass (Pro meeting notes); set when `status` is already `done`. */
@@ -52,6 +54,7 @@ export type Message =
       status: 'processing';
       model?: string;
       modelLabel?: string;
+      modelMode?: AiModelMode;
       /** Adaptive polling hints for client optimization */
       progress?: number;
       retryAfterMs?: number;
@@ -62,6 +65,7 @@ export type Message =
       status: 'done';
       model?: string;
       modelLabel?: string;
+      modelMode?: AiModelMode;
       summary: string;
       suggestedTitle: string;
       tasks: AiResult['tasks'];
@@ -74,7 +78,14 @@ export type Message =
       reasoning?: string;
       tokenUsage?: { prompt: number; completion: number };
     }
-  | { id: string; status: 'error'; error: string; model?: string; modelLabel?: string };
+  | {
+      id: string;
+      status: 'error';
+      error: string;
+      model?: string;
+      modelLabel?: string;
+      modelMode?: AiModelMode;
+    };
 
 export type AskMessage =
   | {
@@ -82,6 +93,7 @@ export type AskMessage =
       status: 'processing';
       model?: string;
       modelLabel?: string;
+      modelMode?: AiModelMode;
       /** Adaptive polling hints for client optimization */
       progress?: number;
       retryAfterMs?: number;
@@ -92,6 +104,7 @@ export type AskMessage =
       status: 'done';
       model?: string;
       modelLabel?: string;
+      modelMode?: AiModelMode;
       answer: string;
       answerKind?: 'plain' | 'list' | 'tasks' | 'decisions';
       items?: string[];
@@ -110,7 +123,14 @@ export type AskMessage =
         label?: string;
       }>;
     }
-  | { id: string; status: 'error'; error: string; model?: string; modelLabel?: string };
+  | {
+      id: string;
+      status: 'error';
+      error: string;
+      model?: string;
+      modelLabel?: string;
+      modelMode?: AiModelMode;
+    };
 
 export type {
   AutoOrganizeArchiveResult,

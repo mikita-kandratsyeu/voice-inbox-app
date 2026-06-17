@@ -44,6 +44,7 @@ export async function runAskJob(payload: AskJobPayload): Promise<void> {
       id,
       status: 'done',
       ...aiModelResponseFields(model),
+      ...(payload.modelMode ? { modelMode: payload.modelMode } : {}),
       answer: result.answer,
       ...(result.answerKind ? { answerKind: result.answerKind } : {}),
       ...(result.items?.length ? { items: result.items } : {}),
@@ -78,6 +79,7 @@ export async function runAskJob(payload: AskJobPayload): Promise<void> {
         status: 'error',
         error: err instanceof Error ? err.message : 'Unknown error',
         ...aiModelResponseFields(model),
+        ...(payload.modelMode ? { modelMode: payload.modelMode } : {}),
       });
     }
     throw err;

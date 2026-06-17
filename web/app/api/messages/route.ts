@@ -10,7 +10,7 @@ import {
 import { HEADER_SYNC_TOKEN } from '@/config/constants';
 import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { logAiRequest } from '@/lib/ai-operation';
-import { aiModelResponseFields } from '@/lib/ai-model-display';
+import { aiModelClientResponseFields } from '@/lib/ai-model-display';
 import { withDeduplication, getMessageDeduplicationKey } from '@/lib/request-deduplication';
 import {
   estimateSummaryTasksRoutingChars,
@@ -221,6 +221,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         meetingDialogueSystemPrompt,
         meetingDialogueAux,
         aiLimitContext,
+        modelMode,
       ),
     60000,
   );
@@ -239,7 +240,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const response = NextResponse.json({
     id,
     status: 'processing',
-    ...aiModelResponseFields(resolvedModel),
+    ...aiModelClientResponseFields(resolvedModel, modelMode),
     ...(result.syncToken && { syncToken: result.syncToken }),
   });
 
