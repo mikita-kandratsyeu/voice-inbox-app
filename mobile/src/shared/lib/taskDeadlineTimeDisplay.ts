@@ -24,11 +24,8 @@ export function parseTaskDeadlineTime(
 }
 
 export function formatLocalTimeOfDay(date: Date): string {
-  return date.toLocaleTimeString(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: !uses24HourClock(),
-  });
+  const d = dayjs(date);
+  return uses24HourClock() ? d.format('H:mm') : d.format('h:mm A');
 }
 
 export function formatTaskDeadlineTimeForDisplay(hhmm: string | null | undefined): string {
