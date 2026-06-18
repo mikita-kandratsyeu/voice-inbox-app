@@ -41,3 +41,4 @@
 "watch.sync.syncing" = "Syncing";
 "watch.sync.synced" = "Synced";
 "watch.sync.failed" = "Failed";
+"watch.sync.phone_hint" = "Keep iPhone app open for sync";

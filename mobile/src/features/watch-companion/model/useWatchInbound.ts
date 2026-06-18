@@ -26,6 +26,28 @@ function sendSyncResult(
   });
 }
 
+async function processWatchCommand(payload: unknown): Promise<void> {
+  if (!payload || typeof payload !== 'object') {
+    return;
+  }
+
+  const info = payload as Record<string, unknown>;
+  if (info.type === 'syncResult') {
+    return;
+  }
+
+  const command = WatchCommandSchema.parse(info);
+
+  if (command.type === 'toggleTask') {
+    await handleToggleTask(command);
+    return;
+  }
+
+  if (command.type === 'openNote') {
+    handleOpenNote(command);
+  }
+}
+
 export function useWatchInbound() {
   const unsubRef = useRef<Array<() => void>>([]);
   const processedIdsRef = useRef<Set<string>>(new Set());
@@ -85,24 +107,22 @@ export function useWatchInbound() {
     const userInfoUnsub = watchEvents.on('user-info', async (payloads) => {
       for (const info of payloads) {
         try {
-          if (info.type === 'syncResult') {
-            continue;
-          }
-
-          const command = WatchCommandSchema.parse(info);
-
-          if (command.type === 'toggleTask') {
-            handleToggleTask(command);
-          } else if (command.type === 'openNote') {
-            handleOpenNote(command);
-          }
+          await processWatchCommand(info);
         } catch (error) {
           console.error('[WatchInbound] User info handler error:', error);
         }
       }
     });
 
-    unsubRef.current = [fileUnsub, userInfoUnsub];
+    const messageUnsub = watchEvents.on('message', async (message) => {
+      try {
+        await processWatchCommand(message);
+      } catch (error) {
+        console.error('[WatchInbound] Message handler error:', error);
+      }
+    });
+
+    unsubRef.current = [fileUnsub, userInfoUnsub, messageUnsub];
 
     return () => {
       unsubRef.current.forEach((unsub) => unsub());
@@ -111,12 +131,12 @@ export function useWatchInbound() {
   }, []);
 }
 
-function handleToggleTask(command: ToggleTaskCommand) {
+async function handleToggleTask(command: ToggleTaskCommand) {
   if (!getHasSeenOnboarding()) {
     return;
   }
   const store = useRecordStore.getState();
-  void store.toggleTask(command.recordId, command.taskId);
+  await store.toggleTask(command.recordId, command.taskId);
 }
 
 function handleOpenNote(command: OpenNoteCommand) {

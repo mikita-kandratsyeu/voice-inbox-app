@@ -22,6 +22,8 @@ struct RecordingsQueueView: View {
                             NavigationLink(value: recording.id) {
                                 RecordingRow(recording: recording)
                             }
+                            .navigationLinkIndicatorVisibility(.hidden)
+                            .listRowInsets(EdgeInsets(top: 6, leading: 2, bottom: 6, trailing: 2))
                         }
                     }
                     .navigationDestination(for: String.self) { recordingId in
@@ -44,7 +46,7 @@ struct RecordingRow: View {
     let recording: PendingRecording
 
     var body: some View {
-        HStack {
+        HStack(alignment: .center, spacing: 8) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(formatDuration(recording.durationSeconds))
                     .font(.headline)
@@ -54,10 +56,11 @@ struct RecordingRow: View {
                     .foregroundStyle(.secondary)
             }
 
-            Spacer()
+            Spacer(minLength: 4)
 
             statusView
         }
+        .padding(.trailing, 2)
     }
 
     @ViewBuilder
@@ -65,15 +68,23 @@ struct RecordingRow: View {
         switch recording.syncState {
         case .pending:
             Image(systemName: "clock")
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.orange)
+                .frame(width: 18, height: 18)
         case .syncing:
             ProgressView()
+                .controlSize(.small)
+                .frame(width: 18, height: 18)
         case .synced:
             Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.green)
+                .frame(width: 18, height: 18)
         case .failed:
             Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.red)
+                .frame(width: 18, height: 18)
         }
     }
 

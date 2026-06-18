@@ -72,35 +72,6 @@ struct RecordingPulseRings: View {
     }
 }
 
-struct RecordingWaveformBars: View {
-    let level: CGFloat
-    let color: Color
-
-    private let barCount = 7
-
-    var body: some View {
-        HStack(spacing: 3) {
-            ForEach(0 ..< barCount, id: \.self) { index in
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(color)
-                    .frame(width: 4, height: barHeight(for: index))
-            }
-        }
-        .frame(height: 40)
-        .animation(.easeOut(duration: 0.1), value: level)
-    }
-
-    private func barHeight(for index: Int) -> CGFloat {
-        let center = CGFloat(barCount - 1) / 2
-        let distance = abs(CGFloat(index) - center) / center
-        let shape = 1 - distance * 0.45
-        let minHeight: CGFloat = 6
-        let maxHeight: CGFloat = 36
-        let animated = min(1, level * shape + 0.12)
-        return minHeight + (maxHeight - minHeight) * animated
-    }
-}
-
 struct RecordActionButton: View {
     let isRecording: Bool
     let audioLevel: CGFloat

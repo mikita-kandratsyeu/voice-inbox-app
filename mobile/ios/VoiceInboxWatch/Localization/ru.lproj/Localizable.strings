@@ -41,3 +41,4 @@
 "watch.sync.syncing" = "Синхронизация";
 "watch.sync.synced" = "Синхронизировано";
 "watch.sync.failed" = "Ошибка";
+"watch.sync.phone_hint" = "Держите iPhone открытым для синхронизации";

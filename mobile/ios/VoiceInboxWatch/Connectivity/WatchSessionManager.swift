@@ -75,13 +75,51 @@ class WatchSessionManager: NSObject, ObservableObject {
             return
         }
 
+        guard let dict = commandDictionary(command) else {
+            print("Failed to encode command")
+            return
+        }
+
+        if session.isReachable {
+            session.sendMessage(dict, replyHandler: nil) { error in
+                print("sendMessage failed, queueing userInfo: \(error.localizedDescription)")
+                session.transferUserInfo(dict)
+            }
+            print("Sent command via message: \(command.type.rawValue)")
+        } else {
+            session.transferUserInfo(dict)
+            print("Sent command via userInfo: \(command.type.rawValue)")
+        }
+    }
+
+    private func commandDictionary(_ command: WatchCommand) -> [String: Any]? {
         do {
             let data = try JSONEncoder().encode(command)
-            let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any] ?? [:]
-            session.transferUserInfo(dict)
-            print("Sent command: \(command.type.rawValue)")
+            return try JSONSerialization.jsonObject(with: data) as? [String: Any]
         } catch {
-            print("Failed to send command: \(error)")
+            print("Failed to encode command: \(error)")
+            return nil
+        }
+    }
+
+    private func applyApplicationContext(_ applicationContext: [String: Any]) {
+        guard !applicationContext.isEmpty else { return }
+
+        guard let snapshotJson = applicationContext["snapshotJson"] as? String,
+              let data = snapshotJson.data(using: .utf8) else {
+            print("Invalid application context format")
+            return
+        }
+
+        do {
+            let decoder = JSONDecoder()
+            let snapshot = try decoder.decode(WatchSnapshot.self, from: data)
+            DispatchQueue.main.async {
+                self.snapshot = snapshot
+                print("Applied snapshot: \(snapshot.tasksToday.count) tasks, \(snapshot.recentNotes.count) notes")
+            }
+        } catch {
+            print("Failed to decode snapshot: \(error)")
         }
     }
 
@@ -182,6 +220,7 @@ extension WatchSessionManager: WCSessionDelegate {
 
         if activationState == .activated {
             print("Watch session activated")
+            applyApplicationContext(session.applicationContext)
             flushPendingTransfers()
         }
 
@@ -197,27 +236,13 @@ extension WatchSessionManager: WCSessionDelegate {
 
         if session.isReachable {
             print("iPhone became reachable, flushing pending transfers")
+            applyApplicationContext(session.applicationContext)
             flushPendingTransfers()
         }
     }
 
     func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
-        guard let snapshotJson = applicationContext["snapshotJson"] as? String,
-              let data = snapshotJson.data(using: .utf8) else {
-            print("Invalid application context format")
-            return
-        }
-
-        do {
-            let decoder = JSONDecoder()
-            let snapshot = try decoder.decode(WatchSnapshot.self, from: data)
-            DispatchQueue.main.async {
-                self.snapshot = snapshot
-                print("Received snapshot update: \(snapshot.tasksToday.count) tasks, \(snapshot.recentNotes.count) notes")
-            }
-        } catch {
-            print("Failed to decode snapshot: \(error)")
-        }
+        applyApplicationContext(applicationContext)
     }
 
     func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {

@@ -2,10 +2,9 @@ import SwiftUI
 import WatchKit
 
 private enum RecordLayout {
-    static let meterHeight: CGFloat = 36
     static let statusHeight: CGFloat = 62
-    static let buttonSize: CGFloat = 112
-    static let sectionSpacing: CGFloat = 8
+    static let buttonSize: CGFloat = 118
+    static let sectionSpacing: CGFloat = 10
 }
 
 struct RecordView: View {
@@ -26,8 +25,6 @@ struct RecordView: View {
                     .frame(height: 28)
 
                 Spacer(minLength: 0)
-
-                meterSlot
 
                 RecordActionButton(
                     isRecording: recorder.isRecording,
@@ -69,20 +66,6 @@ struct RecordView: View {
                 queueBadge
             }
         }
-    }
-
-    private var meterSlot: some View {
-        ZStack {
-            if recorder.isRecording {
-                RecordingWaveformBars(
-                    level: CGFloat(recorder.audioLevel),
-                    color: .red.opacity(0.85)
-                )
-                .transition(.opacity)
-            }
-        }
-        .frame(height: RecordLayout.meterHeight)
-        .animation(.easeInOut(duration: 0.25), value: recorder.isRecording)
     }
 
     private var statusSlot: some View {
