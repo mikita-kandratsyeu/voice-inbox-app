@@ -14,3 +14,4 @@ export type {
 } from './lib/watchPayload';
 export { useWatchInbound } from './model/useWatchInbound';
 export { useWatchSnapshotSync } from './model/useWatchSnapshotSync';
+export { WatchTranscriptionBridge } from './model/WatchTranscriptionBridge';

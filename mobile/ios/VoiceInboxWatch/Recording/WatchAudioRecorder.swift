@@ -1,4 +1,5 @@
 import AVFoundation
+import Combine
 import Foundation
 
 class WatchAudioRecorder: NSObject, ObservableObject {
@@ -7,6 +8,7 @@ class WatchAudioRecorder: NSObject, ObservableObject {
 
     private var audioRecorder: AVAudioRecorder?
     private var recordingURL: URL?
+    private var recordingId: String?
     private var timer: Timer?
 
     private let maxRecordingDuration: TimeInterval = 180 // 3 minutes
@@ -22,7 +24,9 @@ class WatchAudioRecorder: NSObject, ObservableObject {
             return false
         }
 
-        let fileName = "\(UUID().uuidString).m4a"
+        let id = UUID().uuidString
+        let fileName = "\(id).m4a"
+        recordingId = id
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let recordingsDir = documentsPath.appendingPathComponent("watch-recordings")
 
@@ -67,7 +71,7 @@ class WatchAudioRecorder: NSObject, ObservableObject {
     }
 
     func stopRecording() -> PendingRecording? {
-        guard isRecording, let url = recordingURL else { return nil }
+        guard isRecording, let url = recordingURL, let id = recordingId else { return nil }
 
         audioRecorder?.stop()
         timer?.invalidate()
@@ -78,7 +82,7 @@ class WatchAudioRecorder: NSObject, ObservableObject {
         currentDuration = 0
 
         let recording = PendingRecording(
-            id: UUID().uuidString,
+            id: id,
             createdAt: Date(),
             durationSeconds: duration,
             fileName: url.lastPathComponent,
@@ -87,6 +91,7 @@ class WatchAudioRecorder: NSObject, ObservableObject {
 
         audioRecorder = nil
         recordingURL = nil
+        recordingId = nil
 
         return recording
     }

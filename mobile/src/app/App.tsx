@@ -35,7 +35,11 @@ import {
 import { useTaskDeadlineNotificationHandlers } from '@/features/task-deadline-notifications/model/useTaskDeadlineNotificationHandlers';
 import { TaskDeadlineActionSheet } from '@/features/task-deadline-notifications/ui/TaskDeadlineActionSheet';
 import { TranscriptionResumePrompt } from '@/features/transcription';
-import { useWatchInbound, useWatchSnapshotSync } from '@/features/watch-companion';
+import {
+  useWatchInbound,
+  useWatchSnapshotSync,
+  WatchTranscriptionBridge,
+} from '@/features/watch-companion';
 import {
   BootSplashVisibleProvider,
   initReduceMotionCheck,
@@ -166,6 +170,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
                     <AppLockGate>
                       <AppProcessingKeepAwake />
                       <TranscriptionResumePrompt />
+                      <WatchTranscriptionBridge />
                       <RootNavigator />
                     </AppLockGate>
                   </OnboardingGate>

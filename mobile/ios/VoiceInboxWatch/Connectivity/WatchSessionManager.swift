@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import WatchConnectivity
 
@@ -90,8 +91,8 @@ extension WatchSessionManager: WCSessionDelegate {
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         DispatchQueue.main.async {
             self.isReachable = session.isReachable
-            self.isPaired = session.isPaired
-            self.isInstalled = session.isWatchAppInstalled
+            self.isPaired = activationState == .activated
+            self.isInstalled = session.isCompanionAppInstalled
         }
 
         if activationState == .activated {

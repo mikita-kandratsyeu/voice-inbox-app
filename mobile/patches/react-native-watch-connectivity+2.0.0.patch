@@ -1,0 +1,16 @@
+diff --git a/node_modules/react-native-watch-connectivity/WatchConnectivity.podspec b/node_modules/react-native-watch-connectivity/RNWatchConnectivity.podspec
+similarity index 94%
+rename from node_modules/react-native-watch-connectivity/WatchConnectivity.podspec
+rename to node_modules/react-native-watch-connectivity/RNWatchConnectivity.podspec
+index d04d522..bca18b1 100644
+--- a/node_modules/react-native-watch-connectivity/WatchConnectivity.podspec
++++ b/node_modules/react-native-watch-connectivity/RNWatchConnectivity.podspec
+@@ -3,7 +3,7 @@ require "json"
+ package = JSON.parse(File.read(File.join(__dir__, "package.json")))
+ 
+ Pod::Spec.new do |s|
+-  s.name         = "WatchConnectivity"
++  s.name         = "RNWatchConnectivity"
+   s.version      = package["version"]
+   s.summary      = package["description"]
+   s.homepage     = package["homepage"]

@@ -1,57 +1,54 @@
 import { useEffect, useRef } from 'react';
 import { transferUserInfo, watchEvents } from 'react-native-watch-connectivity';
 
+import { runNavigationWhenUnlocked } from '@/app/navigation/deferredNavigation';
+import { navigationRef } from '@/app/navigation/navigationRef';
 import { useRecordStore } from '@/entities/record';
+import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 
+import { finalizeWatchRecordingImport } from '../lib/finalizeWatchRecordingImport';
 import { importWatchRecording } from '../lib/importWatchRecording';
 import type { OpenNoteCommand, ToggleTaskCommand } from '../lib/watchPayload';
 import { RecordingMetadataSchema, WatchCommandSchema } from '../lib/watchPayload';
 
 export function useWatchInbound() {
-  const subsRef = useRef<Array<{ remove: () => void }>>([]);
+  const unsubRef = useRef<Array<() => void>>([]);
   const processedIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    // File transfer handler
-    const fileSub = watchEvents.on('file', async (event) => {
+    const fileUnsub = watchEvents.on('file', async (event) => {
       try {
+        if (!getHasSeenOnboarding()) {
+          return;
+        }
+
         const metadata = RecordingMetadataSchema.parse(event.metadata);
 
-        // Idempotency check
         if (processedIdsRef.current.has(metadata.watchRecordingId)) {
-          console.log('[WatchInbound] Skipping duplicate:', metadata.watchRecordingId);
           return;
         }
 
         const result = await importWatchRecording(event.uri, metadata);
 
-        // Send sync result back to Watch
-        const syncResult = {
+        transferUserInfo({
           type: 'syncResult',
           watchRecordingId: metadata.watchRecordingId,
           status: result.success ? 'success' : 'error',
           recordId: result.recordId,
-        };
+        });
 
-        transferUserInfo(syncResult);
-
-        if (result.success && result.recordId) {
-          // TODO: Add record to store and schedule transcription
-          // This requires proper integration with useRecordStore and transcription hooks
-
-          // Mark as processed
+        if (result.success && result.record) {
+          await finalizeWatchRecordingImport(result.record);
           processedIdsRef.current.add(metadata.watchRecordingId);
 
-          // Cleanup old processed IDs (7 days TTL)
           if (processedIdsRef.current.size > 100) {
             const arr = Array.from(processedIdsRef.current);
             processedIdsRef.current = new Set(arr.slice(-50));
           }
         }
 
-        // Clean up temp file if not in recordings dir
         try {
           const normalizedPath = event.uri.startsWith('file://') ? event.uri.slice(7) : event.uri;
           if (!normalizedPath.includes('/recordings/')) {
@@ -65,35 +62,54 @@ export function useWatchInbound() {
       }
     });
 
-    // User info handler (commands from Watch)
-    const userInfoSub = watchEvents.on('user-info', async (info) => {
-      try {
-        const command = WatchCommandSchema.parse(info);
+    const userInfoUnsub = watchEvents.on('user-info', async (payloads) => {
+      for (const info of payloads) {
+        try {
+          if (info.type === 'syncResult') {
+            continue;
+          }
 
-        if (command.type === 'toggleTask') {
-          handleToggleTask(command);
-        } else if (command.type === 'openNote') {
-          handleOpenNote(command);
+          const command = WatchCommandSchema.parse(info);
+
+          if (command.type === 'toggleTask') {
+            handleToggleTask(command);
+          } else if (command.type === 'openNote') {
+            handleOpenNote(command);
+          }
+        } catch (error) {
+          console.error('[WatchInbound] User info handler error:', error);
         }
-      } catch (error) {
-        console.error('[WatchInbound] User info handler error:', error);
       }
     });
 
-    subsRef.current = [fileSub, userInfoSub];
+    unsubRef.current = [fileUnsub, userInfoUnsub];
 
     return () => {
-      subsRef.current.forEach((sub) => sub.remove());
-      subsRef.current = [];
+      unsubRef.current.forEach((unsub) => unsub());
+      unsubRef.current = [];
     };
   }, []);
 }
 
 function handleToggleTask(command: ToggleTaskCommand) {
+  if (!getHasSeenOnboarding()) {
+    return;
+  }
   const store = useRecordStore.getState();
-  store.toggleTask(command.recordId, command.taskId);
+  void store.toggleTask(command.recordId, command.taskId);
 }
 
-function handleOpenNote(_command: OpenNoteCommand) {
-  // TODO: Implement deep link navigation via Linking.openURL or navigationRef
+function handleOpenNote(command: OpenNoteCommand) {
+  if (!getHasSeenOnboarding()) {
+    return;
+  }
+
+  const record = useRecordStore.getState().records.find((item) => item.id === command.recordId);
+  if (!record) {
+    return;
+  }
+
+  runNavigationWhenUnlocked(() => {
+    navigationRef.navigate('RecordingDetail', { record });
+  });
 }

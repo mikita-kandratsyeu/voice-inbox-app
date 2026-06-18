@@ -125,11 +125,12 @@ describe('buildWatchSnapshot', () => {
   });
 
   it('should include task due date formatted as "MMM D"', () => {
-    const records = [mockRecordWithTask('rec1', 'Task', '2024-03-15')];
+    const today = new Date().toISOString().slice(0, 10);
+    const records = [mockRecordWithTask('rec1', 'Task', today)];
 
     const snapshot = buildWatchSnapshot(records);
 
-    expect(snapshot.tasksToday[0].dueDate).toMatch(/^[A-Z][a-z]{2} \d{1,2}$/);
+    expect(snapshot.tasksToday[0]?.dueDate).toMatch(/^[A-Z][a-z]{2} \d{1,2}$/);
   });
 
   it('should handle records without tasks or summary', () => {

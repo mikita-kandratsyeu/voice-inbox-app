@@ -18,6 +18,7 @@ function formatDuration(durationMs: number): string {
 
 export interface ImportWatchRecordingResult {
   success: boolean;
+  record?: VoiceRecord;
   recordId?: string;
   error?: string;
 }
@@ -32,43 +33,46 @@ export async function importWatchRecording(
     const recordId = generateRecordId();
     const normalizedPath = fileUri.startsWith('file://') ? fileUri.slice(7) : fileUri;
 
-    // Persist file to recordings directory
     const audioPath = await persistRecordingToDocuments(normalizedPath, recordId);
 
-    // Get duration (fallback to metadata if file read fails)
     let durationMs = Math.round(metadata.durationSeconds * 1000);
     try {
       const fileDuration = await getAudioDurationMs(audioPath);
-      if (fileDuration !== null) {
+      if (fileDuration !== null && fileDuration > 0) {
         durationMs = fileDuration;
       }
     } catch (err) {
       diagWarn('[importWatchRecording] getAudioDurationMs failed, using metadata:', err);
     }
 
-    // Build record
-    const now = new Date().toISOString();
-    const createdAt = metadata.createdAt || now;
+    if (durationMs <= 0) {
+      return { success: false, error: 'Could not determine audio duration' };
+    }
+
+    const createdAt = metadata.createdAt || dayjs().toISOString();
 
     const record: VoiceRecord = {
       id: recordId,
       title: getAutoTitleForDate(createdAt),
-      audioPath,
       transcript: '',
+      transcriptSegments: [],
+      summary: '',
+      tasks: [],
       duration: formatDuration(durationMs),
-      durationMs,
+      durationMs: Math.round(durationMs),
       createdAt,
-      status: 'unread' as const,
+      status: 'unread',
       aiStatus: 'idle',
-      summary: undefined,
-      tasks: undefined,
-      folderId: undefined,
+      transcriptProgress: 0,
       isPinned: false,
+      tags: [],
+      audioPath,
     };
 
     return {
       success: true,
       recordId: record.id,
+      record,
     };
   } catch (error) {
     console.error('[importWatchRecording] Import failed:', error);
