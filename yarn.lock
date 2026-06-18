@@ -2514,6 +2514,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@formatjs/bigdecimal@npm:0.2.6":
+  version: 0.2.6
+  resolution: "@formatjs/bigdecimal@npm:0.2.6"
+  checksum: 10c0/8e39a52ffd77bb6ed877e044d16a8dc4282ab940b0d10caeaf94ba7db9a0b56e7440fc56caee369915d5614cff2116cb6ad46a199a53f2caa1b3b1735f808307
+  languageName: node
+  linkType: hard
+
 "@formatjs/fast-memoize@npm:3.1.6, @formatjs/fast-memoize@npm:^3.1.0":
   version: 3.1.6
   resolution: "@formatjs/fast-memoize@npm:3.1.6"
@@ -2537,12 +2544,48 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formatjs/intl-localematcher@npm:^0.8.1":
+"@formatjs/intl-getcanonicallocales@npm:3.2.10, @formatjs/intl-getcanonicallocales@npm:^3.2.10":
+  version: 3.2.10
+  resolution: "@formatjs/intl-getcanonicallocales@npm:3.2.10"
+  checksum: 10c0/16d39fe94efd57dd4d1b261115892c86d0c230e921ee402153f7c1e87b833aee678f44ff31d10c436c59b081f95ebf8d70324c1ba83fd99543d84e66dfa1fba3
+  languageName: node
+  linkType: hard
+
+"@formatjs/intl-locale@npm:^5.3.9":
+  version: 5.3.9
+  resolution: "@formatjs/intl-locale@npm:5.3.9"
+  dependencies:
+    "@formatjs/intl-getcanonicallocales": "npm:3.2.10"
+    "@formatjs/intl-supportedvaluesof": "npm:2.3.8"
+  checksum: 10c0/f8233900c3777badfad67a60a4ba92e4d6b1b26d669410041bbd70471573cd7565f5af38403033e2a30bbddda561159463720a9af4ff2f4cad4f3ec32815000a
+  languageName: node
+  linkType: hard
+
+"@formatjs/intl-localematcher@npm:0.8.10, @formatjs/intl-localematcher@npm:^0.8.1":
   version: 0.8.10
   resolution: "@formatjs/intl-localematcher@npm:0.8.10"
   dependencies:
     "@formatjs/fast-memoize": "npm:3.1.6"
   checksum: 10c0/49a38b45d618de0ce857d62208e41af4c043a90d739a10828cb0a1e57c88c1ad28c27905ce57246ae5aa1c66834276a42665320d8294b01607d0e46b229d4a71
+  languageName: node
+  linkType: hard
+
+"@formatjs/intl-numberformat@npm:^9.3.11":
+  version: 9.3.11
+  resolution: "@formatjs/intl-numberformat@npm:9.3.11"
+  dependencies:
+    "@formatjs/bigdecimal": "npm:0.2.6"
+    "@formatjs/intl-localematcher": "npm:0.8.10"
+  checksum: 10c0/645864cff17f650488e69c68c1206889f09fde52c57445c5d9d049a5737d420a99d2e827f002e1f65c856694d9e945f61c92840444f0c6486b55cbd6980a59b5
+  languageName: node
+  linkType: hard
+
+"@formatjs/intl-supportedvaluesof@npm:2.3.8":
+  version: 2.3.8
+  resolution: "@formatjs/intl-supportedvaluesof@npm:2.3.8"
+  dependencies:
+    "@formatjs/fast-memoize": "npm:3.1.6"
+  checksum: 10c0/4c84b70c48ddd47c86087666b8dd7524f263cbbe8825341745db2416441907b6354509f3439a08f373f374442c8abc1e1d53662c2a6d8ef7a5e7385be10e1619
   languageName: node
   linkType: hard
 
@@ -18343,6 +18386,9 @@ __metadata:
     "@babel/runtime": "npm:^7.29.2"
     "@callstack/liquid-glass": "npm:^0.8.0"
     "@eslint/js": "npm:^9.39.4"
+    "@formatjs/intl-getcanonicallocales": "npm:^3.2.10"
+    "@formatjs/intl-locale": "npm:^5.3.9"
+    "@formatjs/intl-numberformat": "npm:^9.3.11"
     "@gorhom/bottom-sheet": "npm:^5.2.14"
     "@notifee/react-native": "npm:^9.1.8"
     "@op-engineering/op-sqlite": "npm:^16.2.0"

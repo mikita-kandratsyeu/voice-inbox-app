@@ -26,13 +26,12 @@ import {
   syncProLicenseRevenueCatOnServer,
 } from '@/shared/lib/ai-api/proLicenseApi';
 import { diagWarn } from '@/shared/lib/appLogger';
-import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
-
 import {
   resolveDerivedIapPriceString,
   resolveIapPriceString,
   resolveScaledIapPriceString,
-} from './iapStorePriceString';
+} from '@/shared/lib/intl/formatIapCurrency';
+import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 
 function trimEnv(v: string | undefined): string {
   return (v ?? '').trim();

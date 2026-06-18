@@ -1,3 +1,4 @@
+import '@/shared/lib/intl/setupIntlNumberFormatPolyfill';
 import '@/features/model-manager/lib/recoverInterruptedWhisperDownloads';
 
 import { getMessaging, setBackgroundMessageHandler } from '@react-native-firebase/messaging';
