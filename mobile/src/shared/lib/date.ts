@@ -14,7 +14,7 @@ export const resolveDayjsLocale = (locale: string | null | undefined): 'en' | 'r
 };
 
 export const RU_WEEKDAY_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] as const;
-export const EN_WEEKDAY_SHORT = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const;
+export const EN_WEEKDAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
 
 export function formatWeekdayShort(date: dayjs.Dayjs, locale: string | null | undefined): string {
   const resolved = resolveDayjsLocale(locale);

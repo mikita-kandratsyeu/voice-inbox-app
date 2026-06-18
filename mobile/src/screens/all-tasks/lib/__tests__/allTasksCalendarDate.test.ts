@@ -31,7 +31,7 @@ describe('allTasksCalendarDate', () => {
 
     it('uses compact English weekday labels', () => {
       const tuesday = dayjs('2026-06-09').locale('en');
-      expect(formatWeekdayShort(tuesday, 'en')).toBe('Tu');
+      expect(formatWeekdayShort(tuesday, 'en')).toBe('Tue');
     });
   });
 
