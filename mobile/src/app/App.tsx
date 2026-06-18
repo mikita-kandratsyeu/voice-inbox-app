@@ -53,9 +53,10 @@ import {
 } from '@/shared/lib/push';
 import { WarmupBottomSheet } from '@/shared/ui';
 
-import { flushPendingRecordModalNavigation, useInitDeepLinking } from './deep-linking';
+import { useInitDeepLinking } from './deep-linking';
 import { handlePushNotification } from './model/pushNavigationHandler';
 import { openTaskDeadlineRecord } from './model/taskDeadlineNavigationHandler';
+import { flushDeferredNavigation } from './navigation/deferredNavigation';
 import { navigationRef } from './navigation/navigationRef';
 import { RootNavigator } from './navigation/RootNavigator';
 
@@ -146,7 +147,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
                   ref={navigationRef}
                   onReady={() => {
                     routeNameRef.current = navigationRef.getCurrentRoute()?.name;
-                    flushPendingRecordModalNavigation();
+                    flushDeferredNavigation();
                     flushPendingSharedAudioImport();
                   }}
                   onStateChange={() => {

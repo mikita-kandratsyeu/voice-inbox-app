@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import { runNavigationWhenUnlocked } from '@/app/navigation/deferredNavigation';
 import { navigationRef } from '@/app/navigation/navigationRef';
 import { diagWarn } from '@/shared/lib/appLogger';
 
@@ -17,17 +18,16 @@ export const useDownloadingDeeplink = () => {
     }
 
     try {
-      if (!navigationRef.isReady()) {
-        return;
-      }
-      navigationRef.navigate('Main', {
-        screen: 'SettingsRoot',
-        params: {
-          state: {
-            routes: [{ name: 'Settings' }, { name: settingsScreen }],
-            index: 1,
+      runNavigationWhenUnlocked(() => {
+        navigationRef.navigate('Main', {
+          screen: 'SettingsRoot',
+          params: {
+            state: {
+              routes: [{ name: 'Settings' }, { name: settingsScreen }],
+              index: 1,
+            },
           },
-        },
+        });
       });
     } catch (e) {
       diagWarn('[useDownloadingDeeplink] failed to handle deeplink', e);

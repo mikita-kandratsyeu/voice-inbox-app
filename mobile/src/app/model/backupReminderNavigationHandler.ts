@@ -1,3 +1,4 @@
+import { runNavigationWhenUnlocked } from '@/app/navigation/deferredNavigation';
 import {
   createBackupReminderNotificationPressHandler,
   handleBackupReminderNotificationData,
@@ -7,13 +8,13 @@ import { navigationRef } from '../navigation/navigationRef';
 
 const backupReminderNotificationPressDeps = {
   navigateToBackupSettings: () => {
-    if (!navigationRef.isReady()) return;
-
-    navigationRef.navigate('Main', {
-      screen: 'SettingsRoot',
-      params: {
-        screen: 'Settings',
-      },
+    runNavigationWhenUnlocked(() => {
+      navigationRef.navigate('Main', {
+        screen: 'SettingsRoot',
+        params: {
+          screen: 'Settings',
+        },
+      });
     });
   },
 };

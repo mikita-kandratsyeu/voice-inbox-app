@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { Linking } from 'react-native';
 
+import { runNavigationWhenUnlocked } from '@/app/navigation/deferredNavigation';
 import { navigationRef } from '@/app/navigation/navigationRef';
 import { useDownloadingDeeplink } from '@/features/downloading-deeplink';
 import { isAudioImportDeepLinkUrl } from '@/features/import-audio-file/lib/isAudioDeepLink';
@@ -35,41 +36,6 @@ const tryParseAllTasksDeepLink = (rawUrl: string): { recordId?: string } | null 
   return { recordId };
 };
 
-const pendingRecordModalOpenRef = { current: false };
-const pendingTextNoteModalOpenRef = { current: false };
-const pendingAllTasksOpenRef = { current: false };
-const pendingAllTasksRecordIdRef = { current: null as string | null };
-const pendingInAppEventIdRef = { current: null as string | null };
-
-export const flushPendingRecordModalNavigation = () => {
-  if (!navigationRef.isReady()) {
-    return;
-  }
-
-  if (pendingRecordModalOpenRef.current) {
-    pendingRecordModalOpenRef.current = false;
-    navigationRef.navigate('RecordModal');
-  }
-
-  if (pendingTextNoteModalOpenRef.current) {
-    pendingTextNoteModalOpenRef.current = false;
-    navigationRef.navigate('TextNoteModal');
-  }
-
-  if (pendingAllTasksOpenRef.current) {
-    pendingAllTasksOpenRef.current = false;
-    const recordId = pendingAllTasksRecordIdRef.current ?? undefined;
-    pendingAllTasksRecordIdRef.current = null;
-    navigationRef.navigate('AllTasks', recordId ? { recordId } : undefined);
-  }
-
-  if (pendingInAppEventIdRef.current) {
-    const eventId = pendingInAppEventIdRef.current;
-    pendingInAppEventIdRef.current = null;
-    navigationRef.navigate('InAppEventDetail', { eventId });
-  }
-};
-
 export const useInitDeepLinking = () => {
   const { handleRecordingDeeplink } = useRecordingDeeplink();
   const { handleDownloadingDeeplink } = useDownloadingDeeplink();
@@ -82,11 +48,9 @@ export const useInitDeepLinking = () => {
       return true;
     }
 
-    if (navigationRef.isReady()) {
+    runNavigationWhenUnlocked(() => {
       navigationRef.navigate('RecordModal');
-    } else {
-      pendingRecordModalOpenRef.current = true;
-    }
+    });
     return true;
   }, []);
 
@@ -98,11 +62,9 @@ export const useInitDeepLinking = () => {
       return true;
     }
 
-    if (navigationRef.isReady()) {
+    runNavigationWhenUnlocked(() => {
       navigationRef.navigate('TextNoteModal');
-    } else {
-      pendingTextNoteModalOpenRef.current = true;
-    }
+    });
     return true;
   }, []);
 
@@ -117,12 +79,9 @@ export const useInitDeepLinking = () => {
       return true;
     }
 
-    if (navigationRef.isReady()) {
+    runNavigationWhenUnlocked(() => {
       navigationRef.navigate('AllTasks', recordId ? { recordId } : undefined);
-    } else {
-      pendingAllTasksOpenRef.current = true;
-      pendingAllTasksRecordIdRef.current = recordId ?? null;
-    }
+    });
     return true;
   }, []);
 
@@ -134,11 +93,9 @@ export const useInitDeepLinking = () => {
       return true;
     }
 
-    if (navigationRef.isReady()) {
+    runNavigationWhenUnlocked(() => {
       navigationRef.navigate('InAppEventDetail', { eventId });
-    } else {
-      pendingInAppEventIdRef.current = eventId;
-    }
+    });
     return true;
   }, []);
 

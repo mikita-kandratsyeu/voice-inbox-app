@@ -1,3 +1,4 @@
+import { runNavigationWhenUnlocked } from '@/app/navigation/deferredNavigation';
 import { useRecordStore } from '@/entities/record';
 import {
   createRecordingStoppedByAppLockNotificationPressHandler,
@@ -8,15 +9,15 @@ import { navigationRef } from '../navigation/navigationRef';
 
 const recordingStoppedByAppLockNotificationPressDeps = {
   navigateToRecord: (recordId: string) => {
-    if (!navigationRef.isReady()) return;
+    runNavigationWhenUnlocked(() => {
+      const record = useRecordStore.getState().records.find((item) => item.id === recordId);
+      if (record) {
+        navigationRef.navigate('RecordingDetail', { record });
+        return;
+      }
 
-    const record = useRecordStore.getState().records.find((item) => item.id === recordId);
-    if (record) {
-      navigationRef.navigate('RecordingDetail', { record });
-      return;
-    }
-
-    navigationRef.navigate('Main');
+      navigationRef.navigate('Main');
+    });
   },
 };
 

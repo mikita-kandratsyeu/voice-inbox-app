@@ -1,3 +1,4 @@
+import { runNavigationWhenUnlocked } from '@/app/navigation/deferredNavigation';
 import { useRecordStore } from '@/entities/record';
 import {
   createTaskDeadlineNotificationPressHandler,
@@ -9,22 +10,23 @@ import { useTaskDeadlineActionSheet } from '@/features/task-deadline-notificatio
 import { navigationRef } from '../navigation/navigationRef';
 
 function navigateToRecord(recordId: string): void {
-  if (!navigationRef.isReady()) return;
+  runNavigationWhenUnlocked(() => {
+    const record = useRecordStore.getState().records.find((item) => item.id === recordId);
+    if (record) {
+      navigationRef.navigate('RecordingDetail', { record });
+      return;
+    }
 
-  const record = useRecordStore.getState().records.find((item) => item.id === recordId);
-  if (record) {
-    navigationRef.navigate('RecordingDetail', { record });
-    return;
-  }
-
-  navigationRef.navigate('Main');
+    navigationRef.navigate('Main');
+  });
 }
 
 const taskDeadlineNotificationPressDeps = {
   navigateToRecord,
   navigateToAllTasks: () => {
-    if (!navigationRef.isReady()) return;
-    navigationRef.navigate('AllTasks');
+    runNavigationWhenUnlocked(() => {
+      navigationRef.navigate('AllTasks');
+    });
   },
   openActionSheet: (payload: TaskDeadlineSheetPayload) => {
     useTaskDeadlineActionSheet.getState().show(payload);

@@ -1,6 +1,7 @@
 import React, { useEffect, useSyncExternalStore } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
+import { flushDeferredNavigation } from '@/app/navigation/deferredNavigation';
 import { getPinHashNeedsReset, useAppLockStore } from '@/entities/app-lock';
 import { storage } from '@/shared/lib/async-storage';
 
@@ -39,6 +40,12 @@ export const AppLockGate = ({ children }: AppLockGateProps) => {
 
     return () => sub.remove();
   }, [isEnabled, lock]);
+
+  useEffect(() => {
+    if (isEnabled && !isLocked) {
+      flushDeferredNavigation();
+    }
+  }, [isEnabled, isLocked]);
 
   if (isEnabled && pinHashNeedsReset) {
     return <PinHashMigrationScreen />;
