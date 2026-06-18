@@ -1921,6 +1921,15 @@
     "confirmPin": "Confirm {{digits}}-digit PIN",
     "pinLengthTitle": "PIN length",
     "pinLengthOption": "{{digits}} digits",
+    "requireLockTitle": "Require lock",
+    "requireLockPickerTitle": "Require lock",
+    "requireLockPickerMessage": "Choose how soon to ask again when you return from another app. Opening the app fresh always requires your PIN or biometrics.",
+    "requireLockOption": {
+      "0": "Immediately",
+      "60000": "After 1 minute",
+      "300000": "After 5 minutes",
+      "900000": "After 15 minutes"
+    },
     "migration": {
       "title": "Security update",
       "enterCurrent": "Enter your current PIN to continue",

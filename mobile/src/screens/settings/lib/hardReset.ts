@@ -1,7 +1,10 @@
 import { IOS_DOCUMENT_PATH, IOS_LIBRARY_PATH } from '@op-engineering/op-sqlite';
 import * as Keychain from 'react-native-keychain';
 
-import { DEFAULT_PIN_LENGTH } from '@/entities/app-lock/model/constants';
+import {
+  DEFAULT_APP_LOCK_GRACE_PERIOD_MS,
+  DEFAULT_PIN_LENGTH,
+} from '@/entities/app-lock/model/constants';
 import { useAppLockStore } from '@/entities/app-lock/model/store';
 import { useFolderStore } from '@/entities/folder/model/store';
 import { useRecordStore } from '@/entities/record/model/store';
@@ -96,6 +99,7 @@ export async function performHardReset(): Promise<void> {
     useBiometrics: false,
     isLocked: false,
     pinLength: DEFAULT_PIN_LENGTH,
+    lockGracePeriodMs: DEFAULT_APP_LOCK_GRACE_PERIOD_MS,
     biometryType: null,
   });
   useSettingsStore.setState({

@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import { Fingerprint, ScanFace } from 'lucide-react-native';
+import { Clock3, Fingerprint, ScanFace } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
@@ -14,6 +14,7 @@ import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 import { getSettingsIconColor } from '../lib/settingsIconColor';
+import { AppLockGracePeriodSheet } from './AppLockGracePeriodSheet';
 
 type SetupStep = 'confirm' | 'initial';
 
@@ -30,14 +31,17 @@ export const AppLockSetupScreen = () => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [gracePeriodSheetVisible, setGracePeriodSheetVisible] = useState(false);
 
   const {
     isEnabled,
     useBiometrics,
     pinLength,
+    lockGracePeriodMs,
     setEnabled,
     setUseBiometrics,
     setPinLength,
+    setLockGracePeriodMs,
     setPin: savePin,
     checkBiometryAvailable,
     biometryType,
@@ -129,13 +133,29 @@ export const AppLockSetupScreen = () => {
     [biometryType, setUseBiometrics],
   );
 
+  const handleGracePeriodPress = useCallback(() => {
+    setGracePeriodSheetVisible(true);
+  }, []);
+
+  const handleGracePeriodSheetClose = useCallback(() => {
+    setGracePeriodSheetVisible(false);
+  }, []);
+
+  const handleGracePeriodSelect = useCallback(
+    (value: typeof lockGracePeriodMs) => {
+      setLockGracePeriodMs(value);
+      setGracePeriodSheetVisible(false);
+    },
+    [setLockGracePeriodMs],
+  );
+
   const bioLabel = biometryType
     ? t(`appLock.biometry.${biometryType}` as 'appLock.biometry.FaceID') || biometryType
     : t('common.biometrics');
   const isFaceBiometry =
     biometryType === 'FaceID' || biometryType === 'Face' || biometryType === 'OpticID';
   const BioIcon = isFaceBiometry ? ScanFace : Fingerprint;
-  const bioIconColor = getSettingsIconColor(color, isFaceBiometry ? 'scanFace' : 'fingerprint');
+  const bioIconColor = getSettingsIconColor(color, 'scanFace');
 
   const pinLengthLocked = step !== 'initial';
 
@@ -281,6 +301,19 @@ export const AppLockSetupScreen = () => {
                 showChevron={false}
                 onPress={undefined}
                 isFirst
+              />
+              <SettingsRow
+                label={t('appLock.requireLockTitle')}
+                value={t(`appLock.requireLockOption.${lockGracePeriodMs}`)}
+                leftIcon={
+                  <Clock3
+                    size={20}
+                    color={getSettingsIconColor(color, 'calendarClock')}
+                    strokeWidth={1.8}
+                  />
+                }
+                onPress={handleGracePeriodPress}
+                showChevron
                 isLast={!biometryType}
               />
               {biometryType ? (
@@ -308,6 +341,12 @@ export const AppLockSetupScreen = () => {
             </SettingsSection>
           )}
         </ScrollView>
+        <AppLockGracePeriodSheet
+          visible={gracePeriodSheetVisible}
+          selectedMs={lockGracePeriodMs}
+          onSelect={handleGracePeriodSelect}
+          onClose={handleGracePeriodSheetClose}
+        />
       </View>
     </View>
   );
