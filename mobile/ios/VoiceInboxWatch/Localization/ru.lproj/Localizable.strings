@@ -7,6 +7,7 @@
 "watch.record.connecting" = "Подключите iPhone";
 "watch.record.install_required" = "Установите приложение на iPhone";
 "watch.record.recording" = "Идёт запись...";
+"watch.record.tap_hint" = "Коснитесь, чтобы записать";
 "watch.record.queue_count" = "%d в очереди";
 
 /* Watch App - Queue Tab */
@@ -14,6 +15,8 @@
 "watch.queue.title" = "Очередь";
 "watch.queue.empty" = "Нет записей";
 "watch.queue.retry" = "Повторить";
+"watch.queue.delete" = "Удалить";
+"watch.queue.detail_title" = "Запись";
 
 /* Watch App - Tasks Tab */
 "watch.tasks.tab" = "Задачи";
@@ -25,6 +28,13 @@
 "watch.notes.tab" = "Заметки";
 "watch.notes.title" = "Заметки";
 "watch.notes.empty" = "Нет недавних заметок";
+"watch.notes.sync_required" = "Подключите iPhone для синхронизации";
+
+/* Watch App - Dates */
+"watch.date.today" = "Сегодня";
+"watch.date.tomorrow" = "Завтра";
+"watch.date.today_time" = "Сегодня, %@";
+"watch.date.yesterday_time" = "Вчера, %@";
 
 /* Watch App - Sync States */
 "watch.sync.pending" = "Ожидает";

@@ -49,6 +49,10 @@ class PendingRecordingStore: ObservableObject {
         recordings.filter { $0.syncState == .pending || $0.syncState == .failed }
     }
 
+    func getRetryableRecordings() -> [PendingRecording] {
+        recordings.filter { $0.syncState == .pending || $0.syncState == .failed || $0.syncState == .syncing }
+    }
+
     private func load() {
         guard FileManager.default.fileExists(atPath: storeURL.path) else {
             recordings = []

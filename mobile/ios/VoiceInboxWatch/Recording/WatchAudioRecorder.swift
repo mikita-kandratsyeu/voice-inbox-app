@@ -5,6 +5,7 @@ import Foundation
 class WatchAudioRecorder: NSObject, ObservableObject {
     @Published var isRecording = false
     @Published var currentDuration: TimeInterval = 0
+    @Published var audioLevel: Float = 0
 
     private var audioRecorder: AVAudioRecorder?
     private var recordingURL: URL?
@@ -49,17 +50,20 @@ class WatchAudioRecorder: NSObject, ObservableObject {
         do {
             audioRecorder = try AVAudioRecorder(url: recordingURL!, settings: settings)
             audioRecorder?.delegate = self
+            audioRecorder?.isMeteringEnabled = true
             audioRecorder?.record()
 
             isRecording = true
             currentDuration = 0
+            audioLevel = 0
 
-            timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+            timer = Timer.scheduledTimer(withTimeInterval: 0.08, repeats: true) { [weak self] _ in
                 guard let self = self else { return }
                 self.currentDuration = self.audioRecorder?.currentTime ?? 0
+                self.updateAudioLevel()
 
                 if self.currentDuration >= self.maxRecordingDuration {
-                    self.stopRecording()
+                    _ = self.stopRecording()
                 }
             }
 
@@ -80,6 +84,7 @@ class WatchAudioRecorder: NSObject, ObservableObject {
         let duration = currentDuration
         isRecording = false
         currentDuration = 0
+        audioLevel = 0
 
         let recording = PendingRecording(
             id: id,
@@ -94,6 +99,19 @@ class WatchAudioRecorder: NSObject, ObservableObject {
         recordingId = nil
 
         return recording
+    }
+
+    private func updateAudioLevel() {
+        guard let audioRecorder else {
+            audioLevel = 0
+            return
+        }
+
+        audioRecorder.updateMeters()
+        let power = audioRecorder.averagePower(forChannel: 0)
+        // Voice input typically sits between roughly -50 dB and -10 dB.
+        let normalized = (power + 50) / 40
+        audioLevel = max(0, min(1, normalized))
     }
 }
 

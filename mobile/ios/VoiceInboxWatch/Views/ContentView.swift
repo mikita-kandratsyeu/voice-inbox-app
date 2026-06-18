@@ -7,22 +7,34 @@ struct ContentView: View {
         TabView {
             RecordView()
                 .tabItem {
-                    Label("Record", systemImage: "mic.fill")
+                    Label(
+                        NSLocalizedString("watch.record.tab", comment: ""),
+                        systemImage: "mic.fill"
+                    )
                 }
 
             RecordingsQueueView()
                 .tabItem {
-                    Label("Queue", systemImage: "list.bullet")
+                    Label(
+                        NSLocalizedString("watch.queue.tab", comment: ""),
+                        systemImage: "list.bullet"
+                    )
                 }
 
             TasksView()
                 .tabItem {
-                    Label("Tasks", systemImage: "checkmark.circle")
+                    Label(
+                        NSLocalizedString("watch.tasks.tab", comment: ""),
+                        systemImage: "checkmark.circle"
+                    )
                 }
 
             NotesView()
                 .tabItem {
-                    Label("Notes", systemImage: "note.text")
+                    Label(
+                        NSLocalizedString("watch.notes.tab", comment: ""),
+                        systemImage: "note.text"
+                    )
                 }
         }
     }

@@ -12,6 +12,10 @@ class WatchSessionManager: NSObject, ObservableObject {
 
     private let store = PendingRecordingStore.shared
     private var session: WCSession?
+    private var reconcileTimer: Timer?
+
+    private let syncTimeout: TimeInterval = 90
+    private let maxTransferAttempts = 3
 
     private override init() {
         super.init()
@@ -48,14 +52,18 @@ class WatchSessionManager: NSObject, ObservableObject {
 
         var updatedRecording = recording
         updatedRecording.syncState = .syncing
+        updatedRecording.transferStartedAt = Date()
         store.update(updatedRecording)
+        startReconcileTimerIfNeeded()
 
         session.transferFile(fileURL, metadata: metadata)
         print("Enqueued file transfer: \(recording.id)")
     }
 
     func flushPendingTransfers() {
-        let pending = store.getPendingRecordings()
+        reconcileStuckTransfers()
+
+        let pending = store.getRetryableRecordings()
         for recording in pending {
             enqueueTransfer(recording)
         }
@@ -80,8 +88,85 @@ class WatchSessionManager: NSObject, ObservableObject {
     func retryFailedTransfer(_ recording: PendingRecording) {
         var updatedRecording = recording
         updatedRecording.syncState = .pending
+        updatedRecording.transferStartedAt = nil
+        updatedRecording.transferAttempts = 0
         store.update(updatedRecording)
         enqueueTransfer(updatedRecording)
+    }
+
+    func reconcileStuckTransfers() {
+        let now = Date()
+        var didChange = false
+
+        for recording in store.recordings {
+            guard recording.syncState == .syncing else { continue }
+
+            let startedAt = recording.transferStartedAt ?? recording.createdAt
+            guard now.timeIntervalSince(startedAt) >= syncTimeout else { continue }
+
+            var updated = recording
+            if updated.transferAttempts + 1 >= maxTransferAttempts {
+                updated.syncState = .failed
+                updated.transferStartedAt = nil
+                print("Transfer timed out for \(recording.id), marking failed")
+            } else {
+                updated.syncState = .pending
+                updated.transferAttempts += 1
+                updated.transferStartedAt = nil
+                print("Transfer timed out for \(recording.id), retry \(updated.transferAttempts)")
+            }
+
+            store.update(updated)
+            didChange = true
+        }
+
+        if didChange {
+            let retryable = store.getRetryableRecordings()
+            for recording in retryable where recording.syncState == .pending {
+                enqueueTransfer(recording)
+            }
+        }
+
+        startReconcileTimerIfNeeded()
+    }
+
+    private func startReconcileTimerIfNeeded() {
+        let hasSyncing = store.recordings.contains { $0.syncState == .syncing }
+
+        if hasSyncing {
+            if reconcileTimer == nil {
+                reconcileTimer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
+                    self?.reconcileStuckTransfers()
+                }
+            }
+        } else {
+            reconcileTimer?.invalidate()
+            reconcileTimer = nil
+        }
+    }
+
+    private func handleSyncResult(watchRecordingId: String, status: String) {
+        guard let recording = store.recordings.first(where: { $0.id == watchRecordingId }) else {
+            return
+        }
+
+        var updated = recording
+        updated.syncState = status == "success" ? .synced : .failed
+        updated.transferStartedAt = nil
+        store.update(updated)
+        print("Sync result for \(watchRecordingId): \(status)")
+
+        if status == "success" {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                guard let self else { return }
+                if let current = self.store.recordings.first(where: { $0.id == watchRecordingId }),
+                   current.syncState == .synced {
+                    self.store.remove(current)
+                }
+            }
+        }
+
+        startReconcileTimerIfNeeded()
     }
 }
 
@@ -136,7 +221,6 @@ extension WatchSessionManager: WCSessionDelegate {
     }
 
     func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
-        // Handle sync result from iPhone
         guard let type = userInfo["type"] as? String, type == "syncResult" else {
             return
         }
@@ -147,12 +231,7 @@ extension WatchSessionManager: WCSessionDelegate {
         }
 
         DispatchQueue.main.async {
-            if let recording = self.store.recordings.first(where: { $0.id == watchRecordingId }) {
-                var updated = recording
-                updated.syncState = status == "success" ? .synced : .failed
-                self.store.update(updated)
-                print("Sync result for \(watchRecordingId): \(status)")
-            }
+            self.handleSyncResult(watchRecordingId: watchRecordingId, status: status)
         }
     }
 
@@ -168,10 +247,11 @@ extension WatchSessionManager: WCSessionDelegate {
                     print("File transfer failed: \(error)")
                     var updated = recording
                     updated.syncState = .failed
+                    updated.transferStartedAt = nil
                     self.store.update(updated)
+                    self.startReconcileTimerIfNeeded()
                 } else {
                     print("File transfer completed: \(watchRecordingId)")
-                    // Keep as .syncing until we get syncResult from iPhone
                 }
             }
         }

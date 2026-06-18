@@ -37,7 +37,7 @@ function buildTodayTasks(records: RecordListItem[]): WatchTask[] {
     recordId: row.recordId,
     text: row.task.text,
     isCompleted: row.task.isDone,
-    dueDate: row.task.deadline ? dayjs(row.task.deadline).format('MMM D') : null,
+    dueDate: row.task.deadline ? dayjs(row.task.deadline).format('YYYY-MM-DD') : null,
   }));
 }
 

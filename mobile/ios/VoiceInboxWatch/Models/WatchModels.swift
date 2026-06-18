@@ -8,12 +8,43 @@ struct PendingRecording: Codable, Identifiable {
     let durationSeconds: Double
     let fileName: String
     var syncState: SyncState
+    var transferStartedAt: Date?
+    var transferAttempts: Int
 
     enum SyncState: String, Codable {
         case pending
         case syncing
         case synced
         case failed
+    }
+
+    init(
+        id: String,
+        createdAt: Date,
+        durationSeconds: Double,
+        fileName: String,
+        syncState: SyncState,
+        transferStartedAt: Date? = nil,
+        transferAttempts: Int = 0
+    ) {
+        self.id = id
+        self.createdAt = createdAt
+        self.durationSeconds = durationSeconds
+        self.fileName = fileName
+        self.syncState = syncState
+        self.transferStartedAt = transferStartedAt
+        self.transferAttempts = transferAttempts
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        durationSeconds = try container.decode(Double.self, forKey: .durationSeconds)
+        fileName = try container.decode(String.self, forKey: .fileName)
+        syncState = try container.decode(SyncState.self, forKey: .syncState)
+        transferStartedAt = try container.decodeIfPresent(Date.self, forKey: .transferStartedAt)
+        transferAttempts = try container.decodeIfPresent(Int.self, forKey: .transferAttempts) ?? 0
     }
 }
 

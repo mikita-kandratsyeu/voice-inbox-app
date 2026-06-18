@@ -11,34 +11,37 @@ struct RecordingsQueueView: View {
                     VStack(spacing: 12) {
                         Image(systemName: "tray")
                             .font(.system(size: 40))
-                            .foregroundColor(.secondary)
-                        Text("No recordings")
+                            .foregroundStyle(.secondary)
+                        Text(NSLocalizedString("watch.queue.empty", comment: ""))
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 } else {
                     List {
                         ForEach(store.recordings) { recording in
-                            RecordingRow(recording: recording)
+                            NavigationLink(value: recording.id) {
+                                RecordingRow(recording: recording)
+                            }
                         }
-                        .onDelete(perform: deleteRecordings)
+                    }
+                    .navigationDestination(for: String.self) { recordingId in
+                        if let recording = store.recordings.first(where: { $0.id == recordingId }) {
+                            RecordingQueueDetailView(recording: recording)
+                        }
                     }
                 }
             }
-            .navigationTitle("Queue")
-        }
-    }
-
-    private func deleteRecordings(at offsets: IndexSet) {
-        for index in offsets {
-            store.remove(store.recordings[index])
+            .navigationTitle(NSLocalizedString("watch.queue.title", comment: ""))
+            .onAppear {
+                sessionManager.reconcileStuckTransfers()
+                sessionManager.flushPendingTransfers()
+            }
         }
     }
 }
 
 struct RecordingRow: View {
     let recording: PendingRecording
-    @EnvironmentObject var sessionManager: WatchSessionManager
 
     var body: some View {
         HStack {
@@ -48,22 +51,12 @@ struct RecordingRow: View {
 
                 Text(formatDate(recording.createdAt))
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
 
             Spacer()
 
             statusView
-        }
-        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            if recording.syncState == .failed {
-                Button {
-                    sessionManager.retryFailedTransfer(recording)
-                } label: {
-                    Label("Retry", systemImage: "arrow.clockwise")
-                }
-                .tint(.blue)
-            }
         }
     }
 
@@ -72,15 +65,15 @@ struct RecordingRow: View {
         switch recording.syncState {
         case .pending:
             Image(systemName: "clock")
-                .foregroundColor(.orange)
+                .foregroundStyle(.orange)
         case .syncing:
             ProgressView()
         case .synced:
             Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(.green)
+                .foregroundStyle(.green)
         case .failed:
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundColor(.red)
+                .foregroundStyle(.red)
         }
     }
 
@@ -91,9 +84,91 @@ struct RecordingRow: View {
     }
 
     private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
+        WatchDateFormatting.displayDateTime(date)
+    }
+}
+
+struct RecordingQueueDetailView: View {
+    let recording: PendingRecording
+
+    @EnvironmentObject var sessionManager: WatchSessionManager
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var store = PendingRecordingStore.shared
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(formatDuration(recording.durationSeconds))
+                        .font(.title2.bold())
+
+                    Text(formatDate(recording.createdAt))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+
+                    statusLabel
+                }
+
+                if recording.syncState == .failed || recording.syncState == .syncing {
+                    Button {
+                        sessionManager.retryFailedTransfer(recording)
+                        dismiss()
+                    } label: {
+                        Label(
+                            NSLocalizedString("watch.queue.retry", comment: ""),
+                            systemImage: "arrow.clockwise"
+                        )
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.blue)
+                }
+
+                Button(role: .destructive) {
+                    store.remove(recording)
+                    dismiss()
+                } label: {
+                    Label(
+                        NSLocalizedString("watch.queue.delete", comment: ""),
+                        systemImage: "trash"
+                    )
+                }
+                .buttonStyle(.bordered)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 4)
+        }
+        .navigationTitle(NSLocalizedString("watch.queue.detail_title", comment: ""))
+    }
+
+    @ViewBuilder
+    private var statusLabel: some View {
+        switch recording.syncState {
+        case .pending:
+            Label(NSLocalizedString("watch.sync.pending", comment: ""), systemImage: "clock")
+                .font(.caption)
+                .foregroundStyle(.orange)
+        case .syncing:
+            Label(NSLocalizedString("watch.sync.syncing", comment: ""), systemImage: "arrow.triangle.2.circlepath")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        case .synced:
+            Label(NSLocalizedString("watch.sync.synced", comment: ""), systemImage: "checkmark.circle.fill")
+                .font(.caption)
+                .foregroundStyle(.green)
+        case .failed:
+            Label(NSLocalizedString("watch.sync.failed", comment: ""), systemImage: "exclamationmark.triangle.fill")
+                .font(.caption)
+                .foregroundStyle(.red)
+        }
+    }
+
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let minutes = Int(duration) / 60
+        let seconds = Int(duration) % 60
+        return String(format: "%d:%02d", minutes, seconds)
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        WatchDateFormatting.displayDateTime(date)
     }
 }

@@ -13,31 +13,48 @@ import { importWatchRecording } from '../lib/importWatchRecording';
 import type { OpenNoteCommand, ToggleTaskCommand } from '../lib/watchPayload';
 import { RecordingMetadataSchema, WatchCommandSchema } from '../lib/watchPayload';
 
+function sendSyncResult(
+  watchRecordingId: string,
+  status: 'success' | 'error',
+  recordId?: string,
+): void {
+  transferUserInfo({
+    type: 'syncResult',
+    watchRecordingId,
+    status,
+    ...(recordId ? { recordId } : {}),
+  });
+}
+
 export function useWatchInbound() {
   const unsubRef = useRef<Array<() => void>>([]);
   const processedIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const fileUnsub = watchEvents.on('file', async (event) => {
+      let watchRecordingId: string | undefined;
+
       try {
-        if (!getHasSeenOnboarding()) {
+        const metadata = RecordingMetadataSchema.parse(event.metadata);
+        watchRecordingId = metadata.watchRecordingId;
+
+        if (processedIdsRef.current.has(metadata.watchRecordingId)) {
+          sendSyncResult(metadata.watchRecordingId, 'success');
           return;
         }
 
-        const metadata = RecordingMetadataSchema.parse(event.metadata);
-
-        if (processedIdsRef.current.has(metadata.watchRecordingId)) {
+        if (!getHasSeenOnboarding()) {
+          sendSyncResult(metadata.watchRecordingId, 'error');
           return;
         }
 
         const result = await importWatchRecording(event.uri, metadata);
 
-        transferUserInfo({
-          type: 'syncResult',
-          watchRecordingId: metadata.watchRecordingId,
-          status: result.success ? 'success' : 'error',
-          recordId: result.recordId,
-        });
+        sendSyncResult(
+          metadata.watchRecordingId,
+          result.success ? 'success' : 'error',
+          result.recordId,
+        );
 
         if (result.success && result.record) {
           await finalizeWatchRecordingImport(result.record);
@@ -59,6 +76,9 @@ export function useWatchInbound() {
         }
       } catch (error) {
         console.error('[WatchInbound] File handler error:', error);
+        if (watchRecordingId) {
+          sendSyncResult(watchRecordingId, 'error');
+        }
       }
     });
 

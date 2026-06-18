@@ -8,7 +8,7 @@ struct NotesView: View {
             Group {
                 if let snapshot = sessionManager.snapshot {
                     if snapshot.recentNotes.isEmpty {
-                        emptyState
+                        emptyState(message: NSLocalizedString("watch.notes.empty", comment: ""))
                     } else {
                         List {
                             ForEach(snapshot.recentNotes) { note in
@@ -19,21 +19,22 @@ struct NotesView: View {
                         }
                     }
                 } else {
-                    emptyState
+                    emptyState(message: NSLocalizedString("watch.notes.sync_required", comment: ""))
                 }
             }
-            .navigationTitle("Notes")
+            .navigationTitle(NSLocalizedString("watch.notes.title", comment: ""))
         }
     }
 
-    private var emptyState: some View {
+    private func emptyState(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "note.text")
                 .font(.system(size: 40))
-                .foregroundColor(.secondary)
-            Text("No recent notes")
+                .foregroundStyle(.secondary)
+            Text(message)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         }
     }
 
@@ -61,28 +62,18 @@ struct NoteRow: View {
                 if !note.summary.isEmpty {
                     Text(note.summary)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(3)
                 }
 
-                Text(formatDate(note.createdAt))
+                Text(WatchDateFormatting.displayFromISO(note.createdAt))
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .buttonStyle(.plain)
-    }
-
-    private func formatDate(_ dateString: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        guard let date = formatter.date(from: dateString) else {
-            return dateString
-        }
-
-        let displayFormatter = DateFormatter()
-        displayFormatter.dateStyle = .short
-        displayFormatter.timeStyle = .short
-        return displayFormatter.string(from: date)
     }
 }

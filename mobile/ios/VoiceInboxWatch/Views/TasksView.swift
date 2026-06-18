@@ -9,7 +9,7 @@ struct TasksView: View {
             Group {
                 if let snapshot = sessionManager.snapshot {
                     if snapshot.tasksToday.isEmpty {
-                        emptyState(message: "No tasks for today")
+                        emptyState(message: NSLocalizedString("watch.tasks.empty", comment: ""))
                     } else {
                         List {
                             ForEach(snapshot.tasksToday) { task in
@@ -24,10 +24,10 @@ struct TasksView: View {
                         }
                     }
                 } else {
-                    emptyState(message: "Connect iPhone to sync")
+                    emptyState(message: NSLocalizedString("watch.tasks.sync_required", comment: ""))
                 }
             }
-            .navigationTitle("Today")
+            .navigationTitle(NSLocalizedString("watch.tasks.title", comment: ""))
         }
     }
 
@@ -35,10 +35,11 @@ struct TasksView: View {
         VStack(spacing: 12) {
             Image(systemName: "checkmark.circle")
                 .font(.system(size: 40))
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             Text(message)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         }
     }
 
@@ -68,22 +69,22 @@ struct TaskRow: View {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: effectiveCompleted ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 20))
-                    .foregroundColor(effectiveCompleted ? .green : .gray)
+                    .foregroundStyle(effectiveCompleted ? .green : .gray)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(task.text)
                         .font(.body)
                         .strikethrough(effectiveCompleted)
-                        .foregroundColor(effectiveCompleted ? .secondary : .primary)
+                        .foregroundStyle(effectiveCompleted ? .secondary : .primary)
 
                     if let dueDate = task.dueDate {
-                        Text(dueDate)
+                        Text(WatchDateFormatting.displayDueFromPayload(dueDate))
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
-                Spacer()
+                Spacer(minLength: 0)
             }
         }
         .buttonStyle(.plain)

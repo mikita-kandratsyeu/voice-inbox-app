@@ -124,13 +124,13 @@ describe('buildWatchSnapshot', () => {
     expect(snapshot.recentNotes[0].summary).toBe('This is transcript text');
   });
 
-  it('should include task due date formatted as "MMM D"', () => {
+  it('should include task due date as ISO day', () => {
     const today = new Date().toISOString().slice(0, 10);
     const records = [mockRecordWithTask('rec1', 'Task', today)];
 
     const snapshot = buildWatchSnapshot(records);
 
-    expect(snapshot.tasksToday[0]?.dueDate).toMatch(/^[A-Z][a-z]{2} \d{1,2}$/);
+    expect(snapshot.tasksToday[0]?.dueDate).toBe(today);
   });
 
   it('should handle records without tasks or summary', () => {

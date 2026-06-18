@@ -7,6 +7,7 @@
 "watch.record.connecting" = "Connect to iPhone";
 "watch.record.install_required" = "Install app on iPhone";
 "watch.record.recording" = "Recording...";
+"watch.record.tap_hint" = "Tap to record";
 "watch.record.queue_count" = "%d in queue";
 
 /* Watch App - Queue Tab */
@@ -14,6 +15,8 @@
 "watch.queue.title" = "Queue";
 "watch.queue.empty" = "No recordings";
 "watch.queue.retry" = "Retry";
+"watch.queue.delete" = "Delete";
+"watch.queue.detail_title" = "Recording";
 
 /* Watch App - Tasks Tab */
 "watch.tasks.tab" = "Tasks";
@@ -25,6 +28,13 @@
 "watch.notes.tab" = "Notes";
 "watch.notes.title" = "Notes";
 "watch.notes.empty" = "No recent notes";
+"watch.notes.sync_required" = "Connect iPhone to sync";
+
+/* Watch App - Dates */
+"watch.date.today" = "Today";
+"watch.date.tomorrow" = "Tomorrow";
+"watch.date.today_time" = "Today, %@";
+"watch.date.yesterday_time" = "Yesterday, %@";
 
 /* Watch App - Sync States */
 "watch.sync.pending" = "Pending";
