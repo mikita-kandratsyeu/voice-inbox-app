@@ -194,7 +194,7 @@ export const AppLockSetupScreen = () => {
 
               <SettingsSection title={t('appLock.pinLengthTitle')}>
                 <View
-                  className="flex-row flex-wrap items-center justify-center gap-2 px-4 py-3.5"
+                  className="flex-row flex-wrap items-center gap-2 px-4 py-3.5"
                   style={{
                     backgroundColor: color.background.card,
                     opacity: pinLengthLocked ? 0.5 : 1,

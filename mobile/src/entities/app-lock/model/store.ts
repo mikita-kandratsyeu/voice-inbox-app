@@ -21,6 +21,7 @@ import {
   type AppLockGracePeriodMs,
   DEFAULT_APP_LOCK_GRACE_PERIOD_MS,
   DEFAULT_PIN_LENGTH,
+  PIN_LENGTH_OPTIONS,
 } from './constants';
 import type { AppLockState, BiometryType } from './types';
 
@@ -32,10 +33,15 @@ const KEYS = {
 
 const getStoredEnabled = (): boolean => storage.getBoolean(KEYS.ENABLED) ?? false;
 const getStoredUseBiometrics = (): boolean => storage.getBoolean(KEYS.USE_BIOMETRICS) ?? true;
-const getStoredPinLength = (): number => {
-  const value = storage.getNumber(KEYS.PIN_LENGTH);
-  return value === 6 ? 6 : DEFAULT_PIN_LENGTH;
+const normalizePinLength = (value: number | undefined): number => {
+  if (value != null && (PIN_LENGTH_OPTIONS as readonly number[]).includes(value)) {
+    return value;
+  }
+
+  return DEFAULT_PIN_LENGTH;
 };
+
+const getStoredPinLength = (): number => normalizePinLength(storage.getNumber(KEYS.PIN_LENGTH));
 const getStoredLockGracePeriodMs = (): AppLockGracePeriodMs =>
   normalizeAppLockGracePeriodMs(storage.getNumber(APP_LOCK_GRACE_PERIOD_STORAGE_KEY));
 
@@ -90,7 +96,7 @@ export const useAppLockStore = create<AppLockState>((set, get) => ({
   },
 
   setPinLength: (length) => {
-    const nextLength = length === 6 ? 6 : DEFAULT_PIN_LENGTH;
+    const nextLength = normalizePinLength(length);
     storage.set(KEYS.PIN_LENGTH, nextLength);
     set({ pinLength: nextLength });
   },
