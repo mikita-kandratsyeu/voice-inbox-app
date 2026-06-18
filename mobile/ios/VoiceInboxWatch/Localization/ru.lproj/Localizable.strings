@@ -1,0 +1,33 @@
+/* Watch App - General */
+"watch.app.name" = "Voice Inbox";
+
+/* Watch App - Record Tab */
+"watch.record.tab" = "Запись";
+"watch.record.title" = "Запись";
+"watch.record.connecting" = "Подключите iPhone";
+"watch.record.install_required" = "Установите приложение на iPhone";
+"watch.record.recording" = "Идёт запись...";
+"watch.record.queue_count" = "%d в очереди";
+
+/* Watch App - Queue Tab */
+"watch.queue.tab" = "Очередь";
+"watch.queue.title" = "Очередь";
+"watch.queue.empty" = "Нет записей";
+"watch.queue.retry" = "Повторить";
+
+/* Watch App - Tasks Tab */
+"watch.tasks.tab" = "Задачи";
+"watch.tasks.title" = "Сегодня";
+"watch.tasks.empty" = "Нет задач на сегодня";
+"watch.tasks.sync_required" = "Подключите iPhone для синхронизации";
+
+/* Watch App - Notes Tab */
+"watch.notes.tab" = "Заметки";
+"watch.notes.title" = "Заметки";
+"watch.notes.empty" = "Нет недавних заметок";
+
+/* Watch App - Sync States */
+"watch.sync.pending" = "Ожидает";
+"watch.sync.syncing" = "Синхронизация";
+"watch.sync.synced" = "Синхронизировано";
+"watch.sync.failed" = "Ошибка";

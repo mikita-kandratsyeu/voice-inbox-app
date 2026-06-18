@@ -2950,5 +2950,10 @@
     "dbErrorTitle": "Could not load data",
     "dbErrorMessage": "Your data is likely intact. Please restart the app.",
     "dbErrorRestart": "OK"
+  },
+  "watch": {
+    "import": {
+      "defaultTitle": "Watch note"
+    }
   }
 }

@@ -15974,6 +15974,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-watch-connectivity@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "react-native-watch-connectivity@npm:2.0.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/e5841a16dd82d8cc5a80d9fd4fd03d440f09a6abde33775c33a72be1754e913c9940ad385b2a24a7a7cb5d4471044a6ea7f60dc422c5cba0178fb366453f94da
+  languageName: node
+  linkType: hard
+
 "react-native-webview@npm:^13.16.1":
   version: 13.16.1
   resolution: "react-native-webview@npm:13.16.1"
@@ -18693,6 +18703,7 @@ __metadata:
     react-native-screens: "npm:^4.25.2"
     react-native-svg: "npm:^15.15.3"
     react-native-view-shot: "npm:^5.1.0"
+    react-native-watch-connectivity: "npm:^2.0.0"
     react-native-webview: "npm:^13.16.1"
     react-native-worklets: "npm:^0.8.3"
     react-native-zip-archive: "npm:8.0.1"

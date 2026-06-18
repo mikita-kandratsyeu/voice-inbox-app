@@ -1,0 +1,33 @@
+/* Watch App - General */
+"watch.app.name" = "Voice Inbox";
+
+/* Watch App - Record Tab */
+"watch.record.tab" = "Record";
+"watch.record.title" = "Record";
+"watch.record.connecting" = "Connect to iPhone";
+"watch.record.install_required" = "Install app on iPhone";
+"watch.record.recording" = "Recording...";
+"watch.record.queue_count" = "%d in queue";
+
+/* Watch App - Queue Tab */
+"watch.queue.tab" = "Queue";
+"watch.queue.title" = "Queue";
+"watch.queue.empty" = "No recordings";
+"watch.queue.retry" = "Retry";
+
+/* Watch App - Tasks Tab */
+"watch.tasks.tab" = "Tasks";
+"watch.tasks.title" = "Today";
+"watch.tasks.empty" = "No tasks for today";
+"watch.tasks.sync_required" = "Connect iPhone to sync";
+
+/* Watch App - Notes Tab */
+"watch.notes.tab" = "Notes";
+"watch.notes.title" = "Notes";
+"watch.notes.empty" = "No recent notes";
+
+/* Watch App - Sync States */
+"watch.sync.pending" = "Pending";
+"watch.sync.syncing" = "Syncing";
+"watch.sync.synced" = "Synced";
+"watch.sync.failed" = "Failed";
