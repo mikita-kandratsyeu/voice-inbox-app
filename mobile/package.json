@@ -110,6 +110,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.6",
+    "@babel/plugin-transform-class-static-block": "^8.0.1",
     "@babel/plugin-transform-export-namespace-from": "^7.27.1",
     "@babel/preset-env": "^7.29.5",
     "@babel/runtime": "^7.29.2",
