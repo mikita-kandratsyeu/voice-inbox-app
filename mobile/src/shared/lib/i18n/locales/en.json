@@ -1903,7 +1903,7 @@
     "unlockError": "Failed to unlock. Try entering your PIN.",
     "tryAgainIn": "Try again in {{seconds}} sec",
     "backspace": "Backspace",
-    "biometricPromptTitle": "Unlock Voice Inbox AI",
+    "biometricPromptTitle": "Unlock the app.",
     "disableTitle": "Disable lock",
     "disableMessage": "The app will no longer ask for PIN on launch.",
     "disable": "Disable",

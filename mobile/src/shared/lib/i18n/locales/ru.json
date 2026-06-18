@@ -1947,7 +1947,7 @@
     "unlockError": "Не удалось разблокировать. Попробуйте ввести PIN-код.",
     "tryAgainIn": "Попробуйте снова через {{seconds}} сек",
     "backspace": "Удалить цифру",
-    "biometricPromptTitle": "Разблокируйте Voice Inbox AI",
+    "biometricPromptTitle": "Разблокируйте приложение.",
     "disableTitle": "Отключить блокировку",
     "disableMessage": "Приложение больше не будет запрашивать PIN при входе.",
     "disable": "Отключить",
