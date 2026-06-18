@@ -1209,9 +1209,6 @@ export const NotesGraphScreenBody = () => {
             folderHighlightsVisible={folderHighlightsVisible}
             minimapVisible={minimapVisible}
           />
-          {isCapturingExport && !exportSheetVisible ? (
-            <GraphBuildingState label={t('notesGraph.export.capturingPreview')} />
-          ) : null}
         </View>
       )}
 
@@ -1294,6 +1291,10 @@ export const NotesGraphScreenBody = () => {
             onClose={handleSearchCleared}
           />
         </KeyboardStickyView>
+      ) : null}
+
+      {isCapturingExport && !exportSheetVisible ? (
+        <GraphBuildingState label={t('notesGraph.export.capturingPreview')} />
       ) : null}
     </View>
   );
