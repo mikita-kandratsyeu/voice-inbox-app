@@ -288,6 +288,27 @@ PODS:
     - ReactNativeDependencies
     - Yoga
   - iosMath (0.9.4)
+  - LiquidGlass (0.8.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - llama-rn (0.12.4):
     - hermes-engine
     - RCTRequired
@@ -317,9 +338,9 @@ PODS:
     - nanopb/encode (= 3.30910.0)
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
-  - NitroDeviceInfo (1.7.1):
+  - NitroDeviceInfo (1.8.0):
     - NitroModules
-  - NitroFetch (1.4.0):
+  - NitroFetch (1.4.1):
     - hermes-engine
     - NitroModules
     - RCTRequired
@@ -3159,6 +3180,7 @@ DEPENDENCIES:
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - HtmlToPdf (from `../node_modules/react-native-html-to-pdf`)
   - InappbrowserNitro (from `../node_modules/react-native-inappbrowser-nitro`)
+  - "LiquidGlass (from `../node_modules/@callstack/liquid-glass`)"
   - llama-rn (from `../node_modules/llama.rn`)
   - NitroDeviceInfo (from `../node_modules/react-native-nitro-device-info`)
   - NitroFetch (from `../node_modules/react-native-nitro-fetch`)
@@ -3344,6 +3366,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-html-to-pdf"
   InappbrowserNitro:
     :path: "../node_modules/react-native-inappbrowser-nitro"
+  LiquidGlass:
+    :path: "../node_modules/@callstack/liquid-glass"
   llama-rn:
     :path: "../node_modules/llama.rn"
   NitroDeviceInfo:
@@ -3630,11 +3654,12 @@ SPEC CHECKSUMS:
   HtmlToPdf: ec9d25cbf1ba0cedf6c05afe4edcfd3e63dcc21c
   InappbrowserNitro: e4e4ba49eb5e0cb1b6ed7ffe0224bfcaf5bd8d28
   iosMath: f7a6cbadf9d836d2149c2a84c435b1effc244cba
+  LiquidGlass: 5466190fb4b1f0468386cdf51b1a7652ab3d0ea9
   llama-rn: e4c793546113ee1247f32d2e0ae8b321be7bff60
   MMKVCore: 3d16ce9f7d411e135020915fde98a056859a1efa
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
-  NitroDeviceInfo: 2b461fd75ed6fdeba99d920fc1d88cbe8006d645
-  NitroFetch: f360c5aa1302e4c381b18af6f1941370d0d12b78
+  NitroDeviceInfo: 87c71a4fc33faf71bf616789dda68d9bc60d1e4d
+  NitroFetch: 2c40e4f5b5f391d6ed4bdcadeec42e160a4cbc27
   NitroFS: 671a78596568ba42758ff3ca8cbd8c2fa3b43486
   NitroMmkv: 21968ae5bd91f4569b8a69b2e75357845dac2ca1
   NitroModules: 675efe9b98bac1359517fd33549c7191badebcbc

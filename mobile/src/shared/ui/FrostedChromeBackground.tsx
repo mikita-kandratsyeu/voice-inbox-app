@@ -1,3 +1,4 @@
+import { isLiquidGlassSupported, LiquidGlassView } from '@callstack/liquid-glass';
 import { BlurView } from '@react-native-community/blur';
 import React from 'react';
 import { type StyleProp, View, type ViewStyle } from 'react-native';
@@ -27,6 +28,27 @@ export type FrostedChromeBackgroundProps = {
   borderBottomRightRadius?: number;
 };
 
+type ChromeShellProps = {
+  shell: StyleProp<ViewStyle>;
+  children: React.ReactNode;
+};
+
+function ChromeShell({ shell, children }: ChromeShellProps) {
+  return (
+    <View pointerEvents="none" style={shell}>
+      {children}
+    </View>
+  );
+}
+
+type OpaqueChromeFillProps = {
+  backgroundColor: string;
+};
+
+function OpaqueChromeFill({ backgroundColor }: OpaqueChromeFillProps) {
+  return <View pointerEvents="none" style={[ABSOLUTE_FILL, { backgroundColor }]} />;
+}
+
 export function FrostedChromeBackground({
   style,
   borderRadius,
@@ -51,24 +73,29 @@ export function FrostedChromeBackground({
 
   const shell: StyleProp<ViewStyle> = [ABSOLUTE_FILL, radiusStyle, { overflow: 'hidden' }, style];
 
+  const opaqueFillColor = withAlphaHex(color.background.primary, ANDROID_FILL_OPACITY);
+
+  if (isLiquidGlassSupported) {
+    return (
+      <LiquidGlassView
+        pointerEvents="none"
+        style={shell}
+        effect="regular"
+        colorScheme={isDark ? 'dark' : 'light'}
+      />
+    );
+  }
+
   if (!IS_IOS) {
     return (
-      <View pointerEvents="none" style={shell}>
-        <View
-          pointerEvents="none"
-          style={[
-            ABSOLUTE_FILL,
-            {
-              backgroundColor: withAlphaHex(color.background.primary, ANDROID_FILL_OPACITY),
-            },
-          ]}
-        />
-      </View>
+      <ChromeShell shell={shell}>
+        <OpaqueChromeFill backgroundColor={opaqueFillColor} />
+      </ChromeShell>
     );
   }
 
   return (
-    <View pointerEvents="none" style={shell}>
+    <ChromeShell shell={shell}>
       <BlurView
         style={ABSOLUTE_FILL}
         blurType={isDark ? 'dark' : 'light'}
@@ -87,6 +114,6 @@ export function FrostedChromeBackground({
           },
         ]}
       />
-    </View>
+    </ChromeShell>
   );
 }

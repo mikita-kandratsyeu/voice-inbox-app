@@ -1485,6 +1485,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@callstack/liquid-glass@npm:^0.8.0":
+  version: 0.8.0
+  resolution: "@callstack/liquid-glass@npm:0.8.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/95e504bc49e8ecd919eb6fa29992e7fdfa0e33d9815816317814e86530b4acd80f4317327e7da4d2f8c910aaf0eaccc856bdcc574c61c1f780806d19d966338d
+  languageName: node
+  linkType: hard
+
 "@craftzdog/react-native-buffer@npm:^6.1.2":
   version: 6.1.2
   resolution: "@craftzdog/react-native-buffer@npm:6.1.2"
@@ -15496,31 +15506,33 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-nitro-device-info@npm:^1.7.1":
-  version: 1.7.1
-  resolution: "react-native-nitro-device-info@npm:1.7.1"
+"react-native-nitro-device-info@npm:^1.8.0":
+  version: 1.8.0
+  resolution: "react-native-nitro-device-info@npm:1.8.0"
   peerDependencies:
     react: "*"
     react-native: "*"
     react-native-nitro-modules: ">=0.35.0 <1.0.0"
-  checksum: 10c0/e8844f9048bb72f345999aec3f22ff714abb3797f6fdc4eb26212a1e738e54757c6517f7935f883939dfeecfec43f679349a861c7a8a9a6f4d420f10cf1e40b0
+  bin:
+    react-native-nitro-device-info: bin/migrate.js
+  checksum: 10c0/6f1610ac2348552ce174792bfb0b69723066af262df5cbe8cba05e2667857625784e3afe01a3acb081eb08befb6120d5917f63b439b76123ded7e5d79c148931
   languageName: node
   linkType: hard
 
-"react-native-nitro-fetch@npm:^1.3.2":
-  version: 1.4.0
-  resolution: "react-native-nitro-fetch@npm:1.4.0"
+"react-native-nitro-fetch@npm:^1.4.1":
+  version: 1.4.1
+  resolution: "react-native-nitro-fetch@npm:1.4.1"
   dependencies:
     web-streams-polyfill: "npm:^4.2.0"
   peerDependencies:
     react: "*"
     react-native: "*"
     react-native-nitro-modules: ^0.35.2
-    react-native-worklets: ^0.8.0
+    react-native-worklets: ">=0.8.0"
   peerDependenciesMeta:
     react-native-worklets:
       optional: true
-  checksum: 10c0/585b0ec3f5a4b1825c18fcb8b3125037eab35af99ec3f799035bf8f01a340bf50b2fc4964fb7e9066c21e0b7bd024c5d4277e741a3e16de4d5f9f1dab768d669
+  checksum: 10c0/b5fa61d431c28b3d160abeb8d72a23862c3685c5a4cc4d5201f8d98e502a623f65172fb6e056ec9f7879b7ddafdaa57a8a6659154f067f96bb7041f8e0981021
   languageName: node
   linkType: hard
 
@@ -18329,6 +18341,7 @@ __metadata:
     "@babel/plugin-transform-export-namespace-from": "npm:^7.27.1"
     "@babel/preset-env": "npm:^7.29.5"
     "@babel/runtime": "npm:^7.29.2"
+    "@callstack/liquid-glass": "npm:^0.8.0"
     "@eslint/js": "npm:^9.39.4"
     "@gorhom/bottom-sheet": "npm:^5.2.14"
     "@notifee/react-native": "npm:^9.1.8"
@@ -18417,8 +18430,8 @@ __metadata:
     react-native-keychain: "npm:^10.0.0"
     react-native-localize: "npm:^3.7.0"
     react-native-mmkv: "npm:^4.3.1"
-    react-native-nitro-device-info: "npm:^1.7.1"
-    react-native-nitro-fetch: "npm:^1.3.2"
+    react-native-nitro-device-info: "npm:^1.8.0"
+    react-native-nitro-fetch: "npm:^1.4.1"
     react-native-nitro-fs: "npm:^0.9.0"
     react-native-nitro-modules: "npm:^0.35.9"
     react-native-nitro-sound: "npm:^0.2.15"
