@@ -3121,6 +3121,27 @@ PODS:
     - SSZipArchive (~> 2.5.5)
     - Yoga
   - SSZipArchive (2.5.5)
+  - WatchConnectivity (2.0.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - whisper-rn (0.6.0):
     - hermes-engine
     - RCTRequired
@@ -3299,6 +3320,7 @@ DEPENDENCIES:
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
   - RNZipArchive (from `../node_modules/react-native-zip-archive`)
+  - WatchConnectivity (from `../node_modules/react-native-watch-connectivity`)
   - whisper-rn (from `../node_modules/whisper.rn`)
   - yandex-mobile-ads (from `../node_modules/yandex-mobile-ads`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
@@ -3602,6 +3624,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-worklets"
   RNZipArchive:
     :path: "../node_modules/react-native-zip-archive"
+  WatchConnectivity:
+    :path: "../node_modules/react-native-watch-connectivity"
   whisper-rn:
     :path: "../node_modules/whisper.rn"
   yandex-mobile-ads:
@@ -3780,6 +3804,7 @@ SPEC CHECKSUMS:
   RNWorklets: ee6814ab289ae916049337d50d241baba955933a
   RNZipArchive: 071aee69059e0347cb7519c5354aa436b8a23e73
   SSZipArchive: c69881e8ac5521f0e622291387add5f60f30f3c4
+  WatchConnectivity: 20a91bc474a97787b0744d9eb28f5923ca3d324d
   whisper-rn: 2e0c586294fbc0c00e5ad4bbdbb8394c2fc902d0
   yandex-mobile-ads: 0338956981fccce8200e11b57852f207d6809119
   YandexMobileAds: 47d9d0ce6705e79e3801138e8c1d9898e4c79a51
