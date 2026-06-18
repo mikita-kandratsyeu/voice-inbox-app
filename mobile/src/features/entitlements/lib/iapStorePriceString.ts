@@ -41,6 +41,27 @@ function findPriceNumberSpan(
   };
 }
 
+function resolveGroupingSeparator(
+  core: string,
+  compactCore: string,
+  decimalSep: ',' | '.' | null,
+): string | null {
+  if (decimalSep != null) {
+    const intPartRaw = core.split(decimalSep)[0] ?? core;
+    if (/[\s\u00a0\u202f]/.test(intPartRaw) && /\d[\s\u00a0\u202f]\d{3}/.test(intPartRaw)) {
+      return ' ';
+    }
+  }
+
+  if (decimalSep === ',') {
+    return compactCore.includes('.') ? '.' : '.';
+  }
+  if (decimalSep === '.') {
+    return compactCore.includes(',') ? ',' : ',';
+  }
+  return null;
+}
+
 function formatAmountLikeTemplate(amount: number, template: string): string {
   const leading = template.match(/^[\s\u00a0\u202f]*/)?.[0] ?? '';
   const trailing = template.match(/[\s\u00a0\u202f]*$/)?.[0] ?? '';
@@ -59,7 +80,7 @@ function formatAmountLikeTemplate(amount: number, template: string): string {
     decimalSep = '.';
   }
 
-  const groupingSep = decimalSep === ',' ? '.' : decimalSep === '.' ? ',' : null;
+  const groupingSep = resolveGroupingSeparator(core, compactCore, decimalSep);
 
   let fractionDigits = 0;
   if (decimalSep != null) {
@@ -67,7 +88,9 @@ function formatAmountLikeTemplate(amount: number, template: string): string {
     fractionDigits = fractionPart.replace(/\D/g, '').length;
   }
 
-  const templateHasGrouping = groupingSep != null && compactCore.includes(groupingSep);
+  const templateHasGrouping =
+    groupingSep != null &&
+    (groupingSep === ' ' ? /[\s\u00a0\u202f]/.test(core) : compactCore.includes(groupingSep));
   const rounded = fractionDigits > 0 ? amount.toFixed(fractionDigits) : String(Math.round(amount));
   const [intPart, fracPart = ''] = rounded.split('.');
 
@@ -126,9 +149,13 @@ export function resolveScaledIapPriceString(
   referencePriceString: string | null | undefined,
   targetAmount: number,
   currencyCode: string,
+  layoutReferencePriceString?: string | null | undefined,
 ): string | null {
-  const raw = referencePriceString?.trim();
-  if (raw) {
+  for (const candidate of [layoutReferencePriceString, referencePriceString]) {
+    const raw = candidate?.trim();
+    if (!raw) {
+      continue;
+    }
     const scaled = formatIapAmountLikeStorePrice(raw, targetAmount);
     if (scaled) {
       return scaled;

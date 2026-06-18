@@ -347,6 +347,7 @@ export async function getProBillingPriceOptions(): Promise<IapBillingOptions> {
           o.monthly?.product?.priceString,
           yearAtMonthlyRate,
           monthlyCurrency,
+          o.annual?.product?.priceString,
         );
         const pct = Math.round((1 - ap / yearAtMonthlyRate) * 100);
         savePercentVsMonthly = pct >= 1 ? pct : null;

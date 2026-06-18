@@ -45,9 +45,10 @@ describe('iapStorePriceString', () => {
       // United Kingdom — prefix £
       ['United Kingdom annual compare-at', '£9.99', 119.88, '£119.88'],
 
-      // Russia — suffix ₽, comma decimals, dot thousands when scaled
-      ['Russia annual compare-at', '449,00 ₽', 5388, '5.388,00 ₽'],
-      ['Russia annual per-month equivalent', '449,00 ₽', 37.42, '37,42 ₽'],
+      // Russia — suffix ₽, comma decimals, space thousands when scaled
+      ['Russia annual compare-at from monthly template', '449,00 ₽', 5388, '5.388,00 ₽'],
+      ['Russia annual compare-at from annual template', '2 490,00 ₽', 5388, '5 388,00 ₽'],
+      ['Russia annual per-month equivalent', '2 490,00 ₽', 207.5, '207,50 ₽'],
 
       // Japan — integer yen, no fractional digits
       ['Japan annual compare-at', '¥1200', 14400, '¥14400'],
@@ -104,11 +105,11 @@ describe('iapStorePriceString', () => {
       ],
       [
         'Russia — ₽ layout beats RUB ISO in per-month string',
-        '449,00 ₽',
-        37.42,
-        '37,42 RUB',
+        '2 490,00 ₽',
+        207.5,
+        '207,50 RUB',
         'RUB',
-        '37,42 ₽',
+        '207,50 ₽',
       ],
       [
         'Ukraine — ₴ layout beats UAH ISO in per-month string',
@@ -161,6 +162,10 @@ describe('iapStorePriceString', () => {
         expect(resolveScaledIapPriceString(monthly, yearAmount, currency)).toBe(expected);
       },
     );
+
+    it('uses annual store layout for Russian space thousands in compare-at', () => {
+      expect(resolveScaledIapPriceString('449,00 ₽', 5388, 'RUB', '2 490,00 ₽')).toBe('5 388,00 ₽');
+    });
 
     it('falls back to Intl when the monthly template is missing', () => {
       expect(resolveScaledIapPriceString(null, 119.88, 'USD')).toBe('$119.88');
