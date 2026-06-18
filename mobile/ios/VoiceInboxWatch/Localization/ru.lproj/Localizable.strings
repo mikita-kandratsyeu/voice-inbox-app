@@ -7,7 +7,7 @@
 "watch.record.connecting" = "Подключите iPhone";
 "watch.record.install_required" = "Установите приложение на iPhone";
 "watch.record.recording" = "Идёт запись...";
-"watch.record.tap_hint" = "Коснитесь, чтобы записать";
+"watch.record.tap_hint" = "Нажмите\nдля записи";
 "watch.record.queue_count" = "%d в очереди";
 
 /* Watch App - Queue Tab */

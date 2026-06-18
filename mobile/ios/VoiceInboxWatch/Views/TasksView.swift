@@ -76,6 +76,9 @@ struct TaskRow: View {
                         .font(.body)
                         .strikethrough(effectiveCompleted)
                         .foregroundStyle(effectiveCompleted ? .secondary : .primary)
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.85)
+                        .multilineTextAlignment(.leading)
 
                     if let dueDate = task.dueDate {
                         Text(WatchDateFormatting.displayDueFromPayload(dueDate))

@@ -146,11 +146,17 @@ struct RecordActionButton: View {
                     )
                     .shadow(color: accentColor.opacity(isRecording ? 0.5 : 0.32), radius: isRecording ? 12 : 9)
 
-                Image(systemName: isRecording ? "stop.fill" : "mic.fill")
-                    .font(.system(size: isRecording ? 24 : 28, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .contentTransition(.symbolEffect(.replace))
-                    .symbolEffect(.pulse, options: .repeating, isActive: isRecording)
+                ZStack {
+                    VoiceWaveformIcon(size: 26, color: .white, lineWidth: 2.4)
+                        .opacity(isRecording ? 0 : 1)
+
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .opacity(isRecording ? 1 : 0)
+                        .symbolEffect(.pulse, options: .repeating, isActive: isRecording)
+                }
+                .animation(.easeInOut(duration: 0.2), value: isRecording)
             }
             .frame(width: 120, height: 120)
         }

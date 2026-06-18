@@ -58,12 +58,16 @@ struct NoteRow: View {
                 Text(note.title)
                     .font(.headline)
                     .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .multilineTextAlignment(.leading)
 
                 if !note.summary.isEmpty {
                     Text(note.summary)
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .lineLimit(3)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
+                        .multilineTextAlignment(.leading)
                 }
 
                 Text(WatchDateFormatting.displayFromISO(note.createdAt))

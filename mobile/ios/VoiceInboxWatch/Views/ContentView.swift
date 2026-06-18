@@ -2,40 +2,30 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var sessionManager: WatchSessionManager
+    @State private var selectedTab: WatchTab = .record
 
     var body: some View {
-        TabView {
+        ZStack(alignment: .bottom) {
+            WatchTabScaffold {
+                tabContent
+            }
+
+            WatchTabBar(selectedTab: $selectedTab)
+        }
+        .background(Color.black)
+    }
+
+    @ViewBuilder
+    private var tabContent: some View {
+        switch selectedTab {
+        case .record:
             RecordView()
-                .tabItem {
-                    Label(
-                        NSLocalizedString("watch.record.tab", comment: ""),
-                        systemImage: "mic.fill"
-                    )
-                }
-
+        case .queue:
             RecordingsQueueView()
-                .tabItem {
-                    Label(
-                        NSLocalizedString("watch.queue.tab", comment: ""),
-                        systemImage: "list.bullet"
-                    )
-                }
-
+        case .tasks:
             TasksView()
-                .tabItem {
-                    Label(
-                        NSLocalizedString("watch.tasks.tab", comment: ""),
-                        systemImage: "checkmark.circle"
-                    )
-                }
-
+        case .notes:
             NotesView()
-                .tabItem {
-                    Label(
-                        NSLocalizedString("watch.notes.tab", comment: ""),
-                        systemImage: "note.text"
-                    )
-                }
         }
     }
 }

@@ -2,10 +2,10 @@ import SwiftUI
 import WatchKit
 
 private enum RecordLayout {
-    static let meterHeight: CGFloat = 40
-    static let statusHeight: CGFloat = 54
-    static let buttonSize: CGFloat = 120
-    static let sectionSpacing: CGFloat = 10
+    static let meterHeight: CGFloat = 36
+    static let statusHeight: CGFloat = 62
+    static let buttonSize: CGFloat = 112
+    static let sectionSpacing: CGFloat = 8
 }
 
 struct RecordView: View {
@@ -102,12 +102,13 @@ struct RecordView: View {
                 .transition(.opacity)
             } else {
                 Text(NSLocalizedString("watch.record.tap_hint", comment: ""))
-                    .font(.footnote.weight(.medium))
+                    .font(.caption.weight(.medium))
                     .foregroundStyle(.white.opacity(0.78))
                     .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.85)
-                    .padding(.horizontal, 6)
+                    .lineLimit(3)
+                    .minimumScaleFactor(0.8)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 4)
                     .transition(.opacity)
             }
         }
