@@ -26,8 +26,13 @@ import {
   syncProLicenseRevenueCatOnServer,
 } from '@/shared/lib/ai-api/proLicenseApi';
 import { diagWarn } from '@/shared/lib/appLogger';
-import { i18n } from '@/shared/lib/i18n';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
+
+import {
+  resolveDerivedIapPriceString,
+  resolveIapPriceString,
+  resolveScaledIapPriceString,
+} from './iapStorePriceString';
 
 function trimEnv(v: string | undefined): string {
   return (v ?? '').trim();
@@ -154,30 +159,6 @@ export type IapBillingOptions = {
   savePercentVsMonthly: number | null;
 };
 
-function intlLocaleForIapPrices(): string {
-  const raw = (i18n.language ?? 'en').toLowerCase();
-
-  if (raw.startsWith('ru')) return 'ru-RU';
-
-  return 'en-US';
-}
-
-function formatIapCurrencyAmount(amount: number, currencyCode: string): string | null {
-  const code = (currencyCode ?? '').trim().toUpperCase();
-  if (!code || !Number.isFinite(amount)) {
-    return null;
-  }
-  try {
-    return new Intl.NumberFormat(intlLocaleForIapPrices(), {
-      style: 'currency',
-      currency: code,
-      currencyDisplay: 'narrowSymbol',
-    }).format(amount);
-  } catch {
-    return null;
-  }
-}
-
 function introFreeFromIntro(
   intro: PurchasesIntroPrice | null | undefined,
 ): IapIntroFreePeriod | null {
@@ -203,9 +184,11 @@ function billingRowFromProduct(
     return null;
   }
 
-  const rawMain = product.priceString?.trim();
-  const formattedMain = formatIapCurrencyAmount(product.price, product.currencyCode);
-  const priceString = formattedMain ?? rawMain;
+  const priceString = resolveIapPriceString(
+    product.priceString,
+    product.price,
+    product.currencyCode,
+  );
 
   if (!priceString) {
     return null;
@@ -223,9 +206,12 @@ function billingRowFromProduct(
           ? product.price / 12
           : null;
     if (perMonthNum != null) {
-      const formatted = formatIapCurrencyAmount(perMonthNum, product.currencyCode);
-      const rawPer = product.pricePerMonthString?.trim();
-      pricePerMonthString = formatted ?? (rawPer && rawPer.length > 0 ? rawPer : null);
+      pricePerMonthString = resolveDerivedIapPriceString(
+        priceString,
+        perMonthNum,
+        product.pricePerMonthString,
+        product.currencyCode,
+      );
     }
   }
 
@@ -357,7 +343,8 @@ export async function getProBillingPriceOptions(): Promise<IapBillingOptions> {
       const yearAtMonthlyRate = mp * 12;
 
       if (ap < yearAtMonthlyRate) {
-        annualComparedToMonthlyYearPriceString = formatIapCurrencyAmount(
+        annualComparedToMonthlyYearPriceString = resolveScaledIapPriceString(
+          o.monthly?.product?.priceString,
           yearAtMonthlyRate,
           monthlyCurrency,
         );
@@ -504,8 +491,11 @@ export async function getAiLimitResetProduct(): Promise<AiLimitResetProduct | nu
       return null;
     }
 
-    const formatted = formatIapCurrencyAmount(product.price, product.currencyCode);
-    const priceString = formatted ?? product.priceString?.trim();
+    const priceString = resolveIapPriceString(
+      product.priceString,
+      product.price,
+      product.currencyCode,
+    );
     if (!priceString) {
       return null;
     }
