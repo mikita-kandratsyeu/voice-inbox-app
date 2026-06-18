@@ -1,7 +1,4 @@
-import {
-  formatIapAmountLikeFirstStorePrice,
-  formatIapAmountLikeStorePrice,
-} from './formatIapFromStoreTemplate';
+import { formatIapAmountLikeFirstStorePrice } from './formatIapFromStoreTemplate';
 import {
   getIapFormatLocale,
   IAP_CURRENCY_LOCALE,
@@ -13,6 +10,30 @@ export type FormatIapCurrencyOptions = {
   minimumFractionDigits?: number;
   maximumFractionDigits?: number;
 };
+
+/** Store priceString sometimes uses ISO code prefix (e.g. "USD 5.99") instead of a symbol. */
+export function storePriceStringHasIsoCode(priceString: string, currencyCode: string): boolean {
+  const code = normalizeIapCurrencyCode(currencyCode);
+  if (!code) {
+    return false;
+  }
+  return new RegExp(`\\b${code}\\b`, 'i').test(priceString);
+}
+
+function pickSymbolLayoutReferences(
+  currencyCode: string,
+  ...candidates: Array<string | null | undefined>
+): string[] {
+  const layouts: string[] = [];
+  for (const candidate of candidates) {
+    const raw = candidate?.trim();
+    if (!raw || storePriceStringHasIsoCode(raw, currencyCode)) {
+      continue;
+    }
+    layouts.push(raw);
+  }
+  return layouts;
+}
 
 /** Format a monetary amount for IAP UI using Intl (FormatJS polyfill on device). */
 export function formatIapCurrency(
@@ -48,15 +69,24 @@ export function formatIapCurrency(
   }
 }
 
-/** Prefer the store-localized price string; format with Intl only when the store omits one. */
+/** Prefer the store-localized price string; reformat when it uses an ISO code instead of a symbol. */
 export function resolveIapPriceString(
   storePriceString: string | null | undefined,
   amount: number,
   currencyCode: string,
+  symbolLayoutReference?: string | null | undefined,
 ): string | null {
   const raw = storePriceString?.trim();
-  if (raw) {
+  if (raw && !storePriceStringHasIsoCode(raw, currencyCode)) {
     return raw;
+  }
+
+  const fromLayout = formatIapAmountLikeFirstStorePrice(
+    pickSymbolLayoutReferences(currencyCode, symbolLayoutReference),
+    amount,
+  );
+  if (fromLayout) {
+    return fromLayout;
   }
 
   return formatIapCurrency(amount, currencyCode);
@@ -68,9 +98,15 @@ export function resolveScaledIapPriceString(
   targetAmount: number,
   currencyCode: string,
   layoutReferencePriceString?: string | null | undefined,
+  symbolLayoutReference?: string | null | undefined,
 ): string | null {
   const fromStore = formatIapAmountLikeFirstStorePrice(
-    [layoutReferencePriceString, referencePriceString],
+    pickSymbolLayoutReferences(
+      currencyCode,
+      symbolLayoutReference,
+      layoutReferencePriceString,
+      referencePriceString,
+    ),
     targetAmount,
   );
   if (fromStore) {
@@ -86,15 +122,15 @@ export function resolveScaledIapPriceString(
 export function resolveDerivedIapPriceString(
   layoutReferencePriceString: string | null | undefined,
   amount: number,
-  _storePriceString: string | null | undefined,
+  symbolLayoutReference: string | null | undefined,
   currencyCode: string,
 ): string | null {
-  const layoutRef = layoutReferencePriceString?.trim();
-  if (layoutRef) {
-    const derived = formatIapAmountLikeStorePrice(layoutRef, amount);
-    if (derived) {
-      return derived;
-    }
+  const fromLayout = formatIapAmountLikeFirstStorePrice(
+    pickSymbolLayoutReferences(currencyCode, symbolLayoutReference, layoutReferencePriceString),
+    amount,
+  );
+  if (fromLayout) {
+    return fromLayout;
   }
 
   return formatIapCurrency(amount, currencyCode);

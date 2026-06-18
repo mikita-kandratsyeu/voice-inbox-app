@@ -66,6 +66,11 @@ describe('formatIapCurrency', () => {
       expect(resolveIapPriceString('₺449,99', 449.99, 'TRY')).toBe('₺449,99');
     });
 
+    it('reformats ISO-code store strings using pricePerMonth symbol layout', () => {
+      expect(resolveIapPriceString('USD\u00a05.99', 5.99, 'USD', '5,99 $')).toBe('5,99 $');
+      expect(resolveIapPriceString('USD\u00a034.99', 34.99, 'USD', '2,91 $')).toBe('34,99 $');
+    });
+
     it('formats with Intl when the store omits a price string', () => {
       mockGetLocales.mockReturnValue([{ languageTag: 'pl-PL', languageCode: 'pl' }]);
       expect(resolveIapPriceString(null, 29.99, 'PLN')).toBe(intlCurrency('pl-PL', 'PLN', 29.99));
@@ -80,11 +85,21 @@ describe('formatIapCurrency', () => {
     it('falls back to Intl when no store template is available', () => {
       expect(resolveScaledIapPriceString(null, 119.88, 'USD')).toBe('$119.88');
     });
+
+    it('uses symbol layout when compare-at references use ISO codes', () => {
+      expect(
+        resolveScaledIapPriceString('USD\u00a05.99', 71.88, 'USD', 'USD\u00a034.99', '2,91 $'),
+      ).toBe('71,88 $');
+    });
   });
 
   describe('resolveDerivedIapPriceString', () => {
     it('derives per-month from annual store layout instead of ISO store strings', () => {
       expect(resolveDerivedIapPriceString('149,99 zł', 12.49, '12,49 PLN', 'PLN')).toBe('12,49 zł');
+    });
+
+    it('derives USD per-month from symbol layout when annual price uses ISO code', () => {
+      expect(resolveDerivedIapPriceString('USD\u00a034.99', 2.91, '2,91 $', 'USD')).toBe('2,91 $');
     });
 
     it('derives Russian per-month from annual store layout', () => {
