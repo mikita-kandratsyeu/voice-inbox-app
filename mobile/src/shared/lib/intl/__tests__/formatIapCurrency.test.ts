@@ -73,26 +73,23 @@ describe('formatIapCurrency', () => {
   });
 
   describe('resolveScaledIapPriceString', () => {
-    it('formats compare-at amounts with Intl', () => {
-      mockGetLocales.mockReturnValue([{ languageTag: 'ru-RU', languageCode: 'ru' }]);
-      expect(resolveScaledIapPriceString('449,00 ₽', 5388, 'RUB', '2 490,00 ₽')).toBe(
-        intlCurrency('ru-RU', 'RUB', 5388),
-      );
+    it('uses annual store layout for Russian compare-at with space thousands', () => {
+      expect(resolveScaledIapPriceString('449,00 ₽', 5388, 'RUB', '2 490,00 ₽')).toBe('5 388,00 ₽');
+    });
+
+    it('falls back to Intl when no store template is available', () => {
+      expect(resolveScaledIapPriceString(null, 119.88, 'USD')).toBe('$119.88');
     });
   });
 
   describe('resolveDerivedIapPriceString', () => {
-    it('formats per-month equivalents with Intl instead of ISO store strings', () => {
-      mockGetLocales.mockReturnValue([{ languageTag: 'pl-PL', languageCode: 'pl' }]);
-      expect(resolveDerivedIapPriceString('149,99 zł', 12.49, '12,49 PLN', 'PLN')).toBe(
-        intlCurrency('pl-PL', 'PLN', 12.49),
-      );
+    it('derives per-month from annual store layout instead of ISO store strings', () => {
+      expect(resolveDerivedIapPriceString('149,99 zł', 12.49, '12,49 PLN', 'PLN')).toBe('12,49 zł');
     });
 
-    it('formats Russian per-month equivalents with a space thousands separator', () => {
-      mockGetLocales.mockReturnValue([{ languageTag: 'ru-RU', languageCode: 'ru' }]);
+    it('derives Russian per-month from annual store layout', () => {
       expect(resolveDerivedIapPriceString('2 490,00 ₽', 207.5, '207,50 RUB', 'RUB')).toBe(
-        intlCurrency('ru-RU', 'RUB', 207.5),
+        '207,50 ₽',
       );
     });
   });

@@ -1,4 +1,8 @@
 import {
+  formatIapAmountLikeFirstStorePrice,
+  formatIapAmountLikeStorePrice,
+} from './formatIapFromStoreTemplate';
+import {
   getIapFormatLocale,
   IAP_CURRENCY_LOCALE,
   normalizeIapCurrencyCode,
@@ -58,25 +62,41 @@ export function resolveIapPriceString(
   return formatIapCurrency(amount, currencyCode);
 }
 
-/** Format a computed amount (e.g. monthly × 12 compare-at) with Intl. */
+/** Format compare-at (e.g. monthly × 12) using a store layout, then Intl. */
 export function resolveScaledIapPriceString(
-  _referencePriceString: string | null | undefined,
+  referencePriceString: string | null | undefined,
   targetAmount: number,
   currencyCode: string,
-  _layoutReferencePriceString?: string | null | undefined,
+  layoutReferencePriceString?: string | null | undefined,
 ): string | null {
+  const fromStore = formatIapAmountLikeFirstStorePrice(
+    [layoutReferencePriceString, referencePriceString],
+    targetAmount,
+  );
+  if (fromStore) {
+    return fromStore;
+  }
+
   return formatIapCurrency(targetAmount, currencyCode);
 }
 
 /**
- * Format a derived per-period amount (e.g. annual price per month) with Intl.
+ * Format a derived per-period amount (e.g. annual price per month) using the main store layout.
  */
 export function resolveDerivedIapPriceString(
-  _layoutReferencePriceString: string | null | undefined,
+  layoutReferencePriceString: string | null | undefined,
   amount: number,
   _storePriceString: string | null | undefined,
   currencyCode: string,
 ): string | null {
+  const layoutRef = layoutReferencePriceString?.trim();
+  if (layoutRef) {
+    const derived = formatIapAmountLikeStorePrice(layoutRef, amount);
+    if (derived) {
+      return derived;
+    }
+  }
+
   return formatIapCurrency(amount, currencyCode);
 }
 
