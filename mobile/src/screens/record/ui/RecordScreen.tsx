@@ -11,6 +11,7 @@ import { useAppLockStore } from '@/entities/app-lock';
 import type { RecordingMark, RecordingMarkKind, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import { showRecordingStoppedByAppLockNotification } from '@/features/app-lock';
 import {
   computeAdsAllowedForInterstitial,
   getMaxRecordingMsForTier,
@@ -155,6 +156,11 @@ export const RecordScreen = () => {
         };
 
         useRecordStore.getState().addRecord(record);
+
+        void showRecordingStoppedByAppLockNotification({
+          recordId,
+          recordTitle: autoTitle,
+        });
 
         const persist = useSettingsStore.getState().autoTranscribeOnSave;
         if (shouldApplyAutoTranscribeOnSave(persist, isProActive, aiExecutionMode)) {

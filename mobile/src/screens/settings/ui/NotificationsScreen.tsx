@@ -1,5 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
-import { Bell, CalendarClock, CloudCheck, RotateCcw, UploadCloud } from 'lucide-react-native';
+import {
+  Bell,
+  CalendarClock,
+  CloudCheck,
+  LockKeyhole,
+  RotateCcw,
+  UploadCloud,
+} from 'lucide-react-native';
 import React from 'react';
 import { ScrollView, Switch, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -113,6 +120,23 @@ export const NotificationsScreen = () => {
               }
               showChevron={false}
               isFirst={!IS_IOS}
+            />
+            <SettingsRow
+              label={screen.t('settings.appLockRecordingNotifications')}
+              subtitle={screen.t('settings.appLockRecordingNotificationsHint')}
+              leftIcon={
+                <LockKeyhole
+                  size={20}
+                  color={getSettingsIconColor(screen.color, 'lockKeyhole')}
+                  strokeWidth={1.8}
+                />
+              }
+              value={
+                permissionGranted
+                  ? screen.t('settings.notificationsScreen.aiAlertsFollowsSystem')
+                  : undefined
+              }
+              showChevron={false}
             />
             <SettingsRow
               label={screen.t('settings.taskDeadlineNotifications')}

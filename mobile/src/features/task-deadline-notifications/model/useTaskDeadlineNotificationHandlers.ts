@@ -6,6 +6,10 @@ import {
   openBackupReminderNotification,
 } from '@/app/model/backupReminderNavigationHandler';
 import {
+  handleRecordingStoppedByAppLockNotificationPress,
+  openRecordingStoppedByAppLockNotification,
+} from '@/app/model/recordingStoppedByAppLockNavigationHandler';
+import {
   handleTaskDeadlineNotificationPress,
   openTaskDeadlineNotification,
 } from '@/app/model/taskDeadlineNavigationHandler';
@@ -20,6 +24,7 @@ export function useTaskDeadlineNotificationHandlers(): void {
       handleTaskDeadlineNotificationPress(event);
       handleBackupReminderNotificationPress(event);
       handleTranscriptionPausedNotificationPress(event);
+      handleRecordingStoppedByAppLockNotificationPress(event);
     });
 
     void notifee.getInitialNotification().then((initial) => {
@@ -27,6 +32,7 @@ export function useTaskDeadlineNotificationHandlers(): void {
       openTaskDeadlineNotification(initial.notification.data);
       openBackupReminderNotification(initial.notification.data);
       openTranscriptionPausedNotification(initial.notification.data);
+      openRecordingStoppedByAppLockNotification(initial.notification.data);
     });
 
     return unsubscribe;
@@ -39,5 +45,6 @@ export function registerTaskDeadlineNotificationBackgroundHandler(): void {
     handleTaskDeadlineNotificationPress(event);
     handleBackupReminderNotificationPress(event);
     handleTranscriptionPausedNotificationPress(event);
+    handleRecordingStoppedByAppLockNotificationPress(event);
   });
 }
