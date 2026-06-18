@@ -20,7 +20,6 @@ const ICON_ACTION_SIZE = TABLET_SIDEBAR_COMPOSE_BUTTON_HEIGHT;
 type TabletSidebarComposeRowProps = {
   color: Colors;
   onRecord: () => void;
-  onRecordLongPress: () => void;
   onTextNote: () => void;
 };
 
@@ -40,7 +39,6 @@ function iconActionShadow(color: Colors, shadowColor: string) {
 export function TabletSidebarComposeRow({
   color,
   onRecord,
-  onRecordLongPress,
   onTextNote,
 }: TabletSidebarComposeRowProps) {
   const { t } = useTranslation();
@@ -71,15 +69,10 @@ export function TabletSidebarComposeRow({
             />
           }
           accessibilityLabel={t('tablet.sidebar.newRecording')}
-          accessibilityHint={t('inbox.emptyImportHint')}
           activeOpacity={0.9}
           onPress={() => {
             hapticSelection();
             onRecord();
-          }}
-          onLongPress={() => {
-            hapticSelection();
-            onRecordLongPress();
           }}
           className="rounded-[12px]"
           containerStyle={{

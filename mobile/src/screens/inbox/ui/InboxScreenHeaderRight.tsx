@@ -1,6 +1,6 @@
 import { MenuView } from '@react-native-menu/menu';
 import type { TFunction } from 'i18next';
-import { FolderTree, MoreVertical, Search, SquarePen } from 'lucide-react-native';
+import { FolderTree, ListChecks, MoreVertical, Search } from 'lucide-react-native';
 import React, { memo, useMemo } from 'react';
 import { View } from 'react-native';
 
@@ -27,12 +27,9 @@ type InboxScreenHeaderRightProps = {
   onEnterBatchMode: () => void;
   onOpenAllTasks: () => void;
   onOpenNotesGraph: () => void;
-  onCreateTextNote: () => void;
   onImportFile: () => void;
   /** Tablet sidebar: no overflow menu; actions as header icons. */
   useTabletShell?: boolean;
-  /** Tablet sidebar already exposes text note compose. */
-  hideCreateTextNote?: boolean;
   t: TFunction;
 };
 
@@ -55,10 +52,8 @@ function InboxScreenHeaderRightInner({
   onEnterBatchMode,
   onOpenAllTasks,
   onOpenNotesGraph,
-  onCreateTextNote,
   onImportFile,
   useTabletShell = false,
-  hideCreateTextNote = false,
   t,
 }: InboxScreenHeaderRightProps) {
   const theme = useAppTheme();
@@ -69,16 +64,6 @@ function InboxScreenHeaderRightInner({
   const moreMenuActions = useMemo(() => {
     const titleColor = color.text.primary;
     const actions: NativeMenuAction[] = [];
-
-    if (!useTabletShell) {
-      actions.push({
-        id: 'allTasks',
-        title: t('allTasks.title'),
-        titleColor,
-        image: 'checklist',
-        imageColor: titleColor,
-      });
-    }
 
     const navigationItems: NativeMenuAction[] = [];
 
@@ -238,18 +223,16 @@ function InboxScreenHeaderRightInner({
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
       {searchButton}
-      {!hideCreateTextNote ? (
-        <HeaderIconButton
-          iconOnly
-          variant="icon"
-          size="md"
-          icon={<SquarePen size={20} color={color.text.primary} strokeWidth={2.2} />}
-          color={color}
-          onPress={onCreateTextNote}
-          accessibilityLabel={t('textNote.openCreate')}
-          hitSlop={HEADER_ICON_HIT_SLOP}
-        />
-      ) : null}
+      <HeaderIconButton
+        iconOnly
+        variant="icon"
+        size="md"
+        icon={<ListChecks size={20} color={color.text.primary} strokeWidth={2.2} />}
+        color={color}
+        onPress={onOpenAllTasks}
+        accessibilityLabel={t('allTasks.title')}
+        hitSlop={HEADER_ICON_HIT_SLOP}
+      />
       <MenuView
         key={`inbox-more-${theme}`}
         title=""
@@ -259,7 +242,6 @@ function InboxScreenHeaderRightInner({
         onPressAction={({ nativeEvent }) => {
           const id = nativeEvent.event;
           if (id === 'importFile') onImportFile();
-          if (id === 'allTasks') onOpenAllTasks();
           if (id === 'notesGraph') onOpenNotesGraph();
           if (id === 'autoOrganize' && !isAutoOrganizing && foldersEnabled) {
             onOpenAiOrganizeSheet();

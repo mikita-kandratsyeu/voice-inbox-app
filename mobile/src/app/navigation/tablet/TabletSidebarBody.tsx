@@ -53,7 +53,6 @@ export type TabletSidebarBodyProps = {
   onOpenSettings: () => void;
   onOpenPlanPaywall: () => void;
   onRecord: () => void;
-  onRecordLongPress: () => void;
   onTextNote: () => void;
   navigateToInbox: (target: TabletInboxSidebarTarget) => void;
   openAllTasks: () => void;
@@ -88,7 +87,6 @@ export function TabletSidebarBody({
   onOpenSettings,
   onOpenPlanPaywall,
   onRecord,
-  onRecordLongPress,
   onTextNote,
   navigateToInbox,
   openAllTasks,
@@ -257,12 +255,7 @@ export function TabletSidebarBody({
           borderBottomColor: theme.border,
         }}
       >
-        <TabletSidebarComposeRow
-          color={color}
-          onRecord={onRecord}
-          onRecordLongPress={onRecordLongPress}
-          onTextNote={onTextNote}
-        />
+        <TabletSidebarComposeRow color={color} onRecord={onRecord} onTextNote={onTextNote} />
       </View>
 
       <View style={{ flex: 1, minHeight: 0, paddingHorizontal: horizontalPad }}>
