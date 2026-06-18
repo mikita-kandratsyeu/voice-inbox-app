@@ -6,7 +6,7 @@ import { i18n, selectPlatform } from '@/shared/lib';
 /** Horizontal inset from screen edges when the pill is narrower than {@link FLOAT_TAB_MAX_WIDTH}. */
 export const FLOAT_TAB_HORIZONTAL_INSET = 28;
 /** Max width of the floating tab bar pill (phone and tablet, centered). */
-export const FLOAT_TAB_MAX_WIDTH = 480;
+export const FLOAT_TAB_MAX_WIDTH = 340;
 /** Gap between home indicator / screen bottom and the tab bar. */
 export const FLOAT_TAB_BOTTOM_GAP = 10;
 /** Tab bar pill fill: 1 = opaque; lower = slight glass effect over the screen behind. */
