@@ -22,7 +22,6 @@ import {
   requestTabletOpenCreateFolder,
 } from './tabletInboxNavBridge';
 import { useTabletInboxSidebarStore } from './tabletInboxSidebarStore';
-import { useTabletShellImportAudio } from './TabletShellContext';
 import { TabletSidebarBody } from './TabletSidebarBody';
 import { TABLET_SIDEBAR_PAD, TABLET_SIDEBAR_WIDTH } from './tabletSidebarMetrics';
 import { getTabletSidebarTheme } from './tabletSidebarTheme';
@@ -42,7 +41,6 @@ export const TabletSidebar = () => {
   const insets = useSafeAreaInsets();
   const rootNavigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const currentTab = useTabletTabNavigationStore((s) => s.activeTab);
-  const importAudioFile = useTabletShellImportAudio();
   const { isProActive } = useProEntitlement();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
@@ -159,10 +157,6 @@ export const TabletSidebar = () => {
     rootNavigation.navigate('RecordModal');
   }, [activeTranscriptionRecord, rootNavigation, t]);
 
-  const handleImportAudio = useCallback(() => {
-    void importAudioFile();
-  }, [importAudioFile]);
-
   const handleTextNote = useCallback(() => {
     hapticSelection();
     rootNavigation.navigate('TextNoteModal');
@@ -221,7 +215,6 @@ export const TabletSidebar = () => {
         onOpenSettings={openSettings}
         onOpenPlanPaywall={openPlanPaywall}
         onRecord={handleNewRecording}
-        onRecordLongPress={handleImportAudio}
         onTextNote={handleTextNote}
         navigateToInbox={navigateToInbox}
         openAllTasks={openAllTasks}

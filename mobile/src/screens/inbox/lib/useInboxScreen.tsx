@@ -438,10 +438,6 @@ export function useInboxScreen() {
     }
   }, [searchBarExplicitOpen, query]);
 
-  const handleCreateTextNote = useCallback(() => {
-    navigation.navigate('TextNoteModal');
-  }, [navigation]);
-
   const handleOpenNotesGraph = useCallback(() => {
     if (isProActive) {
       navigation.navigate('NotesGraph');
@@ -1219,7 +1215,6 @@ export function useInboxScreen() {
     allSelected,
     handleSelectAll,
     handleSearchHeaderPress,
-    handleCreateTextNote,
     handleOpenNotesGraph,
     handleCloseNotesGraphProSheet,
     handleNotesGraphProUpgrade,

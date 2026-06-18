@@ -176,7 +176,6 @@ export const BottomTabNavigator = () => {
               iconColor={color.icon.onAccent}
               accentColor={color.accent.primary}
               isTablet={isTablet}
-              onLongPress={importAudioFile}
             />
           ),
         }}

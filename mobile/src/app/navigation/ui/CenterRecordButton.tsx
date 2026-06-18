@@ -23,14 +23,12 @@ type CenterRecordButtonProps = {
   iconColor: string;
   accentColor: string;
   isTablet?: boolean;
-  onLongPress?: () => void;
 };
 
 export const CenterRecordButton = ({
   iconColor,
   accentColor,
   isTablet,
-  onLongPress,
 }: CenterRecordButtonProps) => {
   const { t } = useTranslation();
   const scale = useSharedValue(1);
@@ -92,6 +90,11 @@ export const CenterRecordButton = ({
     navigation.navigate('RecordModal');
   };
 
+  const handleLongPress = () => {
+    hapticLight();
+    navigation.navigate('TextNoteModal');
+  };
+
   return (
     <View className="min-h-[48px] shrink-0 self-stretch items-center justify-center">
       <Animated.View
@@ -113,10 +116,10 @@ export const CenterRecordButton = ({
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel={t('tabs.record')}
-          accessibilityHint={onLongPress ? t('inbox.emptyImportHint') : undefined}
+          accessibilityHint={t('textNote.openCreate')}
           activeOpacity={1}
           onPress={handlePress}
-          onLongPress={onLongPress}
+          onLongPress={handleLongPress}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           style={{

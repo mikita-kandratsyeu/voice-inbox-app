@@ -91,7 +91,6 @@ export const InboxScreen = () => {
     allSelected,
     handleSelectAll,
     handleSearchHeaderPress,
-    handleCreateTextNote,
     handleOpenNotesGraph,
     handleCloseNotesGraphProSheet,
     handleNotesGraphProUpgrade,
@@ -192,10 +191,8 @@ export const InboxScreen = () => {
             onEnterBatchMode={handleEnterBatchModeNoHaptic}
             onOpenAllTasks={() => navigation.navigate('AllTasks')}
             onOpenNotesGraph={handleOpenNotesGraph}
-            onCreateTextNote={handleCreateTextNote}
             onImportFile={handleImportFile}
             useTabletShell={useTabletShell}
-            hideCreateTextNote={useTabletShell}
             t={t}
           />
         }
