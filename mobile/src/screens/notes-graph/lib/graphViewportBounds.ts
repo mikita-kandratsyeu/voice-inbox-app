@@ -1,8 +1,8 @@
 import { nodeBounds } from './graphNodeMetrics';
 import type { GraphNode } from './graphTypes';
 
-export const GRAPH_PAN_OVERSCROLL = 240;
-export const GRAPH_PAN_OVERSCROLL_VIEWPORT_RATIO = 0.35;
+export const GRAPH_PAN_OVERSCROLL = 320;
+export const GRAPH_PAN_OVERSCROLL_VIEWPORT_RATIO = 0.45;
 export const GRAPH_VIEWPORT_MIN_SCALE = 0.2;
 export const GRAPH_VIEWPORT_MAX_SCALE = 3.5;
 export const GRAPH_WORLD_CONTENT_PADDING = 100;
@@ -84,11 +84,14 @@ export function expandPanContentBounds(
   graphHeight: number,
   padding = GRAPH_WORLD_CONTENT_PADDING,
 ): GraphContentBounds {
+  // Increase padding generously to make corner nodes reachable
+  const expandedPadding = padding * 2;
+
   return {
-    minX: Math.min(contentBounds.minX - padding, 0),
-    minY: Math.min(contentBounds.minY - padding, 0),
-    maxX: Math.max(contentBounds.maxX + padding, graphWidth),
-    maxY: Math.max(contentBounds.maxY + padding, graphHeight),
+    minX: Math.min(contentBounds.minX - expandedPadding, 0),
+    minY: Math.min(contentBounds.minY - expandedPadding, 0),
+    maxX: Math.max(contentBounds.maxX + expandedPadding, graphWidth),
+    maxY: Math.max(contentBounds.maxY + expandedPadding, graphHeight),
   };
 }
 

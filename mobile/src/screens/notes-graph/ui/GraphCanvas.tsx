@@ -232,6 +232,8 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   const savedFocalY = useSharedValue(0);
   const isPinching = useSharedValue(false);
   const isNodeDragging = useSharedValue(false);
+  const nodeDragTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconcileTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isReconciling, setIsReconciling] = useState(false);
   const reconcilingTokenRef = useRef(0);
   const reconcileStartedAtRef = useRef(0);
@@ -254,6 +256,9 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     setViewportTransform({ scale: nextScale, translateX: nextX, translateY: nextY });
   }, []);
 
+  const lastSyncTime = useSharedValue(0);
+  const SYNC_THROTTLE_MS = 16; // ~60fps
+
   useAnimatedReaction(
     () => ({
       scale: scale.value,
@@ -261,14 +266,21 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       translateY: translateY.value,
     }),
     (current, previous) => {
-      if (
-        previous &&
-        current.scale === previous.scale &&
-        current.translateX === previous.translateX &&
-        current.translateY === previous.translateY
-      ) {
-        return;
-      }
+      if (!previous) return;
+
+      // Check if values actually changed
+      const hasChanged =
+        current.scale !== previous.scale ||
+        current.translateX !== previous.translateX ||
+        current.translateY !== previous.translateY;
+
+      if (!hasChanged) return;
+
+      // Throttle updates to prevent jumping
+      const now = Date.now();
+      if (now - lastSyncTime.value < SYNC_THROTTLE_MS) return;
+
+      lastSyncTime.value = now;
       scheduleOnRN(syncViewportState, current.scale, current.translateX, current.translateY);
     },
   );
@@ -416,16 +428,18 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
   const focusNode = useCallback(
     (node: GraphNode) => {
+      // Use moderate zoom to keep context visible
+      const targetScale = Math.min(1.15, Math.max(0.8, savedScale.value));
       const transform = computeFocusTransform(
         node,
         viewportWidth,
         viewportHeight,
-        1.15,
+        targetScale,
         focusViewportInsets,
       );
       applyTransform(transform);
     },
-    [applyTransform, focusViewportInsets, viewportHeight, viewportWidth],
+    [applyTransform, focusViewportInsets, savedScale, viewportHeight, viewportWidth],
   );
 
   const zoomIn = useCallback(() => {
@@ -518,25 +532,64 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
   const handleNodeDragStart = useCallback(() => {
     isNodeDragging.value = true;
+
+    // Safety timeout: force unlock after 5 seconds if drag gets stuck
+    if (nodeDragTimeoutRef.current) {
+      clearTimeout(nodeDragTimeoutRef.current);
+    }
+    nodeDragTimeoutRef.current = setTimeout(() => {
+      if (__DEV__) {
+        console.warn('[Graph] Node drag timeout - forcing unlock');
+      }
+      isNodeDragging.value = false;
+    }, 5000);
   }, [isNodeDragging]);
 
   const handleNodeDragCancel = useCallback(() => {
+    if (nodeDragTimeoutRef.current) {
+      clearTimeout(nodeDragTimeoutRef.current);
+      nodeDragTimeoutRef.current = null;
+    }
     isNodeDragging.value = false;
   }, [isNodeDragging]);
 
   const handleNodeDragEnd = useCallback(
     (nodeId: string, x: number, y: number) => {
+      if (nodeDragTimeoutRef.current) {
+        clearTimeout(nodeDragTimeoutRef.current);
+        nodeDragTimeoutRef.current = null;
+      }
+
       isNodeDragging.value = false;
       reconcilingTokenRef.current += 1;
       reconcileStartedAtRef.current = Date.now();
       pendingDragReconcileRef.current = { nodeId, x, y };
       setReconciling(true);
+
+      // Safety timeout for reconcile
+      if (reconcileTimeoutRef.current) {
+        clearTimeout(reconcileTimeoutRef.current);
+      }
+      reconcileTimeoutRef.current = setTimeout(() => {
+        if (__DEV__) {
+          console.warn('[Graph] Reconcile timeout - forcing complete');
+        }
+        setReconciling(false);
+        reconcileTimeoutRef.current = null;
+      }, 2000);
     },
     [isNodeDragging, setReconciling],
   );
 
   useEffect(() => {
-    if (!isReconciling) return;
+    if (!isReconciling) {
+      // Clear timeout when reconcile completes
+      if (reconcileTimeoutRef.current) {
+        clearTimeout(reconcileTimeoutRef.current);
+        reconcileTimeoutRef.current = null;
+      }
+      return;
+    }
 
     const pending = pendingDragReconcileRef.current;
     if (!pending) return;
@@ -618,6 +671,10 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
   const clampTranslationWorklet = (tx: number, ty: number, currentScale: number) => {
     'worklet';
+    // Allow more overscroll during active gestures for smoother interaction
+    const overscrollMultiplier = isPinching.value ? 1.5 : 1.3;
+    const effectiveOverscroll = panOverscrollSV.value * overscrollMultiplier;
+
     return clampViewportTranslation(
       tx,
       ty,
@@ -626,7 +683,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       worldHeightSV.value,
       viewportWidthSV.value,
       viewportHeightSV.value,
-      panOverscrollSV.value,
+      effectiveOverscroll,
       contentMinXSV.value,
       contentMinYSV.value,
       contentMaxXSV.value,
