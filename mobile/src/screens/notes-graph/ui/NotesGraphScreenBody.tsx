@@ -19,7 +19,7 @@ import { useProEntitlement } from '@/features/pro-license';
 import { TaskEditSheet } from '@/screens/recording-detail/ui/TaskEditSheet';
 import { useAppTheme, useColors } from '@/shared/config';
 import { hapticSelection, inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
-import { EmptyState, HeaderIconButton, ScreenHeader } from '@/shared/ui';
+import { EmptyState, FrostedHeaderButtonGroup, HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 import { collectUniqueTags, countFilteredGraphRecords } from '../lib/buildGraphModel';
 import { buildLocalGraphFilters, resolveLocalGraphDepth } from '../lib/buildLocalGraphFilters';
@@ -1072,103 +1072,102 @@ export const NotesGraphScreenBody = () => {
   const headerRightSlot =
     recordCount > 0 ? (
       <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 6,
-          opacity: headerControlsDisabled ? 0.45 : 1,
-        }}
+        style={{ opacity: headerControlsDisabled ? 0.45 : 1 }}
         pointerEvents={headerControlsDisabled ? 'none' : 'auto'}
       >
-        {records.length > 0 ? (
-          <HeaderIconButton
-            iconOnly
-            variant="icon"
-            size="md"
-            icon={
-              <Search
-                size={21}
-                color={
-                  searchBarExplicitOpen || searchQuery.trim().length > 0
-                    ? color.accent.primary
-                    : color.text.primary
-                }
-                strokeWidth={2.2}
-              />
-            }
-            color={color}
-            onPress={handleSearchHeaderPress}
-            accessibilityLabel={
-              !showGraphSearchBar
-                ? t('search.a11yOpen')
-                : searchQuery.trim() === ''
-                  ? t('search.a11yHide')
-                  : t('search.a11yFocus')
-            }
-          />
-        ) : null}
-        <MenuView
-          key={`notes-graph-menu-${theme}`}
-          title=""
-          themeVariant={isDark ? 'dark' : 'light'}
-          shouldOpenOnLongPress={false}
-          actions={notesGraphMenuActions}
-          onPressAction={({ nativeEvent }) => {
-            if (nativeEvent.event === 'layoutHistory') {
-              setHistorySheetVisible(true);
-              return;
-            }
-            if (nativeEvent.event === 'toggleNodeDisplayMode') {
-              hapticSelection();
-              setNodeDisplayMode((value) => {
-                const next = value === 'dots' ? 'cards' : 'dots';
-                setGraphNodeDisplayMode(next);
-                return next;
-              });
-              return;
-            }
-            if (nativeEvent.event === 'toggleFolderHighlights') {
-              hapticSelection();
-              setFolderHighlightsVisible((value) => {
-                const next = !value;
-                setGraphFolderHighlightsVisible(next);
-                return next;
-              });
-              return;
-            }
-            if (nativeEvent.event === 'toggleMinimap') {
-              hapticSelection();
-              setMinimapVisible((value) => {
-                const next = !value;
-                setGraphMinimapVisible(next);
-                return next;
-              });
-              return;
-            }
-            if (nativeEvent.event === 'toggleShowArchived') {
-              hapticSelection();
-              setFilters((prev) => {
-                const next = !prev.showArchived;
-                setGraphShowArchived(next);
-                return { ...prev, showArchived: next };
-              });
-              return;
-            }
-            if (nativeEvent.event === 'exportImage') {
-              handleOpenExportPreview();
-            }
-          }}
-        >
-          <HeaderIconButton
-            iconOnly
-            variant="icon"
-            size="md"
-            icon={<MoreVertical size={21} color={color.text.primary} strokeWidth={2.2} />}
-            color={color}
-            onPress={() => {}}
-            accessibilityLabel={t('common.moreActions')}
-          />
-        </MenuView>
+        <FrostedHeaderButtonGroup color={color}>
+          {records.length > 0 ? (
+            <HeaderIconButton
+              inFrostedGroup
+              iconOnly
+              variant="icon"
+              size="md"
+              icon={
+                <Search
+                  size={21}
+                  color={
+                    searchBarExplicitOpen || searchQuery.trim().length > 0
+                      ? color.accent.primary
+                      : color.text.primary
+                  }
+                  strokeWidth={2.2}
+                />
+              }
+              color={color}
+              onPress={handleSearchHeaderPress}
+              accessibilityLabel={
+                !showGraphSearchBar
+                  ? t('search.a11yOpen')
+                  : searchQuery.trim() === ''
+                    ? t('search.a11yHide')
+                    : t('search.a11yFocus')
+              }
+            />
+          ) : null}
+          <MenuView
+            key={`notes-graph-menu-${theme}`}
+            title=""
+            themeVariant={isDark ? 'dark' : 'light'}
+            shouldOpenOnLongPress={false}
+            actions={notesGraphMenuActions}
+            onPressAction={({ nativeEvent }) => {
+              if (nativeEvent.event === 'layoutHistory') {
+                setHistorySheetVisible(true);
+                return;
+              }
+              if (nativeEvent.event === 'toggleNodeDisplayMode') {
+                hapticSelection();
+                setNodeDisplayMode((value) => {
+                  const next = value === 'dots' ? 'cards' : 'dots';
+                  setGraphNodeDisplayMode(next);
+                  return next;
+                });
+                return;
+              }
+              if (nativeEvent.event === 'toggleFolderHighlights') {
+                hapticSelection();
+                setFolderHighlightsVisible((value) => {
+                  const next = !value;
+                  setGraphFolderHighlightsVisible(next);
+                  return next;
+                });
+                return;
+              }
+              if (nativeEvent.event === 'toggleMinimap') {
+                hapticSelection();
+                setMinimapVisible((value) => {
+                  const next = !value;
+                  setGraphMinimapVisible(next);
+                  return next;
+                });
+                return;
+              }
+              if (nativeEvent.event === 'toggleShowArchived') {
+                hapticSelection();
+                setFilters((prev) => {
+                  const next = !prev.showArchived;
+                  setGraphShowArchived(next);
+                  return { ...prev, showArchived: next };
+                });
+                return;
+              }
+              if (nativeEvent.event === 'exportImage') {
+                handleOpenExportPreview();
+              }
+            }}
+          >
+            <HeaderIconButton
+              inFrostedGroup
+              iconOnly
+              variant="icon"
+              size="md"
+              icon={<MoreVertical size={21} color={color.text.primary} strokeWidth={2.2} />}
+              color={color}
+              onPress={() => {}}
+              accessibilityLabel={t('common.moreActions')}
+            />
+          </MenuView>
+        </FrostedHeaderButtonGroup>
       </View>
     ) : null;
 

@@ -2,13 +2,12 @@ import { MenuView } from '@react-native-menu/menu';
 import type { TFunction } from 'i18next';
 import { FolderTree, ListChecks, MoreVertical, Search } from 'lucide-react-native';
 import React, { memo, useMemo } from 'react';
-import { View } from 'react-native';
 
 import type { BatchSelectState } from '@/features/batch-select';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
-import { HeaderIconButton } from '@/shared/ui';
+import { HeaderIconButton, FrostedChromeSurface, FrostedHeaderButtonGroup } from '@/shared/ui';
 
 type InboxScreenHeaderRightProps = {
   color: Colors;
@@ -125,17 +124,21 @@ function InboxScreenHeaderRightInner({
 
   if (batchSelect.isSelectMode) {
     return (
-      <HeaderIconButton
-        label={allSelected ? t('batch.deselectAll') : t('batch.selectAll')}
-        color={color}
-        onPress={onSelectAll}
-      />
+      <FrostedChromeSurface color={color} borderRadius={9999} shadow="subtle">
+        <HeaderIconButton
+          label={allSelected ? t('batch.deselectAll') : t('batch.selectAll')}
+          color={color}
+          onPress={onSelectAll}
+          containerStyle={{ backgroundColor: 'transparent' }}
+        />
+      </FrostedChromeSurface>
     );
   }
 
   const searchButton =
     recordsLength > 0 ? (
       <HeaderIconButton
+        inFrostedGroup
         iconOnly
         variant="icon"
         size="md"
@@ -166,6 +169,7 @@ function InboxScreenHeaderRightInner({
   const tabletOrganizeButton =
     useTabletShell && foldersEnabled ? (
       <HeaderIconButton
+        inFrostedGroup
         iconOnly
         variant="icon"
         size="md"
@@ -190,7 +194,7 @@ function InboxScreenHeaderRightInner({
 
   if (useTabletShell) {
     return (
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+      <FrostedHeaderButtonGroup color={color}>
         {searchButton}
         {tabletOrganizeButton}
         <MenuView
@@ -206,6 +210,7 @@ function InboxScreenHeaderRightInner({
           }}
         >
           <HeaderIconButton
+            inFrostedGroup
             iconOnly
             variant="icon"
             size="md"
@@ -216,14 +221,15 @@ function InboxScreenHeaderRightInner({
             hitSlop={HEADER_ICON_HIT_SLOP}
           />
         </MenuView>
-      </View>
+      </FrostedHeaderButtonGroup>
     );
   }
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+    <FrostedHeaderButtonGroup color={color}>
       {searchButton}
       <HeaderIconButton
+        inFrostedGroup
         iconOnly
         variant="icon"
         size="md"
@@ -250,6 +256,7 @@ function InboxScreenHeaderRightInner({
         }}
       >
         <HeaderIconButton
+          inFrostedGroup
           iconOnly
           variant="icon"
           size="md"
@@ -260,7 +267,7 @@ function InboxScreenHeaderRightInner({
           hitSlop={HEADER_ICON_HIT_SLOP}
         />
       </MenuView>
-    </View>
+    </FrostedHeaderButtonGroup>
   );
 }
 

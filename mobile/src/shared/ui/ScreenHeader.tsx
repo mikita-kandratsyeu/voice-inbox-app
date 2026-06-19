@@ -9,6 +9,7 @@ import { useColors } from '@/shared/config';
 import { useTabletShellLayout } from '@/shared/lib';
 
 import { IS_ANDROID } from '../lib';
+import { FROSTED_HEADER_ICON_SIZE, FrostedChromeSurface } from './FrostedChromeSurface';
 import { HeaderIconButton } from './HeaderIconButton';
 
 type ScreenHeaderProps = {
@@ -62,19 +63,22 @@ export const ScreenHeader = ({
         paddingTop: insets.top + 12,
       }}
     >
-      <View className="min-w-[44px]">
+      <View className="shrink-0">
         {onBack ? (
-          <HeaderIconButton
-            iconOnly
-            variant="icon"
-            size="md"
-            icon={<ChevronLeft size={22} color={color.text.primary} strokeWidth={2.2} />}
-            color={color}
-            onPress={onBack}
-            activeOpacity={0.7}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityLabel={t('common.goBack')}
-          />
+          <FrostedChromeSurface color={color} fixedSize={FROSTED_HEADER_ICON_SIZE} shadow="subtle">
+            <HeaderIconButton
+              inFrostedGroup
+              iconOnly
+              variant="icon"
+              size="md"
+              icon={<ChevronLeft size={22} color={color.text.primary} strokeWidth={2.2} />}
+              color={color}
+              onPress={onBack}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel={t('common.goBack')}
+            />
+          </FrostedChromeSurface>
         ) : null}
       </View>
       <View className="min-w-0 flex-1 justify-center" style={{ minHeight: subtitle ? 52 : 44 }}>

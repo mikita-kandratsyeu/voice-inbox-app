@@ -10,7 +10,7 @@ import type { VoiceRecord } from '@/entities/record';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
-import { HeaderIconButton, PrivateExecutionBadge } from '@/shared/ui';
+import { HeaderIconButton, PrivateExecutionBadge, FrostedChromeSurface, FrostedHeaderButtonGroup, FROSTED_HEADER_ICON_SIZE } from '@/shared/ui';
 
 type RecordingDetailHeaderProps = {
   record: VoiceRecord;
@@ -57,7 +57,6 @@ export const RecordingDetailHeader = ({
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const isDark = theme === 'dark';
-  const iconBtnBg = { backgroundColor: color.background.tertiary };
   const headerBackgroundColor = isPrivateMode
     ? color.background.primary
     : color.background.secondary;
@@ -223,17 +222,20 @@ export const RecordingDetailHeader = ({
       style={{ backgroundColor: headerBackgroundColor, paddingTop: insets.top + 12 }}
     >
       <View className="shrink-0 flex-row items-center gap-3">
-        <HeaderIconButton
-          iconOnly
-          variant="icon"
-          size="md"
-          icon={<ChevronLeft size={22} color={color.text.primary} strokeWidth={2.2} />}
-          color={color}
-          onPress={onBack}
-          activeOpacity={0.7}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel={t('common.goBack')}
-        />
+        <FrostedChromeSurface color={color} fixedSize={FROSTED_HEADER_ICON_SIZE} shadow="subtle">
+          <HeaderIconButton
+            inFrostedGroup
+            iconOnly
+            variant="icon"
+            size="md"
+            icon={<ChevronLeft size={22} color={color.text.primary} strokeWidth={2.2} />}
+            color={color}
+            onPress={onBack}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel={t('common.goBack')}
+          />
+        </FrostedChromeSurface>
         {isPrivateMode ? <PrivateExecutionBadge color={color} compact /> : null}
       </View>
       <View className="min-w-0 flex-1 pl-3 pr-2" pointerEvents="none">
@@ -246,8 +248,9 @@ export const RecordingDetailHeader = ({
           {record.title}
         </Animated.Text>
       </View>
-      <View className="shrink-0 flex-row items-center gap-2">
+      <FrostedHeaderButtonGroup color={color}>
         <HeaderIconButton
+          inFrostedGroup
           iconOnly
           variant="icon"
           size="md"
@@ -263,11 +266,11 @@ export const RecordingDetailHeader = ({
           disabled={isOpeningDocument}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          containerStyle={iconBtnBg}
           accessibilityLabel={t('recordingDetail.document.openA11y')}
           accessibilityState={{ disabled: isOpeningDocument, busy: isOpeningDocument }}
         />
         <HeaderIconButton
+          inFrostedGroup
           iconOnly
           variant="icon"
           size="md"
@@ -298,6 +301,7 @@ export const RecordingDetailHeader = ({
           actions={menuActions}
         >
           <HeaderIconButton
+            inFrostedGroup
             iconOnly
             variant="icon"
             size="md"
@@ -309,7 +313,7 @@ export const RecordingDetailHeader = ({
             accessibilityLabel={t('common.moreActions')}
           />
         </MenuView>
-      </View>
+      </FrostedHeaderButtonGroup>
     </View>
   );
 };

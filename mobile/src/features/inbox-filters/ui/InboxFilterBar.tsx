@@ -12,11 +12,6 @@ import React, { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type LayoutChangeEvent, TouchableOpacity, View, type ViewStyle } from 'react-native';
 
-import {
-  FLOAT_TAB_IOS_SHADOW_OFFSET_Y,
-  FLOAT_TAB_IOS_SHADOW_RADIUS,
-  floatingTabBarShadowOpacity,
-} from '@/app/navigation/config';
 import type { InboxCardLayout } from '@/features/inbox-card-layout';
 import type {
   InboxFilterStatus,
@@ -26,9 +21,9 @@ import type {
 } from '@/features/inbox-filters';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { hapticSelection, selectPlatform } from '@/shared/lib';
+import { hapticSelection } from '@/shared/lib';
 import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
-import { FrostedChromeBackground } from '@/shared/ui';
+import { FrostedChromeSurface } from '@/shared/ui';
 
 const PRIMARY_FILTERS: PrimaryFilterStatus[] = ['all', 'pinned', 'archived'];
 
@@ -50,37 +45,9 @@ function FrostedFilterSurface({
   style?: ViewStyle;
 }) {
   return (
-    <View
-      style={[
-        {
-          borderRadius: FILTER_CHROME_RADIUS,
-          backgroundColor: 'transparent',
-          ...selectPlatform({
-            ios: {
-              shadowColor: color.shadow.color,
-              shadowOffset: { width: 0, height: FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
-              shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
-              shadowRadius: FLOAT_TAB_IOS_SHADOW_RADIUS,
-            },
-            android: {
-              elevation: 8,
-            },
-            default: {},
-          }),
-        },
-        style,
-      ]}
-    >
-      <View
-        style={{
-          borderRadius: FILTER_CHROME_RADIUS,
-          overflow: 'hidden',
-        }}
-      >
-        <FrostedChromeBackground borderRadius={FILTER_CHROME_RADIUS} />
-        {children}
-      </View>
-    </View>
+    <FrostedChromeSurface color={color} borderRadius={FILTER_CHROME_RADIUS} style={style}>
+      {children}
+    </FrostedChromeSurface>
   );
 }
 
