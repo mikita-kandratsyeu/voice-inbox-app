@@ -1,6 +1,6 @@
 import type { GraphEdgeVisibility, GraphFilters } from './graphTypes';
 
-export const LARGE_GRAPH_SIMPLIFY_THRESHOLD = 150;
+export const LARGE_GRAPH_SIMPLIFY_THRESHOLD = 80;
 
 export function shouldAutoSimplifyGraph(recordCount: number): boolean {
   return recordCount > LARGE_GRAPH_SIMPLIFY_THRESHOLD;

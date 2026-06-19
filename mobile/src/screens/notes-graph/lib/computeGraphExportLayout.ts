@@ -105,10 +105,12 @@ export function computeGraphExportLayout(
   let deviceMaxDimension = maxDimension ?? capabilities.maxExportDimension;
 
   // For large graphs, reduce max dimension to prevent memory issues
-  if (nodes.length > 200) {
+  if (nodes.length > 150) {
+    deviceMaxDimension = Math.min(deviceMaxDimension, 3072);
+  } else if (nodes.length > 100) {
     deviceMaxDimension = Math.min(deviceMaxDimension, 4096);
-  } else if (nodes.length > 150) {
-    deviceMaxDimension = Math.min(deviceMaxDimension, 6144);
+  } else if (nodes.length > 80) {
+    deviceMaxDimension = Math.min(deviceMaxDimension, 5120);
   }
 
   // measureGraphContentBounds already includes EDGE_VISUAL_MARGIN

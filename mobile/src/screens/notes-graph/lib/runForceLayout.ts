@@ -8,7 +8,7 @@ import { layoutNodesInCircle } from './runCircularLayout';
 import { layoutNodesWithGlobalForce } from './runGlobalForceLayout';
 
 const GRAPH_BOUNDS_PADDING = 80;
-const MAX_OVERLAP_RESOLUTION_NODES = 250;
+const MAX_OVERLAP_RESOLUTION_NODES = 150;
 
 /**
  * Compute layout dimensions with scale-awareness.

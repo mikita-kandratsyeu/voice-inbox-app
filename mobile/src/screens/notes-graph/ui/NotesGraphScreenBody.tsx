@@ -89,7 +89,7 @@ import { GraphLayoutHistorySheet } from './GraphLayoutHistorySheet';
 import { GraphLayoutSaveSheet } from './GraphLayoutSaveSheet';
 import { GraphStickySearchBar } from './GraphStickySearchBar';
 
-const LARGE_GRAPH_RECORD_THRESHOLD = 100;
+const LARGE_GRAPH_RECORD_THRESHOLD = 80;
 const GRAPH_SEARCH_DEBOUNCE_MS = 300;
 
 function waitForNextFrame(): Promise<void> {
@@ -832,7 +832,7 @@ export const NotesGraphScreenBody = () => {
   const handleOpenExportPreview = useCallback(() => {
     if (isCapturingExport || isRecapturingExport) return;
 
-    if (layoutNodes.length > 250) {
+    if (layoutNodes.length > 150) {
       Alert.alert(
         t('notesGraph.export.largeGraphWarningTitle'),
         t('notesGraph.export.largeGraphWarningMessage', { count: layoutNodes.length }),

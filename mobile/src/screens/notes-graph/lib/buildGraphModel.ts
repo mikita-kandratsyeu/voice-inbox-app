@@ -65,12 +65,17 @@ export function countGraphNodes(allRecords: VoiceRecord[], filters: GraphFilters
 }
 
 function addSimilarEdges(records: VoiceRecord[], edges: GraphEdge[]): void {
+  if (records.length === 0) return;
+
   const context = buildSimilarityContext(records);
   const minScore = context.useEmbeddings ? MIN_HYBRID_SCORE : MIN_LEXICAL_ONLY_SCORE;
   const edgeCountByRecord = new Map<string, number>();
   const addedPairs = new Set<string>();
 
-  for (const current of records) {
+  const maxRecordsForSimilarity = Math.min(records.length, 80);
+  const recordsToProcess = records.slice(0, maxRecordsForSimilarity);
+
+  for (const current of recordsToProcess) {
     const candidates = records.filter(
       (other) => other.id !== current.id && shouldPrefilterSimilarityPair(current, other),
     );
@@ -127,8 +132,9 @@ function addSharedTagEdges(records: VoiceRecord[], edges: GraphEdge[]): void {
   for (const [tag, taggedRecords] of tagToRecords) {
     if (taggedRecords.length < 2) continue;
 
-    for (let i = 0; i < taggedRecords.length; i++) {
-      for (let j = i + 1; j < taggedRecords.length; j++) {
+    const maxPairsForTag = Math.min(taggedRecords.length, 50);
+    for (let i = 0; i < maxPairsForTag; i++) {
+      for (let j = i + 1; j < maxPairsForTag; j++) {
         const a = taggedRecords[i]!;
         const b = taggedRecords[j]!;
         const pairKey = [a.id, b.id].sort().join('|');
@@ -285,7 +291,7 @@ export function buildGraphModel(allRecords: VoiceRecord[], filters: GraphFilters
     }
   }
 
-  if (filters.edgeVisibility.similar) {
+  if (filters.edgeVisibility.similar && filtered.length <= 100) {
     addSimilarEdges(filtered, edges);
   }
   if (filters.edgeVisibility.sharedTag) {
