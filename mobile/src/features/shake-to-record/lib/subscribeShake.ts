@@ -1,9 +1,9 @@
 import { accelerometer, SensorTypes, setUpdateIntervalForType } from 'react-native-sensors';
 
-import { isShakeSample } from './shakeDetection';
+import { advanceShakeConfirm, createShakeConfirmState, isShakeImpulse } from './shakeDetection';
 
-const SENSOR_UPDATE_INTERVAL_MS = 100;
-const SHAKE_DEBOUNCE_MS = 1800;
+const SENSOR_UPDATE_INTERVAL_MS = 50;
+const SHAKE_DEBOUNCE_MS = 1400;
 
 type ShakeListener = () => void;
 
@@ -26,6 +26,7 @@ function ensureSensorSubscription(): void {
   let lastZ = 0;
   let lastSensorUpdateAt = 0;
   let lastShakeAt = 0;
+  let confirmState = createShakeConfirmState();
 
   try {
     setUpdateIntervalForType(SensorTypes.accelerometer, SENSOR_UPDATE_INTERVAL_MS);
@@ -37,18 +38,29 @@ function ensureSensorSubscription(): void {
     ({ x, y, z }) => {
       const now = Date.now();
       const elapsed = now - lastSensorUpdateAt;
-      if (elapsed < SENSOR_UPDATE_INTERVAL_MS * 0.75) {
+      if (lastSensorUpdateAt > 0 && elapsed < SENSOR_UPDATE_INTERVAL_MS * 0.5) {
         return;
       }
 
-      const isShake = isShakeSample(x, y, z, lastX, lastY, lastZ, elapsed);
+      const impulse = isShakeImpulse(
+        x,
+        y,
+        z,
+        lastX,
+        lastY,
+        lastZ,
+        elapsed || SENSOR_UPDATE_INTERVAL_MS,
+      );
 
       lastSensorUpdateAt = now;
       lastX = x;
       lastY = y;
       lastZ = z;
 
-      if (!isShake) {
+      const { confirmed, next } = advanceShakeConfirm(confirmState, impulse, now);
+      confirmState = next;
+
+      if (!confirmed) {
         return;
       }
 

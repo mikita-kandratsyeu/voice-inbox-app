@@ -9,7 +9,7 @@ import { useSettingsStore } from '@/entities/settings';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
 import { shouldReduceMotion } from '@/shared/config/animations';
-import { hapticLight } from '@/shared/lib';
+import { hapticMedium, hapticSelection } from '@/shared/lib';
 
 import { getAskAiShakeBridge } from '../lib/askAiShakeBridge';
 import { addShakeListener } from '../lib/subscribeShake';
@@ -52,7 +52,7 @@ export function useShakeGestures({ enabled }: UseShakeGesturesOptions): void {
       shakeToCancelAskAiEnabled &&
       askBridge.onCancel
     ) {
-      hapticLight();
+      hapticMedium();
       askBridge.onCancel();
       return;
     }
@@ -70,6 +70,7 @@ export function useShakeGestures({ enabled }: UseShakeGesturesOptions): void {
     }
 
     if (hasAnyActiveTranscriptionJob()) {
+      hapticSelection();
       Alert.alert(
         t('record.blockedByTranscriptionTitle'),
         t('record.blockedByTranscriptionMessage'),
@@ -90,7 +91,7 @@ export function useShakeGestures({ enabled }: UseShakeGesturesOptions): void {
       return;
     }
 
-    hapticLight();
+    hapticMedium();
     runNavigationWhenUnlocked(() => {
       navigationRef.navigate('RecordModal');
     });

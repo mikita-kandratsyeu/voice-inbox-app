@@ -52,7 +52,7 @@ export const RecordScreenHeader = ({ state, onClose }: RecordScreenHeaderProps) 
         >
           <View
             style={{
-              height: FROSTED_HEADER_ICON_SIZE,
+              height: FROSTED_HEADER_ICON_SIZE / 1.45,
               flexDirection: 'row',
               alignItems: 'center',
               gap: 8,
