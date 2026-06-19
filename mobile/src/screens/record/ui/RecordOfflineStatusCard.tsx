@@ -35,7 +35,7 @@ export const RecordOfflineStatusCard = ({
         <View className="w-full flex-row items-center gap-3.5 px-4 py-3.5">
           <View
             className="h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-            style={{ backgroundColor: 'rgba(255,255,255,0.14)' }}
+            style={{ backgroundColor: 'rgba(255,255,255,0.12)' }}
           >
             <Cpu size={20} color="#ffffff" strokeWidth={1.85} />
           </View>
@@ -62,10 +62,7 @@ export const RecordOfflineStatusCard = ({
             shadow="subtle"
             variant="onMedia"
           >
-            <View
-              className="flex-row items-center gap-1.5 px-2.5 py-1"
-              style={{ minHeight: 28 }}
-            >
+            <View className="flex-row items-center gap-1.5 px-2.5 py-1" style={{ minHeight: 28 }}>
               <Bookmark size={13} color="#ffffff" strokeWidth={2} fill="rgba(255,255,255,0.22)" />
               <Text className="text-[12px] font-semibold leading-4 text-white/90">{marksHint}</Text>
             </View>

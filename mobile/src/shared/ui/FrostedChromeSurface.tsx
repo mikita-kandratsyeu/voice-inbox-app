@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, type StyleProp, View, type ViewStyle } from 'react-native';
+import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import {
   FLOAT_TAB_IOS_SHADOW_OFFSET_Y,
@@ -10,7 +10,11 @@ import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { IS_IOS, selectPlatform, withAlphaHex } from '@/shared/lib';
 
-import { FrostedChromeBackground } from './FrostedChromeBackground';
+import {
+  FrostedChromeBackground,
+  ON_MEDIA_CHROME_BORDER,
+  ON_MEDIA_CHROME_FILL,
+} from './FrostedChromeBackground';
 
 /** 44pt header icon touch target — circular frosted chrome. */
 export const FROSTED_HEADER_ICON_SIZE = 44;
@@ -52,7 +56,7 @@ function resolveChromeBorder(
 } {
   if (variant === 'onMedia') {
     return {
-      borderColor: withAlphaHex('#ffffff', 0.2),
+      borderColor: ON_MEDIA_CHROME_BORDER,
       borderWidth: 1,
     };
   }
@@ -85,7 +89,7 @@ function resolveChromeFillOverlay(
   variant: FrostedChromeVariant,
 ): string | null {
   if (variant === 'onMedia') {
-    return withAlphaHex('#ffffff', IS_IOS ? 0.16 : 0.24);
+    return null;
   }
 
   if (shadow === 'subtle' && !isDark) {
@@ -99,8 +103,9 @@ function resolveChromeShadowStyle(
   color: Colors,
   shadow: FrostedChromeShadow,
   isDark: boolean,
+  variant: FrostedChromeVariant,
 ): ViewStyle | null {
-  if (shadow === false) return null;
+  if (shadow === false || variant === 'onMedia') return null;
 
   if (shadow === 'subtle') {
     return selectPlatform({
@@ -149,15 +154,15 @@ export function FrostedChromeSurface({
   const { borderColor, borderWidth } = resolveChromeBorder(color, isDark, shadow, variant);
   const fillOverlay = resolveChromeFillOverlay(color, isDark, shadow, variant);
   const resolvedRadius = fixedSize != null ? fixedSize / 2 : borderRadius;
-  const fixedSquare =
-    fixedSize != null ? { width: fixedSize, height: fixedSize } : null;
+  const fixedSquare = fixedSize != null ? { width: fixedSize, height: fixedSize } : null;
+  const onMedia = variant === 'onMedia';
 
   return (
     <View
       style={[
         { borderRadius: resolvedRadius, backgroundColor: 'transparent' },
         fixedSquare,
-        resolveChromeShadowStyle(color, shadow, isDark),
+        resolveChromeShadowStyle(color, shadow, isDark, variant),
         style,
       ]}
     >
@@ -172,7 +177,20 @@ export function FrostedChromeSurface({
           justifyContent: 'center',
         }}
       >
-        <FrostedChromeBackground borderRadius={resolvedRadius} />
+        {onMedia ? (
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFillObject,
+              {
+                borderRadius: resolvedRadius,
+                backgroundColor: ON_MEDIA_CHROME_FILL,
+              },
+            ]}
+          />
+        ) : (
+          <FrostedChromeBackground borderRadius={resolvedRadius} />
+        )}
         {fillOverlay != null ? (
           <View
             pointerEvents="none"

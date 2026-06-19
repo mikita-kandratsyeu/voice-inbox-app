@@ -48,9 +48,19 @@ export {
   NOTE_DOCUMENT_BODY_LINE_HEIGHT,
 } from './documentMarkdownTheme';
 export { EmptyState } from './EmptyState';
+export {
+  FLOATING_FROSTED_CHROME_RADIUS,
+  FloatingFrostedChrome,
+  FloatingFrostedChromeDivider,
+  FloatingFrostedChromeSection,
+} from './FloatingFrostedChrome';
 export { FrostedBottomChrome } from './FrostedBottomChrome';
 export type { FrostedChromeBackgroundProps } from './FrostedChromeBackground';
-export { FrostedChromeBackground } from './FrostedChromeBackground';
+export {
+  FrostedChromeBackground,
+  ON_MEDIA_CHROME_BORDER,
+  ON_MEDIA_CHROME_FILL,
+} from './FrostedChromeBackground';
 export type { FrostedChromeShadow, FrostedChromeVariant } from './FrostedChromeSurface';
 export {
   FROSTED_HEADER_ICON_RADIUS,
@@ -59,12 +69,6 @@ export {
 } from './FrostedChromeSurface';
 export { FrostedHeaderButtonGroup } from './FrostedHeaderButtonGroup';
 export { FrostedHeaderIconButton } from './FrostedHeaderIconButton';
-export {
-  FLOATING_FROSTED_CHROME_RADIUS,
-  FloatingFrostedChrome,
-  FloatingFrostedChromeDivider,
-  FloatingFrostedChromeSection,
-} from './FloatingFrostedChrome';
 export { HeaderIconButton } from './HeaderIconButton';
 export type { InputFieldProps } from './InputField';
 export { getInputFieldInputStyle, InputField } from './InputField';

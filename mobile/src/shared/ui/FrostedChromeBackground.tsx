@@ -18,6 +18,9 @@ const ANDROID_FILL_OPACITY = 0.88;
 const IOS_EXTRA_TINT_LIGHT = 0.34;
 const IOS_EXTRA_TINT_DARK = 0.4;
 const BLUR_AMOUNT = 28;
+/** Translucent glass over saturated accent backgrounds (recorder). */
+export const ON_MEDIA_CHROME_FILL = 'rgba(255,255,255,0.18)';
+export const ON_MEDIA_CHROME_BORDER = 'rgba(255,255,255,0.2)';
 
 export type FrostedChromeBackgroundProps = {
   style?: StyleProp<ViewStyle>;
@@ -26,6 +29,8 @@ export type FrostedChromeBackgroundProps = {
   borderTopRightRadius?: number;
   borderBottomLeftRadius?: number;
   borderBottomRightRadius?: number;
+  /** Accent/media color behind the chrome (e.g. recorder screen). */
+  mediaTint?: string;
 };
 
 type ChromeShellProps = {
@@ -56,10 +61,12 @@ export function FrostedChromeBackground({
   borderTopRightRadius = 0,
   borderBottomLeftRadius = 0,
   borderBottomRightRadius = 0,
+  mediaTint,
 }: FrostedChromeBackgroundProps) {
   const theme = useAppTheme();
   const color = useColors();
   const isDark = theme === 'dark';
+  const onMedia = mediaTint != null;
 
   const radiusStyle: ViewStyle =
     borderRadius != null
@@ -74,6 +81,42 @@ export function FrostedChromeBackground({
   const shell: StyleProp<ViewStyle> = [ABSOLUTE_FILL, radiusStyle, { overflow: 'hidden' }, style];
 
   const opaqueFillColor = withAlphaHex(color.background.primary, ANDROID_FILL_OPACITY);
+
+  if (onMedia) {
+    if (isLiquidGlassSupported) {
+      return (
+        <ChromeShell shell={shell}>
+          <LiquidGlassView
+            pointerEvents="none"
+            style={ABSOLUTE_FILL}
+            effect="regular"
+            colorScheme="light"
+          />
+          <OpaqueChromeFill backgroundColor={ON_MEDIA_CHROME_FILL} />
+        </ChromeShell>
+      );
+    }
+
+    if (!IS_IOS) {
+      return (
+        <ChromeShell shell={shell}>
+          <OpaqueChromeFill backgroundColor={ON_MEDIA_CHROME_FILL} />
+        </ChromeShell>
+      );
+    }
+
+    return (
+      <ChromeShell shell={shell}>
+        <BlurView
+          style={ABSOLUTE_FILL}
+          blurType="light"
+          blurAmount={BLUR_AMOUNT}
+          reducedTransparencyFallbackColor={mediaTint}
+        />
+        <OpaqueChromeFill backgroundColor={ON_MEDIA_CHROME_FILL} />
+      </ChromeShell>
+    );
+  }
 
   if (isLiquidGlassSupported) {
     return (
