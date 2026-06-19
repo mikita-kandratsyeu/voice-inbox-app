@@ -420,7 +420,6 @@ export const GraphRecordNodeCardContent = React.memo(function GraphRecordNodeCar
   folderName,
   archivedLabel,
   openTasksLabel,
-  connectionsLabel,
   tags,
   accentColor,
   color,
@@ -432,7 +431,6 @@ export const GraphRecordNodeCardContent = React.memo(function GraphRecordNodeCar
   folderName?: string;
   archivedLabel?: string;
   openTasksLabel?: string;
-  connectionsLabel?: string;
   tags: string[];
   accentColor: string;
   color: Colors;
@@ -458,20 +456,6 @@ export const GraphRecordNodeCardContent = React.memo(function GraphRecordNodeCar
       >
         {title}
       </Text>
-      {connectionsLabel ? (
-        <Text
-          numberOfLines={1}
-          style={{
-            color: color.text.secondary,
-            fontSize: 10,
-            fontWeight: '500',
-            lineHeight: 13,
-            marginTop: 3,
-          }}
-        >
-          {connectionsLabel}
-        </Text>
-      ) : null}
       {hasMetaChips ? (
         <View
           style={{
@@ -543,7 +527,6 @@ export const GraphTaskNodeCardContent = React.memo(function GraphTaskNodeCardCon
   priority,
   deadline,
   deadlineTime,
-  connectionsLabel,
 }: {
   text: string;
   color: Colors;
@@ -551,7 +534,6 @@ export const GraphTaskNodeCardContent = React.memo(function GraphTaskNodeCardCon
   priority?: 'high' | 'medium' | 'low';
   deadline?: string | null;
   deadlineTime?: string | null;
-  connectionsLabel?: string;
 }) {
   const { t, i18n } = useTranslation();
   const parsedDeadline = parseTaskDeadline(deadline);
@@ -586,20 +568,6 @@ export const GraphTaskNodeCardContent = React.memo(function GraphTaskNodeCardCon
       >
         {text}
       </Text>
-      {connectionsLabel ? (
-        <Text
-          numberOfLines={1}
-          style={{
-            color: color.text.secondary,
-            fontSize: 10,
-            fontWeight: '500',
-            lineHeight: 13,
-            marginTop: 2,
-          }}
-        >
-          {connectionsLabel}
-        </Text>
-      ) : null}
       {hasMeta ? (
         <View
           style={{

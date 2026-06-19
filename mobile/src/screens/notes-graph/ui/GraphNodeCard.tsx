@@ -57,22 +57,16 @@ export const GraphNodeCard = React.memo(function GraphNodeCard({
   neighbor = false,
   interactionPhase,
   onPress,
-  connectionCount = 0,
 }: GraphNodeCardProps & {
   folderIcon?: string;
   dimmed?: boolean;
   active?: boolean;
   neighbor?: boolean;
-  connectionCount?: number;
 }) {
   const { t } = useTranslation();
   const scheme = useAppTheme();
   const interacting = useGraphNodeInteracting(interactionPhase);
   const isActive = active || interacting;
-  const connectionsLabel =
-    isActive && connectionCount > 0
-      ? t('notesGraph.node.connections', { count: connectionCount })
-      : undefined;
 
   if (node.kind === 'task' && node.task) {
     return (
@@ -93,7 +87,6 @@ export const GraphNodeCard = React.memo(function GraphNodeCard({
           priority={node.task.priority}
           deadline={node.task.deadline}
           deadlineTime={node.task.deadlineTime}
-          connectionsLabel={connectionsLabel}
         />
       </GraphAnimatedNodeCard>
     );
@@ -152,7 +145,6 @@ export const GraphNodeCard = React.memo(function GraphNodeCard({
           folderTintHex={chrome.folderTintHex}
           showInboxIcon={chrome.showInboxIcon}
           leadingFolderIconId={chrome.leadingFolderIconId}
-          connectionsLabel={connectionsLabel}
         />
       </GraphAnimatedNodeCard>
     );

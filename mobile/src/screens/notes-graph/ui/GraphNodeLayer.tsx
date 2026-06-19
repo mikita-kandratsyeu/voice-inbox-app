@@ -15,7 +15,6 @@ import { hapticLight } from '@/shared/lib';
 
 import type { GraphViewportCull } from '../lib/buildGraphRenderedEdges';
 import { buildGraphRenderedNodes } from '../lib/buildGraphRenderedNodes';
-import { buildGraphNodeConnectionCounts } from '../lib/countGraphNodeConnections';
 import { snapGraphPointToGrid } from '../lib/graphSnapGrid';
 import type { GraphEdge, GraphNode, GraphNodeDisplayMode } from '../lib/graphTypes';
 import { RECORD_NODE_WIDTH, TASK_NODE_WIDTH } from '../lib/graphTypes';
@@ -300,7 +299,6 @@ type GraphNodeItemProps = {
   active: boolean;
   highlighted: boolean;
   neighbor: boolean;
-  connectionCount: number;
   nodeDisplayMode?: GraphNodeDisplayMode;
   onRecordPress: (recordId: string) => void;
   onTaskPress: (recordId: string, taskId: string) => void;
@@ -324,7 +322,6 @@ const GraphNodeItem = React.memo(
     active,
     highlighted,
     neighbor,
-    connectionCount,
     nodeDisplayMode = 'cards',
     onRecordPress,
     onTaskPress,
@@ -402,7 +399,6 @@ const GraphNodeItem = React.memo(
               dimmed={dimmed}
               active={active}
               neighbor={neighbor}
-              connectionCount={connectionCount}
               interactionPhase={interactionPhase}
             />
           )
@@ -445,7 +441,6 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
   onNodeFocus,
   layoutRestoreToken = 0,
 }: GraphNodeLayerProps) {
-  const connectionCountByNodeId = useMemo(() => buildGraphNodeConnectionCounts(edges), [edges]);
   const activeNeighborIds = useMemo(
     () => (activeNodeId ? buildGraphActiveNeighborIds(activeNodeId, edges) : new Set<string>()),
     [activeNodeId, edges],
@@ -494,7 +489,6 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
             active={visualState.active}
             neighbor={visualState.neighbor}
             highlighted={visualState.highlighted}
-            connectionCount={connectionCountByNodeId.get(node.id) ?? 0}
             nodeDisplayMode={nodeDisplayMode}
             onRecordPress={onRecordPress}
             onTaskPress={onTaskPress}

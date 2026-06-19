@@ -361,11 +361,7 @@
       "openTasks_one": "{{count}} задача",
       "openTasks_few": "{{count}} задачи",
       "openTasks_many": "{{count}} задач",
-      "openTasks_other": "{{count}} задач",
-      "connections_one": "{{count}} связь",
-      "connections_few": "{{count}} связи",
-      "connections_many": "{{count}} связей",
-      "connections_other": "{{count}} связей"
+      "openTasks_other": "{{count}} задач"
     },
     "filters": {
       "allFolders": "Все папки",

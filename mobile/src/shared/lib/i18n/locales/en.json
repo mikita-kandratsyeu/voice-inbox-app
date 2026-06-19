@@ -346,9 +346,7 @@
     "simplifyActiveHint": "Simplified view — tap to show all links",
     "node": {
       "openTasks_one": "{{count}} task",
-      "openTasks_other": "{{count}} tasks",
-      "connections_one": "{{count}} connection",
-      "connections_other": "{{count}} connections"
+      "openTasks_other": "{{count}} tasks"
     },
     "filters": {
       "allFolders": "All folders",
