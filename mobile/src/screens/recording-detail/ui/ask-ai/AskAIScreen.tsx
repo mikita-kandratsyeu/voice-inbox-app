@@ -2,7 +2,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ArrowRight, Trash2 } from 'lucide-react-native';
+import { Trash2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Share, ToastAndroid, View } from 'react-native';
@@ -21,9 +21,9 @@ import {
   useNetworkStatus,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
-import { Button, HeaderIconButton, ScreenHeader } from '@/shared/ui';
+import { HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
-import { AskAIComposer } from './AskAIComposer';
+import { ASK_AI_COMPOSER_BOTTOM_EXTRA, AskAIComposer } from './AskAIComposer';
 import { AskMainContent } from './AskMainContent';
 
 export const AskAIScreen = () => {
@@ -210,26 +210,8 @@ export const AskAIScreen = () => {
     !isRestoringSession &&
     !isLoading &&
     !disableByNetwork;
-
-  const sendButton = useMemo(
-    () => (
-      <View style={{ flexShrink: 0 }}>
-        <Button
-          variant="primary"
-          size="md"
-          icon={<ArrowRight size={18} color="#fff" strokeWidth={2.5} />}
-          iconOnly
-          color={color}
-          containerStyle={{ backgroundColor: color.accent.primary }}
-          onPress={handleAsk}
-          disabled={!canSend}
-          accessibilityLabel={t('recordingDetail.askSend')}
-          accessibilityState={{ disabled: !canSend }}
-        />
-      </View>
-    ),
-    [color, handleAsk, canSend, t],
-  );
+  const composerBottomInset =
+    10 + 44 + 10 + Math.max(insets.bottom, 8) + ASK_AI_COMPOSER_BOTTOM_EXTRA;
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -257,7 +239,7 @@ export const AskAIScreen = () => {
             contentContainerStyle={{
               paddingHorizontal: 16,
               paddingTop: 12,
-              paddingBottom: 16,
+              paddingBottom: shouldShowInputRow ? composerBottomInset + 16 : 16,
               ...(scrollContentFlexGrow ? { flexGrow: 1 } : {}),
               ...(scrollContentCentered ? { justifyContent: 'center' as const } : {}),
             }}
@@ -293,13 +275,13 @@ export const AskAIScreen = () => {
         {shouldShowInputRow ? (
           <AskAIComposer
             color={color}
-            insetsBottom={insets.bottom}
+            insetsBottom={insets.bottom + ASK_AI_COMPOSER_BOTTOM_EXTRA}
             contentMaxWidth={contentMaxWidth}
             questionInput={questionInput}
             onChangeQuestion={setQuestionInput}
             onSubmit={handleAsk}
+            canSend={canSend}
             disableByNetwork={disableByNetwork}
-            sendButton={sendButton}
           />
         ) : null}
       </View>

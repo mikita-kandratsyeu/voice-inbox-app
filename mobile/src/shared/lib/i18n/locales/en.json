@@ -849,6 +849,7 @@
     "askSuggestedMeetingSpeakers": "Quick recap by participant",
     "askSuggestedKeyPhrases": "Explain the key phrases",
     "askButton": "Ask",
+    "askOpenMenu": "Open Ask AI",
     "askProcessing": "Answering…",
     "askError": "Failed to get answer",
     "askErrorContinueHint": "Close to view summary and tasks.",

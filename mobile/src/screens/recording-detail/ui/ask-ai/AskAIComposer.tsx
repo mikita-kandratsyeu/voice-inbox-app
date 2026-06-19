@@ -1,9 +1,11 @@
-import React, { memo, type ReactNode } from 'react';
+import { ArrowRight, MessageSquare, X } from 'lucide-react-native';
+import React, { memo, useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TextInput, View } from 'react-native';
+import { TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 
 import type { Colors } from '@/shared/config';
+import { hapticLight, iosHitSlopForVisualSize } from '@/shared/lib';
 import {
   FloatingFrostedChrome,
   FloatingFrostedChromeDivider,
@@ -18,9 +20,13 @@ type AskAIComposerProps = {
   questionInput: string;
   onChangeQuestion: (text: string) => void;
   onSubmit: () => void;
+  canSend: boolean;
   disableByNetwork: boolean;
-  sendButton: ReactNode;
 };
+
+const SEND_BUTTON_SIZE = 36;
+/** Extra gap between the composer pill and the screen bottom (above safe area). */
+export const ASK_AI_COMPOSER_BOTTOM_EXTRA = 8;
 
 const AskAIComposerInner = ({
   color,
@@ -29,11 +35,32 @@ const AskAIComposerInner = ({
   questionInput,
   onChangeQuestion,
   onSubmit,
+  canSend,
   disableByNetwork,
-  sendButton,
 }: AskAIComposerProps) => {
   const { t } = useTranslation();
+  const inputRef = useRef<TextInput>(null);
+  const [focused, setFocused] = useState(false);
   const hasInputText = questionInput.length > 0;
+  const isActive = focused || hasInputText;
+
+  const handleChangeText = useCallback(
+    (text: string) => {
+      onChangeQuestion(text.replace(/\n/g, ' '));
+    },
+    [onChangeQuestion],
+  );
+
+  const handleClear = useCallback(() => {
+    onChangeQuestion('');
+    inputRef.current?.focus();
+  }, [onChangeQuestion]);
+
+  const handleSend = useCallback(() => {
+    if (!canSend) return;
+    hapticLight();
+    onSubmit();
+  }, [canSend, onSubmit]);
 
   return (
     <KeyboardStickyView offset={{ closed: 0, opened: 0 }} style={{ alignSelf: 'stretch' }}>
@@ -59,30 +86,79 @@ const AskAIComposerInner = ({
                 flex: 1,
                 minWidth: 0,
                 flexDirection: 'row',
-                alignItems: hasInputText ? 'flex-start' : 'center',
+                alignItems: 'center',
+                gap: 8,
               }}
             >
+              <MessageSquare
+                size={17}
+                color={isActive ? color.accent.primary : color.icon.muted}
+                strokeWidth={2.2}
+              />
               <TextInput
-                style={[
-                  getInputFieldInputStyle(color, hasInputText),
-                  { flex: 1 },
-                  hasInputText ? { maxHeight: 100 } : undefined,
-                ]}
+                ref={inputRef}
+                style={[getInputFieldInputStyle(color), { flex: 1 }]}
                 placeholder={t('recordingDetail.askPlaceholder')}
                 placeholderTextColor={color.text.secondary}
                 accessibilityLabel={t('recordingDetail.askPlaceholder')}
                 value={questionInput}
-                onChangeText={onChangeQuestion}
+                onChangeText={handleChangeText}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
                 returnKeyType="send"
                 submitBehavior="submit"
                 editable={!disableByNetwork}
-                multiline={hasInputText}
-                scrollEnabled={hasInputText}
-                onSubmitEditing={onSubmit}
+                onSubmitEditing={handleSend}
               />
+              {hasInputText ? (
+                <TouchableOpacity
+                  onPress={handleClear}
+                  hitSlop={iosHitSlopForVisualSize(16, 16)}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.clear')}
+                >
+                  <View
+                    style={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: 8,
+                      backgroundColor: color.icon.muted,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <X size={10} color={color.background.primary} strokeWidth={2.5} />
+                  </View>
+                </TouchableOpacity>
+              ) : null}
             </View>
             <FloatingFrostedChromeDivider color={color} />
-            <FloatingFrostedChromeSection>{sendButton}</FloatingFrostedChromeSection>
+            <FloatingFrostedChromeSection>
+              <TouchableOpacity
+                onPress={handleSend}
+                disabled={!canSend}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel={t('recordingDetail.askSend')}
+                accessibilityState={{ disabled: !canSend }}
+                hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+                style={{
+                  width: SEND_BUTTON_SIZE,
+                  height: SEND_BUTTON_SIZE,
+                  borderRadius: 10,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: canSend ? color.accent.primary : color.background.tertiary,
+                }}
+              >
+                <ArrowRight
+                  size={17}
+                  color={canSend ? color.icon.onAccent : color.text.muted}
+                  strokeWidth={2.5}
+                />
+              </TouchableOpacity>
+            </FloatingFrostedChromeSection>
           </View>
         </FloatingFrostedChrome>
       </View>

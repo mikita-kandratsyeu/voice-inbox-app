@@ -866,6 +866,7 @@
     "askSuggestedMeetingSpeakers": "Кратко по репликам участников",
     "askSuggestedKeyPhrases": "Поясни ключевые фразы",
     "askButton": "Спросить",
+    "askOpenMenu": "Войти в Ask AI",
     "askProcessing": "Ответ генерируется…",
     "askError": "Не удалось получить ответ",
     "askErrorContinueHint": "Закройте окно, чтобы просмотреть сводку и задачи.",

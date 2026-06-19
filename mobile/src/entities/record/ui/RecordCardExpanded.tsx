@@ -48,6 +48,7 @@ type RecordCardExpandedProps = {
   onRename?: () => void;
   onDelete?: () => void;
   onOpenAllTasks?: () => void;
+  onAskAI?: () => void;
   onOpenInGraph?: () => void;
   onLinkNote?: () => void;
   a11yHint?: string | null;
@@ -80,6 +81,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
   onRename,
   onDelete,
   onOpenAllTasks,
+  onAskAI,
   onOpenInGraph,
   onLinkNote,
   a11yHint,
@@ -231,6 +233,16 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
         }
       : null;
 
+    const askAIAction: NativeMenuAction | null = onAskAI
+      ? {
+          id: 'askAI',
+          title: t('recordingDetail.askOpenMenu'),
+          titleColor,
+          image: 'bubble.left.and.bubble.right',
+          imageColor: titleColor,
+        }
+      : null;
+
     const restPrimary: NativeMenuAction[] = [];
 
     if (shareAction) {
@@ -264,6 +276,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
 
     const notesConnectionsActions: NativeMenuAction[] = [];
     if (linkNoteAction) notesConnectionsActions.push(linkNoteAction);
+    if (askAIAction) notesConnectionsActions.push(askAIAction);
     if (openInGraphAction) notesConnectionsActions.push(openInGraphAction);
 
     if (
@@ -361,6 +374,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
     onArchive,
     onDelete,
     onOpenAllTasks,
+    onAskAI,
     onOpenInGraph,
     onLinkNote,
     onPin,
@@ -450,6 +464,7 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
                 if (id === 'unarchive') onUnarchive?.();
                 if (id === 'share') onShare?.();
                 if (id === 'linkNote') onLinkNote?.();
+                if (id === 'askAI') onAskAI?.();
                 if (id === 'openInGraph') onOpenInGraph?.();
                 if (id === 'delete') onDelete?.();
               }}

@@ -457,6 +457,13 @@ export function useInboxScreen() {
     [isProActive, navigation],
   );
 
+  const handleOpenAskAIForRecord = useCallback(
+    (record: VoiceRecord) => {
+      navigation.navigate('RecordingAskAI', { record });
+    },
+    [navigation],
+  );
+
   const handleCloseNotesGraphProSheet = useCallback(() => {
     setNotesGraphProSheetVisible(false);
   }, []);
@@ -997,6 +1004,7 @@ export function useInboxScreen() {
           onRecordRename={handleRecordRename}
           onRecordDelete={handleRecordDelete}
           onOpenAllTasksForNote={handleOpenAllTasksForNote}
+          onOpenAskAIForRecord={handleOpenAskAIForRecord}
           onOpenNotesGraphForRecord={handleOpenNotesGraphForRecord}
         />
       );
@@ -1023,6 +1031,7 @@ export function useInboxScreen() {
       handleRecordRename,
       handleRecordDelete,
       handleOpenAllTasksForNote,
+      handleOpenAskAIForRecord,
       handleOpenNotesGraphForRecord,
       batchSelect,
       publishedByRecordId,
