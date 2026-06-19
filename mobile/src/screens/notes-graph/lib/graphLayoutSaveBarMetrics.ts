@@ -1,7 +1,5 @@
 import { type ViewStyle } from 'react-native';
 
-import { selectPlatform } from '@/shared/lib/platform';
-
 export type GraphLayoutSaveBarColors = {
   background: { primary: string };
   text: { primary: string };
@@ -35,23 +33,8 @@ export function getGraphLayoutSaveBarBottom(bottomInset: number): number {
   return bottomInset + GRAPH_LAYOUT_SAVE_SIDE_GUTTER;
 }
 
-export function getGraphLayoutSaveDockShadowStyle(color: GraphLayoutSaveBarColors): ViewStyle {
-  return (
-    selectPlatform({
-      ios: {
-        shadowColor: color.shadow.color,
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: color.shadow.opacity * 2.2,
-        shadowRadius: 10,
-      },
-      android: { elevation: 6 },
-      default: {},
-    }) ?? {}
-  );
-}
-
-/** Matches {@link GraphControls} chrome — primary surface + default border. */
-export function getGraphLayoutSaveDockStyle(color: GraphLayoutSaveBarColors): ViewStyle {
+/** Inner layout for the save dock — frosted chrome is applied in {@link GraphLayoutSaveBar}. */
+export function getGraphLayoutSaveDockStyle(): ViewStyle {
   return {
     flexDirection: 'row',
     alignItems: 'center',
@@ -60,11 +43,6 @@ export function getGraphLayoutSaveDockStyle(color: GraphLayoutSaveBarColors): Vi
     paddingLeft: GRAPH_LAYOUT_SAVE_DOCK_PADDING_H,
     paddingRight: GRAPH_LAYOUT_SAVE_DOCK_PADDING_H - 1,
     paddingVertical: GRAPH_LAYOUT_SAVE_DOCK_PADDING_V,
-    borderRadius: GRAPH_LAYOUT_SAVE_DOCK_HEIGHT / 2,
-    backgroundColor: color.background.primary,
-    borderWidth: 1,
-    borderColor: color.border.default,
-    ...getGraphLayoutSaveDockShadowStyle(color),
   };
 }
 

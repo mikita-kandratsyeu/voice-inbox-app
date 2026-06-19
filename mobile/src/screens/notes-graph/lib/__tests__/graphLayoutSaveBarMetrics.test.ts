@@ -1,7 +1,6 @@
 import {
   getGraphLayoutSaveBarBottom,
   getGraphLayoutSaveDockButtonStyle,
-  getGraphLayoutSaveDockShadowStyle,
   getGraphLayoutSaveDockStyle,
   GRAPH_LAYOUT_SAVE_BUTTON_SIZE,
   GRAPH_LAYOUT_SAVE_CORNER_COLUMN_WIDTH,
@@ -31,14 +30,13 @@ describe('graphLayoutSaveBarMetrics', () => {
     );
   });
 
-  it('matches graph control chrome for the dock surface', () => {
-    const dock = getGraphLayoutSaveDockStyle(color);
+  it('defines inner layout for the frosted save dock', () => {
+    const dock = getGraphLayoutSaveDockStyle();
 
-    expect(dock.backgroundColor).toBe(color.background.primary);
-    expect(dock.borderColor).toBe(color.border.default);
-    expect(dock.borderWidth).toBe(1);
+    expect(dock.flexDirection).toBe('row');
     expect(dock.height).toBe(GRAPH_LAYOUT_SAVE_DOCK_HEIGHT);
-    expect(dock.borderRadius).toBe(GRAPH_LAYOUT_SAVE_DOCK_HEIGHT / 2);
+    expect(dock.backgroundColor).toBeUndefined();
+    expect(dock.borderWidth).toBeUndefined();
   });
 
   it('styles discard as a subtle icon chip and save as primary', () => {
@@ -49,12 +47,5 @@ describe('graphLayoutSaveBarMetrics', () => {
     expect(discard.height).toBe(GRAPH_LAYOUT_SAVE_BUTTON_SIZE);
     expect(save.backgroundColor).toBe(color.accent.primary);
     expect(discard.backgroundColor).not.toBe(color.accent.primary);
-  });
-
-  it('adds platform shadow styles to the dock', () => {
-    const shadow = getGraphLayoutSaveDockShadowStyle(color);
-
-    expect(shadow).toBeDefined();
-    expect(Object.keys(shadow).length).toBeGreaterThan(0);
   });
 });

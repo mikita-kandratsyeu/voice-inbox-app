@@ -5,7 +5,7 @@ import { ActivityIndicator, Text, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { hapticLight } from '@/shared/lib';
-import { Button } from '@/shared/ui';
+import { Button, FrostedChromeSurface } from '@/shared/ui';
 
 import {
   getGraphLayoutSaveBarBottom,
@@ -13,6 +13,7 @@ import {
   getGraphLayoutSaveDockStyle,
   GRAPH_LAYOUT_SAVE_BUTTON_SIZE,
   GRAPH_LAYOUT_SAVE_CORNER_COLUMN_WIDTH,
+  GRAPH_LAYOUT_SAVE_DOCK_HEIGHT,
   GRAPH_LAYOUT_SAVE_ICON_SIZE,
 } from '../lib/graphLayoutSaveBarMetrics';
 
@@ -74,75 +75,81 @@ export function GraphLayoutSaveBar({
         justifyContent: 'center',
       }}
     >
-      <View style={getGraphLayoutSaveDockStyle(color)}>
-        <Button
-          color={color}
-          variant="ghost"
-          size="sm"
-          shape="circle"
-          iconOnly
-          className={compactButtonClassName}
-          accessibilityLabel={t('notesGraph.saveLayoutBar.discard')}
-          icon={dockIconSlot(
-            <Undo2
-              size={GRAPH_LAYOUT_SAVE_ICON_SIZE}
-              color={color.text.secondary}
-              strokeWidth={2.2}
-            />,
-          )}
-          disabled={controlsDisabled}
-          onPress={() => {
-            hapticLight();
-            onDiscard();
-          }}
-          containerStyle={getGraphLayoutSaveDockButtonStyle(color, 'discard', true)}
-        />
+      <FrostedChromeSurface
+        color={color}
+        borderRadius={GRAPH_LAYOUT_SAVE_DOCK_HEIGHT / 2}
+        shadow="subtle"
+      >
+        <View style={getGraphLayoutSaveDockStyle()}>
+          <Button
+            color={color}
+            variant="ghost"
+            size="sm"
+            shape="circle"
+            iconOnly
+            className={compactButtonClassName}
+            accessibilityLabel={t('notesGraph.saveLayoutBar.discard')}
+            icon={dockIconSlot(
+              <Undo2
+                size={GRAPH_LAYOUT_SAVE_ICON_SIZE}
+                color={color.text.secondary}
+                strokeWidth={2.2}
+              />,
+            )}
+            disabled={controlsDisabled}
+            onPress={() => {
+              hapticLight();
+              onDiscard();
+            }}
+            containerStyle={getGraphLayoutSaveDockButtonStyle(color, 'discard', true)}
+          />
 
-        <View
-          style={{
-            width: 1,
-            height: GRAPH_LAYOUT_SAVE_BUTTON_SIZE - 10,
-            borderRadius: 1,
-            backgroundColor: color.border.default,
-          }}
-        />
+          <View
+            style={{
+              width: 1,
+              height: GRAPH_LAYOUT_SAVE_BUTTON_SIZE - 10,
+              borderRadius: 1,
+              backgroundColor: color.border.default,
+            }}
+          />
 
-        <Button
-          color={color}
-          variant="primary"
-          size="sm"
-          iconOnly
-          className={compactButtonClassName}
-          accessibilityLabel={t('notesGraph.saveChangesA11y')}
-          icon={
-            isSaving ? (
-              <ActivityIndicator size="small" color={color.icon.onAccent} />
-            ) : (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                {dockIconSlot(
-                  <Save
-                    size={GRAPH_LAYOUT_SAVE_ICON_SIZE}
-                    color={color.icon.onAccent}
-                    strokeWidth={2.3}
-                  />,
-                )}
-                <Text style={[saveLabelStyle, { color: color.icon.onAccent }]}>
-                  {t('notesGraph.saveLayoutBar.save')}
-                </Text>
-              </View>
-            )
-          }
-          disabled={controlsDisabled}
-          onPress={() => {
-            hapticLight();
-            onSave();
-          }}
-          containerStyle={{
-            ...getGraphLayoutSaveDockButtonStyle(color, 'save'),
-            paddingHorizontal: 11,
-          }}
-        />
-      </View>
+          <Button
+            color={color}
+            variant="primary"
+            size="sm"
+            iconOnly
+            className={compactButtonClassName}
+            accessibilityLabel={t('notesGraph.saveChangesA11y')}
+            icon={
+              isSaving ? (
+                <ActivityIndicator size="small" color={color.icon.onAccent} />
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                  {dockIconSlot(
+                    <Save
+                      size={GRAPH_LAYOUT_SAVE_ICON_SIZE}
+                      color={color.icon.onAccent}
+                      strokeWidth={2.3}
+                    />,
+                  )}
+                  <Text style={[saveLabelStyle, { color: color.icon.onAccent }]}>
+                    {t('notesGraph.saveLayoutBar.save')}
+                  </Text>
+                </View>
+              )
+            }
+            disabled={controlsDisabled}
+            onPress={() => {
+              hapticLight();
+              onSave();
+            }}
+            containerStyle={{
+              ...getGraphLayoutSaveDockButtonStyle(color, 'save'),
+              paddingHorizontal: 11,
+            }}
+          />
+        </View>
+      </FrostedChromeSurface>
     </View>
   );
 }

@@ -6,6 +6,7 @@ import Svg, { Line } from 'react-native-svg';
 
 import type { Colors } from '@/shared/config';
 import { hapticLight } from '@/shared/lib';
+import { FROSTED_HEADER_ICON_SIZE, FrostedChromeSurface } from '@/shared/ui';
 
 import { getLegendEdgeStrokeStyle } from '../lib/graphEdgeStyles';
 import type { GraphEdgeKind } from '../lib/graphTypes';
@@ -48,50 +49,47 @@ function ControlButton({
   const longPressHandledRef = useRef(false);
 
   return (
-    <Pressable
-      onPress={() => {
-        if (disabled || longPressHandledRef.current) {
-          longPressHandledRef.current = false;
-          return;
-        }
-        hapticLight();
-        onPress();
-      }}
-      onLongPress={
-        onLongPress
-          ? () => {
-              if (disabled) return;
-              longPressHandledRef.current = true;
-              hapticLight();
-              onLongPress();
-            }
-          : undefined
-      }
-      delayLongPress={onLongPress ? delayLongPress : undefined}
-      disabled={disabled}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityHint={accessibilityHint}
-      accessibilityState={{ disabled }}
-      style={{
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: color.background.primary,
-        borderWidth: 1,
-        borderColor: color.border.default,
-        opacity: disabled ? 0.45 : 1,
-        shadowColor: color.shadow.color,
-        shadowOpacity: color.shadow.opacity * 0.6,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 3,
-      }}
+    <FrostedChromeSurface
+      color={color}
+      fixedSize={FROSTED_HEADER_ICON_SIZE}
+      shadow="subtle"
+      style={{ opacity: disabled ? 0.45 : 1 }}
     >
-      {children}
-    </Pressable>
+      <Pressable
+        onPress={() => {
+          if (disabled || longPressHandledRef.current) {
+            longPressHandledRef.current = false;
+            return;
+          }
+          hapticLight();
+          onPress();
+        }}
+        onLongPress={
+          onLongPress
+            ? () => {
+                if (disabled) return;
+                longPressHandledRef.current = true;
+                hapticLight();
+                onLongPress();
+              }
+            : undefined
+        }
+        delayLongPress={onLongPress ? delayLongPress : undefined}
+        disabled={disabled}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint}
+        accessibilityState={{ disabled }}
+        style={{
+          width: FROSTED_HEADER_ICON_SIZE,
+          height: FROSTED_HEADER_ICON_SIZE,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {children}
+      </Pressable>
+    </FrostedChromeSurface>
   );
 }
 
@@ -129,76 +127,71 @@ export function GraphControls({
         }}
       >
         {legendVisible && !showStatusLoader ? (
-          <View
-            style={{
-              backgroundColor: color.background.primary,
-              borderColor: color.border.default,
-              borderWidth: 1,
-              borderRadius: 14,
-              paddingHorizontal: 14,
-              paddingVertical: 12,
-              gap: 10,
-              minWidth: 196,
-              maxWidth: 240,
-              shadowColor: color.shadow.color,
-              shadowOpacity: color.shadow.opacity * 0.7,
-              shadowRadius: 8,
-              shadowOffset: { width: 0, height: 3 },
-              elevation: 4,
-            }}
+          <FrostedChromeSurface
+            color={color}
+            borderRadius={14}
+            shadow="subtle"
+            style={{ minWidth: 196, maxWidth: 240 }}
           >
-            <LegendRow color={color} edgeKind="similar" label={t('notesGraph.legend.similar')} />
-            <LegendRow
-              color={color}
-              edgeKind="sharedTag"
-              label={t('notesGraph.legend.sharedTag')}
-            />
-            <LegendRow
-              color={color}
-              edgeKind="sameFolder"
-              label={t('notesGraph.legend.sameFolder')}
-            />
-            <LegendRow color={color} edgeKind="linked" label={t('notesGraph.legend.linked')} />
-            <LegendRow color={color} edgeKind="contains" label={t('notesGraph.legend.tasks')} />
-          </View>
+            <View
+              style={{
+                alignSelf: 'stretch',
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                gap: 10,
+              }}
+            >
+              <LegendRow color={color} edgeKind="similar" label={t('notesGraph.legend.similar')} />
+              <LegendRow
+                color={color}
+                edgeKind="sharedTag"
+                label={t('notesGraph.legend.sharedTag')}
+              />
+              <LegendRow
+                color={color}
+                edgeKind="sameFolder"
+                label={t('notesGraph.legend.sameFolder')}
+              />
+              <LegendRow color={color} edgeKind="linked" label={t('notesGraph.legend.linked')} />
+              <LegendRow color={color} edgeKind="contains" label={t('notesGraph.legend.tasks')} />
+            </View>
+          </FrostedChromeSurface>
         ) : null}
 
         {showStatusLoader ? (
-          <View
-            accessibilityRole="progressbar"
-            accessibilityLabel={statusLabel}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 9,
-              height: 44,
-              paddingHorizontal: 14,
-              borderRadius: 22,
-              backgroundColor: color.background.primary,
-              borderWidth: 1,
-              borderColor: color.border.default,
-              maxWidth: 240,
-              shadowColor: color.shadow.color,
-              shadowOpacity: color.shadow.opacity * 0.6,
-              shadowRadius: 6,
-              shadowOffset: { width: 0, height: 2 },
-              elevation: 3,
-            }}
+          <FrostedChromeSurface
+            color={color}
+            borderRadius={22}
+            shadow="subtle"
+            style={{ maxWidth: 240 }}
           >
-            <ActivityIndicator size="small" color={color.accent.primary} />
-            <Text
+            <View
+              accessibilityRole="progressbar"
+              accessibilityLabel={statusLabel}
               style={{
-                color: color.text.primary,
-                fontSize: 13,
-                fontWeight: '600',
-                lineHeight: 17,
-                flexShrink: 1,
+                alignSelf: 'stretch',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 9,
+                height: FROSTED_HEADER_ICON_SIZE,
+                paddingHorizontal: 14,
               }}
-              numberOfLines={1}
             >
-              {statusLabel}
-            </Text>
-          </View>
+              <ActivityIndicator size="small" color={color.accent.primary} />
+              <Text
+                style={{
+                  color: color.text.primary,
+                  fontSize: 13,
+                  fontWeight: '600',
+                  lineHeight: 17,
+                  flexShrink: 1,
+                }}
+                numberOfLines={1}
+              >
+                {statusLabel}
+              </Text>
+            </View>
+          </FrostedChromeSurface>
         ) : (
           <ControlButton
             color={color}
