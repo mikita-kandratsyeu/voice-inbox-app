@@ -125,8 +125,9 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
         activeNodeId,
         viewportCull,
         nodeDisplayMode,
+        edgeDensityInfo,
       ),
-    [activeNodeId, edges, matchedNodeIds, nodes, viewportCull, nodeDisplayMode],
+    [activeNodeId, edgeDensityInfo, edges, matchedNodeIds, nodeDisplayMode, nodes, viewportCull],
   );
 
   const preparedEdges = useMemo(

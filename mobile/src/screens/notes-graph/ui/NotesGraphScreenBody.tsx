@@ -36,6 +36,11 @@ import {
   setGraphFolderHighlightsVisible,
 } from '../lib/graphFolderHighlightsPreferences';
 import {
+  GRAPH_LAYOUT_TRANSITION_MS,
+  runLayoutTransition,
+  shouldAnimateLayoutTransition,
+} from '../lib/graphLayoutTransition';
+import {
   getGraphMinimapVisible,
   isGraphMinimapAvailable,
   setGraphMinimapVisible,
@@ -63,7 +68,7 @@ import { estimateGraphSearchFocusBottomInset } from '../lib/graphViewportInsets'
 import type { NotesGraphHistoryScope } from '../lib/notesGraphHistoryScope';
 import {
   awaitPendingNotesGraphLayout,
-  buildAndCacheNotesGraphLayout,
+  buildAndCacheNotesGraphLayoutAsync,
   buildNotesGraphLayoutCacheKey,
   clearNotesGraphLayoutCache,
   getCachedNotesGraphLayout,
@@ -148,6 +153,7 @@ export const NotesGraphScreenBody = () => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
   const [layoutNodes, setLayoutNodes] = useState<GraphNode[]>([]);
+  const [displayNodes, setDisplayNodes] = useState<GraphNode[]>([]);
   const [layoutEdges, setLayoutEdges] = useState<GraphEdge[]>([]);
   const [searchIndex, setSearchIndex] = useState<GraphSearchIndexEntry[]>([]);
   const [graphSize, setGraphSize] = useState({ width: 0, height: 0 });
@@ -178,6 +184,8 @@ export const NotesGraphScreenBody = () => {
   const exportPreviewBackgroundIdRef = useRef<GraphExportBackgroundId>(
     GRAPH_EXPORT_DEFAULT_BACKGROUND_ID,
   );
+  const layoutNodesRef = useRef<GraphNode[]>([]);
+  const layoutTransitionCancelRef = useRef<(() => void) | null>(null);
   const [activeSavedVersion, setActiveSavedVersion] = useState<NotesGraphLayoutVersionEntry | null>(
     null,
   );
@@ -287,6 +295,8 @@ export const NotesGraphScreenBody = () => {
 
   useEffect(() => {
     return () => {
+      layoutTransitionCancelRef.current?.();
+      layoutTransitionCancelRef.current = null;
       clearGraphSessionLayout();
       clearNotesGraphLayoutCache();
     };
@@ -355,12 +365,36 @@ export const NotesGraphScreenBody = () => {
       recordCount: number;
       searchIndex: GraphSearchIndexEntry[];
     }) => {
-      setLayoutNodes(built.layoutNodes);
+      const previousNodes = layoutNodesRef.current;
+      const nextNodes = built.layoutNodes;
+
       setLayoutEdges(built.layoutEdges);
       setGraphSize(built.graphSize);
       setRecordCount(built.recordCount);
       setSearchIndex(built.searchIndex);
       setIsBuilding(false);
+
+      layoutTransitionCancelRef.current?.();
+      layoutTransitionCancelRef.current = null;
+
+      const finishApply = () => {
+        layoutNodesRef.current = nextNodes;
+        setLayoutNodes(nextNodes);
+        setDisplayNodes(nextNodes);
+      };
+
+      if (shouldAnimateLayoutTransition(previousNodes, nextNodes)) {
+        layoutTransitionCancelRef.current = runLayoutTransition(
+          previousNodes,
+          nextNodes,
+          GRAPH_LAYOUT_TRANSITION_MS,
+          setDisplayNodes,
+          finishApply,
+        );
+        return;
+      }
+
+      finishApply();
     };
 
     void (async () => {
@@ -379,15 +413,9 @@ export const NotesGraphScreenBody = () => {
         return;
       }
 
-      await new Promise<void>((resolve) => {
-        requestAnimationFrame(() => {
-          setTimeout(resolve, 0);
-        });
-      });
-
       if (cancelled) return;
 
-      const built = buildAndCacheNotesGraphLayout(
+      const built = await buildAndCacheNotesGraphLayoutAsync(
         graphRecords,
         filters,
         filteredRecordCount,
@@ -849,6 +877,7 @@ export const NotesGraphScreenBody = () => {
           { text: t('common.cancel'), style: 'cancel' },
           {
             text: t('common.continue'),
+            style: 'destructive',
             onPress: () => {
               exportCaptureTokenRef.current += 1;
               setExportPreviewUri(null);
@@ -1182,7 +1211,7 @@ export const NotesGraphScreenBody = () => {
         <View style={{ flex: 1 }}>
           <GraphCanvas
             ref={canvasRef}
-            nodes={layoutNodes}
+            nodes={displayNodes}
             edges={layoutEdges}
             graphWidth={graphSize.width}
             graphHeight={graphSize.height}

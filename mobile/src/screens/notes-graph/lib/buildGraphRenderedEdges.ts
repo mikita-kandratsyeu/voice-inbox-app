@@ -4,6 +4,7 @@ import {
   computeEdgeCurvature,
   computeQuadraticEdgePath,
 } from './graphEdgePath';
+import { adjustEdgeCurvatureForDensity, type EdgeDensityInfo } from './graphEdgeDensity';
 import { type GraphEdgeEmphasis, resolveGraphEdgeEmphasis } from './graphEdgeStyles';
 import { nodeBorderAnchor, nodeCenter } from './graphNodeMetrics';
 import type { GraphEdge, GraphEdgeKind, GraphNode, GraphNodeDisplayMode } from './graphTypes';
@@ -84,6 +85,7 @@ export function buildGraphRenderedEdges(
   activeNodeId: string | null,
   viewportCull?: GraphViewportCull | null,
   displayMode?: GraphNodeDisplayMode,
+  edgeDensityInfo?: EdgeDensityInfo | null,
 ): GraphRenderedEdge[] {
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
   const nodeCenters = new Map<string, { x: number; y: number }>();
@@ -117,7 +119,10 @@ export function buildGraphRenderedEdges(
     } else {
       const bend = bendLayout.get(edge.id) ?? { index: 0, total: 1 };
       const distance = Math.hypot(to.x - from.x, to.y - from.y);
-      const curvature = computeEdgeCurvature(distance, edge.id, bend, edge.kind);
+      const curvature = adjustEdgeCurvatureForDensity(
+        computeEdgeCurvature(distance, edge.id, bend, edge.kind),
+        edgeDensityInfo ?? { totalEdges: 0, maxDensity: 0, isHighDensity: false, baseOpacity: 1 },
+      );
 
       const useCubic = edge.kind === 'similar' || edge.kind === 'contains';
       path = useCubic

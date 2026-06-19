@@ -96,6 +96,9 @@ describe('notesGraphLayoutCache', () => {
 
     warmNotesGraphLayoutWithFilters(records, filters, null, 390, 800);
 
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    await new Promise<void>((resolve) => setImmediate(resolve));
     const warmed = await awaitPendingNotesGraphLayout(key);
     expect(warmed?.layoutNodes).toHaveLength(2);
     expect(getCachedNotesGraphLayout(key)).toBe(warmed);
@@ -112,8 +115,11 @@ describe('notesGraphLayoutCache', () => {
     jest.advanceTimersByTime(399);
     expect(getCachedNotesGraphLayout(key)).toBeNull();
 
-    jest.advanceTimersByTime(1);
-    jest.runOnlyPendingTimers();
+    jest.advanceTimersByTime(400);
+    jest.advanceTimersByTime(0);
+    jest.useRealTimers();
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    await new Promise<void>((resolve) => setImmediate(resolve));
 
     const warmed = await awaitPendingNotesGraphLayout(key);
     expect(warmed?.layoutNodes).toHaveLength(1);

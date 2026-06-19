@@ -1,13 +1,12 @@
 import type { VoiceRecord } from '@/entities/record';
 
+import { computeLayoutAsync } from './asyncLayoutComputation';
 import { buildGraphModel } from './buildGraphModel';
 import { buildGraphSearchIndex, type GraphSearchIndexEntry } from './graphSearch';
 import { clearStaleSessionPositions, getSessionNodePositions } from './graphSessionLayout';
 import { resolveGraphFilters } from './graphSimplifyMode';
-import type { GraphEdge } from './graphTypes';
-import type { GraphFilters } from './graphTypes';
-import type { GraphNode } from './graphTypes';
-import { runForceLayout } from './runForceLayout';
+import type { GraphEdge, GraphFilters, GraphModel, GraphNode } from './graphTypes';
+import { type LayoutResult, runForceLayout } from './runForceLayout';
 
 export type NotesGraphLayoutResult = {
   layoutNodes: GraphNode[];
@@ -17,7 +16,20 @@ export type NotesGraphLayoutResult = {
   searchIndex: GraphSearchIndexEntry[];
 };
 
-export function buildNotesGraphLayout(
+export function buildNotesGraphLayoutFromModel(
+  model: GraphModel,
+  layout: LayoutResult,
+): NotesGraphLayoutResult {
+  return {
+    layoutNodes: layout.nodes,
+    layoutEdges: model.edges,
+    graphSize: { width: layout.width, height: layout.height },
+    recordCount: model.recordCount,
+    searchIndex: buildGraphSearchIndex(layout.nodes),
+  };
+}
+
+function buildNotesGraphLayoutSync(
   records: VoiceRecord[],
   filters: GraphFilters,
   filteredRecordCount: number,
@@ -41,11 +53,41 @@ export function buildNotesGraphLayout(
     effective.layoutMode,
   );
 
-  return {
-    layoutNodes: layout.nodes,
-    layoutEdges: model.edges,
-    graphSize: { width: layout.width, height: layout.height },
-    recordCount: model.recordCount,
-    searchIndex: buildGraphSearchIndex(layout.nodes),
-  };
+  return buildNotesGraphLayoutFromModel(model, layout);
+}
+
+export function buildNotesGraphLayout(
+  records: VoiceRecord[],
+  filters: GraphFilters,
+  filteredRecordCount: number,
+  simplifyOverride: boolean | null,
+  windowWidth: number,
+  windowHeight: number,
+): NotesGraphLayoutResult {
+  return buildNotesGraphLayoutSync(
+    records,
+    filters,
+    filteredRecordCount,
+    simplifyOverride,
+    windowWidth,
+    windowHeight,
+  );
+}
+
+export function buildNotesGraphLayoutAsync(
+  records: VoiceRecord[],
+  filters: GraphFilters,
+  filteredRecordCount: number,
+  simplifyOverride: boolean | null,
+  windowWidth: number,
+  windowHeight: number,
+): Promise<NotesGraphLayoutResult> {
+  return computeLayoutAsync(
+    records,
+    filters,
+    filteredRecordCount,
+    simplifyOverride,
+    windowWidth,
+    windowHeight,
+  );
 }

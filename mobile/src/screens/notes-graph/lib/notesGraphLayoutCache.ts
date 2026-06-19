@@ -1,7 +1,8 @@
 import type { VoiceRecord } from '@/entities/record';
 
-import { countFilteredGraphRecords } from './buildGraphModel';
+import { AsyncLayoutComputer } from './asyncLayoutComputation';
 import { buildNotesGraphLayout, type NotesGraphLayoutResult } from './buildNotesGraphLayout';
+import { countFilteredGraphRecords } from './buildGraphModel';
 import {
   DEFAULT_EDGE_VISIBILITY,
   DEFAULT_GRAPH_LAYOUT_MODE,
@@ -62,9 +63,11 @@ let cachedEntry: { key: string; result: NotesGraphLayoutResult } | null = null;
 let pendingBuild: { key: string; promise: Promise<NotesGraphLayoutResult> } | null = null;
 let warmDebounceId: ReturnType<typeof setTimeout> | null = null;
 let cacheGeneration = 0;
+const layoutComputer = new AsyncLayoutComputer();
 
 export function clearNotesGraphLayoutCache(): void {
   cacheGeneration += 1;
+  layoutComputer.cancel();
   cachedEntry = null;
   pendingBuild = null;
   if (warmDebounceId) {
@@ -107,6 +110,58 @@ export function buildAndCacheNotesGraphLayout(
   return result;
 }
 
+export async function buildAndCacheNotesGraphLayoutAsync(
+  records: VoiceRecord[],
+  filters: GraphFilters,
+  filteredRecordCount: number,
+  simplifyOverride: boolean | null,
+  windowWidth: number,
+  windowHeight: number,
+): Promise<NotesGraphLayoutResult> {
+  const key = buildNotesGraphLayoutCacheKey(
+    records,
+    filters,
+    simplifyOverride,
+    windowWidth,
+    windowHeight,
+  );
+  const cached = getCachedNotesGraphLayout(key);
+  if (cached) return cached;
+
+  if (pendingBuild?.key === key) {
+    return pendingBuild.promise;
+  }
+
+  const generation = cacheGeneration;
+  const promise = layoutComputer
+    .compute(
+      records,
+      filters,
+      filteredRecordCount,
+      simplifyOverride,
+      windowWidth,
+      windowHeight,
+    )
+    .then((result) => {
+      if (generation === cacheGeneration) {
+        cachedEntry = { key, result };
+      }
+      if (pendingBuild?.key === key) {
+        pendingBuild = null;
+      }
+      return result;
+    })
+    .catch((error) => {
+      if (pendingBuild?.key === key) {
+        pendingBuild = null;
+      }
+      throw error;
+    });
+
+  pendingBuild = { key, promise };
+  return promise;
+}
+
 function scheduleNotesGraphLayoutWarm(
   records: VoiceRecord[],
   filters: GraphFilters,
@@ -125,27 +180,16 @@ function scheduleNotesGraphLayoutWarm(
 
   if (cachedEntry?.key === key || pendingBuild?.key === key) return;
 
-  pendingBuild = {
-    key,
-    promise: new Promise((resolve) => {
-      const generation = cacheGeneration;
-      setTimeout(() => {
-        const result = buildNotesGraphLayout(
-          records,
-          filters,
-          filteredRecordCount,
-          simplifyOverride,
-          windowWidth,
-          windowHeight,
-        );
-        if (generation === cacheGeneration) {
-          cachedEntry = { key, result };
-        }
-        pendingBuild = null;
-        resolve(result);
-      }, 0);
-    }),
-  };
+  setTimeout(() => {
+    void buildAndCacheNotesGraphLayoutAsync(
+      records,
+      filters,
+      filteredRecordCount,
+      simplifyOverride,
+      windowWidth,
+      windowHeight,
+    );
+  }, 0);
 }
 
 export function warmNotesGraphLayoutWithFilters(

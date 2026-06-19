@@ -1,15 +1,18 @@
 import type { GraphNode } from './graphTypes';
 
-export type LayoutTransitionState = {
-  isTransitioning: boolean;
-  oldPositions: Map<string, { x: number; y: number }>;
-  newPositions: Map<string, { x: number; y: number }>;
+export const GRAPH_LAYOUT_TRANSITION_MS = 280;
+
+const MIN_NODE_OVERLAP_RATIO = 0.5;
+
+export type LayoutTransitionMaps = {
+  old: Map<string, { x: number; y: number }>;
+  new: Map<string, { x: number; y: number }>;
 };
 
 export function buildLayoutTransitionMap(
   oldNodes: GraphNode[],
   newNodes: GraphNode[],
-): { old: Map<string, { x: number; y: number }>; new: Map<string, { x: number; y: number }> } {
+): LayoutTransitionMaps {
   const old = new Map<string, { x: number; y: number }>();
   const newMap = new Map<string, { x: number; y: number }>();
 
@@ -40,5 +43,79 @@ export function interpolateNodePosition(
   return {
     x: oldP.x + (newP.x - oldP.x) * progress,
     y: oldP.y + (newP.y - oldP.y) * progress,
+  };
+}
+
+export function shouldAnimateLayoutTransition(
+  oldNodes: GraphNode[],
+  newNodes: GraphNode[],
+): boolean {
+  if (oldNodes.length === 0 || newNodes.length === 0) return false;
+
+  const oldIds = new Set(oldNodes.map((node) => node.id));
+  let overlap = 0;
+
+  for (const node of newNodes) {
+    if (oldIds.has(node.id)) overlap += 1;
+  }
+
+  return overlap / newNodes.length >= MIN_NODE_OVERLAP_RATIO;
+}
+
+export function interpolateLayoutNodes(
+  targetNodes: GraphNode[],
+  progress: number,
+  maps: LayoutTransitionMaps,
+): GraphNode[] {
+  const eased = easeOutCubic(progress);
+
+  return targetNodes.map((node) => {
+    const position = interpolateNodePosition(node.id, eased, maps.old, maps.new);
+    if (node.x === position.x && node.y === position.y) return node;
+    return { ...node, x: position.x, y: position.y };
+  });
+}
+
+function easeOutCubic(progress: number): number {
+  const t = Math.max(0, Math.min(1, progress));
+  return 1 - (1 - t) ** 3;
+}
+
+export function runLayoutTransition(
+  fromNodes: GraphNode[],
+  toNodes: GraphNode[],
+  durationMs: number,
+  onFrame: (nodes: GraphNode[]) => void,
+  onComplete: () => void,
+): () => void {
+  const maps = buildLayoutTransitionMap(fromNodes, toNodes);
+  const startedAt = Date.now();
+  let frameId: number | null = null;
+  let cancelled = false;
+
+  const tick = () => {
+    if (cancelled) return;
+
+    const elapsed = Date.now() - startedAt;
+    const progress = durationMs <= 0 ? 1 : Math.min(1, elapsed / durationMs);
+    onFrame(interpolateLayoutNodes(toNodes, progress, maps));
+
+    if (progress < 1) {
+      frameId = requestAnimationFrame(tick);
+      return;
+    }
+
+    frameId = null;
+    onComplete();
+  };
+
+  frameId = requestAnimationFrame(tick);
+
+  return () => {
+    cancelled = true;
+    if (frameId !== null) {
+      cancelAnimationFrame(frameId);
+      frameId = null;
+    }
   };
 }
