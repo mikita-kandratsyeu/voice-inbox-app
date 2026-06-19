@@ -29,7 +29,7 @@ import { appendLinkedNotesSectionForSourceEditor } from '@/features/note-links';
 import { TaskOutcomeSheet, useTaskCompletionFlow } from '@/features/task-outcome';
 import { useColors } from '@/shared/config';
 import { hapticSuccess, useIsTablet } from '@/shared/lib';
-import { HeaderIconButton } from '@/shared/ui';
+import { FrostedHeaderButtonGroup, FrostedHeaderIconButton, HeaderIconButton } from '@/shared/ui';
 
 export const NoteDocumentScreen = () => {
   const { t } = useTranslation();
@@ -372,7 +372,7 @@ export const NoteDocumentScreen = () => {
         }}
       >
         <View className="shrink-0">
-          <HeaderIconButton
+          <FrostedHeaderIconButton
             iconOnly
             variant="icon"
             size="md"
@@ -398,8 +398,9 @@ export const NoteDocumentScreen = () => {
             {screenTitle}
           </Text>
         </Pressable>
-        <View className="shrink-0 flex-row items-center gap-2">
+        <FrostedHeaderButtonGroup color={color}>
           <HeaderIconButton
+            inFrostedGroup
             iconOnly
             variant="icon"
             size="md"
@@ -420,6 +421,7 @@ export const NoteDocumentScreen = () => {
             }
           />
           <HeaderIconButton
+            inFrostedGroup
             iconOnly
             variant="icon"
             size="md"
@@ -430,7 +432,7 @@ export const NoteDocumentScreen = () => {
             accessibilityLabel={t('common.save')}
             accessibilityState={{ disabled: !canSave }}
           />
-        </View>
+        </FrostedHeaderButtonGroup>
       </View>
 
       {isPreparing ? (

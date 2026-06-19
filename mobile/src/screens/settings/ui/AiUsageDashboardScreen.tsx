@@ -43,7 +43,7 @@ import {
 import { resolveAiModelRoutingDisplayLabel } from '@/shared/lib/aiModelRoutingDisplay';
 import { formatLocalizedLongDateWithTime } from '@/shared/lib/taskDeadlineTimeDisplay';
 import {
-  HeaderIconButton,
+  FrostedHeaderIconButton,
   SCREEN_PADDING,
   ScreenHeader,
   SettingsRow,
@@ -425,7 +425,7 @@ export const AiUsageDashboardScreen = () => {
 
   const headerRightSlot = useMemo(
     () => (
-      <HeaderIconButton
+      <FrostedHeaderIconButton
         iconOnly
         variant="icon"
         size="md"

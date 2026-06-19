@@ -28,7 +28,7 @@ import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import { type Colors, useColors } from '@/shared/config';
 import { hapticLight, IS_IOS, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
-import { HeaderIconButton, ProcessingArcSpinner, ScreenHeader } from '@/shared/ui';
+import { FrostedHeaderIconButton, ProcessingArcSpinner, ScreenHeader } from '@/shared/ui';
 
 import { formatMaskedApiKey } from '../lib/formatMaskedApiKey';
 import { usePrivateRemoteServerScreen } from '../lib/usePrivateRemoteServerScreen';
@@ -171,7 +171,7 @@ export const PrivateRemoteServerScreen = () => {
         title={t('aiSettings.privateProvider.serverConfig')}
         onBack={() => navigation.goBack()}
         rightSlot={
-          <HeaderIconButton
+          <FrostedHeaderIconButton
             iconOnly
             variant="icon"
             size="md"

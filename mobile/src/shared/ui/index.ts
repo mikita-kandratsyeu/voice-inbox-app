@@ -58,6 +58,7 @@ export {
   FrostedChromeSurface,
 } from './FrostedChromeSurface';
 export { FrostedHeaderButtonGroup } from './FrostedHeaderButtonGroup';
+export { FrostedHeaderIconButton } from './FrostedHeaderIconButton';
 export {
   FLOATING_FROSTED_CHROME_RADIUS,
   FloatingFrostedChrome,

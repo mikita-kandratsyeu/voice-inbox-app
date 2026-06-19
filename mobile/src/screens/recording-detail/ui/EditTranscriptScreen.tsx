@@ -17,7 +17,7 @@ import {
 import { useEditTranscript } from '@/features/edit-transcript';
 import { useColors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib';
-import { HeaderIconButton, ScreenHeader } from '@/shared/ui';
+import { FrostedHeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 import { EditTranscriptSegmentInput } from './EditTranscriptSegmentInput';
 
@@ -100,7 +100,7 @@ export const EditTranscriptScreen = () => {
         onBack={handleBack}
         dismissKeyboardOnPress
         rightSlot={
-          <HeaderIconButton
+          <FrostedHeaderIconButton
             iconOnly
             variant="icon"
             size="md"

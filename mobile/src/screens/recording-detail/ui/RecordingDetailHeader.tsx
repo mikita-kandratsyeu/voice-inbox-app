@@ -10,7 +10,7 @@ import type { VoiceRecord } from '@/entities/record';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
-import { HeaderIconButton, PrivateExecutionBadge, FrostedChromeSurface, FrostedHeaderButtonGroup, FROSTED_HEADER_ICON_SIZE } from '@/shared/ui';
+import { HeaderIconButton, PrivateExecutionBadge, FrostedHeaderButtonGroup, FrostedHeaderIconButton } from '@/shared/ui';
 
 type RecordingDetailHeaderProps = {
   record: VoiceRecord;
@@ -222,20 +222,17 @@ export const RecordingDetailHeader = ({
       style={{ backgroundColor: headerBackgroundColor, paddingTop: insets.top + 12 }}
     >
       <View className="shrink-0 flex-row items-center gap-3">
-        <FrostedChromeSurface color={color} fixedSize={FROSTED_HEADER_ICON_SIZE} shadow="subtle">
-          <HeaderIconButton
-            inFrostedGroup
-            iconOnly
-            variant="icon"
-            size="md"
-            icon={<ChevronLeft size={22} color={color.text.primary} strokeWidth={2.2} />}
-            color={color}
-            onPress={onBack}
-            activeOpacity={0.7}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityLabel={t('common.goBack')}
-          />
-        </FrostedChromeSurface>
+        <FrostedHeaderIconButton
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={<ChevronLeft size={22} color={color.text.primary} strokeWidth={2.2} />}
+          color={color}
+          onPress={onBack}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel={t('common.goBack')}
+        />
         {isPrivateMode ? <PrivateExecutionBadge color={color} compact /> : null}
       </View>
       <View className="min-w-0 flex-1 pl-3 pr-2" pointerEvents="none">

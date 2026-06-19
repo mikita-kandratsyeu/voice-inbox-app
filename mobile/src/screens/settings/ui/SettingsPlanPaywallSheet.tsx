@@ -9,7 +9,7 @@ import type { IapBillingOptions, IapBillingPeriod } from '@/features/entitlement
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { getWebsiteUrl, useAppTheme, useColors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib/platform';
-import { HeaderIconButton, PlanPaywallProChip, SheetFooterButtons } from '@/shared/ui';
+import { FrostedHeaderIconButton, PlanPaywallProChip, SheetFooterButtons } from '@/shared/ui';
 
 import {
   ExpandableSection,
@@ -123,7 +123,7 @@ export function SettingsPlanPaywallSheet({
             paddingTop: insets.top + 2,
           }}
         >
-          <HeaderIconButton
+          <FrostedHeaderIconButton
             iconOnly
             variant="icon"
             size="md"

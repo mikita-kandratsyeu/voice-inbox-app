@@ -38,7 +38,7 @@ import {
   taskDeadlineValidationErrorKey,
   validateTaskDeadlineFields,
 } from '@/shared/lib/validateTaskDeadlineInput';
-import { EmptyState, HeaderIconButton, ScreenHeader, SectionHeader } from '@/shared/ui';
+import { EmptyState, FrostedHeaderButtonGroup, HeaderIconButton, ScreenHeader, SectionHeader } from '@/shared/ui';
 
 import { sortTaskRows } from '../lib/applyAllTasksQuickFilter';
 import { buildAllTasksRows } from '../lib/buildAllTasksRows';
@@ -678,8 +678,9 @@ export const AllTasksScreen = () => {
 
   const headerRightSlot = useMemo(
     () => (
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+      <FrostedHeaderButtonGroup color={color}>
         <HeaderIconButton
+          inFrostedGroup
           iconOnly
           variant="icon"
           size="md"
@@ -698,6 +699,7 @@ export const AllTasksScreen = () => {
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         />
         <HeaderIconButton
+          inFrostedGroup
           iconOnly
           variant="icon"
           size="md"
@@ -707,7 +709,7 @@ export const AllTasksScreen = () => {
           accessibilityLabel={t('allTasks.createTaskA11y')}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         />
-      </View>
+      </FrostedHeaderButtonGroup>
     ),
     [color, openCreateTask, t, toggleViewMode, viewMode],
   );

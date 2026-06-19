@@ -44,7 +44,7 @@ import {
   formatLocalTimeOfDay,
   formatTaskDeadlineTimeForDisplay,
 } from '@/shared/lib/taskDeadlineTimeDisplay';
-import { Button, HeaderIconButton, NoteMarkdown, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
+import { Button, FrostedHeaderIconButton, NoteMarkdown, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
 
 import { getSettingsIconColor } from '../lib';
 import { buildAppStats, formatDigestDurationMs } from '../lib/appStats';
@@ -621,7 +621,7 @@ export const DigestScreen = () => {
   const shareHeaderButton = useMemo(
     () =>
       canShareAnalytics || canShareAiDigest ? (
-        <HeaderIconButton
+        <FrostedHeaderIconButton
           iconOnly
           variant="icon"
           size="md"

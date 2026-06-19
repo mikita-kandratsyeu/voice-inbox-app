@@ -33,7 +33,7 @@ import { useColors } from '@/shared/config';
 import { DEFAULT_FOLDER_BRAND_HEX, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import {
   AppBottomSheetModal,
-  HeaderIconButton,
+  FrostedHeaderIconButton,
   ScreenHeader,
   useBottomSheetContentPadding,
 } from '@/shared/ui';
@@ -248,7 +248,7 @@ export const AutoOrganizeReviewScreen = () => {
         }}
         titleAlign="center"
         rightSlot={
-          <HeaderIconButton
+          <FrostedHeaderIconButton
             iconOnly
             variant="icon"
             size="md"

@@ -12,7 +12,7 @@ import { getSettingsIconColor } from '@/screens/settings/lib/settingsIconColor';
 import { useColors } from '@/shared/config';
 import { formatRelativeTime, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import {
-  HeaderIconButton,
+  FrostedHeaderIconButton,
   SCREEN_PADDING,
   ScreenHeader,
   SettingsRow,
@@ -313,7 +313,7 @@ export function GithubSyncScreen() {
         title={t('settings.githubSync.sectionTitle')}
         onBack={() => navigation.goBack()}
         rightSlot={
-          <HeaderIconButton
+          <FrostedHeaderIconButton
             iconOnly
             variant="icon"
             size="md"

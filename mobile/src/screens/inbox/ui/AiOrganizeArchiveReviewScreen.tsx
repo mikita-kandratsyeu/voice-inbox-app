@@ -21,7 +21,7 @@ import {
 } from '@/features/manage-folders/ui/AiOrganizeReviewListRow';
 import { useColors } from '@/shared/config';
 import { hapticSelection, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
-import { HeaderIconButton, ScreenHeader } from '@/shared/ui';
+import { FrostedHeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 type Route = RouteProp<InboxStackParamList, 'AiOrganizeArchiveReview'>;
 
@@ -111,7 +111,7 @@ export function AiOrganizeArchiveReviewScreen() {
         titleAlign="center"
         rightSlot={
           suggestions.length > 0 ? (
-            <HeaderIconButton
+            <FrostedHeaderIconButton
               iconOnly
               variant="icon"
               size="md"

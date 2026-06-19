@@ -38,7 +38,7 @@ import {
   useTabletContentMaxWidth,
 } from '@/shared/lib';
 import { diagWarn } from '@/shared/lib/appLogger';
-import { BlockingProgressModal, HeaderIconButton, ScreenHeader } from '@/shared/ui';
+import { BlockingProgressModal, FrostedHeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 type ImportRecordsRouteProp = RouteProp<SettingsStackParamList, 'ImportRecords'>;
 
@@ -518,7 +518,7 @@ export const ImportRecordsScreen = () => {
         rightSlot={
           dbRecordIds !== null &&
           (importable.length > 0 || duplicatesTrash.length > 0 || archiveFolders.length > 0) ? (
-            <HeaderIconButton
+            <FrostedHeaderIconButton
               iconOnly
               variant="icon"
               size="md"

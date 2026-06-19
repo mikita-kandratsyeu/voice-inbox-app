@@ -11,7 +11,7 @@ import type { SettingsStackParamList } from '@/app/navigation/types';
 import { useColors } from '@/shared/config';
 import { formatFileSize } from '@/shared/lib';
 import { clearAppLogs, getAppLogSize, readAppLogTail } from '@/shared/lib/appLogger';
-import { Button, HeaderIconButton, ScreenHeader } from '@/shared/ui';
+import { Button, FrostedHeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 const MAX_TAIL_BYTES = 200 * 1024;
 
@@ -63,7 +63,7 @@ export const DiagnosticLogsScreen = () => {
         title={t('diagnosticLogs.title')}
         onBack={() => navigation.goBack()}
         rightSlot={
-          <HeaderIconButton
+          <FrostedHeaderIconButton
             iconOnly
             variant="icon"
             size="md"

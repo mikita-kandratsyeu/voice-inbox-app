@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { HeaderIconButton } from '@/shared/ui';
+import { useColors } from '@/shared/config';
+import { FrostedHeaderIconButton } from '@/shared/ui';
 
 import type { RecordingState } from '../config';
 import { getHeaderTitle } from '../config';
@@ -17,23 +18,20 @@ type RecordScreenHeaderProps = {
 export const RecordScreenHeader = ({ state, onClose }: RecordScreenHeaderProps) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const color = useColors();
   /** Same vertical rhythm as `RecordingDetailHeader` / `TextNoteScreen` (insets + 12). */
   const topStyle = { paddingTop: insets.top + 12 };
   const dotColor = state === 'recording' ? '#ef4444' : 'rgba(255,255,255,0.72)';
 
   return (
     <View className="flex-row items-center justify-between px-5 pb-3" style={topStyle}>
-      <HeaderIconButton
+      <FrostedHeaderIconButton
         iconOnly
         size="md"
         icon={<X size={22} color="#ffffff" strokeWidth={2.5} />}
+        color={color}
         onPress={onClose}
         activeOpacity={0.7}
-        containerStyle={{
-          backgroundColor: 'rgba(255,255,255,0.24)',
-          borderWidth: 1,
-          borderColor: 'rgba(255,255,255,0.18)',
-        }}
         accessibilityLabel={t('record.closeRecorder')}
         accessibilityHint={t('record.closeRecorderHint')}
       />

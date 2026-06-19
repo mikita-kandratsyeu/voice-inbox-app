@@ -26,7 +26,7 @@ import {
   ActionListItemCard,
   BlockingProgressModal,
   EmptyState,
-  HeaderIconButton,
+  FrostedHeaderIconButton,
   SCREEN_PADDING,
   ScreenHeader,
 } from '@/shared/ui';
@@ -198,7 +198,7 @@ export const TrashScreen = () => {
         onBack={() => navigation.goBack()}
         rightSlot={
           !loading && items.length > 0 && !isEmptyingTrash ? (
-            <HeaderIconButton
+            <FrostedHeaderIconButton
               iconOnly
               variant="icon"
               size="md"
