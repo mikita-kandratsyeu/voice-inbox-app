@@ -34,7 +34,7 @@ export const SettingsDeviceSection = ({ color, t, navigation, isAppLockEnabled }
     <SettingsRow
       label={t('settings.gestures.entryTitle')}
       subtitle={t('settings.gestures.entrySubtitle')}
-      leftIcon={<Hand size={20} color={getSettingsIconColor(color, 'mic')} strokeWidth={1.8} />}
+      leftIcon={<Hand size={20} color={getSettingsIconColor(color, 'hand')} strokeWidth={1.8} />}
       onPress={() => navigation.navigate('Gestures')}
       showChevron
     />

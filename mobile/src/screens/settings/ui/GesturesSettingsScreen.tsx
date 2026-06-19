@@ -55,7 +55,7 @@ export const GesturesSettingsScreen = () => {
             label={t('settings.gestures.shakeToRecord.title')}
             subtitle={t('settings.gestures.shakeToRecord.subtitle')}
             leftIcon={
-              <Smartphone size={20} color={getSettingsIconColor(color, 'mic')} strokeWidth={1.8} />
+              <Smartphone size={20} color={getSettingsIconColor(color, 'hand')} strokeWidth={1.8} />
             }
             isFirst
             rightSlot={
