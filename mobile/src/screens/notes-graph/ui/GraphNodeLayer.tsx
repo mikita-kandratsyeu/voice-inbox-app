@@ -15,9 +15,8 @@ import { hapticLight } from '@/shared/lib';
 
 import type { GraphViewportCull } from '../lib/buildGraphRenderedEdges';
 import { buildGraphRenderedNodes } from '../lib/buildGraphRenderedNodes';
-import type { CollapsedClusterNode } from '../lib/graphCollapsedClusters';
 import { snapGraphPointToGrid } from '../lib/graphSnapGrid';
-import type { GraphEdge, GraphNode, GraphNodeDisplayMode, GraphNodeLOD } from '../lib/graphTypes';
+import type { GraphEdge, GraphNode, GraphNodeDisplayMode } from '../lib/graphTypes';
 import { RECORD_NODE_WIDTH, TASK_NODE_WIDTH } from '../lib/graphTypes';
 import { GRAPH_CLUSTER_BOUNDARY_PADDING } from '../lib/graphViewportBounds';
 import {
@@ -49,8 +48,6 @@ type GraphNodeLayerProps = {
   layoutRestoreToken?: number;
   interactionsEnabled?: boolean;
   nodeDisplayMode?: GraphNodeDisplayMode;
-  nodeLOD?: GraphNodeLOD;
-  collapsedClusters?: Map<string, CollapsedClusterNode>;
   viewportCull?: GraphViewportCull | null;
   onRecordPress: (recordId: string) => void;
   onTaskPress: (recordId: string, taskId: string) => void;
@@ -303,7 +300,6 @@ type GraphNodeItemProps = {
   highlighted: boolean;
   neighbor: boolean;
   nodeDisplayMode?: GraphNodeDisplayMode;
-  nodeLOD?: GraphNodeLOD;
   onRecordPress: (recordId: string) => void;
   onTaskPress: (recordId: string, taskId: string) => void;
   onNodeDragStart: () => void;
@@ -327,7 +323,6 @@ const GraphNodeItem = React.memo(
     highlighted,
     neighbor,
     nodeDisplayMode = 'cards',
-    nodeLOD = 'full',
     onRecordPress,
     onTaskPress,
     onNodeDragStart,
@@ -405,7 +400,6 @@ const GraphNodeItem = React.memo(
               active={active}
               neighbor={neighbor}
               interactionPhase={interactionPhase}
-              lod={nodeLOD}
             />
           )
         }
@@ -438,7 +432,6 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
   worldHeight,
   interactionsEnabled = true,
   nodeDisplayMode = 'cards',
-  nodeLOD = 'full',
   viewportCull,
   onRecordPress,
   onTaskPress,
@@ -497,7 +490,6 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
             neighbor={visualState.neighbor}
             highlighted={visualState.highlighted}
             nodeDisplayMode={nodeDisplayMode}
-            nodeLOD={nodeLOD}
             onRecordPress={onRecordPress}
             onTaskPress={onTaskPress}
             onNodeDragStart={onNodeDragStart}

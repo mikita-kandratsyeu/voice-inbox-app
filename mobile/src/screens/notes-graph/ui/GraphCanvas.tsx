@@ -40,14 +40,7 @@ import {
   computeMapPanTransform,
   computeMapPinchTransform,
 } from '../lib/graphCanvasGestures';
-import type { GraphCluster } from '../lib/graphClusterLayout';
 import { buildGraphClusters } from '../lib/graphClusterLayout';
-import {
-  applyCollapsedClustersToLayout,
-  type CollapsedClusterNode,
-  createCollapsedClusterNode,
-  rerouteEdgesForCollapsedClusters,
-} from '../lib/graphCollapsedClusters';
 import { GRAPH_DRAG_RECONCILE_MIN_MS } from '../lib/graphDragReconcile';
 import { computeEdgeDensity, type EdgeDensityInfo } from '../lib/graphEdgeDensity';
 import {
@@ -56,8 +49,7 @@ import {
 } from '../lib/graphExportBackground';
 import { resolveGraphExportColors } from '../lib/graphExportColors';
 import { getSessionNodePositions, setSessionNodePosition } from '../lib/graphSessionLayout';
-import type { GraphEdge, GraphNode, GraphNodeDisplayMode, GraphNodeLOD } from '../lib/graphTypes';
-import { resolveNodeLOD } from '../lib/graphTypes';
+import type { GraphEdge, GraphNode, GraphNodeDisplayMode } from '../lib/graphTypes';
 import {
   clampViewportScaleValue,
   clampViewportTransform,
@@ -234,10 +226,6 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     scale: 1,
   });
 
-  const [collapsedClusters, setCollapsedClusters] = useState<Map<string, CollapsedClusterNode>>(
-    () => new Map(),
-  );
-
   const scale = useSharedValue(1);
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -266,11 +254,6 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   const displayNodes = useMemo(
     () => mergeNodePositions(nodes, positionOverrides),
     [nodes, positionOverrides],
-  );
-
-  const currentLOD: GraphNodeLOD = useMemo(
-    () => resolveNodeLOD(viewportTransform.scale),
-    [viewportTransform.scale],
   );
 
   const nodeById = useMemo(() => new Map(displayNodes.map((n) => [n.id, n])), [displayNodes]);
@@ -938,38 +921,6 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
   const clusters = useMemo(() => buildGraphClusters(displayNodes, edges), [displayNodes, edges]);
 
-  const handleToggleCluster = useCallback(
-    (cluster: GraphCluster) => {
-      setCollapsedClusters((prev) => {
-        const next = new Map(prev);
-        if (prev.has(cluster.id)) {
-          next.delete(cluster.id);
-        } else {
-          const displayLabel =
-            cluster.label ??
-            (cluster.type === 'folder'
-              ? (foldersById.get(cluster.id.replace('folder:', ''))?.name ??
-                t('folders.detailFolderRemoved'))
-              : cluster.id);
-          const collapsedNode = createCollapsedClusterNode(cluster, nodeById, displayLabel);
-          next.set(cluster.id, collapsedNode);
-        }
-        return next;
-      });
-    },
-    [foldersById, nodeById, t],
-  );
-
-  const finalDisplayNodes = useMemo(
-    () => applyCollapsedClustersToLayout(displayNodes, collapsedClusters),
-    [displayNodes, collapsedClusters],
-  );
-
-  const finalEdges = useMemo(
-    () => rerouteEdgesForCollapsedClusters(edges, collapsedClusters),
-    [edges, collapsedClusters],
-  );
-
   const edgeViewportCull = useMemo<GraphViewportCull | null>(() => {
     if (edges.length < 48) return null;
 
@@ -1019,7 +970,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
           {!exportBusy ? (
             <>
               <GraphClusterBoundaries
-                nodes={finalDisplayNodes}
+                nodes={displayNodes}
                 clusters={clusters}
                 foldersById={foldersById}
                 isProActive={isProActive}
@@ -1031,12 +982,10 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
                 scale={scale}
                 visible
                 showFolderClusters={folderHighlightsVisible}
-                collapsedClusters={collapsedClusters}
-                onToggleCluster={handleToggleCluster}
               />
               <GraphEdgeLayer
-                nodes={finalDisplayNodes}
-                edges={finalEdges}
+                nodes={displayNodes}
+                edges={edges}
                 color={color}
                 canvasWidth={viewportWidth}
                 canvasHeight={viewportHeight}
@@ -1063,8 +1012,8 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
             ]}
           >
             <GraphNodeLayer
-              nodes={finalDisplayNodes}
-              edges={finalEdges}
+              nodes={displayNodes}
+              edges={edges}
               color={color}
               foldersById={foldersById}
               isProActive={isProActive}
@@ -1076,8 +1025,6 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               layoutRestoreToken={layoutRestoreToken}
               interactionsEnabled={!isReconciling && !exportBusy}
               nodeDisplayMode={nodeDisplayMode}
-              nodeLOD={currentLOD}
-              collapsedClusters={collapsedClusters}
               viewportCull={nodeViewportCull}
               onRecordPress={onRecordPress}
               onTaskPress={onTaskPress}

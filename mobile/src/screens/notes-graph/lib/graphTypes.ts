@@ -6,14 +6,6 @@ export type GraphEdgeKind = 'contains' | 'similar' | 'sharedTag' | 'sameFolder' 
 
 export type GraphNodeDisplayMode = 'cards' | 'dots';
 
-export type GraphNodeLOD = 'full' | 'compact' | 'dot';
-
-export function resolveNodeLOD(scale: number): GraphNodeLOD {
-  if (scale > 0.7) return 'full';
-  if (scale > 0.3) return 'compact';
-  return 'dot';
-}
-
 export type GraphNode = {
   id: string;
   kind: GraphNodeKind;
@@ -85,11 +77,6 @@ export const RECORD_NODE_WIDTH = 164;
 export const RECORD_NODE_HEIGHT = 86;
 export const TASK_NODE_WIDTH = 142;
 export const TASK_NODE_HEIGHT = 44;
-
-export const RECORD_NODE_WIDTH_COMPACT = 120;
-export const RECORD_NODE_HEIGHT_COMPACT = 52;
-export const TASK_NODE_WIDTH_COMPACT = 100;
-export const TASK_NODE_HEIGHT_COMPACT = 36;
 
 export function recordNodeId(recordId: string): string {
   return `record:${recordId}`;

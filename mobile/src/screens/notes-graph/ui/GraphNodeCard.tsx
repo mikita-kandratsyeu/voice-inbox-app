@@ -9,17 +9,13 @@ import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { resolveDisplayFolderColor } from '@/shared/lib';
 
-import type { GraphNode, GraphNodeLOD } from '../lib/graphTypes';
+import type { GraphNode } from '../lib/graphTypes';
 import {
   GraphAnimatedNodeCard,
   GraphNodeCardWrapper,
   GraphRecordNodeCardContent,
   GraphTaskNodeCardContent,
 } from './GraphAnimatedNodeCard';
-import {
-  GraphRecordNodeCardContentCompact,
-  GraphTaskNodeCardContentCompact,
-} from './GraphNodeCardCompact';
 import { GRAPH_NODE_INTERACTION_PRESSING } from './graphNodeInteraction';
 
 function useGraphNodeInteracting(interactionPhase: SharedValue<number>): boolean {
@@ -45,7 +41,6 @@ type GraphNodeCardProps = {
   isProActive: boolean;
   highlighted: boolean;
   interactionPhase: SharedValue<number>;
-  lod?: GraphNodeLOD;
   onPress?: () => void;
 };
 
@@ -61,7 +56,6 @@ export const GraphNodeCard = React.memo(function GraphNodeCard({
   active = false,
   neighbor = false,
   interactionPhase,
-  lod = 'full',
   onPress,
 }: GraphNodeCardProps & {
   folderIcon?: string;
@@ -86,22 +80,14 @@ export const GraphNodeCard = React.memo(function GraphNodeCard({
         nodeKind="task"
         onPress={onPress}
       >
-        {lod === 'compact' ? (
-          <GraphTaskNodeCardContentCompact
-            text={node.task.text}
-            color={color}
-            isDone={node.task.isDone}
-          />
-        ) : (
-          <GraphTaskNodeCardContent
-            text={node.task.text}
-            color={color}
-            isDone={node.task.isDone}
-            priority={node.task.priority}
-            deadline={node.task.deadline}
-            deadlineTime={node.task.deadlineTime}
-          />
-        )}
+        <GraphTaskNodeCardContent
+          text={node.task.text}
+          color={color}
+          isDone={node.task.isDone}
+          priority={node.task.priority}
+          deadline={node.task.deadline}
+          deadlineTime={node.task.deadlineTime}
+        />
       </GraphAnimatedNodeCard>
     );
   }
@@ -146,24 +132,20 @@ export const GraphNodeCard = React.memo(function GraphNodeCard({
         accentStripeColor={accentColor}
         onPress={onPress}
       >
-        {lod === 'compact' ? (
-          <GraphRecordNodeCardContentCompact title={record.title} color={color} />
-        ) : (
-          <GraphRecordNodeCardContent
-            title={record.title}
-            folderName={chrome.locationLabel}
-            archivedLabel={record.status === 'archived' ? t('inbox.filters.archived') : undefined}
-            openTasksLabel={
-              openTasks > 0 ? t('notesGraph.node.openTasks', { count: openTasks }) : undefined
-            }
-            tags={record.tags ?? []}
-            accentColor={accentColor}
-            color={color}
-            folderTintHex={chrome.folderTintHex}
-            showInboxIcon={chrome.showInboxIcon}
-            leadingFolderIconId={chrome.leadingFolderIconId}
-          />
-        )}
+        <GraphRecordNodeCardContent
+          title={record.title}
+          folderName={chrome.locationLabel}
+          archivedLabel={record.status === 'archived' ? t('inbox.filters.archived') : undefined}
+          openTasksLabel={
+            openTasks > 0 ? t('notesGraph.node.openTasks', { count: openTasks }) : undefined
+          }
+          tags={record.tags ?? []}
+          accentColor={accentColor}
+          color={color}
+          folderTintHex={chrome.folderTintHex}
+          showInboxIcon={chrome.showInboxIcon}
+          leadingFolderIconId={chrome.leadingFolderIconId}
+        />
       </GraphAnimatedNodeCard>
     );
   }

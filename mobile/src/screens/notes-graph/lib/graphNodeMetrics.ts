@@ -1,14 +1,10 @@
 import { GRAPH_NODE_DOT_CONTAINER_SIZE, GRAPH_NODE_DOT_SIZE_ACTIVE } from './graphNodeDotLayout';
-import type { GraphNode, GraphNodeDisplayMode, GraphNodeLOD } from './graphTypes';
+import type { GraphNode, GraphNodeDisplayMode } from './graphTypes';
 import {
   RECORD_NODE_HEIGHT,
-  RECORD_NODE_HEIGHT_COMPACT,
   RECORD_NODE_WIDTH,
-  RECORD_NODE_WIDTH_COMPACT,
   TASK_NODE_HEIGHT,
-  TASK_NODE_HEIGHT_COMPACT,
   TASK_NODE_WIDTH,
-  TASK_NODE_WIDTH_COMPACT,
 } from './graphTypes';
 
 const dimensionsCache = new Map<GraphNode['kind'], { width: number; height: number }>([
@@ -16,18 +12,7 @@ const dimensionsCache = new Map<GraphNode['kind'], { width: number; height: numb
   ['record', { width: RECORD_NODE_WIDTH, height: RECORD_NODE_HEIGHT }],
 ]);
 
-const compactDimensionsCache = new Map<GraphNode['kind'], { width: number; height: number }>([
-  ['task', { width: TASK_NODE_WIDTH_COMPACT, height: TASK_NODE_HEIGHT_COMPACT }],
-  ['record', { width: RECORD_NODE_WIDTH_COMPACT, height: RECORD_NODE_HEIGHT_COMPACT }],
-]);
-
-export function nodeDimensions(
-  kind: GraphNode['kind'],
-  lod: GraphNodeLOD = 'full',
-): { width: number; height: number } {
-  if (lod === 'compact') {
-    return compactDimensionsCache.get(kind)!;
-  }
+export function nodeDimensions(kind: GraphNode['kind']): { width: number; height: number } {
   return dimensionsCache.get(kind)!;
 }
 
