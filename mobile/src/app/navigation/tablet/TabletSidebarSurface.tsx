@@ -1,5 +1,14 @@
 import React from 'react';
-import { View } from 'react-native';
+import { type StyleProp, View, type ViewStyle } from 'react-native';
+
+import {
+  FLOAT_TAB_IOS_SHADOW_OFFSET_Y,
+  FLOAT_TAB_IOS_SHADOW_RADIUS,
+  floatingTabBarShadowOpacity,
+} from '@/app/navigation/config';
+import type { Colors } from '@/shared/config';
+import { selectPlatform, withAlphaHex } from '@/shared/lib';
+import { FrostedChromeBackground } from '@/shared/ui';
 
 import {
   getTabletSidebarInnerWidth,
@@ -9,24 +18,54 @@ import {
 import type { TabletSidebarTheme } from './tabletSidebarTheme';
 
 type TabletSidebarSurfaceProps = {
+  color: Colors;
   theme: TabletSidebarTheme;
   contentWidth: number;
   children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
 };
 
-export function TabletSidebarSurface({ theme, contentWidth, children }: TabletSidebarSurfaceProps) {
+export function TabletSidebarSurface({
+  color,
+  theme,
+  contentWidth,
+  children,
+  style,
+}: TabletSidebarSurfaceProps) {
   return (
     <View
-      style={{
-        width: contentWidth,
-        borderRadius: TABLET_SIDEBAR_SURFACE_RADIUS,
-        padding: TABLET_SIDEBAR_SURFACE_PAD,
-        backgroundColor: theme.surface,
-        borderWidth: 1,
-        borderColor: theme.border,
-      }}
+      style={[
+        {
+          width: contentWidth,
+          borderRadius: TABLET_SIDEBAR_SURFACE_RADIUS,
+          backgroundColor: 'transparent',
+          ...selectPlatform({
+            ios: {
+              shadowColor: color.shadow.color,
+              shadowOffset: { width: 0, height: FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
+              shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
+              shadowRadius: FLOAT_TAB_IOS_SHADOW_RADIUS,
+            },
+            android: {
+              elevation: 8,
+            },
+            default: {},
+          }),
+        },
+        style,
+      ]}
     >
-      {children}
+      <View
+        style={{
+          borderRadius: TABLET_SIDEBAR_SURFACE_RADIUS,
+          overflow: 'hidden',
+          borderWidth: 1,
+          borderColor: withAlphaHex(theme.border, 0.45),
+        }}
+      >
+        <FrostedChromeBackground borderRadius={TABLET_SIDEBAR_SURFACE_RADIUS} />
+        <View style={{ padding: TABLET_SIDEBAR_SURFACE_PAD }}>{children}</View>
+      </View>
     </View>
   );
 }

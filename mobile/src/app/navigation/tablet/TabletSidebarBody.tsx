@@ -299,7 +299,6 @@ export function TabletSidebarBody({
           gap: 14,
           borderTopWidth: 1,
           borderTopColor: theme.border,
-          backgroundColor: theme.panel,
         }}
       >
         <View style={{ gap: 8, opacity: navDimmed ? 0.62 : 1 }}>{overviewNav}</View>

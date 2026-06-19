@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -14,7 +14,8 @@ import { useProEntitlement } from '@/features/pro-license';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { useColors } from '@/shared/config';
-import { hapticSelection } from '@/shared/lib';
+import { hapticSelection, withAlphaHex } from '@/shared/lib';
+import { FrostedChromeBackground } from '@/shared/ui';
 
 import type { RootStackParamList } from '../types';
 import {
@@ -173,9 +174,12 @@ export const TabletSidebar = () => {
         flexShrink: 0,
         alignSelf: 'stretch',
         overflow: 'hidden',
-        backgroundColor: theme.panel,
+        backgroundColor: 'transparent',
       }}
     >
+      <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { overflow: 'hidden' }]}>
+        <FrostedChromeBackground />
+      </View>
       <View
         pointerEvents="none"
         style={{
@@ -183,8 +187,8 @@ export const TabletSidebar = () => {
           right: 0,
           top: 0,
           bottom: 0,
-          width: 1,
-          backgroundColor: theme.border,
+          width: StyleSheet.hairlineWidth,
+          backgroundColor: withAlphaHex(theme.border, 0.45),
           zIndex: 2,
         }}
       />

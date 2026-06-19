@@ -92,9 +92,7 @@ export function TabletSidebarNavItem({
         : 'transparent'
       : showSelectionChrome
         ? activeBg
-        : appearance === 'primary'
-          ? theme.surface
-          : 'transparent';
+        : 'transparent';
 
   const containerStyle: ViewStyle = {
     height: itemHeight,
