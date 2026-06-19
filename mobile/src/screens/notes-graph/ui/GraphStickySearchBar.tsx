@@ -7,9 +7,11 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import type { Colors } from '@/shared/config';
 import { iosHitSlopForVisualSize } from '@/shared/lib/iosTouchTarget';
 import {
+  FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
   FloatingFrostedChrome,
   FloatingFrostedChromeDivider,
   FloatingFrostedChromeSection,
+  getFloatingSearchBarChromeBottomInset,
   getInputFieldInputStyle,
   HeaderIconButton,
 } from '@/shared/ui';
@@ -27,7 +29,6 @@ type GraphStickySearchBarProps = {
   onNextMatch: () => void;
   color: Colors;
   focusSignal: number;
-  insetsBottom: number;
   onClose: () => void;
 };
 
@@ -42,7 +43,6 @@ export const GraphStickySearchBar = memo(function GraphStickySearchBar({
   onNextMatch,
   color,
   focusSignal,
-  insetsBottom,
   onClose,
 }: GraphStickySearchBarProps) {
   const { t } = useTranslation();
@@ -115,17 +115,15 @@ export const GraphStickySearchBar = memo(function GraphStickySearchBar({
   const showMatchLabel = currentMatchLabel != null;
 
   return (
-    <FloatingFrostedChrome
-      color={color}
-      insetsBottom={insetsBottom}
-      contentStyle={{
-        paddingHorizontal: 12,
-        paddingTop: showMatchLabel ? 10 : 12,
-        paddingBottom: showMatchLabel ? 10 : 12,
-        gap: showMatchLabel ? 8 : 0,
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'stretch', minHeight: 44 }}>
+    <FloatingFrostedChrome color={color} insetsBottom={getFloatingSearchBarChromeBottomInset()}>
+      <View
+        style={{
+          paddingHorizontal: 12,
+          paddingVertical: FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
+          gap: showMatchLabel ? 8 : 0,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'stretch', minHeight: 44 }}>
         <View
           style={{
             flex: 1,
@@ -220,6 +218,7 @@ export const GraphStickySearchBar = memo(function GraphStickySearchBar({
           </Text>
         </View>
       ) : null}
+      </View>
     </FloatingFrostedChrome>
   );
 });

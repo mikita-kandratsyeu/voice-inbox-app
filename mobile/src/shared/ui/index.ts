@@ -54,6 +54,11 @@ export {
   FloatingFrostedChromeDivider,
   FloatingFrostedChromeSection,
 } from './FloatingFrostedChrome';
+export {
+  FLOATING_SEARCH_BAR_BOTTOM_GAP,
+  FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
+  getFloatingSearchBarChromeBottomInset,
+} from './floatingSearchBarMetrics';
 export { FrostedBottomChrome } from './FrostedBottomChrome';
 export type { FrostedChromeBackgroundProps } from './FrostedChromeBackground';
 export {

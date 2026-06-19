@@ -1,8 +1,10 @@
+import { FLOATING_SEARCH_BAR_BOTTOM_GAP } from '@/shared/ui/floatingSearchBarMetrics';
+
 /** Minimum height of the search controls row inside the floating pill. */
 export const GRAPH_STICKY_SEARCH_BAR_ROW_HEIGHT = 44;
 
-/** Inner vertical padding when the match / status line is hidden. */
-export const GRAPH_STICKY_SEARCH_COMPACT_VERTICAL_PADDING = 24;
+/** Inner vertical padding when the match / status line is hidden (top + bottom). */
+export const GRAPH_STICKY_SEARCH_COMPACT_VERTICAL_PADDING = 20;
 
 /** Inner vertical padding when the match / status line is shown (top + bottom). */
 export const GRAPH_STICKY_SEARCH_EXPANDED_VERTICAL_PADDING = 20;
@@ -64,5 +66,5 @@ export function estimateGraphSearchFocusBottomInset(options: {
     GRAPH_STICKY_SEARCH_BAR_ROW_HEIGHT +
     labelBlock;
 
-  return height + Math.max(options.safeAreaBottom, 8);
+  return height + Math.max(options.safeAreaBottom, 8) + FLOATING_SEARCH_BAR_BOTTOM_GAP;
 }

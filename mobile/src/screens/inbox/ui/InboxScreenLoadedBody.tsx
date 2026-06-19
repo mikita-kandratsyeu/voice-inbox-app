@@ -23,9 +23,11 @@ import type { Colors } from '@/shared/config';
 import { iosHitSlopForVisualSize } from '@/shared/lib/iosTouchTarget';
 import {
   EmptyState,
+  FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
   FloatingFrostedChrome,
   FloatingFrostedChromeDivider,
   FloatingFrostedChromeSection,
+  getFloatingSearchBarChromeBottomInset,
   getInputFieldInputStyle,
   HeaderIconButton,
   SwipeHintBanner,
@@ -40,7 +42,6 @@ type StickySearchBarProps = {
   onChangeQuery: (text: string) => void;
   color: Colors;
   focusSignal: number;
-  insetsBottom: number;
   onClose: () => void;
   onFocus: () => void;
   onBlur: () => void;
@@ -52,7 +53,6 @@ function StickySearchBar({
   onChangeQuery,
   color,
   focusSignal,
-  insetsBottom,
   onClose,
   onFocus,
   onBlur,
@@ -89,11 +89,11 @@ function StickySearchBar({
   );
 
   return (
-    <FloatingFrostedChrome color={color} insetsBottom={insetsBottom}>
+    <FloatingFrostedChrome color={color} insetsBottom={getFloatingSearchBarChromeBottomInset()}>
       <View
         style={{
           paddingHorizontal: 12,
-          paddingVertical: 10,
+          paddingVertical: FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
           flexDirection: 'row',
           alignItems: 'stretch',
           minHeight: 44,
@@ -275,8 +275,6 @@ function InboxScreenLoadedBodyInner({
     );
   }, [batchSelect.isSelectMode, onDismissSwipeHint, showInboxSearchBar, showSwipeHintForLayout]);
 
-  const stickyClosedOffset = insetsBottom;
-
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <View
@@ -397,15 +395,14 @@ function InboxScreenLoadedBodyInner({
       </View>
       {showInboxSearchBar && (
         <KeyboardStickyView
-          offset={{ closed: -stickyClosedOffset, opened: 0 }}
-          style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}
+          offset={{ closed: 0, opened: 0 }}
+          style={{ position: 'absolute', left: 0, right: 0, bottom: insetsBottom }}
         >
           <StickySearchBar
             query={query}
             onChangeQuery={onChangeQuery}
             color={color}
             focusSignal={searchFocusSignal}
-            insetsBottom={insetsBottom}
             onClose={onSearchCleared}
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setSearchFocused(false)}

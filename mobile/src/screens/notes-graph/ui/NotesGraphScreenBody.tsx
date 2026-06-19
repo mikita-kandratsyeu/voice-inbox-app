@@ -1325,13 +1325,13 @@ export const NotesGraphScreenBody = () => {
 
       {showGraphSearchBar ? (
         <KeyboardStickyView
-          offset={{ closed: -insets.bottom, opened: 0 }}
+          offset={{ closed: 0, opened: 0 }}
           pointerEvents={isGraphReconciling ? 'none' : 'auto'}
           style={{
             position: 'absolute',
             left: 0,
             right: 0,
-            bottom: 0,
+            bottom: insets.bottom,
             opacity: isGraphReconciling ? 0.55 : 1,
           }}
         >
@@ -1346,7 +1346,6 @@ export const NotesGraphScreenBody = () => {
             onNextMatch={handleSearchNext}
             color={color}
             focusSignal={searchFocusSignal}
-            insetsBottom={insets.bottom}
             onClose={handleSearchCleared}
           />
         </KeyboardStickyView>

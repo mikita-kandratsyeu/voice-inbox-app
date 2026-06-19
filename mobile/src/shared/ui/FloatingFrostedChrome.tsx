@@ -11,6 +11,12 @@ import { selectPlatform } from '@/shared/lib';
 
 import { FrostedChromeBackground } from './FrostedChromeBackground';
 
+export {
+  FLOATING_SEARCH_BAR_BOTTOM_GAP,
+  FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
+  getFloatingSearchBarChromeBottomInset,
+} from './floatingSearchBarMetrics';
+
 export const FLOATING_FROSTED_CHROME_RADIUS = 12;
 
 type FloatingFrostedChromeProps = {
