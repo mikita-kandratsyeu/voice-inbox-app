@@ -21,20 +21,31 @@ function computeGlobalLayoutMetrics(
 ): { width: number; height: number; spread: number } {
   const avgNodeSpan = 188;
 
-  // For large graphs, reduce per-node spacing to keep within scale bounds
+  // Progressive spacing reduction for large graphs
   let effectiveSpan = avgNodeSpan;
-  if (nodeCount > 100) {
-    effectiveSpan = avgNodeSpan * 0.65; // 100+ nodes: 65% spacing
+  if (nodeCount > 150) {
+    effectiveSpan = avgNodeSpan * 0.58; // 150+ nodes: very compact
+  } else if (nodeCount > 100) {
+    effectiveSpan = avgNodeSpan * 0.68; // 100-150 nodes: compact (improved from 0.65)
   } else if (nodeCount > 50) {
-    effectiveSpan = avgNodeSpan * 0.8; // 50-100 nodes: 80% spacing
+    effectiveSpan = avgNodeSpan * 0.82; // 50-100 nodes: comfortable (improved from 0.8)
   }
 
   const gridSide = Math.ceil(Math.sqrt(Math.max(nodeCount, 1))) * effectiveSpan;
   const width = Math.max(viewportWidth, gridSide);
   const height = Math.max(viewportHeight, gridSide);
 
-  // Reduce spread for large graphs to keep them compact
-  const spreadFactor = nodeCount > 100 ? 0.4 : nodeCount > 50 ? 0.44 : 0.48;
+  // Better spread scaling for organic layouts
+  let spreadFactor: number;
+  if (nodeCount > 150) {
+    spreadFactor = 0.36; // Very tight for huge graphs
+  } else if (nodeCount > 100) {
+    spreadFactor = 0.42; // Improved from 0.4
+  } else if (nodeCount > 50) {
+    spreadFactor = 0.46; // Improved from 0.44
+  } else {
+    spreadFactor = 0.50; // Improved from 0.48 for small graphs
+  }
   const spread = Math.max(width, height) * spreadFactor;
 
   return { width, height, spread };
@@ -44,50 +55,61 @@ function buildForceAtlasSettings(nodeCount: number) {
   const inferred = forceAtlas2.inferSettings(nodeCount);
   const spreadFactor = Math.sqrt(Math.max(nodeCount, 1));
 
-  // For large graphs, reduce scalingRatio to keep nodes closer together
-  const baseScalingRatio = Math.max(inferred.scalingRatio ?? 8, 8 + spreadFactor * 8.5);
-  const scalingRatio =
-    nodeCount > 100
-      ? baseScalingRatio * 0.6
-      : nodeCount > 50
-        ? baseScalingRatio * 0.75
-        : baseScalingRatio;
-
-  // Increase gravity for large graphs to pull nodes together
-  let gravity: number;
-  if (nodeCount > 100) {
-    gravity = 0.05; // Higher gravity for 100+ nodes
-  } else if (nodeCount > 64) {
-    gravity = 0.04;
-  } else if (nodeCount > 24) {
-    gravity = 0.06;
-  } else if (nodeCount > 10) {
-    gravity = 0.12;
+  // Enhanced scaling ratio for better organic distribution
+  const baseScalingRatio = Math.max(inferred.scalingRatio ?? 8, 10 + spreadFactor * 9); // Increased from 8 + 8.5
+  let scalingRatio: number;
+  if (nodeCount > 150) {
+    scalingRatio = baseScalingRatio * 0.52; // Very tight for 150+
+  } else if (nodeCount > 100) {
+    scalingRatio = baseScalingRatio * 0.62; // Improved from 0.6
+  } else if (nodeCount > 50) {
+    scalingRatio = baseScalingRatio * 0.77; // Improved from 0.75
   } else {
-    gravity = 0.24;
+    scalingRatio = baseScalingRatio;
+  }
+
+  // Progressive gravity scaling for natural clustering
+  let gravity: number;
+  if (nodeCount > 150) {
+    gravity = 0.06; // Stronger for huge graphs
+  } else if (nodeCount > 100) {
+    gravity = 0.055; // Slightly increased from 0.05
+  } else if (nodeCount > 64) {
+    gravity = 0.045; // Slightly increased from 0.04
+  } else if (nodeCount > 24) {
+    gravity = 0.065; // Slightly increased from 0.06
+  } else if (nodeCount > 10) {
+    gravity = 0.14; // Increased from 0.12 for better cohesion
+  } else {
+    gravity = 0.26; // Increased from 0.24
   }
 
   return {
     ...inferred,
     adjustSizes: true,
     barnesHutOptimize: nodeCount > 48,
-    edgeWeightInfluence: 0.72,
+    barnesHutTheta: 0.45, // Slightly looser from default 0.5 for better accuracy
+    edgeWeightInfluence: 0.75, // Increased from 0.72 - edges matter more
     gravity,
     linLogMode: false,
     scalingRatio,
     slowDown: nodeCount > 96 ? 4 : nodeCount > 48 ? 6 : 8,
+    strongGravityMode: nodeCount <= 20, // Enable for small graphs
     weighted: true,
   };
 }
 
 function layoutIterations(nodeCount: number): number {
-  if (nodeCount > 100) return Math.min(520, 100 + nodeCount * 3);
-  if (nodeCount > 48) return Math.min(720, 140 + nodeCount * 5);
-  return Math.min(1000, 180 + nodeCount * 8);
+  // More iterations for better convergence, especially for large graphs
+  if (nodeCount > 150) return Math.min(600, 140 + nodeCount * 3); // New tier for 150+
+  if (nodeCount > 100) return Math.min(580, 120 + nodeCount * 3.5); // Increased from 520
+  if (nodeCount > 48) return Math.min(780, 160 + nodeCount * 5.5); // Increased from 720 & 140
+  return Math.min(1100, 200 + nodeCount * 9); // Increased from 1000, 180, 8
 }
 
 function addInitialJitter(graph: Graph, spread: number): void {
-  const jitter = Math.max(12, spread * 0.04);
+  // Stronger initial jitter for more natural organic distribution
+  const jitter = Math.max(16, spread * 0.05); // Increased from 12 & 0.04
   graph.forEachNode((nodeId) => {
     const x = graph.getNodeAttribute(nodeId, 'x') as number;
     const y = graph.getNodeAttribute(nodeId, 'y') as number;

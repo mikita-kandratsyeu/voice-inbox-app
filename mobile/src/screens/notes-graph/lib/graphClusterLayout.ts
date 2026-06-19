@@ -14,16 +14,16 @@ const AVG_NODE_SPAN = 188;
  * Large graphs (>50 nodes) get tighter spacing to prevent excessive zoom-out requirements.
  */
 function getClusterGridGap(totalNodeCount: number): number {
-  if (totalNodeCount <= 20) return 180; // Spacious for small graphs
-  if (totalNodeCount <= 50) return 140; // Medium spacing
-  if (totalNodeCount <= 100) return 100; // Compact for large graphs
-  return 80; // Very compact for huge graphs (100+)
+  if (totalNodeCount <= 20) return 200; // Spacious for small graphs - increased from 180
+  if (totalNodeCount <= 50) return 160; // Medium spacing - increased from 140
+  if (totalNodeCount <= 100) return 120; // Compact for large graphs - increased from 100
+  return 90; // Very compact for huge graphs (100+) - increased from 80
 }
 
 function getClusterPadding(totalNodeCount: number): number {
-  if (totalNodeCount <= 20) return 32; // Comfortable for small graphs
-  if (totalNodeCount <= 50) return 24; // Tighter for medium graphs
-  return 16; // Minimal for large graphs
+  if (totalNodeCount <= 20) return 40; // Comfortable for small graphs - increased from 32
+  if (totalNodeCount <= 50) return 32; // Tighter for medium graphs - increased from 24
+  return 20; // Minimal for large graphs - increased from 16
 }
 
 export type GraphClusterType = 'folder' | 'tag' | 'group' | 'solo';
@@ -133,9 +133,18 @@ function extractClusterMetadata(
   }
 
   if (clusterId.startsWith('group:')) {
+    // Enhanced group labels for better clarity
+    let label: string | undefined;
+    if (nodeIds.length >= 10) {
+      label = `🔗 Group (${nodeIds.length})`;
+    } else if (nodeIds.length >= 5) {
+      label = `Connected (${nodeIds.length})`;
+    }
+    // No label for small groups (2-4 nodes) to reduce clutter
+
     return {
       type: 'group',
-      label: nodeIds.length > 3 ? `Connected (${nodeIds.length})` : undefined,
+      label,
     };
   }
 
@@ -224,10 +233,10 @@ export function buildGraphClusters(nodes: GraphNode[], edges: GraphEdge[]): Grap
 
 function clusterForceIterations(nodeCount: number): number {
   if (nodeCount <= 1) return 0;
-  if (nodeCount <= 5) return 180;
-  if (nodeCount <= 15) return 280;
-  if (nodeCount > 48) return Math.min(420, 100 + nodeCount * 5);
-  return Math.min(600, 150 + nodeCount * 12);
+  if (nodeCount <= 5) return 200; // Increased from 180 for better convergence
+  if (nodeCount <= 15) return 320; // Increased from 280
+  if (nodeCount > 48) return Math.min(480, 120 + nodeCount * 5); // More iterations for large clusters
+  return Math.min(650, 180 + nodeCount * 12); // Increased cap from 600
 }
 
 function buildClusterForceAtlasSettings(
@@ -242,12 +251,12 @@ function buildClusterForceAtlasSettings(
 
   // For large graphs (100+ total nodes), reduce scaling ratio to keep clusters compact
   const isLargeGraph = (totalGraphNodeCount ?? nodeCount) > 100;
-  const baseScalingRatio = Math.max(inferred.scalingRatio ?? 8, 12 + Math.sqrt(nodeCount) * 6);
-  const scalingRatio = isLargeGraph ? baseScalingRatio * 0.7 : baseScalingRatio;
+  const baseScalingRatio = Math.max(inferred.scalingRatio ?? 8, 14 + Math.sqrt(nodeCount) * 6.5); // Increased from 12 & 6
+  const scalingRatio = isLargeGraph ? baseScalingRatio * 0.65 : baseScalingRatio; // Tighter from 0.7
 
   // Increase gravity for large graphs to pull nodes together
-  const baseGravity = isSmall ? 0.22 : nodeCount > 16 ? 0.12 : 0.18;
-  const gravity = isLargeGraph ? baseGravity * 1.5 : baseGravity;
+  const baseGravity = isSmall ? 0.26 : nodeCount > 16 ? 0.14 : 0.20; // Increased all values
+  const gravity = isLargeGraph ? baseGravity * 1.6 : baseGravity; // Stronger from 1.5
 
   return {
     ...inferred,
