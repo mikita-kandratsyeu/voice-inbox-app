@@ -102,7 +102,14 @@ export function computeGraphExportLayout(
 
   // Detect device capabilities dynamically
   const capabilities = getDeviceCapabilities();
-  const deviceMaxDimension = maxDimension ?? capabilities.maxExportDimension;
+  let deviceMaxDimension = maxDimension ?? capabilities.maxExportDimension;
+
+  // For large graphs, reduce max dimension to prevent memory issues
+  if (nodes.length > 200) {
+    deviceMaxDimension = Math.min(deviceMaxDimension, 4096);
+  } else if (nodes.length > 150) {
+    deviceMaxDimension = Math.min(deviceMaxDimension, 6144);
+  }
 
   // measureGraphContentBounds already includes EDGE_VISUAL_MARGIN
   // Add additional padding for export frame

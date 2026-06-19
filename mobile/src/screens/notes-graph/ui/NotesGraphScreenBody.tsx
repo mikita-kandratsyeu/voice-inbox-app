@@ -43,7 +43,11 @@ import {
   setGraphNodeDisplayMode,
 } from '../lib/graphNodeDisplayModePreferences';
 import { findGraphSearchMatchIds, type GraphSearchIndexEntry } from '../lib/graphSearch';
-import { getSessionNodePositions, replaceSessionNodePositions } from '../lib/graphSessionLayout';
+import {
+  clearGraphSessionLayout,
+  getSessionNodePositions,
+  replaceSessionNodePositions,
+} from '../lib/graphSessionLayout';
 import { shouldAutoSimplifyGraph } from '../lib/graphSimplifyMode';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
 import {
@@ -59,6 +63,7 @@ import {
   awaitPendingNotesGraphLayout,
   buildAndCacheNotesGraphLayout,
   buildNotesGraphLayoutCacheKey,
+  clearNotesGraphLayoutCache,
   getCachedNotesGraphLayout,
 } from '../lib/notesGraphLayoutCache';
 import {
@@ -84,7 +89,7 @@ import { GraphLayoutHistorySheet } from './GraphLayoutHistorySheet';
 import { GraphLayoutSaveSheet } from './GraphLayoutSaveSheet';
 import { GraphStickySearchBar } from './GraphStickySearchBar';
 
-const LARGE_GRAPH_RECORD_THRESHOLD = 150;
+const LARGE_GRAPH_RECORD_THRESHOLD = 100;
 const GRAPH_SEARCH_DEBOUNCE_MS = 300;
 
 function waitForNextFrame(): Promise<void> {
@@ -274,6 +279,13 @@ export const NotesGraphScreenBody = () => {
   const syncUnsavedLayoutState = useCallback(() => {
     const snapshot = serializeNotesGraphPositions(getSessionNodePositions());
     setHasUnsavedLayoutChanges(snapshot !== savedLayoutSnapshotRef.current);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearGraphSessionLayout();
+      clearNotesGraphLayoutCache();
+    };
   }, []);
 
   useEffect(() => {
@@ -820,6 +832,28 @@ export const NotesGraphScreenBody = () => {
   const handleOpenExportPreview = useCallback(() => {
     if (isCapturingExport || isRecapturingExport) return;
 
+    if (layoutNodes.length > 250) {
+      Alert.alert(
+        t('notesGraph.export.largeGraphWarningTitle'),
+        t('notesGraph.export.largeGraphWarningMessage', { count: layoutNodes.length }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.continue'),
+            onPress: () => {
+              exportCaptureTokenRef.current += 1;
+              setExportPreviewUri(null);
+              setExportPreviewSize(null);
+              setExportCaptureBackgroundId('canvas');
+              exportPreviewBackgroundIdRef.current = 'canvas';
+              setIsCapturingExport(true);
+            },
+          },
+        ],
+      );
+      return;
+    }
+
     exportCaptureTokenRef.current += 1;
 
     setExportPreviewUri(null);
@@ -827,7 +861,7 @@ export const NotesGraphScreenBody = () => {
     setExportCaptureBackgroundId('canvas');
     exportPreviewBackgroundIdRef.current = 'canvas';
     setIsCapturingExport(true);
-  }, [isCapturingExport, isRecapturingExport]);
+  }, [isCapturingExport, isRecapturingExport, layoutNodes.length, t]);
 
   useEffect(() => {
     if (!isCapturingExport || exportPreviewUri != null) {

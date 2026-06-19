@@ -272,7 +272,9 @@
       "backgroundTransparent": "Transparent",
       "failed": "Could not export the graph image. Try again.",
       "scaledDownTitle": "Export Adjusted",
-      "scaledDownMessage": "The export was scaled to {{width}}×{{height}}px to fit your device's {{tier}} memory. The image quality remains high."
+      "scaledDownMessage": "The export was scaled to {{width}}×{{height}}px to fit your device's {{tier}} memory. The image quality remains high.",
+      "largeGraphWarningTitle": "Large graph",
+      "largeGraphWarningMessage": "This graph has {{count}} nodes. Exporting may take longer and use significant memory. Continue?"
     },
     "history": {
       "openA11y": "Layout history",

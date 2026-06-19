@@ -53,8 +53,8 @@ export function getDeviceCapabilities(): DeviceCapabilities {
     case 'ultra':
       // Latest flagships with 8GB+ RAM
       markdownEditorLimit = 20_000;
-      maxExportDimension = 8192;
-      maxSafeExportPixels = 8192 * 8192;
+      maxExportDimension = 6144;
+      maxSafeExportPixels = 6144 * 6144;
       canHandleLargeOperations = true;
       llmGpuLayers = 99; // Full offload to GPU/Metal
       llmBatchSize = 2048;
@@ -64,8 +64,8 @@ export function getDeviceCapabilities(): DeviceCapabilities {
     case 'high':
       // Flagship devices from 2022+
       markdownEditorLimit = 15_000;
-      maxExportDimension = 6144;
-      maxSafeExportPixels = 6144 * 6144;
+      maxExportDimension = 4096;
+      maxSafeExportPixels = 4096 * 4096;
       canHandleLargeOperations = true;
       llmGpuLayers = 66; // ⅔ layers on GPU
       llmBatchSize = 1536;

@@ -8,6 +8,7 @@ import { layoutNodesInCircle } from './runCircularLayout';
 import { layoutNodesWithGlobalForce } from './runGlobalForceLayout';
 
 const GRAPH_BOUNDS_PADDING = 80;
+const MAX_OVERLAP_RESOLUTION_NODES = 250;
 
 /**
  * Compute layout dimensions with scale-awareness.
@@ -43,7 +44,12 @@ function computeLayoutMetrics(
 function resolveNodeOverlaps(nodes: GraphNode[], gap = 22, maxPasses?: number): GraphNode[] {
   if (nodes.length < 2) return nodes;
 
-  const passes = maxPasses ?? (nodes.length > 80 ? 20 : nodes.length > 40 ? 36 : 64);
+  if (nodes.length > MAX_OVERLAP_RESOLUTION_NODES) {
+    return nodes.map((node) => ({ ...node }));
+  }
+
+  const passes =
+    maxPasses ?? (nodes.length > 150 ? 12 : nodes.length > 80 ? 20 : nodes.length > 40 ? 36 : 64);
   const layoutNodes = nodes.map((node) => ({ ...node }));
 
   for (let pass = 0; pass < passes; pass++) {
