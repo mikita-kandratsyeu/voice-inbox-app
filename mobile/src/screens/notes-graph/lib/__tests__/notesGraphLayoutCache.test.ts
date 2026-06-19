@@ -55,7 +55,7 @@ describe('notesGraphLayoutCache', () => {
 
   it('includes layout mode in the cache key', () => {
     const records = [makeRecord('a', 'A')];
-    const clusterKey = buildNotesGraphLayoutCacheKey(records, filters, null, 390, 800);
+    const forceKey = buildNotesGraphLayoutCacheKey(records, filters, null, 390, 800);
     const circularKey = buildNotesGraphLayoutCacheKey(
       records,
       { ...filters, layoutMode: 'circular' },
@@ -64,8 +64,8 @@ describe('notesGraphLayoutCache', () => {
       800,
     );
 
-    expect(clusterKey).not.toBe(circularKey);
-    expect(clusterKey).toContain(';cluster;');
+    expect(forceKey).not.toBe(circularKey);
+    expect(forceKey).toContain(';force;');
     expect(circularKey).toContain(';circular;');
   });
 

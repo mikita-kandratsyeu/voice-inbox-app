@@ -50,7 +50,7 @@ describe('parseNotesGraphPersistKey', () => {
     expect(parseNotesGraphPersistKey(layoutKey)?.showArchived).toBe(false);
   });
 
-  it('parses legacy keys without layout mode as cluster', () => {
+  it('parses legacy keys without layout mode as force', () => {
     const layoutKey = [
       '2:a,b',
       'folder-1',
@@ -61,7 +61,7 @@ describe('parseNotesGraphPersistKey', () => {
       '5',
     ].join(';');
 
-    expect(parseNotesGraphPersistKey(layoutKey)?.layoutMode).toBe('cluster');
+    expect(parseNotesGraphPersistKey(layoutKey)?.layoutMode).toBe('force');
     expect(parseNotesGraphPersistKey(layoutKey)?.showArchived).toBe(false);
   });
 

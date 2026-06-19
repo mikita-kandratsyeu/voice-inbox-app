@@ -44,7 +44,7 @@ function computeGlobalLayoutMetrics(
   } else if (nodeCount > 50) {
     spreadFactor = 0.46; // Improved from 0.44
   } else {
-    spreadFactor = 0.50; // Improved from 0.48 for small graphs
+    spreadFactor = 0.5; // Improved from 0.48 for small graphs
   }
   const spread = Math.max(width, height) * spreadFactor;
 

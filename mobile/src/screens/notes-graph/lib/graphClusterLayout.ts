@@ -255,7 +255,7 @@ function buildClusterForceAtlasSettings(
   const scalingRatio = isLargeGraph ? baseScalingRatio * 0.65 : baseScalingRatio; // Tighter from 0.7
 
   // Increase gravity for large graphs to pull nodes together
-  const baseGravity = isSmall ? 0.26 : nodeCount > 16 ? 0.14 : 0.20; // Increased all values
+  const baseGravity = isSmall ? 0.26 : nodeCount > 16 ? 0.14 : 0.2; // Increased all values
   const gravity = isLargeGraph ? baseGravity * 1.6 : baseGravity; // Stronger from 1.5
 
   return {
