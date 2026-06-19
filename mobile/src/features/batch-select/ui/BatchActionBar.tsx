@@ -1,21 +1,21 @@
 import { Archive, ArchiveRestore, FolderInput, Share, Trash2, X } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   BATCH_ACTION_BAR_HOME_GAP,
-  BATCH_ACTION_BAR_PADDING_TOP,
   BATCH_ACTION_BAR_ROW_HEIGHT,
-  FLOAT_TAB_IOS_SHADOW_OFFSET_Y,
-  FLOAT_TAB_IOS_SHADOW_RADIUS,
-  floatingTabBarShadowOpacity,
   getFloatingTabBarScrollPaddingBottom,
 } from '@/app/navigation/config';
 import type { Colors } from '@/shared/config';
-import { hapticLight, hapticMedium, useIsTablet, withAlphaHex } from '@/shared/lib';
-import { Button, FrostedChromeBackground } from '@/shared/ui';
+import { hapticLight, hapticMedium, useIsTablet } from '@/shared/lib';
+import {
+  FloatingFrostedChrome,
+  FloatingFrostedChromeDivider,
+  HeaderIconButton,
+} from '@/shared/ui';
 
 type BatchActionBarProps = {
   count: number;
@@ -99,7 +99,7 @@ export const BatchActionBar = ({
 
   const disabled = count === 0;
 
-  const bottomPad = dockToScreenBottom
+  const chromeInsetsBottom = dockToScreenBottom
     ? Math.max(insets.bottom, 8) + BATCH_ACTION_BAR_HOME_GAP
     : getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet) + 8;
 
@@ -139,123 +139,112 @@ export const BatchActionBar = ({
     onMoveToFolder();
   };
 
-  return (
-    <View
-      style={{
-        ...(dockToScreenBottom
-          ? {
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 40,
-            }
-          : { position: 'relative' }),
-        backgroundColor: 'transparent',
-        overflow: 'visible',
-        shadowColor: color.shadow.color,
-        shadowOffset: { width: 0, height: -FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
-        shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
-        shadowRadius: FLOAT_TAB_IOS_SHADOW_RADIUS,
-        elevation: 8,
+  const chrome = (
+    <FloatingFrostedChrome
+      color={color}
+      insetsBottom={chromeInsetsBottom}
+      contentStyle={{
+        paddingHorizontal: 12,
+        paddingVertical: 10,
       }}
     >
-      <FrostedChromeBackground />
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          top: 0,
-          height: StyleSheet.hairlineWidth,
-          backgroundColor: withAlphaHex(color.border.default, 0.45),
-        }}
-      />
       <View
         style={{
-          paddingBottom: bottomPad,
-          paddingTop: BATCH_ACTION_BAR_PADDING_TOP,
-          paddingHorizontal: 20,
+          flexDirection: 'row',
+          alignItems: 'stretch',
+          minHeight: BATCH_ACTION_BAR_ROW_HEIGHT,
         }}
       >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            minHeight: BATCH_ACTION_BAR_ROW_HEIGHT,
-          }}
-        >
-          <Button
+        <View style={{ justifyContent: 'center' }}>
+          <HeaderIconButton
             iconOnly
             variant="icon"
             size="md"
-            shape="circle"
             icon={<X size={22} color={color.text.secondary} strokeWidth={2.2} />}
             color={color}
             onPress={handleCancel}
             accessibilityLabel={t('common.cancel')}
           />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-              paddingLeft: 8,
-            }}
-            style={{ flexGrow: 0, maxWidth: '82%' }}
-          >
-            {!hideMoveToFolder && (
-              <ActionButton
-                icon={(c) => <FolderInput size={20} strokeWidth={2} color={c} />}
-                label={t('batch.moveToFolder')}
-                onPress={handleMoveToFolder}
-                disabled={disabled}
-                color={color}
-              />
-            )}
-            {showUnarchive ? (
-              <ActionButton
-                icon={(c) => <ArchiveRestore size={20} strokeWidth={2} color={c} />}
-                label={t('batch.unarchive')}
-                onPress={handleUnarchive}
-                disabled={disabled}
-                color={color}
-              />
-            ) : (
-              <ActionButton
-                icon={(c) => <Archive size={20} strokeWidth={2} color={c} />}
-                label={t('batch.archive')}
-                onPress={handleArchive}
-                disabled={disabled}
-                color={color}
-              />
-            )}
-            {showExport ? (
-              <ActionButton
-                icon={(c) => <Share size={20} strokeWidth={2} color={c} />}
-                label={t('batch.export')}
-                onPress={handleExport}
-                disabled={disabled}
-                color={color}
-              />
-            ) : null}
+        </View>
+        <FloatingFrostedChromeDivider color={color} />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{
+            flexGrow: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: 12,
+            paddingLeft: 8,
+          }}
+          style={{ flex: 1, minWidth: 0 }}
+        >
+          {!hideMoveToFolder && (
             <ActionButton
-              icon={(c) => <Trash2 size={20} strokeWidth={2} color={c} />}
-              label={t('batch.delete')}
-              onPress={handleDelete}
-              onLongPress={onDeleteLongPress ? handleDeleteLongPress : undefined}
-              accessibilityHint={onDeleteLongPress ? t('batch.deleteLongPressHint') : undefined}
+              icon={(c) => <FolderInput size={20} strokeWidth={2} color={c} />}
+              label={t('batch.moveToFolder')}
+              onPress={handleMoveToFolder}
               disabled={disabled}
-              destructive
               color={color}
             />
-          </ScrollView>
-        </View>
+          )}
+          {showUnarchive ? (
+            <ActionButton
+              icon={(c) => <ArchiveRestore size={20} strokeWidth={2} color={c} />}
+              label={t('batch.unarchive')}
+              onPress={handleUnarchive}
+              disabled={disabled}
+              color={color}
+            />
+          ) : (
+            <ActionButton
+              icon={(c) => <Archive size={20} strokeWidth={2} color={c} />}
+              label={t('batch.archive')}
+              onPress={handleArchive}
+              disabled={disabled}
+              color={color}
+            />
+          )}
+          {showExport ? (
+            <ActionButton
+              icon={(c) => <Share size={20} strokeWidth={2} color={c} />}
+              label={t('batch.export')}
+              onPress={handleExport}
+              disabled={disabled}
+              color={color}
+            />
+          ) : null}
+          <ActionButton
+            icon={(c) => <Trash2 size={20} strokeWidth={2} color={c} />}
+            label={t('batch.delete')}
+            onPress={handleDelete}
+            onLongPress={onDeleteLongPress ? handleDeleteLongPress : undefined}
+            accessibilityHint={onDeleteLongPress ? t('batch.deleteLongPressHint') : undefined}
+            disabled={disabled}
+            destructive
+            color={color}
+          />
+        </ScrollView>
       </View>
-    </View>
+    </FloatingFrostedChrome>
   );
+
+  if (dockToScreenBottom) {
+    return (
+      <View
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 40,
+        }}
+      >
+        {chrome}
+      </View>
+    );
+  }
+
+  return chrome;
 };

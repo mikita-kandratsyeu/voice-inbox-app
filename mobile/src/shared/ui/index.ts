@@ -51,6 +51,12 @@ export { EmptyState } from './EmptyState';
 export { FrostedBottomChrome } from './FrostedBottomChrome';
 export type { FrostedChromeBackgroundProps } from './FrostedChromeBackground';
 export { FrostedChromeBackground } from './FrostedChromeBackground';
+export {
+  FLOATING_FROSTED_CHROME_RADIUS,
+  FloatingFrostedChrome,
+  FloatingFrostedChromeDivider,
+  FloatingFrostedChromeSection,
+} from './FloatingFrostedChrome';
 export { HeaderIconButton } from './HeaderIconButton';
 export type { InputFieldProps } from './InputField';
 export { getInputFieldInputStyle, InputField } from './InputField';

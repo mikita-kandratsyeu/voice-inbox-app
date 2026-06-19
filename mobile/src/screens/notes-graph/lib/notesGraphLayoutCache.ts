@@ -1,8 +1,12 @@
 import type { VoiceRecord } from '@/entities/record';
 
 import { AsyncLayoutComputer } from './asyncLayoutComputation';
-import { buildNotesGraphLayout, type NotesGraphLayoutResult } from './buildNotesGraphLayout';
 import { countFilteredGraphRecords } from './buildGraphModel';
+import { buildNotesGraphLayout, type NotesGraphLayoutResult } from './buildNotesGraphLayout';
+import {
+  cancelGraphLayoutWorkerJobs,
+  releaseGraphLayoutWorkerRuntime,
+} from './graphLayoutWorkerRuntime';
 import {
   DEFAULT_EDGE_VISIBILITY,
   DEFAULT_GRAPH_LAYOUT_MODE,
@@ -68,6 +72,8 @@ const layoutComputer = new AsyncLayoutComputer();
 export function clearNotesGraphLayoutCache(): void {
   cacheGeneration += 1;
   layoutComputer.cancel();
+  cancelGraphLayoutWorkerJobs();
+  releaseGraphLayoutWorkerRuntime();
   cachedEntry = null;
   pendingBuild = null;
   if (warmDebounceId) {
@@ -117,6 +123,7 @@ export async function buildAndCacheNotesGraphLayoutAsync(
   simplifyOverride: boolean | null,
   windowWidth: number,
   windowHeight: number,
+  onProgress?: (progress: number) => void,
 ): Promise<NotesGraphLayoutResult> {
   const key = buildNotesGraphLayoutCacheKey(
     records,
@@ -141,6 +148,7 @@ export async function buildAndCacheNotesGraphLayoutAsync(
       simplifyOverride,
       windowWidth,
       windowHeight,
+      onProgress,
     )
     .then((result) => {
       if (generation === cacheGeneration) {

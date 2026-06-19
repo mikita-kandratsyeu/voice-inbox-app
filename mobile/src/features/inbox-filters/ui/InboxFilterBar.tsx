@@ -33,6 +33,7 @@ import { FrostedChromeBackground } from '@/shared/ui';
 const PRIMARY_FILTERS: PrimaryFilterStatus[] = ['all', 'pinned', 'archived'];
 
 const FILTER_CHROME_RADIUS = 12;
+export const INBOX_FILTER_CHROME_RADIUS = FILTER_CHROME_RADIUS;
 const FILTER_FLOAT_TOP_PAD = 10;
 const FILTER_FLOAT_BOTTOM_PAD = 10;
 const FILTER_ROW_INNER_HEIGHT = 4 * 2 + IOS_MIN_TOUCH_TARGET;

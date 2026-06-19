@@ -1084,8 +1084,11 @@ export function useInboxScreen() {
   }, [batchProgress, t]);
 
   const screenStyle = useMemo(
-    () => ({ flex: 1, backgroundColor: color.background.primary }),
-    [color.background.primary],
+    () => ({
+      flex: 1,
+      backgroundColor: useTabletShell ? color.background.secondary : color.background.primary,
+    }),
+    [color.background.primary, color.background.secondary, useTabletShell],
   );
 
   const listContentStyle = useMemo(

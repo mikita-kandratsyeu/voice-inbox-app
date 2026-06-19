@@ -1,6 +1,6 @@
 import { useWindowDimensions } from 'react-native';
 
-import { TABLET_SIDEBAR_WIDTH } from '@/app/navigation/tablet/tabletSidebarMetrics';
+import { getTabletSidebarSlotWidth } from '@/app/navigation/tablet/tabletSidebarMetrics';
 
 import { useTabletShellLayout } from './useTabletShellLayout';
 
@@ -24,7 +24,7 @@ export function useTabletContentMaxWidth(
     return undefined;
   }
 
-  const layoutWidth = inTabletShell ? width - TABLET_SIDEBAR_WIDTH : width;
+  const layoutWidth = inTabletShell ? width - getTabletSidebarSlotWidth() : width;
 
   if (inTabletShell) {
     return layoutWidth;

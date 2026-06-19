@@ -5,6 +5,7 @@ export type TabletSidebarTheme = {
   panel: string;
   content: string;
   surface: string;
+  /** Same token as inbox record cards (`getRecordCardChromeStyle`). */
   border: string;
 };
 

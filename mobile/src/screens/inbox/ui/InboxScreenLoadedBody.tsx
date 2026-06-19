@@ -20,11 +20,12 @@ import type {
 } from '@/features/inbox-filters';
 import { INBOX_FILTER_BAR_FALLBACK_HEIGHT, InboxFilterBar } from '@/features/inbox-filters';
 import type { Colors } from '@/shared/config';
-import { IS_IOS } from '@/shared/lib';
 import { iosHitSlopForVisualSize } from '@/shared/lib/iosTouchTarget';
 import {
   EmptyState,
-  FrostedBottomChrome,
+  FloatingFrostedChrome,
+  FloatingFrostedChromeDivider,
+  FloatingFrostedChromeSection,
   getInputFieldInputStyle,
   HeaderIconButton,
   SwipeHintBanner,
@@ -72,87 +73,87 @@ function StickySearchBar({
     inputRef.current?.focus();
   };
 
-  return (
-    <FrostedBottomChrome
+  const closeButton = (
+    <HeaderIconButton
+      iconOnly
+      variant="icon"
+      size="md"
+      icon={<X size={22} color={color.text.secondary} strokeWidth={2.2} />}
       color={color}
-      insetsBottom={insetsBottom}
-      contentStyle={{
-        paddingHorizontal: 16,
-        paddingTop: 14,
-        paddingBottom: 14,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
+      onPress={() => {
+        onChangeQuery('');
+        onClose();
       }}
-    >
+      accessibilityLabel={t('search.a11yHide')}
+    />
+  );
+
+  return (
+    <FloatingFrostedChrome color={color} insetsBottom={insetsBottom}>
       <View
         style={{
-          flex: 1,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 8,
-          backgroundColor: color.background.tertiary,
-          borderRadius: 12,
           paddingHorizontal: 12,
-          paddingVertical: IS_IOS ? 10 : 8,
-          borderWidth: 1,
-          borderColor: focused ? color.accent.primary : color.border.default,
+          paddingVertical: 10,
+          flexDirection: 'row',
+          alignItems: 'stretch',
+          minHeight: 44,
         }}
       >
-        <Search
-          size={16}
-          color={focused || query ? color.accent.primary : color.icon.muted}
-          strokeWidth={2}
-        />
-        <TextInput
-          ref={inputRef}
-          style={[getInputFieldInputStyle(color), { flex: 1 }]}
-          placeholder={t('search.placeholder')}
-          placeholderTextColor={color.text.secondary}
-          value={query}
-          onChangeText={onChangeQuery}
-          onFocus={onFocus}
-          onBlur={onBlur}
-          returnKeyType="search"
-          clearButtonMode="never"
-          autoCapitalize="none"
-        />
-        {query.length > 0 && (
-          <TouchableOpacity
-            onPress={handleClear}
-            hitSlop={iosHitSlopForVisualSize(16, 16)}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.clear')}
-          >
-            <View
-              style={{
-                width: 16,
-                height: 16,
-                borderRadius: 8,
-                backgroundColor: color.icon.muted,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+        <View
+          style={{
+            flex: 1,
+            minWidth: 0,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            justifyContent: 'center',
+          }}
+        >
+          <Search
+            size={16}
+            color={focused || query ? color.accent.primary : color.icon.muted}
+            strokeWidth={2}
+          />
+          <TextInput
+            ref={inputRef}
+            style={[getInputFieldInputStyle(color), { flex: 1 }]}
+            placeholder={t('search.placeholder')}
+            placeholderTextColor={color.text.secondary}
+            value={query}
+            onChangeText={onChangeQuery}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            returnKeyType="search"
+            clearButtonMode="never"
+            autoCapitalize="none"
+          />
+          {query.length > 0 && (
+            <TouchableOpacity
+              onPress={handleClear}
+              hitSlop={iosHitSlopForVisualSize(16, 16)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.clear')}
             >
-              <X size={10} color={color.background.primary} strokeWidth={2.5} />
-            </View>
-          </TouchableOpacity>
-        )}
+              <View
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: 8,
+                  backgroundColor: color.icon.muted,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <X size={10} color={color.background.primary} strokeWidth={2.5} />
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+        <FloatingFrostedChromeDivider color={color} />
+        <FloatingFrostedChromeSection>{closeButton}</FloatingFrostedChromeSection>
       </View>
-      <HeaderIconButton
-        iconOnly
-        variant="icon"
-        size="md"
-        icon={<X size={22} color={color.text.secondary} strokeWidth={2.2} />}
-        color={color}
-        onPress={() => {
-          onChangeQuery('');
-          onClose();
-        }}
-        accessibilityLabel={t('search.a11yHide')}
-      />
-    </FrostedBottomChrome>
+    </FloatingFrostedChrome>
   );
 }
 

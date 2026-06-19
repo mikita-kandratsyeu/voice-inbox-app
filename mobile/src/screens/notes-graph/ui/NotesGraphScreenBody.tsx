@@ -64,7 +64,10 @@ import {
   recordNodeId,
   taskNodeId,
 } from '../lib/graphTypes';
-import { estimateGraphSearchFocusBottomInset } from '../lib/graphViewportInsets';
+import {
+  estimateGraphSearchFocusBottomInset,
+  shouldShowGraphSearchMatchLabel,
+} from '../lib/graphViewportInsets';
 import type { NotesGraphHistoryScope } from '../lib/notesGraphHistoryScope';
 import {
   awaitPendingNotesGraphLayout,
@@ -159,6 +162,7 @@ export const NotesGraphScreenBody = () => {
   const [graphSize, setGraphSize] = useState({ width: 0, height: 0 });
   const [recordCount, setRecordCount] = useState(0);
   const [isBuilding, setIsBuilding] = useState(true);
+  const [buildProgress, setBuildProgress] = useState<number | null>(null);
   const [isGraphReconciling, setIsGraphReconciling] = useState(false);
   const [hasUnsavedLayoutChanges, setHasUnsavedLayoutChanges] = useState(false);
   const [isSavingLayout, setIsSavingLayout] = useState(false);
@@ -186,6 +190,7 @@ export const NotesGraphScreenBody = () => {
   );
   const layoutNodesRef = useRef<GraphNode[]>([]);
   const layoutTransitionCancelRef = useRef<(() => void) | null>(null);
+  const buildProgressPercentRef = useRef(-1);
   const [activeSavedVersion, setActiveSavedVersion] = useState<NotesGraphLayoutVersionEntry | null>(
     null,
   );
@@ -373,6 +378,8 @@ export const NotesGraphScreenBody = () => {
       setRecordCount(built.recordCount);
       setSearchIndex(built.searchIndex);
       setIsBuilding(false);
+      setBuildProgress(null);
+      buildProgressPercentRef.current = -1;
 
       layoutTransitionCancelRef.current?.();
       layoutTransitionCancelRef.current = null;
@@ -404,7 +411,11 @@ export const NotesGraphScreenBody = () => {
         return;
       }
 
-      if (!cancelled) setIsBuilding(true);
+      if (!cancelled) {
+        setIsBuilding(true);
+        setBuildProgress(0);
+        buildProgressPercentRef.current = -1;
+      }
 
       const pending = await awaitPendingNotesGraphLayout(layoutCacheKey);
       if (cancelled) return;
@@ -422,6 +433,13 @@ export const NotesGraphScreenBody = () => {
         simplifyOverride,
         windowWidth,
         windowHeight,
+        (progress) => {
+          if (cancelled) return;
+          const percent = Math.round(progress * 100);
+          if (percent === buildProgressPercentRef.current) return;
+          buildProgressPercentRef.current = percent;
+          setBuildProgress(progress);
+        },
       );
 
       if (!cancelled) applyBuilt(built);
@@ -519,13 +537,21 @@ export const NotesGraphScreenBody = () => {
   const showGraphSearchBar =
     records.length > 0 && (searchBarExplicitOpen || searchQuery.trim().length > 0);
 
+  const showGraphSearchMatchLabel = shouldShowGraphSearchMatchLabel({
+    query: searchQuery,
+    debouncedQuery: debouncedSearchQuery,
+    matchCount: searchMatches.length,
+    matchIndex: searchMatches.length > 0 && searchMatchIndex >= 0 ? searchMatchIndex : null,
+  });
+
   const searchFocusBottomInset = useMemo(
     () =>
       estimateGraphSearchFocusBottomInset({
         searchBarVisible: showGraphSearchBar,
         safeAreaBottom: insets.bottom,
+        showMatchLabel: showGraphSearchMatchLabel,
       }),
-    [insets.bottom, showGraphSearchBar],
+    [insets.bottom, showGraphSearchBar, showGraphSearchMatchLabel],
   );
 
   const focusViewportInsets = useMemo(
@@ -1154,7 +1180,10 @@ export const NotesGraphScreenBody = () => {
           subtitle={focusRecordTitle ?? undefined}
           onBack={handleBack}
         />
-        <GraphBuildingState label={t('notesGraph.building')} />
+        <GraphBuildingState
+          label={t('notesGraph.building')}
+          progress={buildProgress ?? undefined}
+        />
       </View>
     );
   }

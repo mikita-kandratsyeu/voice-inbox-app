@@ -12,6 +12,8 @@ type InboxHeaderProps = {
   rightSlot?: React.ReactNode;
   subtitleText: string;
   title: string;
+  /** Tablet shell: header sits on the content column without a separate chrome band. */
+  transparentBackground?: boolean;
 };
 
 export const InboxHeader = memo(function InboxHeader({
@@ -21,17 +23,18 @@ export const InboxHeader = memo(function InboxHeader({
   rightSlot,
   subtitleText,
   title,
+  transparentBackground = false,
 }: InboxHeaderProps) {
   const insets = useSafeAreaInsets();
 
   const headerStyle = useMemo(
     () => ({
-      backgroundColor: color.background.primary,
-      borderBottomWidth: 1,
+      backgroundColor: transparentBackground ? 'transparent' : color.background.primary,
+      borderBottomWidth: transparentBackground ? 0 : 1,
       borderBottomColor: color.border.default,
       paddingTop: insets.top + 16,
     }),
-    [color.background.primary, color.border.default, insets.top],
+    [color.background.primary, color.border.default, insets.top, transparentBackground],
   );
 
   const titleStyle = useMemo(() => ({ color: color.text.primary }), [color.text.primary]);

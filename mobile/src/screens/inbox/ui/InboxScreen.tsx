@@ -167,6 +167,7 @@ export const InboxScreen = () => {
         color={color}
         isLoaded={isLoaded}
         isPrivateMode={isPrivateMode}
+        transparentBackground={useTabletShell}
         subtitleText={
           batchSelect.isSelectMode
             ? t('batch.selectedCount', { count: batchSelect.selectedIds.size })

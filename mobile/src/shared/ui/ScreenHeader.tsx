@@ -6,6 +6,7 @@ import { KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/shared/config';
+import { useTabletShellLayout } from '@/shared/lib';
 
 import { IS_ANDROID } from '../lib';
 import { HeaderIconButton } from './HeaderIconButton';
@@ -31,6 +32,7 @@ export const ScreenHeader = ({
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const color = useColors();
+  const useTabletShell = useTabletShellLayout();
 
   const handleTitlePress = useCallback(() => {
     KeyboardController.dismiss();
@@ -54,8 +56,8 @@ export const ScreenHeader = ({
     <View
       className="flex-row items-center justify-between px-4 pb-3"
       style={{
-        backgroundColor: color.background.primary,
-        borderBottomWidth: 1,
+        backgroundColor: useTabletShell ? 'transparent' : color.background.primary,
+        borderBottomWidth: useTabletShell ? 0 : 1,
         borderBottomColor: color.border.default,
         paddingTop: insets.top + 12,
       }}

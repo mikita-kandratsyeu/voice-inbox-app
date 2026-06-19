@@ -5,10 +5,11 @@ import {
   buildNotesGraphLayoutFromModel,
   type NotesGraphLayoutResult,
 } from './buildNotesGraphLayout';
+import { buildLayoutWorkerRequest, mergeLayoutWorkerResponse } from './graphLayoutWorkerPayload';
+import { runGraphLayoutOnWorker } from './graphLayoutWorkerRuntime';
 import { clearStaleSessionPositions, getSessionNodePositions } from './graphSessionLayout';
 import { resolveGraphFilters } from './graphSimplifyMode';
 import type { GraphFilters } from './graphTypes';
-import { runForceLayout } from './runForceLayout';
 
 export type AsyncLayoutComputationOptions = {
   onProgress?: (progress: number) => void;
@@ -16,7 +17,8 @@ export type AsyncLayoutComputationOptions = {
 };
 
 /**
- * Yields to the event loop before running ForceAtlas2 so the UI can paint first.
+ * Builds graph model on the main thread, runs ForceAtlas2 on a background worklet
+ * runtime when available, then merges positions back into full nodes.
  */
 export async function computeLayoutAsync(
   records: VoiceRecord[],
@@ -41,7 +43,7 @@ export async function computeLayoutAsync(
     throw new Error('Layout computation cancelled');
   }
 
-  onProgress?.(0.2);
+  onProgress?.(0.15);
 
   const effective = resolveGraphFilters(filters, filteredRecordCount, simplifyOverride);
   const model = buildGraphModel(records, effective);
@@ -51,26 +53,33 @@ export async function computeLayoutAsync(
   const layoutViewportWidth = Math.max(windowWidth, 390);
   const layoutViewportHeight = Math.max(windowHeight * 0.72, 640);
 
-  onProgress?.(0.35);
+  onProgress?.(0.3);
 
-  await yieldToEventLoop();
-
-  if (signal?.aborted) {
-    throw new Error('Layout computation cancelled');
-  }
-
-  const layout = runForceLayout(
+  const workerRequest = buildLayoutWorkerRequest(
     model.nodes,
     model.edges,
     layoutViewportWidth,
     layoutViewportHeight,
-    sessionPositions,
     effective.layoutMode,
+    sessionPositions,
   );
+
+  onProgress?.(0.4);
+
+  const workerResponse = await runGraphLayoutOnWorker(workerRequest, signal);
 
   if (signal?.aborted) {
     throw new Error('Layout computation cancelled');
   }
+
+  onProgress?.(0.95);
+
+  const layoutNodes = mergeLayoutWorkerResponse(model.nodes, workerResponse);
+  const layout = {
+    nodes: layoutNodes,
+    width: workerResponse.width,
+    height: workerResponse.height,
+  };
 
   onProgress?.(1);
 

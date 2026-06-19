@@ -10,9 +10,11 @@ import { useRotatingGraphLoadingTip } from '../lib/graphLoadingTips';
 type GraphBuildingStateProps = {
   label: string;
   showTips?: boolean;
+  /** 0–1 layout build progress; omit for indeterminate spinner only. */
+  progress?: number;
 };
 
-export function GraphBuildingState({ label, showTips = true }: GraphBuildingStateProps) {
+export function GraphBuildingState({ label, showTips = true, progress }: GraphBuildingStateProps) {
   const { t } = useTranslation();
   const color = useColors();
   const tipKey = useRotatingGraphLoadingTip(showTips);
@@ -33,6 +35,7 @@ export function GraphBuildingState({ label, showTips = true }: GraphBuildingStat
     >
       <ProgressStatusCard
         title={label}
+        progress={progress}
         subtitle={
           showTips ? (
             <RotatingTipText

@@ -42,13 +42,18 @@ export function getFloatingTabBarScrollPaddingBottom(
 export const BATCH_ACTION_BAR_PADDING_TOP = 16;
 export const BATCH_ACTION_BAR_ROW_HEIGHT = 54;
 export const BATCH_ACTION_BAR_HOME_GAP = 8;
+/** Matches {@link FloatingFrostedChrome} default top inset for batch mode pill. */
+const BATCH_ACTION_BAR_FLOAT_TOP_INSET = 10;
+/** Inner vertical padding inside the batch action pill. */
+const BATCH_ACTION_BAR_INNER_PAD_VERTICAL = 10;
 
 export function getBatchActionBarHeight(safeAreaBottom: number): number {
+  const bottomOuter = Math.max(safeAreaBottom, 8) + BATCH_ACTION_BAR_HOME_GAP;
   return (
-    BATCH_ACTION_BAR_PADDING_TOP +
+    BATCH_ACTION_BAR_FLOAT_TOP_INSET +
+    BATCH_ACTION_BAR_INNER_PAD_VERTICAL * 2 +
     BATCH_ACTION_BAR_ROW_HEIGHT +
-    Math.max(safeAreaBottom, 8) +
-    BATCH_ACTION_BAR_HOME_GAP
+    bottomOuter
   );
 }
 

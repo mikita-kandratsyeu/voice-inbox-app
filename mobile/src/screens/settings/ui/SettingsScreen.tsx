@@ -17,6 +17,7 @@ import {
   useIsTablet,
   useScrollToTopOnTabPress,
   useTabletContentMaxWidth,
+  useTabletShellLayout,
 } from '@/shared/lib';
 import { runAfterInteractions } from '@/shared/lib/runAfterInteractions';
 import { PrivateExecutionBadge, SCREEN_PADDING, SettingsRow, SettingsSection } from '@/shared/ui';
@@ -48,6 +49,7 @@ export const SettingsScreen = () => {
   const latestScrollYRef = useRef(0);
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
+  const useTabletShell = useTabletShellLayout();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
@@ -112,8 +114,8 @@ export const SettingsScreen = () => {
     <View style={{ flex: 1, backgroundColor: settings.color.background.secondary }}>
       <View
         style={{
-          backgroundColor: settings.color.background.primary,
-          borderBottomWidth: 1,
+          backgroundColor: useTabletShell ? 'transparent' : settings.color.background.primary,
+          borderBottomWidth: useTabletShell ? 0 : 1,
           borderBottomColor: settings.color.border.default,
           paddingTop: insets.top + 16,
           paddingHorizontal: SCREEN_PADDING,

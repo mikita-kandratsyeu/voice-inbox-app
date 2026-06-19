@@ -5,9 +5,14 @@ import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'reac
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
-import { IS_IOS } from '@/shared/lib';
 import { iosHitSlopForVisualSize } from '@/shared/lib/iosTouchTarget';
-import { FrostedBottomChrome, getInputFieldInputStyle, HeaderIconButton } from '@/shared/ui';
+import {
+  FloatingFrostedChrome,
+  FloatingFrostedChromeDivider,
+  FloatingFrostedChromeSection,
+  getInputFieldInputStyle,
+  HeaderIconButton,
+} from '@/shared/ui';
 
 import { GRAPH_STICKY_SEARCH_MATCH_LABEL_HEIGHT } from '../lib/graphViewportInsets';
 
@@ -60,25 +65,6 @@ export const GraphStickySearchBar = memo(function GraphStickySearchBar({
     return null;
   }, [hasMatches, isSearchPending, debouncedQuery, matchIndex, matchCount, t]);
 
-  const contentStyle = useMemo(
-    () => ({
-      paddingHorizontal: 16,
-      paddingTop: 14,
-      paddingBottom: 14,
-      gap: 8,
-    }),
-    [],
-  );
-
-  const rowStyle = useMemo(
-    () => ({
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      gap: 10,
-    }),
-    [],
-  );
-
   useEffect(() => {
     if (focusSignal <= 0) return;
     const id = requestAnimationFrame(() => inputRef.current?.focus());
@@ -91,26 +77,63 @@ export const GraphStickySearchBar = memo(function GraphStickySearchBar({
     inputRef.current?.focus();
   }, [onChangeQuery]);
 
+  const matchNav = hasMatches ? (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+      <HeaderIconButton
+        iconOnly
+        variant="icon"
+        size="md"
+        icon={<ChevronUp size={20} color={color.text.primary} strokeWidth={2.2} />}
+        color={color}
+        onPress={onPreviousMatch}
+        accessibilityLabel={t('notesGraph.searchPrevious')}
+      />
+      <HeaderIconButton
+        iconOnly
+        variant="icon"
+        size="md"
+        icon={<ChevronDown size={20} color={color.text.primary} strokeWidth={2.2} />}
+        color={color}
+        onPress={onNextMatch}
+        accessibilityLabel={t('notesGraph.searchNext')}
+      />
+    </View>
+  ) : null;
+
+  const closeButton = (
+    <HeaderIconButton
+      iconOnly
+      variant="icon"
+      size="md"
+      icon={<X size={22} color={color.text.secondary} strokeWidth={2.2} />}
+      color={color}
+      onPress={onClose}
+      accessibilityLabel={t('search.a11yHide')}
+    />
+  );
+
+  const showMatchLabel = currentMatchLabel != null;
+
   return (
-    <FrostedBottomChrome color={color} insetsBottom={insetsBottom} contentStyle={contentStyle}>
-      <View style={rowStyle}>
+    <FloatingFrostedChrome
+      color={color}
+      insetsBottom={insetsBottom}
+      contentStyle={{
+        paddingHorizontal: 12,
+        paddingTop: showMatchLabel ? 10 : 12,
+        paddingBottom: showMatchLabel ? 10 : 12,
+        gap: showMatchLabel ? 8 : 0,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'stretch', minHeight: 44 }}>
         <View
           style={{
             flex: 1,
+            minWidth: 0,
             flexDirection: 'row',
             alignItems: 'center',
             gap: 9,
-            backgroundColor: color.background.tertiary,
-            borderRadius: 14,
-            paddingHorizontal: 14,
-            paddingVertical: IS_IOS ? 11 : 9,
-            borderWidth: focused ? 2 : 1.5,
-            borderColor: focused ? color.accent.primary : color.border.default,
-            shadowColor: color.shadow.color,
-            shadowOpacity: focused ? color.shadow.opacity * 0.4 : 0,
-            shadowRadius: 6,
-            shadowOffset: { width: 0, height: 2 },
-            elevation: focused ? 2 : 0,
+            justifyContent: 'center',
           }}
         >
           <Search
@@ -132,96 +155,71 @@ export const GraphStickySearchBar = memo(function GraphStickySearchBar({
             clearButtonMode="never"
             autoCapitalize="none"
           />
-          {query.length > 0 && (
-            <>
-              {isSearchPending ? (
-                <Animated.View
-                  entering={FadeIn.duration(150)}
-                  exiting={FadeOut.duration(150)}
-                  style={{
-                    width: 16,
-                    height: 16,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
+          {query.length > 0 ? (
+            isSearchPending ? (
+              <Animated.View
+                entering={FadeIn.duration(150)}
+                exiting={FadeOut.duration(150)}
+                style={{
+                  width: 16,
+                  height: 16,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <ActivityIndicator size="small" color={color.accent.primary} />
+              </Animated.View>
+            ) : (
+              <Animated.View entering={FadeIn.duration(150)} exiting={FadeOut.duration(150)}>
+                <TouchableOpacity
+                  onPress={handleClear}
+                  hitSlop={iosHitSlopForVisualSize(16, 16)}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.clear')}
                 >
-                  <ActivityIndicator size="small" color={color.accent.primary} />
-                </Animated.View>
-              ) : (
-                <Animated.View entering={FadeIn.duration(150)} exiting={FadeOut.duration(150)}>
-                  <TouchableOpacity
-                    onPress={handleClear}
-                    hitSlop={iosHitSlopForVisualSize(16, 16)}
-                    activeOpacity={0.7}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('common.clear')}
+                  <View
+                    style={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: 8,
+                      backgroundColor: color.icon.muted,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
                   >
-                    <View
-                      style={{
-                        width: 16,
-                        height: 16,
-                        borderRadius: 8,
-                        backgroundColor: color.icon.muted,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <X size={10} color={color.background.primary} strokeWidth={2.5} />
-                    </View>
-                  </TouchableOpacity>
-                </Animated.View>
-              )}
-            </>
-          )}
+                    <X size={10} color={color.background.primary} strokeWidth={2.5} />
+                  </View>
+                </TouchableOpacity>
+              </Animated.View>
+            )
+          ) : null}
         </View>
 
         {hasMatches ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <HeaderIconButton
-              iconOnly
-              variant="icon"
-              size="md"
-              icon={<ChevronUp size={20} color={color.text.primary} strokeWidth={2.2} />}
-              color={color}
-              onPress={onPreviousMatch}
-              accessibilityLabel={t('notesGraph.searchPrevious')}
-            />
-            <HeaderIconButton
-              iconOnly
-              variant="icon"
-              size="md"
-              icon={<ChevronDown size={20} color={color.text.primary} strokeWidth={2.2} />}
-              color={color}
-              onPress={onNextMatch}
-              accessibilityLabel={t('notesGraph.searchNext')}
-            />
-          </View>
+          <>
+            <FloatingFrostedChromeDivider color={color} />
+            <FloatingFrostedChromeSection>{matchNav}</FloatingFrostedChromeSection>
+          </>
         ) : null}
 
-        <HeaderIconButton
-          iconOnly
-          variant="icon"
-          size="md"
-          icon={<X size={22} color={color.text.secondary} strokeWidth={2.2} />}
-          color={color}
-          onPress={onClose}
-          accessibilityLabel={t('search.a11yHide')}
-        />
+        <FloatingFrostedChromeDivider color={color} />
+        <FloatingFrostedChromeSection>{closeButton}</FloatingFrostedChromeSection>
       </View>
 
-      <View
-        style={{
-          minHeight: GRAPH_STICKY_SEARCH_MATCH_LABEL_HEIGHT,
-          justifyContent: 'center',
-          paddingHorizontal: 4,
-        }}
-      >
-        {currentMatchLabel ? (
+      {showMatchLabel ? (
+        <View
+          style={{
+            minHeight: GRAPH_STICKY_SEARCH_MATCH_LABEL_HEIGHT,
+            justifyContent: 'center',
+            paddingHorizontal: 4,
+          }}
+        >
           <Text style={{ color: color.text.secondary, fontSize: 12, fontWeight: '600' }}>
             {currentMatchLabel}
           </Text>
-        ) : null}
-      </View>
-    </FrostedBottomChrome>
+        </View>
+      ) : null}
+    </FloatingFrostedChrome>
   );
 });

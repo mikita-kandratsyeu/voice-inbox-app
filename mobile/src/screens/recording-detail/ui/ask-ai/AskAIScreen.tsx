@@ -18,7 +18,6 @@ import { useColors } from '@/shared/config';
 import {
   hapticSuccess,
   IS_ANDROID,
-  useIsTablet,
   useNetworkStatus,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
@@ -34,7 +33,6 @@ export const AskAIScreen = () => {
   const insets = useSafeAreaInsets();
   const color = useColors();
   const contentMaxWidth = useTabletContentMaxWidth('wide');
-  const isTablet = useIsTablet();
 
   const { record: routeRecord } = route.params;
   const hydrateRecordDetails = useRecordStore((s) => s.hydrateRecordDetails);
@@ -296,11 +294,10 @@ export const AskAIScreen = () => {
           <AskAIComposer
             color={color}
             insetsBottom={insets.bottom}
-            isTablet={isTablet}
+            contentMaxWidth={contentMaxWidth}
             questionInput={questionInput}
             onChangeQuestion={setQuestionInput}
             onSubmit={handleAsk}
-            canSend={canSend}
             disableByNetwork={disableByNetwork}
             sendButton={sendButton}
           />

@@ -1,4 +1,4 @@
-import { layoutNodesByClusters } from './graphClusterLayout';
+import { layoutNodesByClusters, reanchorClusterTaskNodes } from './graphClusterLayout';
 import { nodeDimensions } from './graphNodeMetrics';
 import type { GraphEdge, GraphLayoutMode, GraphNode } from './graphTypes';
 import { DEFAULT_GRAPH_LAYOUT_MODE } from './graphTypes';
@@ -140,6 +140,10 @@ export function runForceLayout(
   }
 
   layoutNodes = resolveNodeOverlaps(layoutNodes, 22, layoutMode === 'circular' ? 28 : undefined);
+
+  if (layoutMode === 'cluster') {
+    layoutNodes = reanchorClusterTaskNodes(layoutNodes, edges);
+  }
 
   if (layoutMode === 'force') {
     layoutNodes = layoutIsolatedRecordNodes(layoutNodes, edges, layoutWidth);

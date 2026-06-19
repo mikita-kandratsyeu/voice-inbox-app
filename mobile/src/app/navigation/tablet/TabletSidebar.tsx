@@ -14,9 +14,14 @@ import { useProEntitlement } from '@/features/pro-license';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { useColors } from '@/shared/config';
-import { hapticSelection, withAlphaHex } from '@/shared/lib';
+import { hapticSelection, selectPlatform } from '@/shared/lib';
 import { FrostedChromeBackground } from '@/shared/ui';
 
+import {
+  FLOAT_TAB_IOS_SHADOW_OFFSET_Y,
+  FLOAT_TAB_IOS_SHADOW_RADIUS,
+  floatingTabBarShadowOpacity,
+} from '@/app/navigation/config';
 import type { RootStackParamList } from '../types';
 import {
   requestTabletInboxSidebarNav,
@@ -24,7 +29,15 @@ import {
 } from './tabletInboxNavBridge';
 import { useTabletInboxSidebarStore } from './tabletInboxSidebarStore';
 import { TabletSidebarBody } from './TabletSidebarBody';
-import { TABLET_SIDEBAR_PAD, TABLET_SIDEBAR_WIDTH } from './tabletSidebarMetrics';
+import {
+  TABLET_SIDEBAR_FLOAT_MARGIN_BOTTOM,
+  TABLET_SIDEBAR_FLOAT_MARGIN_LEFT,
+  TABLET_SIDEBAR_FLOAT_MARGIN_TOP,
+  TABLET_SIDEBAR_FLOAT_GAP,
+  TABLET_SIDEBAR_FLOAT_RADIUS,
+  TABLET_SIDEBAR_PAD,
+  getTabletSidebarSlotWidth,
+} from './tabletSidebarMetrics';
 import { getTabletSidebarTheme } from './tabletSidebarTheme';
 import {
   isOnSettingsRootScreen,
@@ -170,61 +183,85 @@ export const TabletSidebar = () => {
   return (
     <View
       style={{
-        width: TABLET_SIDEBAR_WIDTH,
+        width: getTabletSidebarSlotWidth(),
         flexShrink: 0,
-        alignSelf: 'stretch',
-        overflow: 'hidden',
-        backgroundColor: 'transparent',
+        paddingLeft: TABLET_SIDEBAR_FLOAT_MARGIN_LEFT,
+        paddingRight: TABLET_SIDEBAR_FLOAT_GAP,
+        paddingTop: insets.top + TABLET_SIDEBAR_FLOAT_MARGIN_TOP,
+        paddingBottom: Math.max(insets.bottom, 8) + TABLET_SIDEBAR_FLOAT_MARGIN_BOTTOM,
       }}
     >
-      <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { overflow: 'hidden' }]}>
-        <FrostedChromeBackground />
+      <View style={{ flex: 1 }}>
+        <View
+          style={{
+            flex: 1,
+            borderRadius: TABLET_SIDEBAR_FLOAT_RADIUS,
+            backgroundColor: 'transparent',
+            ...selectPlatform({
+              ios: {
+                shadowColor: color.shadow.color,
+                shadowOffset: { width: 0, height: FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
+                shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
+                shadowRadius: FLOAT_TAB_IOS_SHADOW_RADIUS,
+              },
+              android: {
+                elevation: 8,
+              },
+              default: {},
+            }),
+          }}
+        >
+          <View
+            style={{
+              flex: 1,
+              borderRadius: TABLET_SIDEBAR_FLOAT_RADIUS,
+              overflow: 'hidden',
+              backgroundColor: 'transparent',
+              borderWidth: 1,
+              borderColor: theme.border,
+            }}
+          >
+            <View
+              pointerEvents="none"
+              style={[StyleSheet.absoluteFillObject, { overflow: 'hidden' }]}
+            >
+              <FrostedChromeBackground borderRadius={TABLET_SIDEBAR_FLOAT_RADIUS} />
+            </View>
+            <TabletSidebarBody
+              color={color}
+              theme={theme}
+              t={t}
+              isSettingsTab={isSettingsTab}
+              navDimmed={navDimmed}
+              isProActive={isProActive}
+              folders={folders}
+              folderCounts={folderCounts}
+              foldersEnabled={foldersEnabled}
+              currentTab={currentTab}
+              inboxSelection={inboxSelection}
+              inboxCount={inboxCount}
+              hasUnread={unreadCount > 0}
+              pinnedCount={pinnedCount}
+              archivedCount={archivedCount}
+              openTasksCount={openTasksCount}
+              notesGraphNodeCount={notesGraphNodeCount}
+              aiProcessing={aiProcessing}
+              inboxActive={inboxActive}
+              pinnedActive={pinnedActive}
+              archivedActive={archivedActive}
+              horizontalPad={TABLET_SIDEBAR_PAD}
+              onOpenSettings={openSettings}
+              onOpenPlanPaywall={openPlanPaywall}
+              onRecord={handleNewRecording}
+              onTextNote={handleTextNote}
+              navigateToInbox={navigateToInbox}
+              openAllTasks={openAllTasks}
+              openNotesGraph={openNotesGraph}
+              openCreateFolder={openCreateFolder}
+            />
+          </View>
+        </View>
       </View>
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          right: 0,
-          top: 0,
-          bottom: 0,
-          width: StyleSheet.hairlineWidth,
-          backgroundColor: withAlphaHex(theme.border, 0.45),
-          zIndex: 2,
-        }}
-      />
-      <TabletSidebarBody
-        color={color}
-        theme={theme}
-        insets={insets}
-        t={t}
-        isSettingsTab={isSettingsTab}
-        navDimmed={navDimmed}
-        isProActive={isProActive}
-        folders={folders}
-        folderCounts={folderCounts}
-        foldersEnabled={foldersEnabled}
-        currentTab={currentTab}
-        inboxSelection={inboxSelection}
-        inboxCount={inboxCount}
-        hasUnread={unreadCount > 0}
-        pinnedCount={pinnedCount}
-        archivedCount={archivedCount}
-        openTasksCount={openTasksCount}
-        notesGraphNodeCount={notesGraphNodeCount}
-        aiProcessing={aiProcessing}
-        inboxActive={inboxActive}
-        pinnedActive={pinnedActive}
-        archivedActive={archivedActive}
-        horizontalPad={TABLET_SIDEBAR_PAD}
-        onOpenSettings={openSettings}
-        onOpenPlanPaywall={openPlanPaywall}
-        onRecord={handleNewRecording}
-        onTextNote={handleTextNote}
-        navigateToInbox={navigateToInbox}
-        openAllTasks={openAllTasks}
-        openNotesGraph={openNotesGraph}
-        openCreateFolder={openCreateFolder}
-      />
       <AutomationComingSoonSheet
         visible={notesGraphProSheetVisible}
         feature="notesGraph"

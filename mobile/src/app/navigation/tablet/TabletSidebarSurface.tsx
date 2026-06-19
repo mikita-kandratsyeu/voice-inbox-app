@@ -7,7 +7,7 @@ import {
   floatingTabBarShadowOpacity,
 } from '@/app/navigation/config';
 import type { Colors } from '@/shared/config';
-import { selectPlatform, withAlphaHex } from '@/shared/lib';
+import { selectPlatform } from '@/shared/lib';
 import { FrostedChromeBackground } from '@/shared/ui';
 
 import {
@@ -60,7 +60,7 @@ export function TabletSidebarSurface({
           borderRadius: TABLET_SIDEBAR_SURFACE_RADIUS,
           overflow: 'hidden',
           borderWidth: 1,
-          borderColor: withAlphaHex(theme.border, 0.45),
+          borderColor: theme.border,
         }}
       >
         <FrostedChromeBackground borderRadius={TABLET_SIDEBAR_SURFACE_RADIUS} />

@@ -2,7 +2,6 @@ import type { TFunction } from 'i18next';
 import { Archive, Inbox, ListChecks, Pin } from 'lucide-react-native';
 import React from 'react';
 import { View } from 'react-native';
-import type { EdgeInsets } from 'react-native-safe-area-context';
 
 import type { Folder } from '@/entities/folder';
 import { NotesGraphIcon } from '@/screens/notes-graph/ui/NotesGraphIcon';
@@ -30,7 +29,6 @@ export type TabletSidebarBodyProps = {
   horizontalPad: number;
   color: Colors;
   theme: TabletSidebarTheme;
-  insets: EdgeInsets;
   t: TFunction;
   isSettingsTab: boolean;
   navDimmed: boolean;
@@ -64,7 +62,6 @@ export function TabletSidebarBody({
   horizontalPad,
   color,
   theme,
-  insets,
   t,
   isSettingsTab,
   navDimmed,
@@ -247,7 +244,7 @@ export function TabletSidebarBody({
     <View style={{ flex: 1 }}>
       <View
         style={{
-          paddingTop: insets.top + 8,
+          paddingTop: horizontalPad,
           paddingHorizontal: horizontalPad,
           paddingBottom: 14,
           gap: 14,
@@ -295,7 +292,7 @@ export function TabletSidebarBody({
         style={{
           paddingHorizontal: horizontalPad,
           paddingTop: 12,
-          paddingBottom: Math.max(insets.bottom, 14),
+          paddingBottom: 14,
           gap: 14,
           borderTopWidth: 1,
           borderTopColor: theme.border,
