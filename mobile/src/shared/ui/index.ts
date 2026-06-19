@@ -51,7 +51,7 @@ export { EmptyState } from './EmptyState';
 export { FrostedBottomChrome } from './FrostedBottomChrome';
 export type { FrostedChromeBackgroundProps } from './FrostedChromeBackground';
 export { FrostedChromeBackground } from './FrostedChromeBackground';
-export type { FrostedChromeShadow } from './FrostedChromeSurface';
+export type { FrostedChromeShadow, FrostedChromeVariant } from './FrostedChromeSurface';
 export {
   FROSTED_HEADER_ICON_RADIUS,
   FROSTED_HEADER_ICON_SIZE,
