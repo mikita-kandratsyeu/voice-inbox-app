@@ -303,6 +303,7 @@ type GraphNodeItemProps = {
   highlighted: boolean;
   neighbor: boolean;
   nodeDisplayMode?: GraphNodeDisplayMode;
+  nodeLOD?: GraphNodeLOD;
   onRecordPress: (recordId: string) => void;
   onTaskPress: (recordId: string, taskId: string) => void;
   onNodeDragStart: () => void;
@@ -326,6 +327,7 @@ const GraphNodeItem = React.memo(
     highlighted,
     neighbor,
     nodeDisplayMode = 'cards',
+    nodeLOD = 'full',
     onRecordPress,
     onTaskPress,
     onNodeDragStart,
@@ -403,6 +405,7 @@ const GraphNodeItem = React.memo(
               active={active}
               neighbor={neighbor}
               interactionPhase={interactionPhase}
+              lod={nodeLOD}
             />
           )
         }
@@ -435,6 +438,7 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
   worldHeight,
   interactionsEnabled = true,
   nodeDisplayMode = 'cards',
+  nodeLOD = 'full',
   viewportCull,
   onRecordPress,
   onTaskPress,
@@ -493,6 +497,7 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
             neighbor={visualState.neighbor}
             highlighted={visualState.highlighted}
             nodeDisplayMode={nodeDisplayMode}
+            nodeLOD={nodeLOD}
             onRecordPress={onRecordPress}
             onTaskPress={onTaskPress}
             onNodeDragStart={onNodeDragStart}

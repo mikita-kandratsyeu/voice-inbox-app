@@ -138,6 +138,8 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
     return null;
   }
 
+  const layerOpacityValue = edgeDensityInfo?.isHighDensity ? 0.85 : 1;
+
   return (
     <View pointerEvents="none" style={[styles.layer, { width: canvasWidth, height: canvasHeight }]}>
       <Canvas style={{ width: canvasWidth, height: canvasHeight }}>
