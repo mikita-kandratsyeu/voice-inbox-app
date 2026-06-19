@@ -69,6 +69,7 @@ const AskAIComposerInner = ({
           alignSelf: 'center',
           width: '100%',
           maxWidth: contentMaxWidth ?? '100%',
+          backgroundColor: 'transparent',
         }}
       >
         <FloatingFrostedChrome color={color} insetsBottom={insetsBottom}>
