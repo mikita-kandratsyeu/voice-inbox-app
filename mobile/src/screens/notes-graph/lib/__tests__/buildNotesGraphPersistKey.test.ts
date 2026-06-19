@@ -59,7 +59,7 @@ describe('buildNotesGraphPersistKey', () => {
     expect(parsed?.simplifyOverride).toBeNull();
     expect(parsed?.filteredCount).toBe(2);
     expect(parsed?.edgeVisibility).toEqual(filters.edgeVisibility);
-    expect(parsed?.layoutMode).toBe('cluster');
+    expect(parsed?.layoutMode).toBe('force');
   });
 
   it('encodes explicit simplify override', () => {

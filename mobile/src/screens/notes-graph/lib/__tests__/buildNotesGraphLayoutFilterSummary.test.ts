@@ -48,7 +48,7 @@ describe('buildNotesGraphLayoutFilterSummary', () => {
     expect(rows[1]?.value).toBe('notesGraph.history.filters.tagsNone');
     expect(rows.find((row) => row.id === 'showCompletedTasks')?.value).toBe('settings.on');
     expect(rows.find((row) => row.id === 'layoutMode')?.value).toBe(
-      'notesGraph.filters.layoutMode.cluster',
+      'notesGraph.filters.layoutMode.force',
     );
     expect(rows.find((row) => row.id === 'view')?.value).toBe(
       'notesGraph.history.filters.viewFull',
@@ -56,7 +56,7 @@ describe('buildNotesGraphLayoutFilterSummary', () => {
   });
 
   it.each([
-    ['force', 'notesGraph.filters.layoutMode.force'],
+    ['cluster', 'notesGraph.filters.layoutMode.cluster'],
     ['circular', 'notesGraph.filters.layoutMode.circular'],
   ] as const)('maps %s layout mode to history label', (layoutMode, expectedValue) => {
     const rows = buildNotesGraphLayoutFilterSummary({

@@ -180,14 +180,14 @@ function DraggableNodeShell({
       .onStart(() => {
         'worklet';
         nodeDragEnabled.value = true;
-        scheduleOnRN(handleCanvasDragStart);
-        interactionPhase.value = GRAPH_NODE_INTERACTION_DRAGGING;
         scheduleOnRN(hapticLight);
       })
       .onFinalize((_event, success) => {
         'worklet';
+        if (interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING) {
+          return;
+        }
         nodeDragEnabled.value = false;
-        if (interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING) return;
         interactionPhase.value = withTiming(0, {
           duration: 160,
         });
@@ -204,6 +204,11 @@ function DraggableNodeShell({
         } else {
           state.fail();
         }
+      })
+      .onStart(() => {
+        'worklet';
+        interactionPhase.value = GRAPH_NODE_INTERACTION_DRAGGING;
+        scheduleOnRN(handleCanvasDragStart);
       })
       .onUpdate((event) => {
         'worklet';

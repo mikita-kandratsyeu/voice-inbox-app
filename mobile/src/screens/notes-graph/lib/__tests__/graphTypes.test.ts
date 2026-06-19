@@ -7,12 +7,12 @@ import {
 } from '../graphTypes';
 
 describe('graph layout modes', () => {
-  it('defaults to cluster layout', () => {
-    expect(DEFAULT_GRAPH_LAYOUT_MODE).toBe('cluster');
+  it('defaults to force layout', () => {
+    expect(DEFAULT_GRAPH_LAYOUT_MODE).toBe('force');
   });
 
   it('exposes all supported layout modes', () => {
-    expect(GRAPH_LAYOUT_MODES).toEqual(['cluster', 'force', 'circular']);
+    expect(GRAPH_LAYOUT_MODES).toEqual(['force', 'cluster', 'circular']);
   });
 
   it('validates layout mode tokens', () => {

@@ -36,7 +36,7 @@ export type GraphEdgeVisibility = {
   linked: boolean;
 };
 
-export const GRAPH_LAYOUT_MODES = ['cluster', 'force', 'circular'] as const;
+export const GRAPH_LAYOUT_MODES = ['force', 'cluster', 'circular'] as const;
 
 export type GraphLayoutMode = (typeof GRAPH_LAYOUT_MODES)[number];
 
@@ -65,7 +65,7 @@ export const DEFAULT_EDGE_VISIBILITY: GraphEdgeVisibility = {
   linked: true,
 };
 
-export const DEFAULT_GRAPH_LAYOUT_MODE: GraphLayoutMode = 'cluster';
+export const DEFAULT_GRAPH_LAYOUT_MODE: GraphLayoutMode = 'force';
 
 export const DEFAULT_NODE_DISPLAY_MODE: GraphNodeDisplayMode = 'cards';
 
