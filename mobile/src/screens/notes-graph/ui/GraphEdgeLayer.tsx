@@ -7,6 +7,7 @@ import type { SharedValue } from 'react-native-reanimated';
 import type { Colors } from '@/shared/config';
 
 import { buildGraphRenderedEdges, type GraphViewportCull } from '../lib/buildGraphRenderedEdges';
+import type { EdgeDensityInfo } from '../lib/graphEdgeDensity';
 import { getGraphEdgeGlowStyle, getGraphEdgeStrokeStyle } from '../lib/graphEdgeStyles';
 import { getCachedSkiaPath } from '../lib/graphSkiaUtils';
 import { parseStrokeDashIntervals } from '../lib/graphStrokeDash';
@@ -26,6 +27,7 @@ type GraphEdgeLayerProps = {
   activeNodeId: string | null;
   viewportCull?: GraphViewportCull | null;
   nodeDisplayMode?: GraphNodeDisplayMode;
+  edgeDensityInfo?: EdgeDensityInfo;
 };
 
 type PreparedEdgePath = {
@@ -41,8 +43,10 @@ type PreparedEdgePath = {
 function prepareEdgePaths(
   renderedEdges: ReturnType<typeof buildGraphRenderedEdges>,
   color: Colors,
+  densityInfo?: EdgeDensityInfo,
 ): PreparedEdgePath[] {
   const items: PreparedEdgePath[] = [];
+  const baseOpacity = densityInfo?.baseOpacity ?? 1;
 
   for (const { edge, path, from, to, emphasis } of renderedEdges) {
     const skiaPath = getCachedSkiaPath(`${edge.id}:${path}`, path);
@@ -52,11 +56,17 @@ function prepareEdgePaths(
     const style = getGraphEdgeStrokeStyle(edge.kind, color, emphasis);
     const useGradient = emphasis !== 'dimmed' && Boolean(style.strokeGradient);
 
+    const adjustedOpacity =
+      emphasis === 'highlighted' ? style.opacity : (style.opacity ?? 1) * baseOpacity;
+
     items.push({
       edgeId: edge.id,
       path: skiaPath,
       glow,
-      style,
+      style: {
+        ...style,
+        opacity: adjustedOpacity,
+      },
       from,
       to,
       useGradient,
@@ -104,6 +114,7 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
   activeNodeId,
   viewportCull = null,
   nodeDisplayMode = 'cards',
+  edgeDensityInfo,
 }: GraphEdgeLayerProps) {
   const renderedEdges = useMemo(
     () =>
@@ -119,8 +130,8 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
   );
 
   const preparedEdges = useMemo(
-    () => prepareEdgePaths(renderedEdges, color),
-    [color, renderedEdges],
+    () => prepareEdgePaths(renderedEdges, color, edgeDensityInfo),
+    [color, renderedEdges, edgeDensityInfo],
   );
 
   if (preparedEdges.length === 0) {
@@ -130,7 +141,12 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
   return (
     <View pointerEvents="none" style={[styles.layer, { width: canvasWidth, height: canvasHeight }]}>
       <Canvas style={{ width: canvasWidth, height: canvasHeight }}>
-        <GraphSkiaWorldGroup translateX={translateX} translateY={translateY} scale={scale}>
+        <GraphSkiaWorldGroup
+          translateX={translateX}
+          translateY={translateY}
+          scale={scale}
+          opacity={layerOpacityValue}
+        >
           {preparedEdges.map((prepared) =>
             prepared.glow ? (
               <Path

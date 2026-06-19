@@ -15,8 +15,9 @@ import { hapticLight } from '@/shared/lib';
 
 import type { GraphViewportCull } from '../lib/buildGraphRenderedEdges';
 import { buildGraphRenderedNodes } from '../lib/buildGraphRenderedNodes';
+import type { CollapsedClusterNode } from '../lib/graphCollapsedClusters';
 import { snapGraphPointToGrid } from '../lib/graphSnapGrid';
-import type { GraphEdge, GraphNode, GraphNodeDisplayMode } from '../lib/graphTypes';
+import type { GraphEdge, GraphNode, GraphNodeDisplayMode, GraphNodeLOD } from '../lib/graphTypes';
 import { RECORD_NODE_WIDTH, TASK_NODE_WIDTH } from '../lib/graphTypes';
 import { GRAPH_CLUSTER_BOUNDARY_PADDING } from '../lib/graphViewportBounds';
 import {
@@ -48,6 +49,8 @@ type GraphNodeLayerProps = {
   layoutRestoreToken?: number;
   interactionsEnabled?: boolean;
   nodeDisplayMode?: GraphNodeDisplayMode;
+  nodeLOD?: GraphNodeLOD;
+  collapsedClusters?: Map<string, CollapsedClusterNode>;
   viewportCull?: GraphViewportCull | null;
   onRecordPress: (recordId: string) => void;
   onTaskPress: (recordId: string, taskId: string) => void;

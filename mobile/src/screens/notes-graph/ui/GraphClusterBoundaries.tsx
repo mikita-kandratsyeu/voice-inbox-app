@@ -1,5 +1,6 @@
 import {
   Canvas,
+  Circle,
   DashPathEffect,
   Group,
   LinearGradient,
@@ -11,6 +12,7 @@ import {
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import type { SharedValue } from 'react-native-reanimated';
 
 import type { Folder } from '@/entities/folder';
@@ -18,6 +20,7 @@ import type { Colors } from '@/shared/config';
 import { resolveDisplayFolderColor, withAlphaHex } from '@/shared/lib';
 
 import type { GraphCluster } from '../lib/graphClusterLayout';
+import type { CollapsedClusterNode } from '../lib/graphCollapsedClusters';
 import { nodeDimensions } from '../lib/graphNodeMetrics';
 import type { GraphNode } from '../lib/graphTypes';
 import { GRAPH_CLUSTER_BOUNDARY_PADDING } from '../lib/graphViewportBounds';
@@ -54,6 +57,8 @@ type GraphClusterBoundariesProps = {
   scale: SharedValue<number>;
   visible: boolean;
   showFolderClusters?: boolean;
+  collapsedClusters?: Map<string, CollapsedClusterNode>;
+  onToggleCluster?: (cluster: GraphCluster) => void;
 };
 
 function getClusterDisplayLabel(
@@ -160,6 +165,8 @@ export const GraphClusterBoundaries = React.memo(function GraphClusterBoundaries
   scale,
   visible,
   showFolderClusters = true,
+  collapsedClusters = new Map(),
+  onToggleCluster,
 }: GraphClusterBoundariesProps) {
   const { t } = useTranslation();
   const nodeById = useMemo(() => new Map(nodes.map((node) => [node.id, node])), [nodes]);
@@ -188,72 +195,116 @@ export const GraphClusterBoundaries = React.memo(function GraphClusterBoundaries
 
   const folderRemovedLabel = t('folders.detailFolderRemoved');
 
+  const handleCanvasTap = Gesture.Tap().onEnd((event) => {
+    if (!onToggleCluster) return;
+
+    const worldX = (event.x - translateX.value) / scale.value;
+    const worldY = (event.y - translateY.value) / scale.value;
+
+    for (const { cluster, minX, minY, width: rectWidth, height: rectHeight } of clusterBounds) {
+      if (
+        worldX >= minX &&
+        worldX <= minX + rectWidth &&
+        worldY >= minY &&
+        worldY <= minY + rectHeight
+      ) {
+        onToggleCluster(cluster);
+        break;
+      }
+    }
+  });
+
   return (
-    <View pointerEvents="none" style={[styles.layer, { width: canvasWidth, height: canvasHeight }]}>
-      <Canvas style={{ width: canvasWidth, height: canvasHeight }}>
-        <GraphSkiaWorldGroup
-          translateX={translateX}
-          translateY={translateY}
-          scale={scale}
-          opacity={0.65}
-        >
-          {clusterBounds.map(({ cluster, minX, minY, width: rectWidth, height: rectHeight }) => {
-            const clusterColor = getClusterColor(cluster, color, foldersById, isProActive);
-            const dashIntervals = getClusterDashIntervals(cluster);
+    <View style={[styles.layer, { width: canvasWidth, height: canvasHeight }]}>
+      <GestureDetector gesture={handleCanvasTap}>
+        <Canvas style={{ width: canvasWidth, height: canvasHeight }}>
+          <GraphSkiaWorldGroup
+            translateX={translateX}
+            translateY={translateY}
+            scale={scale}
+            opacity={0.65}
+          >
+            {clusterBounds.map(({ cluster, minX, minY, width: rectWidth, height: rectHeight }) => {
+              const clusterColor = getClusterColor(cluster, color, foldersById, isProActive);
+              const dashIntervals = getClusterDashIntervals(cluster);
 
-            return (
-              <Group key={cluster.id}>
-                <RoundedRect
-                  x={minX}
-                  y={minY}
-                  width={rectWidth}
-                  height={rectHeight}
-                  r={CLUSTER_BORDER_RADIUS}
-                >
-                  <LinearGradient
-                    start={vec(minX, minY)}
-                    end={vec(minX, minY + rectHeight)}
-                    colors={[withAlphaHex(clusterColor, 0.08), withAlphaHex(clusterColor, 0.02)]}
-                  />
-                </RoundedRect>
-                <RoundedRect
-                  x={minX}
-                  y={minY}
-                  width={rectWidth}
-                  height={rectHeight}
-                  r={CLUSTER_BORDER_RADIUS}
-                  style="stroke"
-                  strokeWidth={2}
+              return (
+                <Group key={cluster.id}>
+                  <RoundedRect
+                    x={minX}
+                    y={minY}
+                    width={rectWidth}
+                    height={rectHeight}
+                    r={CLUSTER_BORDER_RADIUS}
+                  >
+                    <LinearGradient
+                      start={vec(minX, minY)}
+                      end={vec(minX, minY + rectHeight)}
+                      colors={[withAlphaHex(clusterColor, 0.08), withAlphaHex(clusterColor, 0.02)]}
+                    />
+                  </RoundedRect>
+                  <RoundedRect
+                    x={minX}
+                    y={minY}
+                    width={rectWidth}
+                    height={rectHeight}
+                    r={CLUSTER_BORDER_RADIUS}
+                    style="stroke"
+                    strokeWidth={2}
+                    color={clusterColor}
+                  >
+                    {dashIntervals ? <DashPathEffect intervals={dashIntervals} /> : null}
+                  </RoundedRect>
+                </Group>
+              );
+            })}
+          </GraphSkiaWorldGroup>
+          <GraphSkiaWorldGroup translateX={translateX} translateY={translateY} scale={scale}>
+            {clusterBounds.map(({ cluster, minX, minY }) => {
+              const displayLabel = getClusterDisplayLabel(cluster, foldersById, folderRemovedLabel);
+              const showLabel = !!displayLabel && cluster.nodeIds.length >= 3;
+              if (!showLabel) return null;
+
+              const clusterColor = getClusterColor(cluster, color, foldersById, isProActive);
+
+              return (
+                <Text
+                  key={`${cluster.id}-label`}
+                  x={minX + CLUSTER_LABEL_OFFSET}
+                  y={minY + CLUSTER_LABEL_OFFSET + clusterLabelFont.getSize()}
+                  text={displayLabel}
+                  font={clusterLabelFont}
                   color={clusterColor}
-                >
-                  {dashIntervals ? <DashPathEffect intervals={dashIntervals} /> : null}
-                </RoundedRect>
-              </Group>
-            );
-          })}
-        </GraphSkiaWorldGroup>
-        <GraphSkiaWorldGroup translateX={translateX} translateY={translateY} scale={scale}>
-          {clusterBounds.map(({ cluster, minX, minY }) => {
-            const displayLabel = getClusterDisplayLabel(cluster, foldersById, folderRemovedLabel);
-            const showLabel = !!displayLabel && cluster.nodeIds.length >= 3;
-            if (!showLabel) return null;
+                  opacity={0.85}
+                />
+              );
+            })}
+          </GraphSkiaWorldGroup>
+          <GraphSkiaWorldGroup translateX={translateX} translateY={translateY} scale={scale}>
+            {clusterBounds.map(({ cluster, minX, minY, width: rectWidth }) => {
+              if (cluster.nodeIds.length < 3) return null;
 
-            const clusterColor = getClusterColor(cluster, color, foldersById, isProActive);
+              const isCollapsed = collapsedClusters.has(cluster.id);
+              const buttonX = minX + rectWidth - 32;
+              const buttonY = minY + 16;
+              const clusterColor = getClusterColor(cluster, color, foldersById, isProActive);
 
-            return (
-              <Text
-                key={`${cluster.id}-label`}
-                x={minX + CLUSTER_LABEL_OFFSET}
-                y={minY + CLUSTER_LABEL_OFFSET + clusterLabelFont.getSize()}
-                text={displayLabel}
-                font={clusterLabelFont}
-                color={clusterColor}
-                opacity={0.85}
-              />
-            );
-          })}
-        </GraphSkiaWorldGroup>
-      </Canvas>
+              return (
+                <Group key={`${cluster.id}-button`}>
+                  <Circle cx={buttonX} cy={buttonY} r={10} color={clusterColor} opacity={0.9} />
+                  <Text
+                    x={buttonX - 5}
+                    y={buttonY + 4}
+                    text={isCollapsed ? '+' : '−'}
+                    font={clusterLabelFont}
+                    color={color.background.primary}
+                  />
+                </Group>
+              );
+            })}
+          </GraphSkiaWorldGroup>
+        </Canvas>
+      </GestureDetector>
     </View>
   );
 });
