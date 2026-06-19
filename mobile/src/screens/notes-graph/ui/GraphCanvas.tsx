@@ -835,6 +835,25 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     viewportWidth,
   ]);
 
+  const nodeViewportCull = useMemo<GraphViewportCull | null>(() => {
+    if (displayNodes.length < 50) return null;
+
+    return {
+      translateX: viewportTransform.translateX,
+      translateY: viewportTransform.translateY,
+      scale: viewportTransform.scale,
+      viewportWidth,
+      viewportHeight,
+    };
+  }, [
+    displayNodes.length,
+    viewportHeight,
+    viewportTransform.scale,
+    viewportTransform.translateX,
+    viewportTransform.translateY,
+    viewportWidth,
+  ]);
+
   return (
     <View
       style={{ flex: 1, overflow: 'hidden', backgroundColor: color.background.secondary }}
@@ -889,6 +908,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               layoutRestoreToken={layoutRestoreToken}
               interactionsEnabled={!isReconciling && !exportBusy}
               nodeDisplayMode={nodeDisplayMode}
+              viewportCull={nodeViewportCull}
               onRecordPress={onRecordPress}
               onTaskPress={onTaskPress}
               onNodeFocus={onNodeFocus}

@@ -13,6 +13,8 @@ import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
 import { hapticLight } from '@/shared/lib';
 
+import type { GraphViewportCull } from '../lib/buildGraphRenderedEdges';
+import { buildGraphRenderedNodes } from '../lib/buildGraphRenderedNodes';
 import { buildGraphNodeConnectionCounts } from '../lib/countGraphNodeConnections';
 import { snapGraphPointToGrid } from '../lib/graphSnapGrid';
 import type { GraphEdge, GraphNode, GraphNodeDisplayMode } from '../lib/graphTypes';
@@ -47,6 +49,7 @@ type GraphNodeLayerProps = {
   layoutRestoreToken?: number;
   interactionsEnabled?: boolean;
   nodeDisplayMode?: GraphNodeDisplayMode;
+  viewportCull?: GraphViewportCull | null;
   onRecordPress: (recordId: string) => void;
   onTaskPress: (recordId: string, taskId: string) => void;
   onNodeDragStart: () => void;
@@ -427,6 +430,7 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
   worldHeight,
   interactionsEnabled = true,
   nodeDisplayMode = 'cards',
+  viewportCull,
   onRecordPress,
   onTaskPress,
   onNodeDragStart,
@@ -441,11 +445,16 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
     [activeNodeId, edges],
   );
 
+  const visibleNodes = useMemo(() => {
+    if (!viewportCull) return nodes;
+    return buildGraphRenderedNodes(nodes, viewportCull);
+  }, [nodes, viewportCull]);
+
   const sortedNodes = useMemo(() => {
-    const tasks = nodes.filter((n) => n.kind === 'task');
-    const records = nodes.filter((n) => n.kind === 'record');
+    const tasks = visibleNodes.filter((n) => n.kind === 'task');
+    const records = visibleNodes.filter((n) => n.kind === 'record');
     return [...records, ...tasks];
-  }, [nodes]);
+  }, [visibleNodes]);
 
   const visualStatesById = useMemo(() => {
     const states = new Map<string, GraphNodeVisualState>();
