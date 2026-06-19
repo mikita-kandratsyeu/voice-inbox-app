@@ -71,6 +71,7 @@ export type SettingsStackParamList = {
   Support: undefined;
   AppLockSetup: undefined;
   Notifications: undefined;
+  Gestures: undefined;
   ImportRecords: {
     records: VoiceRecord[];
     folders?: Folder[];

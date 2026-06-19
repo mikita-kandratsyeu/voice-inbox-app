@@ -13,6 +13,7 @@ import {
   BackupRestoreScreen,
   DiagnosticLogsScreen,
   DigestScreen,
+  GesturesSettingsScreen,
   ImportRecordsScreen,
   NotificationsScreen,
   PrivateAiModeScreen,
@@ -122,6 +123,11 @@ export const SettingsNavigator = () => {
         <Stack.Screen
           name="Notifications"
           component={NotificationsScreen}
+          options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="Gestures"
+          component={GesturesSettingsScreen}
           options={{ animation: 'slide_from_right' }}
         />
         <Stack.Screen

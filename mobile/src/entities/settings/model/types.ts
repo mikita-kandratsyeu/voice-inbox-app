@@ -140,6 +140,8 @@ export type SettingsState = {
   autoArchiveAfterDays: AutoArchiveAfterDays;
   /** Shake phone to open the recording screen from anywhere in the app. */
   shakeToRecordEnabled: boolean;
+  /** Shake on Ask AI while generating to cancel the response. */
+  shakeToCancelAskAiEnabled: boolean;
   taskDeadlineNotificationsEnabled: boolean;
   backupReminderNotificationsEnabled: boolean;
   backupReminderPeriodDays: BackupReminderPeriodDays;
@@ -190,6 +192,7 @@ export type SettingsState = {
   setAutoArchiveEnabled: (value: boolean) => void;
   setAutoArchiveAfterDays: (value: AutoArchiveAfterDays) => void;
   setShakeToRecordEnabled: (value: boolean) => void;
+  setShakeToCancelAskAiEnabled: (value: boolean) => void;
   setTaskDeadlineNotificationsEnabled: (value: boolean) => void;
   setBackupReminderNotificationsEnabled: (value: boolean) => void;
   setBackupReminderPeriodDays: (value: BackupReminderPeriodDays) => void;

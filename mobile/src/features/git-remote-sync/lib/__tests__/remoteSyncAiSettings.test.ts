@@ -64,6 +64,7 @@ const baseState = {
   autoArchiveEnabled: false,
   autoArchiveAfterDays: 14,
   shakeToRecordEnabled: true,
+  shakeToCancelAskAiEnabled: true,
   taskDeadlineNotificationsEnabled: true,
   backupReminderNotificationsEnabled: false,
   backupReminderPeriodDays: 14,
@@ -86,6 +87,15 @@ describe('remoteSyncAiSettings', () => {
     expect(buildRemoteSyncAiSettings().privateRemoteQueueConcurrency).toBe(4);
   });
 
+  it('exports shake to cancel ask ai preference in ai settings payload', () => {
+    mockGetState.mockReturnValue({
+      ...baseState,
+      shakeToCancelAskAiEnabled: false,
+    } as ReturnType<typeof useSettingsStore.getState>);
+
+    expect(buildRemoteSyncAiSettings().shakeToCancelAskAiEnabled).toBe(false);
+  });
+
   it('exports shake to record preference in ai settings payload', () => {
     mockGetState.mockReturnValue({
       ...baseState,
@@ -100,6 +110,7 @@ describe('remoteSyncAiSettings', () => {
     const setAutoArchiveAfterDays = jest.fn();
     const setAutoTranscribeOnSave = jest.fn();
     const setShakeToRecordEnabled = jest.fn();
+    const setShakeToCancelAskAiEnabled = jest.fn();
     const setPrivateAutoAiAfterTranscription = jest.fn();
     const setAutoAiAfterTranscription = jest.fn();
     const setPrivateRemoteQueueConcurrency = jest.fn();
@@ -128,6 +139,7 @@ describe('remoteSyncAiSettings', () => {
       setAutoRefreshMeetingSpeakersOnRegen: jest.fn(),
       setAutoTranscribeOnSave,
       setShakeToRecordEnabled,
+      setShakeToCancelAskAiEnabled,
       setPrivateAutoAiAfterTranscription,
       setAutoAiAfterTranscription,
       setAutoArchiveEnabled: jest.fn(),
@@ -170,6 +182,7 @@ describe('remoteSyncAiSettings', () => {
       autoArchiveEnabled: true,
       autoArchiveAfterDays: 7,
       shakeToRecordEnabled: false,
+      shakeToCancelAskAiEnabled: false,
       taskDeadlineNotificationsEnabled: false,
       backupReminderNotificationsEnabled: true,
       backupReminderPeriodDays: 30,
@@ -183,6 +196,7 @@ describe('remoteSyncAiSettings', () => {
     expect(setAutoArchiveAfterDays).toHaveBeenCalledWith(7);
     expect(setAutoTranscribeOnSave).toHaveBeenCalledWith(true);
     expect(setShakeToRecordEnabled).toHaveBeenCalledWith(false);
+    expect(setShakeToCancelAskAiEnabled).toHaveBeenCalledWith(false);
     expect(setPrivateAutoAiAfterTranscription).toHaveBeenCalledWith(true);
     expect(setAutoAiAfterTranscription).toHaveBeenCalledWith(true);
     expect(setPrivateRemoteQueueConcurrency).toHaveBeenCalledWith(3);

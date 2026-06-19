@@ -73,8 +73,6 @@ export function useSettingsScreen() {
   const setAutoArchiveEnabled = useSettingsStore((s) => s.setAutoArchiveEnabled);
   const autoArchiveAfterDays = useSettingsStore((s) => s.autoArchiveAfterDays);
   const setAutoArchiveAfterDays = useSettingsStore((s) => s.setAutoArchiveAfterDays);
-  const shakeToRecordEnabled = useSettingsStore((s) => s.shakeToRecordEnabled);
-  const setShakeToRecordEnabled = useSettingsStore((s) => s.setShakeToRecordEnabled);
   const appLanguage = useSettingsStore((s) => s.appLanguage);
   const appTheme = useSettingsStore((s) => s.appTheme);
   const resolvedColorScheme = useAppTheme();
@@ -468,8 +466,6 @@ export function useSettingsScreen() {
     setAutoArchiveEnabled,
     autoArchiveAfterDays,
     handleAutoArchiveDelayPress,
-    shakeToRecordEnabled,
-    setShakeToRecordEnabled,
     autoArchiveDelaySheetVisible,
     handleAutoArchiveDelaySheetClose,
     handleAutoArchiveDelaySelect,

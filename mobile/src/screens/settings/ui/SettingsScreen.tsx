@@ -249,8 +249,6 @@ export const SettingsScreen = () => {
             t={settings.t}
             navigation={settings.navigation}
             isAppLockEnabled={settings.isAppLockEnabled}
-            shakeToRecordEnabled={settings.shakeToRecordEnabled}
-            setShakeToRecordEnabled={settings.setShakeToRecordEnabled}
           />
           <SettingsPrivacySection
             color={settings.color}

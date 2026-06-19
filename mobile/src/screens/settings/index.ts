@@ -7,6 +7,7 @@ export { AppLockSetupScreen } from './ui/AppLockSetupScreen';
 export { BackupRestoreScreen } from './ui/BackupRestoreScreen';
 export { DiagnosticLogsScreen } from './ui/DiagnosticLogsScreen';
 export { DigestScreen } from './ui/DigestScreen';
+export { GesturesSettingsScreen } from './ui/GesturesSettingsScreen';
 export { ImportRecordsScreen } from './ui/ImportRecordsScreen';
 export { NotificationsScreen } from './ui/NotificationsScreen';
 export { PrivateAiModeScreen } from './ui/PrivateAiModeScreen';

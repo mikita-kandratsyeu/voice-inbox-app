@@ -88,6 +88,7 @@ const KEYS = {
   AUTO_ARCHIVE_ENABLED: 'settings.autoArchiveEnabled',
   AUTO_ARCHIVE_AFTER_DAYS: 'settings.autoArchiveAfterDays',
   SHAKE_TO_RECORD_ENABLED: 'settings.shakeToRecordEnabled',
+  SHAKE_TO_CANCEL_ASK_AI_ENABLED: 'settings.shakeToCancelAskAiEnabled',
   TASK_DEADLINE_NOTIFICATIONS_ENABLED: 'settings.taskDeadlineNotificationsEnabled',
   BACKUP_REMINDER_NOTIFICATIONS_ENABLED: 'settings.backupReminderNotificationsEnabled',
   BACKUP_REMINDER_PERIOD_DAYS: 'settings.backupReminderPeriodDays',
@@ -295,6 +296,15 @@ const getStoredAutoArchiveAfterDays = (): AutoArchiveAfterDays => {
 
 const getStoredShakeToRecordEnabled = (): boolean => {
   const val = storage.getString(KEYS.SHAKE_TO_RECORD_ENABLED);
+  if (val == null) {
+    return true;
+  }
+
+  return val === 'true';
+};
+
+const getStoredShakeToCancelAskAiEnabled = (): boolean => {
+  const val = storage.getString(KEYS.SHAKE_TO_CANCEL_ASK_AI_ENABLED);
   if (val == null) {
     return true;
   }
@@ -543,6 +553,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   autoArchiveEnabled: getStoredAutoArchiveEnabled(),
   autoArchiveAfterDays: getStoredAutoArchiveAfterDays(),
   shakeToRecordEnabled: getStoredShakeToRecordEnabled(),
+  shakeToCancelAskAiEnabled: getStoredShakeToCancelAskAiEnabled(),
   taskDeadlineNotificationsEnabled: getStoredTaskDeadlineNotificationsEnabled(),
   backupReminderNotificationsEnabled: getStoredBackupReminderNotificationsEnabled(),
   backupReminderPeriodDays: getStoredBackupReminderPeriodDays(),
@@ -912,6 +923,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setShakeToRecordEnabled: (value: boolean) => {
     storage.set(KEYS.SHAKE_TO_RECORD_ENABLED, String(value));
     set({ shakeToRecordEnabled: value });
+  },
+
+  setShakeToCancelAskAiEnabled: (value: boolean) => {
+    storage.set(KEYS.SHAKE_TO_CANCEL_ASK_AI_ENABLED, String(value));
+    set({ shakeToCancelAskAiEnabled: value });
   },
 
   setTaskDeadlineNotificationsEnabled: (value: boolean) => {

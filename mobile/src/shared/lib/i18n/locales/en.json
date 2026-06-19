@@ -1209,9 +1209,20 @@
         "meetingMode": "Use a regular summary when you do not need replies split by participant — it costs 1 credit instead of 2."
       }
     },
-    "shakeToRecord": {
-      "title": "Shake to record",
-      "subtitle": "Shake your device from anywhere in the app to start a new voice note."
+    "gestures": {
+      "entryTitle": "Gestures",
+      "entrySubtitle": "Shake to start a voice note or stop a generating answer.",
+      "title": "Gestures",
+      "intro": "Turn shake gestures on or off. They work while the app is open in the foreground.",
+      "sectionTitle": "Shake",
+      "shakeToRecord": {
+        "title": "Shake to record",
+        "subtitle": "Opens the recorder and starts a new voice note from any screen in the app."
+      },
+      "shakeToCancelAskAi": {
+        "title": "Shake to stop answer",
+        "subtitle": "On Questions about this note, cancels generation while an answer is loading."
+      }
     },
     "digest": {
       "sectionTitle": "Overview",

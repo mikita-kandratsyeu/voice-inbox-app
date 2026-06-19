@@ -14,6 +14,7 @@ import type { RootStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { type AskAIHistoryItem, useAskAI } from '@/features/ask-ai';
+import { useShakeToCancelAskAi } from '@/features/shake-to-record';
 import { useColors } from '@/shared/config';
 import {
   hapticSuccess,
@@ -41,6 +42,7 @@ export const AskAIScreen = () => {
   );
 
   const [questionInput, setQuestionInput] = useState('');
+  const [isScreenFocused, setIsScreenFocused] = useState(false);
   const {
     askQuestion,
     cancelAsk,
@@ -94,12 +96,20 @@ export const AskAIScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setIsScreenFocused(true);
       void syncAskSessionFromDb();
       return () => {
+        setIsScreenFocused(false);
         KeyboardController.dismiss({ animated: false });
       };
     }, [syncAskSessionFromDb]),
   );
+
+  useShakeToCancelAskAi({
+    enabled: isScreenFocused,
+    isLoading,
+    onCancel: cancelAsk,
+  });
 
   const handleBack = useCallback(() => {
     KeyboardController.dismiss({ animated: false });

@@ -63,6 +63,7 @@ export type RemoteSyncAiSettingsPayload = {
   autoArchiveEnabled: boolean;
   autoArchiveAfterDays: AutoArchiveAfterDays;
   shakeToRecordEnabled: boolean;
+  shakeToCancelAskAiEnabled: boolean;
   taskDeadlineNotificationsEnabled: boolean;
   backupReminderNotificationsEnabled: boolean;
   backupReminderPeriodDays: BackupReminderPeriodDays;
@@ -222,6 +223,7 @@ export function buildRemoteSyncAiSettings(): RemoteSyncAiSettingsPayload {
     autoArchiveEnabled: state.autoArchiveEnabled,
     autoArchiveAfterDays: state.autoArchiveAfterDays,
     shakeToRecordEnabled: state.shakeToRecordEnabled,
+    shakeToCancelAskAiEnabled: state.shakeToCancelAskAiEnabled,
     taskDeadlineNotificationsEnabled: state.taskDeadlineNotificationsEnabled,
     backupReminderNotificationsEnabled: state.backupReminderNotificationsEnabled,
     backupReminderPeriodDays: state.backupReminderPeriodDays,
@@ -335,6 +337,10 @@ export function parseRemoteSyncAiSettings(raw: unknown): RemoteSyncAiSettingsPay
     autoArchiveEnabled: readBool(raw.autoArchiveEnabled, current.autoArchiveEnabled),
     autoArchiveAfterDays: readArchiveDays(raw.autoArchiveAfterDays, current.autoArchiveAfterDays),
     shakeToRecordEnabled: readBool(raw.shakeToRecordEnabled, current.shakeToRecordEnabled),
+    shakeToCancelAskAiEnabled: readBool(
+      raw.shakeToCancelAskAiEnabled,
+      current.shakeToCancelAskAiEnabled,
+    ),
     taskDeadlineNotificationsEnabled: readBool(
       raw.taskDeadlineNotificationsEnabled,
       current.taskDeadlineNotificationsEnabled,
@@ -390,6 +396,7 @@ export function applyRemoteSyncAiSettings(payload: RemoteSyncAiSettingsPayload):
   store.setAutoArchiveEnabled(payload.autoArchiveEnabled);
   store.setAutoArchiveAfterDays(payload.autoArchiveAfterDays);
   store.setShakeToRecordEnabled(payload.shakeToRecordEnabled);
+  store.setShakeToCancelAskAiEnabled(payload.shakeToCancelAskAiEnabled);
   store.setTaskDeadlineNotificationsEnabled(payload.taskDeadlineNotificationsEnabled);
   store.setBackupReminderNotificationsEnabled(payload.backupReminderNotificationsEnabled);
   store.setBackupReminderPeriodDays(payload.backupReminderPeriodDays);

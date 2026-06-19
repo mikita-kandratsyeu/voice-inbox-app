@@ -12,7 +12,7 @@ import { hapticLight } from '@/shared/lib';
 
 import { subscribeShake } from '../lib/subscribeShake';
 
-const RECORDING_ROUTE_NAMES = new Set(['RecordModal', 'TextNoteModal']);
+const BLOCKED_SHAKE_ROUTES = new Set(['RecordModal', 'TextNoteModal', 'RecordingAskAI']);
 
 type UseShakeToRecordOptions = {
   enabled: boolean;
@@ -39,7 +39,7 @@ export function useShakeToRecord({ enabled }: UseShakeToRecordOptions): void {
     }
 
     const currentRoute = navigationRef.getCurrentRoute()?.name;
-    if (currentRoute && RECORDING_ROUTE_NAMES.has(currentRoute)) {
+    if (currentRoute && BLOCKED_SHAKE_ROUTES.has(currentRoute)) {
       return;
     }
 
