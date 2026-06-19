@@ -159,6 +159,7 @@ export const NotesGraphScreenBody = () => {
   const [historySheetVisible, setHistorySheetVisible] = useState(false);
   const [layoutSaveSheetVisible, setLayoutSaveSheetVisible] = useState(false);
   const [exportSheetVisible, setExportSheetVisible] = useState(false);
+  const [exportPreviewReady, setExportPreviewReady] = useState(false);
   const [exportPreviewUri, setExportPreviewUri] = useState<string | null>(null);
   const [exportPreviewSize, setExportPreviewSize] = useState<{
     width: number;
@@ -847,6 +848,7 @@ export const NotesGraphScreenBody = () => {
               exportCaptureTokenRef.current += 1;
               setExportPreviewUri(null);
               setExportPreviewSize(null);
+              setExportPreviewReady(false);
               setExportCaptureBackgroundId(GRAPH_EXPORT_DEFAULT_BACKGROUND_ID);
               exportPreviewBackgroundIdRef.current = GRAPH_EXPORT_DEFAULT_BACKGROUND_ID;
               setIsCapturingExport(true);
@@ -861,6 +863,7 @@ export const NotesGraphScreenBody = () => {
 
     setExportPreviewUri(null);
     setExportPreviewSize(null);
+    setExportPreviewReady(false);
     setExportCaptureBackgroundId(GRAPH_EXPORT_DEFAULT_BACKGROUND_ID);
     exportPreviewBackgroundIdRef.current = GRAPH_EXPORT_DEFAULT_BACKGROUND_ID;
     setIsCapturingExport(true);
@@ -1244,11 +1247,13 @@ export const NotesGraphScreenBody = () => {
         imageUri={exportPreviewUri}
         imagePixelSize={exportPreviewSize}
         onBackgroundChange={handleExportBackgroundChange}
+        onPreviewReady={setExportPreviewReady}
         onClose={() => {
           exportCaptureTokenRef.current += 1;
           setExportSheetVisible(false);
           setExportPreviewUri(null);
           setExportPreviewSize(null);
+          setExportPreviewReady(false);
           setExportCaptureBackgroundId(GRAPH_EXPORT_DEFAULT_BACKGROUND_ID);
           exportPreviewBackgroundIdRef.current = GRAPH_EXPORT_DEFAULT_BACKGROUND_ID;
           setIsExportCaptureMount(false);
@@ -1285,8 +1290,21 @@ export const NotesGraphScreenBody = () => {
         </KeyboardStickyView>
       ) : null}
 
-      {isCapturingExport && !exportSheetVisible ? (
-        <GraphBuildingState label={t('notesGraph.export.capturingPreview')} />
+      {isCapturingExport || (exportSheetVisible && !exportPreviewReady) ? (
+        <View
+          pointerEvents="box-none"
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            zIndex: 1000,
+            elevation: 1000,
+          }}
+        >
+          <GraphBuildingState label={t('notesGraph.export.capturingPreview')} />
+        </View>
       ) : null}
     </View>
   );

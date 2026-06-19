@@ -45,6 +45,7 @@ type GraphExportPreviewSheetProps = {
   imagePixelSize?: ImageSize | null;
   isLoadingPreview?: boolean;
   onBackgroundChange?: (backgroundId: GraphExportBackgroundId) => void;
+  onPreviewReady?: (ready: boolean) => void;
   onClose: () => void;
 };
 
@@ -79,6 +80,7 @@ export function GraphExportPreviewSheet({
   imagePixelSize = null,
   isLoadingPreview = false,
   onBackgroundChange,
+  onPreviewReady,
   onClose,
 }: GraphExportPreviewSheetProps) {
   const { t } = useTranslation();
@@ -88,6 +90,7 @@ export function GraphExportPreviewSheet({
   const [imageSize, setImageSize] = useState<ImageSize | null>(null);
   const [crop, setCrop] = useState<ImageCropRect | null>(null);
   const [previewWidth, setPreviewWidth] = useState(0);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [cropTemplateId, setCropTemplateId] = useState<CropAspectTemplateId>('full');
   const [backgroundId, setBackgroundId] = useState<GraphExportBackgroundId>(
@@ -105,6 +108,8 @@ export function GraphExportPreviewSheet({
       setCrop(null);
       setCropTemplateId('full');
       setBackgroundId(GRAPH_EXPORT_DEFAULT_BACKGROUND_ID);
+      setIsImageLoaded(false);
+      onPreviewReady?.(false);
       return;
     }
 
@@ -137,12 +142,27 @@ export function GraphExportPreviewSheet({
     return () => {
       cancelled = true;
     };
-  }, [imagePixelSize, imageUri, onClose, t, visible]);
+  }, [imagePixelSize, imageUri, onClose, onPreviewReady, t, visible]);
+
+  useEffect(() => {
+    setIsImageLoaded(false);
+  }, [imageUri]);
 
   const containLayout = useMemo(() => {
     if (!imageSize || previewWidth <= 0) return null;
     return computeContainLayout(imageSize.width, imageSize.height, previewWidth, PREVIEW_HEIGHT);
   }, [imageSize, previewWidth]);
+
+  const isPreviewContentReady = Boolean(visible && imageUri && containLayout && isImageLoaded);
+
+  useEffect(() => {
+    onPreviewReady?.(isPreviewContentReady);
+  }, [isPreviewContentReady, onPreviewReady]);
+
+  const isPreviewBusy =
+    isLoadingPreview || isExporting || (Boolean(imageUri) && !isPreviewContentReady);
+  const showPreviewLoader = isPreviewBusy && (isLoadingPreview || Boolean(imageUri));
+  const loadingLabel = t('share.exportPreparing');
 
   const displayCrop = useMemo(() => {
     if (!crop || !containLayout) return null;
@@ -223,9 +243,6 @@ export function GraphExportPreviewSheet({
     }
   }, [crop, imageSize, imageUri, isExporting, isLoadingPreview, onClose, t]);
 
-  const isPreviewBusy = isLoadingPreview || isExporting;
-  const loadingLabel = t('share.exportPreparing');
-
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>
       <AppBottomSheetContent bottomPadding={24}>
@@ -252,7 +269,7 @@ export function GraphExportPreviewSheet({
             overflow: 'hidden',
           }}
         >
-          {isLoadingPreview ? (
+          {showPreviewLoader ? (
             <GraphExportPreviewLoadingState label={t('notesGraph.export.capturingPreview')} />
           ) : null}
 
@@ -265,6 +282,7 @@ export function GraphExportPreviewSheet({
                 position: 'absolute',
                 top: containLayout.y,
                 width: containLayout.width,
+                opacity: isImageLoaded ? 1 : 0,
               }}
             >
               <GraphExportBackgroundFill
@@ -275,6 +293,9 @@ export function GraphExportPreviewSheet({
               />
               <Image
                 source={{ uri: imageUri }}
+                onLoad={() => {
+                  setIsImageLoaded(true);
+                }}
                 style={{
                   height: containLayout.height,
                   width: containLayout.width,

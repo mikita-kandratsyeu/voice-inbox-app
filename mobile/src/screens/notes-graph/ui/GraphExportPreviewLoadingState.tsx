@@ -9,12 +9,16 @@ import { useRotatingGraphLoadingTip } from '../lib/graphLoadingTips';
 
 type GraphExportPreviewLoadingStateProps = {
   label: string;
+  showTips?: boolean;
 };
 
-export function GraphExportPreviewLoadingState({ label }: GraphExportPreviewLoadingStateProps) {
+export function GraphExportPreviewLoadingState({
+  label,
+  showTips = true,
+}: GraphExportPreviewLoadingStateProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const tipKey = useRotatingGraphLoadingTip();
+  const tipKey = useRotatingGraphLoadingTip(showTips);
 
   return (
     <View
@@ -28,11 +32,13 @@ export function GraphExportPreviewLoadingState({ label }: GraphExportPreviewLoad
       <ProgressStatusCard
         title={label}
         subtitle={
-          <RotatingTipText
-            text={t(tipKey)}
-            color={color.text.secondary}
-            className="text-center text-[14px] leading-5"
-          />
+          showTips ? (
+            <RotatingTipText
+              text={t(tipKey)}
+              color={color.text.secondary}
+              className="text-center text-[14px] leading-5"
+            />
+          ) : undefined
         }
       />
     </View>
