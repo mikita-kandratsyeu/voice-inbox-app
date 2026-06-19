@@ -23,6 +23,11 @@ describe('graph node display mode preferences storage', () => {
     expect(getGraphNodeDisplayMode()).toBe('cards');
   });
 
+  it('treats unknown stored values as cards', () => {
+    mockStorageState.set('notesGraph.nodeDisplayMode', 'invalid');
+    expect(getGraphNodeDisplayMode()).toBe('cards');
+  });
+
   it('persists node display mode', () => {
     setGraphNodeDisplayMode('dots');
     expect(getGraphNodeDisplayMode()).toBe('dots');

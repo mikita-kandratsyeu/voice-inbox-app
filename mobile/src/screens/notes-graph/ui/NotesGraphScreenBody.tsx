@@ -740,7 +740,12 @@ export const NotesGraphScreenBody = () => {
 
     shouldFitAfterLayoutApplyRef.current = true;
     pendingLayoutApplyVersionRef.current = entry;
-    setFilters(parsedPersistKeyToGraphFilters(parsed));
+    setFilters({
+      ...parsedPersistKeyToGraphFilters(parsed),
+      showArchived: getGraphShowArchived(),
+      nodeDisplayMode: getGraphNodeDisplayMode(),
+    });
+    setNodeDisplayMode(getGraphNodeDisplayMode());
     setSimplifyOverride(parsed.simplifyOverride);
     setLayoutApplyRequestId((id) => id + 1);
   }, []);
@@ -947,6 +952,15 @@ export const NotesGraphScreenBody = () => {
       state: nodeDisplayMode === 'dots' ? 'on' : 'off',
     });
 
+    actions.push({
+      id: 'toggleShowArchived',
+      title: t('notesGraph.controls.toggleShowArchived'),
+      image: 'archivebox',
+      imageColor: titleColor,
+      titleColor,
+      state: filters.showArchived ? 'on' : 'off',
+    });
+
     if (foldersEnabled) {
       actions.push({
         id: 'toggleFolderHighlights',
@@ -968,15 +982,6 @@ export const NotesGraphScreenBody = () => {
         state: minimapVisible ? 'on' : 'off',
       });
     }
-
-    actions.push({
-      id: 'toggleShowArchived',
-      title: t('notesGraph.controls.toggleShowArchived'),
-      image: 'archivebox',
-      imageColor: titleColor,
-      titleColor,
-      state: filters.showArchived ? 'on' : 'off',
-    });
 
     actions.push(
       inlineNativeMenuSection('notesGraphMainSection', titleColor, [

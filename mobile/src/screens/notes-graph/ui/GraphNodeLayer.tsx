@@ -90,7 +90,6 @@ function DraggableNodeShell({
   const isDraggingRef = useRef(false);
   const nodeId = node.id;
   const interactionPhase = useSharedValue(GRAPH_NODE_INTERACTION_IDLE);
-  const nodeDragEnabled = useSharedValue(false);
 
   const nodeLeft = useSharedValue(node.x);
   const nodeTop = useSharedValue(node.y);
@@ -179,7 +178,7 @@ function DraggableNodeShell({
       })
       .onStart(() => {
         'worklet';
-        nodeDragEnabled.value = true;
+        scheduleOnRN(handleCanvasDragStart);
         scheduleOnRN(hapticLight);
       })
       .onFinalize((_event, success) => {
@@ -187,7 +186,7 @@ function DraggableNodeShell({
         if (interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING) {
           return;
         }
-        nodeDragEnabled.value = false;
+        scheduleOnRN(handleDragCancel);
         interactionPhase.value = withTiming(0, {
           duration: 160,
         });
@@ -196,19 +195,10 @@ function DraggableNodeShell({
       });
 
     const pan = Gesture.Pan()
-      .manualActivation(true)
-      .onTouchesMove((_event, state) => {
-        'worklet';
-        if (nodeDragEnabled.value) {
-          state.activate();
-        } else {
-          state.fail();
-        }
-      })
+      .activateAfterLongPress(GRAPH_NODE_LONG_PRESS_MS)
       .onStart(() => {
         'worklet';
         interactionPhase.value = GRAPH_NODE_INTERACTION_DRAGGING;
-        scheduleOnRN(handleCanvasDragStart);
       })
       .onUpdate((event) => {
         'worklet';
@@ -249,7 +239,6 @@ function DraggableNodeShell({
       })
       .onFinalize((_event, success) => {
         'worklet';
-        nodeDragEnabled.value = false;
         if (success) return;
         if (interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING) {
           scheduleOnRN(handleDragCancel);
@@ -272,7 +261,6 @@ function DraggableNodeShell({
     handleFocus,
     handlePress,
     interactionPhase,
-    nodeDragEnabled,
     nodeId,
     nodeLeft,
     nodeTop,

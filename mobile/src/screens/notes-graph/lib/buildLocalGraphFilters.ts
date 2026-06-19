@@ -1,3 +1,4 @@
+import { getGraphShowArchived } from './graphArchivePreferences';
 import { getGraphNodeDisplayMode } from './graphNodeDisplayModePreferences';
 import type { GraphFilters } from './graphTypes';
 import { DEFAULT_GRAPH_LAYOUT_MODE } from './graphTypes';
@@ -8,7 +9,7 @@ export function buildLocalGraphFilters(): GraphFilters {
     tags: [],
     showTasks: true,
     showCompletedTasks: true,
-    showArchived: true,
+    showArchived: getGraphShowArchived(),
     edgeVisibility: {
       linked: true,
       similar: true,

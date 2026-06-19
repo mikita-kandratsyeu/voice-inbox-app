@@ -6,6 +6,7 @@ const DISPLAY_MODE_STORAGE_KEY = 'notesGraph.nodeDisplayMode';
 
 export function getGraphNodeDisplayMode(): GraphNodeDisplayMode {
   const raw = storage.getString(DISPLAY_MODE_STORAGE_KEY);
+  if (raw == null) return 'cards';
   if (raw === 'dots') return 'dots';
   return 'cards';
 }
