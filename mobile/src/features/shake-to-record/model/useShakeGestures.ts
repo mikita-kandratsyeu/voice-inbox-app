@@ -8,25 +8,32 @@ import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
+import { shouldReduceMotion } from '@/shared/config/animations';
 import { hapticLight } from '@/shared/lib';
 
-import { subscribeShake } from '../lib/subscribeShake';
+import { getAskAiShakeBridge } from '../lib/askAiShakeBridge';
+import { addShakeListener } from '../lib/subscribeShake';
 
-const BLOCKED_SHAKE_ROUTES = new Set(['RecordModal', 'TextNoteModal', 'RecordingAskAI']);
+const RECORDING_ROUTE_NAMES = new Set(['RecordModal', 'TextNoteModal']);
 
-type UseShakeToRecordOptions = {
+type UseShakeGesturesOptions = {
   enabled: boolean;
 };
 
-export function useShakeToRecord({ enabled }: UseShakeToRecordOptions): void {
+export function useShakeGestures({ enabled }: UseShakeGesturesOptions): void {
   const { t } = useTranslation();
   const shakeToRecordEnabled = useSettingsStore((s) => s.shakeToRecordEnabled);
+  const shakeToCancelAskAiEnabled = useSettingsStore((s) => s.shakeToCancelAskAiEnabled);
   const activeTranscriptionRecord = useRecordStore((s) =>
     s.records.find((r) => r.aiStatus === 'loading_model' || r.aiStatus === 'processing'),
   );
 
   const handleShake = useCallback(() => {
-    if (!enabled || !shakeToRecordEnabled) {
+    if (!enabled) {
+      return;
+    }
+
+    if (shouldReduceMotion()) {
       return;
     }
 
@@ -38,8 +45,27 @@ export function useShakeToRecord({ enabled }: UseShakeToRecordOptions): void {
       return;
     }
 
+    const askBridge = getAskAiShakeBridge();
+    if (
+      askBridge.isFocused &&
+      askBridge.isLoading &&
+      shakeToCancelAskAiEnabled &&
+      askBridge.onCancel
+    ) {
+      hapticLight();
+      askBridge.onCancel();
+      return;
+    }
+
+    if (!shakeToRecordEnabled) {
+      return;
+    }
+
     const currentRoute = navigationRef.getCurrentRoute()?.name;
-    if (currentRoute && BLOCKED_SHAKE_ROUTES.has(currentRoute)) {
+    if (
+      currentRoute &&
+      (RECORDING_ROUTE_NAMES.has(currentRoute) || currentRoute === 'RecordingAskAI')
+    ) {
       return;
     }
 
@@ -68,13 +94,14 @@ export function useShakeToRecord({ enabled }: UseShakeToRecordOptions): void {
     runNavigationWhenUnlocked(() => {
       navigationRef.navigate('RecordModal');
     });
-  }, [activeTranscriptionRecord, enabled, shakeToRecordEnabled, t]);
+  }, [activeTranscriptionRecord, enabled, shakeToCancelAskAiEnabled, shakeToRecordEnabled, t]);
 
   useEffect(() => {
-    if (!enabled || !shakeToRecordEnabled) {
+    const gesturesEnabled = enabled && (shakeToRecordEnabled || shakeToCancelAskAiEnabled);
+    if (!gesturesEnabled) {
       return;
     }
 
-    return subscribeShake(handleShake);
-  }, [enabled, handleShake, shakeToRecordEnabled]);
+    return addShakeListener(handleShake);
+  }, [enabled, handleShake, shakeToCancelAskAiEnabled, shakeToRecordEnabled]);
 }

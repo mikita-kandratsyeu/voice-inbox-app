@@ -1,2 +1,2 @@
-export { useShakeToCancelAskAi } from './model/useShakeToCancelAskAi';
-export { useShakeToRecord } from './model/useShakeToRecord';
+export { useAskAiShakeBridge } from './model/useAskAiShakeBridge';
+export { useShakeGestures } from './model/useShakeGestures';

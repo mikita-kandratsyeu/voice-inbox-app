@@ -32,7 +32,7 @@ import {
   useResetPrivateAiServerWhenNotPro,
   useResetProOnlyAiModelWhenNotPro,
 } from '@/features/pro-license';
-import { useShakeToRecord } from '@/features/shake-to-record';
+import { useShakeGestures } from '@/features/shake-to-record';
 import { useTaskDeadlineNotificationHandlers } from '@/features/task-deadline-notifications/model/useTaskDeadlineNotificationHandlers';
 import { TaskDeadlineActionSheet } from '@/features/task-deadline-notifications/ui/TaskDeadlineActionSheet';
 import { TranscriptionResumePrompt } from '@/features/transcription';
@@ -122,7 +122,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
   useResetAccentWhenNotPro({ enabled: !bootSplashVisible });
   useResetProOnlyAiModelWhenNotPro({ enabled: !bootSplashVisible });
   useResetPrivateAiServerWhenNotPro({ enabled: !bootSplashVisible });
-  useShakeToRecord({ enabled: bootstrapReady && !bootSplashVisible });
+  useShakeGestures({ enabled: bootstrapReady && !bootSplashVisible });
 
   useEffect(() => {
     setupAppLogger();

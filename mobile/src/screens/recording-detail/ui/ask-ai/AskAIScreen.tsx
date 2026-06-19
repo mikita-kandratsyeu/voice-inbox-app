@@ -14,7 +14,7 @@ import type { RootStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { type AskAIHistoryItem, useAskAI } from '@/features/ask-ai';
-import { useShakeToCancelAskAi } from '@/features/shake-to-record';
+import { useAskAiShakeBridge } from '@/features/shake-to-record';
 import { useColors } from '@/shared/config';
 import {
   hapticSuccess,
@@ -105,8 +105,8 @@ export const AskAIScreen = () => {
     }, [syncAskSessionFromDb]),
   );
 
-  useShakeToCancelAskAi({
-    enabled: isScreenFocused,
+  useAskAiShakeBridge({
+    isFocused: isScreenFocused,
     isLoading,
     onCancel: cancelAsk,
   });
