@@ -943,6 +943,28 @@ export const NotesGraphScreenBody = () => {
     const titleColor = color.text.primary;
     const actions: NativeMenuAction[] = [];
 
+    if (isGraphMinimapAvailable(layoutNodes.length)) {
+      actions.push({
+        id: 'toggleMinimap',
+        title: t('notesGraph.controls.toggleMinimap'),
+        image: 'map',
+        imageColor: titleColor,
+        titleColor,
+        state: minimapVisible ? 'on' : 'off',
+      });
+    }
+
+    if (foldersEnabled) {
+      actions.push({
+        id: 'toggleFolderHighlights',
+        title: t('notesGraph.controls.toggleFolderHighlights'),
+        image: 'rectangle.dashed',
+        imageColor: titleColor,
+        titleColor,
+        state: folderHighlightsVisible ? 'on' : 'off',
+      });
+    }
+
     actions.push({
       id: 'toggleNodeDisplayMode',
       title: t('notesGraph.controls.toggleNodeDisplayMode'),
@@ -960,28 +982,6 @@ export const NotesGraphScreenBody = () => {
       titleColor,
       state: filters.showArchived ? 'on' : 'off',
     });
-
-    if (foldersEnabled) {
-      actions.push({
-        id: 'toggleFolderHighlights',
-        title: t('notesGraph.controls.toggleFolderHighlights'),
-        image: 'rectangle.dashed',
-        imageColor: titleColor,
-        titleColor,
-        state: folderHighlightsVisible ? 'on' : 'off',
-      });
-    }
-
-    if (isGraphMinimapAvailable(layoutNodes.length)) {
-      actions.push({
-        id: 'toggleMinimap',
-        title: t('notesGraph.controls.toggleMinimap'),
-        image: 'map',
-        imageColor: titleColor,
-        titleColor,
-        state: minimapVisible ? 'on' : 'off',
-      });
-    }
 
     actions.push(
       inlineNativeMenuSection('notesGraphMainSection', titleColor, [
