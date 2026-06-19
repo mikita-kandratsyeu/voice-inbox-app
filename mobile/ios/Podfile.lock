@@ -2987,6 +2987,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNSensors (7.3.6):
+    - React-Core
   - RNSVG (15.15.5):
     - hermes-engine
     - RCTRequired
@@ -3296,6 +3298,7 @@ DEPENDENCIES:
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - "RNReminders (from `../node_modules/@wiicamp/react-native-reminders`)"
   - RNScreens (from `../node_modules/react-native-screens`)
+  - RNSensors (from `../node_modules/react-native-sensors`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
   - RNZipArchive (from `../node_modules/react-native-zip-archive`)
@@ -3596,6 +3599,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@wiicamp/react-native-reminders"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNSensors:
+    :path: "../node_modules/react-native-sensors"
   RNSVG:
     :path: "../node_modules/react-native-svg"
   RNWorklets:
@@ -3776,6 +3781,7 @@ SPEC CHECKSUMS:
   RNReanimated: f219dbf93e54b1858a62e3e2dd7379e9ad3d9952
   RNReminders: e7bdf59616634b7ae180b18f6bf86dba531b0007
   RNScreens: cca7e1ec9184d91c7681160df11bdb7bf1ab0235
+  RNSensors: 117ba71c7eeeea0407ea0c0bb79e3495d602049b
   RNSVG: e159713f6708efab643b3d73a41975a52d80c5c2
   RNWorklets: ee6814ab289ae916049337d50d241baba955933a
   RNZipArchive: 071aee69059e0347cb7519c5354aa436b8a23e73

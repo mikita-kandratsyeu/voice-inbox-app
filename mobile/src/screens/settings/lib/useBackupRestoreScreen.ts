@@ -86,6 +86,7 @@ export function useBackupRestoreScreen() {
         folders: result.folders,
         legacyFolders: result.legacyFolders,
         graphLayouts: result.graphLayouts,
+        remoteSyncAuxiliary: result.remoteSyncAuxiliary,
       });
     },
     [navigation, pendingImportZipPath, releasePendingImportZip, t],

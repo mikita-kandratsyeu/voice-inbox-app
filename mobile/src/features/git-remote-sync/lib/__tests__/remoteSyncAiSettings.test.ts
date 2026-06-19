@@ -63,6 +63,7 @@ const baseState = {
   privateAutoAiAfterTranscription: false,
   autoArchiveEnabled: false,
   autoArchiveAfterDays: 14,
+  shakeToRecordEnabled: true,
   taskDeadlineNotificationsEnabled: true,
   backupReminderNotificationsEnabled: false,
   backupReminderPeriodDays: 14,
@@ -85,10 +86,20 @@ describe('remoteSyncAiSettings', () => {
     expect(buildRemoteSyncAiSettings().privateRemoteQueueConcurrency).toBe(4);
   });
 
+  it('exports shake to record preference in ai settings payload', () => {
+    mockGetState.mockReturnValue({
+      ...baseState,
+      shakeToRecordEnabled: false,
+    } as ReturnType<typeof useSettingsStore.getState>);
+
+    expect(buildRemoteSyncAiSettings().shakeToRecordEnabled).toBe(false);
+  });
+
   it('parses and applies transcription and automation settings', () => {
     const setTranscriptionLanguage = jest.fn();
     const setAutoArchiveAfterDays = jest.fn();
     const setAutoTranscribeOnSave = jest.fn();
+    const setShakeToRecordEnabled = jest.fn();
     const setPrivateAutoAiAfterTranscription = jest.fn();
     const setAutoAiAfterTranscription = jest.fn();
     const setPrivateRemoteQueueConcurrency = jest.fn();
@@ -116,6 +127,7 @@ describe('remoteSyncAiSettings', () => {
       setShowSummaryReasoningInNotes: jest.fn(),
       setAutoRefreshMeetingSpeakersOnRegen: jest.fn(),
       setAutoTranscribeOnSave,
+      setShakeToRecordEnabled,
       setPrivateAutoAiAfterTranscription,
       setAutoAiAfterTranscription,
       setAutoArchiveEnabled: jest.fn(),
@@ -157,6 +169,7 @@ describe('remoteSyncAiSettings', () => {
       privateAutoAiAfterTranscription: true,
       autoArchiveEnabled: true,
       autoArchiveAfterDays: 7,
+      shakeToRecordEnabled: false,
       taskDeadlineNotificationsEnabled: false,
       backupReminderNotificationsEnabled: true,
       backupReminderPeriodDays: 30,
@@ -169,6 +182,7 @@ describe('remoteSyncAiSettings', () => {
     expect(setTranscriptionLanguage).toHaveBeenCalledWith('ru');
     expect(setAutoArchiveAfterDays).toHaveBeenCalledWith(7);
     expect(setAutoTranscribeOnSave).toHaveBeenCalledWith(true);
+    expect(setShakeToRecordEnabled).toHaveBeenCalledWith(false);
     expect(setPrivateAutoAiAfterTranscription).toHaveBeenCalledWith(true);
     expect(setAutoAiAfterTranscription).toHaveBeenCalledWith(true);
     expect(setPrivateRemoteQueueConcurrency).toHaveBeenCalledWith(3);

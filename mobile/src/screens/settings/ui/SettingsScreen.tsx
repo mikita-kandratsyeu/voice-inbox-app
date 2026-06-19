@@ -187,6 +187,8 @@ export const SettingsScreen = () => {
             color={settings.color}
             onOpenDigest={() => settings.navigation.navigate('Digest')}
             onOpenSiriShortcuts={() => settings.navigation.navigate('SiriShortcuts')}
+            shakeToRecordEnabled={settings.shakeToRecordEnabled}
+            setShakeToRecordEnabled={settings.setShakeToRecordEnabled}
             t={settings.t}
           />
           <SettingsAutomationSection

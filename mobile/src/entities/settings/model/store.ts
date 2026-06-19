@@ -87,6 +87,7 @@ const KEYS = {
   AUTO_AI_AFTER_TRANSCRIPTION: 'settings.autoAiAfterTranscription',
   AUTO_ARCHIVE_ENABLED: 'settings.autoArchiveEnabled',
   AUTO_ARCHIVE_AFTER_DAYS: 'settings.autoArchiveAfterDays',
+  SHAKE_TO_RECORD_ENABLED: 'settings.shakeToRecordEnabled',
   TASK_DEADLINE_NOTIFICATIONS_ENABLED: 'settings.taskDeadlineNotificationsEnabled',
   BACKUP_REMINDER_NOTIFICATIONS_ENABLED: 'settings.backupReminderNotificationsEnabled',
   BACKUP_REMINDER_PERIOD_DAYS: 'settings.backupReminderPeriodDays',
@@ -290,6 +291,15 @@ const getStoredAutoArchiveEnabled = (): boolean => {
 
 const getStoredAutoArchiveAfterDays = (): AutoArchiveAfterDays => {
   return parseAutoArchiveAfterDays(storage.getString(KEYS.AUTO_ARCHIVE_AFTER_DAYS));
+};
+
+const getStoredShakeToRecordEnabled = (): boolean => {
+  const val = storage.getString(KEYS.SHAKE_TO_RECORD_ENABLED);
+  if (val == null) {
+    return true;
+  }
+
+  return val === 'true';
 };
 
 const getStoredTaskDeadlineNotificationsEnabled = (): boolean => {
@@ -532,6 +542,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   privateAutoAiAfterTranscription: getStoredPrivateAutoAiAfterTranscription(),
   autoArchiveEnabled: getStoredAutoArchiveEnabled(),
   autoArchiveAfterDays: getStoredAutoArchiveAfterDays(),
+  shakeToRecordEnabled: getStoredShakeToRecordEnabled(),
   taskDeadlineNotificationsEnabled: getStoredTaskDeadlineNotificationsEnabled(),
   backupReminderNotificationsEnabled: getStoredBackupReminderNotificationsEnabled(),
   backupReminderPeriodDays: getStoredBackupReminderPeriodDays(),
@@ -896,6 +907,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAutoArchiveAfterDays: (value: AutoArchiveAfterDays) => {
     storage.set(KEYS.AUTO_ARCHIVE_AFTER_DAYS, String(value));
     set({ autoArchiveAfterDays: value });
+  },
+
+  setShakeToRecordEnabled: (value: boolean) => {
+    storage.set(KEYS.SHAKE_TO_RECORD_ENABLED, String(value));
+    set({ shakeToRecordEnabled: value });
   },
 
   setTaskDeadlineNotificationsEnabled: (value: boolean) => {

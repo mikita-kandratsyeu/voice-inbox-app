@@ -1209,6 +1209,10 @@
         "meetingMode": "Use a regular summary when you do not need replies split by participant — it costs 1 credit instead of 2."
       }
     },
+    "shakeToRecord": {
+      "title": "Shake to record",
+      "subtitle": "Shake your device from anywhere in the app to start a new voice note."
+    },
     "digest": {
       "sectionTitle": "Overview",
       "title": "AI digest and statistics",

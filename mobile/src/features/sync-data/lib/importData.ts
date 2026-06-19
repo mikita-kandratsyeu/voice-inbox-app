@@ -3,6 +3,7 @@ import { isPasswordProtected, unzip, unzipWithPassword } from 'react-native-zip-
 
 import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
+import type { RemoteSyncAuxiliaryData } from '@/features/git-remote-sync/lib/applyRemoteSyncAuxiliaryData';
 import { ensureRecordingsDir, i18n, RECORDINGS_DIR } from '@/shared/lib';
 import { diagWarn } from '@/shared/lib/appLogger';
 import {
@@ -12,6 +13,7 @@ import {
   pickSingleFileToCachesDirectory,
 } from '@/shared/lib/fs';
 
+import { readBackupAuxiliarySettings } from './backupAuxiliarySettings';
 import {
   type BackupExportPayload,
   type BackupGraphLayoutVersion,
@@ -43,6 +45,7 @@ export type ImportResult =
       legacyFolders: Folder[];
       exportedAt: string;
       graphLayouts: BackupGraphLayoutVersion[];
+      remoteSyncAuxiliary?: RemoteSyncAuxiliaryData;
     }
   | { success: false; error: 'cancelled' | string }
   | { success: false; needsPassword: true; zipFsPath: string };
@@ -292,6 +295,8 @@ async function importFromZip(fileUri: string, password?: string): Promise<Import
       records.push(record as VoiceRecord);
     }
 
+    const remoteSyncAuxiliary = await readBackupAuxiliarySettings(extractDir);
+
     return {
       success: true,
       records,
@@ -305,6 +310,7 @@ async function importFromZip(fileUri: string, password?: string): Promise<Import
           : [],
       exportedAt: payload.exportedAt,
       graphLayouts: extractGraphLayouts(payload),
+      remoteSyncAuxiliary,
     };
   } finally {
     await removeDirRecursive(extractDir).catch(() => {});

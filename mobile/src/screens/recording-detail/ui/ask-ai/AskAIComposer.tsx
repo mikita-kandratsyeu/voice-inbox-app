@@ -147,7 +147,7 @@ const AskAIComposerInner = ({
                 style={{
                   width: SEND_BUTTON_SIZE,
                   height: SEND_BUTTON_SIZE,
-                  borderRadius: 10,
+                  borderRadius: SEND_BUTTON_SIZE / 2,
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: canSend ? color.accent.primary : color.background.tertiary,

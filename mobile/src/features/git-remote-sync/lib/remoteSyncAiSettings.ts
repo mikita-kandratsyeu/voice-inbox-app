@@ -62,6 +62,7 @@ export type RemoteSyncAiSettingsPayload = {
   privateAutoAiAfterTranscription: boolean;
   autoArchiveEnabled: boolean;
   autoArchiveAfterDays: AutoArchiveAfterDays;
+  shakeToRecordEnabled: boolean;
   taskDeadlineNotificationsEnabled: boolean;
   backupReminderNotificationsEnabled: boolean;
   backupReminderPeriodDays: BackupReminderPeriodDays;
@@ -220,6 +221,7 @@ export function buildRemoteSyncAiSettings(): RemoteSyncAiSettingsPayload {
     privateAutoAiAfterTranscription: state.privateAutoAiAfterTranscription,
     autoArchiveEnabled: state.autoArchiveEnabled,
     autoArchiveAfterDays: state.autoArchiveAfterDays,
+    shakeToRecordEnabled: state.shakeToRecordEnabled,
     taskDeadlineNotificationsEnabled: state.taskDeadlineNotificationsEnabled,
     backupReminderNotificationsEnabled: state.backupReminderNotificationsEnabled,
     backupReminderPeriodDays: state.backupReminderPeriodDays,
@@ -332,6 +334,7 @@ export function parseRemoteSyncAiSettings(raw: unknown): RemoteSyncAiSettingsPay
     ),
     autoArchiveEnabled: readBool(raw.autoArchiveEnabled, current.autoArchiveEnabled),
     autoArchiveAfterDays: readArchiveDays(raw.autoArchiveAfterDays, current.autoArchiveAfterDays),
+    shakeToRecordEnabled: readBool(raw.shakeToRecordEnabled, current.shakeToRecordEnabled),
     taskDeadlineNotificationsEnabled: readBool(
       raw.taskDeadlineNotificationsEnabled,
       current.taskDeadlineNotificationsEnabled,
@@ -386,6 +389,7 @@ export function applyRemoteSyncAiSettings(payload: RemoteSyncAiSettingsPayload):
   store.setAutoTranscribeOnSave(payload.autoTranscribeOnSave);
   store.setAutoArchiveEnabled(payload.autoArchiveEnabled);
   store.setAutoArchiveAfterDays(payload.autoArchiveAfterDays);
+  store.setShakeToRecordEnabled(payload.shakeToRecordEnabled);
   store.setTaskDeadlineNotificationsEnabled(payload.taskDeadlineNotificationsEnabled);
   store.setBackupReminderNotificationsEnabled(payload.backupReminderNotificationsEnabled);
   store.setBackupReminderPeriodDays(payload.backupReminderPeriodDays);

@@ -15921,6 +15921,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-sensors@npm:^7.3.6":
+  version: 7.3.6
+  resolution: "react-native-sensors@npm:7.3.6"
+  dependencies:
+    rxjs: "npm:>= 6"
+  peerDependencies:
+    prop-types: ^15.6.0
+    react-native: ">=0.39.0"
+  checksum: 10c0/efa08b7f27b97b4d334afba51b564dac9ded6f7b684bb774a17f5c02a8f22cc7b72afa8338cb66fef2bf85f0fd96cfe89cd7d5a1ad280cef9e86f32d3c483b52
+  languageName: node
+  linkType: hard
+
 "react-native-skia-android@npm:147.1.0":
   version: 147.1.0
   resolution: "react-native-skia-android@npm:147.1.0"
@@ -16577,6 +16589,15 @@ __metadata:
   dependencies:
     queue-microtask: "npm:^1.2.2"
   checksum: 10c0/200b5ab25b5b8b7113f9901bfe3afc347e19bb7475b267d55ad0eb86a62a46d77510cb0f232507c9e5d497ebda569a08a9867d0d14f57a82ad5564d991588b39
+  languageName: node
+  linkType: hard
+
+"rxjs@npm:>= 6":
+  version: 7.8.2
+  resolution: "rxjs@npm:7.8.2"
+  dependencies:
+    tslib: "npm:^2.1.0"
+  checksum: 10c0/1fcd33d2066ada98ba8f21fcbbcaee9f0b271de1d38dc7f4e256bfbc6ffcdde68c8bfb69093de7eeb46f24b1fb820620bf0223706cff26b4ab99a7ff7b2e2c45
   languageName: node
   linkType: hard
 
@@ -18691,6 +18712,7 @@ __metadata:
     react-native-reanimated: "npm:4.3.1"
     react-native-safe-area-context: "npm:^5.8.0"
     react-native-screens: "npm:^4.25.2"
+    react-native-sensors: "npm:^7.3.6"
     react-native-svg: "npm:^15.15.3"
     react-native-view-shot: "npm:^5.1.0"
     react-native-webview: "npm:^13.16.1"

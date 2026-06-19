@@ -138,6 +138,8 @@ export type SettingsState = {
   privateAutoAiAfterTranscription: boolean;
   autoArchiveEnabled: boolean;
   autoArchiveAfterDays: AutoArchiveAfterDays;
+  /** Shake phone to open the recording screen from anywhere in the app. */
+  shakeToRecordEnabled: boolean;
   taskDeadlineNotificationsEnabled: boolean;
   backupReminderNotificationsEnabled: boolean;
   backupReminderPeriodDays: BackupReminderPeriodDays;
@@ -187,6 +189,7 @@ export type SettingsState = {
   setPrivateAutoAiAfterTranscription: (value: boolean) => void;
   setAutoArchiveEnabled: (value: boolean) => void;
   setAutoArchiveAfterDays: (value: AutoArchiveAfterDays) => void;
+  setShakeToRecordEnabled: (value: boolean) => void;
   setTaskDeadlineNotificationsEnabled: (value: boolean) => void;
   setBackupReminderNotificationsEnabled: (value: boolean) => void;
   setBackupReminderPeriodDays: (value: BackupReminderPeriodDays) => void;

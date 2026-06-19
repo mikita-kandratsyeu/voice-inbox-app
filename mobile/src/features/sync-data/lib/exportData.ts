@@ -7,6 +7,7 @@ import { i18n } from '@/shared/lib';
 import { diagWarn } from '@/shared/lib/appLogger';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
+import { buildBackupAuxiliarySettingsFiles } from './backupAuxiliarySettings';
 import { BACKUP_ZIP_ENCRYPTION } from './backupZip';
 import { buildBackupPayload, prepareBackupExportDirectory } from './buildBackupPayload';
 
@@ -76,6 +77,10 @@ export const exportData = async (
 
     const json = JSON.stringify(payload, null, 2);
     await NitroFS.writeFile(`${exportDir}/${METADATA_FILENAME}`, json, 'utf8');
+
+    for (const [filename, contents] of buildBackupAuxiliarySettingsFiles()) {
+      await NitroFS.writeFile(`${exportDir}/${filename}`, contents, 'utf8');
+    }
 
     if (password) {
       await zipWithPassword(
