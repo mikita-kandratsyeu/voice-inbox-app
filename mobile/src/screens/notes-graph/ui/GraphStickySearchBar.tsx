@@ -8,10 +8,9 @@ import type { Colors } from '@/shared/config';
 import { iosHitSlopForVisualSize } from '@/shared/lib/iosTouchTarget';
 import {
   FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
-  FloatingFrostedChrome,
   FloatingFrostedChromeDivider,
   FloatingFrostedChromeSection,
-  getFloatingSearchBarChromeBottomInset,
+  FloatingFrostedInputChrome,
   getInputFieldInputStyle,
   HeaderIconButton,
 } from '@/shared/ui';
@@ -115,7 +114,7 @@ export const GraphStickySearchBar = memo(function GraphStickySearchBar({
   const showMatchLabel = currentMatchLabel != null;
 
   return (
-    <FloatingFrostedChrome color={color} insetsBottom={getFloatingSearchBarChromeBottomInset()}>
+    <FloatingFrostedInputChrome color={color}>
       <View
         style={{
           paddingHorizontal: 12,
@@ -219,6 +218,6 @@ export const GraphStickySearchBar = memo(function GraphStickySearchBar({
         </View>
       ) : null}
       </View>
-    </FloatingFrostedChrome>
+    </FloatingFrostedInputChrome>
   );
 });

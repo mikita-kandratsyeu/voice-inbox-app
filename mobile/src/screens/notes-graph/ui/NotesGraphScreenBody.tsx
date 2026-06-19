@@ -6,7 +6,6 @@ import { MoreVertical, Search } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, Text, useWindowDimensions, View } from 'react-native';
-import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -19,7 +18,7 @@ import { useProEntitlement } from '@/features/pro-license';
 import { TaskEditSheet } from '@/screens/recording-detail/ui/TaskEditSheet';
 import { useAppTheme, useColors } from '@/shared/config';
 import { hapticSelection, inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
-import { EmptyState, FrostedHeaderButtonGroup, HeaderIconButton, ScreenHeader } from '@/shared/ui';
+import { EmptyState, FloatingFrostedStickyView, FrostedHeaderButtonGroup, HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 import { collectUniqueTags, countFilteredGraphRecords } from '../lib/buildGraphModel';
 import { buildLocalGraphFilters, resolveLocalGraphDepth } from '../lib/buildLocalGraphFilters';
@@ -1324,16 +1323,10 @@ export const NotesGraphScreenBody = () => {
       />
 
       {showGraphSearchBar ? (
-        <KeyboardStickyView
-          offset={{ closed: 0, opened: 0 }}
+        <FloatingFrostedStickyView
+          safeAreaBottom={insets.bottom}
           pointerEvents={isGraphReconciling ? 'none' : 'auto'}
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            bottom: insets.bottom,
-            opacity: isGraphReconciling ? 0.55 : 1,
-          }}
+          style={{ opacity: isGraphReconciling ? 0.55 : 1 }}
         >
           <GraphStickySearchBar
             query={searchQuery}
@@ -1348,7 +1341,7 @@ export const NotesGraphScreenBody = () => {
             focusSignal={searchFocusSignal}
             onClose={handleSearchCleared}
           />
-        </KeyboardStickyView>
+        </FloatingFrostedStickyView>
       ) : null}
 
       {isCapturingExport || (exportSheetVisible && !exportPreviewReady) ? (

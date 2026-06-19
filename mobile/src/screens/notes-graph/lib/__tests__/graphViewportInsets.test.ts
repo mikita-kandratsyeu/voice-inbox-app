@@ -9,7 +9,7 @@ import {
   GRAPH_STICKY_SEARCH_MATCH_LABEL_HEIGHT,
   shouldShowGraphSearchMatchLabel,
 } from '../graphViewportInsets';
-import { FLOATING_SEARCH_BAR_BOTTOM_GAP } from '@/shared/ui/floatingSearchBarMetrics';
+import { FLOATING_SEARCH_BAR_KEYBOARD_OPEN_GAP } from '@/shared/ui/floatingSearchBarMetrics';
 
 describe('shouldShowGraphSearchMatchLabel', () => {
   it('shows when there are matches', () => {
@@ -75,8 +75,7 @@ describe('estimateGraphSearchFocusBottomInset', () => {
       GRAPH_STICKY_SEARCH_FLOAT_OUTER_TOP_PAD +
         GRAPH_STICKY_SEARCH_COMPACT_VERTICAL_PADDING +
         GRAPH_STICKY_SEARCH_BAR_ROW_HEIGHT +
-        20 +
-        FLOATING_SEARCH_BAR_BOTTOM_GAP,
+        FLOATING_SEARCH_BAR_KEYBOARD_OPEN_GAP,
     );
   });
 
@@ -93,8 +92,7 @@ describe('estimateGraphSearchFocusBottomInset', () => {
         GRAPH_STICKY_SEARCH_BAR_ROW_HEIGHT +
         GRAPH_STICKY_SEARCH_CONTENT_GAP +
         GRAPH_STICKY_SEARCH_MATCH_LABEL_HEIGHT +
-        20 +
-        FLOATING_SEARCH_BAR_BOTTOM_GAP,
+        FLOATING_SEARCH_BAR_KEYBOARD_OPEN_GAP,
     );
   });
 });

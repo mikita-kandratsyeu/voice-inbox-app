@@ -24,6 +24,7 @@ type FloatingFrostedChromeProps = {
   insetsBottom: number;
   horizontalInset?: number;
   topInset?: number;
+  outerBottomPadding?: number;
   borderRadius?: number;
   contentStyle?: StyleProp<ViewStyle>;
   children: ReactNode;
@@ -34,6 +35,7 @@ export function FloatingFrostedChrome({
   insetsBottom,
   horizontalInset = 16,
   topInset = 10,
+  outerBottomPadding,
   borderRadius = FLOATING_FROSTED_CHROME_RADIUS,
   contentStyle,
   children,
@@ -43,7 +45,7 @@ export function FloatingFrostedChrome({
       style={{
         paddingHorizontal: horizontalInset,
         paddingTop: topInset,
-        paddingBottom: Math.max(insetsBottom, 8),
+        paddingBottom: outerBottomPadding ?? Math.max(insetsBottom, 8),
       }}
     >
       <View

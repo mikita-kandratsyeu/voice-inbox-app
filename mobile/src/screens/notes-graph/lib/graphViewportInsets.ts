@@ -1,4 +1,4 @@
-import { FLOATING_SEARCH_BAR_BOTTOM_GAP } from '@/shared/ui/floatingSearchBarMetrics';
+import { FLOATING_SEARCH_BAR_KEYBOARD_OPEN_GAP } from '@/shared/ui/floatingSearchBarMetrics';
 
 /** Minimum height of the search controls row inside the floating pill. */
 export const GRAPH_STICKY_SEARCH_BAR_ROW_HEIGHT = 44;
@@ -66,5 +66,5 @@ export function estimateGraphSearchFocusBottomInset(options: {
     GRAPH_STICKY_SEARCH_BAR_ROW_HEIGHT +
     labelBlock;
 
-  return height + Math.max(options.safeAreaBottom, 8) + FLOATING_SEARCH_BAR_BOTTOM_GAP;
+  return height + FLOATING_SEARCH_BAR_KEYBOARD_OPEN_GAP;
 }

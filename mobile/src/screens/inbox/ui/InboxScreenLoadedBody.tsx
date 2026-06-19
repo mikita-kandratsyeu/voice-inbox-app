@@ -5,7 +5,6 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from '
 import { useTranslation } from 'react-i18next';
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { TextInput, TouchableOpacity, View } from 'react-native';
-import { KeyboardStickyView } from 'react-native-keyboard-controller';
 
 import {
   getFloatingTabBarScrollPaddingBottom,
@@ -24,10 +23,10 @@ import { iosHitSlopForVisualSize } from '@/shared/lib/iosTouchTarget';
 import {
   EmptyState,
   FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
-  FloatingFrostedChrome,
   FloatingFrostedChromeDivider,
   FloatingFrostedChromeSection,
-  getFloatingSearchBarChromeBottomInset,
+  FloatingFrostedInputChrome,
+  FloatingFrostedStickyView,
   getInputFieldInputStyle,
   HeaderIconButton,
   SwipeHintBanner,
@@ -89,7 +88,7 @@ function StickySearchBar({
   );
 
   return (
-    <FloatingFrostedChrome color={color} insetsBottom={getFloatingSearchBarChromeBottomInset()}>
+    <FloatingFrostedInputChrome color={color}>
       <View
         style={{
           paddingHorizontal: 12,
@@ -153,7 +152,7 @@ function StickySearchBar({
         <FloatingFrostedChromeDivider color={color} />
         <FloatingFrostedChromeSection>{closeButton}</FloatingFrostedChromeSection>
       </View>
-    </FloatingFrostedChrome>
+    </FloatingFrostedInputChrome>
   );
 }
 
@@ -394,10 +393,7 @@ function InboxScreenLoadedBodyInner({
         </View>
       </View>
       {showInboxSearchBar && (
-        <KeyboardStickyView
-          offset={{ closed: 0, opened: 0 }}
-          style={{ position: 'absolute', left: 0, right: 0, bottom: insetsBottom }}
-        >
+        <FloatingFrostedStickyView safeAreaBottom={insetsBottom}>
           <StickySearchBar
             query={query}
             onChangeQuery={onChangeQuery}
@@ -408,7 +404,7 @@ function InboxScreenLoadedBodyInner({
             onBlur={() => setSearchFocused(false)}
             focused={searchFocused}
           />
-        </KeyboardStickyView>
+        </FloatingFrostedStickyView>
       )}
     </View>
   );

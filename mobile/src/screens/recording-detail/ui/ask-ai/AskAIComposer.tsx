@@ -2,20 +2,22 @@ import { ArrowRight, MessageSquare, X } from 'lucide-react-native';
 import React, { memo, useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TextInput, TouchableOpacity, View } from 'react-native';
-import { KeyboardStickyView } from 'react-native-keyboard-controller';
 
 import type { Colors } from '@/shared/config';
 import { hapticLight, iosHitSlopForVisualSize } from '@/shared/lib';
 import {
-  FloatingFrostedChrome,
+  FLOATING_FROSTED_INPUT_ROW_MIN_HEIGHT,
+  FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
   FloatingFrostedChromeDivider,
   FloatingFrostedChromeSection,
+  FloatingFrostedInputChrome,
+  FloatingFrostedStickyView,
   getInputFieldInputStyle,
 } from '@/shared/ui';
 
 type AskAIComposerProps = {
   color: Colors;
-  insetsBottom: number;
+  safeAreaBottom: number;
   contentMaxWidth: number | undefined;
   questionInput: string;
   onChangeQuestion: (text: string) => void;
@@ -25,12 +27,10 @@ type AskAIComposerProps = {
 };
 
 const SEND_BUTTON_SIZE = 36;
-/** Extra gap between the composer pill and the screen bottom (above safe area). */
-export const ASK_AI_COMPOSER_BOTTOM_EXTRA = 8;
 
 const AskAIComposerInner = ({
   color,
-  insetsBottom,
+  safeAreaBottom,
   contentMaxWidth,
   questionInput,
   onChangeQuestion,
@@ -63,7 +63,7 @@ const AskAIComposerInner = ({
   }, [canSend, onSubmit]);
 
   return (
-    <KeyboardStickyView offset={{ closed: 0, opened: 0 }} style={{ alignSelf: 'stretch' }}>
+    <FloatingFrostedStickyView safeAreaBottom={safeAreaBottom}>
       <View
         style={{
           alignSelf: 'center',
@@ -72,14 +72,14 @@ const AskAIComposerInner = ({
           backgroundColor: 'transparent',
         }}
       >
-        <FloatingFrostedChrome color={color} insetsBottom={insetsBottom}>
+        <FloatingFrostedInputChrome color={color}>
           <View
             style={{
               paddingHorizontal: 12,
-              paddingVertical: 10,
+              paddingVertical: FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
               flexDirection: 'row',
               alignItems: 'stretch',
-              minHeight: 44,
+              minHeight: FLOATING_FROSTED_INPUT_ROW_MIN_HEIGHT,
             }}
           >
             <View
@@ -161,9 +161,9 @@ const AskAIComposerInner = ({
               </TouchableOpacity>
             </FloatingFrostedChromeSection>
           </View>
-        </FloatingFrostedChrome>
+        </FloatingFrostedInputChrome>
       </View>
-    </KeyboardStickyView>
+    </FloatingFrostedStickyView>
   );
 };
 

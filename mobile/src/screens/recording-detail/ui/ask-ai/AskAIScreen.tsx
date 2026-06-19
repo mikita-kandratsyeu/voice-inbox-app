@@ -22,9 +22,9 @@ import {
   useNetworkStatus,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
-import { FrostedHeaderIconButton, ScreenHeader } from '@/shared/ui';
+import { estimateFloatingFrostedInputBottomClearance, FrostedHeaderIconButton, ScreenHeader } from '@/shared/ui';
 
-import { ASK_AI_COMPOSER_BOTTOM_EXTRA, AskAIComposer } from './AskAIComposer';
+import { AskAIComposer } from './AskAIComposer';
 import { AskMainContent } from './AskMainContent';
 
 export const AskAIScreen = () => {
@@ -220,8 +220,7 @@ export const AskAIScreen = () => {
     !isRestoringSession &&
     !isLoading &&
     !disableByNetwork;
-  const composerBottomInset =
-    10 + 44 + 10 + Math.max(insets.bottom, 8) + ASK_AI_COMPOSER_BOTTOM_EXTRA;
+  const composerBottomInset = estimateFloatingFrostedInputBottomClearance(insets.bottom);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -231,7 +230,7 @@ export const AskAIScreen = () => {
         rightSlot={clearHistoryHeaderButton}
         dismissKeyboardOnPress
       />
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, position: 'relative' }}>
         <View
           style={{
             flex: 1,
@@ -285,7 +284,7 @@ export const AskAIScreen = () => {
         {shouldShowInputRow ? (
           <AskAIComposer
             color={color}
-            insetsBottom={insets.bottom + ASK_AI_COMPOSER_BOTTOM_EXTRA}
+            safeAreaBottom={insets.bottom}
             contentMaxWidth={contentMaxWidth}
             questionInput={questionInput}
             onChangeQuestion={setQuestionInput}

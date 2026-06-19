@@ -55,10 +55,19 @@ export {
   FloatingFrostedChromeSection,
 } from './FloatingFrostedChrome';
 export {
+  FLOATING_FROSTED_CHROME_TOP_INSET,
+  FLOATING_FROSTED_INPUT_ROW_MIN_HEIGHT,
   FLOATING_SEARCH_BAR_BOTTOM_GAP,
   FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
+  FLOATING_SEARCH_BAR_KEYBOARD_OPEN_GAP,
+  estimateFloatingFrostedInputBottomClearance,
+  estimateFloatingFrostedInputHeight,
+  estimateFloatingFrostedInputKeyboardOpenClearance,
+  getFloatingFrostedInputKeyboardStickyOffset,
   getFloatingSearchBarChromeBottomInset,
 } from './floatingSearchBarMetrics';
+export { FloatingFrostedInputChrome } from './FloatingFrostedInputChrome';
+export { FloatingFrostedStickyView } from './FloatingFrostedStickyView';
 export { FrostedBottomChrome } from './FrostedBottomChrome';
 export type { FrostedChromeBackgroundProps } from './FrostedChromeBackground';
 export {
