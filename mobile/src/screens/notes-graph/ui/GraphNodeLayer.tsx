@@ -207,32 +207,26 @@ function DraggableNodeShell({
       })
       .onUpdate((event) => {
         'worklet';
-        // Canvas scale transforms the view, so gesture deltas need inverse transform
-        // to convert from screen space to world space
         const viewportScale = Math.max(canvasScale.value, 0.001);
         const baseLeft = nodeLeft.value;
         const baseTop = nodeTop.value;
-
-        // Transform gesture delta from screen space to world space
-        const worldDeltaX = event.translationX / viewportScale;
-        const worldDeltaY = event.translationY / viewportScale;
-
-        const snapped = snapGraphPointToGrid(baseLeft + worldDeltaX, baseTop + worldDeltaY);
+        const snapped = snapGraphPointToGrid(
+          baseLeft + event.translationX / viewportScale,
+          baseTop + event.translationY / viewportScale,
+        );
         const clamped = clampNodePosition(snapped.x, snapped.y);
         dragOffsetX.value = clamped.x - baseLeft;
         dragOffsetY.value = clamped.y - baseTop;
       })
       .onEnd((event) => {
         'worklet';
-        // Transform gesture delta from screen space to world space
         const viewportScale = Math.max(canvasScale.value, 0.001);
         const baseLeft = nodeLeft.value;
         const baseTop = nodeTop.value;
-
-        const worldDeltaX = event.translationX / viewportScale;
-        const worldDeltaY = event.translationY / viewportScale;
-
-        const snapped = snapGraphPointToGrid(baseLeft + worldDeltaX, baseTop + worldDeltaY);
+        const snapped = snapGraphPointToGrid(
+          baseLeft + event.translationX / viewportScale,
+          baseTop + event.translationY / viewportScale,
+        );
         const clamped = clampNodePosition(snapped.x, snapped.y);
         const finalX = clamped.x;
         const finalY = clamped.y;
