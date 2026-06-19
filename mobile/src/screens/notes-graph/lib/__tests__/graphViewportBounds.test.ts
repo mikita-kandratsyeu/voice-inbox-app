@@ -6,6 +6,7 @@ import {
   computeExportWorldDimensionsForNodes,
   computeWorldDimensions,
   computeWorldDimensionsForNodes,
+  expandPanContentBounds,
   GRAPH_CLUSTER_BOUNDARY_PADDING,
   GRAPH_PAN_OVERSCROLL,
   GRAPH_VIEWPORT_MAX_SCALE,
@@ -100,6 +101,22 @@ describe('computeExportWorldDimensionsForNodes', () => {
 
     expect(exportWorld.width).toBeLessThan(panWorld.width);
     expect(exportWorld.width).toBeLessThan(Math.ceil(8192 / 0.275));
+  });
+});
+
+describe('expandPanContentBounds', () => {
+  it('extends pan limits to the full layout canvas', () => {
+    const content = {
+      minX: 120,
+      minY: 80,
+      maxX: 920,
+      maxY: 640,
+    };
+    const expanded = expandPanContentBounds(content, 2400, 1800);
+
+    expect(expanded.minX).toBeLessThanOrEqual(0);
+    expect(expanded.maxX).toBeGreaterThanOrEqual(2400);
+    expect(expanded.maxY).toBeGreaterThanOrEqual(1800);
   });
 });
 

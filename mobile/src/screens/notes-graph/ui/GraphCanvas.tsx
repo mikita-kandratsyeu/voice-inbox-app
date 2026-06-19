@@ -12,7 +12,9 @@ import type { LayoutChangeEvent } from 'react-native';
 import { useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  cancelAnimation,
   Easing,
+  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withDecay,
@@ -49,6 +51,7 @@ import {
   clampViewportTransform,
   clampViewportTranslation,
   computeWorldDimensionsForNodes,
+  expandPanContentBounds,
   GRAPH_VIEWPORT_MAX_SCALE,
   GRAPH_VIEWPORT_MIN_SCALE,
   resolveGraphPanOverscroll,
@@ -251,6 +254,25 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     setViewportTransform({ scale: nextScale, translateX: nextX, translateY: nextY });
   }, []);
 
+  useAnimatedReaction(
+    () => ({
+      scale: scale.value,
+      translateX: translateX.value,
+      translateY: translateY.value,
+    }),
+    (current, previous) => {
+      if (
+        previous &&
+        current.scale === previous.scale &&
+        current.translateX === previous.translateX &&
+        current.translateY === previous.translateY
+      ) {
+        return;
+      }
+      scheduleOnRN(syncViewportState, current.scale, current.translateX, current.translateY);
+    },
+  );
+
   const {
     width: worldWidth,
     height: worldHeight,
@@ -266,6 +288,11 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         MIN_SCALE,
       ),
     [displayNodes, graphHeight, graphWidth, viewportHeight, viewportWidth],
+  );
+
+  const panContentBounds = useMemo(
+    () => (contentBounds ? expandPanContentBounds(contentBounds, graphWidth, graphHeight) : null),
+    [contentBounds, graphHeight, graphWidth],
   );
 
   const panOverscroll = useMemo(
@@ -293,12 +320,12 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     viewportWidthSV.value = viewportWidth;
     viewportHeightSV.value = viewportHeight;
     panOverscrollSV.value = panOverscroll;
-    contentMinXSV.value = contentBounds?.minX ?? 0;
-    contentMinYSV.value = contentBounds?.minY ?? 0;
-    contentMaxXSV.value = contentBounds?.maxX ?? worldWidth;
-    contentMaxYSV.value = contentBounds?.maxY ?? worldHeight;
+    contentMinXSV.value = panContentBounds?.minX ?? 0;
+    contentMinYSV.value = panContentBounds?.minY ?? 0;
+    contentMaxXSV.value = panContentBounds?.maxX ?? worldWidth;
+    contentMaxYSV.value = panContentBounds?.maxY ?? worldHeight;
   }, [
-    contentBounds,
+    panContentBounds,
     panOverscroll,
     worldHeight,
     worldWidth,
@@ -326,9 +353,9 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         MIN_SCALE,
         MAX_SCALE,
         panOverscroll,
-        contentBounds,
+        panContentBounds,
       ),
-    [contentBounds, panOverscroll, viewportHeight, viewportWidth, worldHeight, worldWidth],
+    [panContentBounds, panOverscroll, viewportHeight, viewportWidth, worldHeight, worldWidth],
   );
 
   const applyTransform = useCallback(
@@ -344,9 +371,12 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       savedTranslateY.value = clamped.translateY;
 
       if (animated) {
+        cancelAnimation(scale);
+        cancelAnimation(translateX);
+        cancelAnimation(translateY);
         scale.value = withSpring(clamped.scale, GRAPH_VIEWPORT_SPRING, (finished) => {
           if (finished) {
-            scheduleOnRN(commitViewportSync);
+            scheduleOnRN(syncViewportState, scale.value, translateX.value, translateY.value);
           }
         });
         translateX.value = withSpring(clamped.translateX, GRAPH_VIEWPORT_SPRING);
@@ -578,6 +608,9 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
   const syncGestureBaseline = () => {
     'worklet';
+    cancelAnimation(scale);
+    cancelAnimation(translateX);
+    cancelAnimation(translateY);
     savedScale.value = scale.value;
     savedTranslateX.value = translateX.value;
     savedTranslateY.value = translateY.value;
@@ -658,16 +691,20 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         const adjustedTranslateY = centerY - worldCenterY * finalScale;
         const clamped = clampTranslationWorklet(adjustedTranslateX, adjustedTranslateY, finalScale);
 
-        scale.value = withSpring(finalScale, GRAPH_VIEWPORT_SPRING);
+        scale.value = withSpring(finalScale, GRAPH_VIEWPORT_SPRING, (finished) => {
+          if (finished) {
+            commitViewportFromGesture();
+          }
+        });
         translateX.value = withSpring(clamped.translateX, GRAPH_VIEWPORT_SPRING);
         translateY.value = withSpring(clamped.translateY, GRAPH_VIEWPORT_SPRING);
-
-        savedScale.value = finalScale;
-        savedTranslateX.value = clamped.translateX;
-        savedTranslateY.value = clamped.translateY;
+      } else {
+        commitViewportFromGesture();
       }
-
-      commitViewportFromGesture();
+    })
+    .onFinalize(() => {
+      'worklet';
+      isPinching.value = false;
     });
 
   const panVelocityX = useSharedValue(0);
@@ -729,7 +766,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
           (finished) => {
             if (finished) {
               savedTranslateX.value = translateX.value;
-              scheduleOnRN(syncViewportState, scale.value, translateX.value, translateY.value);
+              commitViewportFromGesture();
             }
           },
         );
@@ -782,7 +819,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
       scale.value = withTiming(clampedScale, timing, (finished) => {
         if (finished) {
-          scheduleOnRN(syncViewportState, clampedScale, clamped.translateX, clamped.translateY);
+          scheduleOnRN(syncViewportState, scale.value, translateX.value, translateY.value);
         }
       });
       translateX.value = withTiming(clamped.translateX, timing);
@@ -802,7 +839,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
   const tapGestures = Gesture.Exclusive(doubleTap, singleTap);
 
-  const canvasGesture = Gesture.Simultaneous(Gesture.Simultaneous(pinch, pan), tapGestures);
+  const canvasGesture = Gesture.Simultaneous(pinch, Gesture.Exclusive(pan, tapGestures));
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -860,41 +897,42 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       onLayout={handleCanvasLayout}
     >
       <DottedBackground width={viewportWidth} height={viewportHeight} dotColor={color.text.muted} />
-      {!exportBusy ? (
-        <>
-          <GraphClusterBoundaries
-            nodes={displayNodes}
-            clusters={clusters}
-            foldersById={foldersById}
-            isProActive={isProActive}
-            color={color}
-            canvasWidth={viewportWidth}
-            canvasHeight={viewportHeight}
-            translateX={translateX}
-            translateY={translateY}
-            scale={scale}
-            visible
-            showFolderClusters={folderHighlightsVisible}
-          />
-          <GraphEdgeLayer
-            nodes={displayNodes}
-            edges={edges}
-            color={color}
-            canvasWidth={viewportWidth}
-            canvasHeight={viewportHeight}
-            translateX={translateX}
-            translateY={translateY}
-            scale={scale}
-            matchedNodeIds={matchedNodeIds}
-            activeNodeId={activeNodeId}
-            viewportCull={edgeViewportCull}
-            nodeDisplayMode={nodeDisplayMode}
-          />
-        </>
-      ) : null}
       <GestureDetector gesture={canvasGesture}>
         <View collapsable={false} style={{ flex: 1, overflow: 'hidden' }}>
+          {!exportBusy ? (
+            <>
+              <GraphClusterBoundaries
+                nodes={displayNodes}
+                clusters={clusters}
+                foldersById={foldersById}
+                isProActive={isProActive}
+                color={color}
+                canvasWidth={viewportWidth}
+                canvasHeight={viewportHeight}
+                translateX={translateX}
+                translateY={translateY}
+                scale={scale}
+                visible
+                showFolderClusters={folderHighlightsVisible}
+              />
+              <GraphEdgeLayer
+                nodes={displayNodes}
+                edges={edges}
+                color={color}
+                canvasWidth={viewportWidth}
+                canvasHeight={viewportHeight}
+                translateX={translateX}
+                translateY={translateY}
+                scale={scale}
+                matchedNodeIds={matchedNodeIds}
+                activeNodeId={activeNodeId}
+                viewportCull={edgeViewportCull}
+                nodeDisplayMode={nodeDisplayMode}
+              />
+            </>
+          ) : null}
           <Animated.View
+            pointerEvents="box-none"
             style={[
               {
                 width: worldWidth,
@@ -983,7 +1021,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         reconcilingLabel={t('notesGraph.reconciling')}
       />
 
-      {hasUnsavedLayoutChanges && onSaveLayout && onDiscardLayout ? (
+      {hasUnsavedLayoutChanges && onSaveLayout && onDiscardLayout && !isReconciling ? (
         <GraphLayoutSaveBar
           color={color}
           bottomInset={bottomInset}

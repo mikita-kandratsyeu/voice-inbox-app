@@ -90,6 +90,7 @@ function DraggableNodeShell({
   const isDraggingRef = useRef(false);
   const nodeId = node.id;
   const interactionPhase = useSharedValue(GRAPH_NODE_INTERACTION_IDLE);
+  const nodeDragEnabled = useSharedValue(false);
 
   const nodeLeft = useSharedValue(node.x);
   const nodeTop = useSharedValue(node.y);
@@ -176,8 +177,16 @@ function DraggableNodeShell({
         'worklet';
         interactionPhase.value = GRAPH_NODE_INTERACTION_PRESSING;
       })
+      .onStart(() => {
+        'worklet';
+        nodeDragEnabled.value = true;
+        scheduleOnRN(handleCanvasDragStart);
+        interactionPhase.value = GRAPH_NODE_INTERACTION_DRAGGING;
+        scheduleOnRN(hapticLight);
+      })
       .onFinalize((_event, success) => {
         'worklet';
+        nodeDragEnabled.value = false;
         if (interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING) return;
         interactionPhase.value = withTiming(0, {
           duration: 160,
@@ -187,12 +196,14 @@ function DraggableNodeShell({
       });
 
     const pan = Gesture.Pan()
-      .activateAfterLongPress(GRAPH_NODE_LONG_PRESS_MS)
-      .onStart(() => {
+      .manualActivation(true)
+      .onTouchesMove((_event, state) => {
         'worklet';
-        scheduleOnRN(handleCanvasDragStart);
-        interactionPhase.value = 2;
-        scheduleOnRN(hapticLight);
+        if (nodeDragEnabled.value) {
+          state.activate();
+        } else {
+          state.fail();
+        }
       })
       .onUpdate((event) => {
         'worklet';
@@ -233,8 +244,9 @@ function DraggableNodeShell({
       })
       .onFinalize((_event, success) => {
         'worklet';
+        nodeDragEnabled.value = false;
         if (success) return;
-        if (interactionPhase.value >= 2) {
+        if (interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING) {
           scheduleOnRN(handleDragCancel);
         }
         interactionPhase.value = withTiming(0, {
@@ -255,6 +267,7 @@ function DraggableNodeShell({
     handleFocus,
     handlePress,
     interactionPhase,
+    nodeDragEnabled,
     nodeId,
     nodeLeft,
     nodeTop,

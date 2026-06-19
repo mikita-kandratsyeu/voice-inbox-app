@@ -14,15 +14,17 @@ import { RECORD_NODE_WIDTH, TASK_NODE_WIDTH } from './graphTypes';
 export function buildGraphRenderedNodes(
   nodes: GraphNode[],
   viewportCull: GraphViewportCull,
-  buffer = 300,
+  buffer?: number,
 ): GraphNode[] {
   const { translateX, translateY, scale, viewportWidth, viewportHeight } = viewportCull;
+  const safeScale = Math.max(scale, 0.01);
+  const cullBuffer = buffer ?? Math.max(300, viewportWidth / safeScale, viewportHeight / safeScale);
 
   // Convert viewport bounds to world coordinates
-  const viewMinX = -translateX / scale - buffer;
-  const viewMaxX = (-translateX + viewportWidth) / scale + buffer;
-  const viewMinY = -translateY / scale - buffer;
-  const viewMaxY = (-translateY + viewportHeight) / scale + buffer;
+  const viewMinX = -translateX / safeScale - cullBuffer;
+  const viewMaxX = (-translateX + viewportWidth) / safeScale + cullBuffer;
+  const viewMinY = -translateY / safeScale - cullBuffer;
+  const viewMaxY = (-translateY + viewportHeight) / safeScale + cullBuffer;
 
   const visible: GraphNode[] = [];
 

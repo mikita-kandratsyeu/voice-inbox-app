@@ -77,6 +77,21 @@ function expandBoundsForClusterHighlights(
   };
 }
 
+/** Looser bounds for pan clamping so the map can reach nodes across the full layout. */
+export function expandPanContentBounds(
+  contentBounds: GraphContentBounds,
+  graphWidth: number,
+  graphHeight: number,
+  padding = GRAPH_WORLD_CONTENT_PADDING,
+): GraphContentBounds {
+  return {
+    minX: Math.min(contentBounds.minX - padding, 0),
+    minY: Math.min(contentBounds.minY - padding, 0),
+    maxX: Math.max(contentBounds.maxX + padding, graphWidth),
+    maxY: Math.max(contentBounds.maxY + padding, graphHeight),
+  };
+}
+
 /**
  * World canvas starts at (0, 0). Size must cover absolute content extents, not just span,
  * otherwise folder highlights and nodes shifted right/bottom get clipped.
