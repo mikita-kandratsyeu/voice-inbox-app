@@ -7,10 +7,14 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import type { Colors } from '@/shared/config';
 import { iosHitSlopForVisualSize } from '@/shared/lib/iosTouchTarget';
 import {
-  FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
+  FLOATING_FROSTED_INPUT_ICON_SIZE,
+  FLOATING_FROSTED_INPUT_ICON_STROKE,
   FloatingFrostedChromeDivider,
   FloatingFrostedChromeSection,
   FloatingFrostedInputChrome,
+  getFloatingFrostedInputContainerStyle,
+  getFloatingFrostedInputFieldRowStyle,
+  getFloatingFrostedInputRowStyle,
   getInputFieldInputStyle,
   HeaderIconButton,
 } from '@/shared/ui';
@@ -117,106 +121,96 @@ export const GraphStickySearchBar = memo(function GraphStickySearchBar({
     <FloatingFrostedInputChrome color={color}>
       <View
         style={{
-          paddingHorizontal: 12,
-          paddingVertical: FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
+          ...getFloatingFrostedInputContainerStyle(),
           gap: showMatchLabel ? 8 : 0,
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'stretch', minHeight: 44 }}>
-        <View
-          style={{
-            flex: 1,
-            minWidth: 0,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 9,
-            justifyContent: 'center',
-          }}
-        >
-          <Search
-            size={17}
-            color={focused || query ? color.accent.primary : color.icon.muted}
-            strokeWidth={2.2}
-          />
-          <TextInput
-            ref={inputRef}
-            style={[getInputFieldInputStyle(color), { flex: 1 }]}
-            placeholder={t('notesGraph.searchPlaceholder')}
-            placeholderTextColor={color.text.secondary}
-            value={query}
-            onChangeText={onChangeQuery}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            onSubmitEditing={onSubmit}
-            returnKeyType="search"
-            clearButtonMode="never"
-            autoCapitalize="none"
-          />
-          {query.length > 0 ? (
-            isSearchPending ? (
-              <Animated.View
-                entering={FadeIn.duration(150)}
-                exiting={FadeOut.duration(150)}
-                style={{
-                  width: 16,
-                  height: 16,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <ActivityIndicator size="small" color={color.accent.primary} />
-              </Animated.View>
-            ) : (
-              <Animated.View entering={FadeIn.duration(150)} exiting={FadeOut.duration(150)}>
-                <TouchableOpacity
-                  onPress={handleClear}
-                  hitSlop={iosHitSlopForVisualSize(16, 16)}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('common.clear')}
+        <View style={getFloatingFrostedInputRowStyle()}>
+          <View style={getFloatingFrostedInputFieldRowStyle()}>
+            <Search
+              size={FLOATING_FROSTED_INPUT_ICON_SIZE}
+              color={focused || query ? color.accent.primary : color.icon.muted}
+              strokeWidth={FLOATING_FROSTED_INPUT_ICON_STROKE}
+            />
+            <TextInput
+              ref={inputRef}
+              style={[getInputFieldInputStyle(color), { flex: 1 }]}
+              placeholder={t('notesGraph.searchPlaceholder')}
+              placeholderTextColor={color.text.secondary}
+              value={query}
+              onChangeText={onChangeQuery}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              onSubmitEditing={onSubmit}
+              returnKeyType="search"
+              clearButtonMode="never"
+              autoCapitalize="none"
+            />
+            {query.length > 0 ? (
+              isSearchPending ? (
+                <Animated.View
+                  entering={FadeIn.duration(150)}
+                  exiting={FadeOut.duration(150)}
+                  style={{
+                    width: 16,
+                    height: 16,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                 >
-                  <View
-                    style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: 8,
-                      backgroundColor: color.icon.muted,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
+                  <ActivityIndicator size="small" color={color.accent.primary} />
+                </Animated.View>
+              ) : (
+                <Animated.View entering={FadeIn.duration(150)} exiting={FadeOut.duration(150)}>
+                  <TouchableOpacity
+                    onPress={handleClear}
+                    hitSlop={iosHitSlopForVisualSize(16, 16)}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.clear')}
                   >
-                    <X size={10} color={color.background.primary} strokeWidth={2.5} />
-                  </View>
-                </TouchableOpacity>
-              </Animated.View>
-            )
+                    <View
+                      style={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: 8,
+                        backgroundColor: color.icon.muted,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <X size={10} color={color.background.primary} strokeWidth={2.5} />
+                    </View>
+                  </TouchableOpacity>
+                </Animated.View>
+              )
+            ) : null}
+          </View>
+
+          {hasMatches ? (
+            <>
+              <FloatingFrostedChromeDivider color={color} />
+              <FloatingFrostedChromeSection>{matchNav}</FloatingFrostedChromeSection>
+            </>
           ) : null}
+
+          <FloatingFrostedChromeDivider color={color} />
+          <FloatingFrostedChromeSection>{closeButton}</FloatingFrostedChromeSection>
         </View>
 
-        {hasMatches ? (
-          <>
-            <FloatingFrostedChromeDivider color={color} />
-            <FloatingFrostedChromeSection>{matchNav}</FloatingFrostedChromeSection>
-          </>
+        {showMatchLabel ? (
+          <View
+            style={{
+              minHeight: GRAPH_STICKY_SEARCH_MATCH_LABEL_HEIGHT,
+              justifyContent: 'center',
+              paddingHorizontal: 4,
+            }}
+          >
+            <Text style={{ color: color.text.secondary, fontSize: 12, fontWeight: '600' }}>
+              {currentMatchLabel}
+            </Text>
+          </View>
         ) : null}
-
-        <FloatingFrostedChromeDivider color={color} />
-        <FloatingFrostedChromeSection>{closeButton}</FloatingFrostedChromeSection>
-      </View>
-
-      {showMatchLabel ? (
-        <View
-          style={{
-            minHeight: GRAPH_STICKY_SEARCH_MATCH_LABEL_HEIGHT,
-            justifyContent: 'center',
-            paddingHorizontal: 4,
-          }}
-        >
-          <Text style={{ color: color.text.secondary, fontSize: 12, fontWeight: '600' }}>
-            {currentMatchLabel}
-          </Text>
-        </View>
-      ) : null}
       </View>
     </FloatingFrostedInputChrome>
   );

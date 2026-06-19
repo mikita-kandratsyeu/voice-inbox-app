@@ -6,12 +6,16 @@ import { TextInput, TouchableOpacity, View } from 'react-native';
 import type { Colors } from '@/shared/config';
 import { hapticLight, iosHitSlopForVisualSize } from '@/shared/lib';
 import {
-  FLOATING_FROSTED_INPUT_ROW_MIN_HEIGHT,
-  FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
+  FLOATING_FROSTED_ACCESSORY_BUTTON_SIZE,
+  FLOATING_FROSTED_INPUT_ICON_SIZE,
+  FLOATING_FROSTED_INPUT_ICON_STROKE,
   FloatingFrostedChromeDivider,
   FloatingFrostedChromeSection,
   FloatingFrostedInputChrome,
   FloatingFrostedStickyView,
+  getFloatingFrostedInputContainerStyle,
+  getFloatingFrostedInputFieldRowStyle,
+  getFloatingFrostedInputRowStyle,
   getInputFieldInputStyle,
 } from '@/shared/ui';
 
@@ -26,7 +30,7 @@ type AskAIComposerProps = {
   disableByNetwork: boolean;
 };
 
-const SEND_BUTTON_SIZE = 36;
+const SEND_BUTTON_SIZE = FLOATING_FROSTED_ACCESSORY_BUTTON_SIZE;
 
 const AskAIComposerInner = ({
   color,
@@ -75,26 +79,15 @@ const AskAIComposerInner = ({
         <FloatingFrostedInputChrome color={color}>
           <View
             style={{
-              paddingHorizontal: 12,
-              paddingVertical: FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
-              flexDirection: 'row',
-              alignItems: 'stretch',
-              minHeight: FLOATING_FROSTED_INPUT_ROW_MIN_HEIGHT,
+              ...getFloatingFrostedInputContainerStyle(),
+              ...getFloatingFrostedInputRowStyle(),
             }}
           >
-            <View
-              style={{
-                flex: 1,
-                minWidth: 0,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 8,
-              }}
-            >
+            <View style={getFloatingFrostedInputFieldRowStyle()}>
               <MessageSquare
-                size={17}
+                size={FLOATING_FROSTED_INPUT_ICON_SIZE}
                 color={isActive ? color.accent.primary : color.icon.muted}
-                strokeWidth={2.2}
+                strokeWidth={FLOATING_FROSTED_INPUT_ICON_STROKE}
               />
               <TextInput
                 ref={inputRef}

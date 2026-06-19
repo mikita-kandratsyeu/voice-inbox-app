@@ -22,11 +22,15 @@ import type { Colors } from '@/shared/config';
 import { iosHitSlopForVisualSize } from '@/shared/lib/iosTouchTarget';
 import {
   EmptyState,
-  FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
+  FLOATING_FROSTED_INPUT_ICON_SIZE,
+  FLOATING_FROSTED_INPUT_ICON_STROKE,
   FloatingFrostedChromeDivider,
   FloatingFrostedChromeSection,
   FloatingFrostedInputChrome,
   FloatingFrostedStickyView,
+  getFloatingFrostedInputContainerStyle,
+  getFloatingFrostedInputFieldRowStyle,
+  getFloatingFrostedInputRowStyle,
   getInputFieldInputStyle,
   HeaderIconButton,
   SwipeHintBanner,
@@ -90,28 +94,13 @@ function StickySearchBar({
   return (
     <FloatingFrostedInputChrome color={color}>
       <View
-        style={{
-          paddingHorizontal: 12,
-          paddingVertical: FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
-          flexDirection: 'row',
-          alignItems: 'stretch',
-          minHeight: 44,
-        }}
+        style={{ ...getFloatingFrostedInputContainerStyle(), ...getFloatingFrostedInputRowStyle() }}
       >
-        <View
-          style={{
-            flex: 1,
-            minWidth: 0,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 8,
-            justifyContent: 'center',
-          }}
-        >
+        <View style={getFloatingFrostedInputFieldRowStyle()}>
           <Search
-            size={16}
+            size={FLOATING_FROSTED_INPUT_ICON_SIZE}
             color={focused || query ? color.accent.primary : color.icon.muted}
-            strokeWidth={2}
+            strokeWidth={FLOATING_FROSTED_INPUT_ICON_STROKE}
           />
           <TextInput
             ref={inputRef}

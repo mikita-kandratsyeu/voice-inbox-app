@@ -1,19 +1,26 @@
-import { FLOATING_SEARCH_BAR_KEYBOARD_OPEN_GAP } from '@/shared/ui/floatingSearchBarMetrics';
+import {
+  FLOATING_FROSTED_CHROME_TOP_INSET,
+  FLOATING_FROSTED_INPUT_ROW_MIN_HEIGHT,
+  FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
+  FLOATING_SEARCH_BAR_KEYBOARD_OPEN_GAP,
+} from '@/shared/ui/floatingSearchBarMetrics';
 
 /** Minimum height of the search controls row inside the floating pill. */
-export const GRAPH_STICKY_SEARCH_BAR_ROW_HEIGHT = 44;
+export const GRAPH_STICKY_SEARCH_BAR_ROW_HEIGHT = FLOATING_FROSTED_INPUT_ROW_MIN_HEIGHT;
 
 /** Inner vertical padding when the match / status line is hidden (top + bottom). */
-export const GRAPH_STICKY_SEARCH_COMPACT_VERTICAL_PADDING = 20;
+export const GRAPH_STICKY_SEARCH_COMPACT_VERTICAL_PADDING =
+  FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD * 2;
 
 /** Inner vertical padding when the match / status line is shown (top + bottom). */
-export const GRAPH_STICKY_SEARCH_EXPANDED_VERTICAL_PADDING = 20;
+export const GRAPH_STICKY_SEARCH_EXPANDED_VERTICAL_PADDING =
+  FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD * 2;
 
 /** Gap between the search row and the match label inside the pill. */
 export const GRAPH_STICKY_SEARCH_CONTENT_GAP = 8;
 
 /** Outer top inset for the floating search pill. */
-export const GRAPH_STICKY_SEARCH_FLOAT_OUTER_TOP_PAD = 10;
+export const GRAPH_STICKY_SEARCH_FLOAT_OUTER_TOP_PAD = FLOATING_FROSTED_CHROME_TOP_INSET;
 
 /** Match counter line below the search row. */
 export const GRAPH_STICKY_SEARCH_MATCH_LABEL_HEIGHT = 22;

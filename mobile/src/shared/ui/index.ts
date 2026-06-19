@@ -54,20 +54,28 @@ export {
   FloatingFrostedChromeDivider,
   FloatingFrostedChromeSection,
 } from './FloatingFrostedChrome';
+export { FloatingFrostedInputChrome } from './FloatingFrostedInputChrome';
+export { FloatingFrostedStickyView } from './FloatingFrostedStickyView';
 export {
+  estimateFloatingFrostedInputBottomClearance,
+  estimateFloatingFrostedInputHeight,
+  estimateFloatingFrostedInputKeyboardOpenClearance,
+  FLOATING_FROSTED_ACCESSORY_BUTTON_SIZE,
   FLOATING_FROSTED_CHROME_TOP_INSET,
+  FLOATING_FROSTED_INPUT_HORIZONTAL_PAD,
+  FLOATING_FROSTED_INPUT_ICON_GAP,
+  FLOATING_FROSTED_INPUT_ICON_SIZE,
+  FLOATING_FROSTED_INPUT_ICON_STROKE,
   FLOATING_FROSTED_INPUT_ROW_MIN_HEIGHT,
   FLOATING_SEARCH_BAR_BOTTOM_GAP,
   FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
   FLOATING_SEARCH_BAR_KEYBOARD_OPEN_GAP,
-  estimateFloatingFrostedInputBottomClearance,
-  estimateFloatingFrostedInputHeight,
-  estimateFloatingFrostedInputKeyboardOpenClearance,
+  getFloatingFrostedInputContainerStyle,
+  getFloatingFrostedInputFieldRowStyle,
   getFloatingFrostedInputKeyboardStickyOffset,
+  getFloatingFrostedInputRowStyle,
   getFloatingSearchBarChromeBottomInset,
 } from './floatingSearchBarMetrics';
-export { FloatingFrostedInputChrome } from './FloatingFrostedInputChrome';
-export { FloatingFrostedStickyView } from './FloatingFrostedStickyView';
 export { FrostedBottomChrome } from './FrostedBottomChrome';
 export type { FrostedChromeBackgroundProps } from './FrostedChromeBackground';
 export {

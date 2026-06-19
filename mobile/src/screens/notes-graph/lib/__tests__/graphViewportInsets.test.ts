@@ -1,3 +1,5 @@
+import { FLOATING_SEARCH_BAR_KEYBOARD_OPEN_GAP } from '@/shared/ui/floatingSearchBarMetrics';
+
 import {
   estimateGraphSearchFocusBottomInset,
   GRAPH_FLOATING_CONTROLS_BOTTOM_CLEARANCE,
@@ -9,7 +11,6 @@ import {
   GRAPH_STICKY_SEARCH_MATCH_LABEL_HEIGHT,
   shouldShowGraphSearchMatchLabel,
 } from '../graphViewportInsets';
-import { FLOATING_SEARCH_BAR_KEYBOARD_OPEN_GAP } from '@/shared/ui/floatingSearchBarMetrics';
 
 describe('shouldShowGraphSearchMatchLabel', () => {
   it('shows when there are matches', () => {

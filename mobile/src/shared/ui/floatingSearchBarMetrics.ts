@@ -1,3 +1,5 @@
+import type { ViewStyle } from 'react-native';
+
 /** Gap between a floating input pill and the safe-area bottom edge (keyboard closed). */
 export const FLOATING_SEARCH_BAR_BOTTOM_GAP = 8;
 
@@ -10,8 +12,49 @@ export const FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD = 10;
 /** Minimum height of the primary controls row inside the pill. */
 export const FLOATING_FROSTED_INPUT_ROW_MIN_HEIGHT = 44;
 
+/** Horizontal inset inside floating input pills. */
+export const FLOATING_FROSTED_INPUT_HORIZONTAL_PAD = 12;
+
+/** Leading icon size for floating search / ask inputs. */
+export const FLOATING_FROSTED_INPUT_ICON_SIZE = 17;
+
+/** Leading icon stroke width for floating search / ask inputs. */
+export const FLOATING_FROSTED_INPUT_ICON_STROKE = 2.2;
+
+/** Gap between the leading icon and the text field. */
+export const FLOATING_FROSTED_INPUT_ICON_GAP = 9;
+
+/** Trailing circular action size (matches {@link HeaderIconButton} `md`). */
+export const FLOATING_FROSTED_ACCESSORY_BUTTON_SIZE = FLOATING_FROSTED_INPUT_ROW_MIN_HEIGHT;
+
 /** Outer top inset for floating frosted pills. Matches {@link FloatingFrostedChrome} default. */
 export const FLOATING_FROSTED_CHROME_TOP_INSET = 10;
+
+export function getFloatingFrostedInputContainerStyle(): ViewStyle {
+  return {
+    paddingHorizontal: FLOATING_FROSTED_INPUT_HORIZONTAL_PAD,
+    paddingVertical: FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
+  };
+}
+
+export function getFloatingFrostedInputRowStyle(): ViewStyle {
+  return {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    minHeight: FLOATING_FROSTED_INPUT_ROW_MIN_HEIGHT,
+  };
+}
+
+export function getFloatingFrostedInputFieldRowStyle(): ViewStyle {
+  return {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: FLOATING_FROSTED_INPUT_ICON_GAP,
+    justifyContent: 'center',
+  };
+}
 
 export function getFloatingSearchBarChromeBottomInset(): number {
   return FLOATING_SEARCH_BAR_BOTTOM_GAP;

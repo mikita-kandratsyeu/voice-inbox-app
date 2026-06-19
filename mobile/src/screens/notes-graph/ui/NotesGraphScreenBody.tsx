@@ -18,7 +18,13 @@ import { useProEntitlement } from '@/features/pro-license';
 import { TaskEditSheet } from '@/screens/recording-detail/ui/TaskEditSheet';
 import { useAppTheme, useColors } from '@/shared/config';
 import { hapticSelection, inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
-import { EmptyState, FloatingFrostedStickyView, FrostedHeaderButtonGroup, HeaderIconButton, ScreenHeader } from '@/shared/ui';
+import {
+  EmptyState,
+  FloatingFrostedStickyView,
+  FrostedHeaderButtonGroup,
+  HeaderIconButton,
+  ScreenHeader,
+} from '@/shared/ui';
 
 import { collectUniqueTags, countFilteredGraphRecords } from '../lib/buildGraphModel';
 import { buildLocalGraphFilters, resolveLocalGraphDepth } from '../lib/buildLocalGraphFilters';

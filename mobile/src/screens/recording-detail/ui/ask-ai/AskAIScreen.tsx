@@ -22,7 +22,11 @@ import {
   useNetworkStatus,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
-import { estimateFloatingFrostedInputBottomClearance, FrostedHeaderIconButton, ScreenHeader } from '@/shared/ui';
+import {
+  estimateFloatingFrostedInputBottomClearance,
+  FrostedHeaderIconButton,
+  ScreenHeader,
+} from '@/shared/ui';
 
 import { AskAIComposer } from './AskAIComposer';
 import { AskMainContent } from './AskMainContent';
