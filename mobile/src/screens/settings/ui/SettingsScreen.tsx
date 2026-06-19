@@ -187,8 +187,6 @@ export const SettingsScreen = () => {
             color={settings.color}
             onOpenDigest={() => settings.navigation.navigate('Digest')}
             onOpenSiriShortcuts={() => settings.navigation.navigate('SiriShortcuts')}
-            shakeToRecordEnabled={settings.shakeToRecordEnabled}
-            setShakeToRecordEnabled={settings.setShakeToRecordEnabled}
             t={settings.t}
           />
           <SettingsAutomationSection
@@ -251,6 +249,8 @@ export const SettingsScreen = () => {
             t={settings.t}
             navigation={settings.navigation}
             isAppLockEnabled={settings.isAppLockEnabled}
+            shakeToRecordEnabled={settings.shakeToRecordEnabled}
+            setShakeToRecordEnabled={settings.setShakeToRecordEnabled}
           />
           <SettingsPrivacySection
             color={settings.color}
