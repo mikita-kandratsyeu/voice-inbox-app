@@ -17,11 +17,6 @@ import { useColors } from '@/shared/config';
 import { hapticSelection, selectPlatform } from '@/shared/lib';
 import { FrostedChromeBackground } from '@/shared/ui';
 
-import {
-  FLOAT_TAB_IOS_SHADOW_OFFSET_Y,
-  FLOAT_TAB_IOS_SHADOW_RADIUS,
-  floatingTabBarShadowOpacity,
-} from '@/app/navigation/config';
 import type { RootStackParamList } from '../types';
 import {
   requestTabletInboxSidebarNav,
@@ -30,13 +25,17 @@ import {
 import { useTabletInboxSidebarStore } from './tabletInboxSidebarStore';
 import { TabletSidebarBody } from './TabletSidebarBody';
 import {
+  getTabletSidebarSlotWidth,
+  TABLET_SIDEBAR_ANDROID_ELEVATION,
+  TABLET_SIDEBAR_FLOAT_GAP,
   TABLET_SIDEBAR_FLOAT_MARGIN_BOTTOM,
   TABLET_SIDEBAR_FLOAT_MARGIN_LEFT,
   TABLET_SIDEBAR_FLOAT_MARGIN_TOP,
-  TABLET_SIDEBAR_FLOAT_GAP,
   TABLET_SIDEBAR_FLOAT_RADIUS,
+  TABLET_SIDEBAR_IOS_SHADOW_OFFSET_Y,
+  TABLET_SIDEBAR_IOS_SHADOW_RADIUS,
   TABLET_SIDEBAR_PAD,
-  getTabletSidebarSlotWidth,
+  tabletSidebarShadowOpacity,
 } from './tabletSidebarMetrics';
 import { getTabletSidebarTheme } from './tabletSidebarTheme';
 import {
@@ -200,12 +199,12 @@ export const TabletSidebar = () => {
             ...selectPlatform({
               ios: {
                 shadowColor: color.shadow.color,
-                shadowOffset: { width: 0, height: FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
-                shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
-                shadowRadius: FLOAT_TAB_IOS_SHADOW_RADIUS,
+                shadowOffset: { width: 0, height: TABLET_SIDEBAR_IOS_SHADOW_OFFSET_Y },
+                shadowOpacity: tabletSidebarShadowOpacity(color.shadow.opacity),
+                shadowRadius: TABLET_SIDEBAR_IOS_SHADOW_RADIUS,
               },
               android: {
-                elevation: 8,
+                elevation: TABLET_SIDEBAR_ANDROID_ELEVATION,
               },
               default: {},
             }),

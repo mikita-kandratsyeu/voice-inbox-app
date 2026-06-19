@@ -12,6 +12,14 @@ export const TABLET_SIDEBAR_FLOAT_MARGIN_BOTTOM = 12;
 export const TABLET_SIDEBAR_FLOAT_GAP = 10;
 /** Corner radius for the floating sidebar pill. */
 export const TABLET_SIDEBAR_FLOAT_RADIUS = 22;
+/** iOS: softer lift than floating pills — sidebar is large, heavy shadow reads muddy. */
+export const TABLET_SIDEBAR_IOS_SHADOW_OFFSET_Y = 2;
+export const TABLET_SIDEBAR_IOS_SHADOW_RADIUS = 6;
+export const TABLET_SIDEBAR_ANDROID_ELEVATION = 4;
+
+export function tabletSidebarShadowOpacity(themeShadowOpacity: number): number {
+  return Math.min(0.04, themeShadowOpacity + 0.02);
+}
 /** Fixed height for Inbox / filters / Settings rows in the sidebar. */
 export const TABLET_SIDEBAR_NAV_ITEM_HEIGHT = 50;
 export const TABLET_SIDEBAR_NAV_ITEM_RADIUS = 12;
