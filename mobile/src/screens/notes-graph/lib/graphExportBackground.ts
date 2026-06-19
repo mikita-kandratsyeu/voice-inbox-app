@@ -2,7 +2,7 @@ import type { Colors } from '@/shared/config';
 
 export const GRAPH_EXPORT_BACKGROUND_IDS = [
   'white',
-  'light',
+  'transparent',
   'blue',
   'lavender',
   'mint',
@@ -23,7 +23,7 @@ export type GraphExportBackgroundStyle = {
 
 type GraphExportBackgroundLabelKey =
   | 'backgroundWhite'
-  | 'backgroundLight'
+  | 'backgroundTransparent'
   | 'backgroundBlue'
   | 'backgroundLavender'
   | 'backgroundMint'
@@ -31,7 +31,6 @@ type GraphExportBackgroundLabelKey =
   | 'backgroundRose';
 
 const LIGHT_EXPORT_COLORS = {
-  secondary: '#f9fafb',
   dot: '#9ca3af',
 } as const;
 
@@ -44,9 +43,9 @@ const SOLID_EXPORT_PRESETS: Record<
     showDots: false,
     dotColor: LIGHT_EXPORT_COLORS.dot,
   },
-  light: {
-    backgroundColor: LIGHT_EXPORT_COLORS.secondary,
-    showDots: true,
+  transparent: {
+    backgroundColor: 'transparent',
+    showDots: false,
     dotColor: LIGHT_EXPORT_COLORS.dot,
   },
   blue: {
@@ -81,7 +80,7 @@ const GRAPH_EXPORT_BACKGROUND_LABEL_KEYS: Record<
   GraphExportBackgroundLabelKey
 > = {
   white: 'backgroundWhite',
-  light: 'backgroundLight',
+  transparent: 'backgroundTransparent',
   blue: 'backgroundBlue',
   lavender: 'backgroundLavender',
   mint: 'backgroundMint',

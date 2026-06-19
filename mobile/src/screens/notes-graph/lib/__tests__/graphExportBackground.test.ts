@@ -11,8 +11,9 @@ import {
 describe('graphExportBackground', () => {
   it('recognizes valid background ids', () => {
     expect(isGraphExportBackgroundId('white')).toBe(true);
+    expect(isGraphExportBackgroundId('transparent')).toBe(true);
     expect(isGraphExportBackgroundId('rose')).toBe(true);
-    expect(isGraphExportBackgroundId('canvas')).toBe(false);
+    expect(isGraphExportBackgroundId('light')).toBe(false);
     expect(isGraphExportBackgroundId('unknown')).toBe(false);
   });
 
@@ -22,7 +23,7 @@ describe('graphExportBackground', () => {
   });
 
   it('maps ids to i18n label keys', () => {
-    expect(graphExportBackgroundLabelKey('light')).toBe('backgroundLight');
+    expect(graphExportBackgroundLabelKey('transparent')).toBe('backgroundTransparent');
     expect(graphExportBackgroundLabelKey('mint')).toBe('backgroundMint');
   });
 
@@ -33,10 +34,10 @@ describe('graphExportBackground', () => {
     expect(style.showDots).toBe(false);
   });
 
-  it('resolves dotted light preset', () => {
-    const style = resolveGraphExportBackground('light', colors.light);
+  it('resolves transparent export without dots', () => {
+    const style = resolveGraphExportBackground('transparent', colors.light);
 
-    expect(style.backgroundColor).toBe('#f9fafb');
-    expect(style.showDots).toBe(true);
+    expect(style.backgroundColor).toBe('transparent');
+    expect(style.showDots).toBe(false);
   });
 });
