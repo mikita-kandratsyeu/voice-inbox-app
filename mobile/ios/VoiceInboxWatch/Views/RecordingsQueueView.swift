@@ -10,12 +10,16 @@ struct RecordingsQueueView: View {
                 if store.recordings.isEmpty {
                     VStack(spacing: 12) {
                         Image(systemName: "tray")
-                            .font(.system(size: 40))
-                            .foregroundStyle(.secondary)
+                            .font(.system(size: 44))
+                            .foregroundStyle(.orange.opacity(0.6))
+                            .symbolEffect(.bounce)
                         Text(NSLocalizedString("watch.queue.empty", comment: ""))
-                            .font(.caption)
+                            .font(.system(size: 14))
                             .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 8)
                     }
+                    .padding(.vertical, 20)
                 } else {
                     List {
                         ForEach(store.recordings) { recording in
@@ -24,8 +28,26 @@ struct RecordingsQueueView: View {
                             }
                             .navigationLinkIndicatorVisibility(.hidden)
                             .listRowInsets(EdgeInsets(top: 6, leading: 2, bottom: 6, trailing: 2))
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    store.remove(recording)
+                                } label: {
+                                    Label(NSLocalizedString("watch.queue.delete", comment: ""), systemImage: "trash")
+                                }
+                            }
+                            .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                if recording.syncState == .failed || recording.syncState == .syncing {
+                                    Button {
+                                        sessionManager.retryFailedTransfer(recording)
+                                    } label: {
+                                        Label(NSLocalizedString("watch.queue.retry", comment: ""), systemImage: "arrow.clockwise")
+                                    }
+                                    .tint(.blue)
+                                }
+                            }
                         }
                     }
+                    .listStyle(.carousel)
                     .navigationDestination(for: String.self) { recordingId in
                         if let recording = store.recordings.first(where: { $0.id == recordingId }) {
                             RecordingQueueDetailView(recording: recording)
@@ -34,6 +56,14 @@ struct RecordingsQueueView: View {
                 }
             }
             .navigationTitle(NSLocalizedString("watch.queue.title", comment: ""))
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Label(NSLocalizedString("watch.queue.title", comment: ""), systemImage: "clock.fill")
+                        .labelStyle(.iconOnly)
+                        .foregroundStyle(.white.opacity(0.8))
+                        .font(.system(size: 20))
+                }
+            }
             .onAppear {
                 sessionManager.reconcileStuckTransfers()
                 sessionManager.flushPendingTransfers()
@@ -46,20 +76,21 @@ struct RecordingRow: View {
     let recording: PendingRecording
 
     var body: some View {
-        HStack(alignment: .center, spacing: 8) {
+        HStack(alignment: .center, spacing: 10) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(formatDuration(recording.durationSeconds))
-                    .font(.headline)
+                    .font(.system(size: 16, weight: .semibold))
 
                 Text(formatDate(recording.createdAt))
-                    .font(.caption2)
+                    .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }
 
-            Spacer(minLength: 4)
+            Spacer(minLength: 6)
 
             statusView
         }
+        .padding(.vertical, 6)
         .padding(.trailing, 2)
     }
 
@@ -68,23 +99,26 @@ struct RecordingRow: View {
         switch recording.syncState {
         case .pending:
             Image(systemName: "clock")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(.orange)
-                .frame(width: 18, height: 18)
+                .frame(width: 24, height: 24)
+                .symbolEffect(.pulse, options: .repeating)
         case .syncing:
             ProgressView()
-                .controlSize(.small)
-                .frame(width: 18, height: 18)
+                .controlSize(.regular)
+                .frame(width: 24, height: 24)
         case .synced:
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(.green)
-                .frame(width: 18, height: 18)
+                .frame(width: 24, height: 24)
+                .symbolEffect(.bounce, value: recording.syncState)
         case .failed:
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(.red)
-                .frame(width: 18, height: 18)
+                .frame(width: 24, height: 24)
+                .symbolEffect(.bounce, value: recording.syncState)
         }
     }
 

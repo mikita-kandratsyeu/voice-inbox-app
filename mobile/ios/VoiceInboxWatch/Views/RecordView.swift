@@ -42,6 +42,14 @@ struct RecordView: View {
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Label(NSLocalizedString("watch.record.title", comment: ""), systemImage: "mic.fill")
+                    .labelStyle(.iconOnly)
+                    .foregroundStyle(.white.opacity(0.8))
+                    .font(.system(size: 20))
+            }
+        }
     }
 
     private var background: some View {
@@ -82,7 +90,10 @@ struct RecordView: View {
                         .font(.caption2)
                         .foregroundStyle(.white.opacity(0.55))
                 }
-                .transition(.opacity)
+                .transition(.asymmetric(
+                    insertion: .scale(scale: 0.8).combined(with: .opacity),
+                    removal: .scale(scale: 1.2).combined(with: .opacity)
+                ))
             } else {
                 Text(NSLocalizedString("watch.record.tap_hint", comment: ""))
                     .font(.caption.weight(.medium))
@@ -92,11 +103,14 @@ struct RecordView: View {
                     .minimumScaleFactor(0.8)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 4)
-                    .transition(.opacity)
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.8).combined(with: .opacity),
+                        removal: .scale(scale: 1.2).combined(with: .opacity)
+                    ))
             }
         }
         .frame(height: RecordLayout.statusHeight)
-        .animation(.easeInOut(duration: 0.25), value: recorder.isRecording)
+        .animation(.spring(response: 0.4, dampingFraction: 0.75), value: recorder.isRecording)
     }
 
     @ViewBuilder
