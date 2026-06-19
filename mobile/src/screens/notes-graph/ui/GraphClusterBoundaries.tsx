@@ -11,6 +11,7 @@ import {
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, View } from 'react-native';
+import type { SharedValue } from 'react-native-reanimated';
 
 import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
@@ -20,6 +21,7 @@ import type { GraphCluster } from '../lib/graphClusterLayout';
 import { nodeDimensions } from '../lib/graphNodeMetrics';
 import type { GraphNode } from '../lib/graphTypes';
 import { GRAPH_CLUSTER_BOUNDARY_PADDING } from '../lib/graphViewportBounds';
+import { GraphSkiaWorldGroup } from './GraphSkiaWorldGroup';
 
 const CLUSTER_PADDING = GRAPH_CLUSTER_BOUNDARY_PADDING;
 const CLUSTER_LABEL_OFFSET = 16;
@@ -45,8 +47,11 @@ type GraphClusterBoundariesProps = {
   foldersById: Map<string, Folder>;
   isProActive: boolean;
   color: Colors;
-  width: number;
-  height: number;
+  canvasWidth: number;
+  canvasHeight: number;
+  translateX: SharedValue<number>;
+  translateY: SharedValue<number>;
+  scale: SharedValue<number>;
   visible: boolean;
   showFolderClusters?: boolean;
 };
@@ -148,8 +153,11 @@ export const GraphClusterBoundaries = React.memo(function GraphClusterBoundaries
   foldersById,
   isProActive,
   color,
-  width,
-  height,
+  canvasWidth,
+  canvasHeight,
+  translateX,
+  translateY,
+  scale,
   visible,
   showFolderClusters = true,
 }: GraphClusterBoundariesProps) {
@@ -181,9 +189,14 @@ export const GraphClusterBoundaries = React.memo(function GraphClusterBoundaries
   const folderRemovedLabel = t('folders.detailFolderRemoved');
 
   return (
-    <View pointerEvents="none" style={[styles.layer, { width, height }]}>
-      <Canvas style={{ width, height }}>
-        <Group opacity={0.65}>
+    <View pointerEvents="none" style={[styles.layer, { width: canvasWidth, height: canvasHeight }]}>
+      <Canvas style={{ width: canvasWidth, height: canvasHeight }}>
+        <GraphSkiaWorldGroup
+          translateX={translateX}
+          translateY={translateY}
+          scale={scale}
+          opacity={0.65}
+        >
           {clusterBounds.map(({ cluster, minX, minY, width: rectWidth, height: rectHeight }) => {
             const clusterColor = getClusterColor(cluster, color, foldersById, isProActive);
             const dashIntervals = getClusterDashIntervals(cluster);
@@ -218,26 +231,28 @@ export const GraphClusterBoundaries = React.memo(function GraphClusterBoundaries
               </Group>
             );
           })}
-        </Group>
-        {clusterBounds.map(({ cluster, minX, minY }) => {
-          const displayLabel = getClusterDisplayLabel(cluster, foldersById, folderRemovedLabel);
-          const showLabel = !!displayLabel && cluster.nodeIds.length >= 3;
-          if (!showLabel) return null;
+        </GraphSkiaWorldGroup>
+        <GraphSkiaWorldGroup translateX={translateX} translateY={translateY} scale={scale}>
+          {clusterBounds.map(({ cluster, minX, minY }) => {
+            const displayLabel = getClusterDisplayLabel(cluster, foldersById, folderRemovedLabel);
+            const showLabel = !!displayLabel && cluster.nodeIds.length >= 3;
+            if (!showLabel) return null;
 
-          const clusterColor = getClusterColor(cluster, color, foldersById, isProActive);
+            const clusterColor = getClusterColor(cluster, color, foldersById, isProActive);
 
-          return (
-            <Text
-              key={`${cluster.id}-label`}
-              x={minX + CLUSTER_LABEL_OFFSET}
-              y={minY + CLUSTER_LABEL_OFFSET + clusterLabelFont.getSize()}
-              text={displayLabel}
-              font={clusterLabelFont}
-              color={clusterColor}
-              opacity={0.85}
-            />
-          );
-        })}
+            return (
+              <Text
+                key={`${cluster.id}-label`}
+                x={minX + CLUSTER_LABEL_OFFSET}
+                y={minY + CLUSTER_LABEL_OFFSET + clusterLabelFont.getSize()}
+                text={displayLabel}
+                font={clusterLabelFont}
+                color={clusterColor}
+                opacity={0.85}
+              />
+            );
+          })}
+        </GraphSkiaWorldGroup>
       </Canvas>
     </View>
   );

@@ -860,6 +860,38 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       onLayout={handleCanvasLayout}
     >
       <DottedBackground width={viewportWidth} height={viewportHeight} dotColor={color.text.muted} />
+      {!exportBusy ? (
+        <>
+          <GraphClusterBoundaries
+            nodes={displayNodes}
+            clusters={clusters}
+            foldersById={foldersById}
+            isProActive={isProActive}
+            color={color}
+            canvasWidth={viewportWidth}
+            canvasHeight={viewportHeight}
+            translateX={translateX}
+            translateY={translateY}
+            scale={scale}
+            visible
+            showFolderClusters={folderHighlightsVisible}
+          />
+          <GraphEdgeLayer
+            nodes={displayNodes}
+            edges={edges}
+            color={color}
+            canvasWidth={viewportWidth}
+            canvasHeight={viewportHeight}
+            translateX={translateX}
+            translateY={translateY}
+            scale={scale}
+            matchedNodeIds={matchedNodeIds}
+            activeNodeId={activeNodeId}
+            viewportCull={edgeViewportCull}
+            nodeDisplayMode={nodeDisplayMode}
+          />
+        </>
+      ) : null}
       <GestureDetector gesture={canvasGesture}>
         <View collapsable={false} style={{ flex: 1, overflow: 'hidden' }}>
           <Animated.View
@@ -872,28 +904,6 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               animatedStyle,
             ]}
           >
-            <GraphClusterBoundaries
-              nodes={displayNodes}
-              clusters={clusters}
-              foldersById={foldersById}
-              isProActive={isProActive}
-              color={color}
-              width={worldWidth}
-              height={worldHeight}
-              visible={!exportBusy}
-              showFolderClusters={folderHighlightsVisible}
-            />
-            <GraphEdgeLayer
-              nodes={displayNodes}
-              edges={edges}
-              color={color}
-              width={worldWidth}
-              height={worldHeight}
-              matchedNodeIds={matchedNodeIds}
-              activeNodeId={activeNodeId}
-              viewportCull={edgeViewportCull}
-              nodeDisplayMode={nodeDisplayMode}
-            />
             <GraphNodeLayer
               nodes={displayNodes}
               edges={edges}

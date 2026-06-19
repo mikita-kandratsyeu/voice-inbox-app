@@ -1,14 +1,8 @@
 import type { SkPath } from '@shopify/react-native-skia';
-import {
-  Canvas,
-  DashPathEffect,
-  Group,
-  LinearGradient,
-  Path,
-  vec,
-} from '@shopify/react-native-skia';
+import { Canvas, DashPathEffect, LinearGradient, Path, vec } from '@shopify/react-native-skia';
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
+import type { SharedValue } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
 
@@ -17,13 +11,17 @@ import { getGraphEdgeGlowStyle, getGraphEdgeStrokeStyle } from '../lib/graphEdge
 import { getCachedSkiaPath } from '../lib/graphSkiaUtils';
 import { parseStrokeDashIntervals } from '../lib/graphStrokeDash';
 import type { GraphEdge, GraphNode, GraphNodeDisplayMode } from '../lib/graphTypes';
+import { GraphSkiaWorldGroup } from './GraphSkiaWorldGroup';
 
 type GraphEdgeLayerProps = {
   nodes: GraphNode[];
   edges: GraphEdge[];
   color: Colors;
-  width: number;
-  height: number;
+  canvasWidth: number;
+  canvasHeight: number;
+  translateX: SharedValue<number>;
+  translateY: SharedValue<number>;
+  scale: SharedValue<number>;
   matchedNodeIds: ReadonlySet<string> | null;
   activeNodeId: string | null;
   viewportCull?: GraphViewportCull | null;
@@ -97,8 +95,11 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
   nodes,
   edges,
   color,
-  width,
-  height,
+  canvasWidth,
+  canvasHeight,
+  translateX,
+  translateY,
+  scale,
   matchedNodeIds,
   activeNodeId,
   viewportCull = null,
@@ -127,9 +128,9 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
   }
 
   return (
-    <View pointerEvents="none" style={[styles.layer, { width, height }]}>
-      <Canvas style={{ width, height }}>
-        <Group>
+    <View pointerEvents="none" style={[styles.layer, { width: canvasWidth, height: canvasHeight }]}>
+      <Canvas style={{ width: canvasWidth, height: canvasHeight }}>
+        <GraphSkiaWorldGroup translateX={translateX} translateY={translateY} scale={scale}>
           {preparedEdges.map((prepared) =>
             prepared.glow ? (
               <Path
@@ -146,7 +147,7 @@ export const GraphEdgeLayer = React.memo(function GraphEdgeLayer({
           {preparedEdges.map((prepared) => (
             <GraphEdgeStroke key={prepared.edgeId} prepared={prepared} />
           ))}
-        </Group>
+        </GraphSkiaWorldGroup>
       </Canvas>
     </View>
   );
