@@ -1,10 +1,10 @@
+import { adjustEdgeCurvatureForDensity, type EdgeDensityInfo } from './graphEdgeDensity';
 import {
   buildParallelEdgeBendLayout,
   computeCubicEdgePath,
   computeEdgeCurvature,
   computeQuadraticEdgePath,
 } from './graphEdgePath';
-import { adjustEdgeCurvatureForDensity, type EdgeDensityInfo } from './graphEdgeDensity';
 import { type GraphEdgeEmphasis, resolveGraphEdgeEmphasis } from './graphEdgeStyles';
 import { nodeBorderAnchor, nodeCenter } from './graphNodeMetrics';
 import type { GraphEdge, GraphEdgeKind, GraphNode, GraphNodeDisplayMode } from './graphTypes';

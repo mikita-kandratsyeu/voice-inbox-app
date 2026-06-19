@@ -38,7 +38,13 @@ import {
   taskDeadlineValidationErrorKey,
   validateTaskDeadlineFields,
 } from '@/shared/lib/validateTaskDeadlineInput';
-import { EmptyState, FrostedHeaderButtonGroup, HeaderIconButton, ScreenHeader, SectionHeader } from '@/shared/ui';
+import {
+  EmptyState,
+  FrostedHeaderButtonGroup,
+  HeaderIconButton,
+  ScreenHeader,
+  SectionHeader,
+} from '@/shared/ui';
 
 import { sortTaskRows } from '../lib/applyAllTasksQuickFilter';
 import { buildAllTasksRows } from '../lib/buildAllTasksRows';

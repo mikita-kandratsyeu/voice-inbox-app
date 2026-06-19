@@ -11,11 +11,7 @@ import {
 } from '@/app/navigation/config';
 import type { Colors } from '@/shared/config';
 import { hapticLight, hapticMedium, useIsTablet } from '@/shared/lib';
-import {
-  FloatingFrostedChrome,
-  FloatingFrostedChromeDivider,
-  HeaderIconButton,
-} from '@/shared/ui';
+import { FloatingFrostedChrome, FloatingFrostedChromeDivider, HeaderIconButton } from '@/shared/ui';
 
 type BatchActionBarProps = {
   count: number;

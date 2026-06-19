@@ -189,10 +189,7 @@ export const GraphClusterBoundaries = React.memo(function GraphClusterBoundaries
   const folderRemovedLabel = t('folders.detailFolderRemoved');
 
   return (
-    <View
-      pointerEvents="none"
-      style={[styles.layer, { width: canvasWidth, height: canvasHeight }]}
-    >
+    <View pointerEvents="none" style={[styles.layer, { width: canvasWidth, height: canvasHeight }]}>
       <Canvas style={{ width: canvasWidth, height: canvasHeight }}>
         <GraphSkiaWorldGroup
           translateX={translateX}

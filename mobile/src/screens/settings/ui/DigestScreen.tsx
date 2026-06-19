@@ -44,7 +44,13 @@ import {
   formatLocalTimeOfDay,
   formatTaskDeadlineTimeForDisplay,
 } from '@/shared/lib/taskDeadlineTimeDisplay';
-import { Button, FrostedHeaderIconButton, NoteMarkdown, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
+import {
+  Button,
+  FrostedHeaderIconButton,
+  NoteMarkdown,
+  SCREEN_PADDING,
+  ScreenHeader,
+} from '@/shared/ui';
 
 import { getSettingsIconColor } from '../lib';
 import { buildAppStats, formatDigestDurationMs } from '../lib/appStats';

@@ -7,7 +7,7 @@ import type { BatchSelectState } from '@/features/batch-select';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
-import { HeaderIconButton, FrostedChromeSurface, FrostedHeaderButtonGroup } from '@/shared/ui';
+import { FrostedChromeSurface, FrostedHeaderButtonGroup, HeaderIconButton } from '@/shared/ui';
 
 type InboxScreenHeaderRightProps = {
   color: Colors;

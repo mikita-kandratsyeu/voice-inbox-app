@@ -355,7 +355,9 @@ function assignClusterInitialPositions(
 
     tasks.forEach((taskId, index) => {
       const horizontalSpread =
-        tasks.length > 1 ? (index - (tasks.length - 1) / 2) * (taskSpan + TASK_PARENT_INITIAL_GAP) : 0;
+        tasks.length > 1
+          ? (index - (tasks.length - 1) / 2) * (taskSpan + TASK_PARENT_INITIAL_GAP)
+          : 0;
       graph.setNodeAttribute(taskId, 'x', px + horizontalSpread);
       graph.setNodeAttribute(taskId, 'y', verticalBase);
     });
@@ -400,7 +402,9 @@ function placeTasksNearParentsInGraph(
 
     tasks.forEach((taskId, index) => {
       const horizontalSpread =
-        tasks.length > 1 ? (index - (tasks.length - 1) / 2) * (taskSpan + TASK_PARENT_INITIAL_GAP) : 0;
+        tasks.length > 1
+          ? (index - (tasks.length - 1) / 2) * (taskSpan + TASK_PARENT_INITIAL_GAP)
+          : 0;
       graph.setNodeAttribute(taskId, 'x', px + horizontalSpread);
       graph.setNodeAttribute(taskId, 'y', verticalBase);
     });
@@ -993,7 +997,9 @@ export function reanchorClusterTaskNodes(nodes: GraphNode[], edges: GraphEdge[])
 
     tasks.forEach((task, index) => {
       const horizontalSpread =
-        tasks.length > 1 ? (index - (tasks.length - 1) / 2) * (taskSpan + TASK_PARENT_INITIAL_GAP) : 0;
+        tasks.length > 1
+          ? (index - (tasks.length - 1) / 2) * (taskSpan + TASK_PARENT_INITIAL_GAP)
+          : 0;
       const taskCenterX = parentCenter.x + horizontalSpread;
       const taskCenterY = verticalTop + taskDims.height / 2;
       task.x = taskCenterX - taskDims.width / 2;

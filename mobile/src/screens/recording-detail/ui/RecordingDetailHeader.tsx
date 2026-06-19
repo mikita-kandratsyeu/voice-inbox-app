@@ -10,7 +10,12 @@ import type { VoiceRecord } from '@/entities/record';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
-import { HeaderIconButton, PrivateExecutionBadge, FrostedHeaderButtonGroup, FrostedHeaderIconButton } from '@/shared/ui';
+import {
+  FrostedHeaderButtonGroup,
+  FrostedHeaderIconButton,
+  HeaderIconButton,
+  PrivateExecutionBadge,
+} from '@/shared/ui';
 
 type RecordingDetailHeaderProps = {
   record: VoiceRecord;

@@ -69,10 +69,7 @@ export const RecordScreenHeader = ({ state, onClose }: RecordScreenHeaderProps) 
                 borderColor: 'rgba(255,255,255,0.88)',
               }}
             />
-            <Text
-              className="text-[13px] font-semibold tracking-wide text-white"
-              numberOfLines={1}
-            >
+            <Text className="text-[13px] font-semibold tracking-wide text-white" numberOfLines={1}>
               {getHeaderTitle(state)}
             </Text>
           </View>

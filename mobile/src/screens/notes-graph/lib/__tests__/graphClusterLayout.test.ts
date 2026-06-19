@@ -1,8 +1,8 @@
 import type { VoiceRecord } from '@/entities/record';
 
 import { buildGraphClusters, layoutNodesByClusters } from '../graphClusterLayout';
-import { graphNodeSearchText } from '../graphNodeSearchText';
 import { nodeCenter } from '../graphNodeMetrics';
+import { graphNodeSearchText } from '../graphNodeSearchText';
 import type { GraphEdge, GraphNode } from '../graphTypes';
 import { recordNodeId, taskNodeId } from '../graphTypes';
 import { minNodeCenterDistance, runForceLayout } from '../runForceLayout';
