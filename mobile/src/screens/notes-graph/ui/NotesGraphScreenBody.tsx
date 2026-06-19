@@ -27,8 +27,10 @@ import { buildLocalGraphNeighborhood } from '../lib/buildLocalGraphNeighborhood'
 import { buildNotesGraphPersistKey } from '../lib/buildNotesGraphPersistKey';
 import { formatGraphAppliedLayoutHeaderSubtitle } from '../lib/formatGraphAppliedLayoutHeaderSubtitle';
 import { getGraphShowArchived, setGraphShowArchived } from '../lib/graphArchivePreferences';
-import type { GraphExportBackgroundId } from '../lib/graphExportBackground';
-import { shouldRecaptureGraphExportForBackground } from '../lib/graphExportColors';
+import {
+  GRAPH_EXPORT_DEFAULT_BACKGROUND_ID,
+  type GraphExportBackgroundId,
+} from '../lib/graphExportBackground';
 import {
   getGraphFolderHighlightsVisible,
   setGraphFolderHighlightsVisible,
@@ -163,17 +165,18 @@ export const NotesGraphScreenBody = () => {
     height: number;
   } | null>(null);
   const [isCapturingExport, setIsCapturingExport] = useState(false);
-  const [isRecapturingExport, setIsRecapturingExport] = useState(false);
   const [isExportCaptureMount, setIsExportCaptureMount] = useState(false);
   const [exportCaptureBackgroundId, setExportCaptureBackgroundId] =
-    useState<GraphExportBackgroundId>('canvas');
+    useState<GraphExportBackgroundId>(GRAPH_EXPORT_DEFAULT_BACKGROUND_ID);
   const [folderHighlightsVisible, setFolderHighlightsVisible] = useState(() =>
     getGraphFolderHighlightsVisible(),
   );
   const [minimapVisible, setMinimapVisible] = useState(() => getGraphMinimapVisible());
   const [nodeDisplayMode, setNodeDisplayMode] = useState(() => getGraphNodeDisplayMode());
   const exportCaptureTokenRef = useRef(0);
-  const exportPreviewBackgroundIdRef = useRef<GraphExportBackgroundId>('canvas');
+  const exportPreviewBackgroundIdRef = useRef<GraphExportBackgroundId>(
+    GRAPH_EXPORT_DEFAULT_BACKGROUND_ID,
+  );
   const [activeSavedVersion, setActiveSavedVersion] = useState<NotesGraphLayoutVersionEntry | null>(
     null,
   );
@@ -830,7 +833,7 @@ export const NotesGraphScreenBody = () => {
   ]);
 
   const handleOpenExportPreview = useCallback(() => {
-    if (isCapturingExport || isRecapturingExport) return;
+    if (isCapturingExport) return;
 
     if (layoutNodes.length > 150) {
       Alert.alert(
@@ -844,8 +847,8 @@ export const NotesGraphScreenBody = () => {
               exportCaptureTokenRef.current += 1;
               setExportPreviewUri(null);
               setExportPreviewSize(null);
-              setExportCaptureBackgroundId('canvas');
-              exportPreviewBackgroundIdRef.current = 'canvas';
+              setExportCaptureBackgroundId(GRAPH_EXPORT_DEFAULT_BACKGROUND_ID);
+              exportPreviewBackgroundIdRef.current = GRAPH_EXPORT_DEFAULT_BACKGROUND_ID;
               setIsCapturingExport(true);
             },
           },
@@ -858,10 +861,10 @@ export const NotesGraphScreenBody = () => {
 
     setExportPreviewUri(null);
     setExportPreviewSize(null);
-    setExportCaptureBackgroundId('canvas');
-    exportPreviewBackgroundIdRef.current = 'canvas';
+    setExportCaptureBackgroundId(GRAPH_EXPORT_DEFAULT_BACKGROUND_ID);
+    exportPreviewBackgroundIdRef.current = GRAPH_EXPORT_DEFAULT_BACKGROUND_ID;
     setIsCapturingExport(true);
-  }, [isCapturingExport, isRecapturingExport, layoutNodes.length, t]);
+  }, [isCapturingExport, layoutNodes.length, t]);
 
   useEffect(() => {
     if (!isCapturingExport || exportPreviewUri != null) {
@@ -923,51 +926,10 @@ export const NotesGraphScreenBody = () => {
     };
   }, [exportPreviewUri, isCapturingExport, t]);
 
-  const handleExportBackgroundChange = useCallback(
-    async (backgroundId: GraphExportBackgroundId) => {
-      const previousBackgroundId = exportPreviewBackgroundIdRef.current;
-      exportPreviewBackgroundIdRef.current = backgroundId;
-      setExportCaptureBackgroundId(backgroundId);
-
-      if (
-        !shouldRecaptureGraphExportForBackground(previousBackgroundId, backgroundId) ||
-        isCapturingExport ||
-        isRecapturingExport
-      ) {
-        return;
-      }
-
-      const captureToken = exportCaptureTokenRef.current + 1;
-      exportCaptureTokenRef.current = captureToken;
-      setIsRecapturingExport(true);
-      await waitForNextFrame();
-      if (captureToken !== exportCaptureTokenRef.current) return;
-
-      setIsExportCaptureMount(true);
-      await waitForNextFrame();
-      if (captureToken !== exportCaptureTokenRef.current) return;
-
-      try {
-        const captured = await canvasRef.current?.captureImage();
-        if (captureToken !== exportCaptureTokenRef.current) return;
-        if (!captured?.uri) {
-          throw new Error('recapture returned empty uri');
-        }
-
-        setExportPreviewUri(captured.uri);
-        setExportPreviewSize({ width: captured.width, height: captured.height });
-      } catch {
-        if (captureToken !== exportCaptureTokenRef.current) return;
-        Alert.alert(t('common.error'), t('notesGraph.export.failed'));
-      } finally {
-        if (captureToken === exportCaptureTokenRef.current) {
-          setIsExportCaptureMount(false);
-          setIsRecapturingExport(false);
-        }
-      }
-    },
-    [isCapturingExport, isRecapturingExport, t],
-  );
+  const handleExportBackgroundChange = useCallback((backgroundId: GraphExportBackgroundId) => {
+    exportPreviewBackgroundIdRef.current = backgroundId;
+    setExportCaptureBackgroundId(backgroundId);
+  }, []);
 
   const notesGraphMenuActions = useMemo(() => {
     const titleColor = color.text.primary;
@@ -1239,7 +1201,7 @@ export const NotesGraphScreenBody = () => {
             onDiscardLayout={handleDiscardUnsavedLayoutChanges}
             exportCaptureActive={isExportCaptureMount}
             exportCaptureBackgroundId={exportCaptureBackgroundId}
-            isExportCapturing={isCapturingExport || isRecapturingExport}
+            isExportCapturing={isCapturingExport}
             folderHighlightsVisible={folderHighlightsVisible}
             minimapVisible={minimapVisible}
           />
@@ -1281,20 +1243,16 @@ export const NotesGraphScreenBody = () => {
         visible={exportSheetVisible}
         imageUri={exportPreviewUri}
         imagePixelSize={exportPreviewSize}
-        isLoadingPreview={isRecapturingExport}
-        onBackgroundChange={(backgroundId) => {
-          void handleExportBackgroundChange(backgroundId);
-        }}
+        onBackgroundChange={handleExportBackgroundChange}
         onClose={() => {
           exportCaptureTokenRef.current += 1;
           setExportSheetVisible(false);
           setExportPreviewUri(null);
           setExportPreviewSize(null);
-          setExportCaptureBackgroundId('canvas');
-          exportPreviewBackgroundIdRef.current = 'canvas';
+          setExportCaptureBackgroundId(GRAPH_EXPORT_DEFAULT_BACKGROUND_ID);
+          exportPreviewBackgroundIdRef.current = GRAPH_EXPORT_DEFAULT_BACKGROUND_ID;
           setIsExportCaptureMount(false);
           setIsCapturingExport(false);
-          setIsRecapturingExport(false);
         }}
       />
 

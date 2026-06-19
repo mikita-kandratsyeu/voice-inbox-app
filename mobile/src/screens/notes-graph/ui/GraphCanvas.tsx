@@ -42,7 +42,10 @@ import {
 } from '../lib/graphCanvasGestures';
 import { buildGraphClusters } from '../lib/graphClusterLayout';
 import { GRAPH_DRAG_RECONCILE_MIN_MS } from '../lib/graphDragReconcile';
-import type { GraphExportBackgroundId } from '../lib/graphExportBackground';
+import {
+  GRAPH_EXPORT_DEFAULT_BACKGROUND_ID,
+  type GraphExportBackgroundId,
+} from '../lib/graphExportBackground';
 import { resolveGraphExportColors } from '../lib/graphExportColors';
 import { getSessionNodePositions, setSessionNodePosition } from '../lib/graphSessionLayout';
 import type { GraphEdge, GraphNode, GraphNodeDisplayMode } from '../lib/graphTypes';
@@ -179,7 +182,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     onSaveLayout,
     onDiscardLayout,
     exportCaptureActive = false,
-    exportCaptureBackgroundId = 'canvas',
+    exportCaptureBackgroundId = GRAPH_EXPORT_DEFAULT_BACKGROUND_ID,
     isExportCapturing = false,
     folderHighlightsVisible = true,
     minimapVisible = true,

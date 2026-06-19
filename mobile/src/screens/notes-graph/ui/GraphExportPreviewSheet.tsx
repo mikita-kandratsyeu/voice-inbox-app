@@ -16,6 +16,7 @@ import {
 
 import { getGraphExportViewShotCaptureOptions } from '../lib/computeGraphExportLayout';
 import {
+  GRAPH_EXPORT_DEFAULT_BACKGROUND_ID,
   type GraphExportBackgroundId,
   resolveGraphExportBackground,
 } from '../lib/graphExportBackground';
@@ -89,7 +90,9 @@ export function GraphExportPreviewSheet({
   const [previewWidth, setPreviewWidth] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
   const [cropTemplateId, setCropTemplateId] = useState<CropAspectTemplateId>('full');
-  const [backgroundId, setBackgroundId] = useState<GraphExportBackgroundId>('canvas');
+  const [backgroundId, setBackgroundId] = useState<GraphExportBackgroundId>(
+    GRAPH_EXPORT_DEFAULT_BACKGROUND_ID,
+  );
 
   const backgroundStyle = useMemo(
     () => resolveGraphExportBackground(backgroundId, color),
@@ -101,7 +104,7 @@ export function GraphExportPreviewSheet({
       setImageSize(null);
       setCrop(null);
       setCropTemplateId('full');
-      setBackgroundId('canvas');
+      setBackgroundId(GRAPH_EXPORT_DEFAULT_BACKGROUND_ID);
       return;
     }
 
@@ -188,24 +191,17 @@ export function GraphExportPreviewSheet({
   const handleExport = useCallback(async () => {
     if (!imageUri || !imageSize || !crop || isExporting || isLoadingPreview) return;
 
-    const needsCompositeCapture =
-      backgroundId !== 'transparent' || !isFullImageCrop(crop, imageSize.width, imageSize.height);
-
-    if (needsCompositeCapture) {
-      setIsExporting(true);
-      await waitForNextFrame();
-    }
+    setIsExporting(true);
+    await waitForNextFrame();
 
     try {
       let exportUri = imageUri;
 
-      if (needsCompositeCapture) {
-        const captured = await cropCaptureRef.current?.capture?.();
-        if (!captured) {
-          throw new Error('composite capture failed');
-        }
-        exportUri = captured;
+      const captured = await cropCaptureRef.current?.capture?.();
+      if (!captured) {
+        throw new Error('composite capture failed');
       }
+      exportUri = captured;
 
       const shareUrl = exportUri.startsWith('file://') ? exportUri : `file://${exportUri}`;
 
@@ -225,7 +221,7 @@ export function GraphExportPreviewSheet({
     } finally {
       setIsExporting(false);
     }
-  }, [backgroundId, crop, imageSize, imageUri, isExporting, isLoadingPreview, onClose, t]);
+  }, [crop, imageSize, imageUri, isExporting, isLoadingPreview, onClose, t]);
 
   const isPreviewBusy = isLoadingPreview || isExporting;
   const loadingLabel = t('share.exportPreparing');
@@ -346,10 +342,7 @@ export function GraphExportPreviewSheet({
             ref={cropCaptureRef}
             options={getGraphExportViewShotCaptureOptions()}
             style={{
-              backgroundColor:
-                backgroundStyle.backgroundColor === 'transparent'
-                  ? 'transparent'
-                  : backgroundStyle.backgroundColor,
+              backgroundColor: backgroundStyle.backgroundColor,
               height: cropCaptureLayout.shotHeight,
               width: cropCaptureLayout.shotWidth,
             }}

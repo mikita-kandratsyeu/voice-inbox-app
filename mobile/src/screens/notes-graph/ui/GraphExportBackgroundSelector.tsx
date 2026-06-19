@@ -6,12 +6,12 @@ import { Pressable, Text } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { hapticSelection, inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
+import { hapticSelection, type NativeMenuAction } from '@/shared/lib';
 import { FILTER_CHIP_LABEL_STYLE } from '@/shared/ui/filterChipMetrics';
 
 import {
-  GRAPH_EXPORT_CANVAS_BACKGROUND_ID,
-  GRAPH_EXPORT_COLOR_BACKGROUND_IDS,
+  GRAPH_EXPORT_BACKGROUND_IDS,
+  GRAPH_EXPORT_DEFAULT_BACKGROUND_ID,
   type GraphExportBackgroundId,
   graphExportBackgroundLabelKey,
   isGraphExportBackgroundId,
@@ -40,33 +40,20 @@ export function GraphExportBackgroundSelector({
 
   const label = t(`notesGraph.export.${graphExportBackgroundLabelKey(value)}`);
   const accessibilityLabel = `${t('notesGraph.export.backgroundLabel')}: ${label}`;
-  const isDefaultBackground = value === GRAPH_EXPORT_CANVAS_BACKGROUND_ID;
+  const isDefaultBackground = value === GRAPH_EXPORT_DEFAULT_BACKGROUND_ID;
   const tone = getGraphExportControlTone(color, {
     isActive: !isDefaultBackground,
     disabled,
   });
 
   const menuActions = useMemo<NativeMenuAction[]>(
-    () => [
-      {
-        id: GRAPH_EXPORT_CANVAS_BACKGROUND_ID,
-        title: t(
-          `notesGraph.export.${graphExportBackgroundLabelKey(GRAPH_EXPORT_CANVAS_BACKGROUND_ID)}`,
-        ),
+    () =>
+      GRAPH_EXPORT_BACKGROUND_IDS.map((backgroundId) => ({
+        id: backgroundId,
+        title: t(`notesGraph.export.${graphExportBackgroundLabelKey(backgroundId)}`),
         titleColor: color.text.primary,
-        state: value === GRAPH_EXPORT_CANVAS_BACKGROUND_ID ? 'on' : 'off',
-      },
-      inlineNativeMenuSection(
-        'colorBackgroundsSection',
-        color.text.primary,
-        GRAPH_EXPORT_COLOR_BACKGROUND_IDS.map((backgroundId) => ({
-          id: backgroundId,
-          title: t(`notesGraph.export.${graphExportBackgroundLabelKey(backgroundId)}`),
-          titleColor: color.text.primary,
-          state: backgroundId === value ? 'on' : 'off',
-        })),
-      ),
-    ],
+        state: backgroundId === value ? 'on' : 'off',
+      })),
     [color.text.primary, t, value],
   );
 
