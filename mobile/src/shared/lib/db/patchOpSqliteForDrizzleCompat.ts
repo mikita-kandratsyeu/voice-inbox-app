@@ -1,7 +1,9 @@
-import type { DB } from '@op-engineering/op-sqlite';
+import type { DB, Scalar } from '@op-engineering/op-sqlite';
 
-type RawQueryResult = {
-  rawRows?: unknown[][];
+type ExecuteRawAsync = (query: string, params?: Scalar[]) => Promise<unknown[][]>;
+
+type DrizzleCompatDB = DB & {
+  executeRawAsync: ExecuteRawAsync;
 };
 
 /**
@@ -9,15 +11,11 @@ type RawQueryResult = {
  * 0.45 expects `executeRawAsync` to return `unknown[][]` for SELECT field mapping.
  */
 export function patchOpSqliteForDrizzleCompat(db: DB): DB {
-  const executeRawAsync = db.executeRawAsync?.bind(db);
-  if (!executeRawAsync) return db;
+  const patched = db as DrizzleCompatDB;
 
-  db.executeRawAsync = async (query, params) => {
-    const result = await executeRawAsync(query, params);
-    if (Array.isArray(result)) {
-      return result;
-    }
-    const rawRows = (result as RawQueryResult | null)?.rawRows;
+  patched.executeRawAsync = async (query, params) => {
+    const result = await db.executeRaw(query, params);
+    const rawRows = result?.rawRows;
     return Array.isArray(rawRows) ? rawRows : [];
   };
 
