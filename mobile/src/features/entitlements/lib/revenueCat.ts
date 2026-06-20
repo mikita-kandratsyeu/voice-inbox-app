@@ -74,6 +74,25 @@ function logPurchasesFailure(context: string, e: unknown): void {
 let sessionConfigured = false;
 let boundAppUserId: string | null = null;
 let listenerRegistered = false;
+let initPromise: Promise<void> | null = null;
+
+export async function waitForRevenueCatReady(): Promise<boolean> {
+  if (!getRevenueCatIntegrationEnabled()) {
+    return false;
+  }
+  if (sessionConfigured) {
+    return true;
+  }
+  if (!initPromise) {
+    return false;
+  }
+  try {
+    await initPromise;
+  } catch {
+    return false;
+  }
+  return sessionConfigured;
+}
 
 function applyCustomerInfoToProStorage(info: CustomerInfo): void {
   const entitlementId = getEntitlementId();
@@ -117,6 +136,9 @@ async function onCustomerInfoUpdated(
 
 export async function refreshProEntitlementFromRevenueCatOnly(): Promise<void> {
   if (!getRevenueCatIntegrationEnabled()) {
+    return;
+  }
+  if (!(await waitForRevenueCatReady())) {
     return;
   }
   try {
@@ -267,6 +289,27 @@ function pickPackageFromOffering(offering: PurchasesOffering | null): PurchasesP
   );
 }
 
+async function configureRevenueCatSession(apiKey: string, trimmedDeviceId: string): Promise<void> {
+  if (!sessionConfigured) {
+    Purchases.configure({ apiKey, appUserID: trimmedDeviceId });
+    sessionConfigured = true;
+    boundAppUserId = trimmedDeviceId;
+  } else if (boundAppUserId !== trimmedDeviceId) {
+    await Purchases.logIn(trimmedDeviceId);
+    boundAppUserId = trimmedDeviceId;
+  }
+
+  if (!listenerRegistered) {
+    Purchases.addCustomerInfoUpdateListener((info) => {
+      void onCustomerInfoUpdated(info);
+    });
+    listenerRegistered = true;
+  }
+
+  const info = await Purchases.getCustomerInfo();
+  await onCustomerInfoUpdated(info, { forceRevenueCatServerSync: true });
+}
+
 export async function initRevenueCatWhenReady(deviceId: string): Promise<void> {
   if (!getRevenueCatIntegrationEnabled()) {
     return;
@@ -277,26 +320,32 @@ export async function initRevenueCatWhenReady(deviceId: string): Promise<void> {
     return;
   }
 
+  if (sessionConfigured && boundAppUserId === trimmed) {
+    return;
+  }
+
+  if (initPromise) {
+    try {
+      await initPromise;
+    } catch (e) {
+      logPurchasesFailure('init', e);
+    }
+
+    if (boundAppUserId !== trimmed) {
+      try {
+        await configureRevenueCatSession(apiKey, trimmed);
+      } catch (e) {
+        logPurchasesFailure('init', e);
+      }
+    }
+    return;
+  }
+
+  initPromise = configureRevenueCatSession(apiKey, trimmed);
   try {
-    if (!sessionConfigured) {
-      Purchases.configure({ apiKey, appUserID: trimmed });
-      sessionConfigured = true;
-      boundAppUserId = trimmed;
-    } else if (boundAppUserId !== trimmed) {
-      await Purchases.logIn(trimmed);
-      boundAppUserId = trimmed;
-    }
-
-    if (!listenerRegistered) {
-      Purchases.addCustomerInfoUpdateListener((info) => {
-        void onCustomerInfoUpdated(info);
-      });
-      listenerRegistered = true;
-    }
-
-    const info = await Purchases.getCustomerInfo();
-    await onCustomerInfoUpdated(info, { forceRevenueCatServerSync: true });
+    await initPromise;
   } catch (e) {
+    initPromise = null;
     logPurchasesFailure('init', e);
   }
 }
@@ -307,26 +356,26 @@ export type RestoreProPurchasesResult =
   | { ok: true; entitlementActive: boolean }
   | { ok: false; message: string };
 
+const emptyIapBillingOptions: IapBillingOptions = {
+  monthly: null,
+  annual: null,
+  annualComparedToMonthlyYearPriceString: null,
+  savePercentVsMonthly: null,
+};
+
 export async function getProBillingPriceOptions(): Promise<IapBillingOptions> {
   if (!getRevenueCatIntegrationEnabled()) {
-    return {
-      monthly: null,
-      annual: null,
-      annualComparedToMonthlyYearPriceString: null,
-      savePercentVsMonthly: null,
-    };
+    return emptyIapBillingOptions;
+  }
+  if (!(await waitForRevenueCatReady())) {
+    return emptyIapBillingOptions;
   }
   try {
     const offerings = await Purchases.getOfferings();
     const o = offerings.current;
 
     if (!o) {
-      return {
-        monthly: null,
-        annual: null,
-        annualComparedToMonthlyYearPriceString: null,
-        savePercentVsMonthly: null,
-      };
+      return emptyIapBillingOptions;
     }
 
     const monthly = billingRowFromProduct(o.monthly?.product, 'monthly');
@@ -358,12 +407,7 @@ export async function getProBillingPriceOptions(): Promise<IapBillingOptions> {
     return { monthly, annual, annualComparedToMonthlyYearPriceString, savePercentVsMonthly };
   } catch (e) {
     logPurchasesFailure('getProBillingPriceOptions', e);
-    return {
-      monthly: null,
-      annual: null,
-      annualComparedToMonthlyYearPriceString: null,
-      savePercentVsMonthly: null,
-    };
+    return emptyIapBillingOptions;
   }
 }
 
@@ -371,6 +415,9 @@ export async function purchaseProPackageForPeriod(
   period: IapBillingPeriod,
 ): Promise<PurchaseProResult> {
   if (!getRevenueCatIntegrationEnabled()) {
+    return { ok: false, cancelled: false, message: 'iap_unavailable' };
+  }
+  if (!(await waitForRevenueCatReady())) {
     return { ok: false, cancelled: false, message: 'iap_unavailable' };
   }
   try {
@@ -401,6 +448,9 @@ export async function purchaseDefaultProPackage(): Promise<PurchaseProResult> {
   if (!getRevenueCatIntegrationEnabled()) {
     return { ok: false, cancelled: false, message: 'iap_unavailable' };
   }
+  if (!(await waitForRevenueCatReady())) {
+    return { ok: false, cancelled: false, message: 'iap_unavailable' };
+  }
 
   try {
     const offerings = await Purchases.getOfferings();
@@ -428,6 +478,9 @@ export async function purchaseDefaultProPackage(): Promise<PurchaseProResult> {
 
 export async function restoreProPurchases(): Promise<RestoreProPurchasesResult> {
   if (!getRevenueCatIntegrationEnabled()) {
+    return { ok: false, message: 'iap_unavailable' };
+  }
+  if (!(await waitForRevenueCatReady())) {
     return { ok: false, message: 'iap_unavailable' };
   }
 
@@ -480,6 +533,9 @@ export async function getAiLimitResetProduct(): Promise<AiLimitResetProduct | nu
   if (!getRevenueCatIntegrationEnabled()) {
     return null;
   }
+  if (!(await waitForRevenueCatReady())) {
+    return null;
+  }
 
   const productId = getAiResetProductId();
   if (!productId) {
@@ -515,6 +571,9 @@ export async function getAiLimitResetProduct(): Promise<AiLimitResetProduct | nu
 
 export async function purchaseAiLimitReset(): Promise<PurchaseAiLimitResetResult> {
   if (!getRevenueCatIntegrationEnabled()) {
+    return { ok: false, cancelled: false, message: 'iap_unavailable' };
+  }
+  if (!(await waitForRevenueCatReady())) {
     return { ok: false, cancelled: false, message: 'iap_unavailable' };
   }
 

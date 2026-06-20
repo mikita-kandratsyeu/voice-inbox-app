@@ -1,5 +1,6 @@
 import Purchases from 'react-native-purchases';
 
+import { waitForRevenueCatReady } from '@/features/entitlements/lib/revenueCat';
 import {
   getRevenueCatApiKeyAndroid,
   getRevenueCatApiKeyIos,
@@ -24,6 +25,9 @@ export function isRevenueCatStoreBillingConfigured(): boolean {
 
 export async function isStoreProEntitlementActiveNow(): Promise<boolean> {
   if (!isRevenueCatStoreBillingConfigured()) {
+    return false;
+  }
+  if (!(await waitForRevenueCatReady())) {
     return false;
   }
 

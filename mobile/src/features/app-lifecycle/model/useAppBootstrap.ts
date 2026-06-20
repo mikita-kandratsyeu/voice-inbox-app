@@ -112,6 +112,18 @@ export function useAppBootstrap(
         notifyReady();
 
         void (async () => {
+          const revenueCatInit = (async () => {
+            try {
+              const deviceId = await getOrCreateDeviceId();
+              await Promise.all([syncCrashlyticsUserId(deviceId), syncAnalyticsUserId(deviceId)]);
+              if (!cancelled) {
+                await initRevenueCatWhenReady(deviceId);
+              }
+            } catch {
+              diagWarn('[bootstrap] failed to sync analytics/crashlytics user id');
+            }
+          })();
+
           const warmed = await warmWebApiAuth();
           if (!warmed) {
             diagWarn('[bootstrap] Web API auth warm-up failed');
@@ -124,15 +136,7 @@ export function useAppBootstrap(
           notifyWebApiReady();
           prefetchModelManifest();
 
-          try {
-            const deviceId = await getOrCreateDeviceId();
-            await Promise.all([syncCrashlyticsUserId(deviceId), syncAnalyticsUserId(deviceId)]);
-            if (!cancelled) {
-              void initRevenueCatWhenReady(deviceId);
-            }
-          } catch {
-            diagWarn('[bootstrap] failed to sync analytics/crashlytics user id');
-          }
+          await revenueCatInit;
 
           try {
             const initial = await getInitialNotification(getMessaging());
