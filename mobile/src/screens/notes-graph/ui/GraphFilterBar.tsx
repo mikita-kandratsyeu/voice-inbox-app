@@ -1,4 +1,4 @@
-import { Folder as FolderIcon, LayoutGrid, Tag as TagIcon, Waypoints } from 'lucide-react-native';
+import { Folder as FolderIcon, Tag as TagIcon, Waypoints } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -20,9 +20,11 @@ import {
   filterChipRowStyle,
 } from '@/shared/ui/filterChipMetrics';
 
+import { getLayoutModeIconAccent } from '../lib/graphLayoutModeAccent';
 import type { GraphFilters } from '../lib/graphTypes';
 import { GraphConnectionsFilterSheet } from './GraphConnectionsFilterSheet';
 import { GraphFolderPickerSheet } from './GraphFolderPickerSheet';
+import { GraphLayoutModeIcon } from './GraphLayoutModeIcon';
 import { GraphLayoutModeSheet } from './GraphLayoutModeSheet';
 import { TagPickerSheet } from './TagPickerSheet';
 
@@ -57,14 +59,20 @@ type ChipTone = {
   foregroundColor: string;
 };
 
-function pickerChipTone(color: Colors, emphasized: boolean, isDark: boolean): ChipTone {
+function pickerChipTone(
+  color: Colors,
+  emphasized: boolean,
+  isDark: boolean,
+  accentHex?: string,
+): ChipTone {
   if (emphasized) {
+    const accent = accentHex ?? color.accent.primary;
     const fillAlpha = isDark ? 0.2 : 0.12;
     const borderAlpha = isDark ? 0.48 : 0.34;
     return {
-      backgroundColor: withAlphaHex(color.accent.primary, fillAlpha),
-      borderColor: withAlphaHex(color.accent.primary, borderAlpha),
-      foregroundColor: color.accent.primary,
+      backgroundColor: withAlphaHex(accent, fillAlpha),
+      borderColor: withAlphaHex(accent, borderAlpha),
+      foregroundColor: accent,
     };
   }
 
@@ -172,7 +180,12 @@ export function GraphFilterBar({
     ? t('notesGraph.filters.connectionsCount', { count: activeConnectionCount })
     : t('notesGraph.filters.pickConnections');
 
-  const layoutChipTone = pickerChipTone(color, false, isDark);
+  const layoutChipTone = pickerChipTone(
+    color,
+    true,
+    isDark,
+    getLayoutModeIconAccent(filters.layoutMode, color),
+  );
   const tagsChipTone = pickerChipTone(color, tagsSelected, isDark);
   const connectionsChipTone = pickerChipTone(color, connectionsCustomized, isDark);
 
@@ -213,10 +226,10 @@ export function GraphFilterBar({
           disabled={disabled}
           onPress={() => setLayoutModePickerVisible(true)}
           icon={
-            <LayoutGrid
+            <GraphLayoutModeIcon
+              mode={filters.layoutMode}
+              accentHex={layoutChipTone.foregroundColor}
               size={FILTER_CHIP_ICON_SIZE}
-              color={pickerIconColor(layoutChipTone)}
-              strokeWidth={2}
             />
           }
         />
