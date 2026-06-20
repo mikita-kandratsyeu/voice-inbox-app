@@ -1,12 +1,14 @@
 import { IOS_DOCUMENT_PATH, IOS_LIBRARY_PATH, open } from '@op-engineering/op-sqlite';
 import { drizzle } from 'drizzle-orm/op-sqlite';
-import { migrate } from 'drizzle-orm/op-sqlite/migrator';
 
 import { diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 
 import { IS_IOS } from '../platform';
 import { migrationsConfig } from './migrations';
+import { patchOpSqliteForDrizzleCompat } from './patchOpSqliteForDrizzleCompat';
+import { reconcileMigrationJournal } from './reconcileMigrationJournal';
+import { getMaxMigrationIdx, runMigrations } from './runMigrations';
 import * as schema from './schema';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -67,9 +69,16 @@ async function openAndMigrateDb(): Promise<void> {
   }
 
   const sqlite = open(openParams);
+  patchOpSqliteForDrizzleCompat(sqlite);
+
   const db = drizzle(sqlite, { schema });
 
-  await migrate(db, migrationsConfig);
+  const reconcile = await reconcileMigrationJournal(sqlite, migrationsConfig.journal.entries);
+  const maxIdx = getMaxMigrationIdx();
+
+  if (reconcile.highestIdx !== maxIdx) {
+    await runMigrations(sqlite, reconcile.highestIdx ?? -1);
+  }
 
   _db = db;
 }
