@@ -371,7 +371,7 @@ export function EvenlySpacedBottomTabBar({ state, navigation, descriptors, inset
 
             if (!focused && !event.defaultPrevented) {
               navigation.dispatch({
-                ...CommonActions.navigate(route),
+                ...CommonActions.navigate(route.name, route.params),
                 target: state.key,
               });
             }

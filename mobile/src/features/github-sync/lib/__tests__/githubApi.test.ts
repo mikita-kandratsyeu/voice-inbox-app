@@ -178,6 +178,46 @@ describe('githubApi', () => {
         },
       ]);
     });
+
+    it('fetches additional pages when GitHub returns a next link', async () => {
+      const pageOne = Array.from({ length: 100 }, (_, index) => ({
+        id: index + 1,
+        full_name: `octocat/repo-${index + 1}`,
+        name: `repo-${index + 1}`,
+        owner: { login: 'octocat' },
+        private: true,
+      }));
+
+      mockNitroFetch
+        .mockResolvedValueOnce(
+          jsonResponse(pageOne, true, 200, {
+            link: '<https://api.github.com/user/repos?page=2>; rel="next"',
+          }),
+        )
+        .mockResolvedValueOnce(
+          jsonResponse([
+            {
+              id: 101,
+              full_name: 'octocat/voice-inbox-ai',
+              name: 'voice-inbox-ai',
+              owner: { login: 'octocat' },
+              private: true,
+            },
+          ]),
+        );
+
+      const repos = await listGithubRepos('token');
+      expect(repos).toHaveLength(101);
+      expect(repos.at(-1)).toEqual({
+        id: 101,
+        fullName: 'octocat/voice-inbox-ai',
+        owner: 'octocat',
+        name: 'voice-inbox-ai',
+        private: true,
+        defaultBranch: 'main',
+      });
+      expect(mockNitroFetch).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('listGithubBranches', () => {

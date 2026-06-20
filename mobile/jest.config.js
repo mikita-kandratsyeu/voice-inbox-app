@@ -1,5 +1,8 @@
 module.exports = {
-  preset: 'react-native',
+  preset: '@react-native/jest-preset',
+  transformIgnorePatterns: [
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-native-css-interop|nativewind|lucide-react-native|react-native-svg)/)',
+  ],
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.test.{ts,tsx}', '!src/**/__tests__/**'],
   coverageDirectory: 'coverage',
   moduleNameMapper: {

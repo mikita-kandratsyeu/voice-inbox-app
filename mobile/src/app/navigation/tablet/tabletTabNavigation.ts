@@ -77,15 +77,12 @@ export function navigateSettingsStackScreen<T extends keyof SettingsStackParamLi
   const childRoute = params === undefined ? { name: screen } : { name: screen, params };
 
   navigationRef.dispatch(
-    CommonActions.navigate({
-      name: 'Main',
+    CommonActions.navigate('Main', {
+      screen: 'SettingsRoot',
       params: {
-        screen: 'SettingsRoot',
-        params: {
-          state: {
-            routes: [{ name: 'Settings' }, childRoute],
-            index: 1,
-          },
+        state: {
+          routes: [{ name: 'Settings' }, childRoute],
+          index: 1,
         },
       },
     }),
@@ -110,15 +107,12 @@ export function navigateSettingsRoot(): void {
   }
 
   navigationRef.dispatch(
-    CommonActions.navigate({
-      name: 'Main',
+    CommonActions.navigate('Main', {
+      screen: 'SettingsRoot',
       params: {
-        screen: 'SettingsRoot',
-        params: {
-          state: {
-            routes: [{ name: 'Settings' }],
-            index: 0,
-          },
+        state: {
+          routes: [{ name: 'Settings' }],
+          index: 0,
         },
       },
     }),

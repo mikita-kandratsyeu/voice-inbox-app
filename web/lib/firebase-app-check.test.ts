@@ -40,9 +40,11 @@ function setTestEnv(overrides: TestEnv): () => void {
 
 jest.mock('@/lib/firebase-admin', () => ({
   isFirebaseAdminConfigured: jest.fn(() => true),
-  getFirebaseAdmin: jest.fn(() => ({
-    appCheck: () => ({ verifyToken }),
-  })),
+  initFirebaseAdmin: jest.fn(() => true),
+}));
+
+jest.mock('firebase-admin/app-check', () => ({
+  getAppCheck: jest.fn(() => ({ verifyToken })),
 }));
 
 jest.mock('@/lib/api-telemetry', () => ({

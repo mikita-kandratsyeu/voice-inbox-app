@@ -1,6 +1,6 @@
-import type * as admin from 'firebase-admin';
+import { getMessaging, type Message } from 'firebase-admin/messaging';
 
-import { getFirebaseAdmin } from '@/lib/firebase-admin';
+import { initFirebaseAdmin } from '@/lib/firebase-admin';
 
 import { getPushMessages } from './push-messages';
 import { cleanupInvalidPushToken } from './push-tokens';
@@ -53,15 +53,14 @@ export async function sendPushViaFirebase(
   completedCount?: number,
   deviceId?: string | null,
 ): Promise<boolean> {
-  const admin = getFirebaseAdmin();
-  if (!admin) {
+  if (!initFirebaseAdmin()) {
     console.warn('[FCM] not available (no FIREBASE_SERVICE_ACCOUNT)');
     return false;
   }
 
   const defaults = getPushMessages(payload.type, locale, completedCount);
 
-  const message: admin.messaging.Message = {
+  const message: Message = {
     token: fcmToken,
     notification: {
       title: payload.title ?? defaults.title,
@@ -83,7 +82,7 @@ export async function sendPushViaFirebase(
   };
 
   try {
-    const response = await admin.messaging().send(message);
+    const response = await getMessaging().send(message);
     console.log('[FCM] send ok', { type: payload.type, responseId: response });
     return true;
   } catch (err: unknown) {

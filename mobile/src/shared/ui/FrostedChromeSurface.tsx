@@ -181,7 +181,7 @@ export function FrostedChromeSurface({
           <View
             pointerEvents="none"
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               {
                 borderRadius: resolvedRadius,
                 backgroundColor: ON_MEDIA_CHROME_FILL,
@@ -195,7 +195,7 @@ export function FrostedChromeSurface({
           <View
             pointerEvents="none"
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               {
                 borderRadius: resolvedRadius,
                 backgroundColor: fillOverlay,

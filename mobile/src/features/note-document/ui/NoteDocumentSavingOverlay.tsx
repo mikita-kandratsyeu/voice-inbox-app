@@ -31,7 +31,7 @@ export function NoteDocumentSavingOverlay() {
   return (
     <View
       pointerEvents="auto"
-      style={[StyleSheet.absoluteFillObject, { backgroundColor: color.background.secondary }]}
+      style={[StyleSheet.absoluteFill, { backgroundColor: color.background.secondary }]}
       accessibilityRole="progressbar"
       accessibilityLabel={t('recordingDetail.document.saving')}
     >

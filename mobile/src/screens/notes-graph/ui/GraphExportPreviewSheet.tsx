@@ -53,7 +53,7 @@ function ExportSheetLoadingOverlay({ color, label }: { color: Colors; label: str
   return (
     <View
       style={{
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         alignItems: 'center',
         backgroundColor: 'rgba(0,0,0,0.42)',
         justifyContent: 'center',

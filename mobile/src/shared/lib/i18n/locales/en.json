@@ -1334,10 +1334,10 @@
     "cloudSync": {
       "sectionTitle": "Cloud sync",
       "proTitle": "Cloud backup & sync",
-      "proBody": "Back up notes to iCloud Drive, GitHub, or GitLab — with version history and one-tap import. iCloud includes voice recordings. GitHub and GitLab store note text. Your data stays in your account — Voice Inbox AI doesn't keep a copy."
+      "proBody": "Back up to iCloud, GitHub, or GitLab with version history. Your data stays in your account."
     },
     "backupRestoreScreen": {
-      "title": "Backup & restore",
+      "title": "Backup",
       "intro": "Export your notes to an encrypted ZIP file, then import them on this or another device. Voice recordings are included.",
       "sectionTitle": "On this device",
       "entryRow": "Export & import",

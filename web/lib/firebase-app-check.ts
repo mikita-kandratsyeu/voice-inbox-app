@@ -1,3 +1,5 @@
+import { getAppCheck } from 'firebase-admin/app-check';
+
 import { NextResponse } from 'next/server';
 
 import { HEADER_FIREBASE_APP_CHECK } from '@/config/constants';
@@ -6,7 +8,7 @@ import { ApiErrorCode } from '@/lib/api-error-codes';
 import { recordAppCheckFailure } from '@/lib/api-telemetry';
 import { apiError, HttpStatus } from '@/lib/api/http-response';
 import { isAllowedFirebaseAppCheckAppId } from '@/lib/firebase-app-check-app-ids';
-import { getFirebaseAdmin, isFirebaseAdminConfigured } from '@/lib/firebase-admin';
+import { initFirebaseAdmin, isFirebaseAdminConfigured } from '@/lib/firebase-admin';
 
 /** Local dev only: `SKIP_FIREBASE_APP_CHECK=1` with `APP_ENV=development`. */
 export function isFirebaseAppCheckSkipped(): boolean {
@@ -14,12 +16,11 @@ export function isFirebaseAppCheckSkipped(): boolean {
 }
 
 export async function verifyFirebaseAppCheckToken(token: string): Promise<void> {
-  const admin = getFirebaseAdmin();
-  if (!admin) {
+  if (!initFirebaseAdmin()) {
     throw new Error('Firebase Admin is not configured');
   }
 
-  const result = await admin.appCheck().verifyToken(token);
+  const result = await getAppCheck().verifyToken(token);
   const appId = typeof result.appId === 'string' ? result.appId.trim() : '';
   if (!appId || !isAllowedFirebaseAppCheckAppId(appId)) {
     throw new Error('App Check app_id is not allowed');
