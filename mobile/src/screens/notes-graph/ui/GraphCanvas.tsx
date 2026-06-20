@@ -10,7 +10,7 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import type { LayoutChangeEvent } from 'react-native';
 import { useWindowDimensions, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector, Pressable } from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -74,7 +74,6 @@ import { GraphNodeLayer } from './GraphNodeLayer';
 
 const MIN_SCALE = GRAPH_VIEWPORT_MIN_SCALE;
 const MAX_SCALE = GRAPH_VIEWPORT_MAX_SCALE;
-const PAN_ACTIVATION_DISTANCE = 8;
 const DOUBLE_TAP_ZOOM_FACTOR = 1.5;
 
 export type GraphCaptureResult = {
@@ -474,6 +473,13 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     onResetView?.();
   }, [applyTransform, onResetView]);
 
+  const onResetViewRef = useRef(onResetView);
+  onResetViewRef.current = onResetView;
+
+  const clearSelectionFromBackgroundTap = useCallback(() => {
+    onResetViewRef.current?.();
+  }, []);
+
   const captureImage = useCallback(async () => {
     await waitForGraphExportCaptureReady(edges.length);
 
@@ -779,7 +785,8 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   const panVelocityY = useSharedValue(0);
 
   const pan = Gesture.Pan()
-    .minDistance(PAN_ACTIVATION_DISTANCE)
+    .activeOffsetX([-12, 12])
+    .activeOffsetY([-12, 12])
     .maxPointers(1)
     .onTouchesMove((event, state) => {
       'worklet';
@@ -859,55 +866,58 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       }
     });
 
-  const doubleTap = Gesture.Tap()
+  const applyDoubleTapZoomAtViewportFocal = (focalX: number, focalY: number) => {
+    'worklet';
+    syncGestureBaseline();
+    const next = computeMapDoubleTapTransform(
+      savedScale.value,
+      savedTranslateX.value,
+      savedTranslateY.value,
+      focalX,
+      focalY,
+      doubleTapZoomSV.value,
+    );
+    const clampedScale = clampViewportScale(next.scale);
+    const clamped = clampTranslationWorklet(next.translateX, next.translateY, clampedScale);
+
+    savedScale.value = clampedScale;
+    savedTranslateX.value = clamped.translateX;
+    savedTranslateY.value = clamped.translateY;
+
+    const timing = {
+      duration: viewportTimingMsSV.value,
+      easing: Easing.out(Easing.cubic),
+    };
+
+    scale.value = withTiming(clampedScale, timing, (finished) => {
+      if (finished) {
+        scheduleOnRN(syncViewportState, scale.value, translateX.value, translateY.value);
+      }
+    });
+    translateX.value = withTiming(clamped.translateX, timing);
+    translateY.value = withTiming(clamped.translateY, timing);
+  };
+
+  const viewportDoubleTap = Gesture.Tap()
     .numberOfTaps(2)
     .maxDuration(250)
     .onEnd((event) => {
       'worklet';
-      syncGestureBaseline();
-      const next = computeMapDoubleTapTransform(
-        savedScale.value,
-        savedTranslateX.value,
-        savedTranslateY.value,
-        event.x,
-        event.y,
-        doubleTapZoomSV.value,
-      );
-      const clampedScale = clampViewportScale(next.scale);
-      const clamped = clampTranslationWorklet(next.translateX, next.translateY, clampedScale);
-
-      savedScale.value = clampedScale;
-      savedTranslateX.value = clamped.translateX;
-      savedTranslateY.value = clamped.translateY;
-
-      const timing = {
-        duration: viewportTimingMsSV.value,
-        easing: Easing.out(Easing.cubic),
-      };
-
-      scale.value = withTiming(clampedScale, timing, (finished) => {
-        if (finished) {
-          scheduleOnRN(syncViewportState, scale.value, translateX.value, translateY.value);
-        }
-      });
-      translateX.value = withTiming(clamped.translateX, timing);
-      translateY.value = withTiming(clamped.translateY, timing);
+      applyDoubleTapZoomAtViewportFocal(event.x, event.y);
     });
 
-  const singleTap = Gesture.Tap()
-    .numberOfTaps(1)
+  const backgroundDoubleTap = Gesture.Tap()
+    .numberOfTaps(2)
     .maxDuration(250)
-    .maxDistance(PAN_ACTIVATION_DISTANCE)
-    .onEnd(() => {
+    .maxDelay(250)
+    .onEnd((event) => {
       'worklet';
-      if (onResetView) {
-        scheduleOnRN(onResetView);
-      }
+      const focalX = translateX.value + event.x * scale.value;
+      const focalY = translateY.value + event.y * scale.value;
+      applyDoubleTapZoomAtViewportFocal(focalX, focalY);
     });
 
-  const tapGestures = Gesture.Exclusive(doubleTap, singleTap);
-
-  const canvasGesture = Gesture.Simultaneous(pinch, Gesture.Exclusive(pan, tapGestures));
+  const canvasGesture = Gesture.Simultaneous(pinch, Gesture.Exclusive(pan, viewportDoubleTap));
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -1011,6 +1021,21 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               animatedStyle,
             ]}
           >
+            {!exportBusy && !isReconciling ? (
+              <GestureDetector gesture={backgroundDoubleTap}>
+                <Pressable
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    width: worldWidth,
+                    height: worldHeight,
+                    zIndex: 0,
+                  }}
+                  onPress={clearSelectionFromBackgroundTap}
+                />
+              </GestureDetector>
+            ) : null}
             <GraphNodeLayer
               nodes={displayNodes}
               edges={edges}

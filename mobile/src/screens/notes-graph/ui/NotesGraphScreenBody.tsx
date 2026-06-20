@@ -651,6 +651,7 @@ export const NotesGraphScreenBody = () => {
 
   const handleClearNodeSelection = useCallback(() => {
     setFocusedNodeId(null);
+    setActiveSearchNodeId(null);
     setSearchMatchIndex(GRAPH_SEARCH_MATCH_INDEX_NONE);
   }, []);
 
