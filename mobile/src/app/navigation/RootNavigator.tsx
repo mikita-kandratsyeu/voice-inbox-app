@@ -18,7 +18,6 @@ import {
 } from '@/screens/recording-detail';
 import { WhisperModelPickerScreen } from '@/screens/settings';
 import { isTestflightInternalBuild } from '@/shared/config/buildEnv';
-import { useIsTablet } from '@/shared/lib';
 
 import { BottomTabNavigator } from './BottomTabNavigator';
 import type { RootStackParamList } from './types';
@@ -38,125 +37,115 @@ const AskAIScreenKeyed = () => {
   return <AskAIScreen key={route.params.record.id} />;
 };
 
-export const RootNavigator = () => {
-  const isTablet = useIsTablet();
-
-  return (
-    <InboxFiltersResetProvider>
-      <Stack.Navigator
-        screenOptions={{
-          // Phone: portrait everywhere except NotesGraph. Tablet: system default on other screens.
-          orientation: isTablet ? 'default' : 'portrait',
+export const RootNavigator = () => (
+  <InboxFiltersResetProvider>
+    <Stack.Navigator>
+      <Stack.Screen name="Main" component={BottomTabNavigator} options={{ headerShown: false }} />
+      <Stack.Screen
+        name="RecordModal"
+        component={RecordScreenWithProvider}
+        options={{
+          headerShown: false,
+          presentation: 'fullScreenModal',
+          animation: 'slide_from_bottom',
+          gestureEnabled: false,
         }}
-      >
-        <Stack.Screen name="Main" component={BottomTabNavigator} options={{ headerShown: false }} />
+      />
+      <Stack.Screen
+        name="TextNoteModal"
+        component={TextNoteScreen}
+        options={{
+          headerShown: false,
+          presentation: 'fullScreenModal',
+          animation: 'slide_from_bottom',
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="RecordingDetail"
+        component={RecordingDetailScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="RecordingAskAI"
+        component={AskAIScreenKeyed}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="WhisperModelPickerRoot"
+        component={WhisperModelPickerScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="EditTranscript"
+        component={EditTranscriptScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="NoteDocument"
+        component={NoteDocumentScreen}
+        options={{
+          headerShown: false,
+          presentation: 'fullScreenModal',
+          animation: 'slide_from_bottom',
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="AllTasks"
+        component={AllTasksScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="NotesGraph"
+        component={NotesGraphScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
+        name="InAppEventDetail"
+        component={InAppEventDetailScreen}
+        options={{
+          headerShown: false,
+          presentation: 'fullScreenModal',
+          animation: 'slide_from_bottom',
+          gestureEnabled: false,
+        }}
+      />
+      {showDebugNavigation ? (
         <Stack.Screen
-          name="RecordModal"
-          component={RecordScreenWithProvider}
-          options={{
-            headerShown: false,
-            presentation: 'fullScreenModal',
-            animation: 'slide_from_bottom',
-            gestureEnabled: false,
-          }}
-        />
-        <Stack.Screen
-          name="TextNoteModal"
-          component={TextNoteScreen}
-          options={{
-            headerShown: false,
-            presentation: 'fullScreenModal',
-            animation: 'slide_from_bottom',
-            gestureEnabled: true,
-          }}
-        />
-        <Stack.Screen
-          name="RecordingDetail"
-          component={RecordingDetailScreen}
+          name="Debug"
+          component={DebugScreen}
           options={{
             headerShown: false,
             animation: 'slide_from_right',
             gestureEnabled: true,
           }}
         />
-        <Stack.Screen
-          name="RecordingAskAI"
-          component={AskAIScreenKeyed}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-            gestureEnabled: true,
-          }}
-        />
-        <Stack.Screen
-          name="WhisperModelPickerRoot"
-          component={WhisperModelPickerScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-            gestureEnabled: true,
-          }}
-        />
-        <Stack.Screen
-          name="EditTranscript"
-          component={EditTranscriptScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-            gestureEnabled: true,
-          }}
-        />
-        <Stack.Screen
-          name="NoteDocument"
-          component={NoteDocumentScreen}
-          options={{
-            headerShown: false,
-            presentation: 'fullScreenModal',
-            animation: 'slide_from_bottom',
-            gestureEnabled: true,
-          }}
-        />
-        <Stack.Screen
-          name="AllTasks"
-          component={AllTasksScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-            gestureEnabled: true,
-          }}
-        />
-        <Stack.Screen
-          name="NotesGraph"
-          component={NotesGraphScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-            gestureEnabled: false,
-            orientation: 'all',
-          }}
-        />
-        <Stack.Screen
-          name="InAppEventDetail"
-          component={InAppEventDetailScreen}
-          options={{
-            headerShown: false,
-            presentation: 'fullScreenModal',
-            animation: 'slide_from_bottom',
-            gestureEnabled: false,
-          }}
-        />
-        {showDebugNavigation ? (
-          <Stack.Screen
-            name="Debug"
-            component={DebugScreen}
-            options={{
-              headerShown: false,
-              animation: 'slide_from_right',
-              gestureEnabled: true,
-            }}
-          />
-        ) : null}
-      </Stack.Navigator>
-    </InboxFiltersResetProvider>
-  );
-};
+      ) : null}
+    </Stack.Navigator>
+  </InboxFiltersResetProvider>
+);
