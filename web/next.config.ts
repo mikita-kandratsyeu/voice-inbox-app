@@ -18,7 +18,14 @@ const nextConfig: NextConfig = {
       { source: '/ru/releases/:slug', destination: '/ru/blog/:slug', permanent: true },
     ];
   },
-  serverExternalPackages: ['@prisma/client', 'pg', '@prisma/adapter-pg', 'pdfkit', 'sharp'],
+  serverExternalPackages: [
+    '@prisma/client',
+    'pg',
+    '@prisma/adapter-pg',
+    'pdfkit',
+    'sharp',
+    'firebase-admin',
+  ],
   outputFileTracingIncludes: {
     '/api/admin/pro-licenses/**': ['./public/app-icon.svg'],
   },

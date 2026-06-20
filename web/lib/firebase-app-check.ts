@@ -1,5 +1,3 @@
-import { getAppCheck } from 'firebase-admin/app-check';
-
 import { NextResponse } from 'next/server';
 
 import { HEADER_FIREBASE_APP_CHECK } from '@/config/constants';
@@ -20,6 +18,7 @@ export async function verifyFirebaseAppCheckToken(token: string): Promise<void> 
     throw new Error('Firebase Admin is not configured');
   }
 
+  const { getAppCheck } = await import('firebase-admin/app-check');
   const result = await getAppCheck().verifyToken(token);
   const appId = typeof result.appId === 'string' ? result.appId.trim() : '';
   if (!appId || !isAllowedFirebaseAppCheckAppId(appId)) {

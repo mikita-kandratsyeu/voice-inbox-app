@@ -10,7 +10,6 @@ import {
   validateDeviceId,
 } from '@/lib/api';
 import type { ApiErrorCodeValue } from '@/lib/api-error-codes';
-import { requireAppCheckForToken } from '@/lib/firebase-app-check';
 
 export type AssertMobileDeviceResult =
   | { ok: true; deviceId: string; pathname: string }
@@ -81,6 +80,7 @@ export async function assertMobileTokenExchange(
 ): Promise<AssertMobileDeviceResult> {
   const pathname = new URL(request.url).pathname;
 
+  const { requireAppCheckForToken } = await import('@/lib/firebase-app-check');
   const appCheckError = await requireAppCheckForToken(request);
   if (appCheckError) {
     return { ok: false, response: appCheckError };

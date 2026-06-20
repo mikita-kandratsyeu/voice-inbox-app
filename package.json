@@ -51,7 +51,8 @@
     "js-yaml": "4.2.0",
     "tar": "7.5.16",
     "@babel/core": "7.29.7",
-    "launch-editor": "2.14.1"
+    "launch-editor": "2.14.1",
+    "jwks-rsa@npm:4.1.0/jose": "npm:5.10.0"
   },
   "engines": {
     "node": ">=24"
