@@ -206,15 +206,7 @@ export async function fetchGithubUserLogin(accessToken: string): Promise<string>
   return data.login;
 }
 
-export async function listGithubRepos(accessToken: string): Promise<GithubRepoSummary[]> {
-  const response = await githubFetch(
-    accessToken,
-    '/user/repos?per_page=100&sort=updated&affiliation=owner,organization_member',
-  );
-  if (!response.ok) {
-    await throwGithubHttpError(`GitHub repos failed: ${response.status}`, response);
-  }
-  const data: unknown = await response.json();
+function parseGithubRepoSummaries(data: unknown): GithubRepoSummary[] {
   if (!isArray(data)) {
     throw createGithubError('Invalid GitHub repos response');
   }
@@ -240,6 +232,32 @@ export async function listGithubRepos(accessToken: string): Promise<GithubRepoSu
       defaultBranch: isString(item.default_branch) ? item.default_branch : 'main',
     });
   }
+  return repos;
+}
+
+export async function listGithubRepos(accessToken: string): Promise<GithubRepoSummary[]> {
+  const repos: GithubRepoSummary[] = [];
+  let page = 1;
+
+  while (page <= 10) {
+    const response = await githubFetch(
+      accessToken,
+      `/user/repos?per_page=100&sort=updated&affiliation=owner,organization_member&page=${page}`,
+    );
+    if (!response.ok) {
+      await throwGithubHttpError(`GitHub repos failed: ${response.status}`, response);
+    }
+    const linkHeader = response.headers.get('link');
+    const data: unknown = await response.json();
+    const pageRepos = parseGithubRepoSummaries(data);
+    repos.push(...pageRepos);
+
+    if (pageRepos.length < 100 || !linkHeader?.includes('rel="next"')) {
+      break;
+    }
+    page += 1;
+  }
+
   return repos;
 }
 

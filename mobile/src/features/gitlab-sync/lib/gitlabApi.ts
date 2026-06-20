@@ -140,15 +140,7 @@ export async function fetchGitlabUserLogin(accessToken: string): Promise<string>
   return data.username;
 }
 
-export async function listGitlabRepos(accessToken: string): Promise<GitlabRepoSummary[]> {
-  const response = await gitlabFetch(
-    accessToken,
-    '/projects?membership=true&order_by=last_activity_at&per_page=100',
-  );
-  if (!response.ok) {
-    await throwGitlabHttpError(`GitLab projects failed: ${response.status}`, response);
-  }
-  const data: unknown = await response.json();
+function parseGitlabRepoSummaries(data: unknown): GitlabRepoSummary[] {
   if (!isArray(data)) {
     throw createGitlabError('Invalid GitLab projects response');
   }
@@ -178,6 +170,32 @@ export async function listGitlabRepos(accessToken: string): Promise<GitlabRepoSu
       defaultBranch: isString(item.default_branch) ? item.default_branch : 'main',
     });
   }
+  return repos;
+}
+
+export async function listGitlabRepos(accessToken: string): Promise<GitlabRepoSummary[]> {
+  const repos: GitlabRepoSummary[] = [];
+  let page = 1;
+
+  while (page <= 10) {
+    const response = await gitlabFetch(
+      accessToken,
+      `/projects?membership=true&order_by=last_activity_at&per_page=100&page=${page}`,
+    );
+    if (!response.ok) {
+      await throwGitlabHttpError(`GitLab projects failed: ${response.status}`, response);
+    }
+    const data: unknown = await response.json();
+    const pageRepos = parseGitlabRepoSummaries(data);
+    repos.push(...pageRepos);
+
+    const nextPage = response.headers.get('x-next-page');
+    if (pageRepos.length < 100 || !nextPage) {
+      break;
+    }
+    page += 1;
+  }
+
   return repos;
 }
 

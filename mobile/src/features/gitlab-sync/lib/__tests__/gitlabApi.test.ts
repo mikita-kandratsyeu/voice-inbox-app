@@ -95,6 +95,35 @@ describe('gitlabApi', () => {
         },
       ]);
     });
+
+    it('fetches additional pages when GitLab returns x-next-page', async () => {
+      const pageOne = Array.from({ length: 100 }, (_, index) => ({
+        id: index + 1,
+        path_with_namespace: `acme/repo-${index + 1}`,
+        name: `repo-${index + 1}`,
+        namespace: { path: 'acme' },
+        visibility: 'private',
+      }));
+
+      mockNitroFetch
+        .mockResolvedValueOnce(jsonResponse(pageOne, true, 200, { 'x-next-page': '2' }))
+        .mockResolvedValueOnce(
+          jsonResponse([
+            {
+              id: 101,
+              path_with_namespace: 'acme/voice-inbox-ai',
+              name: 'voice-inbox-ai',
+              namespace: { path: 'acme' },
+              visibility: 'private',
+            },
+          ]),
+        );
+
+      const repos = await listGitlabRepos('token');
+      expect(repos).toHaveLength(101);
+      expect(repos.at(-1)?.fullName).toBe('acme/voice-inbox-ai');
+      expect(mockNitroFetch).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('listTreePathsAtCommit', () => {
