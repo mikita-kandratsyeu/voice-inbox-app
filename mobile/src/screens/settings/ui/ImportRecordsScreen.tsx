@@ -26,6 +26,7 @@ import { useAdsAllowed } from '@/features/app-storefront';
 import { applyRemoteSyncAuxiliaryData } from '@/features/git-remote-sync/lib/applyRemoteSyncAuxiliaryData';
 import { finalizeGithubSyncRestore } from '@/features/github-sync/lib/finalizeGithubSyncRestore';
 import { finalizeGitlabSyncRestore } from '@/features/gitlab-sync/lib/finalizeGitlabSyncRestore';
+import { finalizeIcloudSyncRestore } from '@/features/icloud-sync/lib/finalizeIcloudSyncRestore';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { importNotesGraphLayoutVersionsFromBackup } from '@/features/sync-data';
 import { tryShowYandexInterstitial } from '@/features/yandex-interstitial';
@@ -235,6 +236,7 @@ export const ImportRecordsScreen = () => {
     remoteSyncAuxiliary,
     githubRestore,
     gitlabRestore,
+    icloudRestore,
   } = route.params;
 
   const existingRecords = useRecordStore((s) => s.records);
@@ -451,6 +453,18 @@ export const ImportRecordsScreen = () => {
           folders: useFolderStore.getState().folders,
         });
       }
+      if (icloudRestore) {
+        const folderStore = useFolderStore.getState();
+        if (!folderStore.isLoaded) {
+          await folderStore.load();
+        }
+        await finalizeIcloudSyncRestore({
+          versionId: icloudRestore.versionId,
+          exportedAt: icloudRestore.exportedAt,
+          records: useRecordStore.getState().records,
+          folders: useFolderStore.getState().folders,
+        });
+      }
       if (remoteSyncAuxiliary) {
         applyRemoteSyncAuxiliaryData(remoteSyncAuxiliary);
       }
@@ -479,6 +493,7 @@ export const ImportRecordsScreen = () => {
     trashIdsForReplace,
     githubRestore,
     gitlabRestore,
+    icloudRestore,
     graphLayouts,
     remoteSyncAuxiliary,
   ]);

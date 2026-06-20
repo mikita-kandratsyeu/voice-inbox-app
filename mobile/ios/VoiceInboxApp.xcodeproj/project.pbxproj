@@ -829,7 +829,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RecordingWidget/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox";
+				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox AI";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -876,7 +876,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RecordingWidget/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox";
+				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox AI";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -918,7 +918,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DownloadWidgetExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = DownloadWidgetExtension;
+				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox AI";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -964,7 +964,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DownloadWidgetExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = DownloadWidgetExtension;
+				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox AI";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (

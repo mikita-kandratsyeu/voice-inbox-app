@@ -74,6 +74,7 @@
     "react-native-blob-util": "^0.24.7",
     "react-native-bootsplash": "^7.2.0",
     "react-native-calendar-events": "^2.2.0",
+    "react-native-cloud-storage": "^3",
     "react-native-draggable-flatlist": "^4.0.3",
     "react-native-enriched-markdown": "^0.6.0",
     "react-native-gesture-handler": "^2.30.1",

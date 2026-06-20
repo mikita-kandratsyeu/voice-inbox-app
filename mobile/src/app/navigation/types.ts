@@ -86,9 +86,14 @@ export type SettingsStackParamList = {
       commitSha: string;
       exportedAt: string;
     };
+    icloudRestore?: {
+      versionId: string;
+      exportedAt: string;
+    };
   };
   DiagnosticLogs: undefined;
   GithubSync: undefined;
   GitlabSync: undefined;
+  IcloudSync: undefined;
   BackupRestore: undefined;
 };

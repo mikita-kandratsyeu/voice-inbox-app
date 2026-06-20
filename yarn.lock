@@ -15556,6 +15556,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-cloud-storage@npm:^3":
+  version: 3.0.0
+  resolution: "react-native-cloud-storage@npm:3.0.0"
+  peerDependencies:
+    expo: ">=48.0.0"
+    react: "*"
+    react-native: ">=0.76"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: 10c0/d651fb815c19ebeec8882c8a699b63208cc039e70377bb871cdc9f20f140cec15599ac5c3dff9c014d186804680ff7a5a7340450e981c106bf10490b005c16ce
+  languageName: node
+  linkType: hard
+
 "react-native-css-interop@npm:0.2.5":
   version: 0.2.5
   resolution: "react-native-css-interop@npm:0.2.5"
@@ -18687,6 +18701,7 @@ __metadata:
     react-native-blob-util: "npm:^0.24.7"
     react-native-bootsplash: "npm:^7.2.0"
     react-native-calendar-events: "npm:^2.2.0"
+    react-native-cloud-storage: "npm:^3"
     react-native-dotenv: "npm:^3.4.11"
     react-native-draggable-flatlist: "npm:^4.0.3"
     react-native-enriched-markdown: "npm:^0.6.0"

@@ -247,7 +247,7 @@ export function SettingsPlanPaywallSheet({
                 emphasized
               />
               <FeatureRow color={color} text={t('settings.planPaywall.features.premiumAiModels')} />
-              <FeatureRow color={color} text={t('settings.planPaywall.features.githubSync')} />
+              <FeatureRow color={color} text={t('settings.planPaywall.features.cloudSync')} />
             </View>
 
             <ExpandableSection

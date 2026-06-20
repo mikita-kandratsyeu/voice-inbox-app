@@ -8,6 +8,7 @@ import { scheduleDrainPrivateAiTaskQueue } from '@/features/ai-task-queue';
 import { syncAllBackupReminderNotifications } from '@/features/backup-reminder-notifications';
 import { maybeRunScheduledGithubSync } from '@/features/github-sync/lib/githubSyncSchedule';
 import { maybeRunScheduledGitlabSync } from '@/features/gitlab-sync/lib/gitlabSyncSchedule';
+import { maybeRunScheduledIcloudSync } from '@/features/icloud-sync/lib/icloudSyncSchedule';
 import { localLlmModelDownloader } from '@/features/model-manager/lib/local-llm-download';
 import { whisperModelDownloader } from '@/features/model-manager/lib/whisper-download';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
@@ -100,6 +101,7 @@ export function useAppForegroundLifecycle(webApiReady = false): void {
           void syncAllBackupReminderNotifications();
           void maybeRunScheduledGithubSync();
           void maybeRunScheduledGitlabSync();
+          void maybeRunScheduledIcloudSync();
         }
         foregroundInterval = setInterval(maybeNotifyForeground, HEARTBEAT_INTERVAL_MS);
       } else {

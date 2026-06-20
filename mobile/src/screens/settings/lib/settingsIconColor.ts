@@ -18,6 +18,7 @@ export type SettingsIconId =
   | 'fingerprint'
   | 'github'
   | 'gitlab'
+  | 'icloud'
   | 'hand'
   | 'hardDrive'
   | 'info'
@@ -55,6 +56,7 @@ const SETTINGS_ICON_COLOR: Record<SettingsIconId, (color: Colors) => string> = {
   fingerprint: (c) => c.onboarding.lock.color,
   github: (c) => c.accent.primary,
   gitlab: (c) => c.accent.transcript,
+  icloud: (c) => c.accent.primary,
   hand: (c) => c.accent.models,
   hardDrive: (c) => c.accent.success,
   info: (c) => c.accent.archive,
