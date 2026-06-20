@@ -1,4 +1,4 @@
-import { Check, Clock, FileText, Link2, ListChecks, UsersRound } from 'lucide-react-native';
+import { Check, Clock, FileText, Link2, ListTodo, UsersRound } from 'lucide-react-native';
 import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
@@ -182,7 +182,7 @@ function TasksMetaStat({
         {allTasksDone ? (
           <Check size={iconPx} color={iconColor} strokeWidth={2.5} />
         ) : (
-          <ListChecks size={iconPx} color={iconColor} strokeWidth={2} />
+          <ListTodo size={iconPx} color={iconColor} strokeWidth={2} />
         )}
       </MetaIconBadge>
       <View style={{ flexShrink: 0 }}>

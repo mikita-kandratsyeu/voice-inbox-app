@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { Archive, Inbox, ListChecks, Pin } from 'lucide-react-native';
+import { Archive, Inbox, ListTodo, Pin } from 'lucide-react-native';
 import React from 'react';
 import { View } from 'react-native';
 
@@ -189,7 +189,7 @@ export function TabletSidebarBody({
             activeColor={allTasksIconColor}
             inactiveColor={mutedIcon}
           >
-            <ListChecks />
+            <ListTodo />
           </TabletSidebarNavIcon>
         }
       />

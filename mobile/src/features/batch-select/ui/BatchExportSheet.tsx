@@ -1,5 +1,5 @@
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { ClipboardList, FileText, ListChecks, Mail, UsersRound } from 'lucide-react-native';
+import { ClipboardList, FileText, ListTodo, Mail, UsersRound } from 'lucide-react-native';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Keyboard, Text, TouchableOpacity, View } from 'react-native';
@@ -91,7 +91,7 @@ export const BatchExportSheet = ({
         emailBriefOption,
         {
           tpl: 'meetingBrief' as const,
-          Icon: ListChecks,
+          Icon: ListTodo,
           chipLabel: t('share.emailFormatChipMeeting'),
           accessibilityHint: t('share.meetingBriefDescription'),
         },
@@ -425,7 +425,7 @@ export const BatchExportSheet = ({
 
           {showSpeakerTurnsExport
             ? renderShareFormatRow({
-                icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
+                icon: <ListTodo size={20} color={color.text.primary} strokeWidth={2.1} />,
                 title: t('share.meetingBrief'),
                 description: t('share.meetingBriefDescription'),
                 accessibilityLabel: t('share.meetingBrief'),

@@ -1,4 +1,4 @@
-import { FileText, ListChecks, UsersRound } from 'lucide-react-native';
+import { FileText, ListTodo, UsersRound } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -34,7 +34,7 @@ const VARIANT_CONFIG = {
     titleKey: 'recordingDetail.summaryProcessing' as const,
   },
   tasks: {
-    Icon: ListChecks,
+    Icon: ListTodo,
     titleKey: 'recordingDetail.tasksProcessing' as const,
   },
   meetingDialogue: {

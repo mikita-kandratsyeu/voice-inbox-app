@@ -1891,7 +1891,7 @@
       "plaintextWarning": "Текст заметок и записи голоса сохраняются в iCloud Drive и используют ваше хранилище iCloud.",
       "connect": "Включить синхронизацию с iCloud",
       "enabling": "Включаем…",
-      "connectHint": "Используется ваше хранилище iCloud. Войдите в iCloud и включите iCloud Drive на этом устройстве.",
+      "connectHint": "Войдите в iCloud и включите iCloud Drive на этом устройстве.",
       "unavailableSheetTitle": "iCloud недоступен",
       "unavailableSheetBody": "Войдите с Apple ID и включите iCloud Drive в настройках. Voice Inbox AI сохраняет заметки в ваш iCloud — мы их не храним.",
       "openSettings": "Открыть настройки",

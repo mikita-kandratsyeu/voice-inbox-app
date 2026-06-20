@@ -3,7 +3,7 @@ import {
   ClipboardList,
   FileText,
   Globe,
-  ListChecks,
+  ListTodo,
   Mail,
   Music,
   UsersRound,
@@ -265,7 +265,7 @@ export const ShareRecordSheet = ({
         emailBriefOption,
         {
           tpl: 'meetingBrief' as const,
-          Icon: ListChecks,
+          Icon: ListTodo,
           chipLabel: t('share.emailFormatChipMeeting'),
           accessibilityHint: t('share.meetingBriefDescription'),
         },
@@ -631,7 +631,7 @@ export const ShareRecordSheet = ({
 
           {showSpeakerTurnsExport
             ? renderShareFormatRow({
-                icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
+                icon: <ListTodo size={20} color={color.text.primary} strokeWidth={2.1} />,
                 title: t('share.meetingBrief'),
                 description: t('share.meetingBriefDescription'),
                 accessibilityLabel: t('share.meetingBrief'),

@@ -1,4 +1,4 @@
-import { AlignLeft, ClipboardList, FileText, ListChecks, UsersRound } from 'lucide-react-native';
+import { AlignLeft, ClipboardList, FileText, ListTodo, UsersRound } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
@@ -56,7 +56,7 @@ export const RecordingDetailTabBar = ({
           ) : tab === 'dialogue' ? (
             <UsersRound {...iconProps} />
           ) : tab === 'tasks' ? (
-            <ListChecks {...iconProps} />
+            <ListTodo {...iconProps} />
           ) : (
             <FileText {...iconProps} />
           );

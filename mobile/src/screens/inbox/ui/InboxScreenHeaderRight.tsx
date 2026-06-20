@@ -1,6 +1,6 @@
 import { MenuView } from '@react-native-menu/menu';
 import type { TFunction } from 'i18next';
-import { FolderTree, ListChecks, MoreVertical, Search } from 'lucide-react-native';
+import { FolderTree, ListTodo, MoreVertical, Search } from 'lucide-react-native';
 import React, { memo, useMemo } from 'react';
 
 import type { BatchSelectState } from '@/features/batch-select';
@@ -233,7 +233,7 @@ function InboxScreenHeaderRightInner({
         iconOnly
         variant="icon"
         size="md"
-        icon={<ListChecks size={20} color={color.text.primary} strokeWidth={2.2} />}
+        icon={<ListTodo size={20} color={color.text.primary} strokeWidth={2.2} />}
         color={color}
         onPress={onOpenAllTasks}
         accessibilityLabel={t('allTasks.title')}

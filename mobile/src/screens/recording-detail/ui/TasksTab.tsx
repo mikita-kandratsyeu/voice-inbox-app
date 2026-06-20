@@ -4,7 +4,7 @@ import {
   Bell,
   CheckCircle2,
   Circle,
-  ListChecks,
+  ListTodo,
   MoreHorizontal,
   Plus,
   RefreshCw,
@@ -316,7 +316,7 @@ export const TasksTab = ({
       <>
         <View>
           <TabEmptyState
-            icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
+            icon={<ListTodo size={28} color={color.icon.muted} strokeWidth={1.8} />}
             title={t('recordingDetail.noTranscriptForAi')}
             description={t('recordingDetail.noTranscriptForAiDesc')}
             hideButton
@@ -345,11 +345,11 @@ export const TasksTab = ({
             transcriptCharCount={transcriptCharCount}
           />
           <TabEmptyState
-            icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
+            icon={<ListTodo size={28} color={color.icon.muted} strokeWidth={1.8} />}
             title={t('recordingDetail.tasksNotExtracted')}
             description={t('recordingDetail.tasksNotExtractedDesc')}
             buttonLabel={t('recordingDetail.extractTasks')}
-            buttonIcon={<ListChecks size={18} color="#fff" strokeWidth={2} />}
+            buttonIcon={<ListTodo size={18} color="#fff" strokeWidth={2} />}
             hint={modelHint}
             hintIcon={modelHint ? <AiTabHintIcon /> : undefined}
             disabled={disableByNetwork}

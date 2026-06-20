@@ -1849,7 +1849,7 @@
       "plaintextWarning": "Notes and voice recordings are saved to your iCloud Drive and use your iCloud storage.",
       "connect": "Turn on iCloud sync",
       "enabling": "Turning on…",
-      "connectHint": "Uses your iCloud storage. Sign in to iCloud and turn on iCloud Drive on this device.",
+      "connectHint": "Sign in to iCloud and turn on iCloud Drive on this device.",
       "unavailableSheetTitle": "iCloud isn't available",
       "unavailableSheetBody": "Sign in with your Apple ID and turn on iCloud Drive in Settings. Voice Inbox AI saves notes to your iCloud — we don't host them.",
       "openSettings": "Open Settings",

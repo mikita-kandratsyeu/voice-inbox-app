@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, ListChecks, Pin } from 'lucide-react-native';
+import { CheckCircle2, Clock, ListTodo, Pin } from 'lucide-react-native';
 import React, { memo, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -191,7 +191,7 @@ export const RecordCard = memo(function RecordCard({
                 <CheckCircle2 size={14} color={color.accent.success} strokeWidth={2} />
               ) : (
                 <>
-                  <ListChecks size={14} color={color.icon.muted} strokeWidth={2} />
+                  <ListTodo size={14} color={color.icon.muted} strokeWidth={2} />
                   <Text style={[textSecondaryStyle, { fontSize: 12 }]}>
                     {doneCount}/{tasks.length}
                   </Text>

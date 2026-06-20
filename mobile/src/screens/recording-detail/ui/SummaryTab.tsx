@@ -4,7 +4,7 @@ import {
   ClipboardList,
   FileText,
   HelpCircle,
-  ListChecks,
+  ListTodo,
   RefreshCw,
   Share,
   UsersRound,
@@ -88,7 +88,7 @@ function MeetingRecapSectionBlock({
     ) : section.kind === 'openQuestions' ? (
       <HelpCircle size={18} color={iconColor} strokeWidth={2} />
     ) : section.kind === 'nextSteps' ? (
-      <ListChecks size={18} color={iconColor} strokeWidth={2} />
+      <ListTodo size={18} color={iconColor} strokeWidth={2} />
     ) : (
       <FileText size={18} color={iconColor} strokeWidth={2} />
     );

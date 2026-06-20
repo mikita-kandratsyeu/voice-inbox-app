@@ -1,4 +1,4 @@
-import { Check, Folder, Link2, ListChecks, Tag, Waypoints } from 'lucide-react-native';
+import { Check, Folder, Link2, ListTodo, Tag, Waypoints } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
@@ -80,7 +80,7 @@ function ConnectionFilterIcon({
 
   switch (filterKey) {
     case 'showTasks':
-      return <ListChecks {...iconProps} />;
+      return <ListTodo {...iconProps} />;
     case 'showCompletedTasks':
       return <Check {...iconProps} />;
     case 'similar':

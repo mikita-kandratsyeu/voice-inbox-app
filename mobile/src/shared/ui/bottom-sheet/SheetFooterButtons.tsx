@@ -58,6 +58,8 @@ export type SheetFooterButtonsProps = {
     onPress: () => void;
     disabled?: boolean;
   };
+  /** Side-by-side (default) or stacked full-width buttons when both actions are shown. */
+  buttonLayout?: 'row' | 'stack';
   className?: string;
   /** Primary button background when enabled (default: `color.accent.primary`). */
   primaryBackgroundColor?: string;
@@ -83,6 +85,7 @@ export function SheetFooterButtons({
   secondaryAccessibilityLabel,
   singleVariant = 'primary',
   bottomAction,
+  buttonLayout = 'row',
   className = 'mt-4 w-full',
   primaryBackgroundColor,
   primaryDisabledBackgroundColor,
@@ -98,36 +101,69 @@ export function SheetFooterButtons({
   return (
     <View className={className}>
       {hasSecondary ? (
-        <View className="flex-row gap-3">
-          <Button
-            variant="secondary"
-            label={secondaryLabel}
-            onPress={onSecondaryPress}
-            onPressIn={onSecondaryPressIn}
-            activeOpacity={0.8}
-            className={ROW_BUTTON_CLASS}
-            color={color}
-            disabled={secondaryDisabled}
-            containerStyle={sheetFooterButtonContainerStyle(color, 'secondary')}
-            accessibilityLabel={secondaryAccessibilityLabel ?? secondaryLabel}
-          />
-          <Button
-            variant="primary"
-            label={primaryLabel}
-            labelSuffix={labelSuffix}
-            onPress={onPrimaryPress}
-            onPressIn={onPrimaryPressIn}
-            activeOpacity={0.85}
-            className={ROW_BUTTON_CLASS}
-            color={color}
-            disabled={primaryDisabled}
-            loading={primaryLoading}
-            containerStyle={primaryContainerStyle}
-            labelStyle={primaryLabelStyle}
-            accessibilityLabel={primaryAccessibilityLabel ?? primaryLabel}
-            accessibilityState={{ disabled: primaryDisabled }}
-          />
-        </View>
+        buttonLayout === 'stack' ? (
+          <View className="gap-3">
+            <Button
+              variant="primary"
+              fullWidth
+              label={primaryLabel}
+              labelSuffix={labelSuffix}
+              onPress={onPrimaryPress}
+              onPressIn={onPrimaryPressIn}
+              activeOpacity={0.85}
+              color={color}
+              disabled={primaryDisabled}
+              loading={primaryLoading}
+              containerStyle={primaryContainerStyle}
+              labelStyle={primaryLabelStyle}
+              accessibilityLabel={primaryAccessibilityLabel ?? primaryLabel}
+              accessibilityState={{ disabled: primaryDisabled }}
+            />
+            <Button
+              variant="secondary"
+              fullWidth
+              label={secondaryLabel}
+              onPress={onSecondaryPress}
+              onPressIn={onSecondaryPressIn}
+              activeOpacity={0.8}
+              color={color}
+              disabled={secondaryDisabled}
+              containerStyle={sheetFooterButtonContainerStyle(color, 'secondary')}
+              accessibilityLabel={secondaryAccessibilityLabel ?? secondaryLabel}
+            />
+          </View>
+        ) : (
+          <View className="flex-row gap-3">
+            <Button
+              variant="secondary"
+              label={secondaryLabel}
+              onPress={onSecondaryPress}
+              onPressIn={onSecondaryPressIn}
+              activeOpacity={0.8}
+              className={ROW_BUTTON_CLASS}
+              color={color}
+              disabled={secondaryDisabled}
+              containerStyle={sheetFooterButtonContainerStyle(color, 'secondary')}
+              accessibilityLabel={secondaryAccessibilityLabel ?? secondaryLabel}
+            />
+            <Button
+              variant="primary"
+              label={primaryLabel}
+              labelSuffix={labelSuffix}
+              onPress={onPrimaryPress}
+              onPressIn={onPrimaryPressIn}
+              activeOpacity={0.85}
+              className={ROW_BUTTON_CLASS}
+              color={color}
+              disabled={primaryDisabled}
+              loading={primaryLoading}
+              containerStyle={primaryContainerStyle}
+              labelStyle={primaryLabelStyle}
+              accessibilityLabel={primaryAccessibilityLabel ?? primaryLabel}
+              accessibilityState={{ disabled: primaryDisabled }}
+            />
+          </View>
+        )
       ) : singleVariant === 'secondary' ? (
         <Button
           variant="secondary"

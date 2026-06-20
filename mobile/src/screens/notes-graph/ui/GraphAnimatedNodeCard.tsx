@@ -5,7 +5,7 @@ import {
   CheckCircle2,
   Flag,
   Inbox,
-  ListChecks,
+  ListTodo,
   Tag as TagIcon,
 } from 'lucide-react-native';
 import React, { useMemo } from 'react';
@@ -149,7 +149,7 @@ const GraphNodeOpenTasksChip = React.memo(function GraphNodeOpenTasksChip({
         paddingVertical: GRAPH_CHIP_PAD_Y,
       }}
     >
-      <ListChecks color={color.icon.muted} size={GRAPH_CHIP_ICON_SIZE} strokeWidth={2.2} />
+      <ListTodo color={color.icon.muted} size={GRAPH_CHIP_ICON_SIZE} strokeWidth={2.2} />
       <Text
         numberOfLines={1}
         style={{ color: color.text.secondary, fontSize: GRAPH_CHIP_FONT_SIZE, fontWeight: '600' }}

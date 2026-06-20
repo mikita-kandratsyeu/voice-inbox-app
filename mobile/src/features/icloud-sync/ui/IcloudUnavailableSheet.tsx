@@ -11,6 +11,8 @@ import {
   SheetHeader,
 } from '@/shared/ui';
 
+import { IcloudIcon } from './IcloudIcon';
+
 type Props = {
   visible: boolean;
   onClose: () => void;
@@ -34,11 +36,13 @@ export function IcloudUnavailableSheet({ visible, onClose }: Props) {
         <SheetHeader
           title={t('settings.icloudSync.unavailableSheetTitle')}
           subtitle={t('settings.icloudSync.unavailableSheetBody')}
+          icon={<IcloudIcon size={28} color={color.accent.primary} />}
           color={color}
-          marginBottom={24}
+          marginBottom={12}
         />
         <SheetFooterButtons
           color={color}
+          buttonLayout="stack"
           primaryLabel={t('settings.icloudSync.openSettings')}
           onPrimaryPress={openSettings}
           secondaryLabel={t('common.close')}
