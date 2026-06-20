@@ -175,7 +175,7 @@ export const InAppEventDetailScreen = () => {
             <View
               pointerEvents="none"
               style={[
-                StyleSheet.absoluteFillObject,
+                StyleSheet.absoluteFill,
                 {
                   alignItems: 'center',
                   justifyContent: 'center',

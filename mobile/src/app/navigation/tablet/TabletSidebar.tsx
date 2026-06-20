@@ -220,10 +220,7 @@ export const TabletSidebar = () => {
               borderColor: theme.border,
             }}
           >
-            <View
-              pointerEvents="none"
-              style={[StyleSheet.absoluteFillObject, { overflow: 'hidden' }]}
-            >
+            <View pointerEvents="none" style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]}>
               <FrostedChromeBackground borderRadius={TABLET_SIDEBAR_FLOAT_RADIUS} />
             </View>
             <TabletSidebarBody
