@@ -2,13 +2,12 @@ import type { TFunction } from 'i18next';
 import { Share } from 'react-native';
 
 import { isUserCancelledShare } from '@/features/share-record/lib/isUserCancelledShare';
-import { type AiUsageHistoryEntry, getAiUsageHistory } from '@/shared/lib/ai-api';
+import { type AiUsageHistoryEntry, getAiUsageHistoryForExport } from '@/shared/lib/ai-api';
 import { resolveAiModelRoutingDisplayLabel } from '@/shared/lib/aiModelRoutingDisplay';
 import { diagWarn } from '@/shared/lib/appLogger';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 import { formatLocalizedLongDateWithTime } from '@/shared/lib/taskDeadlineTimeDisplay';
 
-const EXPORT_PAGE_LIMIT = 50;
 const UTF8_BOM = '\uFEFF';
 
 export class AiUsageHistoryExportError extends Error {
@@ -21,20 +20,6 @@ export class AiUsageHistoryExportError extends Error {
 function csvEscape(value: string): string {
   if (/[",\n\r]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
   return value;
-}
-
-async function fetchAllAiUsageHistory(): Promise<AiUsageHistoryEntry[] | null> {
-  const items: AiUsageHistoryEntry[] = [];
-  let cursor: string | null = null;
-
-  while (true) {
-    const page = await getAiUsageHistory({ cursor, limit: EXPORT_PAGE_LIMIT });
-    if (!page) return null;
-
-    items.push(...page.items);
-    if (!page.nextCursor) return items;
-    cursor = page.nextCursor;
-  }
 }
 
 function buildAiUsageHistoryCsv(
@@ -73,18 +58,21 @@ export async function exportAiUsageHistoryCsv(params: {
   t: TFunction;
   language: string;
 }): Promise<void> {
-  const items = await fetchAllAiUsageHistory();
-  if (!items) {
+  const exportResult = await getAiUsageHistoryForExport();
+  if (!exportResult) {
     throw new AiUsageHistoryExportError('fetch_failed');
   }
-  if (items.length === 0) {
+  if (exportResult.items.length === 0) {
     throw new AiUsageHistoryExportError('empty');
+  }
+  if (exportResult.truncated) {
+    diagWarn('[exportAiUsageHistoryCsv] export truncated at server limit');
   }
 
   const timestamp = Date.now();
   const fileName = `ai-credits-${timestamp}.csv`;
   const filePath = `${getCachesDirectoryPath()}/${fileName}`;
-  const csv = `${UTF8_BOM}${buildAiUsageHistoryCsv(items, params.t, params.language)}`;
+  const csv = `${UTF8_BOM}${buildAiUsageHistoryCsv(exportResult.items, params.t, params.language)}`;
 
   try {
     await NitroFS.writeFile(filePath, csv, 'utf8');

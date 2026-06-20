@@ -45,8 +45,58 @@ export type AiUsageHistoryPage = {
   nextCursor: string | null;
 };
 
+export type AiUsageHistoryExport = {
+  items: AiUsageHistoryEntry[];
+  truncated: boolean;
+};
+
+type LedgerRowSelect = {
+  id: string;
+  createdAt: Date;
+  kind: string;
+  operation: string;
+  amount: number;
+  jobId: string | null;
+  description: string | null;
+  metadata: unknown;
+};
+
+const mapLedgerRowToHistoryEntry = (row: LedgerRowSelect): AiUsageHistoryEntry => {
+  const modelMode = readModelMode(row.metadata);
+  const includeResolvedModel = modelMode !== 'auto';
+  return {
+    id: row.id,
+    createdAt: row.createdAt.toISOString(),
+    kind: row.kind as AiUsageLedgerKind,
+    operation: row.operation as AiUsageOperation,
+    amount: row.amount,
+    ...(row.jobId ? { jobId: row.jobId } : {}),
+    ...(row.description ? { description: row.description } : {}),
+    ...(includeResolvedModel && readTrimmedString(row.metadata, 'model')
+      ? { model: readTrimmedString(row.metadata, 'model') }
+      : {}),
+    ...(includeResolvedModel && readTrimmedString(row.metadata, 'modelLabel')
+      ? { modelLabel: readTrimmedString(row.metadata, 'modelLabel') }
+      : {}),
+    ...(modelMode ? { modelMode } : {}),
+  };
+};
+
+const ledgerRowSelect = {
+  id: true,
+  createdAt: true,
+  kind: true,
+  operation: true,
+  amount: true,
+  jobId: true,
+  description: true,
+  metadata: true,
+} as const;
+
 export const DEFAULT_AI_USAGE_HISTORY_LIMIT = 25;
 export const MAX_AI_USAGE_HISTORY_LIMIT = 50;
+/** Max ledger rows returned by the dedicated export endpoint (one request per device). */
+export const MAX_AI_USAGE_HISTORY_EXPORT_LIMIT = 10_000;
 
 const normalizeLimit = (limit: number | null): number => {
   if (!Number.isFinite(limit ?? NaN)) return DEFAULT_AI_USAGE_HISTORY_LIMIT;
@@ -186,42 +236,35 @@ export async function getAiUsageHistory(params: {
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take: limit + 1,
     ...(params.cursor ? { cursor: { id: params.cursor }, skip: 1 } : {}),
-    select: {
-      id: true,
-      createdAt: true,
-      kind: true,
-      operation: true,
-      amount: true,
-      jobId: true,
-      description: true,
-      metadata: true,
-    },
+    select: ledgerRowSelect,
   });
 
   const pageRows = rows.slice(0, limit);
   const nextCursor = rows.length > limit ? (pageRows[pageRows.length - 1]?.id ?? null) : null;
 
   return {
-    items: pageRows.map((row) => {
-      const modelMode = readModelMode(row.metadata);
-      const includeResolvedModel = modelMode !== 'auto';
-      return {
-        id: row.id,
-        createdAt: row.createdAt.toISOString(),
-        kind: row.kind as AiUsageLedgerKind,
-        operation: row.operation as AiUsageOperation,
-        amount: row.amount,
-        ...(row.jobId ? { jobId: row.jobId } : {}),
-        ...(row.description ? { description: row.description } : {}),
-        ...(includeResolvedModel && readTrimmedString(row.metadata, 'model')
-          ? { model: readTrimmedString(row.metadata, 'model') }
-          : {}),
-        ...(includeResolvedModel && readTrimmedString(row.metadata, 'modelLabel')
-          ? { modelLabel: readTrimmedString(row.metadata, 'modelLabel') }
-          : {}),
-        ...(modelMode ? { modelMode } : {}),
-      };
-    }),
+    items: pageRows.map(mapLedgerRowToHistoryEntry),
     nextCursor,
+  };
+}
+
+export async function getAiUsageHistoryForExport(params: {
+  deviceId: string;
+}): Promise<AiUsageHistoryExport> {
+  if (!process.env.DATABASE_URL?.trim()) return { items: [], truncated: false };
+
+  const rows = await prisma.aiUsageLedgerEntry.findMany({
+    where: { deviceId: params.deviceId },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    take: MAX_AI_USAGE_HISTORY_EXPORT_LIMIT + 1,
+    select: ledgerRowSelect,
+  });
+
+  const truncated = rows.length > MAX_AI_USAGE_HISTORY_EXPORT_LIMIT;
+  const exportRows = truncated ? rows.slice(0, MAX_AI_USAGE_HISTORY_EXPORT_LIMIT) : rows;
+
+  return {
+    items: exportRows.map(mapLedgerRowToHistoryEntry),
+    truncated,
   };
 }

@@ -287,6 +287,11 @@ export type AiUsageHistoryPage = {
   nextCursor: string | null;
 };
 
+export type AiUsageHistoryExport = {
+  items: AiUsageHistoryEntry[];
+  truncated: boolean;
+};
+
 function parseAiUsagePayload(raw: Record<string, unknown>): AiUsage {
   const bonusAmountRaw = raw.bonusAmount;
   const bonusAmount =
@@ -335,6 +340,20 @@ function parseAiUsageHistoryPayload(raw: Record<string, unknown>): AiUsageHistor
   };
 }
 
+function parseAiUsageHistoryExportPayload(raw: Record<string, unknown>): AiUsageHistoryExport {
+  const items = Array.isArray(raw.items)
+    ? raw.items
+        .filter((item): item is Record<string, unknown> => item != null && typeof item === 'object')
+        .map(parseAiUsageHistoryEntry)
+        .filter((item) => item.id && item.createdAt)
+    : [];
+
+  return {
+    items,
+    truncated: raw.truncated === true,
+  };
+}
+
 export async function getAiUsage(): Promise<AiUsage | null> {
   try {
     const response = await fetchWithAuth(`${getWebApiUrl()}/api/ai-usage`, { method: 'GET' });
@@ -372,6 +391,24 @@ export async function getAiUsageHistory(params?: {
     const data = (await response.json()) as Record<string, unknown>;
 
     return parseAiUsageHistoryPayload(data);
+  } catch {
+    return null;
+  }
+}
+
+export async function getAiUsageHistoryForExport(): Promise<AiUsageHistoryExport | null> {
+  try {
+    const response = await fetchWithAuth(`${getWebApiUrl()}/api/ai-usage/history/export`, {
+      method: 'GET',
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = (await response.json()) as Record<string, unknown>;
+
+    return parseAiUsageHistoryExportPayload(data);
   } catch {
     return null;
   }
