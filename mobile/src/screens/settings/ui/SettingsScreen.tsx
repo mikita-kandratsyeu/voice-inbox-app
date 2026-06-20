@@ -32,6 +32,7 @@ import {
   SettingsAppearanceSection,
   SettingsAutomationSection,
   SettingsBackupSection,
+  SettingsCloudSyncSection,
   SettingsDeviceSection,
   SettingsDigestSection,
   SettingsPermissionsSection,
@@ -229,6 +230,12 @@ export const SettingsScreen = () => {
             recordsCount={settings.recordsCount}
             navigation={settings.navigation}
           />
+          <SettingsCloudSyncSection
+            color={settings.color}
+            t={settings.t}
+            cloudSyncLocked={settings.cloudSyncLocked}
+            onLockedPress={() => settings.setCloudSyncSheetVisible(true)}
+          />
           <SettingsAppearanceSection
             color={settings.color}
             t={settings.t}
@@ -281,6 +288,15 @@ export const SettingsScreen = () => {
           restoredAmount={settings.resetProLimitSuccessSheet?.reset.restoredAmount ?? 0}
           limit={settings.resetProLimitSuccessSheet?.reset.limit ?? 0}
           alreadyApplied={settings.resetProLimitSuccessSheet?.alreadyApplied ?? false}
+        />
+        <AutomationComingSoonSheet
+          visible={settings.cloudSyncSheetVisible}
+          feature="cloudSync"
+          onUpgradePress={() => {
+            settings.setCloudSyncSheetVisible(false);
+            openPlanPaywall();
+          }}
+          onClose={() => settings.setCloudSyncSheetVisible(false)}
         />
         <AutomationComingSoonSheet
           visible={settings.automationSheet !== null}

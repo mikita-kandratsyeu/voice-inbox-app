@@ -25,6 +25,11 @@ export function isNoteMarkdownPath(path: string): boolean {
   );
 }
 
+export function isRemoteSyncAudioPath(path: string): boolean {
+  const normalized = path.replace(/^\/+/, '');
+  return normalized.startsWith('audio/') || normalized.includes('/audio/');
+}
+
 export function addPathVariants(out: Set<string>, path: string, basePath: string): void {
   const normalizedBase = basePath.replace(/^\/+|\/+$/g, '');
   out.add(path);

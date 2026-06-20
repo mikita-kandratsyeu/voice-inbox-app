@@ -3,7 +3,7 @@ import type { VoiceRecord } from '@/entities/record';
 
 import type { RemoteSnapshot } from './buildRemoteSnapshot';
 import { computeRemoteSyncDiff, type RemoteSyncDiff } from './computeRemoteSyncDiff';
-import { addPathVariants, isNoteMarkdownPath, toRelativeRepoPaths } from './repoPaths';
+import { addPathVariants, isNoteMarkdownPath, isRemoteSyncAudioPath, toRelativeRepoPaths } from './repoPaths';
 
 export type PushFileSnapshotResult =
   | { ok: true; versionId: string; alreadyUpToDate: boolean }
@@ -17,6 +17,8 @@ export type FileSyncPushAdapter = {
   listExistingRelativePaths(): Promise<string[]>;
   writeFiles(input: {
     files: Map<string, string>;
+    localBinaryFiles?: Map<string, string>;
+    tempCleanupDirs?: string[];
     deletions: string[];
     versionId: string;
     versionMeta: Record<string, unknown>;
@@ -56,13 +58,19 @@ function resolveDeletions(params: {
     try {
       const existingPaths = await adapter.listExistingRelativePaths();
       const currentNotePaths = new Set<string>();
+      const currentAudioPaths = new Set<string>();
       for (const path of snapshot.files.keys()) {
         if (isNoteMarkdownPath(path)) {
           addPathVariants(currentNotePaths, path, basePath);
         }
       }
+      for (const path of snapshot.localBinaryFiles?.keys() ?? []) {
+        addPathVariants(currentAudioPaths, path, basePath);
+      }
       for (const path of existingPaths) {
         if (isNoteMarkdownPath(path) && !currentNotePaths.has(path)) {
+          deletions.push(path);
+        } else if (isRemoteSyncAudioPath(path) && !currentAudioPaths.has(path)) {
           deletions.push(path);
         }
       }
@@ -155,7 +163,11 @@ async function pushFileSnapshotInternal(params: {
       JSON.stringify(versionMeta, null, 2),
     );
 
-    const uploadTotal = snapshot.files.size + versionAuxiliaryFiles.size + 1;
+    const uploadTotal =
+      snapshot.files.size +
+      (snapshot.localBinaryFiles?.size ?? 0) +
+      versionAuxiliaryFiles.size +
+      1;
     if (adapter.reportUploadProgress && uploadTotal > 0) {
       adapter.reportStage?.('uploading');
       adapter.reportUploadProgress(0, uploadTotal);
@@ -164,6 +176,8 @@ async function pushFileSnapshotInternal(params: {
     adapter.reportStage?.('finishing');
     await adapter.writeFiles({
       files: snapshot.files,
+      localBinaryFiles: snapshot.localBinaryFiles,
+      tempCleanupDirs: snapshot.tempCleanupDirs,
       deletions,
       versionId,
       versionMeta,

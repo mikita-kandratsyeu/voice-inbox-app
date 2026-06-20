@@ -13,6 +13,10 @@ function isNoteMarkdownPath(path: string, normalizedPrefix: string): boolean {
   return path.startsWith(`${normalizedPrefix}/`) && path.endsWith('.md');
 }
 
+function isAudioPath(path: string): boolean {
+  return path.includes('/audio/') || path.endsWith('/audio') || path.startsWith('audio/');
+}
+
 export function computeRemoteSyncDiff(params: {
   currentHashes: Record<string, string>;
   previousHashes: Record<string, string>;
@@ -39,6 +43,8 @@ export function computeRemoteSyncDiff(params: {
       if (isNoteMarkdownPath(path, normalizedPrefix)) {
         added += 1;
         notesAdded += 1;
+      } else if (isAudioPath(path)) {
+        added += 1;
       } else if (path.includes(`${normalizedPrefix}/`) || path.endsWith('manifest.json')) {
         added += 1;
       }
@@ -46,6 +52,8 @@ export function computeRemoteSyncDiff(params: {
       updated += 1;
       if (isNoteMarkdownPath(path, normalizedPrefix)) {
         notesUpdated += 1;
+      } else if (isAudioPath(path)) {
+        // Audio-only updates still count as sync changes.
       }
     }
     previousKeys.delete(path);
@@ -55,6 +63,9 @@ export function computeRemoteSyncDiff(params: {
     if (isNoteMarkdownPath(path, normalizedPrefix)) {
       removed += 1;
       notesRemoved += 1;
+      deletionPaths.push(path);
+    } else if (isAudioPath(path)) {
+      removed += 1;
       deletionPaths.push(path);
     }
   }

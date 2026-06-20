@@ -8,6 +8,7 @@ import {
 } from '@/features/git-remote-sync/lib/pushFileSnapshot';
 import { joinRepoPath } from '@/features/git-remote-sync/lib/repoPaths';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
+import { NitroFS } from '@/shared/lib/fs';
 
 import { buildIcloudSnapshot } from './buildIcloudSnapshot';
 import { areIcloudSyncHashesEqual } from './computeIcloudSyncDiff';
@@ -23,8 +24,8 @@ import {
   ensureIcloudDirectory,
   listIcloudRelativePaths,
   readIcloudRelativeFile,
+  uploadIcloudRelativeFileFromLocal,
   writeIcloudRelativeFile,
-  writeIcloudRelativeFiles,
 } from './icloudNative';
 import { updateIcloudSyncProgress } from './icloudSyncProgress';
 import {
@@ -44,31 +45,65 @@ import {
 
 export type PushIcloudSnapshotResult = PushFileSnapshotResult;
 
+async function removeExportDir(path: string): Promise<void> {
+  const exists = await NitroFS.exists(path);
+  if (!exists) {
+    return;
+  }
+  const items = await NitroFS.readdir(path);
+  for (const item of items) {
+    const stat = await NitroFS.stat(item.path);
+    if (stat.isFile) {
+      await NitroFS.unlink(item.path);
+    } else {
+      await removeExportDir(item.path);
+    }
+  }
+  await NitroFS.unlink(path);
+}
+
 function createIcloudPushAdapter(basePath: string, reportProgress: boolean): FileSyncPushAdapter {
   return {
     basePath,
     buildSnapshot: (records, folders) => buildIcloudSnapshot({ records, folders, basePath }),
     listExistingRelativePaths: () => listIcloudRelativePaths(basePath),
     writeFiles: async (input) => {
-      await writeIcloudRelativeFiles({
-        basePath,
-        files: input.files,
-        onProgress: input.onUploadProgress,
-      });
-      await deleteIcloudRelativePaths(input.deletions);
-      const manifestContent = input.files.get(
-        joinRepoPath(basePath, '.voice-inbox-ai/manifest.json'),
-      );
-      if (manifestContent) {
-        await ensureIcloudDirectory(
-          joinRepoPath(basePath, `${ICLOUD_SYNC_VERSIONS_DIR}/${input.versionId}`),
+      try {
+        const total = input.files.size + (input.localBinaryFiles?.size ?? 0);
+        let uploaded = 0;
+        const bumpProgress = () => {
+          uploaded += 1;
+          input.onUploadProgress?.(uploaded, total);
+        };
+
+        for (const [path, content] of input.files.entries()) {
+          await writeIcloudRelativeFile(path, content);
+          bumpProgress();
+        }
+        for (const [path, localPath] of input.localBinaryFiles?.entries() ?? []) {
+          await uploadIcloudRelativeFileFromLocal({ relativePath: path, localPath });
+          bumpProgress();
+        }
+
+        await deleteIcloudRelativePaths(input.deletions);
+        const manifestContent = input.files.get(
+          joinRepoPath(basePath, '.voice-inbox-ai/manifest.json'),
         );
-        await writeIcloudRelativeFile(input.versionManifestPath, manifestContent);
+        if (manifestContent) {
+          await ensureIcloudDirectory(
+            joinRepoPath(basePath, `${ICLOUD_SYNC_VERSIONS_DIR}/${input.versionId}`),
+          );
+          await writeIcloudRelativeFile(input.versionManifestPath, manifestContent);
+        }
+        for (const [path, content] of input.versionAuxiliaryFiles.entries()) {
+          await writeIcloudRelativeFile(path, content);
+        }
+        input.onFinishing?.();
+      } finally {
+        for (const dir of input.tempCleanupDirs ?? []) {
+          await removeExportDir(dir).catch(() => {});
+        }
       }
-      for (const [path, content] of input.versionAuxiliaryFiles.entries()) {
-        await writeIcloudRelativeFile(path, content);
-      }
-      input.onFinishing?.();
     },
     pruneOldVersions: async () => {
       const versionsRoot = joinRepoPath(basePath, ICLOUD_SYNC_VERSIONS_DIR);
@@ -125,7 +160,8 @@ export async function pushIcloudSnapshot(params: {
   const { folders, reportProgress = false } = params;
 
   const snapshot = await buildIcloudSnapshot({ records, folders, basePath });
-  const dynamicTimeout = calculateIcloudSyncTimeout(snapshot.files.size);
+  const fileCount = snapshot.files.size + (snapshot.localBinaryFiles?.size ?? 0);
+  const dynamicTimeout = calculateIcloudSyncTimeout(fileCount);
 
   return pushFileSnapshot({
     records,

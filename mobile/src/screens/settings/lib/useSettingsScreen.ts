@@ -85,6 +85,7 @@ export function useSettingsScreen() {
   const [isUpdatingEmbeddings, setIsUpdatingEmbeddings] = useState(false);
   const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
   const [automationSheet, setAutomationSheet] = useState<AutomationFeatureKind | null>(null);
+  const [cloudSyncSheetVisible, setCloudSyncSheetVisible] = useState(false);
   const [autoArchiveDelaySheetVisible, setAutoArchiveDelaySheetVisible] = useState(false);
   const {
     refresh: refreshProEntitlement,
@@ -92,6 +93,7 @@ export function useSettingsScreen() {
     expiresAtMs,
   } = useProEntitlement();
   const automationLocked = isAutomationUiLockedForPublicStore(proEntitlementActive);
+  const cloudSyncLocked = automationLocked;
   const privateAiQueueCount = usePrivateAiTaskQueueCount();
 
   const [planCardStoreProActive, setPlanCardStoreProActive] = useState<boolean | null>(null);
@@ -458,6 +460,9 @@ export function useSettingsScreen() {
     privateAiQueueCount,
     digestAiEnabled,
     automationLocked,
+    cloudSyncLocked,
+    cloudSyncSheetVisible,
+    setCloudSyncSheetVisible,
     autoTranscribeOnSave,
     setAutoTranscribeOnSave,
     autoAiAfterTranscription,

@@ -4,8 +4,9 @@ import QuickCrypto from 'react-native-quick-crypto';
 import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
 import { buildShareText } from '@/features/share-record';
-import { buildBackupPayload } from '@/features/sync-data';
+import { buildBackupPayload, prepareBackupExportDirectory } from '@/features/sync-data/lib/buildBackupPayload';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
+import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
 import {
   REMOTE_SYNC_AI_SETTINGS_FILE,
@@ -22,7 +23,7 @@ import {
   REMOTE_SYNC_RECORDS_FILE,
   REMOTE_SYNC_STRUCTURE_VERSION,
 } from './constants';
-import { hashFileMap, sha256Hex } from './contentHash';
+import { hashFileMap, sha256Hex, sha256HexFromFile } from './contentHash';
 import { buildRemoteSyncAiSettings } from './remoteSyncAiSettings';
 import { buildRemoteSyncPrivateProfiles } from './remoteSyncPrivateProfiles';
 
@@ -60,6 +61,8 @@ export type RemoteSyncIndex = {
 
 export type RemoteSnapshot = {
   files: Map<string, string>;
+  localBinaryFiles?: Map<string, string>;
+  tempCleanupDirs?: string[];
   contentHashes: Record<string, string>;
   manifest: RemoteSyncManifest;
   index: RemoteSyncIndex;
@@ -157,9 +160,19 @@ export async function buildRemoteSnapshot(params: {
   records: VoiceRecord[];
   folders: Folder[];
   basePath: string;
+  includeAudio?: boolean;
 }): Promise<RemoteSnapshot> {
-  const { records, folders, basePath } = params;
-  const payload = await buildBackupPayload(records, folders, { includeAudio: false });
+  const { records, folders, basePath, includeAudio = false } = params;
+  let tempExportDir: string | null = null;
+  if (includeAudio) {
+    tempExportDir = `${getCachesDirectoryPath()}/remote-sync-export-${Date.now()}`;
+    await prepareBackupExportDirectory(tempExportDir);
+  }
+
+  const payload = await buildBackupPayload(records, folders, {
+    includeAudio,
+    exportDir: tempExportDir ?? undefined,
+  });
 
   const noteFiles = new Map<string, string>();
   const contentHashesByRecordId: Record<string, string> = {};
@@ -259,14 +272,45 @@ export async function buildRemoteSnapshot(params: {
     const readmePath = joinRepoPath(basePath, REMOTE_SYNC_README_FILE);
     files.set(
       readmePath,
-      '# Voice Inbox\n\nThis repository stores synced voice notes from Voice Inbox (markdown + metadata, no audio).\n',
+      includeAudio
+        ? '# Voice Inbox\n\nThis folder stores synced voice notes from Voice Inbox (markdown, metadata, and audio).\n'
+        : '# Voice Inbox\n\nThis repository stores synced voice notes from Voice Inbox (markdown + metadata, no audio).\n',
     );
   }
 
+  const localBinaryFiles = new Map<string, string>();
+  if (includeAudio && tempExportDir) {
+    for (const record of payload.records) {
+      const relativeAudioPath = record.audioPath?.trim();
+      if (!relativeAudioPath) {
+        continue;
+      }
+      const localPath = `${tempExportDir}/${relativeAudioPath}`.replace(/\/+/g, '/');
+      localBinaryFiles.set(joinRepoPath(basePath, relativeAudioPath), localPath);
+    }
+  }
+
   const contentHashes = hashFileMap(files);
+  for (const [path, localPath] of localBinaryFiles) {
+    try {
+      const exists = await NitroFS.exists(
+        localPath.startsWith('file://') ? localPath.slice(7) : localPath,
+      );
+      if (!exists) {
+        localBinaryFiles.delete(path);
+        continue;
+      }
+      contentHashes[path] = await sha256HexFromFile(localPath);
+    } catch {
+      localBinaryFiles.delete(path);
+      delete contentHashes[path];
+    }
+  }
 
   return {
     files,
+    localBinaryFiles: localBinaryFiles.size > 0 ? localBinaryFiles : undefined,
+    tempCleanupDirs: tempExportDir ? [tempExportDir] : undefined,
     contentHashes,
     manifest,
     index,

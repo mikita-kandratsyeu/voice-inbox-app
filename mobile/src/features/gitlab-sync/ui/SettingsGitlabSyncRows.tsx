@@ -22,9 +22,20 @@ import { GitlabRepoPickerSheet } from './GitlabRepoPickerSheet';
 type Props = {
   color: Colors;
   t: TFunction;
+  suppressProBadge?: boolean;
+  onLockedPress?: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
 };
 
-export function SettingsGitlabSyncRows({ color, t }: Props) {
+export function SettingsGitlabSyncRows({
+  color,
+  t,
+  suppressProBadge = false,
+  onLockedPress,
+  isFirst,
+  isLast = true,
+}: Props) {
   const { i18n } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const {
@@ -59,8 +70,12 @@ export function SettingsGitlabSyncRows({ color, t }: Props) {
   const [proSheetVisible, setProSheetVisible] = useState(false);
 
   const handleLockedPress = useCallback(() => {
+    if (onLockedPress) {
+      onLockedPress();
+      return;
+    }
     setProSheetVisible(true);
-  }, []);
+  }, [onLockedPress]);
 
   const handleLoadRepos = useCallback(async () => {
     const result = await loadRepos();
@@ -72,7 +87,7 @@ export function SettingsGitlabSyncRows({ color, t }: Props) {
 
   const handleConnect = useCallback(async () => {
     if (!isProActive) {
-      setProSheetVisible(true);
+      handleLockedPress();
       return;
     }
     if (!oauthConfigured) {
@@ -95,7 +110,7 @@ export function SettingsGitlabSyncRows({ color, t }: Props) {
       return;
     }
     setRepoPickerVisible(true);
-  }, [connectGitlab, isProActive, oauthConfigured, t]);
+  }, [connectGitlab, handleLockedPress, isProActive, oauthConfigured, t]);
 
   const handleSelectRepo = useCallback(
     async (repo: GitlabRepoSummary) => {
@@ -138,9 +153,10 @@ export function SettingsGitlabSyncRows({ color, t }: Props) {
         label={t('settings.gitlabSync.connect')}
         subtitle={t('settings.gitlabSync.connectHint')}
         leftIcon={<GitlabIcon size={20} color={getSettingsIconColor(color, 'gitlab')} />}
-        showProBadge
+        showProBadge={!suppressProBadge}
         onPress={handleLockedPress}
-        isLast
+        isFirst={isFirst}
+        isLast={isLast}
       />
     );
   } else if (!connected) {
@@ -153,7 +169,8 @@ export function SettingsGitlabSyncRows({ color, t }: Props) {
         leftIcon={<GitlabIcon size={20} color={getSettingsIconColor(color, 'gitlab')} />}
         loading={isConnecting}
         onPress={() => void handleConnect()}
-        isLast
+        isFirst={isFirst}
+        isLast={isLast}
       />
     );
   } else {
@@ -168,7 +185,8 @@ export function SettingsGitlabSyncRows({ color, t }: Props) {
         leftIcon={<GitlabIcon size={20} color={getSettingsIconColor(color, 'gitlab')} />}
         loading={isSyncing}
         onPress={() => navigation.navigate('GitlabSync')}
-        isLast
+        isFirst={isFirst}
+        isLast={isLast}
       />
     );
   }
@@ -199,15 +217,17 @@ export function SettingsGitlabSyncRows({ color, t }: Props) {
         onLoadRepos={handleLoadRepos}
         onTogglePinnedRepo={togglePinnedRepo}
       />
-      <AutomationComingSoonSheet
-        visible={proSheetVisible}
-        feature="gitlabSync"
-        onUpgradePress={() => {
-          setProSheetVisible(false);
-          openPlanPaywall();
-        }}
-        onClose={() => setProSheetVisible(false)}
-      />
+      {!onLockedPress ? (
+        <AutomationComingSoonSheet
+          visible={proSheetVisible}
+          feature="gitlabSync"
+          onUpgradePress={() => {
+            setProSheetVisible(false);
+            openPlanPaywall();
+          }}
+          onClose={() => setProSheetVisible(false)}
+        />
+      ) : null}
     </>
   );
 }

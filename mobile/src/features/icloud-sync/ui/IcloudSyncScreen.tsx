@@ -203,9 +203,6 @@ export function IcloudSyncScreen() {
         <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
           {t('settings.icloudSync.plaintextWarning')}
         </Text>
-        <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-          {t('settings.icloudSync.audioRestoreHint')}
-        </Text>
 
         <SettingsSection title={t('settings.icloudSync.connectedSectionTitle')}>
           <SettingsRow

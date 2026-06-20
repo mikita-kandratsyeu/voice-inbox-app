@@ -8,6 +8,7 @@ import {
 
 import { joinRepoPath } from '@/features/git-remote-sync/lib/repoPaths';
 import { IS_IOS } from '@/shared/lib';
+import { NitroFS } from '@/shared/lib/fs';
 
 const ICLOUD_SCOPE = CloudStorageScope.Documents;
 
@@ -172,6 +173,85 @@ export async function writeIcloudRelativeFiles(params: {
     await writeIcloudRelativeFile(path, content);
     uploaded += 1;
     onProgress?.(uploaded, total);
+  }
+}
+
+function mimeTypeForAudioPath(path: string): string {
+  const ext = path.toLowerCase().match(/\.[a-z0-9]+$/)?.[0];
+  switch (ext) {
+    case '.mp3':
+      return 'audio/mpeg';
+    case '.wav':
+      return 'audio/wav';
+    case '.m4a':
+    case '.mp4':
+      return 'audio/mp4';
+    default:
+      return 'application/octet-stream';
+  }
+}
+
+function normalizeLocalFsPath(localPath: string): string {
+  return localPath.startsWith('file://') ? localPath.slice(7) : localPath;
+}
+
+export async function uploadIcloudRelativeFileFromLocal(params: {
+  relativePath: string;
+  localPath: string;
+}): Promise<void> {
+  ensureConfigured();
+  const slashIndex = params.relativePath.lastIndexOf('/');
+  if (slashIndex > 0) {
+    await ensureDirectoryRecursive(params.relativePath.slice(0, slashIndex));
+  }
+  try {
+    await CloudStorage.uploadFile(
+      params.relativePath,
+      normalizeLocalFsPath(params.localPath),
+      { mimeType: mimeTypeForAudioPath(params.relativePath) },
+      ICLOUD_SCOPE,
+    );
+  } catch (err) {
+    mapAndThrowWriteError(err);
+  }
+}
+
+export async function uploadIcloudRelativeFilesFromLocal(params: {
+  files: Map<string, string>;
+  onProgress?: (uploaded: number, total: number) => void;
+}): Promise<void> {
+  ensureConfigured();
+  const { files, onProgress } = params;
+  const total = files.size;
+  let uploaded = 0;
+
+  for (const [relativePath, localPath] of files.entries()) {
+    await uploadIcloudRelativeFileFromLocal({ relativePath, localPath });
+    uploaded += 1;
+    onProgress?.(uploaded, total);
+  }
+}
+
+export async function downloadIcloudRelativeFileToLocal(params: {
+  relativePath: string;
+  localPath: string;
+}): Promise<boolean> {
+  ensureConfigured();
+  try {
+    await CloudStorage.triggerSync(params.relativePath, ICLOUD_SCOPE).catch(() => {});
+    const exists = await CloudStorage.exists(params.relativePath, ICLOUD_SCOPE).catch(() => false);
+    if (!exists) {
+      return false;
+    }
+    const destPath = normalizeLocalFsPath(params.localPath);
+    const destDirIndex = destPath.lastIndexOf('/');
+    if (destDirIndex > 0) {
+      await NitroFS.mkdir(destPath.slice(0, destDirIndex)).catch(() => {});
+    }
+    await CloudStorage.downloadFile(params.relativePath, destPath, ICLOUD_SCOPE);
+    return await NitroFS.exists(destPath);
+  } catch {
+    return false;
   }
 }
 

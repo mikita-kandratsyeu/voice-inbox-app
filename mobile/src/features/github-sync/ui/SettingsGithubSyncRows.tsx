@@ -22,9 +22,20 @@ import { GithubRepoPickerSheet } from './GithubRepoPickerSheet';
 type Props = {
   color: Colors;
   t: TFunction;
+  suppressProBadge?: boolean;
+  onLockedPress?: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
 };
 
-export function SettingsGithubSyncRows({ color, t }: Props) {
+export function SettingsGithubSyncRows({
+  color,
+  t,
+  suppressProBadge = false,
+  onLockedPress,
+  isFirst,
+  isLast = false,
+}: Props) {
   const { i18n } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const {
@@ -59,8 +70,12 @@ export function SettingsGithubSyncRows({ color, t }: Props) {
   const [proSheetVisible, setProSheetVisible] = useState(false);
 
   const handleLockedPress = useCallback(() => {
+    if (onLockedPress) {
+      onLockedPress();
+      return;
+    }
     setProSheetVisible(true);
-  }, []);
+  }, [onLockedPress]);
 
   const handleLoadRepos = useCallback(async () => {
     const result = await loadRepos();
@@ -72,7 +87,7 @@ export function SettingsGithubSyncRows({ color, t }: Props) {
 
   const handleConnect = useCallback(async () => {
     if (!isProActive) {
-      setProSheetVisible(true);
+      handleLockedPress();
       return;
     }
     if (!oauthConfigured) {
@@ -95,7 +110,7 @@ export function SettingsGithubSyncRows({ color, t }: Props) {
       return;
     }
     setRepoPickerVisible(true);
-  }, [connectGithub, isProActive, oauthConfigured, t]);
+  }, [connectGithub, handleLockedPress, isProActive, oauthConfigured, t]);
 
   const handleSelectRepo = useCallback(
     async (repo: GithubRepoSummary) => {
@@ -138,9 +153,10 @@ export function SettingsGithubSyncRows({ color, t }: Props) {
         label={t('settings.githubSync.connect')}
         subtitle={t('settings.githubSync.connectHint')}
         leftIcon={<GithubIcon size={20} color={getSettingsIconColor(color, 'github')} />}
-        showProBadge
+        showProBadge={!suppressProBadge}
         onPress={handleLockedPress}
-        isLast={false}
+        isFirst={isFirst}
+        isLast={isLast}
       />
     );
   } else if (!connected) {
@@ -153,7 +169,8 @@ export function SettingsGithubSyncRows({ color, t }: Props) {
         leftIcon={<GithubIcon size={20} color={getSettingsIconColor(color, 'github')} />}
         loading={isConnecting}
         onPress={() => void handleConnect()}
-        isLast={false}
+        isFirst={isFirst}
+        isLast={isLast}
       />
     );
   } else {
@@ -168,7 +185,8 @@ export function SettingsGithubSyncRows({ color, t }: Props) {
         leftIcon={<GithubIcon size={20} color={getSettingsIconColor(color, 'github')} />}
         loading={isSyncing}
         onPress={() => navigation.navigate('GithubSync')}
-        isLast={false}
+        isFirst={isFirst}
+        isLast={isLast}
       />
     );
   }
@@ -199,15 +217,17 @@ export function SettingsGithubSyncRows({ color, t }: Props) {
         onLoadRepos={handleLoadRepos}
         onTogglePinnedRepo={togglePinnedRepo}
       />
-      <AutomationComingSoonSheet
-        visible={proSheetVisible}
-        feature="githubSync"
-        onUpgradePress={() => {
-          setProSheetVisible(false);
-          openPlanPaywall();
-        }}
-        onClose={() => setProSheetVisible(false)}
-      />
+      {!onLockedPress ? (
+        <AutomationComingSoonSheet
+          visible={proSheetVisible}
+          feature="githubSync"
+          onUpgradePress={() => {
+            setProSheetVisible(false);
+            openPlanPaywall();
+          }}
+          onClose={() => setProSheetVisible(false)}
+        />
+      ) : null}
     </>
   );
 }

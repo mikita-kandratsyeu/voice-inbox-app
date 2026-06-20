@@ -23,7 +23,8 @@ export type AutomationFeatureKind =
   | 'notesGraph'
   | 'githubSync'
   | 'gitlabSync'
-  | 'icloudSync';
+  | 'icloudSync'
+  | 'cloudSync';
 
 type AutomationComingSoonSheetProps = {
   visible: boolean;
@@ -64,9 +65,11 @@ export function AutomationComingSoonSheet({
                           ? 'github_sync'
                           : feature === 'gitlabSync'
                             ? 'gitlab_sync'
-                            : feature === 'icloudSync'
-                              ? 'icloud_sync'
-                              : 'accent_color',
+                        : feature === 'icloudSync'
+                          ? 'icloud_sync'
+                          : feature === 'cloudSync'
+                            ? 'cloud_sync'
+                            : 'accent_color',
     });
     if (feature === 'autoTranscribe') {
       void logAnalyticsEvent('premium_feature_tapped_auto_whisper', {
@@ -100,15 +103,19 @@ export function AutomationComingSoonSheet({
       });
     } else if (feature === 'githubSync') {
       void logAnalyticsEvent('premium_feature_tapped_github_sync', {
-        surface: 'settings_backup',
+        surface: 'settings_cloud_sync',
       });
     } else if (feature === 'gitlabSync') {
       void logAnalyticsEvent('premium_feature_tapped_gitlab_sync', {
-        surface: 'settings_backup',
+        surface: 'settings_cloud_sync',
       });
     } else if (feature === 'icloudSync') {
       void logAnalyticsEvent('premium_feature_tapped_icloud_sync', {
-        surface: 'settings_backup',
+        surface: 'settings_cloud_sync',
+      });
+    } else if (feature === 'cloudSync') {
+      void logAnalyticsEvent('premium_feature_tapped_cloud_sync', {
+        surface: 'settings_cloud_sync',
       });
     } else {
       void logAnalyticsEvent('premium_feature_tapped_accent_color', {
@@ -140,7 +147,9 @@ export function AutomationComingSoonSheet({
                         ? t('settings.gitlabSync.proTitle')
                         : feature === 'icloudSync'
                           ? t('settings.icloudSync.proTitle')
-                          : t('appearance.accentColor.proTitle');
+                          : feature === 'cloudSync'
+                            ? t('settings.cloudSync.proTitle')
+                            : t('appearance.accentColor.proTitle');
   const body =
     feature === 'autoTranscribe'
       ? t('settings.automationSoon.autoTranscribeBody')
@@ -164,7 +173,9 @@ export function AutomationComingSoonSheet({
                         ? t('settings.gitlabSync.proBody')
                         : feature === 'icloudSync'
                           ? t('settings.icloudSync.proBody')
-                          : t('appearance.accentColor.proBody');
+                          : feature === 'cloudSync'
+                            ? t('settings.cloudSync.proBody')
+                            : t('appearance.accentColor.proBody');
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>

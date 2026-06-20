@@ -4,9 +4,6 @@ import { HardDrive } from 'lucide-react-native';
 import React from 'react';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
-import { SettingsGithubSyncRows } from '@/features/github-sync';
-import { SettingsGitlabSyncRows } from '@/features/gitlab-sync';
-import { SettingsIcloudSyncRows } from '@/features/icloud-sync';
 import type { Colors } from '@/shared/config';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
@@ -30,9 +27,7 @@ export const SettingsBackupSection = ({ color, t, recordsCount, navigation }: Pr
       }
       onPress={() => navigation.navigate('BackupRestore')}
       isFirst
+      isLast
     />
-    <SettingsIcloudSyncRows color={color} t={t} />
-    <SettingsGithubSyncRows color={color} t={t} />
-    <SettingsGitlabSyncRows color={color} t={t} />
   </SettingsSection>
 );

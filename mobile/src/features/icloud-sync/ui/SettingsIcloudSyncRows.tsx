@@ -19,9 +19,20 @@ import { IcloudUnavailableSheet } from './IcloudUnavailableSheet';
 type Props = {
   color: Colors;
   t: TFunction;
+  suppressProBadge?: boolean;
+  onLockedPress?: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
 };
 
-export function SettingsIcloudSyncRows({ color, t }: Props) {
+export function SettingsIcloudSyncRows({
+  color,
+  t,
+  suppressProBadge = false,
+  onLockedPress,
+  isFirst,
+  isLast = false,
+}: Props) {
   const { i18n } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const { isProActive, enabled, isSyncing, lastSyncedAt, refreshState, enableSync } =
@@ -38,12 +49,16 @@ export function SettingsIcloudSyncRows({ color, t }: Props) {
   );
 
   const handleLockedPress = useCallback(() => {
+    if (onLockedPress) {
+      onLockedPress();
+      return;
+    }
     setProSheetVisible(true);
-  }, []);
+  }, [onLockedPress]);
 
   const handleEnable = useCallback(async () => {
     if (!isProActive) {
-      setProSheetVisible(true);
+      handleLockedPress();
       return;
     }
     setIsEnabling(true);
@@ -57,7 +72,7 @@ export function SettingsIcloudSyncRows({ color, t }: Props) {
     } finally {
       setIsEnabling(false);
     }
-  }, [enableSync, isProActive, navigation]);
+  }, [enableSync, handleLockedPress, isProActive, navigation]);
 
   if (!IS_IOS) {
     return null;
@@ -79,9 +94,10 @@ export function SettingsIcloudSyncRows({ color, t }: Props) {
         label={t('settings.icloudSync.connect')}
         subtitle={t('settings.icloudSync.connectHint')}
         leftIcon={<IcloudIcon size={20} color={getSettingsIconColor(color, 'icloud')} />}
-        showProBadge
+        showProBadge={!suppressProBadge}
         onPress={handleLockedPress}
-        isLast={false}
+        isFirst={isFirst}
+        isLast={isLast}
       />
     );
   } else if (!enabled) {
@@ -92,7 +108,8 @@ export function SettingsIcloudSyncRows({ color, t }: Props) {
         leftIcon={<IcloudIcon size={20} color={getSettingsIconColor(color, 'icloud')} />}
         loading={isEnabling}
         onPress={() => void handleEnable()}
-        isLast={false}
+        isFirst={isFirst}
+        isLast={isLast}
       />
     );
   } else {
@@ -103,7 +120,8 @@ export function SettingsIcloudSyncRows({ color, t }: Props) {
         leftIcon={<IcloudIcon size={20} color={getSettingsIconColor(color, 'icloud')} />}
         loading={isSyncing}
         onPress={() => navigation.navigate('IcloudSync')}
-        isLast={false}
+        isFirst={isFirst}
+        isLast={isLast}
       />
     );
   }
@@ -115,15 +133,17 @@ export function SettingsIcloudSyncRows({ color, t }: Props) {
         visible={unavailableVisible}
         onClose={() => setUnavailableVisible(false)}
       />
-      <AutomationComingSoonSheet
-        visible={proSheetVisible}
-        feature="icloudSync"
-        onUpgradePress={() => {
-          setProSheetVisible(false);
-          openPlanPaywall();
-        }}
-        onClose={() => setProSheetVisible(false)}
-      />
+      {!onLockedPress ? (
+        <AutomationComingSoonSheet
+          visible={proSheetVisible}
+          feature="icloudSync"
+          onUpgradePress={() => {
+            setProSheetVisible(false);
+            openPlanPaywall();
+          }}
+          onClose={() => setProSheetVisible(false)}
+        />
+      ) : null}
     </>
   );
 }
