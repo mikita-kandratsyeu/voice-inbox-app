@@ -4,11 +4,9 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@/generated/prisma/client';
 import { isDevelopmentAppEnv } from '@/lib/app-env';
 import { normalizePostgresConnectionUrl } from '@/lib/direct-database-url';
-import { Pool } from 'pg';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
-  pgPool: Pool | undefined;
 };
 
 /** Modes that trigger pg’s “use uselibpqcompat” warning until pg v9 semantics land. */
@@ -86,25 +84,25 @@ function poolMax(connectionString: string | undefined): number {
   return 3;
 }
 
+function pgPoolConfig(connectionString: string) {
+  return {
+    connectionString,
+    max: poolMax(connectionString),
+    connectionTimeoutMillis: 10_000,
+    idleTimeoutMillis: 30_000,
+    allowExitOnIdle: true,
+  };
+}
+
 function createPrismaClient(): PrismaClient {
   const connectionString = normalizePgConnectionString(process.env.DATABASE_URL);
-
-  // Create or reuse pg.Pool for this instance
-  const pool =
-    globalForPrisma.pgPool ??
-    new Pool({
-      connectionString,
-      max: poolMax(connectionString), // Small pool optimized for serverless
-      connectionTimeoutMillis: 10_000, // 10s connection timeout
-      idleTimeoutMillis: 30_000, // Close idle connections after 30s
-      allowExitOnIdle: true, // Allow process to exit when all clients idle (serverless-friendly)
-    });
-
-  if (isDevelopmentAppEnv()) {
-    globalForPrisma.pgPool = pool;
+  if (!connectionString) {
+    throw new Error('DATABASE_URL is not set');
   }
 
-  const adapter = new PrismaPg(pool);
+  // Pass connection config (not a Pool instance). Turbopack can bundle pg twice,
+  // breaking `instanceof Pool` in @prisma/adapter-pg and causing localhost ECONNREFUSED.
+  const adapter = new PrismaPg(pgPoolConfig(connectionString));
   return new PrismaClient({
     adapter,
     log: isDevelopmentAppEnv() ? ['error', 'warn'] : ['error'],
