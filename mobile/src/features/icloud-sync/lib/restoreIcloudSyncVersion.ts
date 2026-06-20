@@ -90,8 +90,7 @@ export async function restoreIcloudSyncVersion(params: {
           ? buildLegacyBackupFolders(payload.records)
           : [],
       exportedAt: payload.exportedAt,
-      graphLayouts:
-        payload.version === 4 ? normalizeBackupGraphLayouts(payload.graphLayouts) : [],
+      graphLayouts: payload.version === 4 ? normalizeBackupGraphLayouts(payload.graphLayouts) : [],
     };
 
     const [aiSettingsRaw, privateProfilesRaw] = await Promise.all([

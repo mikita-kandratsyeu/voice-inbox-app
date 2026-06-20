@@ -65,11 +65,11 @@ export function AutomationComingSoonSheet({
                           ? 'github_sync'
                           : feature === 'gitlabSync'
                             ? 'gitlab_sync'
-                        : feature === 'icloudSync'
-                          ? 'icloud_sync'
-                          : feature === 'cloudSync'
-                            ? 'cloud_sync'
-                            : 'accent_color',
+                            : feature === 'icloudSync'
+                              ? 'icloud_sync'
+                              : feature === 'cloudSync'
+                                ? 'cloud_sync'
+                                : 'accent_color',
     });
     if (feature === 'autoTranscribe') {
       void logAnalyticsEvent('premium_feature_tapped_auto_whisper', {

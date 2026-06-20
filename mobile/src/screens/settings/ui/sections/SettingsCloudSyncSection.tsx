@@ -15,12 +15,7 @@ type Props = {
   onLockedPress: () => void;
 };
 
-export const SettingsCloudSyncSection = ({
-  color,
-  t,
-  cloudSyncLocked,
-  onLockedPress,
-}: Props) => {
+export const SettingsCloudSyncSection = ({ color, t, cloudSyncLocked, onLockedPress }: Props) => {
   const showIcloud = IS_IOS;
 
   return (

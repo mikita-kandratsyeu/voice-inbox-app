@@ -12,7 +12,7 @@ import type { VoiceRecord } from '@/entities/record';
 
 import { buildIcloudSnapshot } from '../buildIcloudSnapshot';
 
-jest.mock('@/features/sync-data/lib/buildBackupPayload', () => ({
+jest.mock('@/features/sync-data', () => ({
   buildBackupPayload: jest.fn(
     async (records: VoiceRecord[], folders: Folder[], options?: { includeAudio?: boolean }) => ({
       version: 4,
@@ -28,6 +28,9 @@ jest.mock('@/features/sync-data/lib/buildBackupPayload', () => ({
       graphLayouts: [],
     }),
   ),
+}));
+
+jest.mock('@/features/sync-data/lib/buildBackupPayload', () => ({
   prepareBackupExportDirectory: jest.fn(async () => {}),
 }));
 

@@ -3,7 +3,12 @@ import type { VoiceRecord } from '@/entities/record';
 
 import type { RemoteSnapshot } from './buildRemoteSnapshot';
 import { computeRemoteSyncDiff, type RemoteSyncDiff } from './computeRemoteSyncDiff';
-import { addPathVariants, isNoteMarkdownPath, isRemoteSyncAudioPath, toRelativeRepoPaths } from './repoPaths';
+import {
+  addPathVariants,
+  isNoteMarkdownPath,
+  isRemoteSyncAudioPath,
+  toRelativeRepoPaths,
+} from './repoPaths';
 
 export type PushFileSnapshotResult =
   | { ok: true; versionId: string; alreadyUpToDate: boolean }
@@ -164,10 +169,7 @@ async function pushFileSnapshotInternal(params: {
     );
 
     const uploadTotal =
-      snapshot.files.size +
-      (snapshot.localBinaryFiles?.size ?? 0) +
-      versionAuxiliaryFiles.size +
-      1;
+      snapshot.files.size + (snapshot.localBinaryFiles?.size ?? 0) + versionAuxiliaryFiles.size + 1;
     if (adapter.reportUploadProgress && uploadTotal > 0) {
       adapter.reportStage?.('uploading');
       adapter.reportUploadProgress(0, uploadTotal);

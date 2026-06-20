@@ -4,9 +4,8 @@ import QuickCrypto from 'react-native-quick-crypto';
 import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
 import { buildShareText } from '@/features/share-record';
-import { buildBackupPayload, prepareBackupExportDirectory } from '@/features/sync-data/lib/buildBackupPayload';
+import { buildBackupPayload } from '@/features/sync-data';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
-import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
 import {
   REMOTE_SYNC_AI_SETTINGS_FILE,
@@ -23,7 +22,7 @@ import {
   REMOTE_SYNC_RECORDS_FILE,
   REMOTE_SYNC_STRUCTURE_VERSION,
 } from './constants';
-import { hashFileMap, sha256Hex, sha256HexFromFile } from './contentHash';
+import { hashFileMap, sha256Hex } from './contentHash';
 import { buildRemoteSyncAiSettings } from './remoteSyncAiSettings';
 import { buildRemoteSyncPrivateProfiles } from './remoteSyncPrivateProfiles';
 
@@ -165,6 +164,10 @@ export async function buildRemoteSnapshot(params: {
   const { records, folders, basePath, includeAudio = false } = params;
   let tempExportDir: string | null = null;
   if (includeAudio) {
+    const { getCachesDirectoryPath } =
+      require('@/shared/lib/fs') as typeof import('@/shared/lib/fs');
+    const { prepareBackupExportDirectory } =
+      require('@/features/sync-data/lib/buildBackupPayload') as typeof import('@/features/sync-data/lib/buildBackupPayload');
     tempExportDir = `${getCachesDirectoryPath()}/remote-sync-export-${Date.now()}`;
     await prepareBackupExportDirectory(tempExportDir);
   }
@@ -291,19 +294,24 @@ export async function buildRemoteSnapshot(params: {
   }
 
   const contentHashes = hashFileMap(files);
-  for (const [path, localPath] of localBinaryFiles) {
-    try {
-      const exists = await NitroFS.exists(
-        localPath.startsWith('file://') ? localPath.slice(7) : localPath,
-      );
-      if (!exists) {
+  if (includeAudio && tempExportDir && localBinaryFiles.size > 0) {
+    const { NitroFS } = require('@/shared/lib/fs') as typeof import('@/shared/lib/fs');
+    const { sha256HexFromFile } =
+      require('./fileContentHash') as typeof import('./fileContentHash');
+    for (const [path, localPath] of localBinaryFiles) {
+      try {
+        const exists = await NitroFS.exists(
+          localPath.startsWith('file://') ? localPath.slice(7) : localPath,
+        );
+        if (!exists) {
+          localBinaryFiles.delete(path);
+          continue;
+        }
+        contentHashes[path] = await sha256HexFromFile(localPath);
+      } catch {
         localBinaryFiles.delete(path);
-        continue;
+        delete contentHashes[path];
       }
-      contentHashes[path] = await sha256HexFromFile(localPath);
-    } catch {
-      localBinaryFiles.delete(path);
-      delete contentHashes[path];
     }
   }
 
