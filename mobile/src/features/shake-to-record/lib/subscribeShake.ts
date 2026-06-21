@@ -3,7 +3,7 @@ import { accelerometer, SensorTypes, setUpdateIntervalForType } from 'react-nati
 import { advanceShakeConfirm, createShakeConfirmState, isShakeImpulse } from './shakeDetection';
 
 const SENSOR_UPDATE_INTERVAL_MS = 50;
-const SHAKE_DEBOUNCE_MS = 1400;
+const SHAKE_DEBOUNCE_MS = 1800;
 
 type ShakeListener = () => void;
 

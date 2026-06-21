@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
 import { AppState } from 'react-native';
 import { RewardedAdLoader } from 'yandex-mobile-ads';
 
+import { setAdPresentationActive } from '@/features/app-storefront/lib/adPresentationLock';
 import { useProEntitlement } from '@/features/pro-license';
 import { useBootSplashVisible } from '@/shared/config';
 import { getYandexRewardedAdUnitId } from '@/shared/config/runtimeConfig';
@@ -185,6 +186,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
       };
 
       ad.onAdFailedToShow = (adError?: { description?: string }) => {
+        setAdPresentationActive(false);
         if (adError != null) {
           logRewardedAdDebug('showAd', adError);
         } else {
@@ -198,6 +200,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
       };
 
       ad.onAdDismissed = () => {
+        setAdPresentationActive(false);
         setLoading(false);
       };
     },
@@ -264,6 +267,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
 
       if (ad) {
         preloadedAdRef.current = null;
+        setAdPresentationActive(true);
         await ad.show();
         return;
       }
@@ -273,8 +277,10 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
         adUnitId: getAdUnitId(),
       });
       setupAdHandlers(ad);
+      setAdPresentationActive(true);
       await ad.show();
     } catch (err) {
+      setAdPresentationActive(false);
       logRewardedAdDebug('loadAd', err);
       setError(normalizeAdError(err));
       setLoading(false);

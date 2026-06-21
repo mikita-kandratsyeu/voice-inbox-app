@@ -4,11 +4,11 @@ import { IS_IOS } from '@/shared/lib/platform';
  * react-native-sensors: iOS ≈ g, Android ≈ m/s².
  * Use both delta-sum and speed so shakes register on either platform.
  */
-const SHAKE_SPEED_THRESHOLD = IS_IOS ? 280 : 950;
-const SHAKE_DELTA_THRESHOLD = IS_IOS ? 1.75 : 9.5;
+const SHAKE_SPEED_THRESHOLD = IS_IOS ? 380 : 1300;
+const SHAKE_DELTA_THRESHOLD = IS_IOS ? 2.25 : 12.5;
 
-const SHAKE_CONFIRM_WINDOW_MS = 400;
-const SHAKE_CONFIRM_SAMPLES = 2;
+const SHAKE_CONFIRM_WINDOW_MS = 350;
+const SHAKE_CONFIRM_SAMPLES = 3;
 
 export function computeShakeSpeed(
   x: number,

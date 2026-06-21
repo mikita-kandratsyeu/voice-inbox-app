@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AppState } from 'react-native';
 
@@ -6,6 +6,10 @@ import { runNavigationWhenUnlocked } from '@/app/navigation/deferredNavigation';
 import { navigationRef } from '@/app/navigation/navigationRef';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import {
+  getAdPresentationActiveSnapshot,
+  subscribeAdPresentationActive,
+} from '@/features/app-storefront/lib/adPresentationLock';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
 import { shouldReduceMotion } from '@/shared/config/animations';
@@ -22,6 +26,11 @@ type UseShakeGesturesOptions = {
 
 export function useShakeGestures({ enabled }: UseShakeGesturesOptions): void {
   const { t } = useTranslation();
+  const adPresentationActive = useSyncExternalStore(
+    subscribeAdPresentationActive,
+    getAdPresentationActiveSnapshot,
+    getAdPresentationActiveSnapshot,
+  );
   const shakeToRecordEnabled = useSettingsStore((s) => s.shakeToRecordEnabled);
   const shakeToCancelAskAiEnabled = useSettingsStore((s) => s.shakeToCancelAskAiEnabled);
   const activeTranscriptionRecord = useRecordStore((s) =>
@@ -29,7 +38,7 @@ export function useShakeGestures({ enabled }: UseShakeGesturesOptions): void {
   );
 
   const handleShake = useCallback(() => {
-    if (!enabled) {
+    if (!enabled || adPresentationActive) {
       return;
     }
 
@@ -95,14 +104,24 @@ export function useShakeGestures({ enabled }: UseShakeGesturesOptions): void {
     runNavigationWhenUnlocked(() => {
       navigationRef.navigate('RecordModal');
     });
-  }, [activeTranscriptionRecord, enabled, shakeToCancelAskAiEnabled, shakeToRecordEnabled, t]);
+  }, [
+    activeTranscriptionRecord,
+    adPresentationActive,
+    enabled,
+    shakeToCancelAskAiEnabled,
+    shakeToRecordEnabled,
+    t,
+  ]);
 
   useEffect(() => {
-    const gesturesEnabled = enabled && (shakeToRecordEnabled || shakeToCancelAskAiEnabled);
+    const gesturesEnabled =
+      enabled &&
+      !adPresentationActive &&
+      (shakeToRecordEnabled || shakeToCancelAskAiEnabled);
     if (!gesturesEnabled) {
       return;
     }
 
     return addShakeListener(handleShake);
-  }, [enabled, handleShake, shakeToCancelAskAiEnabled, shakeToRecordEnabled]);
+  }, [adPresentationActive, enabled, handleShake, shakeToCancelAskAiEnabled, shakeToRecordEnabled]);
 }

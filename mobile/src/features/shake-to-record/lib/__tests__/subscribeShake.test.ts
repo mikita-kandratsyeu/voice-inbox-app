@@ -11,19 +11,22 @@ describe('shakeDetection', () => {
   });
 
   it('detects a lighter iOS-scale impulse via per-axis delta', () => {
-    expect(computeShakeDelta(0.7, -0.8, 1.6, 0, 0, 1)).toBeGreaterThan(1.75);
-    expect(isShakeImpulse(0.7, -0.8, 1.6, 0, 0, 1, 100)).toBe(true);
+    expect(computeShakeDelta(0.9, -1.0, 2.0, 0, 0, 1)).toBeGreaterThan(2.25);
+    expect(isShakeImpulse(0.9, -1.0, 2.0, 0, 0, 1, 100)).toBe(true);
   });
 
   it('ignores slow drift', () => {
     expect(isShakeImpulse(0.11, 0.1, 9.81, 0.1, 0.1, 9.8, 100)).toBe(false);
   });
 
-  it('confirms shake after two impulses in a short window', () => {
+  it('confirms shake after three impulses in a short window', () => {
     const first = advanceShakeConfirm(createShakeConfirmState(), true, 1000);
     expect(first.confirmed).toBe(false);
 
     const second = advanceShakeConfirm(first.next, true, 1150);
-    expect(second.confirmed).toBe(true);
+    expect(second.confirmed).toBe(false);
+
+    const third = advanceShakeConfirm(second.next, true, 1300);
+    expect(third.confirmed).toBe(true);
   });
 });
