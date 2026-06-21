@@ -2,7 +2,15 @@ import { useNavigation } from '@react-navigation/native';
 import { Clock3, Fingerprint, ScanFace } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, Switch, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import {
+  Alert,
+  ScrollView,
+  Switch,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';

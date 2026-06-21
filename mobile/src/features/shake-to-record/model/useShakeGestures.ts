@@ -115,9 +115,7 @@ export function useShakeGestures({ enabled }: UseShakeGesturesOptions): void {
 
   useEffect(() => {
     const gesturesEnabled =
-      enabled &&
-      !adPresentationActive &&
-      (shakeToRecordEnabled || shakeToCancelAskAiEnabled);
+      enabled && !adPresentationActive && (shakeToRecordEnabled || shakeToCancelAskAiEnabled);
     if (!gesturesEnabled) {
       return;
     }
