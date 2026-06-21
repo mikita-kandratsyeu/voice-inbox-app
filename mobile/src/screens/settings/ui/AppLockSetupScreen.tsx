@@ -2,13 +2,14 @@ import { useNavigation } from '@react-navigation/native';
 import { Clock3, Fingerprint, ScanFace } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Switch, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { useAppLockStore } from '@/entities/app-lock';
 import { PIN_LENGTH_OPTIONS } from '@/entities/app-lock';
 import { PinInput } from '@/features/app-lock/ui/PinInput';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
@@ -24,6 +25,8 @@ export const AppLockSetupScreen = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const contentMaxWidth = useTabletContentMaxWidth();
+  const { width: windowWidth } = useWindowDimensions();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const isTablet = useIsTablet();
 
   const [step, setStep] = useState<SetupStep>('initial');
@@ -340,6 +343,7 @@ export const AppLockSetupScreen = () => {
               ) : null}
             </SettingsSection>
           )}
+          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
         <AppLockGracePeriodSheet
           visible={gracePeriodSheetVisible}

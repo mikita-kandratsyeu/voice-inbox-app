@@ -12,6 +12,7 @@ import { ScrollView, Switch, Text, useWindowDimensions, View } from 'react-nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { IS_IOS, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { SCREEN_PADDING, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
@@ -26,6 +27,7 @@ export const NotificationsScreen = () => {
   const isTablet = useIsTablet();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const screen = useNotificationsScreen();
   const permissionGranted = screen.notificationPermission === 'granted';
 
@@ -202,6 +204,7 @@ export const NotificationsScreen = () => {
               />
             ) : null}
           </SettingsSection>
+          <DeferredInboxBannerAd color={screen.color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
         <BackupReminderPeriodSheet
           visible={screen.backupReminderPeriodSheetVisible}

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { useRecordStore } from '@/entities/record';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { SCREEN_PADDING, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
@@ -20,6 +21,7 @@ export const BackupRestoreScreen = () => {
   const isTablet = useIsTablet();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const recordsCount = useRecordStore((s) => s.records.length);
   const screen = useBackupRestoreScreen();
 
@@ -105,6 +107,7 @@ export const BackupRestoreScreen = () => {
               isLast
             />
           </SettingsSection>
+          <DeferredInboxBannerAd color={screen.color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
         <BackupEncryptionNoticeSheet
           visible={screen.backupNoticeSheetVisible}

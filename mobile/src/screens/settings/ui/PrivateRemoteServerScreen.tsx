@@ -3,14 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Check, Copy, RefreshCw, ShieldCheck, Wifi } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated, {
   Easing,
@@ -24,7 +17,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { type PrivateRemoteQueueConcurrency, useSettingsStore } from '@/entities/settings';
-import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import { type Colors, useColors } from '@/shared/config';
 import { hapticLight, IS_IOS, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
@@ -140,8 +132,6 @@ export const PrivateRemoteServerScreen = () => {
   const { isProActive } = useProEntitlement();
   const isTablet = useIsTablet();
   const contentMaxWidth = useTabletContentMaxWidth();
-  const { width: windowWidth } = useWindowDimensions();
-  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   React.useEffect(() => {
     if (!isProActive) {
@@ -531,8 +521,6 @@ export const PrivateRemoteServerScreen = () => {
               />
             </View>
           </View>
-
-          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </KeyboardAwareScrollView>
       </View>
 

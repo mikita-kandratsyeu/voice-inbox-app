@@ -3,13 +3,14 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RefreshCcwIcon, ShareIcon, TrashIcon } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, Share, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Share, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { SettingsStackParamList } from '@/app/navigation/types';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useColors } from '@/shared/config';
-import { formatFileSize } from '@/shared/lib';
+import { formatFileSize, useTabletContentMaxWidth } from '@/shared/lib';
 import { clearAppLogs, getAppLogSize, readAppLogTail } from '@/shared/lib/appLogger';
 import { Button, FrostedHeaderIconButton, ScreenHeader } from '@/shared/ui';
 
@@ -20,6 +21,9 @@ export const DiagnosticLogsScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const color = useColors();
   const insets = useSafeAreaInsets();
+  const contentMaxWidth = useTabletContentMaxWidth();
+  const { width: windowWidth } = useWindowDimensions();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const [logText, setLogText] = useState('');
   const [logSize, setLogSize] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -151,6 +155,7 @@ export const DiagnosticLogsScreen = () => {
               {t('diagnosticLogs.empty')}
             </Text>
           )}
+          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
     </View>

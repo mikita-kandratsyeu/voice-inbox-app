@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { useSettingsStore } from '@/entities/settings';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { SCREEN_PADDING, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
@@ -21,6 +22,7 @@ export const GesturesSettingsScreen = () => {
   const isTablet = useIsTablet();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   const shakeToRecordEnabled = useSettingsStore((s) => s.shakeToRecordEnabled);
   const setShakeToRecordEnabled = useSettingsStore((s) => s.setShakeToRecordEnabled);
@@ -92,6 +94,7 @@ export const GesturesSettingsScreen = () => {
             showChevron={false}
           />
         </SettingsSection>
+        <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
       </ScrollView>
     </View>
   );
