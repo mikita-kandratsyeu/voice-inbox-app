@@ -12,7 +12,10 @@ const backupReminderNotificationPressDeps = {
       navigationRef.navigate('Main', {
         screen: 'SettingsRoot',
         params: {
-          screen: 'Settings',
+          state: {
+            routes: [{ name: 'Settings' }, { name: 'BackupRestore' }],
+            index: 1,
+          },
         },
       });
     });
