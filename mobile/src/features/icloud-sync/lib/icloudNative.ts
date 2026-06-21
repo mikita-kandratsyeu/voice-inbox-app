@@ -14,10 +14,22 @@ const ICLOUD_SCOPE = CloudStorageScope.Documents;
 
 let configured = false;
 
+function noopCloudAvailabilityListener(_available: boolean): void {
+  // Intentionally empty — keeps react-native-cloud-storage's native event emitter alive.
+}
+
+function ensureCloudAvailabilityListenerRegistered(): void {
+  CloudStorage.getDefaultInstance().subscribeToCloudAvailability(noopCloudAvailabilityListener);
+}
+
 function ensureConfigured(): void {
   if (configured || !IS_IOS) {
     return;
   }
+  // Register before native CloudKit init: RCTCloudStorageCloudKit emits
+  // onCloudAvailabilityChanged from NSUbiquityIdentityDidChangeNotification and
+  // crashes with std::bad_function_call when no JS listener is attached.
+  ensureCloudAvailabilityListenerRegistered();
   CloudStorage.setProvider(CloudStorageProvider.ICloud);
   CloudStorage.setProviderOptions({
     scope: ICLOUD_SCOPE,

@@ -52,7 +52,6 @@
     "tar": "7.5.16",
     "@babel/core": "7.29.7",
     "launch-editor": "2.14.1",
-    "//jwks-rsa-jose-pin": "TEMP: jose@5 for jwks-rsa — firebase-admin App Check on Vercel/Next CJS (ERR_REQUIRE_ESM). Remove after auth0/node-jwks-rsa#508 ships and firebase-admin bumps jwks-rsa (firebase/firebase-admin-node#3181).",
     "jwks-rsa@npm:4.1.0/jose": "npm:5.10.0"
   },
   "engines": {
