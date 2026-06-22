@@ -71,6 +71,7 @@ import { AudioPlayer, type AudioPlayerRef, usePlaybackPosition } from '@/widgets
 
 import type { Tab } from '../config';
 import { renameSpeakerGroup } from '../lib/meetingSpeakerLabels';
+import { AskAiModelChipMenu } from './ask-ai/AskAiModelChipMenu';
 import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { MeetingDialogueTab } from './MeetingDialogueTab';
 import { RecordingDetailCard } from './RecordingDetailCard';
@@ -1016,8 +1017,8 @@ export const RecordingDetailScreen = () => {
             surfaceBackgroundColor={tabPanelBackgroundColor}
             onTitleLayout={handleTitleLayout}
           >
-            {hasAudio ? (
-              <View className="gap-4">
+            <View className={hasAudio ? 'gap-4' : undefined}>
+              {hasAudio ? (
                 <AudioPlayer
                   ref={audioPlayerRef}
                   duration={liveRecord.duration}
@@ -1026,16 +1027,23 @@ export const RecordingDetailScreen = () => {
                   onPositionChange={onPositionUpdate}
                   embedded
                 />
-                <View className="flex-row">
+              ) : null}
+              <View className="flex-row flex-wrap gap-2">
+                {hasAudio ? (
                   <AudioLanguageSelector
                     value={recordLanguage}
                     color={color}
                     onSelect={setRecordLanguage}
                     surfaceBackgroundColor={color.background.tertiary}
                   />
-                </View>
+                ) : null}
+                <AskAiModelChipMenu
+                  color={color}
+                  menuPlacement="inline"
+                  surfaceBackgroundColor={color.background.tertiary}
+                />
               </View>
-            ) : null}
+            </View>
           </RecordingDetailCard>
         </View>
 

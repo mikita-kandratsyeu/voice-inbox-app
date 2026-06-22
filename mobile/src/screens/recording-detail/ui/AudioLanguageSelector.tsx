@@ -10,6 +10,13 @@ import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { hapticSelection, inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
 
+import {
+  RECORDING_DETAIL_METADATA_CHIP_CHEVRON_SIZE,
+  RECORDING_DETAIL_METADATA_CHIP_ICON_SIZE,
+  RECORDING_DETAIL_METADATA_CHIP_TEXT_CLASS,
+  RECORDING_DETAIL_METADATA_CHIP_TOUCHABLE_CLASS,
+} from './recordingDetailMetadataChipStyles';
+
 type AudioLanguageSelectorProps = {
   value: TranscriptionLanguage;
   color: Colors;
@@ -69,19 +76,27 @@ export const AudioLanguageSelector = ({
         accessibilityRole="button"
         accessibilityLabel={controlLabel}
         accessibilityHint={t('recordingDetail.languageHint')}
-        className="max-w-full min-h-10 flex-row items-center gap-1.5 rounded-full px-3.5 py-2"
+        className={RECORDING_DETAIL_METADATA_CHIP_TOUCHABLE_CLASS}
         style={{ backgroundColor: surfaceBackgroundColor ?? color.background.card }}
         activeOpacity={0.75}
       >
-        <Languages size={16} color={color.icon.muted} strokeWidth={2} />
+        <Languages
+          size={RECORDING_DETAIL_METADATA_CHIP_ICON_SIZE}
+          color={color.icon.muted}
+          strokeWidth={2}
+        />
         <Text
-          className="shrink text-[14px] font-semibold leading-[18px]"
+          className={RECORDING_DETAIL_METADATA_CHIP_TEXT_CLASS}
           numberOfLines={1}
           style={{ color: color.text.primary }}
         >
-          {controlLabel}
+          {label}
         </Text>
-        <ChevronDown size={16} color={color.text.secondary} strokeWidth={2} />
+        <ChevronDown
+          size={RECORDING_DETAIL_METADATA_CHIP_CHEVRON_SIZE}
+          color={color.text.secondary}
+          strokeWidth={2}
+        />
       </TouchableOpacity>
     </MenuView>
   );

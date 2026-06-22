@@ -901,6 +901,7 @@
       "tagsSuffix": ", tags: {{tags}}"
     },
     "audioLanguage": "Audio language",
+    "aiModelChip": "AI model",
     "languageHint": "Select a language for more accurate Whisper transcription in this recording.",
     "language": {
       "auto": "Auto detect",

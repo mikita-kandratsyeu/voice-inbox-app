@@ -1,5 +1,5 @@
 import { MenuView } from '@react-native-menu/menu';
-import { ChevronDown } from 'lucide-react-native';
+import { ChevronDown, Sparkles } from 'lucide-react-native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity } from 'react-native';
@@ -13,19 +13,38 @@ import { useAppTheme } from '@/shared/config';
 import { hapticSelection, type NativeMenuAction } from '@/shared/lib';
 import { FrostedChromeSurface } from '@/shared/ui';
 
-import { buildAskAiModelMenuActions, resolveAskAiMenuAction } from './lib/askAiModelMenu';
+import {
+  RECORDING_DETAIL_METADATA_CHIP_CHEVRON_SIZE,
+  RECORDING_DETAIL_METADATA_CHIP_ICON_SIZE,
+  RECORDING_DETAIL_METADATA_CHIP_TEXT_CLASS,
+  RECORDING_DETAIL_METADATA_CHIP_TOUCHABLE_CLASS,
+} from '../recordingDetailMetadataChipStyles';
+import {
+  type AskAiModelMenuPlacement,
+  buildAskAiModelMenuActions,
+  resolveAskAiMenuAction,
+} from './lib/askAiModelMenu';
 import { useAskAiModelLabel } from './lib/useAskAiModelLabel';
 
 type AskAiModelChipMenuProps = {
   color: Colors;
+  /** `inline` — note screen under the player; `bottomAnchored` — Ask AI composer. */
+  menuPlacement?: AskAiModelMenuPlacement;
+  surfaceBackgroundColor?: string;
 };
 
-export function AskAiModelChipMenu({ color }: AskAiModelChipMenuProps) {
+export function AskAiModelChipMenu({
+  color,
+  menuPlacement = 'bottomAnchored',
+  surfaceBackgroundColor,
+}: AskAiModelChipMenuProps) {
   const { t } = useTranslation();
   const theme = useAppTheme();
   const isDark = theme === 'dark';
+  const isInline = menuPlacement === 'inline';
   const modelLabel = useAskAiModelLabel();
   const { isProActive } = useProEntitlement();
+  const chipLabel = modelLabel;
 
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
@@ -53,6 +72,7 @@ export function AskAiModelChipMenu({ color }: AskAiModelChipMenuProps) {
         selectedAIModel,
         selectedLocalAiModel,
         localLlmModelStatuses,
+        menuPlacement,
       }),
     [
       aiModelRoutingMode,
@@ -60,6 +80,7 @@ export function AskAiModelChipMenu({ color }: AskAiModelChipMenuProps) {
       isPrivateDevice,
       isProActive,
       localLlmModelStatuses,
+      menuPlacement,
       selectedAIModel,
       selectedLocalAiModel,
       t,
@@ -106,9 +127,52 @@ export function AskAiModelChipMenu({ color }: AskAiModelChipMenuProps) {
     [openFullPicker, openRemoteServerSettings, setAIModel, setAiModelRoutingMode, setLocalAiModel],
   );
 
+  const chipBody = (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={t('recordingDetail.askModelChipA11y', { model: modelLabel })}
+      activeOpacity={0.75}
+      className={
+        isInline
+          ? RECORDING_DETAIL_METADATA_CHIP_TOUCHABLE_CLASS
+          : 'max-w-full min-h-8 flex-row items-center gap-1 px-3 py-1.5'
+      }
+      hitSlop={isInline ? undefined : { top: 4, bottom: 4, left: 4, right: 4 }}
+      style={
+        isInline
+          ? { backgroundColor: surfaceBackgroundColor ?? color.background.tertiary }
+          : undefined
+      }
+    >
+      {isInline ? (
+        <Sparkles
+          size={RECORDING_DETAIL_METADATA_CHIP_ICON_SIZE}
+          color={color.icon.muted}
+          strokeWidth={2}
+        />
+      ) : null}
+      <Text
+        className={
+          isInline
+            ? RECORDING_DETAIL_METADATA_CHIP_TEXT_CLASS
+            : 'shrink text-[13px] font-semibold leading-[18px]'
+        }
+        numberOfLines={1}
+        style={{ color: color.text.primary }}
+      >
+        {chipLabel}
+      </Text>
+      <ChevronDown
+        size={isInline ? RECORDING_DETAIL_METADATA_CHIP_CHEVRON_SIZE : 14}
+        color={color.text.secondary}
+        strokeWidth={isInline ? 2 : 2.2}
+      />
+    </TouchableOpacity>
+  );
+
   return (
     <MenuView
-      key={`ask-ai-model-menu-${theme}`}
+      key={`ask-ai-model-menu-${theme}-${menuPlacement}`}
       themeVariant={isDark ? 'dark' : 'light'}
       onPressAction={({ nativeEvent }) => {
         hapticSelection();
@@ -116,29 +180,18 @@ export function AskAiModelChipMenu({ color }: AskAiModelChipMenuProps) {
       }}
       actions={menuActions}
     >
-      <FrostedChromeSurface
-        color={color}
-        borderRadius={9999}
-        shadow="subtle"
-        style={{ alignSelf: 'flex-start', maxWidth: '100%' }}
-      >
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel={t('recordingDetail.askModelChipA11y', { model: modelLabel })}
-          activeOpacity={0.75}
-          className="max-w-full min-h-8 flex-row items-center gap-1 px-3 py-1.5"
-          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+      {isInline ? (
+        chipBody
+      ) : (
+        <FrostedChromeSurface
+          color={color}
+          borderRadius={9999}
+          shadow="subtle"
+          style={{ alignSelf: 'flex-start', maxWidth: '100%' }}
         >
-          <Text
-            className="shrink text-[13px] font-semibold leading-[18px]"
-            numberOfLines={1}
-            style={{ color: color.text.primary }}
-          >
-            {modelLabel}
-          </Text>
-          <ChevronDown size={14} color={color.text.secondary} strokeWidth={2.2} />
-        </TouchableOpacity>
-      </FrostedChromeSurface>
+          {chipBody}
+        </FrostedChromeSurface>
+      )}
     </MenuView>
   );
 }

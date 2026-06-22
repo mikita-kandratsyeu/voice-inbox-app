@@ -48,17 +48,20 @@ function toCloudMenuAction(
   };
 }
 
-/** Bottom-anchored MenuView renders subactions in reverse; flip to match settings picker order. */
+export type AskAiModelMenuPlacement = 'bottomAnchored' | 'inline';
+
 function cloudModelsToMenuSubactions(
   models: readonly UserFacingAIModel[],
   titleColor: ColorValue,
   t: TFunction,
   aiModelRoutingMode: 'auto' | 'manual',
   selectedAIModel: UserSelectableAIModelId,
+  reverseRows: boolean,
 ): NativeMenuAction[] {
-  return [...models]
-    .reverse()
-    .map((model) => toCloudMenuAction(model, titleColor, t, aiModelRoutingMode, selectedAIModel));
+  const ordered = reverseRows ? [...models].reverse() : [...models];
+  return ordered.map((model) =>
+    toCloudMenuAction(model, titleColor, t, aiModelRoutingMode, selectedAIModel),
+  );
 }
 
 export function buildAskAiModelMenuActions(params: {
@@ -71,6 +74,8 @@ export function buildAskAiModelMenuActions(params: {
   selectedAIModel: UserSelectableAIModelId;
   selectedLocalAiModel: LocalAiModelId | null;
   localLlmModelStatuses: Partial<Record<LocalAiModelId, WhisperModelStatus>>;
+  /** `bottomAnchored` — Ask AI composer; `inline` — chips in note content (menu opens down). */
+  menuPlacement?: AskAiModelMenuPlacement;
 }): NativeMenuAction[] {
   const {
     t,
@@ -82,7 +87,10 @@ export function buildAskAiModelMenuActions(params: {
     selectedAIModel,
     selectedLocalAiModel,
     localLlmModelStatuses,
+    menuPlacement = 'bottomAnchored',
   } = params;
+
+  const reverseRows = menuPlacement === 'bottomAnchored';
 
   if (isCustomRemote) {
     return [
@@ -98,71 +106,92 @@ export function buildAskAiModelMenuActions(params: {
     const downloadedModels = LOCAL_AI_MODELS.filter(
       (model) => (localLlmModelStatuses[model.id] ?? 'not_downloaded') === 'downloaded',
     );
-    const localActions = [...downloadedModels].reverse().map((model) => ({
+    const orderedLocalModels = reverseRows ? [...downloadedModels].reverse() : downloadedModels;
+    const localActions = orderedLocalModels.map((model) => ({
       id: model.id,
       title: model.name,
       titleColor,
       state: selectedLocalAiModel === model.id ? ('on' as const) : ('off' as const),
     }));
 
-    const sections: NativeMenuAction[] = [
-      inlineNativeMenuSection('askAiLocalMore', titleColor, [
-        {
-          id: MENU_ALL_MODELS,
-          title: t('recordingDetail.askModelAllModels'),
-          titleColor,
-        },
-      ]),
-    ];
-    if (localActions.length > 0) {
-      sections.push(
-        inlineNativeMenuSection(
-          'askAiLocalModels',
-          titleColor,
-          localActions,
-          t('aiModels.privateModeLabel'),
-        ),
-      );
-    }
-    return sections;
+    const allModelsSection = inlineNativeMenuSection('askAiLocalMore', titleColor, [
+      {
+        id: MENU_ALL_MODELS,
+        title: t('recordingDetail.askModelAllModels'),
+        titleColor,
+      },
+    ]);
+    const localSection =
+      localActions.length > 0
+        ? inlineNativeMenuSection(
+            'askAiLocalModels',
+            titleColor,
+            localActions,
+            t('aiModels.privateModeLabel'),
+          )
+        : null;
+
+    return reverseRows
+      ? [allModelsSection, ...(localSection ? [localSection] : [])]
+      : [...(localSection ? [localSection] : []), allModelsSection];
   }
 
   const { standard, advanced } = partitionCloudModelsForPicker(selectedAIModel);
 
-  // Match AIModelPickerScreen: Auto → standard → advanced. MenuView is anchored on the
-  // bottom composer chip (menu grows up): build bottom→top, reverse rows inside sections.
-  const actions: NativeMenuAction[] = [];
-
-  if (isProActive && advanced.length > 0) {
-    actions.push(
-      inlineNativeMenuSection(
-        'askAiProModels',
-        titleColor,
-        cloudModelsToMenuSubactions(advanced, titleColor, t, aiModelRoutingMode, selectedAIModel),
-        t('aiModels.advancedSectionTitle'),
-      ),
-    );
-  }
-
-  if (standard.length > 0) {
-    actions.push(
-      inlineNativeMenuSection(
-        'askAiStandardModels',
-        titleColor,
-        cloudModelsToMenuSubactions(standard, titleColor, t, aiModelRoutingMode, selectedAIModel),
-        t('aiModels.standardSectionTitle'),
-      ),
-    );
-  }
-
-  actions.push({
+  const autoAction: NativeMenuAction = {
     id: 'auto',
     title: t('aiModels.tierAuto'),
     titleColor,
     state: aiModelRoutingMode === 'auto' ? 'on' : 'off',
-  });
+  };
 
-  return actions;
+  const standardSection =
+    standard.length > 0
+      ? inlineNativeMenuSection(
+          'askAiStandardModels',
+          titleColor,
+          cloudModelsToMenuSubactions(
+            standard,
+            titleColor,
+            t,
+            aiModelRoutingMode,
+            selectedAIModel,
+            reverseRows,
+          ),
+          t('aiModels.standardSectionTitle'),
+        )
+      : null;
+
+  const advancedSection =
+    isProActive && advanced.length > 0
+      ? inlineNativeMenuSection(
+          'askAiProModels',
+          titleColor,
+          cloudModelsToMenuSubactions(
+            advanced,
+            titleColor,
+            t,
+            aiModelRoutingMode,
+            selectedAIModel,
+            reverseRows,
+          ),
+          t('aiModels.advancedSectionTitle'),
+        )
+      : null;
+
+  if (menuPlacement === 'inline') {
+    return [
+      autoAction,
+      ...(standardSection ? [standardSection] : []),
+      ...(advancedSection ? [advancedSection] : []),
+    ];
+  }
+
+  return [
+    ...(advancedSection ? [advancedSection] : []),
+    ...(standardSection ? [standardSection] : []),
+    autoAction,
+  ];
 }
 
 export function resolveAskAiMenuAction(actionId: string): AskAiMenuActionResolution | null {

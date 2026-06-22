@@ -918,6 +918,7 @@
       "tagsSuffix": ", теги: {{tags}}"
     },
     "audioLanguage": "Язык аудио",
+    "aiModelChip": "Модель ИИ",
     "languageHint": "Выберите язык для более точной транскрипции Whisper в этой записи.",
     "language": {
       "auto": "Авто",
