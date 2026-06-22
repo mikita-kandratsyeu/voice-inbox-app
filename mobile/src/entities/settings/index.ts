@@ -22,6 +22,7 @@ export {
   ONBOARDING_CURATED_CLOUD_MODEL_IDS,
   shouldShowOnboardingAllModelsHint,
 } from './lib/onboardingCuratedAiModels';
+export { partitionCloudModelsForPicker } from './lib/partitionCloudModelsForPicker';
 export {
   canEnablePrivateMode,
   formatPrivateDiagnosticsFreeDiskGb,

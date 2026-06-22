@@ -7,8 +7,10 @@ import type { Colors } from '@/shared/config';
 import { hapticLight, iosHitSlopForVisualSize } from '@/shared/lib';
 import {
   FLOATING_FROSTED_ACCESSORY_BUTTON_SIZE,
+  FLOATING_FROSTED_INPUT_HORIZONTAL_PAD,
   FLOATING_FROSTED_INPUT_ICON_SIZE,
   FLOATING_FROSTED_INPUT_ICON_STROKE,
+  FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
   FloatingFrostedChromeDivider,
   FloatingFrostedChromeSection,
   FloatingFrostedInputChrome,
@@ -18,6 +20,8 @@ import {
   getFloatingFrostedInputRowStyle,
   getInputFieldInputStyle,
 } from '@/shared/ui';
+
+import { AskAiModelChipMenu } from './AskAiModelChipMenu';
 
 type AskAIComposerProps = {
   color: Colors;
@@ -31,6 +35,7 @@ type AskAIComposerProps = {
 };
 
 const SEND_BUTTON_SIZE = FLOATING_FROSTED_ACCESSORY_BUTTON_SIZE;
+const ASK_AI_CHIP_ROW_VERTICAL_PAD = 8;
 
 const AskAIComposerInner = ({
   color,
@@ -79,8 +84,26 @@ const AskAIComposerInner = ({
         <FloatingFrostedInputChrome color={color}>
           <View
             style={{
+              paddingHorizontal: FLOATING_FROSTED_INPUT_HORIZONTAL_PAD,
+              paddingTop: ASK_AI_CHIP_ROW_VERTICAL_PAD,
+              paddingBottom: 6,
+            }}
+          >
+            <AskAiModelChipMenu color={color} />
+          </View>
+          <View
+            style={{
+              height: 1,
+              marginHorizontal: FLOATING_FROSTED_INPUT_HORIZONTAL_PAD,
+              backgroundColor: color.border.default,
+              opacity: 0.65,
+            }}
+          />
+          <View
+            style={{
               ...getFloatingFrostedInputContainerStyle(),
               ...getFloatingFrostedInputRowStyle(),
+              paddingTop: FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
             }}
           >
             <View style={getFloatingFrostedInputFieldRowStyle()}>

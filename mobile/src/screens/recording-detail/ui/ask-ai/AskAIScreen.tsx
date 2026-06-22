@@ -23,7 +23,7 @@ import {
   useTabletContentMaxWidth,
 } from '@/shared/lib';
 import {
-  estimateFloatingFrostedInputBottomClearance,
+  estimateAskAiComposerBottomClearance,
   FrostedHeaderIconButton,
   ScreenHeader,
 } from '@/shared/ui';
@@ -224,7 +224,7 @@ export const AskAIScreen = () => {
     !isRestoringSession &&
     !isLoading &&
     !disableByNetwork;
-  const composerBottomInset = estimateFloatingFrostedInputBottomClearance(insets.bottom);
+  const composerBottomInset = estimateAskAiComposerBottomClearance(insets.bottom);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>

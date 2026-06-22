@@ -57,6 +57,8 @@ export {
 export { FloatingFrostedInputChrome } from './FloatingFrostedInputChrome';
 export { FloatingFrostedStickyView } from './FloatingFrostedStickyView';
 export {
+  ASK_AI_MODEL_CHIP_ROW_EXTRA_CLEARANCE,
+  estimateAskAiComposerBottomClearance,
   estimateFloatingFrostedInputBottomClearance,
   estimateFloatingFrostedInputHeight,
   estimateFloatingFrostedInputKeyboardOpenClearance,

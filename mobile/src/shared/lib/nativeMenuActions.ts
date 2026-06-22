@@ -12,15 +12,16 @@ export type NativeMenuAction = {
   state?: 'on' | 'off' | 'mixed';
 };
 
-/** iOS UIMenu inline section — renders a divider before `subactions`. */
+/** iOS UIMenu inline section — `sectionTitle` becomes the native section header (iOS). */
 export function inlineNativeMenuSection(
   sectionId: string,
   titleColor: ColorValue,
   subactions: NativeMenuAction[],
+  sectionTitle = '',
 ): NativeMenuAction {
   return {
     id: sectionId,
-    title: '',
+    title: sectionTitle,
     displayInline: true,
     titleColor,
     subactions,
