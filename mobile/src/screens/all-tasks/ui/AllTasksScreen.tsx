@@ -53,7 +53,7 @@ import {
   filterTasksByCalendarDate,
 } from '../lib/filterTasksByCalendarDate';
 import {
-  getTaskDeadlineBucket,
+  getAllTasksListBucket,
   TASK_DEADLINE_BUCKET_ORDER,
 } from '../lib/groupTasksByDeadlineBucket';
 import {
@@ -273,7 +273,7 @@ export const AllTasksScreen = () => {
   const sectionList = useMemo(() => {
     const byBucket = new Map<TaskDeadlineBucket, TaskWithRecord[]>();
     for (const row of taskRows) {
-      const key = getTaskDeadlineBucket(row.task);
+      const key = getAllTasksListBucket(row.task);
       const list = byBucket.get(key) ?? [];
       list.push(row);
       byBucket.set(key, list);
@@ -556,6 +556,26 @@ export const AllTasksScreen = () => {
     [records, showTaskUpdateError, updateTasks],
   );
 
+  const onTogglePin = useCallback(
+    (recordId: string, taskId: string, currentlyPinned: boolean) => {
+      const record = records.find((r) => r.id === recordId);
+      if (!record) return;
+
+      const prev = record.tasks ?? [];
+      const next = prev.map((x) => (x.id === taskId ? { ...x, isPinned: !currentlyPinned } : x));
+      void updateTasks(recordId, next)
+        .then(() => {
+          if (!currentlyPinned && viewMode === 'list') {
+            flashListJumpToTop(listRef.current ?? undefined);
+          }
+        })
+        .catch(() => {
+          showTaskUpdateError();
+        });
+    },
+    [records, showTaskUpdateError, updateTasks, viewMode],
+  );
+
   const showPermissionAlert = useCallback(
     (_: string) => {
       Alert.alert(t('common.error'), t('tasks.permissionDenied'));
@@ -754,6 +774,7 @@ export const AllTasksScreen = () => {
           onQuickSchedule={onQuickSchedule}
           onAddToReminder={onAddTaskToReminder}
           onAddToCalendar={onAddTaskToCalendar}
+          onTogglePin={onTogglePin}
           onDeleteTask={(recordId, taskId) => {
             Alert.alert(t('tasks.deleteTask'), t('tasks.deleteTaskConfirm'), [
               { text: t('common.cancel'), style: 'cancel' },
@@ -780,6 +801,7 @@ export const AllTasksScreen = () => {
       onAddTaskToCalendar,
       t,
       onDeleteTask,
+      onTogglePin,
       onQuickSchedule,
       isTablet,
     ],

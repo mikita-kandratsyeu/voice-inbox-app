@@ -485,6 +485,7 @@
       "done": "Готово"
     },
     "sections": {
+      "pinned": "Закреплённые",
       "overdue": "Просрочено",
       "today": "Сегодня",
       "tomorrow": "Завтра",
@@ -2711,6 +2712,8 @@
     "deleteTask": "Удалить",
     "deleteTaskConfirm": "Удалить эту задачу из заметки?",
     "editTask": "Изменить",
+    "pinTask": "Закрепить задачу",
+    "unpinTask": "Открепить задачу",
     "editTaskOutcome": "Редактировать итог",
     "editTaskA11y": "Изменить задачу: {{text}}",
     "editTaskSheetTitle": "Редактировать задачу",

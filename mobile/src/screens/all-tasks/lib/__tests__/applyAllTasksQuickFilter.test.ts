@@ -115,4 +115,13 @@ describe('sortTaskRows', () => {
 
     expect(sorted.map((r) => r.task.id)).toEqual(['soon', 'soon-medium', 'later']);
   });
+
+  it('sorts pinned tasks before unpinned tasks', () => {
+    const sorted = [
+      row({ id: 'unpinned-soon', deadline: '2026-06-10', priority: 'high' }),
+      row({ id: 'pinned-later', deadline: '2026-06-20', isPinned: true }),
+    ].sort(sortTaskRows);
+
+    expect(sorted.map((r) => r.task.id)).toEqual(['pinned-later', 'unpinned-soon']);
+  });
 });

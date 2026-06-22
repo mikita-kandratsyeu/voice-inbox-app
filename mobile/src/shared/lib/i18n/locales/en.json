@@ -468,6 +468,7 @@
       "done": "Done"
     },
     "sections": {
+      "pinned": "Pinned",
       "overdue": "Overdue",
       "today": "Today",
       "tomorrow": "Tomorrow",
@@ -2659,6 +2660,8 @@
     "deleteTask": "Delete",
     "deleteTaskConfirm": "Remove this task from the note?",
     "editTask": "Edit",
+    "pinTask": "Pin task",
+    "unpinTask": "Unpin task",
     "editTaskOutcome": "Edit result",
     "editTaskA11y": "Edit task: {{text}}",
     "editTaskSheetTitle": "Edit task",

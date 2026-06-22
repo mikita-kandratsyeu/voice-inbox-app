@@ -63,6 +63,10 @@ export function normalizeImportedTasks(raw: unknown): TaskItem[] | undefined {
       task.outcomeRecordId = outcomeRecordId.length > 0 ? outcomeRecordId : null;
     }
 
+    if (isBoolean(item.isPinned)) {
+      task.isPinned = item.isPinned;
+    }
+
     out.push(task);
   }
 

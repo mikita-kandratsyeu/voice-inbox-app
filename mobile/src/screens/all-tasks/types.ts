@@ -8,6 +8,7 @@ export type TaskWithRecord = {
 };
 
 export type TaskDeadlineBucket =
+  | 'pinned'
   | 'overdue'
   | 'today'
   | 'tomorrow'

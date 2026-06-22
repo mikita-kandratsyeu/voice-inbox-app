@@ -1,6 +1,6 @@
 import type { TaskItem } from '@/entities/record';
 
-import { getTaskDeadlineBucket } from '../groupTasksByDeadlineBucket';
+import { getAllTasksListBucket, getTaskDeadlineBucket } from '../groupTasksByDeadlineBucket';
 
 function task(overrides: Partial<TaskItem> = {}): TaskItem {
   return {
@@ -37,5 +37,30 @@ describe('getTaskDeadlineBucket', () => {
     expect(getTaskDeadlineBucket(task({ deadline: '2026-06-10' }))).toBe('tomorrow');
     expect(getTaskDeadlineBucket(task({ deadline: '2026-06-12' }))).toBe('thisWeek');
     expect(getTaskDeadlineBucket(task({ deadline: '2026-06-20' }))).toBe('later');
+  });
+});
+
+describe('getAllTasksListBucket', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-06-09T12:00:00'));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('returns pinned for open pinned tasks', () => {
+    expect(getAllTasksListBucket(task({ isPinned: true, deadline: '2026-06-20' }))).toBe('pinned');
+  });
+
+  it('keeps done pinned tasks in the done bucket', () => {
+    expect(
+      getAllTasksListBucket(task({ isPinned: true, isDone: true, deadline: '2026-06-08' })),
+    ).toBe('done');
+  });
+
+  it('falls back to deadline bucket for unpinned tasks', () => {
+    expect(getAllTasksListBucket(task({ deadline: '2026-06-08' }))).toBe('overdue');
   });
 });

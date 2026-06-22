@@ -26,7 +26,13 @@ export function getTaskDeadlineBucket(task: TaskItem): TaskDeadlineBucket {
   return 'later';
 }
 
+export function getAllTasksListBucket(task: TaskItem): TaskDeadlineBucket {
+  if (task.isPinned && !task.isDone) return 'pinned';
+  return getTaskDeadlineBucket(task);
+}
+
 export const TASK_DEADLINE_BUCKET_ORDER: TaskDeadlineBucket[] = [
+  'pinned',
   'overdue',
   'today',
   'tomorrow',

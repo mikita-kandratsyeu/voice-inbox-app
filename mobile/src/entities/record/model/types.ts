@@ -58,6 +58,8 @@ export type TaskItem = {
   outcomeText?: string | null;
   /** Follow-up note linked as the task result artifact. */
   outcomeRecordId?: string | null;
+  /** Pinned in the All tasks screen. */
+  isPinned?: boolean;
 };
 
 export const RECORDING_MARK_KINDS = [

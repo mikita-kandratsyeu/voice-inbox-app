@@ -7,6 +7,7 @@ import {
   FileText,
   Flag,
   MoreHorizontal,
+  Pin,
 } from 'lucide-react-native';
 import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -43,6 +44,7 @@ type AllTasksTaskRowProps = {
   onQuickSchedule: (recordId: string, taskId: string, deadline: string) => void;
   onAddToCalendar: (item: TaskWithRecord) => void;
   onAddToReminder: (item: TaskWithRecord) => void;
+  onTogglePin: (recordId: string, taskId: string, currentlyPinned: boolean) => void;
   onDeleteTask: (recordId: string, taskId: string) => void;
 };
 
@@ -60,6 +62,7 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
   onQuickSchedule,
   onAddToCalendar,
   onAddToReminder,
+  onTogglePin,
   onDeleteTask,
 }: AllTasksTaskRowProps) {
   const theme = useAppTheme();
@@ -116,12 +119,12 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
   };
 
   const titleColor = color.text.primary;
-  const menuActions = [
+  const taskActionsSection = [
     {
-      id: 'openNote',
-      title: openNoteLabel,
-      image: 'doc.text',
-      imageColor: titleColor,
+      id: 'togglePin',
+      title: task.isPinned ? t('tasks.unpinTask') : t('tasks.pinTask'),
+      image: 'pin',
+      imageColor: task.isPinned ? color.accent.pin : titleColor,
       titleColor,
     },
     {
@@ -142,6 +145,16 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
           },
         ]
       : []),
+  ];
+  const menuActions = [
+    {
+      id: 'openNote',
+      title: openNoteLabel,
+      image: 'doc.text',
+      imageColor: titleColor,
+      titleColor,
+    },
+    inlineNativeMenuSection('taskActionsSection', titleColor, taskActionsSection),
     inlineNativeMenuSection('integrationsSection', titleColor, [
       {
         id: 'addToReminder',
@@ -213,16 +226,26 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
               accessibilityRole="button"
               accessibilityLabel={t('tasks.editTaskA11y', { text: task.text })}
             >
-              <Text
-                className="text-[15px] leading-5 mb-2.5"
-                style={{
-                  color: task.isDone ? color.text.secondary : color.text.primary,
-                  textDecorationLine: task.isDone ? 'line-through' : undefined,
-                }}
-                numberOfLines={3}
-              >
-                {task.text}
-              </Text>
+              <View className="mb-2.5 flex-row items-start gap-1.5">
+                {task.isPinned ? (
+                  <Pin
+                    size={14}
+                    color={color.accent.pin}
+                    strokeWidth={2}
+                    style={{ marginTop: 3, flexShrink: 0 }}
+                  />
+                ) : null}
+                <Text
+                  className="min-w-0 flex-1 text-[15px] leading-5"
+                  style={{
+                    color: task.isDone ? color.text.secondary : color.text.primary,
+                    textDecorationLine: task.isDone ? 'line-through' : undefined,
+                  }}
+                  numberOfLines={3}
+                >
+                  {task.text}
+                </Text>
+              </View>
               <View className="flex-row flex-wrap items-center gap-1.5">
                 {parsedDeadline !== null && (
                   <View
@@ -359,6 +382,9 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
                   onAddToReminder(item);
                 } else if (nativeEvent.event === 'addToCalendar') {
                   onAddToCalendar(item);
+                } else if (nativeEvent.event === 'togglePin') {
+                  hapticSelection();
+                  onTogglePin(recordId, task.id, Boolean(task.isPinned));
                 } else if (nativeEvent.event === 'deleteTask') {
                   onDeleteTask(recordId, task.id);
                 }

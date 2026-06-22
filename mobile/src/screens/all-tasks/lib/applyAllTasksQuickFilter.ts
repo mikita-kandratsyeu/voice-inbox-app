@@ -66,6 +66,10 @@ const PRIORITY_RANK: Record<NonNullable<TaskItem['priority']>, number> = {
 };
 
 export function sortTaskRows(a: TaskWithRecord, b: TaskWithRecord): number {
+  const pinnedA = a.task.isPinned ? 1 : 0;
+  const pinnedB = b.task.isPinned ? 1 : 0;
+  if (pinnedA !== pinnedB) return pinnedB - pinnedA;
+
   const deadlineA = getTaskDeadlineSortTime(a.task);
   const deadlineB = getTaskDeadlineSortTime(b.task);
   if (deadlineA !== deadlineB) return deadlineA - deadlineB;
