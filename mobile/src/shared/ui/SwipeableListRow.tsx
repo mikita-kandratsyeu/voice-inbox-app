@@ -1,6 +1,9 @@
 import React, { memo, useMemo, useState } from 'react';
-import type { PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  GestureDetector,
+  type PanGestureActiveEvent,
+  usePanGesture,
+} from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
   useAnimatedReaction,
@@ -71,19 +74,19 @@ export const SwipeableListRow = memo(function SwipeableListRow({
     },
   );
 
-  const pan = Gesture.Pan()
-    .activeOffsetX([-GESTURE_THRESHOLDS.activeOffset, GESTURE_THRESHOLDS.activeOffset])
-    .failOffsetY([-GESTURE_THRESHOLDS.failOffset, GESTURE_THRESHOLDS.failOffset])
-    .onStart(() => {
+  const pan = usePanGesture({
+    activeOffsetX: [-GESTURE_THRESHOLDS.activeOffset, GESTURE_THRESHOLDS.activeOffset],
+    failOffsetY: [-GESTURE_THRESHOLDS.failOffset, GESTURE_THRESHOLDS.failOffset],
+    onActivate: () => {
       cancelAnimation(translateX);
       scheduleOnRN(setIsSwiping, true);
-    })
-    .onUpdate((e: PanGestureHandlerEventPayload) => {
-      translateX.value = Math.min(0, e.translationX);
-    })
-    .onEnd((e: PanGestureHandlerEventPayload) => {
+    },
+    onUpdate: (event: PanGestureActiveEvent) => {
+      translateX.value = Math.min(0, event.translationX);
+    },
+    onDeactivate: (event: PanGestureActiveEvent) => {
       const threshold = -swipeThreshold;
-      if (e.translationX < threshold) {
+      if (event.translationX < threshold) {
         if (hapticFeedback) {
           scheduleOnRN(hapticMedium);
         }
@@ -96,10 +99,11 @@ export const SwipeableListRow = memo(function SwipeableListRow({
         translateX.value = withSpring(0, SPRING_CONFIGS.gentle);
       }
       scheduleOnRN(setIsSwiping, false);
-    })
-    .onFinalize(() => {
+    },
+    onFinalize: () => {
       scheduleOnRN(setIsSwiping, false);
-    });
+    },
+  });
 
   const rowStyle = useAnimatedStyle(
     () => ({

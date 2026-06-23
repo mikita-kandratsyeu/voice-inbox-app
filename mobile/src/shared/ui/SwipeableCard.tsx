@@ -1,7 +1,10 @@
 import { Archive, ArchiveRestore, Pin, PinOff } from 'lucide-react-native';
 import React, { memo, useState } from 'react';
-import type { PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  GestureDetector,
+  type PanGestureActiveEvent,
+  usePanGesture,
+} from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
   useAnimatedReaction,
@@ -84,23 +87,23 @@ export const SwipeableCard = memo(function SwipeableCard({
     },
   );
 
-  const pan = Gesture.Pan()
-    .activeOffsetX([-GESTURE_THRESHOLDS.activeOffset, GESTURE_THRESHOLDS.activeOffset])
-    .failOffsetY([-GESTURE_THRESHOLDS.failOffset, GESTURE_THRESHOLDS.failOffset])
-    .onStart(() => {
+  const pan = usePanGesture({
+    activeOffsetX: [-GESTURE_THRESHOLDS.activeOffset, GESTURE_THRESHOLDS.activeOffset],
+    failOffsetY: [-GESTURE_THRESHOLDS.failOffset, GESTURE_THRESHOLDS.failOffset],
+    onActivate: () => {
       cancelAnimation(translateX);
       scheduleOnRN(setIsSwiping, true);
-    })
-    .onUpdate((e: PanGestureHandlerEventPayload) => {
-      translateX.value = pinEnabled ? e.translationX : Math.min(0, e.translationX);
-    })
-    .onEnd((e: PanGestureHandlerEventPayload) => {
-      if (e.translationX < -GESTURE_THRESHOLDS.swipe) {
+    },
+    onUpdate: (event: PanGestureActiveEvent) => {
+      translateX.value = pinEnabled ? event.translationX : Math.min(0, event.translationX);
+    },
+    onDeactivate: (event: PanGestureActiveEvent) => {
+      if (event.translationX < -GESTURE_THRESHOLDS.swipe) {
         scheduleOnRN(hapticMedium);
         translateX.value = withTiming(-CARD_FLY_DISTANCE, { duration: 220 }, () => {
           action.value = leftAction;
         });
-      } else if (pinEnabled && e.translationX > GESTURE_THRESHOLDS.swipe) {
+      } else if (pinEnabled && event.translationX > GESTURE_THRESHOLDS.swipe) {
         scheduleOnRN(hapticMedium);
         translateX.value = withTiming(GESTURE_THRESHOLDS.swipeExtended, { duration: 80 }, () => {
           action.value = 'pin';
@@ -109,10 +112,11 @@ export const SwipeableCard = memo(function SwipeableCard({
         translateX.value = withSpring(0, SPRING_CONFIGS.gentle);
       }
       scheduleOnRN(setIsSwiping, false);
-    })
-    .onFinalize(() => {
+    },
+    onFinalize: () => {
       scheduleOnRN(setIsSwiping, false);
-    });
+    },
+  });
 
   const cardStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],

@@ -420,6 +420,21 @@
       "sameFolder": "Same folder",
       "linked": "Linked notes",
       "tasks": "Open tasks"
+    },
+    "legend3d": {
+      "toggle": "Map legend",
+      "notes": "notes",
+      "tasks": "tasks",
+      "linksCount": "links",
+      "dots": "Dots",
+      "links": "Links",
+      "groups": "Groups",
+      "inbox": "Inbox",
+      "archived": "Archived",
+      "taskOpen": "Open task",
+      "taskHigh": "High priority",
+      "taskMedium": "Medium priority",
+      "taskDone": "Done task"
     }
   },
   "allTasks": {

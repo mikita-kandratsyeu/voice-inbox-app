@@ -2,14 +2,12 @@ import { Info, Maximize2, Minus, Plus, RotateCcw } from 'lucide-react-native';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-import Svg, { Line } from 'react-native-svg';
 
 import type { Colors } from '@/shared/config';
 import { hapticLight } from '@/shared/lib';
 import { FROSTED_HEADER_ICON_SIZE, FrostedChromeSurface } from '@/shared/ui';
 
-import { getLegendEdgeStrokeStyle } from '../lib/graphEdgeStyles';
-import type { GraphEdgeKind } from '../lib/graphTypes';
+import { GraphLegendLineRow } from './GraphLegendSamples';
 
 type GraphControlsProps = {
   color: Colors;
@@ -24,6 +22,8 @@ type GraphControlsProps = {
   resetLayoutLongPressEnabled?: boolean;
   legendVisible: boolean;
   legendToggleVisible?: boolean;
+  legendMaxWidth?: number;
+  legendToggleLabel?: string;
   customLegend?: React.ReactNode;
   onToggleLegend: () => void;
   statusActive?: boolean;
@@ -109,6 +109,8 @@ export function GraphControls({
   resetLayoutLongPressEnabled = false,
   legendVisible,
   legendToggleVisible = true,
+  legendMaxWidth = 240,
+  legendToggleLabel,
   customLegend,
   onToggleLegend,
   statusActive = false,
@@ -129,7 +131,7 @@ export function GraphControls({
           bottom: bottomOffset,
           gap: 8,
           alignItems: 'flex-start',
-          maxWidth: 240,
+          maxWidth: legendMaxWidth,
         }}
       >
         {legendVisible && !showStatusLoader ? (
@@ -137,7 +139,7 @@ export function GraphControls({
             color={color}
             borderRadius={14}
             shadow="subtle"
-            style={{ minWidth: 196, maxWidth: 240 }}
+            style={{ minWidth: 196, maxWidth: legendMaxWidth }}
           >
             <View
               style={{
@@ -149,27 +151,27 @@ export function GraphControls({
             >
               {customLegend ?? (
                 <>
-                  <LegendRow
+                  <GraphLegendLineRow
                     color={color}
                     edgeKind="similar"
                     label={t('notesGraph.legend.similar')}
                   />
-                  <LegendRow
+                  <GraphLegendLineRow
                     color={color}
                     edgeKind="sharedTag"
                     label={t('notesGraph.legend.sharedTag')}
                   />
-                  <LegendRow
+                  <GraphLegendLineRow
                     color={color}
                     edgeKind="sameFolder"
                     label={t('notesGraph.legend.sameFolder')}
                   />
-                  <LegendRow
+                  <GraphLegendLineRow
                     color={color}
                     edgeKind="linked"
                     label={t('notesGraph.legend.linked')}
                   />
-                  <LegendRow
+                  <GraphLegendLineRow
                     color={color}
                     edgeKind="contains"
                     label={t('notesGraph.legend.tasks')}
@@ -219,7 +221,7 @@ export function GraphControls({
             color={color}
             disabled={disabled}
             onPress={onToggleLegend}
-            accessibilityLabel={t('notesGraph.legend.toggle')}
+            accessibilityLabel={legendToggleLabel ?? t('notesGraph.legend.toggle')}
           >
             <Info
               size={20}
@@ -284,67 +286,5 @@ export function GraphControls({
         </View>
       </View>
     </>
-  );
-}
-
-const LEGEND_SWATCH_WIDTH = 36;
-const LEGEND_SWATCH_HEIGHT = 14;
-
-function LegendLineSample({ edgeKind, color }: { edgeKind: GraphEdgeKind; color: Colors }) {
-  const style = getLegendEdgeStrokeStyle(edgeKind, color);
-  const lineY = LEGEND_SWATCH_HEIGHT / 2;
-
-  return (
-    <View
-      style={{
-        width: LEGEND_SWATCH_WIDTH,
-        height: LEGEND_SWATCH_HEIGHT,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 6,
-        backgroundColor: color.background.tertiary,
-      }}
-    >
-      <Svg width={LEGEND_SWATCH_WIDTH - 8} height={LEGEND_SWATCH_HEIGHT}>
-        <Line
-          x1={0}
-          y1={lineY}
-          x2={LEGEND_SWATCH_WIDTH - 8}
-          y2={lineY}
-          stroke={style.stroke}
-          strokeWidth={style.strokeWidth}
-          strokeDasharray={style.strokeDasharray}
-          strokeLinecap={style.strokeLinecap ?? 'round'}
-          opacity={style.opacity}
-        />
-      </Svg>
-    </View>
-  );
-}
-
-function LegendRow({
-  color,
-  edgeKind,
-  label,
-}: {
-  color: Colors;
-  edgeKind: GraphEdgeKind;
-  label: string;
-}) {
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 22 }}>
-      <LegendLineSample edgeKind={edgeKind} color={color} />
-      <Text
-        style={{
-          color: color.text.primary,
-          fontSize: 13,
-          fontWeight: '500',
-          lineHeight: 17,
-          flexShrink: 1,
-        }}
-      >
-        {label}
-      </Text>
-    </View>
   );
 }

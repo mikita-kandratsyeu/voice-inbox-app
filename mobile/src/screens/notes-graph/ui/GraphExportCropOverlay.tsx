@@ -1,7 +1,11 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  GestureDetector,
+  type PanGestureActiveEvent,
+  usePanGesture,
+} from 'react-native-gesture-handler';
 
 import { hapticLight } from '@/shared/lib/haptics';
 
@@ -48,6 +52,58 @@ type GraphExportCropOverlayProps = {
   layoutScale: number;
   onCropChange: (next: ImageCropRect) => void;
 };
+
+type CropResizeHandleDetectorProps = {
+  handle: CropResizeHandle;
+  crop: ImageCropRect;
+  imageSize: ImageSize;
+  layoutScale: number;
+  onCropChange: (next: ImageCropRect) => void;
+  cropGestureStartRef: React.MutableRefObject<ImageCropRect | null>;
+  accessibilityLabel: string;
+  style: object;
+  children?: React.ReactNode;
+};
+
+function CropResizeHandleDetector({
+  handle,
+  crop,
+  imageSize,
+  layoutScale,
+  onCropChange,
+  cropGestureStartRef,
+  accessibilityLabel,
+  style,
+  children,
+}: CropResizeHandleDetectorProps) {
+  const resizeGesture = usePanGesture({
+    runOnJS: true,
+    onBegin: () => {
+      cropGestureStartRef.current = crop;
+      hapticLight();
+    },
+    onUpdate: (event: PanGestureActiveEvent) => {
+      const start = cropGestureStartRef.current;
+      if (!start) return;
+
+      const delta = displayDeltaToImageDelta(event.translationX, event.translationY, layoutScale);
+      onCropChange(
+        resizeImageCropFromHandle(start, handle, delta, imageSize.width, imageSize.height),
+      );
+    },
+    onFinalize: () => {
+      cropGestureStartRef.current = null;
+    },
+  });
+
+  return (
+    <GestureDetector gesture={resizeGesture}>
+      <View accessibilityLabel={accessibilityLabel} accessibilityRole="adjustable" style={style}>
+        {children}
+      </View>
+    </GestureDetector>
+  );
+}
 
 function CropCornerBracket({
   corner,
@@ -246,64 +302,33 @@ export function GraphExportCropOverlay({
   const { t } = useTranslation();
   const cropGestureStartRef = useRef<ImageCropRect | null>(null);
 
-  const moveCropGesture = useMemo(() => {
-    return Gesture.Pan()
-      .runOnJS(true)
-      .onBegin(() => {
-        cropGestureStartRef.current = crop;
-        hapticLight();
-      })
-      .onUpdate((event) => {
-        const start = cropGestureStartRef.current;
-        if (!start) return;
+  const moveCropGesture = usePanGesture({
+    runOnJS: true,
+    onBegin: () => {
+      cropGestureStartRef.current = crop;
+      hapticLight();
+    },
+    onUpdate: (event: PanGestureActiveEvent) => {
+      const start = cropGestureStartRef.current;
+      if (!start) return;
 
-        const delta = displayDeltaToImageDelta(event.translationX, event.translationY, layoutScale);
-        onCropChange(
-          clampImageCropRect(
-            {
-              ...start,
-              x: start.x + delta.dx,
-              y: start.y + delta.dy,
-            },
-            imageSize.width,
-            imageSize.height,
-          ),
-        );
-      })
-      .onFinalize(() => {
-        cropGestureStartRef.current = null;
-      });
-  }, [crop, imageSize.height, imageSize.width, layoutScale, onCropChange]);
-
-  const resizeGestures = useMemo(() => {
-    const createResizeGesture = (handle: CropResizeHandle) =>
-      Gesture.Pan()
-        .runOnJS(true)
-        .onBegin(() => {
-          cropGestureStartRef.current = crop;
-          hapticLight();
-        })
-        .onUpdate((event) => {
-          const start = cropGestureStartRef.current;
-          if (!start) return;
-
-          const delta = displayDeltaToImageDelta(
-            event.translationX,
-            event.translationY,
-            layoutScale,
-          );
-          onCropChange(
-            resizeImageCropFromHandle(start, handle, delta, imageSize.width, imageSize.height),
-          );
-        })
-        .onFinalize(() => {
-          cropGestureStartRef.current = null;
-        });
-
-    return Object.fromEntries(
-      RESIZE_HANDLES.map((handle) => [handle, createResizeGesture(handle)]),
-    ) as Record<CropResizeHandle, ReturnType<typeof Gesture.Pan>>;
-  }, [crop, imageSize.height, imageSize.width, layoutScale, onCropChange]);
+      const delta = displayDeltaToImageDelta(event.translationX, event.translationY, layoutScale);
+      onCropChange(
+        clampImageCropRect(
+          {
+            ...start,
+            x: start.x + delta.dx,
+            y: start.y + delta.dy,
+          },
+          imageSize.width,
+          imageSize.height,
+        ),
+      );
+    },
+    onFinalize: () => {
+      cropGestureStartRef.current = null;
+    },
+  });
 
   const imageRight = imageLayout.x + imageLayout.width;
   const imageBottom = imageLayout.y + imageLayout.height;
@@ -416,19 +441,23 @@ export function GraphExportCropOverlay({
           const isVerticalEdge = handle === 'left' || handle === 'right';
 
           return (
-            <GestureDetector key={handle} gesture={resizeGestures[handle]}>
-              <View
-                accessibilityLabel={
-                  isCorner
-                    ? t('notesGraph.export.resizeCornerA11y')
-                    : t('notesGraph.export.resizeEdgeA11y')
-                }
-                accessibilityRole="adjustable"
-                style={[getHandleStyle(handle), getCornerHandleAlignment(handle)]}
-              >
-                {isCorner ? null : <CropEdgeBar vertical={isVerticalEdge} />}
-              </View>
-            </GestureDetector>
+            <CropResizeHandleDetector
+              key={handle}
+              handle={handle}
+              crop={crop}
+              imageSize={imageSize}
+              layoutScale={layoutScale}
+              onCropChange={onCropChange}
+              cropGestureStartRef={cropGestureStartRef}
+              accessibilityLabel={
+                isCorner
+                  ? t('notesGraph.export.resizeCornerA11y')
+                  : t('notesGraph.export.resizeEdgeA11y')
+              }
+              style={[getHandleStyle(handle), getCornerHandleAlignment(handle)]}
+            >
+              {isCorner ? null : <CropEdgeBar vertical={isVerticalEdge} />}
+            </CropResizeHandleDetector>
           );
         })}
       </View>

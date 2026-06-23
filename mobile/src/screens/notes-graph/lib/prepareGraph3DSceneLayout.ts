@@ -36,22 +36,34 @@ export type Graph3DSceneClusterSummary = {
   count: number;
 };
 
+export type Graph3DNodeLegendKind =
+  | 'folder'
+  | 'inbox'
+  | 'archived'
+  | 'taskOpen'
+  | 'taskHigh'
+  | 'taskMedium'
+  | 'taskDone';
+
+export type Graph3DNodeLegendItem = {
+  id: string;
+  kind: Graph3DNodeLegendKind;
+  label: string;
+  color: string;
+  count: number;
+};
+
 export type Graph3DSceneLayout = {
   nodePoints: number[];
   nodeColors: SkColor[];
   nodeKinds: number[];
   nodeCount: number;
   edges: Graph3DSceneEdge[];
-  edgeOrder: number[];
   clusters: Graph3DSceneCluster[];
   clusterSummaries: Graph3DSceneClusterSummary[];
+  nodeLegendItems: Graph3DNodeLegendItem[];
   recordCount: number;
   taskCount: number;
-  projectedX: number[];
-  projectedY: number[];
-  projectedZ: number[];
-  projectedRadius: number[];
-  nodeOrder: number[];
 };
 
 function colorStringToSkiaColor(value: string): SkColor {
@@ -230,7 +242,63 @@ function buildSceneClusters(
   clusters.sort((left, right) => right.count - left.count);
   summaries.sort((left, right) => right.count - left.count);
 
-  return { clusters: clusters.slice(0, 18), summaries: summaries.slice(0, 4) };
+  return { clusters: clusters.slice(0, 18), summaries: summaries.slice(0, 10) };
+}
+
+function buildGraph3DNodeLegendItems(
+  nodes: GraphNode[],
+  foldersById: Map<string, Folder>,
+  color: Colors,
+  isProActive: boolean,
+): Graph3DNodeLegendItem[] {
+  const items = new Map<string, Graph3DNodeLegendItem>();
+
+  const upsert = (
+    id: string,
+    kind: Graph3DNodeLegendKind,
+    label: string,
+    itemColor: string,
+  ): void => {
+    const existing = items.get(id);
+    if (existing) {
+      existing.count += 1;
+      return;
+    }
+
+    items.set(id, { id, kind, label, color: itemColor, count: 1 });
+  };
+
+  for (const node of nodes) {
+    if (node.kind === 'task' && node.task) {
+      if (node.task.isDone) {
+        upsert('task:done', 'taskDone', '', color.text.muted);
+      } else if (node.task.priority === 'high') {
+        upsert('task:high', 'taskHigh', '', color.accent.delete);
+      } else if (node.task.priority === 'medium') {
+        upsert('task:medium', 'taskMedium', '', color.accent.cache);
+      } else {
+        upsert('task:open', 'taskOpen', '', color.accent.primary);
+      }
+      continue;
+    }
+
+    if (node.kind === 'record' && node.record) {
+      const folderId = node.record.folderId;
+      if (folderId) {
+        const folder = foldersById.get(folderId);
+        const itemColor = folder?.color
+          ? resolveDisplayFolderColor(folder.color, isProActive)
+          : color.accent.primary;
+        upsert(`folder:${folderId}`, 'folder', folder?.name ?? 'Folder', itemColor);
+      } else if (node.record.status === 'archived') {
+        upsert('archived', 'archived', '', color.accent.archive);
+      } else {
+        upsert('inbox', 'inbox', '', color.accent.primary);
+      }
+    }
+  }
+
+  return [...items.values()].sort((left, right) => right.count - left.count);
 }
 
 export function prepareGraph3DSceneLayout(
@@ -299,15 +367,10 @@ export function prepareGraph3DSceneLayout(
     nodeKinds,
     nodeCount: nodes.length,
     edges: sceneEdges,
-    edgeOrder: sceneEdges.map((_, index) => index),
     clusters: sceneClusters.clusters,
     clusterSummaries: sceneClusters.summaries,
+    nodeLegendItems: buildGraph3DNodeLegendItems(nodes, foldersById, color, isProActive),
     recordCount,
     taskCount,
-    projectedX: new Array(nodes.length).fill(0),
-    projectedY: new Array(nodes.length).fill(0),
-    projectedZ: new Array(nodes.length).fill(0),
-    projectedRadius: new Array(nodes.length).fill(0),
-    nodeOrder: new Array(nodes.length).fill(0),
   };
 }

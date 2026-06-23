@@ -10,7 +10,19 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import type { LayoutChangeEvent } from 'react-native';
 import { useWindowDimensions, View } from 'react-native';
-import { Gesture, GestureDetector, Pressable } from 'react-native-gesture-handler';
+import {
+  GestureDetector,
+  GestureStateManager,
+  type PanGestureActiveEvent,
+  type PinchGestureActiveEvent,
+  Pressable,
+  type TapGestureActiveEvent,
+  useExclusiveGestures,
+  usePanGesture,
+  usePinchGesture,
+  useSimultaneousGestures,
+  useTapGesture,
+} from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -760,21 +772,21 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     translateY.value = clamped.translateY;
   };
 
-  const pinch = Gesture.Pinch()
-    .onStart((event) => {
+  const pinch = usePinchGesture({
+    onActivate: (event: PinchGestureActiveEvent) => {
       'worklet';
       if (isNodeDragging.value) return;
       isPinching.value = true;
       syncGestureBaseline();
       savedFocalX.value = event.focalX;
       savedFocalY.value = event.focalY;
-    })
-    .onUpdate((event) => {
+    },
+    onUpdate: (event: PinchGestureActiveEvent) => {
       'worklet';
       if (isNodeDragging.value) return;
       applyMapPinch(event.scale, event.focalX, event.focalY);
-    })
-    .onEnd(() => {
+    },
+    onDeactivate: () => {
       'worklet';
       if (!isPinching.value || isNodeDragging.value) return;
       isPinching.value = false;
@@ -800,33 +812,34 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       } else {
         commitViewportFromGesture();
       }
-    })
-    .onFinalize(() => {
+    },
+    onFinalize: () => {
       'worklet';
       isPinching.value = false;
-    });
+    },
+  });
 
   const panVelocityX = useSharedValue(0);
   const panVelocityY = useSharedValue(0);
 
-  const pan = Gesture.Pan()
-    .activeOffsetX([-12, 12])
-    .activeOffsetY([-12, 12])
-    .maxPointers(1)
-    .onTouchesMove((event, state) => {
+  const pan = usePanGesture({
+    activeOffsetX: [-12, 12],
+    activeOffsetY: [-12, 12],
+    maxPointers: 1,
+    onTouchesMove: (event) => {
       'worklet';
       if (event.numberOfTouches > 1 || isPinching.value) {
-        state.fail();
+        GestureStateManager.fail(event.handlerTag);
       }
-    })
-    .onStart(() => {
+    },
+    onActivate: () => {
       'worklet';
       if (isNodeDragging.value || isPinching.value) return;
       syncGestureBaseline();
       panVelocityX.value = 0;
       panVelocityY.value = 0;
-    })
-    .onUpdate((event) => {
+    },
+    onUpdate: (event: PanGestureActiveEvent) => {
       'worklet';
       if (isNodeDragging.value || isPinching.value) return;
       const next = computeMapPanTransform(
@@ -840,8 +853,8 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       translateY.value = clamped.translateY;
       panVelocityX.value = event.velocityX;
       panVelocityY.value = event.velocityY;
-    })
-    .onEnd(() => {
+    },
+    onDeactivate: () => {
       'worklet';
       if (isNodeDragging.value || isPinching.value) return;
 
@@ -889,7 +902,8 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       } else {
         commitViewportFromGesture();
       }
-    });
+    },
+  });
 
   const applyDoubleTapZoomAtViewportFocal = (focalX: number, focalY: number) => {
     'worklet';
@@ -923,26 +937,31 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     translateY.value = withTiming(clamped.translateY, timing);
   };
 
-  const viewportDoubleTap = Gesture.Tap()
-    .numberOfTaps(2)
-    .maxDuration(250)
-    .onEnd((event) => {
+  const viewportDoubleTap = useTapGesture({
+    numberOfTaps: 2,
+    maxDuration: 250,
+    onDeactivate: (event: TapGestureActiveEvent) => {
       'worklet';
       applyDoubleTapZoomAtViewportFocal(event.x, event.y);
-    });
+    },
+  });
 
-  const backgroundDoubleTap = Gesture.Tap()
-    .numberOfTaps(2)
-    .maxDuration(250)
-    .maxDelay(250)
-    .onEnd((event) => {
+  const backgroundDoubleTap = useTapGesture({
+    numberOfTaps: 2,
+    maxDuration: 250,
+    maxDelay: 250,
+    onDeactivate: (event: TapGestureActiveEvent) => {
       'worklet';
       const focalX = translateX.value + event.x * scale.value;
       const focalY = translateY.value + event.y * scale.value;
       applyDoubleTapZoomAtViewportFocal(focalX, focalY);
-    });
+    },
+  });
 
-  const canvasGesture = Gesture.Simultaneous(pinch, Gesture.Exclusive(pan, viewportDoubleTap));
+  const canvasGesture = useSimultaneousGestures(
+    pinch,
+    useExclusiveGestures(pan, viewportDoubleTap),
+  );
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [

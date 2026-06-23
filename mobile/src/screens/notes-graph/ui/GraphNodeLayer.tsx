@@ -1,7 +1,15 @@
 import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  GestureDetector,
+  type PanGestureActiveEvent,
+  useExclusiveGestures,
+  useLongPressGesture,
+  usePanGesture,
+  useSimultaneousGestures,
+  useTapGesture,
+} from 'react-native-gesture-handler';
 import Animated, {
   type SharedValue,
   useAnimatedStyle,
@@ -158,114 +166,101 @@ function DraggableNodeShell({
     onFocus();
   }, [onFocus]);
 
-  const dragGesture = useMemo(() => {
-    const tap = Gesture.Tap()
-      .maxDuration(GRAPH_NODE_LONG_PRESS_MS - 20)
-      .onEnd((_event, success) => {
-        'worklet';
-        if (!success) return;
-        scheduleOnRN(handlePress);
+  const tapGesture = useTapGesture({
+    maxDuration: GRAPH_NODE_LONG_PRESS_MS - 20,
+    onDeactivate: (event) => {
+      'worklet';
+      if (event.canceled) return;
+      scheduleOnRN(handlePress);
+    },
+  });
+
+  const longPressHint = useLongPressGesture({
+    enabled: !dimmed,
+    minDuration: GRAPH_NODE_LONG_PRESS_MS,
+    onBegin: () => {
+      'worklet';
+      interactionPhase.value = GRAPH_NODE_INTERACTION_PRESSING;
+    },
+    onActivate: () => {
+      'worklet';
+      scheduleOnRN(handleCanvasDragStart);
+      scheduleOnRN(hapticLight);
+    },
+    onFinalize: (event) => {
+      'worklet';
+      if (interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING) {
+        return;
+      }
+      scheduleOnRN(handleDragCancel);
+      interactionPhase.value = withTiming(0, {
+        duration: 160,
       });
+      if (event.canceled) return;
+      scheduleOnRN(handleFocus);
+    },
+  });
 
-    if (dimmed) {
-      return tap;
-    }
+  const panGesture = usePanGesture({
+    enabled: !dimmed,
+    activateAfterLongPress: GRAPH_NODE_LONG_PRESS_MS,
+    onActivate: () => {
+      'worklet';
+      interactionPhase.value = GRAPH_NODE_INTERACTION_DRAGGING;
+    },
+    onUpdate: (event: PanGestureActiveEvent) => {
+      'worklet';
+      const viewportScale = Math.max(canvasScale.value, 0.001);
+      const baseLeft = nodeLeft.value;
+      const baseTop = nodeTop.value;
+      const snapped = snapGraphPointToGrid(
+        baseLeft + event.translationX / viewportScale,
+        baseTop + event.translationY / viewportScale,
+      );
+      const clamped = clampNodePosition(snapped.x, snapped.y);
+      dragOffsetX.value = clamped.x - baseLeft;
+      dragOffsetY.value = clamped.y - baseTop;
+    },
+    onDeactivate: (event: PanGestureActiveEvent) => {
+      'worklet';
+      const viewportScale = Math.max(canvasScale.value, 0.001);
+      const baseLeft = nodeLeft.value;
+      const baseTop = nodeTop.value;
+      const snapped = snapGraphPointToGrid(
+        baseLeft + event.translationX / viewportScale,
+        baseTop + event.translationY / viewportScale,
+      );
+      const clamped = clampNodePosition(snapped.x, snapped.y);
+      const finalX = clamped.x;
+      const finalY = clamped.y;
 
-    const longPressHint = Gesture.LongPress()
-      .minDuration(GRAPH_NODE_LONG_PRESS_MS)
-      .onBegin(() => {
-        'worklet';
-        interactionPhase.value = GRAPH_NODE_INTERACTION_PRESSING;
-      })
-      .onStart(() => {
-        'worklet';
-        scheduleOnRN(handleCanvasDragStart);
-        scheduleOnRN(hapticLight);
-      })
-      .onFinalize((_event, success) => {
-        'worklet';
-        if (interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING) {
-          return;
-        }
+      nodeLeft.value = finalX;
+      nodeTop.value = finalY;
+      dragOffsetX.value = 0;
+      dragOffsetY.value = 0;
+
+      interactionPhase.value = withTiming(0, {
+        duration: 160,
+      });
+      scheduleOnRN(handleDragEndComplete, nodeId, finalX, finalY);
+      scheduleOnRN(handleFocus);
+    },
+    onFinalize: (event) => {
+      'worklet';
+      if (!event.canceled) return;
+      if (interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING) {
         scheduleOnRN(handleDragCancel);
-        interactionPhase.value = withTiming(0, {
-          duration: 160,
-        });
-        if (!success) return;
-        scheduleOnRN(handleFocus);
+      }
+      interactionPhase.value = withTiming(0, {
+        duration: 160,
       });
+    },
+  });
 
-    const pan = Gesture.Pan()
-      .activateAfterLongPress(GRAPH_NODE_LONG_PRESS_MS)
-      .onStart(() => {
-        'worklet';
-        interactionPhase.value = GRAPH_NODE_INTERACTION_DRAGGING;
-      })
-      .onUpdate((event) => {
-        'worklet';
-        const viewportScale = Math.max(canvasScale.value, 0.001);
-        const baseLeft = nodeLeft.value;
-        const baseTop = nodeTop.value;
-        const snapped = snapGraphPointToGrid(
-          baseLeft + event.translationX / viewportScale,
-          baseTop + event.translationY / viewportScale,
-        );
-        const clamped = clampNodePosition(snapped.x, snapped.y);
-        dragOffsetX.value = clamped.x - baseLeft;
-        dragOffsetY.value = clamped.y - baseTop;
-      })
-      .onEnd((event) => {
-        'worklet';
-        const viewportScale = Math.max(canvasScale.value, 0.001);
-        const baseLeft = nodeLeft.value;
-        const baseTop = nodeTop.value;
-        const snapped = snapGraphPointToGrid(
-          baseLeft + event.translationX / viewportScale,
-          baseTop + event.translationY / viewportScale,
-        );
-        const clamped = clampNodePosition(snapped.x, snapped.y);
-        const finalX = clamped.x;
-        const finalY = clamped.y;
-
-        nodeLeft.value = finalX;
-        nodeTop.value = finalY;
-        dragOffsetX.value = 0;
-        dragOffsetY.value = 0;
-
-        interactionPhase.value = withTiming(0, {
-          duration: 160,
-        });
-        scheduleOnRN(handleDragEndComplete, nodeId, finalX, finalY);
-        scheduleOnRN(handleFocus);
-      })
-      .onFinalize((_event, success) => {
-        'worklet';
-        if (success) return;
-        if (interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING) {
-          scheduleOnRN(handleDragCancel);
-        }
-        interactionPhase.value = withTiming(0, {
-          duration: 160,
-        });
-      });
-
-    return Gesture.Simultaneous(Gesture.Exclusive(pan, tap), longPressHint);
-  }, [
-    canvasScale,
-    clampNodePosition,
-    dimmed,
-    dragOffsetX,
-    dragOffsetY,
-    handleCanvasDragStart,
-    handleDragCancel,
-    handleDragEndComplete,
-    handleFocus,
-    handlePress,
-    interactionPhase,
-    nodeId,
-    nodeLeft,
-    nodeTop,
-  ]);
+  const dragGesture = useSimultaneousGestures(
+    useExclusiveGestures(panGesture, tapGesture),
+    longPressHint,
+  );
 
   const shellStyle = useAnimatedStyle(
     () => ({

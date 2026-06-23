@@ -47,7 +47,14 @@ function recordGraph3DPicture(
   let depthMin = Number.POSITIVE_INFINITY;
   let depthMax = Number.NEGATIVE_INFINITY;
 
-  for (let index = 0; index < scene.nodeCount; index += 1) {
+  const nodeCount = scene.nodeCount;
+  const projectedX = new Array<number>(nodeCount);
+  const projectedY = new Array<number>(nodeCount);
+  const projectedZ = new Array<number>(nodeCount);
+  const projectedRadius = new Array<number>(nodeCount);
+  const nodeOrder = new Array<number>(nodeCount);
+
+  for (let index = 0; index < nodeCount; index += 1) {
     const pointOffset = index * 3;
     const projected = projectPoint3DWorklet(
       scene.nodePoints[pointOffset],
@@ -60,14 +67,14 @@ function recordGraph3DPicture(
       viewportHeight,
     );
 
-    scene.projectedX[index] = projected.x;
-    scene.projectedY[index] = projected.y;
-    scene.projectedZ[index] = projected.z;
-    scene.projectedRadius[index] = graph3DNodeBaseRadiusWorklet(
+    projectedX[index] = projected.x;
+    projectedY[index] = projected.y;
+    projectedZ[index] = projected.z;
+    projectedRadius[index] = graph3DNodeBaseRadiusWorklet(
       scene.nodeKinds[index] === 1,
       projected.scale,
     );
-    scene.nodeOrder[index] = index;
+    nodeOrder[index] = index;
 
     depthMin = Math.min(depthMin, projected.z);
     depthMax = Math.max(depthMax, projected.z);
@@ -78,7 +85,7 @@ function recordGraph3DPicture(
     depthMax = 1;
   }
 
-  scene.nodeOrder.sort((left, right) => scene.projectedZ[left] - scene.projectedZ[right]);
+  nodeOrder.sort((left, right) => projectedZ[left] - projectedZ[right]);
 
   for (const cluster of scene.clusters) {
     const projected = projectPoint3DWorklet(
@@ -111,23 +118,23 @@ function recordGraph3DPicture(
     canvas.drawCircle(projected.x, projected.y, radius * 0.92, haloPaint);
   }
 
-  for (let orderIndex = 0; orderIndex < scene.edges.length; orderIndex += 1) {
-    scene.edgeOrder[orderIndex] = orderIndex;
+  const edgeCount = scene.edges.length;
+  const edgeOrder = new Array<number>(edgeCount);
+  for (let orderIndex = 0; orderIndex < edgeCount; orderIndex += 1) {
+    edgeOrder[orderIndex] = orderIndex;
   }
 
-  scene.edgeOrder.sort((left, right) => {
+  edgeOrder.sort((left, right) => {
     const leftEdge = scene.edges[left];
     const rightEdge = scene.edges[right];
-    const leftDepth =
-      (scene.projectedZ[leftEdge.sourceIndex] + scene.projectedZ[leftEdge.targetIndex]) / 2;
-    const rightDepth =
-      (scene.projectedZ[rightEdge.sourceIndex] + scene.projectedZ[rightEdge.targetIndex]) / 2;
+    const leftDepth = (projectedZ[leftEdge.sourceIndex] + projectedZ[leftEdge.targetIndex]) / 2;
+    const rightDepth = (projectedZ[rightEdge.sourceIndex] + projectedZ[rightEdge.targetIndex]) / 2;
     return leftDepth - rightDepth;
   });
 
-  for (let orderIndex = 0; orderIndex < scene.edgeOrder.length; orderIndex += 1) {
-    const edge = scene.edges[scene.edgeOrder[orderIndex]];
-    const edgeDepth = (scene.projectedZ[edge.sourceIndex] + scene.projectedZ[edge.targetIndex]) / 2;
+  for (let orderIndex = 0; orderIndex < edgeCount; orderIndex += 1) {
+    const edge = scene.edges[edgeOrder[orderIndex]];
+    const edgeDepth = (projectedZ[edge.sourceIndex] + projectedZ[edge.targetIndex]) / 2;
     const depthFade = graph3DDepthFadeWorklet(edgeDepth, depthMin, depthMax);
     const zoomOutFactor = Math.max(0, Math.min(1, (distance - 2.2) / 4.2));
     const stride = zoomOutFactor > 0.72 ? 4 : zoomOutFactor > 0.38 ? 2 : 1;
@@ -145,20 +152,20 @@ function recordGraph3DPicture(
     paint.setStyle(1);
     paint.setStrokeCap(1);
     canvas.drawLine(
-      scene.projectedX[edge.sourceIndex],
-      scene.projectedY[edge.sourceIndex],
-      scene.projectedX[edge.targetIndex],
-      scene.projectedY[edge.targetIndex],
+      projectedX[edge.sourceIndex],
+      projectedY[edge.sourceIndex],
+      projectedX[edge.targetIndex],
+      projectedY[edge.targetIndex],
       paint,
     );
   }
 
-  for (let orderIndex = 0; orderIndex < scene.nodeCount; orderIndex += 1) {
-    const nodeIndex = scene.nodeOrder[orderIndex];
-    const depthFade = graph3DDepthFadeWorklet(scene.projectedZ[nodeIndex], depthMin, depthMax);
-    const radius = scene.projectedRadius[nodeIndex];
-    const x = scene.projectedX[nodeIndex];
-    const y = scene.projectedY[nodeIndex];
+  for (let orderIndex = 0; orderIndex < nodeCount; orderIndex += 1) {
+    const nodeIndex = nodeOrder[orderIndex];
+    const depthFade = graph3DDepthFadeWorklet(projectedZ[nodeIndex], depthMin, depthMax);
+    const radius = projectedRadius[nodeIndex];
+    const x = projectedX[nodeIndex];
+    const y = projectedY[nodeIndex];
     const color = scene.nodeColors[nodeIndex];
 
     const glowPaint = Skia.Paint();

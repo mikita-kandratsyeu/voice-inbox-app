@@ -10,7 +10,11 @@ import { Maximize2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  GestureDetector,
+  type PanGestureActiveEvent,
+  usePanGesture,
+} from 'react-native-gesture-handler';
 import type { SharedValue } from 'react-native-reanimated';
 import Animated, {
   Easing,
@@ -435,37 +439,26 @@ export function GraphMinimap({
     [persistResize],
   );
 
-  const resizeGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .onBegin(() => {
-          'worklet';
-          resizeStartWidthSV.value = minimapWidthSV.value;
-          resizeStartHeightSV.value = minimapHeightSV.value;
-          scheduleOnRN(handleResizeBegin);
-        })
-        .onUpdate((event) => {
-          'worklet';
-          scheduleOnRN(
-            applyResize,
-            resizeStartWidthSV.value + event.translationX,
-            resizeStartHeightSV.value + event.translationY,
-          );
-        })
-        .onEnd(() => {
-          'worklet';
-          scheduleOnRN(handleResizeEnd, minimapWidthSV.value, minimapHeightSV.value);
-        }),
-    [
-      applyResize,
-      handleResizeBegin,
-      handleResizeEnd,
-      minimapHeightSV,
-      minimapWidthSV,
-      resizeStartHeightSV,
-      resizeStartWidthSV,
-    ],
-  );
+  const resizeGesture = usePanGesture({
+    onBegin: () => {
+      'worklet';
+      resizeStartWidthSV.value = minimapWidthSV.value;
+      resizeStartHeightSV.value = minimapHeightSV.value;
+      scheduleOnRN(handleResizeBegin);
+    },
+    onUpdate: (event: PanGestureActiveEvent) => {
+      'worklet';
+      scheduleOnRN(
+        applyResize,
+        resizeStartWidthSV.value + event.translationX,
+        resizeStartHeightSV.value + event.translationY,
+      );
+    },
+    onDeactivate: () => {
+      'worklet';
+      scheduleOnRN(handleResizeEnd, minimapWidthSV.value, minimapHeightSV.value);
+    },
+  });
 
   const scaleAnimation = useSharedValue(1);
   const [isPressed, setIsPressed] = useState(false);
