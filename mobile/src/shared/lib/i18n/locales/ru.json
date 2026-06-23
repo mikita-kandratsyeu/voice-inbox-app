@@ -140,6 +140,7 @@
   },
   "inbox": {
     "menuSelectNotes": "Выбрать",
+    "menuAskInboxAi": "Войти в Ask Inbox",
     "menuAutoOrganize": "Организовать заметки",
     "menuImportFile": "Импорт файла",
     "adLabel": "Реклама",
@@ -835,9 +836,11 @@
     "ask": "Задать вопрос",
     "askPlaceholder": "Задайте вопрос по заметке...",
     "askModelChipA11y": "Модель ИИ: {{model}}. Нажмите, чтобы сменить.",
+    "askModelChipEmpty": "Выберите модель",
+    "askModelMenuNoLocalModels": "Нет загруженных моделей. Откройте «Все модели», чтобы скачать.",
     "askModelAllModels": "Все модели",
     "askModelOpenRemoteSettings": "Открыть настройки ИИ-сервера",
-    "askEmptyTitle": "Вопросы к заметке",
+    "askEmptyTitle": "Ask AI",
     "askContextSourceTranscript": "Транскрипт",
     "askContextSourceSummary": "Сводка",
     "askContextSourceTasks": "Задачи",
@@ -1199,7 +1202,8 @@
         "operations": {
           "transcript_summarize": "Умная сводка",
           "transcript_summarize_meeting": "Сводка в режиме встреч",
-          "transcript_ask": "Вопрос по заметке",
+          "transcript_ask": "Ask AI",
+          "inbox_ask": "Ask Inbox",
           "translate": "Перевод",
           "digest": "Дайджест",
           "auto_organize": "Подбор папок",
@@ -1223,8 +1227,12 @@
           "subtitle": "Сводка встречи и реплики по участникам: 2 кредита за запуск в Smart. В Private — на устройстве или вашем сервере (Pro), без облачных кредитов."
         },
         "ask": {
-          "title": "Вопросы к заметке",
+          "title": "Ask AI",
           "subtitle": "1 кредит за вопрос в Smart. В Private — на устройстве или вашем сервере (Pro), без облачных кредитов."
+        },
+        "inboxAsk": {
+          "title": "Ask Inbox",
+          "subtitle": "1 кредит за вопрос в Smart. Ищет релевантные заметки по всей библиотеке. В Private нужен ИИ‑сервер (Pro)."
         },
         "translate": {
           "title": "Перевод",
@@ -1258,7 +1266,7 @@
       },
       "shakeToCancelAskAi": {
         "title": "Остановить ответ",
-        "subtitle": "На экране «Вопросы к заметке» отменяет генерацию, пока ответ ещё готовится."
+        "subtitle": "На экранах Ask AI и Ask Inbox отменяет генерацию, пока ответ ещё готовится."
       }
     },
     "digest": {
@@ -2432,7 +2440,7 @@
   },
   "aiModels": {
     "title": "Модель генерации",
-    "privateDescription": "На устройстве — сводки, задачи и ответы по заметке. С ИИ‑сервером (Pro) — папки, автоорганизация и ИИ‑дайджест.",
+    "privateDescription": "На устройстве — сводки, задачи и ответы по заметке. С ИИ‑сервером (Pro) — папки, автоорганизация, ИИ‑дайджест и вопросы по инбоксу.",
     "privateBudgetHint": "Скорость и объём ответа — в настройках ИИ, в разделах «Модель на устройстве» и «ИИ‑сервер».",
     "localDownloadBlockedTitle": "Идёт загрузка",
     "localDownloadBlockedBody": "Дождитесь окончания загрузки текущей модели или отмените её, затем попробуйте снова.",
@@ -3100,6 +3108,59 @@
       "archiveSelected": "В архив ({{count}})",
       "archiveSelectedA11y": "Положить {{count}} выбранных заметок в архив"
     }
+  },
+  "inboxAsk": {
+    "title": "Ask Inbox",
+    "placeholder": "Задайте вопрос по заметкам...",
+    "retrieving": "Ищем подходящие заметки...",
+    "processing": "Ответ генерируется…",
+    "suggestedSection": "Быстрые вопросы",
+    "send": "Отправить вопрос",
+    "copied": "Скопировано",
+    "clearHistoryA11y": "Очистить переписку Ask Inbox",
+    "contextUsed": "ИИ учёл {{used}} из {{total}} заметок",
+    "contextDropped": "Ещё {{count}} заметок не вошли в контекст из‑за лимита",
+    "contextLearnMore": "Что учитывается в ответе",
+    "contextLearnMoreA11y": "Подробнее, что передаётся",
+    "contextIdle": "ИИ может искать по {{total}} заметкам",
+    "contextProcessingCloud": "Облачный ИИ",
+    "contextProcessingPrivate": "Локальный ИИ",
+    "contextSheetTitle": "Что учитывается в ответе",
+    "contextSheetIntro": "Для каждого вопроса приложение находит подходящие заметки и отправляет сжатые выдержки в ИИ.",
+    "contextBulletSearch": "Ваш вопрос и недавняя переписка в этом чате",
+    "contextBulletNotes": "Наиболее релевантные заметки — заголовки, сводки, задачи и фрагменты транскрипта",
+    "contextBulletPrior": "Предыдущие вопросы и ответы в этой сессии",
+    "contextBulletQuestion": "Ваш новый вопрос",
+    "contextBulletDropped": "Ещё {{count}} заметок пропущено из‑за лимита контекста",
+    "contextSheetNotesHeading": "Заметки в последнем ответе",
+    "contextFooterCloud": "В режиме Smart выбранный текст заметок отправляется на серверы Voice Inbox AI по HTTPS. Аудиозаписи не загружаются.",
+    "contextFooterPrivate": "В Private с вашим ИИ‑сервером (Pro) выдержки заметок отправляются на ваш сервер.",
+    "searchChip": "Спросить по найденному",
+    "searchChipA11y": "Спросить ИИ по поиску: {{query}}",
+    "evidenceOpenNote": "Открыть заметку",
+    "evidenceOpenNoteA11y": "Открыть заметку {{title}}",
+    "privateDeviceUnavailable": "Откройте Smart или настройте ИИ‑сервер, чтобы задавать вопросы по инбоксу.",
+    "errorTitle": "Не удалось получить ответ",
+    "errorRetry": "Повторить",
+    "errorPrivateHint": "Не удалось выполнить запрос. Проверьте модель или режим ИИ и нажмите «Повторить».",
+    "errorDefaultHint": "Попробуйте задать вопрос ещё раз.",
+    "clearHistoryTitle": "Очистить переписку?",
+    "clearHistoryMessage": "Все вопросы и ответы по инбоксу будут удалены.",
+    "clearHistoryConfirm": "Очистить всё",
+    "suggestedOpenTasks": "Открытые задачи",
+    "suggestedOpenTasksPrompt": "Какие открытые задачи есть в моих заметках?",
+    "suggestedWeekPromises": "На этой неделе",
+    "suggestedWeekPromisesPrompt": "Что я обещал сделать на этой неделе?",
+    "suggestedProjectTasks": "Задачи по проектам",
+    "suggestedProjectTasksPrompt": "Какие задачи по проектам ещё открыты?",
+    "corpusScopeActiveLabel": "Активные",
+    "corpusScopeAllLabel": "Все",
+    "corpusScopeActiveNotes": "Только активные заметки",
+    "corpusScopeAllNotes": "Включая архив",
+    "corpusScopeNotesSection": "Заметки",
+    "corpusScopeChipA11y": "Область поиска: {{scope}}",
+    "corpusScopeFoldersSection": "Папки",
+    "corpusScopeAllFolders": "Все заметки"
   },
   "inAppEvent": {
     "primaryCta": "Продолжить",

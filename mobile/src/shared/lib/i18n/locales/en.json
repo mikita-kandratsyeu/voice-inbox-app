@@ -140,6 +140,7 @@
   },
   "inbox": {
     "menuSelectNotes": "Select",
+    "menuAskInboxAi": "Open Ask Inbox",
     "menuAutoOrganize": "Organize notes",
     "menuImportFile": "Import file",
     "adLabel": "Ad",
@@ -818,15 +819,17 @@
     "ask": "Ask",
     "askPlaceholder": "Ask a question about this note...",
     "askModelChipA11y": "AI model: {{model}}. Tap to change.",
+    "askModelChipEmpty": "Choose model",
+    "askModelMenuNoLocalModels": "No on-device models downloaded. Open All models to download one.",
     "askModelAllModels": "All models",
     "askModelOpenRemoteSettings": "Open AI server settings",
-    "askEmptyTitle": "Questions about this note",
+    "askEmptyTitle": "Ask AI",
     "askContextSourceTranscript": "Transcript",
     "askContextSourceSummary": "Summary",
     "askContextSourceTasks": "Tasks",
     "askContextSourceLinkedNotes": "Linked notes",
     "askContextSourceChat": "This chat",
-    "askContextProcessingPrivate": "On-device AI",
+    "askContextProcessingPrivate": "Private AI",
     "askContextProcessingCloud": "Cloud AI",
     "askContextLearnMoreA11y": "Details on what is sent",
     "askContextSheetTitle": "What goes into each answer",
@@ -1167,7 +1170,8 @@
         "operations": {
           "transcript_summarize": "Smart summary",
           "transcript_summarize_meeting": "Meeting mode summary",
-          "transcript_ask": "Ask about a note",
+          "transcript_ask": "Ask AI",
+          "inbox_ask": "Ask Inbox",
           "translate": "Translate",
           "digest": "Digest",
           "auto_organize": "Folder suggestions",
@@ -1191,8 +1195,12 @@
           "subtitle": "Meeting recap plus replies by participant: 2 cloud credits per run in Smart. In Private, on your device or your server (Pro) — no cloud credits."
         },
         "ask": {
-          "title": "Questions about notes",
+          "title": "Ask AI",
           "subtitle": "1 cloud credit per question in Smart. In Private, on your device or your server (Pro) — no cloud credits."
+        },
+        "inboxAsk": {
+          "title": "Ask Inbox",
+          "subtitle": "1 cloud credit per question in Smart. Finds relevant notes across your library. Private requires your AI server (Pro)."
         },
         "translate": {
           "title": "Translate",
@@ -1226,7 +1234,7 @@
       },
       "shakeToCancelAskAi": {
         "title": "Shake to stop answer",
-        "subtitle": "On Questions about this note, cancels generation while an answer is loading."
+        "subtitle": "On Ask AI and Ask Inbox, cancels generation while an answer is loading."
       }
     },
     "digest": {
@@ -2384,7 +2392,7 @@
   },
   "aiModels": {
     "title": "Generation model",
-    "privateDescription": "On device: summaries, tasks, and note Q&A. With an AI server (Pro): folders, auto-organize, and AI digest.",
+    "privateDescription": "On device: summaries, tasks, and note Q&A. With an AI server (Pro): folders, auto-organize, AI digest, and inbox questions.",
     "privateBudgetHint": "Response length and speed are in AI settings under \"On-device model\" and \"AI server\".",
     "localDownloadBlockedTitle": "Download in progress",
     "localDownloadBlockedBody": "Wait for the current model to finish downloading, or cancel it, then try again.",
@@ -3028,6 +3036,59 @@
       "archiveSelected": "Archive ({{count}})",
       "archiveSelectedA11y": "Archive {{count}} selected notes"
     }
+  },
+  "inboxAsk": {
+    "title": "Ask Inbox",
+    "placeholder": "Ask a question about your notes...",
+    "retrieving": "Finding relevant notes...",
+    "processing": "Generating answer…",
+    "suggestedSection": "Quick questions",
+    "send": "Send question",
+    "copied": "Copied",
+    "clearHistoryA11y": "Clear Ask Inbox conversation",
+    "contextUsed": "AI used {{used}} of {{total}} notes",
+    "contextDropped": "{{count}} more notes were skipped to stay within limits",
+    "contextLearnMore": "What goes into each answer",
+    "contextLearnMoreA11y": "Details on what is sent",
+    "contextIdle": "AI can search across {{total}} notes",
+    "contextProcessingCloud": "Cloud AI",
+    "contextProcessingPrivate": "Private AI",
+    "contextSheetTitle": "What goes into each answer",
+    "contextSheetIntro": "For each question, the app finds relevant notes and sends a compact excerpt to the AI.",
+    "contextBulletSearch": "Your question and recent conversation in this chat",
+    "contextBulletNotes": "Top matching notes — titles, summaries, tasks, and transcript excerpts",
+    "contextBulletPrior": "Earlier questions and answers in this session",
+    "contextBulletQuestion": "Your new question",
+    "contextBulletDropped": "{{count}} more notes were skipped to stay within limits",
+    "contextSheetNotesHeading": "Notes used in the last answer",
+    "contextFooterCloud": "In Smart mode, selected note text is sent to Voice Inbox AI servers over HTTPS. Voice recordings are never uploaded.",
+    "contextFooterPrivate": "In Private mode with your AI server (Pro), note excerpts are sent to your server.",
+    "searchChip": "Ask about results",
+    "searchChipA11y": "Ask AI about search: {{query}}",
+    "evidenceOpenNote": "Open note",
+    "evidenceOpenNoteA11y": "Open note {{title}}",
+    "privateDeviceUnavailable": "Use Smart or set up your AI server to ask about Inbox.",
+    "errorTitle": "Couldn't get an answer",
+    "errorRetry": "Try again",
+    "errorPrivateHint": "The request couldn't complete. Check your AI model or mode, then tap Try again.",
+    "errorDefaultHint": "Try asking your question again.",
+    "clearHistoryTitle": "Clear conversation?",
+    "clearHistoryMessage": "All inbox questions and answers will be removed.",
+    "clearHistoryConfirm": "Clear all",
+    "suggestedOpenTasks": "Open tasks",
+    "suggestedOpenTasksPrompt": "What open tasks do I have across my notes?",
+    "suggestedWeekPromises": "This week",
+    "suggestedWeekPromisesPrompt": "What did I promise to do this week?",
+    "suggestedProjectTasks": "Project tasks",
+    "suggestedProjectTasksPrompt": "Which project tasks are still open?",
+    "corpusScopeActiveLabel": "Active",
+    "corpusScopeAllLabel": "All",
+    "corpusScopeActiveNotes": "Active notes only",
+    "corpusScopeAllNotes": "Include archived",
+    "corpusScopeNotesSection": "Notes",
+    "corpusScopeChipA11y": "Note scope: {{scope}}",
+    "corpusScopeFoldersSection": "Folders",
+    "corpusScopeAllFolders": "All notes"
   },
   "inAppEvent": {
     "primaryCta": "Continue",
