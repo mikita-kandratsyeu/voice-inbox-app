@@ -1812,7 +1812,14 @@
       "clearMmkvAlertTitle": "Очистить MMKV?",
       "clearMmkvAlertMessage": "Будет удалено ключей: {{count}} (настройки, кэши, debug-флаги). SQLite и записи останутся. После очистки полностью перезапустите приложение.",
       "clearMmkvSuccess": "MMKV очищен. Полностью перезапустите приложение.",
-      "clearMmkvFailed": "Не удалось очистить MMKV."
+      "clearMmkvFailed": "Не удалось очистить MMKV.",
+      "resetMobileBanner": "Сбросить кэш in-app баннера",
+      "resetMobileBannerSubtitle": "Очищает manifest, ETag и список закрытых баннеров, затем заново загружает с сервера.",
+      "resetMobileBannerInProgress": "Сбрасываем кэш баннера…",
+      "resetMobileBannerAlertTitle": "Сбросить кэш in-app баннера?",
+      "resetMobileBannerAlertMessage": "Будут удалены кэш admin-баннера и список закрытых id на этом устройстве. Приложение заново запросит баннер с сервера.",
+      "resetMobileBannerSuccess": "Кэш баннера сброшен. Откройте Inbox, чтобы увидеть актуальный баннер.",
+      "resetMobileBannerFailed": "Не удалось сбросить кэш in-app баннера."
     },
     "gitlabSync": {
       "sectionTitle": "Синхронизация с GitLab",

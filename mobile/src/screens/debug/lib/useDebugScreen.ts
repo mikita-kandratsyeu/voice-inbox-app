@@ -5,6 +5,10 @@ import { Alert } from 'react-native';
 import { isCrashlyticsDebugEnabled } from '@/shared/config/buildEnv';
 import { devWarn } from '@/shared/lib/appLogger';
 import { clearMmkvStorage, getMmkvKeyCount } from '@/shared/lib/async-storage/mmkv';
+import {
+  refreshMobileBannerManifest,
+  resetMobileBannerLocalCache,
+} from '@/shared/lib/mobile-banner';
 
 import { performHardReset } from '../../settings/lib/hardReset';
 
@@ -12,6 +16,7 @@ export function useDebugScreen() {
   const { t } = useTranslation();
   const [isHardResetting, setIsHardResetting] = useState(false);
   const [isClearingMmkv, setIsClearingMmkv] = useState(false);
+  const [isResettingMobileBanner, setIsResettingMobileBanner] = useState(false);
 
   const handleClearMmkv = useCallback(() => {
     const keyCount = getMmkvKeyCount();
@@ -34,6 +39,35 @@ export function useDebugScreen() {
             } finally {
               setIsClearingMmkv(false);
             }
+          },
+        },
+      ],
+    );
+  }, [t]);
+
+  const handleResetMobileBanner = useCallback(() => {
+    Alert.alert(
+      t('settings.debugScreen.resetMobileBannerAlertTitle'),
+      t('settings.debugScreen.resetMobileBannerAlertMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('settings.debugScreen.resetMobileBanner'),
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              try {
+                setIsResettingMobileBanner(true);
+                resetMobileBannerLocalCache();
+                await refreshMobileBannerManifest();
+                Alert.alert(t('common.done'), t('settings.debugScreen.resetMobileBannerSuccess'));
+              } catch (err) {
+                devWarn('[debug] reset mobile banner cache failed', err);
+                Alert.alert(t('common.error'), t('settings.debugScreen.resetMobileBannerFailed'));
+              } finally {
+                setIsResettingMobileBanner(false);
+              }
+            })();
           },
         },
       ],
@@ -71,8 +105,10 @@ export function useDebugScreen() {
 
   return {
     handleClearMmkv,
+    handleResetMobileBanner,
     handleHardReset,
     isClearingMmkv,
+    isResettingMobileBanner,
     isHardResetting,
     showCrashlyticsButton,
   };

@@ -17,6 +17,7 @@ import {
   AiOrganizeTemplateSheet,
   AutoOrganizeProgressOverlay,
 } from '@/features/manage-folders';
+import { MobileAdminBanner, useMobileAdminBanner } from '@/features/mobile-admin-banner';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { BlockingProgressModal } from '@/shared/ui';
 
@@ -31,6 +32,7 @@ import { InboxSkeleton } from './InboxSkeleton';
 export const InboxScreen = () => {
   const inbox = useInboxScreen();
   const importFile = useImportFileAction();
+  const { banner: adminBanner, dismiss: dismissAdminBanner } = useMobileAdminBanner();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const {
@@ -234,6 +236,9 @@ export const InboxScreen = () => {
           scrollRef={folderChipScrollRef}
         />
       )}
+      {adminBanner && !batchSelect.isSelectMode ? (
+        <MobileAdminBanner banner={adminBanner} color={color} onDismiss={dismissAdminBanner} />
+      ) : null}
       {!isLoaded ? (
         <InboxSkeleton color={color} />
       ) : records.length === 0 ? (

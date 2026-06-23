@@ -39,6 +39,9 @@ export function resolveAdminApiAccess(pathname: string, method: string): AdminAc
   if (pathname.startsWith('/api/admin/mobile-model-manifest')) {
     return { type: 'permission', permission: 'config' };
   }
+  if (pathname.startsWith('/api/admin/mobile-banner')) {
+    return { type: 'permission', permission: 'config' };
+  }
   if (pathname.startsWith('/api/admin/landing-social-proof')) {
     return { type: 'permission', permission: 'config' };
   }

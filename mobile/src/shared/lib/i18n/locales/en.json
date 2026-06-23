@@ -1770,7 +1770,14 @@
       "clearMmkvAlertTitle": "Clear MMKV storage?",
       "clearMmkvAlertMessage": "This removes {{count}} keys from MMKV (settings, caches, debug flags). SQLite and recordings stay. Restart the app after clearing.",
       "clearMmkvSuccess": "MMKV cleared. Fully restart the app.",
-      "clearMmkvFailed": "Could not clear MMKV storage."
+      "clearMmkvFailed": "Could not clear MMKV storage.",
+      "resetMobileBanner": "Reset in-app banner cache",
+      "resetMobileBannerSubtitle": "Clears cached manifest, ETag, and dismissed banner ids, then refetches from the server.",
+      "resetMobileBannerInProgress": "Resetting banner cache…",
+      "resetMobileBannerAlertTitle": "Reset in-app banner cache?",
+      "resetMobileBannerAlertMessage": "This removes the cached admin banner and clears dismissed banner ids on this device. The app will fetch the latest banner from the server.",
+      "resetMobileBannerSuccess": "Banner cache reset. Open Inbox to see the latest banner.",
+      "resetMobileBannerFailed": "Could not reset the in-app banner cache."
     },
     "gitlabSync": {
       "sectionTitle": "GitLab sync",

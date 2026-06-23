@@ -1,5 +1,5 @@
 import { crash, getCrashlytics } from '@react-native-firebase/crashlytics';
-import { AlertTriangle, HardDrive, RotateCcw } from 'lucide-react-native';
+import { AlertTriangle, HardDrive, Megaphone, RotateCcw } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -12,6 +12,8 @@ type Props = {
   color: Colors;
   onClearMmkv: () => void;
   isClearingMmkv?: boolean;
+  onResetMobileBanner: () => void;
+  isResettingMobileBanner?: boolean;
   onHardReset: () => void;
   isHardResetting?: boolean;
   showCrashlyticsButton?: boolean;
@@ -21,6 +23,8 @@ export const SettingsDebugSection = ({
   color,
   onClearMmkv,
   isClearingMmkv = false,
+  onResetMobileBanner,
+  isResettingMobileBanner = false,
   onHardReset,
   isHardResetting = false,
   showCrashlyticsButton = false,
@@ -60,6 +64,23 @@ export const SettingsDebugSection = ({
         onPress={onClearMmkv}
         showChevron={false}
         isFirst={!showCrashlyticsButton}
+        isLast={false}
+        dangerous
+      />
+      <SettingsRow
+        label={
+          isResettingMobileBanner
+            ? t('settings.debugScreen.resetMobileBannerInProgress')
+            : t('settings.debugScreen.resetMobileBanner')
+        }
+        subtitle={t('settings.debugScreen.resetMobileBannerSubtitle')}
+        leftIcon={
+          <Megaphone size={20} color={getSettingsIconColor(color, 'bell')} strokeWidth={1.8} />
+        }
+        loading={isResettingMobileBanner}
+        onPress={onResetMobileBanner}
+        showChevron={false}
+        isFirst={false}
         isLast={false}
         dangerous
       />

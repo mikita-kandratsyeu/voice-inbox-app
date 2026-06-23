@@ -22,8 +22,10 @@ export const DebugScreen = () => {
   const color = useColors();
   const {
     handleClearMmkv,
+    handleResetMobileBanner,
     handleHardReset,
     isClearingMmkv,
+    isResettingMobileBanner,
     isHardResetting,
     showCrashlyticsButton,
   } = useDebugScreen();
@@ -45,6 +47,8 @@ export const DebugScreen = () => {
           color={color}
           onClearMmkv={handleClearMmkv}
           isClearingMmkv={isClearingMmkv}
+          onResetMobileBanner={handleResetMobileBanner}
+          isResettingMobileBanner={isResettingMobileBanner}
           onHardReset={handleHardReset}
           isHardResetting={isHardResetting}
           showCrashlyticsButton={showCrashlyticsButton}

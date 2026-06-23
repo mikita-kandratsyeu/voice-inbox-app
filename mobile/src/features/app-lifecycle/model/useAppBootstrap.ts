@@ -20,6 +20,7 @@ import { initFirebaseAppCheck } from '@/shared/lib/app-check/appCheckToken';
 import { diagInfo, diagWarn } from '@/shared/lib/appLogger';
 import { syncCrashlyticsUserId } from '@/shared/lib/crashlytics';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
+import { prefetchMobileBannerManifest } from '@/shared/lib/mobile-banner';
 import { prefetchModelManifest } from '@/shared/lib/model-manifest';
 import { ensurePushRegistered, type PushNotificationData } from '@/shared/lib/push';
 
@@ -135,6 +136,7 @@ export function useAppBootstrap(
 
           notifyWebApiReady();
           prefetchModelManifest();
+          prefetchMobileBannerManifest();
 
           await revenueCatInit;
 
