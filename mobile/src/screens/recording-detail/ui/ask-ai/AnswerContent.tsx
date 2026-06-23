@@ -5,7 +5,11 @@ import { View } from 'react-native';
 import type { VoiceRecord } from '@/entities/record';
 import type { AiExecutionMode } from '@/entities/settings';
 import { type AskAIHistoryItem } from '@/features/ask-ai';
-import { AnswerTurnBlock, AskAiSuggestedQuestions, buildFollowUpQuestions } from '@/features/ask-chat/ui';
+import {
+  AnswerTurnBlock,
+  AskAiSuggestedQuestions,
+  buildFollowUpQuestions,
+} from '@/features/ask-chat/ui';
 import type { Colors } from '@/shared/config';
 import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
 

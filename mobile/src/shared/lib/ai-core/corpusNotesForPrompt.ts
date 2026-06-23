@@ -161,7 +161,10 @@ export function packCorpusNotesForPrompt(
         lone.summary = lone.summary.slice(0, NOTE_SUMMARY_COMPRESSED_MAX);
       }
       if (lone.transcriptExcerpt && lone.transcriptExcerpt.length > TRANSCRIPT_EXCERPT_MAX) {
-        lone.transcriptExcerpt = smartTranscriptExcerpt(lone.transcriptExcerpt, TRANSCRIPT_EXCERPT_MAX);
+        lone.transcriptExcerpt = smartTranscriptExcerpt(
+          lone.transcriptExcerpt,
+          TRANSCRIPT_EXCERPT_MAX,
+        );
       }
 
       return {
@@ -191,7 +194,9 @@ export function sanitizeCorpusNotesForPrompt(
     if (!recordId || !title) continue;
 
     const summary =
-      typeof note.summary === 'string' ? normalizeText(note.summary).slice(0, NOTE_SUMMARY_MAX) : undefined;
+      typeof note.summary === 'string'
+        ? normalizeText(note.summary).slice(0, NOTE_SUMMARY_MAX)
+        : undefined;
 
     const keyPhrases = note.keyPhrases
       ?.map((phrase) => (typeof phrase === 'string' ? normalizeText(phrase) : ''))
@@ -201,7 +206,9 @@ export function sanitizeCorpusNotesForPrompt(
     const tasks =
       note.tasks
         ?.map((task) =>
-          typeof task?.text === 'string' ? normalizeText(task.text).slice(0, NOTE_TASK_TEXT_MAX) : '',
+          typeof task?.text === 'string'
+            ? normalizeText(task.text).slice(0, NOTE_TASK_TEXT_MAX)
+            : '',
         )
         .filter((text): text is string => Boolean(text))
         .slice(0, NOTE_TASKS_MAX)

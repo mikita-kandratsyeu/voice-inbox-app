@@ -50,7 +50,9 @@ export function parseCorpusNotes(raw: unknown): CorpusNoteForPrompt[] | undefine
     if (!recordId || !title) continue;
 
     const summary =
-      typeof o.summary === 'string' ? normalizeText(o.summary).slice(0, NOTE_SUMMARY_MAX) : undefined;
+      typeof o.summary === 'string'
+        ? normalizeText(o.summary).slice(0, NOTE_SUMMARY_MAX)
+        : undefined;
 
     const keyPhrasesList = Array.isArray(o.keyPhrases)
       ? o.keyPhrases
@@ -92,7 +94,9 @@ export function parseCorpusNotes(raw: unknown): CorpusNoteForPrompt[] | undefine
       ...(keyPhrasesList.length > 0 ? { keyPhrases: keyPhrasesList } : {}),
       ...(tasks && tasks.length > 0 ? { tasks } : {}),
       ...(transcriptExcerpt ? { transcriptExcerpt } : {}),
-      ...(typeof o.createdAt === 'string' && o.createdAt.trim() ? { createdAt: o.createdAt.trim() } : {}),
+      ...(typeof o.createdAt === 'string' && o.createdAt.trim()
+        ? { createdAt: o.createdAt.trim() }
+        : {}),
     });
   }
 

@@ -2,28 +2,27 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import { recordRepository, useRecordStore } from '@/entities/record';
-import { DEFAULT_LOCAL_AI_MODEL_ID, resolveEffectivePrivateAiProvider, useSettingsStore } from '@/entities/settings';
-import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import {
-  prepareInboxAskQueryEmbedding,
-  retrieveNotesForInboxAsk,
-  countInboxAskCorpusRecords,
-  type InboxAskRetrievalScope,
-} from '@/features/inbox-ask-retrieval';
+  DEFAULT_LOCAL_AI_MODEL_ID,
+  resolveEffectivePrivateAiProvider,
+  useSettingsStore,
+} from '@/entities/settings';
 import { enrichInboxAskEvidence } from '@/features/inbox-ask/lib/enrichInboxAskEvidence';
 import {
-  createAiAbortHandle,
-  isAiRequestCancelled,
-} from '@/shared/lib/ai-api/abort';
+  countInboxAskCorpusRecords,
+  type InboxAskRetrievalScope,
+  prepareInboxAskQueryEmbedding,
+  retrieveNotesForInboxAsk,
+} from '@/features/inbox-ask-retrieval';
+import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
+import { createAiAbortHandle, isAiRequestCancelled } from '@/shared/lib/ai-api/abort';
 import { cancelCloudAiJob } from '@/shared/lib/ai-api/cancelCloudAiJob';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
 import type { AskPriorTurn } from '@/shared/lib/ai-core';
 import { AIOrchestrator } from '@/shared/lib/ai-core';
 import { INBOX_ASK_MAX_PAYLOAD_CHARS } from '@/shared/lib/ai-core/corpusNotesForPrompt';
-import type {
-  AskAnswerKind,
-  AskEvidence,
-} from '@/shared/lib/ai-core/types';
+import { mapLocalError } from '@/shared/lib/ai-core/local-provider/localAiMapError';
+import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
 import {
   abortAiGeneration,
   registerAiGeneration,
@@ -31,15 +30,14 @@ import {
 } from '@/shared/lib/aiGenerationAbortRegistry';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import { diagWarn } from '@/shared/lib/appLogger';
-import { mapLocalError } from '@/shared/lib/ai-core/local-provider/localAiMapError';
 
 import {
   buildInboxAskSessionKey,
   clearInboxAskSession,
   inboxAskCorpusFingerprint,
+  type InboxAskSessionPersistInput,
   loadInboxAskSession,
   saveInboxAskSession,
-  type InboxAskSessionPersistInput,
 } from './inboxAskSessionDb';
 
 export type InboxAskHistoryItem = {

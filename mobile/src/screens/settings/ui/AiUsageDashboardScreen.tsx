@@ -383,9 +383,7 @@ export const AiUsageDashboardScreen = () => {
     (entry: AiUsageHistoryEntry) => {
       const key = `settings.aiUsageDashboard.history.operations.${entry.operation}`;
       const label = t(key);
-      return label === key
-        ? t('settings.aiUsageDashboard.history.operations.unknown')
-        : label;
+      return label === key ? t('settings.aiUsageDashboard.history.operations.unknown') : label;
     },
     [t],
   );

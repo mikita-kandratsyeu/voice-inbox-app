@@ -3,10 +3,9 @@ import React from 'react';
 import type { VoiceRecord } from '@/entities/record';
 import type { AiExecutionMode, PrivateAiProvider } from '@/entities/settings';
 import type { AskAIHistoryItem } from '@/features/ask-ai';
+import { ErrorState, SessionRestoringSkeleton } from '@/features/ask-chat/ui';
 import type { Colors } from '@/shared/config';
 import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
-
-import { ErrorState, SessionRestoringSkeleton } from '@/features/ask-chat/ui';
 
 import { AnswerContent } from './AnswerContent';
 import { EmptyState } from './EmptyState';

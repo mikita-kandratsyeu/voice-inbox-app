@@ -1,7 +1,4 @@
-import {
-  enrichInboxAskEvidence,
-  resolveInboxEvidenceRecordId,
-} from '../enrichInboxAskEvidence';
+import { enrichInboxAskEvidence, resolveInboxEvidenceRecordId } from '../enrichInboxAskEvidence';
 
 const notes = [
   { recordId: 'rec-1', title: 'Budget sync' },

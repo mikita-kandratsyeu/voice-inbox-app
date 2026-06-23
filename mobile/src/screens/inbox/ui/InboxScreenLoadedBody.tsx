@@ -95,61 +95,63 @@ function StickySearchBar({
     />
   );
 
-  const showAskChip =
-    onAskAboutSearch != null && query.trim().length >= INBOX_ASK_SEARCH_MIN_QUERY;
+  const showAskChip = onAskAboutSearch != null && query.trim().length >= INBOX_ASK_SEARCH_MIN_QUERY;
 
   return (
     <View className="gap-2">
       <FloatingFrostedInputChrome color={color}>
-      <View
-        style={{ ...getFloatingFrostedInputContainerStyle(), ...getFloatingFrostedInputRowStyle() }}
-      >
-        <View style={getFloatingFrostedInputFieldRowStyle()}>
-          <Search
-            size={FLOATING_FROSTED_INPUT_ICON_SIZE}
-            color={focused || query ? color.accent.primary : color.icon.muted}
-            strokeWidth={FLOATING_FROSTED_INPUT_ICON_STROKE}
-          />
-          <TextInput
-            ref={inputRef}
-            style={[getInputFieldInputStyle(color), { flex: 1 }]}
-            placeholder={t('search.placeholder')}
-            placeholderTextColor={color.text.secondary}
-            value={query}
-            onChangeText={onChangeQuery}
-            onFocus={onFocus}
-            onBlur={onBlur}
-            returnKeyType="search"
-            clearButtonMode="never"
-            autoCapitalize="none"
-          />
-          {query.length > 0 && (
-            <TouchableOpacity
-              onPress={handleClear}
-              hitSlop={iosHitSlopForVisualSize(16, 16)}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.clear')}
-            >
-              <View
-                style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: 8,
-                  backgroundColor: color.icon.muted,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+        <View
+          style={{
+            ...getFloatingFrostedInputContainerStyle(),
+            ...getFloatingFrostedInputRowStyle(),
+          }}
+        >
+          <View style={getFloatingFrostedInputFieldRowStyle()}>
+            <Search
+              size={FLOATING_FROSTED_INPUT_ICON_SIZE}
+              color={focused || query ? color.accent.primary : color.icon.muted}
+              strokeWidth={FLOATING_FROSTED_INPUT_ICON_STROKE}
+            />
+            <TextInput
+              ref={inputRef}
+              style={[getInputFieldInputStyle(color), { flex: 1 }]}
+              placeholder={t('search.placeholder')}
+              placeholderTextColor={color.text.secondary}
+              value={query}
+              onChangeText={onChangeQuery}
+              onFocus={onFocus}
+              onBlur={onBlur}
+              returnKeyType="search"
+              clearButtonMode="never"
+              autoCapitalize="none"
+            />
+            {query.length > 0 && (
+              <TouchableOpacity
+                onPress={handleClear}
+                hitSlop={iosHitSlopForVisualSize(16, 16)}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.clear')}
               >
-                <X size={10} color={color.background.primary} strokeWidth={2.5} />
-              </View>
-            </TouchableOpacity>
-          )}
+                <View
+                  style={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: 8,
+                    backgroundColor: color.icon.muted,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <X size={10} color={color.background.primary} strokeWidth={2.5} />
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
+          <FloatingFrostedChromeDivider color={color} />
+          <FloatingFrostedChromeSection>{closeButton}</FloatingFrostedChromeSection>
         </View>
-        <FloatingFrostedChromeDivider color={color} />
-        <FloatingFrostedChromeSection>{closeButton}</FloatingFrostedChromeSection>
-      </View>
-    </FloatingFrostedInputChrome>
+      </FloatingFrostedInputChrome>
       {showAskChip ? (
         <TouchableOpacity
           onPress={() => onAskAboutSearch?.(query.trim())}

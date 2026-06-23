@@ -33,6 +33,7 @@ import {
   useSettingsStore,
 } from '@/entities/settings';
 import { resumeCloudSummarizeForRecord, useAiProcessing } from '@/features/ai-processing';
+import { AskAiModelChipMenu } from '@/features/ask-chat/ui';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { warmNoteDocumentMarkdown } from '@/features/note-document';
 import { LinkNotePickerSheet } from '@/features/note-links';
@@ -71,7 +72,6 @@ import { AudioPlayer, type AudioPlayerRef, usePlaybackPosition } from '@/widgets
 
 import type { Tab } from '../config';
 import { renameSpeakerGroup } from '../lib/meetingSpeakerLabels';
-import { AskAiModelChipMenu } from '@/features/ask-chat/ui';
 import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { MeetingDialogueTab } from './MeetingDialogueTab';
 import { RecordingDetailCard } from './RecordingDetailCard';

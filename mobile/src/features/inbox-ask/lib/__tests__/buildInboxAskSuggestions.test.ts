@@ -1,8 +1,10 @@
+import type { TFunction } from 'i18next';
+
 import { buildInboxAskSuggestions } from '../buildInboxAskSuggestions';
 
 describe('buildInboxAskSuggestions', () => {
   it('maps i18n keys to label/prompt pairs', () => {
-    const t = (key: string) => key;
+    const t = ((key: string) => key) as TFunction;
 
     expect(buildInboxAskSuggestions(t)).toEqual([
       {

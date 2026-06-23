@@ -98,7 +98,10 @@ export const createInboxAsk = async (
   return { created: true, syncToken };
 };
 
-export const getInboxAskById = async (id: string, syncToken?: string): Promise<AskMessage | null> => {
+export const getInboxAskById = async (
+  id: string,
+  syncToken?: string,
+): Promise<AskMessage | null> => {
   const raw = await getMessage(id, syncToken);
   if (!raw) return null;
 

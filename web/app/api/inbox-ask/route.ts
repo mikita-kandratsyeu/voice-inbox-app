@@ -16,7 +16,10 @@ import {
   INBOX_ASK_MAX_PAYLOAD_CHARS,
   parseCorpusNotes,
 } from '@/lib/corpus-notes-prompt';
-import { estimateInboxAskRoutingChars, parseInboxAskPriorTurns } from '@/lib/inbox-ask-user-message';
+import {
+  estimateInboxAskRoutingChars,
+  parseInboxAskPriorTurns,
+} from '@/lib/inbox-ask-user-message';
 import { aiModelClientResponseFields } from '@/lib/ai-model-display';
 import { withDeduplication, getInboxAskDeduplicationKey } from '@/lib/request-deduplication';
 import { resolveAutoAiModel, type AiModelMode } from '@/lib/ai-model-router';
@@ -87,10 +90,14 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const corpusNotes = parseCorpusNotes(body.corpusNotes);
   if (!corpusNotes?.length) {
-    return apiError('corpusNotes must contain 1-8 items with usable context', HttpStatus.BAD_REQUEST, {
-      pathname,
-      code: ApiErrorCode.ValidationError,
-    });
+    return apiError(
+      'corpusNotes must contain 1-8 items with usable context',
+      HttpStatus.BAD_REQUEST,
+      {
+        pathname,
+        code: ApiErrorCode.ValidationError,
+      },
+    );
   }
   if (corpusNotes.length > INBOX_ASK_MAX_NOTES) {
     return apiError(`corpusNotes exceeds max ${INBOX_ASK_MAX_NOTES}`, HttpStatus.BAD_REQUEST, {
@@ -101,10 +108,14 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const payloadChars = estimateCorpusNotesPayloadChars(corpusNotes);
   if (payloadChars > INBOX_ASK_MAX_PAYLOAD_CHARS) {
-    return apiError(`corpusNotes payload exceeds ${INBOX_ASK_MAX_PAYLOAD_CHARS} chars`, HttpStatus.BAD_REQUEST, {
-      pathname,
-      code: ApiErrorCode.ValidationError,
-    });
+    return apiError(
+      `corpusNotes payload exceeds ${INBOX_ASK_MAX_PAYLOAD_CHARS} chars`,
+      HttpStatus.BAD_REQUEST,
+      {
+        pathname,
+        code: ApiErrorCode.ValidationError,
+      },
+    );
   }
 
   const messageTtlSeconds = clampMessageTtlSeconds(rawMessageTtl);

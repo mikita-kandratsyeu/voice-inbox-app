@@ -61,6 +61,8 @@ describe('estimateInboxAskRoutingChars', () => {
     const corpus = [{ recordId: 'rec-1', title: 'Note', summary: 'Summary text' }];
     const chars = estimateInboxAskRoutingChars(corpus, 'What tasks are open?');
 
-    expect(chars).toBeGreaterThan(buildInboxAskUserMessageContent(corpus, 'What tasks are open?').length);
+    expect(chars).toBeGreaterThan(
+      buildInboxAskUserMessageContent(corpus, 'What tasks are open?').length,
+    );
   });
 });

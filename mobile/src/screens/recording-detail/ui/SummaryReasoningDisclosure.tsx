@@ -10,6 +10,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { AskAiAnswerMarkdown } from '@/features/ask-chat/ui';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import {
@@ -18,7 +19,6 @@ import {
   type SummaryTokenUsage,
 } from '@/shared/lib/summaryMetaSubtitle';
 
-import { AskAiAnswerMarkdown } from '@/features/ask-chat/ui';
 import { SummaryMetaLinesText } from './SummaryMetaLinesText';
 
 const REASONING_SCROLL_MAX_HEIGHT = 280;

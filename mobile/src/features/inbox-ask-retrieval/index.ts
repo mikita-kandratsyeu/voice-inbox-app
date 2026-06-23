@@ -1,9 +1,9 @@
 export {
-  INBOX_ASK_RETRIEVAL_TOP_K,
   countInboxAskCorpusRecords,
   filterInboxAskCorpusRecords,
-  prepareInboxAskQueryEmbedding,
-  retrieveNotesForInboxAsk,
+  INBOX_ASK_RETRIEVAL_TOP_K,
   type InboxAskRetrievalResult,
   type InboxAskRetrievalScope,
+  prepareInboxAskQueryEmbedding,
+  retrieveNotesForInboxAsk,
 } from './lib/retrieveNotesForInboxAsk';

@@ -14,8 +14,11 @@ jest.mock('@/shared/lib/embeddings', () => {
     computeCentroid: (embeddings: number[][]) => {
       if (embeddings.length === 0) return [];
       const dim = embeddings[0]?.length ?? 0;
-      return Array.from({ length: dim }, (_, index) =>
-        embeddings.reduce((sum, embedding) => sum + (embedding[index] ?? 0), 0) / embeddings.length,
+      return Array.from(
+        { length: dim },
+        (_, index) =>
+          embeddings.reduce((sum, embedding) => sum + (embedding[index] ?? 0), 0) /
+          embeddings.length,
       );
     },
     generateEmbedding: jest.fn(async () => []),
@@ -33,11 +36,7 @@ import {
   retrieveNotesForInboxAsk,
 } from '../retrieveNotesForInboxAsk';
 
-const makeRecord = (
-  id: string,
-  title: string,
-  patch: Partial<VoiceRecord> = {},
-): VoiceRecord =>
+const makeRecord = (id: string, title: string, patch: Partial<VoiceRecord> = {}): VoiceRecord =>
   ({
     id,
     title,

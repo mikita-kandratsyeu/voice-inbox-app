@@ -28,10 +28,10 @@ export type { FolderInsert, FolderRow, RecordInsert, RecordRow } from './db/sche
 export {
   cloudAiPendingTable,
   foldersTable,
+  inboxAskAiTable,
   notesGraphLayoutVersionTable,
   privateAiTaskQueueTable,
   recordAskAiTable,
-  inboxAskAiTable,
   recordPublishedShareTable,
   recordsTable,
 } from './db/schema';

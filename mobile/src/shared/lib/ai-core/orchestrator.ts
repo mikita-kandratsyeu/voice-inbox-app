@@ -179,8 +179,14 @@ export const AIOrchestrator = {
     return runCloudAsk(request, ctx);
   },
 
-  async runInboxAsk(request: InboxAskRequest, ctx: AiExecutionContext): Promise<InboxAskTaskResult> {
-    if (ctx.aiExecutionMode === 'private_experimental' && ctx.privateAiProvider !== 'custom_openai') {
+  async runInboxAsk(
+    request: InboxAskRequest,
+    ctx: AiExecutionContext,
+  ): Promise<InboxAskTaskResult> {
+    if (
+      ctx.aiExecutionMode === 'private_experimental' &&
+      ctx.privateAiProvider !== 'custom_openai'
+    ) {
       return {
         ok: false,
         provider: 'local',

@@ -4,9 +4,8 @@ import { View } from 'react-native';
 import type { VoiceRecord } from '@/entities/record';
 import type { AiExecutionMode } from '@/entities/settings';
 import type { AskAIHistoryItem } from '@/features/ask-ai';
-import type { Colors } from '@/shared/config';
-
 import { AnswerTurnBlock, AskTurnQuestion, ErrorState } from '@/features/ask-chat/ui';
+import type { Colors } from '@/shared/config';
 
 import { AskAiContextDisclosure } from './AskAiContextDisclosure';
 

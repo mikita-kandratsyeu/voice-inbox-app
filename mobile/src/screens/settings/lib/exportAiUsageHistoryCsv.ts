@@ -46,14 +46,14 @@ function buildAiUsageHistoryCsv(
       operationLabel === operationKey
         ? t('settings.aiUsageDashboard.history.operations.unknown')
         : operationLabel,
-    String(entry.amount),
-    resolveAiModelRoutingDisplayLabel(t, {
-      modelMode: entry.modelMode,
-      model: entry.model,
-      modelLabel: entry.modelLabel,
-    }),
-    entry.description?.trim() || '',
-    entry.jobId?.trim() || '',
+      String(entry.amount),
+      resolveAiModelRoutingDisplayLabel(t, {
+        modelMode: entry.modelMode,
+        model: entry.model,
+        modelLabel: entry.modelLabel,
+      }),
+      entry.description?.trim() || '',
+      entry.jobId?.trim() || '',
     ];
   });
 

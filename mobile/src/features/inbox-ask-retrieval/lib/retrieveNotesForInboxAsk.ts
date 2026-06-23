@@ -2,8 +2,8 @@ import dayjs from 'dayjs';
 
 import type { RecordListItem, VoiceRecord } from '@/entities/record';
 import {
-  packCorpusNotesForPrompt,
   type CorpusNoteCandidate,
+  packCorpusNotesForPrompt,
   type PackCorpusNotesResult,
 } from '@/shared/lib/ai-core/corpusNotesForPrompt';
 import type { CorpusNoteForPrompt } from '@/shared/lib/ai-core/types';
@@ -108,7 +108,11 @@ function matchesQueryWords(text: string, words: string[]): boolean {
   );
 }
 
-function getLexicalScore(record: VoiceRecord | RecordListItem, query: string, searchText: string): number {
+function getLexicalScore(
+  record: VoiceRecord | RecordListItem,
+  query: string,
+  searchText: string,
+): number {
   const q = query.toLowerCase();
   let score = 0;
 
@@ -169,7 +173,10 @@ export function countInboxAskCorpusRecords(
   return filterInboxAskCorpusRecords(records, scope).length;
 }
 
-function toCorpusCandidate(record: VoiceRecord | RecordListItem, score: number): CorpusNoteCandidate {
+function toCorpusCandidate(
+  record: VoiceRecord | RecordListItem,
+  score: number,
+): CorpusNoteCandidate {
   return {
     recordId: record.id,
     score,
@@ -186,11 +193,17 @@ function rankLexicalOnly(
   records: Array<VoiceRecord | RecordListItem>,
   query: string,
 ): ScoredRecord[] {
-  const searchTextById = new Map(records.map((record) => [record.id, buildRetrievalSearchText(record)]));
+  const searchTextById = new Map(
+    records.map((record) => [record.id, buildRetrievalSearchText(record)]),
+  );
 
   return records
     .filter((record) =>
-      matchesLexicalQuery(record, query, searchTextById.get(record.id) ?? buildRetrievalSearchText(record)),
+      matchesLexicalQuery(
+        record,
+        query,
+        searchTextById.get(record.id) ?? buildRetrievalSearchText(record),
+      ),
     )
     .map((record) => ({
       record,
@@ -225,7 +238,8 @@ function rankHybrid(
       const semanticScore = embedding
         ? centeredCosineSimilarity(queryEmbedding, embedding, embeddingCentroid)
         : 0;
-      const hybridScore = SEMANTIC_SCORE_WEIGHT * semanticScore + LEXICAL_SCORE_WEIGHT * lexicalNorm;
+      const hybridScore =
+        SEMANTIC_SCORE_WEIGHT * semanticScore + LEXICAL_SCORE_WEIGHT * lexicalNorm;
       return { record, score: hybridScore, lexicalRaw, semanticScore };
     })
     .filter(({ score, lexicalRaw, semanticScore }) => {

@@ -1,8 +1,7 @@
 import {
-  INBOX_ASK_MAX_NOTES,
-  INBOX_ASK_MAX_PAYLOAD_CHARS,
-  packCorpusNotesForPrompt,
   type CorpusNoteCandidate,
+  INBOX_ASK_MAX_NOTES,
+  packCorpusNotesForPrompt,
 } from '../corpusNotesForPrompt';
 
 const makeCandidate = (

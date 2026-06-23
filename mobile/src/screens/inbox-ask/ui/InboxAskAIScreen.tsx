@@ -13,11 +13,6 @@ import type { RootStackParamList } from '@/app/navigation/types';
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import { areFoldersEnabledInAiMode, useSettingsStore } from '@/entities/settings';
-import { buildInboxAskSuggestions, useInboxAsk, useInboxAskCorpusScope } from '@/features/inbox-ask';
-import { useProEntitlement } from '@/features/pro-license';
-import { InboxAskCorpusScopeChipMenu } from '@/features/inbox-ask/ui/InboxAskCorpusScopeChipMenu';
-import { resolveInboxEvidenceRecordId } from '@/features/inbox-ask/lib/enrichInboxAskEvidence';
-import { InboxAskContextDisclosure } from '@/features/inbox-ask/ui/InboxAskContextDisclosure';
 import {
   AnswerTurnBlock,
   AskAIComposer,
@@ -25,11 +20,29 @@ import {
   ErrorState,
   SessionRestoringSkeleton,
 } from '@/features/ask-chat/ui';
+import {
+  buildInboxAskSuggestions,
+  useInboxAsk,
+  useInboxAskCorpusScope,
+} from '@/features/inbox-ask';
+import { resolveInboxEvidenceRecordId } from '@/features/inbox-ask/lib/enrichInboxAskEvidence';
+import { InboxAskContextDisclosure } from '@/features/inbox-ask/ui/InboxAskContextDisclosure';
+import { InboxAskCorpusScopeChipMenu } from '@/features/inbox-ask/ui/InboxAskCorpusScopeChipMenu';
+import { useProEntitlement } from '@/features/pro-license';
 import { useAskAiShakeBridge } from '@/features/shake-to-record';
 import { useColors } from '@/shared/config';
-import { hapticSuccess, IS_ANDROID, useNetworkStatus, useTabletContentMaxWidth } from '@/shared/lib';
+import {
+  hapticSuccess,
+  IS_ANDROID,
+  useNetworkStatus,
+  useTabletContentMaxWidth,
+} from '@/shared/lib';
 import type { AskEvidence } from '@/shared/lib/ai-core/types';
-import { estimateAskAiComposerBottomClearance, FrostedHeaderIconButton, ScreenHeader } from '@/shared/ui';
+import {
+  estimateAskAiComposerBottomClearance,
+  FrostedHeaderIconButton,
+  ScreenHeader,
+} from '@/shared/ui';
 
 import { ErrorWithHistoryState } from '../../recording-detail/ui/ask-ai/ErrorWithHistoryState';
 import { LoadingState } from '../../recording-detail/ui/ask-ai/LoadingState';
@@ -127,9 +140,7 @@ export function InboxAskAIScreen() {
   useEffect(() => {
     if (inboxAsk.isRestoringSession) return;
     const shouldScroll =
-      inboxAsk.isLoading ||
-      Boolean(inboxAsk.answer?.trim()) ||
-      inboxAsk.history.length > 0;
+      inboxAsk.isLoading || Boolean(inboxAsk.answer?.trim()) || inboxAsk.history.length > 0;
     if (!shouldScroll) return;
 
     let raf2 = 0;
@@ -177,10 +188,13 @@ export function InboxAskAIScreen() {
   const shouldShowInputRow = !inboxAsk.isRestoringSession && !inboxAsk.isLoading;
   const canSend = questionInput.trim().length > 0 && !inboxAsk.isLoading && !disableByNetwork;
 
-  const handleCopy = useCallback((text: string) => {
-    Clipboard.setString(text);
-    if (IS_ANDROID) ToastAndroid.show(t('inboxAsk.copied'), ToastAndroid.SHORT);
-  }, [t]);
+  const handleCopy = useCallback(
+    (text: string) => {
+      Clipboard.setString(text);
+      if (IS_ANDROID) ToastAndroid.show(t('inboxAsk.copied'), ToastAndroid.SHORT);
+    },
+    [t],
+  );
 
   const handleShare = useCallback(async (text: string, title: string) => {
     await Share.share({ message: text, title });
@@ -276,9 +290,7 @@ export function InboxAskAIScreen() {
           onShare={handleShare}
           onCancel={inboxAsk.cancelAsk}
           statusTitle={
-            inboxAsk.phase === 'retrieving'
-              ? t('inboxAsk.retrieving')
-              : t('inboxAsk.processing')
+            inboxAsk.phase === 'retrieving' ? t('inboxAsk.retrieving') : t('inboxAsk.processing')
           }
         />
       );

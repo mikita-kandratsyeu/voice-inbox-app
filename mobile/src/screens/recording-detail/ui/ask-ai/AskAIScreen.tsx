@@ -14,6 +14,7 @@ import type { RootStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { type AskAIHistoryItem, useAskAI } from '@/features/ask-ai';
+import { AskAIComposer } from '@/features/ask-chat/ui';
 import { useAskAiShakeBridge } from '@/features/shake-to-record';
 import { useColors } from '@/shared/config';
 import {
@@ -28,7 +29,6 @@ import {
   ScreenHeader,
 } from '@/shared/ui';
 
-import { AskAIComposer } from '@/features/ask-chat/ui';
 import { AskMainContent } from './AskMainContent';
 
 export const AskAIScreen = () => {

@@ -1,8 +1,5 @@
 import { INBOX_ASK_SYSTEM_PROMPT } from '@/lib/prompts';
-import {
-  buildCorpusNotesPromptBlock,
-  type CorpusNoteForPrompt,
-} from '@/lib/corpus-notes-prompt';
+import { buildCorpusNotesPromptBlock, type CorpusNoteForPrompt } from '@/lib/corpus-notes-prompt';
 import { buildAskInterpretationUserHintBlock } from '@/lib/ask-interpretation-hint';
 
 const INBOX_ASK_PRIOR_TURNS_MAX = 6;
@@ -39,7 +36,9 @@ export function buildInboxAskUserMessageContent(
 ): string {
   const parts: string[] = [buildCorpusNotesPromptBlock(corpusNotes)];
 
-  const normalizedPrior = priorTurns?.length ? priorTurns.slice(-INBOX_ASK_PRIOR_TURNS_MAX) : undefined;
+  const normalizedPrior = priorTurns?.length
+    ? priorTurns.slice(-INBOX_ASK_PRIOR_TURNS_MAX)
+    : undefined;
   if (normalizedPrior?.length) {
     parts.push('\n\nPrior questions and answers in this inbox chat:\n\n');
     parts.push(formatPriorTurnsForInboxAskPrompt(normalizedPrior));

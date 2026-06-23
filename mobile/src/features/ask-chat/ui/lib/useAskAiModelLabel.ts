@@ -1,7 +1,7 @@
 import { isPrivateCustomServerMode, LOCAL_AI_MODELS, useSettingsStore } from '@/entities/settings';
 import { useProEntitlement } from '@/features/pro-license';
-import { i18n } from '@/shared/lib/i18n';
 import { useAiModelName } from '@/shared/lib';
+import { i18n } from '@/shared/lib/i18n';
 
 export function useAskAiModelLabel(): string {
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
