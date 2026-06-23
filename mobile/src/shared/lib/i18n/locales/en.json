@@ -2065,7 +2065,7 @@
     "deleteCategoryLibrarySubtitle": "Recordings, transcripts, summaries, tasks, folders, and trash.",
     "deleteCategoryWhisper": "Transcription models",
     "deleteCategoryWhisperSubtitle": "Saved on your phone for offline speech-to-text.",
-    "deleteCategoryLocalLlm": "On-device AI models",
+    "deleteCategoryLocalLlm": "Private AI models",
     "deleteCategoryLocalLlmSubtitle": "Heavy files used when you run AI privately, without the cloud.",
     "deleteCategoryCache": "Temporary files",
     "deleteCategoryCacheSubtitle": "Safe to clear — the app will recreate what it needs.",
@@ -2083,7 +2083,7 @@
     "used": "Used",
     "whisperModels": "Whisper models",
     "transcriptionModels": "Transcription (Whisper)",
-    "localGenerationModels": "On-device AI (LLM)",
+    "localGenerationModels": "Private AI (LLM)",
     "cacheLabel": "Cache",
     "audioFilesValue": "{{count}} files, {{size}} MB",
     "mb": "MB",
@@ -2791,7 +2791,7 @@
       "transcribeFirst": "Transcribe first, then generate only for notes that need a summary or tasks.",
       "folders": "Long-press notes in the inbox to move them into folders or archive in bulk.",
       "meetingDialogue": "With Smart and Pro, after the summary you get the Participants tab — labeled replies.",
-      "privateKeepOpen": "On-device AI runs while the app is open.",
+      "privateKeepOpen": "Private AI runs while the app is open.",
       "privateBattery": "Long notes on device may take longer and use more battery than short ones.",
       "askContext": "AI uses the transcript, summary, tasks, linked notes, and earlier questions in this chat.",
       "askFollowUp": "Ask follow-up questions — AI keeps the conversation context.",
@@ -2804,7 +2804,7 @@
     "processing": "AI is working on this note…",
     "secondsLeft": "~{{ count }} sec left",
     "minutesLeft": "~{{ count }} min left",
-    "batteryHint": "On-device AI runs only while the app is open. Battery usage may increase."
+    "batteryHint": "Private AI runs only while the app is open. Battery usage may increase."
   },
   "privateRemoteAi": {
     "requesting": "Connecting to AI server…",

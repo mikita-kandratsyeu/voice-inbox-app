@@ -78,6 +78,7 @@ export function InboxAskAIScreen() {
   );
 
   const inboxAsk = useInboxAsk(scope);
+  const { syncInboxAskSessionFromDb } = inboxAsk;
   const { isConnected } = useNetworkStatus();
   const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
 
@@ -118,12 +119,12 @@ export function InboxAskAIScreen() {
   useFocusEffect(
     useCallback(() => {
       setIsScreenFocused(true);
-      void inboxAsk.syncInboxAskSessionFromDb();
+      void syncInboxAskSessionFromDb();
       return () => {
         setIsScreenFocused(false);
         KeyboardController.dismiss({ animated: false });
       };
-    }, [inboxAsk]),
+    }, [syncInboxAskSessionFromDb]),
   );
 
   const initialQuestionHandledRef = useRef(false);
