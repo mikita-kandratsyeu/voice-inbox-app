@@ -67,9 +67,18 @@ import {
 import {
   buildWebParityAiProcessingPrompt,
   buildWebParityAskUserMessageContent,
+  buildWebParityInboxAskUserMessageContent,
   WEB_PARITY_ASK_SYSTEM_PROMPT,
+  WEB_PARITY_INBOX_ASK_SYSTEM_PROMPT,
 } from './private-remote/webPromptParity';
-import type { AskRequest, AskTaskResult, SummaryTaskRequest, SummaryTaskResult } from './types';
+import type {
+  AskRequest,
+  AskTaskResult,
+  InboxAskRequest,
+  InboxAskTaskResult,
+  SummaryTaskRequest,
+  SummaryTaskResult,
+} from './types';
 import type { AiExecutionContext } from './types';
 
 type OpenAiChatResponse = {
@@ -1155,6 +1164,72 @@ export async function runPrivateRemoteAsk(
         ctx,
         [
           { role: 'system', content: askSystemPrompt },
+          { role: 'user', content: user },
+        ],
+        askMaxTokens,
+        LOCAL_GEN_ASK.temperature,
+        request.abortSignal,
+        { jsonObject: true, schemaKind: 'ask' },
+      );
+
+    let remote = await runOnce(userContent);
+    let result = parseLocalAskResponse(remote.content);
+    if (!result) {
+      remote = await runOnce(`${userContent}\n\n${STRICT_JSON_TAIL}`);
+      result = parseLocalAskResponse(remote.content);
+    }
+    if (!result) {
+      throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
+    }
+    return {
+      ok: true,
+      provider: 'private_remote',
+      mode: ctx.aiExecutionMode,
+      result: { ...result, ...(remote.model ? { model: remote.model } : {}) },
+    };
+  } catch (err) {
+    if (request.abortSignal?.aborted) {
+      return {
+        ok: false,
+        provider: 'private_remote',
+        mode: ctx.aiExecutionMode,
+        error: AI_REQUEST_CANCELLED,
+      };
+    }
+    return {
+      ok: false,
+      provider: 'private_remote',
+      mode: ctx.aiExecutionMode,
+      error: mapPrivateRemoteError(err),
+    };
+  }
+}
+
+export async function runPrivateRemoteInboxAsk(
+  request: InboxAskRequest,
+  ctx: AiExecutionContext,
+): Promise<InboxAskTaskResult> {
+  try {
+    if (request.abortSignal?.aborted) {
+      return {
+        ok: false,
+        provider: 'private_remote',
+        mode: ctx.aiExecutionMode,
+        error: AI_REQUEST_CANCELLED,
+      };
+    }
+
+    const userContent = buildWebParityInboxAskUserMessageContent(
+      request.corpusNotes,
+      request.question,
+      request.priorTurns,
+    );
+    const askMaxTokens = resolvePrivateRemoteAskMaxTokens(ctx.privateRemoteOutputBudget);
+    const runOnce = (user: string) =>
+      callRemoteCompletion(
+        ctx,
+        [
+          { role: 'system', content: WEB_PARITY_INBOX_ASK_SYSTEM_PROMPT },
           { role: 'user', content: user },
         ],
         askMaxTokens,

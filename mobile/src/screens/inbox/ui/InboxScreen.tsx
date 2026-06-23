@@ -1,7 +1,8 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { View } from 'react-native';
 
 import { openPlanPaywall } from '@/app/navigation/openPlanPaywall';
+import { useSettingsStore } from '@/entities/settings';
 import {
   FolderChipBar,
   FolderFormModal,
@@ -9,6 +10,7 @@ import {
   FolderReorderSheet,
 } from '@/entities/folder';
 import { BatchActionBar, BatchExportSheet } from '@/features/batch-select';
+import { isInboxAskAvailable } from '@/features/inbox-ask';
 import { useImportFileAction } from '@/features/import-audio-file';
 import {
   AiOrganizeActionSheet,
@@ -29,6 +31,8 @@ import { InboxSkeleton } from './InboxSkeleton';
 export const InboxScreen = () => {
   const inbox = useInboxScreen();
   const importFile = useImportFileAction();
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const {
     t,
     color,
@@ -149,6 +153,11 @@ export const InboxScreen = () => {
     isProActive,
   } = inbox;
 
+  const inboxAskEnabled = useMemo(
+    () => isInboxAskAvailable(aiExecutionMode, privateAiProvider, isProActive),
+    [aiExecutionMode, isProActive, privateAiProvider],
+  );
+
   const handleEnterBatchModeNoHaptic = useCallback(
     () => enterBatchMode(undefined, { haptic: false }),
     [enterBatchMode],
@@ -159,6 +168,16 @@ export const InboxScreen = () => {
   const handleSearchClear = useCallback(
     () => setSearchBarExplicitOpen(false),
     [setSearchBarExplicitOpen],
+  );
+
+  const handleAskAboutSearch = useCallback(
+    (searchQuery: string) => {
+      navigation.navigate('InboxAskAI', {
+        question: searchQuery,
+        folderId: effectiveActiveFolderId ?? undefined,
+      });
+    },
+    [effectiveActiveFolderId, navigation],
   );
 
   return (
@@ -192,6 +211,11 @@ export const InboxScreen = () => {
             onEnterBatchMode={handleEnterBatchModeNoHaptic}
             onOpenAllTasks={() => navigation.navigate('AllTasks')}
             onOpenNotesGraph={handleOpenNotesGraph}
+            onOpenInboxAsk={() =>
+              navigation.navigate('InboxAskAI', {
+                folderId: effectiveActiveFolderId ?? undefined,
+              })
+            }
             onImportFile={handleImportFile}
             useTabletShell={useTabletShell}
             t={t}
@@ -263,6 +287,7 @@ export const InboxScreen = () => {
           getItemType={getItemType}
           onInboxListScroll={onInboxListScroll}
           showInboxScrollResetSkeleton={showInboxScrollResetSkeleton}
+          onAskAboutSearch={inboxAskEnabled ? handleAskAboutSearch : undefined}
         />
       )}
       {batchSelect.isSelectMode && (

@@ -144,6 +144,12 @@ CREATE INDEX IF NOT EXISTS \`idx_record_published_share_expires\` ON \`record_pu
 
 const migration0025 = `ALTER TABLE \`records\` ADD \`summaryAiModelMode\` text;`;
 
+const migration0026 = `CREATE TABLE IF NOT EXISTS \`inbox_ask_ai\` (
+	\`sessionKey\` text PRIMARY KEY NOT NULL,
+	\`payload\` text NOT NULL,
+	\`updatedAt\` text NOT NULL
+);`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -180,5 +186,6 @@ export const migrationsConfig = {
     m0023: migration0023,
     m0024: migration0024,
     m0025: migration0025,
+    m0026: migration0026,
   } as Record<string, string>,
 };

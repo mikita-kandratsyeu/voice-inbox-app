@@ -71,7 +71,7 @@ import { AudioPlayer, type AudioPlayerRef, usePlaybackPosition } from '@/widgets
 
 import type { Tab } from '../config';
 import { renameSpeakerGroup } from '../lib/meetingSpeakerLabels';
-import { AskAiModelChipMenu } from './ask-ai/AskAiModelChipMenu';
+import { AskAiModelChipMenu } from '@/features/ask-chat/ui';
 import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { MeetingDialogueTab } from './MeetingDialogueTab';
 import { RecordingDetailCard } from './RecordingDetailCard';

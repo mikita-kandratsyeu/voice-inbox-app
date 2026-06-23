@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Colors } from '@/shared/config';
+import { resolveAiUserFacingError } from '@/shared/lib/i18n/resolveAiUserFacingError';
 import { RetryErrorState } from '@/shared/ui';
 
 type ErrorStateProps = {
@@ -9,6 +10,9 @@ type ErrorStateProps = {
   onRetry: () => void;
   errorMessage?: string | null;
   showPrivateModeCta?: boolean;
+  titleKey?: string;
+  retryLabelKey?: string;
+  fallbackHintKey?: string;
 };
 
 export const ErrorState = ({
@@ -16,22 +20,25 @@ export const ErrorState = ({
   onRetry,
   errorMessage,
   showPrivateModeCta = false,
+  titleKey = 'recordingDetail.askError',
+  retryLabelKey = 'recordingDetail.summaryRetry',
+  fallbackHintKey,
 }: ErrorStateProps) => {
   const { t } = useTranslation();
-  const trimmedError = errorMessage?.trim();
+  const resolvedError = resolveAiUserFacingError(errorMessage);
 
   return (
     <RetryErrorState
       color={color}
       onRetry={onRetry}
-      title={t('recordingDetail.askError')}
+      title={t(titleKey)}
       message={
-        trimmedError ||
+        resolvedError ||
         (showPrivateModeCta
-          ? t('recordingDetail.privateModeErrorHint')
-          : t('recordingDetail.askErrorContinueHint'))
+          ? t(fallbackHintKey ?? 'recordingDetail.privateModeErrorHint')
+          : t(fallbackHintKey ?? 'recordingDetail.askErrorContinueHint'))
       }
-      retryLabel={t('recordingDetail.summaryRetry')}
+      retryLabel={t(retryLabelKey)}
     />
   );
 };

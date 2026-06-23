@@ -66,6 +66,12 @@ export const recordAskAiTable = sqliteTable('record_ask_ai', {
   updatedAt: text('updatedAt').notNull(),
 });
 
+export const inboxAskAiTable = sqliteTable('inbox_ask_ai', {
+  sessionKey: text('sessionKey').primaryKey(),
+  payload: text('payload').notNull(),
+  updatedAt: text('updatedAt').notNull(),
+});
+
 /** Cloud summarize job to resume after app kill (one row per record). */
 export const cloudAiPendingTable = sqliteTable(
   'cloud_ai_pending',
@@ -139,6 +145,7 @@ export type RecordInsert = typeof recordsTable.$inferInsert;
 export type FolderRow = typeof foldersTable.$inferSelect;
 export type FolderInsert = typeof foldersTable.$inferInsert;
 export type RecordAskAiRow = typeof recordAskAiTable.$inferSelect;
+export type InboxAskAiRow = typeof inboxAskAiTable.$inferSelect;
 export type CloudAiPendingRow = typeof cloudAiPendingTable.$inferSelect;
 export type PrivateAiTaskQueueRow = typeof privateAiTaskQueueTable.$inferSelect;
 export type RecordPublishedShareRow = typeof recordPublishedShareTable.$inferSelect;

@@ -183,6 +183,13 @@
       "when": 1781700000000,
       "tag": "0025_summary_ai_model_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1781800000000,
+      "tag": "0026_inbox_ask_ai",
+      "breakpoints": true
     }
   ]
 }

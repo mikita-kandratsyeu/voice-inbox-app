@@ -10,13 +10,12 @@ import {
   type PrivateAiProvider,
 } from '@/entities/settings';
 import type { AskAIHistoryItem } from '@/features/ask-ai';
+import { AnswerTurnBlock, AskTurnQuestion } from '@/features/ask-chat/ui';
 import type { Colors } from '@/shared/config';
 import { ASK_AI_GENERATION_TIP_KEYS, ASK_AI_PRIVATE_TIP_KEYS } from '@/shared/lib/aiGenerationTips';
 
 import { DetailTabProcessingView } from '../DetailTabProcessingView';
-import { AnswerTurnBlock } from './AnswerContent';
 import { AskAiContextDisclosure } from './AskAiContextDisclosure';
-import { AskTurnQuestion } from './AskTurnQuestion';
 
 type LoadingStateProps = {
   color: Colors;
@@ -31,6 +30,7 @@ type LoadingStateProps = {
   onCopy: (text: string) => void;
   onShare: (text: string, title: string) => void;
   onCancel?: () => void;
+  statusTitle?: string;
 };
 
 export const LoadingState = ({
@@ -46,6 +46,7 @@ export const LoadingState = ({
   onCopy,
   onShare,
   onCancel,
+  statusTitle,
 }: LoadingStateProps) => {
   const { t } = useTranslation();
   const isPrivate = aiExecutionMode === 'private_experimental';
@@ -87,7 +88,7 @@ export const LoadingState = ({
           onCancel={onCancel}
           showProgress={isPrivate}
           tipKeys={isPrivate ? ASK_AI_PRIVATE_TIP_KEYS : ASK_AI_GENERATION_TIP_KEYS}
-          statusTitle={t('recordingDetail.askProcessing')}
+          statusTitle={statusTitle ?? t('recordingDetail.askProcessing')}
           leadingIcon={<Sparkle size={22} color={color.accent.primary} strokeWidth={2} />}
           context={
             isPrivateCustomServer ? 'private_remote' : isPrivate ? 'private_llm' : 'cloud_ai'

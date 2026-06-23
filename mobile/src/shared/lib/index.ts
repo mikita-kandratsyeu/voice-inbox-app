@@ -31,6 +31,7 @@ export {
   notesGraphLayoutVersionTable,
   privateAiTaskQueueTable,
   recordAskAiTable,
+  inboxAskAiTable,
   recordPublishedShareTable,
   recordsTable,
 } from './db/schema';

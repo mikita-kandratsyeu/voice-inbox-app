@@ -5,8 +5,10 @@ import {
   type AskApiResult,
   pollAiMessage,
   pollAskResult,
+  pollInboxAskResult,
   postAiMessage,
   postAskQuestion,
+  postInboxAskQuestion,
   recordIdFromSummarizeJobId,
   saveCloudSummarizePending,
 } from '@/shared/lib/ai-api';
@@ -18,6 +20,8 @@ import type {
   AiExecutionContext,
   AskRequest,
   AskTaskResult,
+  InboxAskRequest,
+  InboxAskTaskResult,
   SummaryTaskRequest,
   SummaryTaskResult,
 } from './types';
@@ -229,6 +233,77 @@ export async function runCloudAsk(
   }
 
   const pollResult = await pollAskResult(request.id, postResult.data.syncToken, fetchOptions);
+  if (!pollResult.ok) {
+    if (pollResult.error === AI_REQUEST_CANCELLED) {
+      return cloudAskCancelledFailure(ctx.aiExecutionMode);
+    }
+    return {
+      ok: false,
+      provider: 'cloud',
+      mode: ctx.aiExecutionMode,
+      error: pollResult.error,
+    };
+  }
+
+  return {
+    ok: true,
+    provider: 'cloud',
+    mode: ctx.aiExecutionMode,
+    result: pollResult.result,
+  };
+}
+
+export async function runCloudInboxAsk(
+  request: InboxAskRequest,
+  ctx: AiExecutionContext,
+): Promise<InboxAskTaskResult> {
+  const consentOk = await ensureCloudAiThirdPartyConsent();
+
+  if (!consentOk) {
+    return {
+      ok: false,
+      provider: 'cloud',
+      mode: ctx.aiExecutionMode,
+      error: i18n.t('cloudAiConsent.declinedHint'),
+    };
+  }
+
+  const fetchOptions = { signal: request.abortSignal };
+
+  if (request.abortSignal?.aborted) {
+    return cloudAskCancelledFailure(ctx.aiExecutionMode);
+  }
+
+  const routingChars = request.corpusNotes.reduce(
+    (sum, note) => sum + JSON.stringify(note).length,
+    request.question.length,
+  );
+
+  const postResult = await postInboxAskQuestion(
+    {
+      id: request.id,
+      corpusNotes: request.corpusNotes,
+      question: request.question,
+      model: ctx.selectedAIModel,
+      modelMode: ctx.aiModelRoutingMode,
+      routingContext: {
+        taskType: 'ask',
+        routingChars,
+      },
+      messageTtlSeconds: ctx.cloudMessageTtlSeconds,
+      ...(request.priorTurns?.length ? { priorTurns: request.priorTurns } : {}),
+    },
+    fetchOptions,
+  );
+
+  if (!postResult.ok) {
+    if (isPostCancelled(postResult)) {
+      return cloudAskCancelledFailure(ctx.aiExecutionMode);
+    }
+    return mapPostError(postResult, ctx.aiExecutionMode, 'AI weekly limit exceeded');
+  }
+
+  const pollResult = await pollInboxAskResult(request.id, postResult.data.syncToken, fetchOptions);
   if (!pollResult.ok) {
     if (pollResult.error === AI_REQUEST_CANCELLED) {
       return cloudAskCancelledFailure(ctx.aiExecutionMode);

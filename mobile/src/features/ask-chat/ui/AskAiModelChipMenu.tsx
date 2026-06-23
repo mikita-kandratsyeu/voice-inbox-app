@@ -14,11 +14,11 @@ import { hapticSelection, type NativeMenuAction } from '@/shared/lib';
 import { FrostedChromeSurface } from '@/shared/ui';
 
 import {
-  RECORDING_DETAIL_METADATA_CHIP_CHEVRON_SIZE,
-  RECORDING_DETAIL_METADATA_CHIP_ICON_SIZE,
-  RECORDING_DETAIL_METADATA_CHIP_TEXT_CLASS,
-  RECORDING_DETAIL_METADATA_CHIP_TOUCHABLE_CLASS,
-} from '../recordingDetailMetadataChipStyles';
+  ASK_CHAT_CHIP_CHEVRON_SIZE,
+  ASK_CHAT_CHIP_ICON_SIZE,
+  ASK_CHAT_CHIP_TEXT_CLASS,
+  ASK_CHAT_CHIP_TOUCHABLE_CLASS,
+} from './askChatChipStyles';
 import {
   type AskAiModelMenuPlacement,
   buildAskAiModelMenuActions,
@@ -134,7 +134,7 @@ export function AskAiModelChipMenu({
       activeOpacity={0.75}
       className={
         isInline
-          ? RECORDING_DETAIL_METADATA_CHIP_TOUCHABLE_CLASS
+          ? ASK_CHAT_CHIP_TOUCHABLE_CLASS
           : 'max-w-full min-h-8 flex-row items-center gap-1 px-3 py-1.5'
       }
       hitSlop={isInline ? undefined : { top: 4, bottom: 4, left: 4, right: 4 }}
@@ -145,17 +145,11 @@ export function AskAiModelChipMenu({
       }
     >
       {isInline ? (
-        <Sparkles
-          size={RECORDING_DETAIL_METADATA_CHIP_ICON_SIZE}
-          color={color.icon.muted}
-          strokeWidth={2}
-        />
+        <Sparkles size={ASK_CHAT_CHIP_ICON_SIZE} color={color.icon.muted} strokeWidth={2} />
       ) : null}
       <Text
         className={
-          isInline
-            ? RECORDING_DETAIL_METADATA_CHIP_TEXT_CLASS
-            : 'shrink text-[13px] font-semibold leading-[18px]'
+          isInline ? ASK_CHAT_CHIP_TEXT_CLASS : 'shrink text-[13px] font-semibold leading-[18px]'
         }
         numberOfLines={1}
         style={{ color: color.text.primary }}
@@ -163,7 +157,7 @@ export function AskAiModelChipMenu({
         {chipLabel}
       </Text>
       <ChevronDown
-        size={isInline ? RECORDING_DETAIL_METADATA_CHIP_CHEVRON_SIZE : 14}
+        size={isInline ? ASK_CHAT_CHIP_CHEVRON_SIZE : 14}
         color={color.text.secondary}
         strokeWidth={isInline ? 2 : 2.2}
       />

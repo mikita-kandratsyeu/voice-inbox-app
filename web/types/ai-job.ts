@@ -51,6 +51,19 @@ export type AskJobPayload = {
   linkedNotes?: AskLinkedNoteForPrompt[];
 };
 
+export type InboxAskJobPayload = {
+  operation: 'inbox_ask';
+  jobId: string;
+  deviceId: string;
+  messageTtlSeconds: number;
+  corpusNotes: import('@/lib/corpus-notes-prompt').CorpusNoteForPrompt[];
+  question: string;
+  model: string;
+  modelMode?: AiModelMode;
+  priorTurns?: { question: string; answer: string }[];
+  clientUserAgent?: string | null;
+};
+
 import type { AutoOrganizeMode, AutoOrganizeTemplate } from '@/lib/auto-organize-types';
 
 export type AutoOrganizeJobPayload = {
@@ -89,5 +102,6 @@ export type MeetingDialogueJobPayload = {
 export type AiJobPayload =
   | SummarizeJobPayload
   | AskJobPayload
+  | InboxAskJobPayload
   | AutoOrganizeJobPayload
   | MeetingDialogueJobPayload;

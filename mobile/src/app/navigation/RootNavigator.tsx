@@ -8,6 +8,7 @@ import { InboxFiltersResetProvider } from '@/features/inbox-filters';
 import { AllTasksScreen } from '@/screens/all-tasks';
 import { DebugScreen } from '@/screens/debug';
 import { InAppEventDetailScreen } from '@/screens/in-app-event';
+import { InboxAskAIScreen } from '@/screens/inbox-ask/ui/InboxAskAIScreen';
 import { NotesGraphScreen } from '@/screens/notes-graph';
 import { RecordScreen, TextNoteScreen } from '@/screens/record';
 import {
@@ -73,6 +74,15 @@ export const RootNavigator = () => (
       <Stack.Screen
         name="RecordingAskAI"
         component={AskAIScreenKeyed}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="InboxAskAI"
+        component={InboxAskAIScreen}
         options={{
           headerShown: false,
           animation: 'slide_from_right',

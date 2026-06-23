@@ -114,6 +114,13 @@ export function buildAskAiModelMenuActions(params: {
       state: selectedLocalAiModel === model.id ? ('on' as const) : ('off' as const),
     }));
 
+    const emptyMenuHint: NativeMenuAction = {
+      id: '__local_models_empty__',
+      title: t('recordingDetail.askModelMenuNoLocalModels'),
+      titleColor,
+      attributes: { disabled: true },
+    };
+
     const allModelsSection = inlineNativeMenuSection('askAiLocalMore', titleColor, [
       {
         id: MENU_ALL_MODELS,
@@ -130,6 +137,10 @@ export function buildAskAiModelMenuActions(params: {
             t('aiModels.privateModeLabel'),
           )
         : null;
+
+    if (downloadedModels.length === 0) {
+      return reverseRows ? [allModelsSection, emptyMenuHint] : [emptyMenuHint, allModelsSection];
+    }
 
     return reverseRows
       ? [allModelsSection, ...(localSection ? [localSection] : [])]

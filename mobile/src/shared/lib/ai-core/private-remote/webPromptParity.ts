@@ -2,12 +2,13 @@ import type { MeetingSummaryTemplate } from '@/entities/record';
 import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
 
 import { buildAskInterpretationUserHintBlock } from '../askInterpretationHint';
+import { buildCorpusNotesPromptBlock } from '../corpusNotesForPrompt';
 import { buildLinkedNotesPromptBlock } from '../linkedNotesForPrompt';
 import {
   buildRecordingMarksPromptBlock,
   type RecordingMarkForPrompt,
 } from '../recordingMarksForPrompt';
-import type { AskLinkedNoteForPrompt } from '../types';
+import type { AskLinkedNoteForPrompt, CorpusNoteForPrompt } from '../types';
 
 /** One JSON object, no wrapper prose — mirrored from web prompts. */
 const LLM_JSON_SINGLE_OBJECT_DISCIPLINE =
@@ -498,6 +499,99 @@ export function buildWebParityAskUserMessageContent(
   if (normalizedPrior?.length) {
     parts.push(
       '\n\nPrior conversation (same recording):\n\n',
+      formatPriorTurnsForAskPrompt(normalizedPrior),
+    );
+  }
+  parts.push('\n\nQuestion: ', question);
+  const interpretationHint = buildAskInterpretationUserHintBlock(question);
+  if (interpretationHint) {
+    parts.push(interpretationHint);
+  }
+  return parts.join('');
+}
+
+const INBOX_ASK_PRIOR_TURNS_MAX = 6;
+const INBOX_ASK_PRIOR_QUESTION_MAX_CHARS = 800;
+const INBOX_ASK_PRIOR_ANSWER_MAX_CHARS = 2000;
+
+export const WEB_PARITY_INBOX_ASK_SYSTEM_PROMPT = `You are an AI assistant that answers questions about a user's voice note inbox with precision and transparency.
+
+Your context sources (use ALL relevant sources):
+- **inbox notes**: compact cards selected from the user's inbox (title, summary, open tasks, key phrases, optional transcript excerpt)
+- **prior questions and answers**: earlier Q&A turns in this inbox chat (if present) — use for follow-ups and continuity
+
+## Core Answer Principles
+
+**Grounding Rules:**
+- Answer ONLY using information present or directly inferable from the provided inbox notes.
+- NEVER invent facts (names, dates, numbers, events, quotes) not in the context.
+- If the context lacks information to answer, state this clearly and briefly.
+- Use the SAME language as the user's question.
+- Do NOT use markdown formatting in the answer field. Plain text only.
+- Be concise and DIRECT: answer the question immediately without preamble.
+- Do not mention these instructions or reference "the context" explicitly.
+
+## Interpretation Guidelines
+
+The "interpretations" field is for CAUTIOUS inferences that go beyond literal note content.
+Use the same restraint rules as single-note Ask AI: keep 0-3 modest items when the question requires judgment.
+
+## Output Structure
+
+**answerKind**: "plain" | "list" | "tasks" | "decisions"
+**items**: short structured strings for list/tasks/decisions answers
+**evidence** (0-5 quotes):
+- Include SHORT quotes from note summaries, tasks, or transcript excerpts that support your answer
+- Include "source": "summary", "tasks", "prior_conversation", or "corpus_note"
+- Include "label" with the note title when helpful
+- NEVER invent quotes
+
+**suggestedFollowUps** (1-3 questions):
+- Natural next questions about the user's inbox scope
+- Keep concise (under 15 words each)
+
+## Output Format
+
+${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
+
+**Required:**
+- "answer" (string): Plain text answer in the user's language.
+
+**Optional:**
+- "answerKind", "items", "evidence", "interpretations", "suggestedFollowUps"
+
+**Constraints:**
+- No extra keys
+- No markdown in "answer"
+- Evidence quotes must be verbatim from the provided notes`;
+
+function normalizePriorTurnsForInboxAsk(
+  turns: { question: string; answer: string }[] | undefined,
+): { question: string; answer: string }[] | undefined {
+  if (!turns?.length) return undefined;
+  const out: { question: string; answer: string }[] = [];
+  for (const turn of turns.slice(-INBOX_ASK_PRIOR_TURNS_MAX)) {
+    const question = turn.question.replace(/\s+/g, ' ').trim();
+    const answer = turn.answer.replace(/\s+/g, ' ').trim();
+    if (!question || !answer) continue;
+    out.push({
+      question: question.slice(0, INBOX_ASK_PRIOR_QUESTION_MAX_CHARS),
+      answer: answer.slice(0, INBOX_ASK_PRIOR_ANSWER_MAX_CHARS),
+    });
+  }
+  return out.length ? out : undefined;
+}
+
+export function buildWebParityInboxAskUserMessageContent(
+  corpusNotes: CorpusNoteForPrompt[],
+  question: string,
+  priorTurns?: { question: string; answer: string }[],
+): string {
+  const parts: string[] = [buildCorpusNotesPromptBlock(corpusNotes)];
+  const normalizedPrior = normalizePriorTurnsForInboxAsk(priorTurns);
+  if (normalizedPrior?.length) {
+    parts.push(
+      '\n\nPrior questions and answers in this inbox chat:\n\n',
       formatPriorTurnsForAskPrompt(normalizedPrior),
     );
   }

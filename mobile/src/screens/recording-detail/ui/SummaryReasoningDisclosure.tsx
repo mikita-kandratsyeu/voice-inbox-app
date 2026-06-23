@@ -18,7 +18,7 @@ import {
   type SummaryTokenUsage,
 } from '@/shared/lib/summaryMetaSubtitle';
 
-import { AskAiAnswerMarkdown } from './ask-ai/AskAiAnswerMarkdown';
+import { AskAiAnswerMarkdown } from '@/features/ask-chat/ui';
 import { SummaryMetaLinesText } from './SummaryMetaLinesText';
 
 const REASONING_SCROLL_MAX_HEIGHT = 280;

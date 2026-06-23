@@ -28,7 +28,7 @@ import {
   ScreenHeader,
 } from '@/shared/ui';
 
-import { AskAIComposer } from './AskAIComposer';
+import { AskAIComposer } from '@/features/ask-chat/ui';
 import { AskMainContent } from './AskMainContent';
 
 export const AskAIScreen = () => {

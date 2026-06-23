@@ -37,10 +37,15 @@ function buildAiUsageHistoryCsv(
     t('settings.aiUsageDashboard.history.exportCsvColumns.jobId'),
   ];
 
-  const rows = items.map((entry) => [
-    formatLocalizedLongDateWithTime(entry.createdAt, language),
-    t(`settings.aiUsageDashboard.history.kinds.${entry.kind}`),
-    t(`settings.aiUsageDashboard.history.operations.${entry.operation}`),
+  const rows = items.map((entry) => {
+    const operationKey = `settings.aiUsageDashboard.history.operations.${entry.operation}`;
+    const operationLabel = t(operationKey);
+    return [
+      formatLocalizedLongDateWithTime(entry.createdAt, language),
+      t(`settings.aiUsageDashboard.history.kinds.${entry.kind}`),
+      operationLabel === operationKey
+        ? t('settings.aiUsageDashboard.history.operations.unknown')
+        : operationLabel,
     String(entry.amount),
     resolveAiModelRoutingDisplayLabel(t, {
       modelMode: entry.modelMode,
@@ -49,7 +54,8 @@ function buildAiUsageHistoryCsv(
     }),
     entry.description?.trim() || '',
     entry.jobId?.trim() || '',
-  ]);
+    ];
+  });
 
   return [headers, ...rows].map((row) => row.map(csvEscape).join(',')).join('\n');
 }

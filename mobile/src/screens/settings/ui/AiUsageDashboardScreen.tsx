@@ -6,6 +6,7 @@ import {
   FolderTree,
   Gauge,
   History,
+  Inbox,
   Languages,
   MessageCircleQuestion,
   Mic,
@@ -379,8 +380,13 @@ export const AiUsageDashboardScreen = () => {
   const limitText = usage ? String(usage.limit) : '—';
   const historyHasFooter = historyLoadFailed || historyCursor != null;
   const getHistoryOperationLabel = useCallback(
-    (entry: AiUsageHistoryEntry) =>
-      t(`settings.aiUsageDashboard.history.operations.${entry.operation}`),
+    (entry: AiUsageHistoryEntry) => {
+      const key = `settings.aiUsageDashboard.history.operations.${entry.operation}`;
+      const label = t(key);
+      return label === key
+        ? t('settings.aiUsageDashboard.history.operations.unknown')
+        : label;
+    },
     [t],
   );
   const getHistorySubtitle = useCallback(
@@ -470,6 +476,13 @@ export const AiUsageDashboardScreen = () => {
         label: t('settings.aiUsageDashboard.features.ask.title'),
         value: t('settings.aiUsageDashboard.hybridBadge'),
         subtitle: t('settings.aiUsageDashboard.features.ask.subtitle'),
+      },
+      {
+        key: 'inboxAsk',
+        icon: <Inbox size={20} color={color.accent.aiData} strokeWidth={1.8} />,
+        label: t('settings.aiUsageDashboard.features.inboxAsk.title'),
+        value: t('settings.aiUsageDashboard.hybridBadge'),
+        subtitle: t('settings.aiUsageDashboard.features.inboxAsk.subtitle'),
       },
       {
         key: 'translate',

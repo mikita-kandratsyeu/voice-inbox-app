@@ -32,6 +32,10 @@ type AskAIComposerProps = {
   onSubmit: () => void;
   canSend: boolean;
   disableByNetwork: boolean;
+  /** Extra chips rendered next to the model picker (e.g. inbox corpus scope). */
+  extraChips?: React.ReactNode;
+  placeholderKey?: string;
+  sendA11yKey?: string;
 };
 
 const SEND_BUTTON_SIZE = FLOATING_FROSTED_ACCESSORY_BUTTON_SIZE;
@@ -46,6 +50,9 @@ const AskAIComposerInner = ({
   onSubmit,
   canSend,
   disableByNetwork,
+  extraChips,
+  placeholderKey = 'recordingDetail.askPlaceholder',
+  sendA11yKey = 'recordingDetail.askSend',
 }: AskAIComposerProps) => {
   const { t } = useTranslation();
   const inputRef = useRef<TextInput>(null);
@@ -89,7 +96,17 @@ const AskAIComposerInner = ({
               paddingBottom: 6,
             }}
           >
-            <AskAiModelChipMenu color={color} />
+            <View
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <AskAiModelChipMenu color={color} />
+              {extraChips}
+            </View>
           </View>
           <View
             style={{
@@ -115,9 +132,9 @@ const AskAIComposerInner = ({
               <TextInput
                 ref={inputRef}
                 style={[getInputFieldInputStyle(color), { flex: 1 }]}
-                placeholder={t('recordingDetail.askPlaceholder')}
+                placeholder={t(placeholderKey)}
                 placeholderTextColor={color.text.secondary}
-                accessibilityLabel={t('recordingDetail.askPlaceholder')}
+                accessibilityLabel={t(placeholderKey)}
                 value={questionInput}
                 onChangeText={handleChangeText}
                 onFocus={() => setFocused(true)}
@@ -157,7 +174,7 @@ const AskAIComposerInner = ({
                 disabled={!canSend}
                 activeOpacity={0.85}
                 accessibilityRole="button"
-                accessibilityLabel={t('recordingDetail.askSend')}
+                accessibilityLabel={t(sendA11yKey)}
                 accessibilityState={{ disabled: !canSend }}
                 hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
                 style={{

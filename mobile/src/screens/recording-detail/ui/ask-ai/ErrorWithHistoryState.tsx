@@ -6,10 +6,9 @@ import type { AiExecutionMode } from '@/entities/settings';
 import type { AskAIHistoryItem } from '@/features/ask-ai';
 import type { Colors } from '@/shared/config';
 
-import { AnswerTurnBlock } from './AnswerContent';
+import { AnswerTurnBlock, AskTurnQuestion, ErrorState } from '@/features/ask-chat/ui';
+
 import { AskAiContextDisclosure } from './AskAiContextDisclosure';
-import { AskTurnQuestion } from './AskTurnQuestion';
-import { ErrorState } from './ErrorState';
 
 type ErrorWithHistoryStateProps = {
   color: Colors;
@@ -22,6 +21,9 @@ type ErrorWithHistoryStateProps = {
   onCopy: (text: string) => void;
   onShare: (text: string, title: string) => void;
   showPrivateModeCta?: boolean;
+  errorTitleKey?: string;
+  errorRetryLabelKey?: string;
+  errorFallbackHintKey?: string;
 };
 
 export const ErrorWithHistoryState = ({
@@ -35,6 +37,9 @@ export const ErrorWithHistoryState = ({
   onCopy,
   onShare,
   showPrivateModeCta = false,
+  errorTitleKey,
+  errorRetryLabelKey,
+  errorFallbackHintKey,
 }: ErrorWithHistoryStateProps) => {
   const failedQuestion = question?.trim() ?? '';
 
@@ -72,6 +77,9 @@ export const ErrorWithHistoryState = ({
             onRetry={onRetry}
             errorMessage={errorMessage}
             showPrivateModeCta={showPrivateModeCta}
+            titleKey={errorTitleKey}
+            retryLabelKey={errorRetryLabelKey}
+            fallbackHintKey={errorFallbackHintKey}
           />
         </View>
       ) : (
@@ -80,6 +88,9 @@ export const ErrorWithHistoryState = ({
           onRetry={onRetry}
           errorMessage={errorMessage}
           showPrivateModeCta={showPrivateModeCta}
+          titleKey={errorTitleKey}
+          retryLabelKey={errorRetryLabelKey}
+          fallbackHintKey={errorFallbackHintKey}
         />
       )}
     </View>

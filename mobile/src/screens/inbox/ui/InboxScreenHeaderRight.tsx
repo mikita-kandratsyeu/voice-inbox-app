@@ -3,7 +3,10 @@ import type { TFunction } from 'i18next';
 import { FolderTree, ListTodo, MoreVertical, Search } from 'lucide-react-native';
 import React, { memo, useMemo } from 'react';
 
+import { useSettingsStore } from '@/entities/settings';
 import type { BatchSelectState } from '@/features/batch-select';
+import { isInboxAskAvailable } from '@/features/inbox-ask';
+import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
@@ -26,6 +29,7 @@ type InboxScreenHeaderRightProps = {
   onEnterBatchMode: () => void;
   onOpenAllTasks: () => void;
   onOpenNotesGraph: () => void;
+  onOpenInboxAsk: () => void;
   onImportFile: () => void;
   /** Tablet sidebar: no overflow menu; actions as header icons. */
   useTabletShell?: boolean;
@@ -51,18 +55,39 @@ function InboxScreenHeaderRightInner({
   onEnterBatchMode,
   onOpenAllTasks,
   onOpenNotesGraph,
+  onOpenInboxAsk,
   onImportFile,
   useTabletShell = false,
   t,
 }: InboxScreenHeaderRightProps) {
   const theme = useAppTheme();
   const isDark = theme === 'dark';
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
+  const { isProActive } = useProEntitlement();
+  const inboxAskEnabled = isInboxAskAvailable(aiExecutionMode, privateAiProvider, isProActive);
 
   const organizeDisabled = isAutoOrganizing;
 
   const moreMenuActions = useMemo(() => {
     const titleColor = color.text.primary;
     const actions: NativeMenuAction[] = [];
+
+    if (inboxAskEnabled) {
+      const inboxAskAction: NativeMenuAction = {
+        id: 'inboxAsk',
+        title: t('inbox.menuAskInboxAi'),
+        titleColor,
+        image: 'sparkles',
+        imageColor: titleColor,
+      };
+
+      if (!useTabletShell) {
+        actions.push(inlineNativeMenuSection('inboxAskSection', titleColor, [inboxAskAction]));
+      } else {
+        actions.push(inboxAskAction);
+      }
+    }
 
     const navigationItems: NativeMenuAction[] = [];
 
@@ -118,7 +143,7 @@ function InboxScreenHeaderRightInner({
     }
 
     return actions;
-  }, [color.text.primary, foldersEnabled, isAutoOrganizing, t, useTabletShell]);
+  }, [color.text.primary, foldersEnabled, inboxAskEnabled, isAutoOrganizing, t, useTabletShell]);
 
   if (!isLoaded) return null;
 
@@ -206,6 +231,7 @@ function InboxScreenHeaderRightInner({
           onPressAction={({ nativeEvent }) => {
             const id = nativeEvent.event;
             if (id === 'selectNotes') onEnterBatchMode();
+            if (id === 'inboxAsk') onOpenInboxAsk();
             if (id === 'importFile') onImportFile();
           }}
         >
@@ -247,6 +273,7 @@ function InboxScreenHeaderRightInner({
         actions={moreMenuActions}
         onPressAction={({ nativeEvent }) => {
           const id = nativeEvent.event;
+          if (id === 'inboxAsk') onOpenInboxAsk();
           if (id === 'importFile') onImportFile();
           if (id === 'notesGraph') onOpenNotesGraph();
           if (id === 'autoOrganize' && !isAutoOrganizing && foldersEnabled) {

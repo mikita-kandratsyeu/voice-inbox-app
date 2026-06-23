@@ -37,6 +37,7 @@ export type RootStackParamList = {
   TextNoteModal: undefined;
   RecordingDetail: { record: VoiceRecord; openLinkPicker?: boolean };
   RecordingAskAI: { record: VoiceRecord };
+  InboxAskAI: { question?: string; folderId?: string };
   WhisperModelPickerRoot: undefined;
   EditTranscript: { record: VoiceRecord };
   NoteDocument: { record: VoiceRecord; initialMode?: 'reading' | 'source' };

@@ -51,7 +51,7 @@ export async function markAiJobFailed(envelope: AiJobEnvelope, error: string): P
     return;
   }
 
-  if (operation === 'transcript_summarize' || operation === 'transcript_ask') {
+  if (operation === 'transcript_summarize' || operation === 'transcript_ask' || operation === 'inbox_ask') {
     const payload = await getJobPayload(jobId);
     const refundUnits =
       payload?.operation === 'transcript_summarize' ? (payload.chargedUsageUnits ?? 1) : 1;

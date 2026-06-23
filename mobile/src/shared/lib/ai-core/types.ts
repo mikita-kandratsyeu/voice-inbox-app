@@ -81,13 +81,16 @@ export type AskEvidenceSource =
   | 'tasks'
   | 'recording_mark'
   | 'prior_conversation'
-  | 'linked_note';
+  | 'linked_note'
+  | 'corpus_note';
 
 export type AskEvidence = {
   quote: string;
   source?: AskEvidenceSource;
   offsetMs?: number | null;
   label?: string;
+  /** Inbox ask: note id when source is corpus_note. */
+  recordId?: string;
 };
 
 export type AskAnswerResult = {
@@ -106,6 +109,33 @@ export type AskLinkedNoteForPrompt = {
   summary?: string;
   tasks?: Array<{ text: string }>;
   transcriptExcerpt?: string;
+};
+
+export type CorpusNoteForPrompt = {
+  recordId: string;
+  title: string;
+  summary?: string;
+  keyPhrases?: string[];
+  tasks?: Array<{ text: string }>;
+  transcriptExcerpt?: string;
+  createdAt?: string;
+};
+
+export type InboxAskAgentPlan = {
+  executionMode: 'smart_cloud' | 'private_remote';
+  modelId: string;
+  retrievalMode: 'hybrid' | 'lexical';
+  packedNotes: CorpusNoteForPrompt[];
+  promptBudget: { maxChars: number; usedChars: number; droppedCount: number };
+};
+
+export type InboxAskRequest = {
+  id: string;
+  question: string;
+  corpusNotes: CorpusNoteForPrompt[];
+  priorTurns?: AskPriorTurn[];
+  onLocalGenerationProgress?: (event: AiLocalGenerationProgressEvent) => void;
+  abortSignal?: AbortSignal;
 };
 
 export type AskRequest = {
@@ -143,3 +173,4 @@ export type AiOrchestratorResult<T> = AiOrchestratorSuccess<T> | AiOrchestratorF
 
 export type SummaryTaskResult = AiOrchestratorResult<AiProcessingResult>;
 export type AskTaskResult = AiOrchestratorResult<AskAnswerResult>;
+export type InboxAskTaskResult = AiOrchestratorResult<AskAnswerResult>;

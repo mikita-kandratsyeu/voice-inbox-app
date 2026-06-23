@@ -1,4 +1,5 @@
 import { runAskJob } from '@/lib/ai-job-runners/run-ask-job';
+import { runInboxAskJob } from '@/lib/ai-job-runners/run-inbox-ask-job';
 import { runAutoOrganizeJob } from '@/lib/ai-job-runners/run-auto-organize-job';
 import { runMeetingDialogueJob } from '@/lib/ai-job-runners/run-meeting-dialogue-job';
 import { runSummarizeJob } from '@/lib/ai-job-runners/run-summarize-job';
@@ -11,6 +12,9 @@ export async function runAiJob(payload: AiJobPayload): Promise<void> {
       break;
     case 'transcript_ask':
       await runAskJob(payload);
+      break;
+    case 'inbox_ask':
+      await runInboxAskJob(payload);
       break;
     case 'folder_auto_organize':
       await runAutoOrganizeJob(payload);

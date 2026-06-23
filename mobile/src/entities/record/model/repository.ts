@@ -409,6 +409,30 @@ export const recordRepository = {
     };
   },
 
+  getEmbeddingsForActiveRecords: async (): Promise<Map<string, number[]>> => {
+    logDb('getEmbeddingsForActiveRecords');
+    const db = getDB();
+    const rows = await db
+      .select({ id: recordsTable.id, embedding: recordsTable.embedding })
+      .from(recordsTable)
+      .where(and(activeRecordsClause, isNotNull(recordsTable.embedding)));
+
+    const out = new Map<string, number[]>();
+    for (const row of rows) {
+      if (!row.embedding) continue;
+      try {
+        const parsed = JSON.parse(row.embedding) as number[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          out.set(row.id, parsed);
+        }
+      } catch {
+        continue;
+      }
+    }
+    logDb('getEmbeddingsForActiveRecords', { count: out.size });
+    return out;
+  },
+
   insert: async (record: VoiceRecord): Promise<void> => {
     logDb('insert', { id: record.id, title: record.title });
     const db = getDB();

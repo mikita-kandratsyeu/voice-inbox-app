@@ -6,13 +6,13 @@ import type { AskAIHistoryItem } from '@/features/ask-ai';
 import type { Colors } from '@/shared/config';
 import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
 
+import { ErrorState, SessionRestoringSkeleton } from '@/features/ask-chat/ui';
+
 import { AnswerContent } from './AnswerContent';
 import { EmptyState } from './EmptyState';
-import { ErrorState } from './ErrorState';
 import { ErrorWithHistoryState } from './ErrorWithHistoryState';
 import { LoadingState } from './LoadingState';
 import { NoTranscriptState } from './NoTranscriptState';
-import { SessionRestoringSkeleton } from './SessionRestoringSkeleton';
 
 type AskMainContentProps = {
   color: Colors;
