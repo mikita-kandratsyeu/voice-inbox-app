@@ -42,7 +42,10 @@ const baseRecord: VoiceRecord = {
   embedding: [0.1, 0.2],
 };
 
-function call(toolName: InboxAskToolCall['toolName'], args: Record<string, unknown>): InboxAskToolCall {
+function call(
+  toolName: InboxAskToolCall['toolName'],
+  args: Record<string, unknown>,
+): InboxAskToolCall {
   return {
     toolCallId: `call-${toolName}`,
     toolName,

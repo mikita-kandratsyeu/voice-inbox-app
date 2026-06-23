@@ -590,7 +590,7 @@ export async function processInboxAskQuestionWithTools(params: {
   const canUseTools = nextRound <= INBOX_ASK_MAX_TOOL_ROUNDS;
 
   const callAsk = async (m: string): Promise<InboxAskToolLoopResult> => {
-    const { content, message, toolCalls } = await withTimeout(
+    const { content, toolCalls } = await withTimeout(
       sendAiChatCompletion({
         model: m,
         messages,

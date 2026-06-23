@@ -31,7 +31,9 @@ export async function POST(request: Request, { params }: RouteContext): Promise<
     return apiError(result.error, result.status, {
       pathname,
       code:
-        result.status === HttpStatus.NOT_FOUND ? ApiErrorCode.NotFound : ApiErrorCode.ValidationError,
+        result.status === HttpStatus.NOT_FOUND
+          ? ApiErrorCode.NotFound
+          : ApiErrorCode.ValidationError,
     });
   }
 

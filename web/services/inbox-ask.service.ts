@@ -270,17 +270,15 @@ export async function submitInboxAskToolResult(
     },
   ];
   const toolSteps = (payload.toolSteps ?? []).map((step) =>
-    step.toolCallId === result.toolCallId
-      ? { ...step, status: 'completed' as const }
-      : step,
+    step.toolCallId === result.toolCallId ? { ...step, status: 'completed' as const } : step,
   );
-  const { pendingToolCall: _pendingToolCall, ...payloadWithoutPending } = payload;
   const nextPayload: InboxAskJobPayload = {
-    ...payloadWithoutPending,
+    ...payload,
     toolResults: [...(payload.toolResults ?? []), result],
     toolMessages,
     toolSteps,
   };
+  delete nextPayload.pendingToolCall;
 
   await saveJobPayload(nextPayload);
   await saveMessage(
