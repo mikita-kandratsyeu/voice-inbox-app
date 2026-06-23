@@ -18,8 +18,10 @@ import type {
   InboxSortOption,
 } from '@/features/inbox-filters';
 import { INBOX_FILTER_BAR_FALLBACK_HEIGHT, InboxFilterBar } from '@/features/inbox-filters';
+import { MobileAdminBanner } from '@/features/mobile-admin-banner';
 import type { Colors } from '@/shared/config';
 import { iosHitSlopForVisualSize } from '@/shared/lib/iosTouchTarget';
+import type { MobileBanner } from '@/shared/lib/mobile-banner';
 import {
   EmptyState,
   FLOATING_FROSTED_INPUT_ICON_SIZE,
@@ -221,6 +223,8 @@ type InboxScreenLoadedBodyProps = {
   onInboxListScroll?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
   showInboxScrollResetSkeleton: boolean;
   onAskAboutSearch?: (query: string) => void;
+  adminBanner?: MobileBanner | null;
+  onDismissAdminBanner?: () => void;
 };
 
 function InboxScreenLoadedBodyInner({
@@ -264,9 +268,18 @@ function InboxScreenLoadedBodyInner({
   onInboxListScroll,
   showInboxScrollResetSkeleton,
   onAskAboutSearch,
+  adminBanner,
+  onDismissAdminBanner,
 }: InboxScreenLoadedBodyProps) {
   const [filterBarHeight, setFilterBarHeight] = useState(INBOX_FILTER_BAR_FALLBACK_HEIGHT);
+  const [bannerHeight, setBannerHeight] = useState(0);
   const [searchFocused, setSearchFocused] = useState(false);
+
+  useEffect(() => {
+    if (!adminBanner) {
+      setBannerHeight(0);
+    }
+  }, [adminBanner]);
 
   useEffect(() => {
     if (!showInboxSearchBar) setSearchFocused(false);
@@ -276,7 +289,11 @@ function InboxScreenLoadedBodyInner({
     setFilterBarHeight(e.nativeEvent.layout.height);
   }, []);
 
-  const filterScrollTopPad = batchSelect.isSelectMode ? 0 : filterBarHeight;
+  const handleBannerLayout = useCallback((e: LayoutChangeEvent) => {
+    setBannerHeight(e.nativeEvent.layout.height);
+  }, []);
+
+  const filterScrollTopPad = batchSelect.isSelectMode ? 0 : filterBarHeight + bannerHeight;
 
   const mergedListContentStyle = useMemo(() => {
     const base = listContentStyle as { paddingTop?: number };
@@ -329,6 +346,15 @@ function InboxScreenLoadedBodyInner({
                 elevation: 10,
               }}
             >
+              {adminBanner && onDismissAdminBanner ? (
+                <MobileAdminBanner
+                  banner={adminBanner}
+                  color={color}
+                  onDismiss={onDismissAdminBanner}
+                  placement="floating"
+                  onLayout={handleBannerLayout}
+                />
+              ) : null}
               <InboxFilterBar
                 filterStatus={filterStatus}
                 menuFilterStatus={menuFilterStatus}

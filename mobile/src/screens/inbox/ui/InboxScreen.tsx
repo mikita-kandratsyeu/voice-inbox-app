@@ -236,7 +236,7 @@ export const InboxScreen = () => {
           scrollRef={folderChipScrollRef}
         />
       )}
-      {adminBanner && !batchSelect.isSelectMode ? (
+      {adminBanner && !batchSelect.isSelectMode && (records.length === 0 || !isLoaded) ? (
         <MobileAdminBanner banner={adminBanner} color={color} onDismiss={dismissAdminBanner} />
       ) : null}
       {!isLoaded ? (
@@ -293,6 +293,8 @@ export const InboxScreen = () => {
           onInboxListScroll={onInboxListScroll}
           showInboxScrollResetSkeleton={showInboxScrollResetSkeleton}
           onAskAboutSearch={inboxAskEnabled ? handleAskAboutSearch : undefined}
+          adminBanner={adminBanner && !batchSelect.isSelectMode ? adminBanner : null}
+          onDismissAdminBanner={dismissAdminBanner}
         />
       )}
       {batchSelect.isSelectMode && (
