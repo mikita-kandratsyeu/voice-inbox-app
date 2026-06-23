@@ -271,6 +271,7 @@ export function GraphCanvas3D({
         onZoomOut={zoomOut}
         onFit={fitToScreen}
         onReset={resetView}
+        resetVisible={false}
         legendVisible={legendVisible}
         legendToggleVisible
         customLegend={

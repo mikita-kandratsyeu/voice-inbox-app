@@ -20,6 +20,7 @@ type GraphControlsProps = {
   onFit: () => void;
   onReset: () => void;
   onResetLayoutLongPress?: () => void;
+  resetVisible?: boolean;
   resetLayoutLongPressEnabled?: boolean;
   legendVisible: boolean;
   legendToggleVisible?: boolean;
@@ -104,6 +105,7 @@ export function GraphControls({
   onFit,
   onReset,
   onResetLayoutLongPress,
+  resetVisible = true,
   resetLayoutLongPressEnabled = false,
   legendVisible,
   legendToggleVisible = true,
@@ -263,20 +265,22 @@ export function GraphControls({
           >
             <Maximize2 size={20} color={color.text.primary} strokeWidth={2.4} />
           </ControlButton>
-          <ControlButton
-            color={color}
-            disabled={disabled}
-            onPress={onReset}
-            onLongPress={resetLayoutLongPressEnabled ? onResetLayoutLongPress : undefined}
-            accessibilityLabel={t('notesGraph.controls.reset')}
-            accessibilityHint={
-              resetLayoutLongPressEnabled
-                ? t('notesGraph.controls.resetLayoutLongPressHint')
-                : undefined
-            }
-          >
-            <RotateCcw size={20} color={color.text.primary} strokeWidth={2.4} />
-          </ControlButton>
+          {resetVisible ? (
+            <ControlButton
+              color={color}
+              disabled={disabled}
+              onPress={onReset}
+              onLongPress={resetLayoutLongPressEnabled ? onResetLayoutLongPress : undefined}
+              accessibilityLabel={t('notesGraph.controls.reset')}
+              accessibilityHint={
+                resetLayoutLongPressEnabled
+                  ? t('notesGraph.controls.resetLayoutLongPressHint')
+                  : undefined
+              }
+            >
+              <RotateCcw size={20} color={color.text.primary} strokeWidth={2.4} />
+            </ControlButton>
+          ) : null}
         </View>
       </View>
     </>
