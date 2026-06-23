@@ -11,11 +11,11 @@ import {
 } from '@/features/related-notes/lib/computeRecordSimilarity';
 import {
   type CorpusNoteForPrompt,
-  INBOX_ASK_TOOL_NAMES,
   type InboxAskToolCall,
-  type InboxAskToolName,
   type InboxAskToolResult,
 } from '@/shared/lib/ai-core/types';
+
+import { isInboxAskToolName } from './inboxAskToolDefinitions';
 
 const MAX_TOOL_QUERY_CHARS = 240;
 const MAX_TOOL_NOTES = 6;
@@ -25,16 +25,10 @@ const MAX_TASKS = 30;
 const MAX_TASK_TEXT_CHARS = 180;
 const MAX_RELATED_NOTES = 6;
 
-const TOOL_NAME_SET = new Set<string>(INBOX_ASK_TOOL_NAMES);
-
 export type InboxAskToolExecutorContext = {
   records: VoiceRecord[];
   scope?: InboxAskRetrievalScope;
 };
-
-function isInboxAskToolName(value: unknown): value is InboxAskToolName {
-  return typeof value === 'string' && TOOL_NAME_SET.has(value);
-}
 
 function readStringArg(args: Record<string, unknown>, key: string, maxChars: number): string {
   const raw = args[key];

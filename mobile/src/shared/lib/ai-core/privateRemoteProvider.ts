@@ -4,6 +4,12 @@ import type {
   AutoOrganizeTemplate,
 } from '@/entities/folder/lib/autoOrganizeTypes';
 import { normalizeAutoOrganizeTemplate } from '@/entities/folder/lib/autoOrganizeTypes';
+import {
+  extractFirstInboxAskToolCall,
+  INBOX_ASK_MAX_TOOL_ROUNDS,
+  INBOX_ASK_TOOL_DEFINITIONS,
+  isToolUnsupportedError,
+} from '@/features/inbox-ask-tools/lib/inboxAskToolDefinitions';
 import { i18n } from '@/shared/lib';
 import { nitroFetch } from '@/shared/lib/fetch';
 import { isRecord, isString } from '@/shared/lib/type-guards';
@@ -76,6 +82,7 @@ import type {
   AskTaskResult,
   InboxAskRequest,
   InboxAskTaskResult,
+  InboxAskToolStep,
   SummaryTaskRequest,
   SummaryTaskResult,
 } from './types';
@@ -89,10 +96,18 @@ type OpenAiChatResponse = {
   };
   choices?: Array<{
     message?: {
-      content?: string | Array<{ type?: string; text?: string }>;
+      content?: string | Array<{ type?: string; text?: string }> | null;
+      tool_calls?: unknown[];
+      reasoning_content?: unknown;
     };
+    text?: string;
   }>;
 };
+
+type RemoteChatMessage =
+  | { role: 'system' | 'user'; content: string }
+  | { role: 'assistant'; content: string | null; tool_calls?: unknown[] }
+  | { role: 'tool'; content: string; tool_call_id: string };
 
 type OpenAiModelsResponse = {
   data?: Array<{ id?: string }>;
@@ -126,6 +141,7 @@ type RemoteCompletionOutput = {
   reasoning?: string;
   model?: string;
   tokenUsage?: { prompt: number; completion: number };
+  toolCalls?: unknown[];
 };
 
 type RepairKind = 'summary' | 'meeting_dialogue';
@@ -214,6 +230,13 @@ function readMessageContent(response: OpenAiChatResponse): string {
     return ((firstChoice as { text: string }).text ?? '').trim();
   }
   return '';
+}
+
+function readMessageToolCalls(response: OpenAiChatResponse): unknown[] | undefined {
+  const firstChoice = response.choices?.[0];
+  if (!firstChoice?.message || !isRecord(firstChoice.message)) return undefined;
+  const toolCalls = (firstChoice.message as { tool_calls?: unknown }).tool_calls;
+  return Array.isArray(toolCalls) && toolCalls.length > 0 ? toolCalls : undefined;
 }
 
 function extractHttpErrorMessage(bodyText: string): string {
@@ -406,11 +429,13 @@ type RemoteCompletionCallOptions = {
   /** When true and user setting allows, tries structured `response_format` (json_schema → json_object). */
   jsonObject?: boolean;
   schemaKind?: PrivateRemoteStructuredSchemaKind;
+  tools?: unknown[];
+  toolChoice?: 'auto' | 'none';
 };
 
 async function callRemoteCompletion(
   ctx: AiExecutionContext,
-  messages: Array<{ role: 'system' | 'user'; content: string }>,
+  messages: RemoteChatMessage[],
   maxTokens: number | null,
   temperature: number,
   abortSignal?: AbortSignal,
@@ -424,6 +449,7 @@ async function callRemoteCompletion(
   const wantStructured = Boolean(options?.jsonObject && ctx.privateRemotePreferJsonObject);
   const schemaKind = options?.schemaKind ?? 'generic';
   const baseUrlKey = remoteBaseUrlKey(ctx.privateRemoteBaseUrl);
+  const hasTools = Boolean(options?.tools?.length);
 
   const postOnce = async (
     formatMode: RemoteStructuredFormatMode,
@@ -441,7 +467,10 @@ async function callRemoteCompletion(
           stream: false,
         };
         applyOutputBudgetToPayload(payload, maxTokens, maxTokensParam);
-        if (formatMode === 'json_object') {
+        if (hasTools) {
+          payload.tools = options?.tools;
+          payload.tool_choice = options?.toolChoice ?? 'auto';
+        } else if (formatMode === 'json_object') {
           payload.response_format = { type: 'json_object' };
         } else if (formatMode === 'json_schema') {
           payload.response_format = buildPrivateRemoteJsonSchemaResponseFormat(schemaKind);
@@ -463,7 +492,8 @@ async function callRemoteCompletion(
         const json = (await response.json()) as OpenAiChatResponse;
         const content = readMessageContent(json);
         const messageReasoning = readMessageReasoning(json);
-        if (!content) {
+        const toolCalls = readMessageToolCalls(json);
+        if (!content && !toolCalls?.length) {
           throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
         }
         const promptTokens = Number(json.usage?.prompt_tokens);
@@ -477,7 +507,8 @@ async function callRemoteCompletion(
             : undefined;
         remoteMaxTokensParamByBaseUrl.set(baseUrlKey, maxTokensParam);
         return {
-          content,
+          content: content || '',
+          ...(toolCalls?.length ? { toolCalls } : {}),
           ...(messageReasoning ? { reasoning: messageReasoning } : {}),
           ...(isString(json.model) && json.model.trim().length > 0
             ? { model: json.model.trim() }
@@ -494,6 +525,10 @@ async function callRemoteCompletion(
     }
     throw lastErr;
   };
+
+  if (hasTools) {
+    return postOnce('plain', false);
+  }
 
   if (!wantStructured) {
     return postOnce('plain', false);
@@ -1205,6 +1240,179 @@ export async function runPrivateRemoteAsk(
   }
 }
 
+async function runPrivateRemoteInboxAskPlain(
+  request: InboxAskRequest,
+  ctx: AiExecutionContext,
+  userContent: string,
+  askMaxTokens: number | null,
+): Promise<InboxAskTaskResult> {
+  const runOnce = (user: string) =>
+    callRemoteCompletion(
+      ctx,
+      [
+        { role: 'system', content: WEB_PARITY_INBOX_ASK_SYSTEM_PROMPT },
+        { role: 'user', content: user },
+      ],
+      askMaxTokens,
+      LOCAL_GEN_ASK.temperature,
+      request.abortSignal,
+      { jsonObject: true, schemaKind: 'ask' },
+    );
+
+  let remote = await runOnce(userContent);
+  let result = parseLocalAskResponse(remote.content);
+  if (!result) {
+    remote = await runOnce(`${userContent}\n\n${STRICT_JSON_TAIL}`);
+    result = parseLocalAskResponse(remote.content);
+  }
+  if (!result) {
+    throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
+  }
+  return {
+    ok: true,
+    provider: 'private_remote',
+    mode: ctx.aiExecutionMode,
+    result: { ...result, ...(remote.model ? { model: remote.model } : {}) },
+  };
+}
+
+async function parsePrivateRemoteInboxAskAnswer(
+  ctx: AiExecutionContext,
+  messages: RemoteChatMessage[],
+  askMaxTokens: number | null,
+  abortSignal?: AbortSignal,
+): Promise<{ result: NonNullable<ReturnType<typeof parseLocalAskResponse>>; model?: string }> {
+  const runStructured = (msgs: RemoteChatMessage[]) =>
+    callRemoteCompletion(ctx, msgs, askMaxTokens, LOCAL_GEN_ASK.temperature, abortSignal, {
+      jsonObject: true,
+      schemaKind: 'ask',
+    });
+
+  let remote = await runStructured(messages);
+  let result = parseLocalAskResponse(remote.content);
+  if (!result) {
+    remote = await runStructured([...messages, { role: 'user', content: STRICT_JSON_TAIL }]);
+    result = parseLocalAskResponse(remote.content);
+  }
+  if (!result) {
+    throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
+  }
+  return { result, ...(remote.model ? { model: remote.model } : {}) };
+}
+
+async function runPrivateRemoteInboxAskWithTools(
+  request: InboxAskRequest,
+  ctx: AiExecutionContext,
+  userContent: string,
+  askMaxTokens: number | null,
+): Promise<InboxAskTaskResult> {
+  const messages: RemoteChatMessage[] = [
+    { role: 'system', content: WEB_PARITY_INBOX_ASK_SYSTEM_PROMPT },
+    { role: 'user', content: userContent },
+  ];
+  const toolSteps: InboxAskToolStep[] = [];
+  let lastModel: string | undefined;
+
+  for (let round = 1; round <= INBOX_ASK_MAX_TOOL_ROUNDS; round += 1) {
+    if (request.abortSignal?.aborted) {
+      return {
+        ok: false,
+        provider: 'private_remote',
+        mode: ctx.aiExecutionMode,
+        error: AI_REQUEST_CANCELLED,
+      };
+    }
+
+    let remote: RemoteCompletionOutput;
+    try {
+      remote = await callRemoteCompletion(
+        ctx,
+        messages,
+        askMaxTokens,
+        LOCAL_GEN_ASK.temperature,
+        request.abortSignal,
+        { tools: INBOX_ASK_TOOL_DEFINITIONS, toolChoice: 'auto' },
+      );
+    } catch (err) {
+      if (round === 1 && isToolUnsupportedError(err)) {
+        return runPrivateRemoteInboxAskPlain(request, ctx, userContent, askMaxTokens);
+      }
+      throw err;
+    }
+
+    lastModel = remote.model ?? lastModel;
+
+    if (remote.toolCalls?.length && request.toolExecutor) {
+      const toolCall = extractFirstInboxAskToolCall(remote.toolCalls, round);
+      if (!toolCall) break;
+
+      messages.push({
+        role: 'assistant',
+        content: remote.content || null,
+        tool_calls: remote.toolCalls,
+      });
+
+      request.onInboxAskToolCall?.(toolCall);
+      const toolResult = await request.toolExecutor(toolCall);
+      request.onInboxAskToolResult?.(toolResult);
+      toolSteps.push({
+        toolCallId: toolCall.toolCallId,
+        toolName: toolCall.toolName,
+        round,
+        status: 'completed',
+      });
+
+      messages.push({
+        role: 'tool',
+        content: JSON.stringify(toolResult.result),
+        tool_call_id: toolCall.toolCallId,
+      });
+      continue;
+    }
+
+    let result = parseLocalAskResponse(remote.content);
+    if (!result) {
+      const structured = await parsePrivateRemoteInboxAskAnswer(
+        ctx,
+        messages,
+        askMaxTokens,
+        request.abortSignal,
+      );
+      lastModel = structured.model ?? lastModel;
+      result = structured.result;
+    }
+
+    return {
+      ok: true,
+      provider: 'private_remote',
+      mode: ctx.aiExecutionMode,
+      result: {
+        ...result,
+        ...(lastModel ? { model: lastModel } : {}),
+        ...(toolSteps.length > 0 ? { toolSteps } : {}),
+      },
+    };
+  }
+
+  const final = await parsePrivateRemoteInboxAskAnswer(
+    ctx,
+    messages,
+    askMaxTokens,
+    request.abortSignal,
+  );
+
+  return {
+    ok: true,
+    provider: 'private_remote',
+    mode: ctx.aiExecutionMode,
+    result: {
+      ...final.result,
+      ...(final.model ? { model: final.model } : {}),
+      ...(toolSteps.length > 0 ? { toolSteps } : {}),
+    },
+  };
+}
+
 export async function runPrivateRemoteInboxAsk(
   request: InboxAskRequest,
   ctx: AiExecutionContext,
@@ -1225,34 +1433,12 @@ export async function runPrivateRemoteInboxAsk(
       request.priorTurns,
     );
     const askMaxTokens = resolvePrivateRemoteAskMaxTokens(ctx.privateRemoteOutputBudget);
-    const runOnce = (user: string) =>
-      callRemoteCompletion(
-        ctx,
-        [
-          { role: 'system', content: WEB_PARITY_INBOX_ASK_SYSTEM_PROMPT },
-          { role: 'user', content: user },
-        ],
-        askMaxTokens,
-        LOCAL_GEN_ASK.temperature,
-        request.abortSignal,
-        { jsonObject: true, schemaKind: 'ask' },
-      );
 
-    let remote = await runOnce(userContent);
-    let result = parseLocalAskResponse(remote.content);
-    if (!result) {
-      remote = await runOnce(`${userContent}\n\n${STRICT_JSON_TAIL}`);
-      result = parseLocalAskResponse(remote.content);
+    if (request.toolExecutor) {
+      return await runPrivateRemoteInboxAskWithTools(request, ctx, userContent, askMaxTokens);
     }
-    if (!result) {
-      throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
-    }
-    return {
-      ok: true,
-      provider: 'private_remote',
-      mode: ctx.aiExecutionMode,
-      result: { ...result, ...(remote.model ? { model: remote.model } : {}) },
-    };
+
+    return await runPrivateRemoteInboxAskPlain(request, ctx, userContent, askMaxTokens);
   } catch (err) {
     if (request.abortSignal?.aborted) {
       return {
