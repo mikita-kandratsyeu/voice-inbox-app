@@ -2,7 +2,7 @@ import { MenuView } from '@react-native-menu/menu';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MoreVertical, Search } from 'lucide-react-native';
+import { Box, MoreVertical, Search } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, Text, useWindowDimensions, View } from 'react-native';
@@ -103,6 +103,7 @@ import {
 import { GraphBuildingState } from './GraphBuildingState';
 import type { GraphCanvasHandle } from './GraphCanvas';
 import { GraphCanvas } from './GraphCanvas';
+import { GraphCanvas3D } from './GraphCanvas3D';
 import { GraphExportPreviewSheet } from './GraphExportPreviewSheet';
 import { GraphFilterBar } from './GraphFilterBar';
 import { GraphLayoutHistorySheet } from './GraphLayoutHistorySheet';
@@ -111,6 +112,8 @@ import { GraphStickySearchBar } from './GraphStickySearchBar';
 
 const LARGE_GRAPH_RECORD_THRESHOLD = 80;
 const GRAPH_SEARCH_DEBOUNCE_MS = 300;
+
+type GraphViewMode = '2d' | '3d';
 
 function waitForNextFrame(): Promise<void> {
   return new Promise((resolve) => {
@@ -195,6 +198,7 @@ export const NotesGraphScreenBody = () => {
   );
   const [minimapVisible, setMinimapVisible] = useState(() => getGraphMinimapVisible());
   const [nodeDisplayMode, setNodeDisplayMode] = useState(() => getGraphNodeDisplayMode());
+  const [graphViewMode, setGraphViewMode] = useState<GraphViewMode>('2d');
   const exportCaptureTokenRef = useRef(0);
   const exportPreviewBackgroundIdRef = useRef<GraphExportBackgroundId>(
     GRAPH_EXPORT_DEFAULT_BACKGROUND_ID,
@@ -522,6 +526,7 @@ export const NotesGraphScreenBody = () => {
   }, [focusRecordId, layoutCacheKey]);
 
   useEffect(() => {
+    if (graphViewMode !== '2d') return;
     if (!isLocalGraphMode || !focusRecordId || isGraphMapBusy || layoutNodes.length === 0) return;
     if (hasFocusedLocalNodeRef.current) return;
 
@@ -533,7 +538,7 @@ export const NotesGraphScreenBody = () => {
     void waitForNextFrame().then(() => {
       canvasRef.current?.focusNode(centerNode);
     });
-  }, [focusRecordId, isGraphMapBusy, isLocalGraphMode, layoutNodes]);
+  }, [focusRecordId, graphViewMode, isGraphMapBusy, isLocalGraphMode, layoutNodes]);
 
   useEffect(() => {
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
@@ -593,7 +598,9 @@ export const NotesGraphScreenBody = () => {
   }, []);
 
   const showGraphSearchBar =
-    records.length > 0 && (searchBarExplicitOpen || searchQuery.trim().length > 0);
+    graphViewMode === '2d' &&
+    records.length > 0 &&
+    (searchBarExplicitOpen || searchQuery.trim().length > 0);
 
   const showGraphSearchMatchLabel = shouldShowGraphSearchMatchLabel({
     query: searchQuery,
@@ -668,11 +675,11 @@ export const NotesGraphScreenBody = () => {
       const wrapped = ((index % matches.length) + matches.length) % matches.length;
       setSearchMatchIndex(wrapped);
       const active = matches[wrapped];
-      if (active) {
+      if (active && graphViewMode === '2d') {
         canvasRef.current?.focusNode(active);
       }
     },
-    [debouncedSearchQuery, resolveSearchMatches],
+    [debouncedSearchQuery, graphViewMode, resolveSearchMatches],
   );
 
   const focusSearchMatchAtRef = useRef(focusSearchMatchAt);
@@ -873,6 +880,10 @@ export const NotesGraphScreenBody = () => {
       return;
 
     shouldFitAfterLayoutApplyRef.current = false;
+    if (graphViewMode !== '2d') {
+      return;
+    }
+
     let innerFrame = 0;
     const outerFrame = requestAnimationFrame(() => {
       innerFrame = requestAnimationFrame(() => {
@@ -892,6 +903,7 @@ export const NotesGraphScreenBody = () => {
     layoutNodes.length,
     persistHydrated,
     recordCount,
+    graphViewMode,
   ]);
 
   const handleDeleteLayoutVersion = useCallback(
@@ -942,6 +954,17 @@ export const NotesGraphScreenBody = () => {
 
   const headerControlsDisabled = isGraphMapBusy || isSavingLayout || isCapturingExport;
 
+  const toggleGraphViewMode = useCallback(() => {
+    hapticSelection();
+    setGraphViewMode((prev) => {
+      const next = prev === '2d' ? '3d' : '2d';
+      if (next === '3d') {
+        setSearchBarExplicitOpen(false);
+      }
+      return next;
+    });
+  }, []);
+
   const appliedLayoutHeaderSubtitle = useMemo(() => {
     if (recordCount === 0 || !activeSavedVersion || hasUnsavedLayoutChanges || isGraphMapBusy) {
       return undefined;
@@ -951,7 +974,7 @@ export const NotesGraphScreenBody = () => {
   }, [activeSavedVersion, hasUnsavedLayoutChanges, i18n.language, isGraphMapBusy, recordCount, t]);
 
   const handleOpenExportPreview = useCallback(() => {
-    if (isCapturingExport) return;
+    if (isCapturingExport || graphViewMode === '3d') return;
 
     if (layoutNodes.length > 150) {
       Alert.alert(
@@ -985,7 +1008,7 @@ export const NotesGraphScreenBody = () => {
     setExportCaptureBackgroundId(GRAPH_EXPORT_DEFAULT_BACKGROUND_ID);
     exportPreviewBackgroundIdRef.current = GRAPH_EXPORT_DEFAULT_BACKGROUND_ID;
     setIsCapturingExport(true);
-  }, [isCapturingExport, layoutNodes.length, t]);
+  }, [graphViewMode, isCapturingExport, layoutNodes.length, t]);
 
   useEffect(() => {
     if (!isCapturingExport || exportPreviewUri != null) {
@@ -1055,8 +1078,9 @@ export const NotesGraphScreenBody = () => {
   const notesGraphMenuActions = useMemo(() => {
     const titleColor = color.text.primary;
     const actions: NativeMenuAction[] = [];
+    const is2dView = graphViewMode === '2d';
 
-    if (isGraphMinimapAvailable(layoutNodes.length)) {
+    if (is2dView && isGraphMinimapAvailable(layoutNodes.length)) {
       actions.push({
         id: 'toggleMinimap',
         title: t('notesGraph.controls.toggleMinimap'),
@@ -1067,7 +1091,7 @@ export const NotesGraphScreenBody = () => {
       });
     }
 
-    if (foldersEnabled) {
+    if (is2dView && foldersEnabled) {
       actions.push({
         id: 'toggleFolderHighlights',
         title: t('notesGraph.controls.toggleFolderHighlights'),
@@ -1078,14 +1102,16 @@ export const NotesGraphScreenBody = () => {
       });
     }
 
-    actions.push({
-      id: 'toggleNodeDisplayMode',
-      title: t('notesGraph.controls.toggleNodeDisplayMode'),
-      image: 'dot.square',
-      imageColor: titleColor,
-      titleColor,
-      state: nodeDisplayMode === 'dots' ? 'on' : 'off',
-    });
+    if (is2dView) {
+      actions.push({
+        id: 'toggleNodeDisplayMode',
+        title: t('notesGraph.controls.toggleNodeDisplayMode'),
+        image: 'dot.square',
+        imageColor: titleColor,
+        titleColor,
+        state: nodeDisplayMode === 'dots' ? 'on' : 'off',
+      });
+    }
 
     actions.push({
       id: 'toggleShowArchived',
@@ -1096,24 +1122,26 @@ export const NotesGraphScreenBody = () => {
       state: filters.showArchived ? 'on' : 'off',
     });
 
-    actions.push(
-      inlineNativeMenuSection('notesGraphMainSection', titleColor, [
-        {
-          id: 'layoutHistory',
-          title: t('notesGraph.history.title'),
-          image: 'clock.arrow.circlepath',
-          imageColor: titleColor,
-          titleColor,
-        },
-        {
-          id: 'exportImage',
-          title: t('notesGraph.export.title'),
-          image: 'square.and.arrow.up',
-          imageColor: titleColor,
-          titleColor,
-        },
-      ]),
-    );
+    if (is2dView) {
+      actions.push(
+        inlineNativeMenuSection('notesGraphMainSection', titleColor, [
+          {
+            id: 'layoutHistory',
+            title: t('notesGraph.history.title'),
+            image: 'clock.arrow.circlepath',
+            imageColor: titleColor,
+            titleColor,
+          },
+          {
+            id: 'exportImage',
+            title: t('notesGraph.export.title'),
+            image: 'square.and.arrow.up',
+            imageColor: titleColor,
+            titleColor,
+          },
+        ]),
+      );
+    }
 
     return actions;
   }, [
@@ -1121,6 +1149,7 @@ export const NotesGraphScreenBody = () => {
     filters.showArchived,
     folderHighlightsVisible,
     foldersEnabled,
+    graphViewMode,
     layoutNodes.length,
     minimapVisible,
     nodeDisplayMode,
@@ -1134,7 +1163,7 @@ export const NotesGraphScreenBody = () => {
         pointerEvents={headerControlsDisabled ? 'none' : 'auto'}
       >
         <FrostedHeaderButtonGroup color={color}>
-          {records.length > 0 ? (
+          {records.length > 0 && graphViewMode === '2d' ? (
             <HeaderIconButton
               inFrostedGroup
               iconOnly
@@ -1162,6 +1191,25 @@ export const NotesGraphScreenBody = () => {
               }
             />
           ) : null}
+          <HeaderIconButton
+            inFrostedGroup
+            iconOnly
+            variant="icon"
+            size="md"
+            icon={
+              <Box
+                size={20}
+                color={graphViewMode === '3d' ? color.accent.primary : color.text.primary}
+                strokeWidth={2.2}
+              />
+            }
+            color={color}
+            onPress={toggleGraphViewMode}
+            accessibilityLabel={
+              graphViewMode === '3d' ? t('notesGraph.view2dA11y') : t('notesGraph.view3dA11y')
+            }
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          />
           <MenuView
             key={`notes-graph-menu-${theme}`}
             title=""
@@ -1311,41 +1359,54 @@ export const NotesGraphScreenBody = () => {
         />
       ) : (
         <View style={{ flex: 1 }}>
-          <GraphCanvas
-            ref={canvasRef}
-            nodes={displayNodes}
-            edges={layoutEdges}
-            graphWidth={graphSize.width}
-            graphHeight={graphSize.height}
-            color={color}
-            foldersById={foldersById}
-            isProActive={isProActive}
-            matchedNodeIds={matchedNodeIds}
-            activeNodeId={resolvedActiveNodeId}
-            bottomInset={insets.bottom}
-            focusViewportInsets={focusViewportInsets}
-            nodeDisplayMode={nodeDisplayMode}
-            onRecordPress={handleRecordPress}
-            onTaskPress={handleTaskPress}
-            onNodeFocus={handleNodeFocus}
-            onResetView={handleClearNodeSelection}
-            onReconcilingChange={setIsGraphReconciling}
-            mapStatusActive={isGraphMapBusy}
-            mapStatusLabel={graphMapStatusLabel}
-            onLayoutPositionsChange={handleLayoutPositionsChange}
-            onResetLayoutLongPress={handleDiscardUnsavedLayoutChanges}
-            resetLayoutLongPressEnabled={hasUnsavedLayoutChanges}
-            layoutRestoreToken={layoutRestoreToken}
-            hasUnsavedLayoutChanges={hasUnsavedLayoutChanges}
-            isSavingLayout={isSavingLayout}
-            onSaveLayout={handleOpenLayoutSaveSheet}
-            onDiscardLayout={handleDiscardUnsavedLayoutChanges}
-            exportCaptureActive={isExportCaptureMount}
-            exportCaptureBackgroundId={exportCaptureBackgroundId}
-            isExportCapturing={isCapturingExport}
-            folderHighlightsVisible={folderHighlightsVisible}
-            minimapVisible={minimapVisible}
-          />
+          {graphViewMode === '2d' ? (
+            <GraphCanvas
+              ref={canvasRef}
+              nodes={displayNodes}
+              edges={layoutEdges}
+              graphWidth={graphSize.width}
+              graphHeight={graphSize.height}
+              color={color}
+              foldersById={foldersById}
+              isProActive={isProActive}
+              matchedNodeIds={matchedNodeIds}
+              activeNodeId={resolvedActiveNodeId}
+              bottomInset={insets.bottom}
+              focusViewportInsets={focusViewportInsets}
+              nodeDisplayMode={nodeDisplayMode}
+              onRecordPress={handleRecordPress}
+              onTaskPress={handleTaskPress}
+              onNodeFocus={handleNodeFocus}
+              onResetView={handleClearNodeSelection}
+              onReconcilingChange={setIsGraphReconciling}
+              mapStatusActive={isGraphMapBusy}
+              mapStatusLabel={graphMapStatusLabel}
+              onLayoutPositionsChange={handleLayoutPositionsChange}
+              onResetLayoutLongPress={handleDiscardUnsavedLayoutChanges}
+              resetLayoutLongPressEnabled={hasUnsavedLayoutChanges}
+              layoutRestoreToken={layoutRestoreToken}
+              hasUnsavedLayoutChanges={hasUnsavedLayoutChanges}
+              isSavingLayout={isSavingLayout}
+              onSaveLayout={handleOpenLayoutSaveSheet}
+              onDiscardLayout={handleDiscardUnsavedLayoutChanges}
+              exportCaptureActive={isExportCaptureMount}
+              exportCaptureBackgroundId={exportCaptureBackgroundId}
+              isExportCapturing={isCapturingExport}
+              folderHighlightsVisible={folderHighlightsVisible}
+              minimapVisible={minimapVisible}
+            />
+          ) : (
+            <GraphCanvas3D
+              nodes={displayNodes}
+              edges={layoutEdges}
+              color={color}
+              foldersById={foldersById}
+              isProActive={isProActive}
+              bottomInset={insets.bottom}
+              mapStatusActive={isGraphMapBusy}
+              mapStatusLabel={graphMapStatusLabel}
+            />
+          )}
         </View>
       )}
 

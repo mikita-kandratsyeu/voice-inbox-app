@@ -10,27 +10,37 @@ export const NOTES_GRAPH_LOADING_TIP_KEYS = [
   'notesGraph.loadingTips.minimap',
 ] as const;
 
+export const NOTES_GRAPH_3D_LOADING_TIP_KEYS = [
+  'notesGraph.loadingTips.orbit3d',
+  'notesGraph.loadingTips.pinchZoom3d',
+  'notesGraph.loadingTips.filters',
+  'notesGraph.loadingTips.switchView3d',
+] as const;
+
 export const NOTES_GRAPH_LOADING_TIP_INTERVAL_MS = 3000;
 
-export function pickRandomGraphLoadingTipIndex(): number {
-  if (NOTES_GRAPH_LOADING_TIP_KEYS.length <= 1) return 0;
-  return Math.floor(Math.random() * NOTES_GRAPH_LOADING_TIP_KEYS.length);
+export function pickRandomGraphLoadingTipIndex(
+  tipKeys: readonly string[] = NOTES_GRAPH_LOADING_TIP_KEYS,
+): number {
+  if (tipKeys.length <= 1) return 0;
+  return Math.floor(Math.random() * tipKeys.length);
 }
 
 export function useRotatingGraphLoadingTip(
   showTips = true,
-): (typeof NOTES_GRAPH_LOADING_TIP_KEYS)[number] {
-  const [tipIndex, setTipIndex] = useState(() => pickRandomGraphLoadingTipIndex());
+  tipKeys: readonly string[] = NOTES_GRAPH_LOADING_TIP_KEYS,
+): string {
+  const [tipIndex, setTipIndex] = useState(() => pickRandomGraphLoadingTipIndex(tipKeys));
 
   useEffect(() => {
-    if (!showTips || NOTES_GRAPH_LOADING_TIP_KEYS.length <= 1) return;
+    if (!showTips || tipKeys.length <= 1) return;
 
     const intervalId = setInterval(() => {
-      setTipIndex((current) => (current + 1) % NOTES_GRAPH_LOADING_TIP_KEYS.length);
+      setTipIndex((current) => (current + 1) % tipKeys.length);
     }, NOTES_GRAPH_LOADING_TIP_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
-  }, [showTips]);
+  }, [showTips, tipKeys]);
 
-  return NOTES_GRAPH_LOADING_TIP_KEYS[tipIndex]!;
+  return tipKeys[tipIndex]!;
 }

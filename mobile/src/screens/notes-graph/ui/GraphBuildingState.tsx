@@ -5,23 +5,32 @@ import { View } from 'react-native';
 import { useColors } from '@/shared/config';
 import { ProgressStatusCard, RotatingTipText } from '@/shared/ui';
 
-import { useRotatingGraphLoadingTip } from '../lib/graphLoadingTips';
+import { NOTES_GRAPH_LOADING_TIP_KEYS, useRotatingGraphLoadingTip } from '../lib/graphLoadingTips';
 
 type GraphBuildingStateProps = {
   label: string;
   showTips?: boolean;
   /** 0–1 layout build progress; omit for indeterminate spinner only. */
   progress?: number;
+  /** When true, captures touches so the graph underneath cannot be interacted with. */
+  blockTouches?: boolean;
+  tipKeys?: readonly string[];
 };
 
-export function GraphBuildingState({ label, showTips = true, progress }: GraphBuildingStateProps) {
+export function GraphBuildingState({
+  label,
+  showTips = true,
+  progress,
+  blockTouches = false,
+  tipKeys = NOTES_GRAPH_LOADING_TIP_KEYS,
+}: GraphBuildingStateProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const tipKey = useRotatingGraphLoadingTip(showTips);
+  const tipKey = useRotatingGraphLoadingTip(showTips, tipKeys);
 
   return (
     <View
-      pointerEvents="box-none"
+      pointerEvents={blockTouches ? 'auto' : 'box-none'}
       style={{
         position: 'absolute',
         left: 0,

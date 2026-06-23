@@ -228,6 +228,9 @@
     "proBody": "Explore a zoomable graph of your notes — linked by tags, folders, similar content, and open tasks.",
     "building": "Building your notes graph…",
     "reconciling": "Updating connections…",
+    "view3dA11y": "Switch to 3D view",
+    "view2dA11y": "Switch to 2D view",
+    "preparing3d": "Preparing 3D view…",
     "saveChangesA11y": "Save layout changes",
     "saveLayoutBar": {
       "hint": "Layout changed",
@@ -325,7 +328,10 @@
       "filters": "Use folder and tag filters at the top to focus on part of your library.",
       "search": "Tap the search icon to jump between matching notes and tasks.",
       "legend": "Tap ⓘ in the corner to see what the connection lines mean.",
-      "minimap": "Use the minimap in the corner to jump to another area of the graph."
+      "minimap": "Use the minimap in the corner to jump to another area of the graph.",
+      "orbit3d": "Drag with one finger to orbit the graph in 3D.",
+      "pinchZoom3d": "Pinch to zoom in and out of the 3D view.",
+      "switchView3d": "Tap the cube icon in the header to switch back to the 2D graph."
     },
     "minimap": {
       "navigateA11y": "Minimap navigation",

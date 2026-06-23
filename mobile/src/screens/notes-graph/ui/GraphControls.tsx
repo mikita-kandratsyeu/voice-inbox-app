@@ -22,6 +22,7 @@ type GraphControlsProps = {
   onResetLayoutLongPress?: () => void;
   resetLayoutLongPressEnabled?: boolean;
   legendVisible: boolean;
+  legendToggleVisible?: boolean;
   onToggleLegend: () => void;
   statusActive?: boolean;
   statusLabel?: string;
@@ -104,6 +105,7 @@ export function GraphControls({
   onResetLayoutLongPress,
   resetLayoutLongPressEnabled = false,
   legendVisible,
+  legendToggleVisible = true,
   onToggleLegend,
   statusActive = false,
   statusLabel,
@@ -192,7 +194,7 @@ export function GraphControls({
               </Text>
             </View>
           </FrostedChromeSurface>
-        ) : (
+        ) : legendToggleVisible ? (
           <ControlButton
             color={color}
             disabled={disabled}
@@ -205,7 +207,7 @@ export function GraphControls({
               strokeWidth={2.4}
             />
           </ControlButton>
-        )}
+        ) : null}
       </View>
 
       <View
