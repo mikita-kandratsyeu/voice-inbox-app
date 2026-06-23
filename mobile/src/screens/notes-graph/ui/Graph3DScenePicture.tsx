@@ -42,6 +42,7 @@ function recordGraph3DPicture(
   const bounds = Skia.XYWHRect(0, 0, viewportWidth, viewportHeight);
   const recorder = Skia.PictureRecorder();
   const canvas = recorder.beginRecording(bounds);
+  const viewportScale = Math.min(viewportWidth, viewportHeight) * 0.35;
 
   let depthMin = Number.POSITIVE_INFINITY;
   let depthMax = Number.NEGATIVE_INFINITY;
@@ -79,6 +80,37 @@ function recordGraph3DPicture(
 
   scene.nodeOrder.sort((left, right) => scene.projectedZ[left] - scene.projectedZ[right]);
 
+  for (const cluster of scene.clusters) {
+    const projected = projectPoint3DWorklet(
+      cluster.x,
+      cluster.y,
+      cluster.z,
+      yaw,
+      pitch,
+      distance,
+      viewportWidth,
+      viewportHeight,
+    );
+    const depthFade = graph3DDepthFadeWorklet(projected.z, depthMin, depthMax);
+    const radius = cluster.radius * projected.scale * viewportScale;
+    if (radius < 8) {
+      continue;
+    }
+
+    const shellPaint = Skia.Paint();
+    shellPaint.setColor(cluster.color);
+    shellPaint.setStrokeWidth(Math.max(1, Math.min(2.5, radius * 0.035)));
+    shellPaint.setAlphaf(0.11 * depthFade);
+    shellPaint.setStyle(1);
+    canvas.drawCircle(projected.x, projected.y, radius, shellPaint);
+
+    const haloPaint = Skia.Paint();
+    haloPaint.setColor(cluster.color);
+    haloPaint.setAlphaf(0.035 * depthFade);
+    haloPaint.setStyle(0);
+    canvas.drawCircle(projected.x, projected.y, radius * 0.92, haloPaint);
+  }
+
   for (let orderIndex = 0; orderIndex < scene.edges.length; orderIndex += 1) {
     scene.edgeOrder[orderIndex] = orderIndex;
   }
@@ -97,10 +129,19 @@ function recordGraph3DPicture(
     const edge = scene.edges[scene.edgeOrder[orderIndex]];
     const edgeDepth = (scene.projectedZ[edge.sourceIndex] + scene.projectedZ[edge.targetIndex]) / 2;
     const depthFade = graph3DDepthFadeWorklet(edgeDepth, depthMin, depthMax);
+    const zoomOutFactor = Math.max(0, Math.min(1, (distance - 2.2) / 4.2));
+    const stride = zoomOutFactor > 0.72 ? 4 : zoomOutFactor > 0.38 ? 2 : 1;
+    if (edge.importance < 3 && stride > 1 && orderIndex % stride !== 0) {
+      continue;
+    }
+    if (edge.importance < 2 && zoomOutFactor > 0.68 && orderIndex % (stride * 2) !== 0) {
+      continue;
+    }
+
     const paint = Skia.Paint();
     paint.setColor(edge.color);
-    paint.setStrokeWidth(edge.strokeWidth);
-    paint.setAlphaf(edge.opacity * depthFade * 0.92);
+    paint.setStrokeWidth(edge.strokeWidth * (1 - zoomOutFactor * 0.22));
+    paint.setAlphaf(edge.opacity * depthFade * (0.92 - zoomOutFactor * 0.36));
     paint.setStyle(1);
     paint.setStrokeCap(1);
     canvas.drawLine(

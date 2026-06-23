@@ -23,6 +23,7 @@ type GraphControlsProps = {
   resetLayoutLongPressEnabled?: boolean;
   legendVisible: boolean;
   legendToggleVisible?: boolean;
+  customLegend?: React.ReactNode;
   onToggleLegend: () => void;
   statusActive?: boolean;
   statusLabel?: string;
@@ -106,6 +107,7 @@ export function GraphControls({
   resetLayoutLongPressEnabled = false,
   legendVisible,
   legendToggleVisible = true,
+  customLegend,
   onToggleLegend,
   statusActive = false,
   statusLabel,
@@ -143,19 +145,35 @@ export function GraphControls({
                 gap: 10,
               }}
             >
-              <LegendRow color={color} edgeKind="similar" label={t('notesGraph.legend.similar')} />
-              <LegendRow
-                color={color}
-                edgeKind="sharedTag"
-                label={t('notesGraph.legend.sharedTag')}
-              />
-              <LegendRow
-                color={color}
-                edgeKind="sameFolder"
-                label={t('notesGraph.legend.sameFolder')}
-              />
-              <LegendRow color={color} edgeKind="linked" label={t('notesGraph.legend.linked')} />
-              <LegendRow color={color} edgeKind="contains" label={t('notesGraph.legend.tasks')} />
+              {customLegend ?? (
+                <>
+                  <LegendRow
+                    color={color}
+                    edgeKind="similar"
+                    label={t('notesGraph.legend.similar')}
+                  />
+                  <LegendRow
+                    color={color}
+                    edgeKind="sharedTag"
+                    label={t('notesGraph.legend.sharedTag')}
+                  />
+                  <LegendRow
+                    color={color}
+                    edgeKind="sameFolder"
+                    label={t('notesGraph.legend.sameFolder')}
+                  />
+                  <LegendRow
+                    color={color}
+                    edgeKind="linked"
+                    label={t('notesGraph.legend.linked')}
+                  />
+                  <LegendRow
+                    color={color}
+                    edgeKind="contains"
+                    label={t('notesGraph.legend.tasks')}
+                  />
+                </>
+              )}
             </View>
           </FrostedChromeSurface>
         ) : null}

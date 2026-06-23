@@ -24,6 +24,7 @@ import { NOTES_GRAPH_3D_LOADING_TIP_KEYS } from '../lib/graphLoadingTips';
 import type { GraphEdge, GraphNode } from '../lib/graphTypes';
 import { prepareGraph3DSceneLayout } from '../lib/prepareGraph3DSceneLayout';
 import { DottedBackground } from './DottedBackground';
+import { Graph3DInfoOverlay } from './Graph3DInfoOverlay';
 import { Graph3DScenePicture } from './Graph3DScenePicture';
 import { GraphBuildingState } from './GraphBuildingState';
 import { GraphControls } from './GraphControls';
@@ -55,6 +56,7 @@ export function GraphCanvas3D({
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const [isPreparing3d, setIsPreparing3d] = useState(true);
+  const [legendVisible, setLegendVisible] = useState(false);
   const prepareGenerationRef = useRef(0);
 
   const finishPrepare3d = useCallback((generation: number) => {
@@ -269,9 +271,20 @@ export function GraphCanvas3D({
         onZoomOut={zoomOut}
         onFit={fitToScreen}
         onReset={resetView}
-        legendVisible={false}
-        legendToggleVisible={false}
-        onToggleLegend={() => {}}
+        legendVisible={legendVisible}
+        legendToggleVisible
+        customLegend={
+          sceneLayout ? (
+            <Graph3DInfoOverlay
+              color={color}
+              clusterSummaries={sceneLayout.clusterSummaries}
+              edgeCount={sceneLayout.edges.length}
+              recordCount={sceneLayout.recordCount}
+              taskCount={sceneLayout.taskCount}
+            />
+          ) : null
+        }
+        onToggleLegend={() => setLegendVisible((value) => !value)}
         statusActive={mapStatusActive}
         statusLabel={mapStatusLabel}
       />
