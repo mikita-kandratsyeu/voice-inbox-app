@@ -52,7 +52,10 @@ type PutBody = {
   banner?: MobileBannerConfig | null;
 };
 
-function nextRevision(current: MobileBannerManifest, nextBanner: MobileBannerConfig | null): number {
+function nextRevision(
+  current: MobileBannerManifest,
+  nextBanner: MobileBannerConfig | null,
+): number {
   if (bannersEqual(current.banner, nextBanner)) {
     return current.revision;
   }

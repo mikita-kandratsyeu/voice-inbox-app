@@ -99,7 +99,10 @@ export async function getMobileBannerManifestForAdmin(): Promise<{
     if (parsed.ok) {
       return { manifest: parsed.manifest, hasStoredCopy: true };
     }
-    console.error('[mobile-banner-manifest-store] invalid stored manifest for admin:', parsed.error);
+    console.error(
+      '[mobile-banner-manifest-store] invalid stored manifest for admin:',
+      parsed.error,
+    );
   }
   return { manifest: createDefaultMobileBannerManifest(), hasStoredCopy: false };
 }

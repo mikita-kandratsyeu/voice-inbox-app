@@ -396,11 +396,7 @@ export function AdminMobileBannerPanel() {
                   key={locale}
                   type="button"
                   onClick={() => setLocaleTab(locale)}
-                  className={
-                    localeTab === locale
-                      ? adminBtnPrimaryClass
-                      : adminBtnSecondaryClass
-                  }
+                  className={localeTab === locale ? adminBtnPrimaryClass : adminBtnSecondaryClass}
                 >
                   {locale.toUpperCase()}
                 </button>

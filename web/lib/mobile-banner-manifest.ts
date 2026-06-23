@@ -99,10 +99,7 @@ function parsePlatforms(raw: unknown): MobileBannerPlatform[] | { error: string 
   return platforms;
 }
 
-function parseOptionalIsoDate(
-  raw: unknown,
-  field: string,
-): string | null | { error: string } {
+function parseOptionalIsoDate(raw: unknown, field: string): string | null | { error: string } {
   if (raw === undefined || raw === null || raw === '') {
     return null;
   }
@@ -164,7 +161,11 @@ function parseLocaleContent(
     return { error: `${fieldPrefix}.body is required when title is set` };
   }
 
-  const ctaLabel = parseOptionalString(item.ctaLabel, `${fieldPrefix}.ctaLabel`, MAX_CTA_LABEL_LENGTH);
+  const ctaLabel = parseOptionalString(
+    item.ctaLabel,
+    `${fieldPrefix}.ctaLabel`,
+    MAX_CTA_LABEL_LENGTH,
+  );
   if (ctaLabel && typeof ctaLabel === 'object' && 'error' in ctaLabel) return ctaLabel;
 
   const normalizedTitle = typeof title === 'string' ? title.trim() : '';
@@ -181,7 +182,9 @@ function parseLocaleContent(
   };
 }
 
-function parseLocales(raw: unknown): Record<MobileBannerLocale, MobileBannerLocaleContent> | { error: string } {
+function parseLocales(
+  raw: unknown,
+): Record<MobileBannerLocale, MobileBannerLocaleContent> | { error: string } {
   if (raw === undefined || raw === null) {
     return { error: 'banner.locales is required' };
   }
