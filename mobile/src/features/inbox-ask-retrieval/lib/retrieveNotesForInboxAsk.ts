@@ -16,7 +16,7 @@ import {
   prepareEmbeddingModel,
 } from '@/shared/lib/embeddings';
 
-export const INBOX_ASK_RETRIEVAL_TOP_K = 12;
+export const INBOX_ASK_RETRIEVAL_TOP_K = 20;
 export const SEMANTIC_SCORE_WEIGHT = 0.4;
 export const LEXICAL_SCORE_WEIGHT = 0.6;
 export const MIN_HYBRID_SCORE = 0.1;
@@ -54,6 +54,7 @@ const STOPWORDS = new Set([
 const RELEVANCE = {
   title: 5,
   summary: 4,
+  transcript: 3,
   tags: 2,
   tasks: 1,
   keyPhrases: 2,
@@ -86,6 +87,7 @@ function buildRetrievalSearchText(record: VoiceRecord | RecordListItem): string 
   const parts = [
     record.title ?? '',
     record.summary ?? '',
+    'transcript' in record ? (record.transcript ?? '') : '',
     ...(record.tags ?? []),
     ...(record.keyPhrases ?? []),
     ...(record.tasks ?? []).map((task) => task.text),
@@ -93,7 +95,7 @@ function buildRetrievalSearchText(record: VoiceRecord | RecordListItem): string 
   return parts.join(' ').toLowerCase();
 }
 
-function getQueryWords(query: string): string[] {
+export function getInboxAskQueryWords(query: string): string[] {
   return query
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\s]/gu, ' ')
@@ -118,6 +120,9 @@ function getLexicalScore(
 
   if (record.title.toLowerCase().includes(q)) score += RELEVANCE.title;
   if (record.summary?.toLowerCase().includes(q)) score += RELEVANCE.summary;
+  if ('transcript' in record && record.transcript?.toLowerCase().includes(q)) {
+    score += RELEVANCE.transcript;
+  }
   if (record.tags?.some((tag) => tag.toLowerCase().includes(q))) score += RELEVANCE.tags;
   if (record.keyPhrases?.some((phrase) => phrase.toLowerCase().includes(q))) {
     score += RELEVANCE.keyPhrases;
@@ -126,7 +131,7 @@ function getLexicalScore(
 
   if (score > 0) return score;
 
-  const words = getQueryWords(query);
+  const words = getInboxAskQueryWords(query);
   for (const word of words) {
     if (searchText.includes(word)) score += 2;
     else if (word.length >= 4 && searchText.includes(word.slice(0, 4))) score += 1;
@@ -139,12 +144,13 @@ function matchesLexicalQuery(
   query: string,
   searchText: string,
 ): boolean {
-  const words = getQueryWords(query);
+  const words = getInboxAskQueryWords(query);
   if (words.length > 0 && matchesQueryWords(searchText, words)) return true;
   const q = query.toLowerCase();
   return (
     record.title.toLowerCase().includes(q) ||
     !!record.summary?.toLowerCase().includes(q) ||
+    !!('transcript' in record && record.transcript?.toLowerCase().includes(q)) ||
     !!record.tags?.some((tag) => tag.toLowerCase().includes(q)) ||
     !!record.keyPhrases?.some((phrase) => phrase.toLowerCase().includes(q)) ||
     !!record.tasks?.some((task) => task.text.toLowerCase().includes(q))
@@ -227,7 +233,12 @@ function rankHybrid(
   embeddingsById: Map<string, number[]>,
 ): ScoredRecord[] {
   const maxLexical =
-    RELEVANCE.title + RELEVANCE.summary + RELEVANCE.tags + RELEVANCE.tasks + RELEVANCE.keyPhrases;
+    RELEVANCE.title +
+    RELEVANCE.summary +
+    RELEVANCE.transcript +
+    RELEVANCE.tags +
+    RELEVANCE.tasks +
+    RELEVANCE.keyPhrases;
 
   return records
     .map((record) => {
@@ -255,7 +266,7 @@ function rankHybrid(
 
 export async function prepareInboxAskQueryEmbedding(question: string): Promise<number[] | null> {
   const trimmed = question.trim();
-  const words = getQueryWords(trimmed);
+  const words = getInboxAskQueryWords(trimmed);
   if (!isEmbeddingAvailable() || trimmed.length < 3 || words.length < 2) {
     return null;
   }
@@ -301,18 +312,13 @@ export function retrieveNotesForInboxAsk(params: {
     ranked = rankLexicalOnly(corpus, query);
   }
 
-  if (ranked.length === 0 && corpus.length > 0) {
-    retrievalMode = 'lexical';
-    ranked = corpus
-      .map((record) => ({ record, score: dayjs(record.createdAt).valueOf() / 1_000_000_000_000 }))
-      .sort((a, b) => b.score - a.score);
-  }
-
   const topCandidates = ranked
     .slice(0, INBOX_ASK_RETRIEVAL_TOP_K)
     .map(({ record, score }) => toCorpusCandidate(record, score));
 
-  const packResult = packCorpusNotesForPrompt(topCandidates);
+  const packResult = packCorpusNotesForPrompt(topCandidates, {
+    queryTerms: getInboxAskQueryWords(query),
+  });
 
   return {
     candidates: topCandidates,

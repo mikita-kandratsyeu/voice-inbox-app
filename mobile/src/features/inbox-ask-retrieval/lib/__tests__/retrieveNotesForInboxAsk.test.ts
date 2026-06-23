@@ -33,6 +33,7 @@ import type { VoiceRecord } from '@/entities/record';
 import {
   countInboxAskCorpusRecords,
   filterInboxAskCorpusRecords,
+  INBOX_ASK_RETRIEVAL_TOP_K,
   retrieveNotesForInboxAsk,
 } from '../retrieveNotesForInboxAsk';
 
@@ -135,7 +136,28 @@ describe('retrieveNotesForInboxAsk', () => {
     expect(withArchive.notes.map((note) => note.recordId).sort()).toEqual(['active', 'archived']);
   });
 
-  it('falls back to recent notes when nothing matches lexically', () => {
+  it('ranks transcript-only lexical matches into retrieval results', () => {
+    const transcriptHit = makeRecord('transcript', 'Weekly sync', {
+      summary: 'General meeting notes',
+      transcript: 'We discussed the quarterly budget allocation in detail.',
+    });
+    const unrelated = makeRecord('other', 'Garden plans', {
+      summary: 'Planting schedule',
+      transcript: 'Tomatoes and herbs for the patio.',
+    });
+
+    const result = retrieveNotesForInboxAsk({
+      question: 'budget',
+      records: [unrelated, transcriptHit],
+      embeddingsById: new Map(),
+    });
+
+    expect(result.retrievalMode).toBe('lexical');
+    expect(result.notes.some((note) => note.recordId === 'transcript')).toBe(true);
+    expect(result.notes.every((note) => note.recordId !== 'other')).toBe(true);
+  });
+
+  it('returns empty notes when nothing matches lexically', () => {
     const older = makeRecord('old', 'Alpha', {
       summary: 'Older note',
       createdAt: '2025-01-01T00:00:00.000Z',
@@ -152,9 +174,26 @@ describe('retrieveNotesForInboxAsk', () => {
     });
 
     expect(result.retrievalMode).toBe('lexical');
-    expect(result.candidates[0]?.recordId).toBe('new');
-    expect(result.notes[0]?.recordId).toBe('new');
+    expect(result.candidates).toHaveLength(0);
+    expect(result.notes).toHaveLength(0);
     expect(result.totalCorpusCount).toBe(2);
+  });
+
+  it('keeps final packed notes within max notes even with a wider pre-pack pool', () => {
+    const records = Array.from({ length: INBOX_ASK_RETRIEVAL_TOP_K + 5 }, (_, index) =>
+      makeRecord(`note-${index}`, `Budget note ${index}`, {
+        summary: `Budget topic ${index}`,
+      }),
+    );
+
+    const result = retrieveNotesForInboxAsk({
+      question: 'budget',
+      records,
+      embeddingsById: new Map(),
+    });
+
+    expect(result.candidates.length).toBeLessThanOrEqual(INBOX_ASK_RETRIEVAL_TOP_K);
+    expect(result.notes.length).toBeLessThanOrEqual(8);
   });
 
   it('uses hybrid ranking when query and note embeddings are available', () => {

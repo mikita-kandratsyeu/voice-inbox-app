@@ -2,6 +2,8 @@ import {
   type CorpusNoteCandidate,
   INBOX_ASK_MAX_NOTES,
   packCorpusNotesForPrompt,
+  queryAwareTranscriptExcerpt,
+  TRANSCRIPT_EXCERPT_MAX,
 } from '../corpusNotesForPrompt';
 
 const makeCandidate = (
@@ -56,5 +58,32 @@ describe('packCorpusNotesForPrompt', () => {
 
     expect(result.totalChars).toBeLessThanOrEqual(2000);
     expect(result.notes.length).toBeGreaterThan(0);
+  });
+
+  it('centers query-aware transcript excerpts around matched terms', () => {
+    const prefix = 'a'.repeat(200);
+    const suffix = 'z'.repeat(200);
+    const transcript = `${prefix} quarterly budget planning ${suffix}`;
+
+    const excerpt = queryAwareTranscriptExcerpt(transcript, ['budget'], TRANSCRIPT_EXCERPT_MAX);
+
+    expect(excerpt).toContain('budget');
+    expect(excerpt?.length).toBeLessThanOrEqual(TRANSCRIPT_EXCERPT_MAX);
+    expect(excerpt).not.toMatch(/^a{40}/);
+  });
+
+  it('includes transcript excerpt when query terms match transcript but not summary', () => {
+    const result = packCorpusNotesForPrompt(
+      [
+        makeCandidate('a', 1, {
+          summary: 'General meeting notes',
+          transcript: 'We reviewed the quarterly budget allocation in detail.',
+        }),
+      ],
+      { queryTerms: ['budget'] },
+    );
+
+    expect(result.notes[0]?.transcriptExcerpt).toContain('budget');
+    expect(result.notes[0]?.summary).toBe('General meeting notes');
   });
 });

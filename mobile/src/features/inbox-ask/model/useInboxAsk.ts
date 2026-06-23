@@ -30,6 +30,7 @@ import {
 } from '@/shared/lib/aiGenerationAbortRegistry';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import { diagWarn } from '@/shared/lib/appLogger';
+import { i18n } from '@/shared/lib/i18n';
 
 import {
   buildInboxAskSessionKey,
@@ -410,6 +411,7 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
 
       try {
         const queryEmbedding = await prepareInboxAskQueryEmbedding(trimmedQuestion);
+        embeddingsRef.current = await recordRepository.getEmbeddingsForActiveRecords();
         const retrieval = retrieveNotesForInboxAsk({
           question: trimmedQuestion,
           records,
@@ -424,7 +426,7 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
               ...prev,
               isLoading: false,
               phase: 'idle' as const,
-              error: null,
+              error: i18n.t('inboxAsk.noRelevantNotes'),
               answer: null,
             };
             persistSnapshot(next);

@@ -52,6 +52,81 @@ export function smartTranscriptExcerpt(
   return `${normalized.slice(0, headLen)}${TRANSCRIPT_EXCERPT_GAP}${normalized.slice(-tailLen)}`;
 }
 
+function textMatchesQueryTerm(text: string, term: string): boolean {
+  const lower = text.toLowerCase();
+  return lower.includes(term) || (term.length >= 4 && lower.includes(term.slice(0, 4)));
+}
+
+function findQueryMatchIndex(text: string, queryTerms: string[]): number {
+  const lower = text.toLowerCase();
+  for (const term of queryTerms) {
+    const direct = lower.indexOf(term);
+    if (direct !== -1) return direct;
+    if (term.length >= 4) {
+      const prefixed = lower.indexOf(term.slice(0, 4));
+      if (prefixed !== -1) return prefixed;
+    }
+  }
+  return -1;
+}
+
+export function queryAwareTranscriptExcerpt(
+  text: string | null | undefined,
+  queryTerms: string[] | undefined,
+  maxChars: number,
+): string | undefined {
+  const normalized = normalizeText(text);
+  if (!normalized) return undefined;
+  if (normalized.length <= maxChars) return normalized;
+
+  const matchIndex =
+    queryTerms?.length && queryTerms.length > 0 ? findQueryMatchIndex(normalized, queryTerms) : -1;
+
+  if (matchIndex === -1) {
+    return smartTranscriptExcerpt(normalized, maxChars);
+  }
+
+  const gap = TRANSCRIPT_EXCERPT_GAP;
+  const hasLeadingGap = matchIndex > 0;
+  const hasTrailingGap = matchIndex < normalized.length - 1;
+  const gapBudget = (hasLeadingGap ? gap.length : 0) + (hasTrailingGap ? gap.length : 0);
+  const innerBudget = maxChars - gapBudget;
+  if (innerBudget <= 2) {
+    return normalized.slice(0, maxChars);
+  }
+
+  const matchCenter = matchIndex;
+  let start = Math.max(0, matchCenter - Math.floor(innerBudget / 2));
+  let end = Math.min(normalized.length, start + innerBudget);
+  start = Math.max(0, end - innerBudget);
+
+  const leading = start > 0 ? gap : '';
+  const trailing = end < normalized.length ? gap : '';
+  return `${leading}${normalized.slice(start, end)}${trailing}`;
+}
+
+function shouldIncludeTranscriptExcerpt(
+  candidate: CorpusNoteCandidate,
+  index: number,
+  queryTerms: string[],
+): boolean {
+  const transcript = normalizeText(candidate.transcript);
+  if (!transcript) return false;
+
+  const summary = normalizeText(candidate.summary);
+  if (!summary && index < 2) return true;
+
+  if (!queryTerms.length) return false;
+
+  const summaryLower = summary.toLowerCase();
+  const transcriptLower = transcript.toLowerCase();
+  return queryTerms.some((term) => {
+    const inTranscript = textMatchesQueryTerm(transcriptLower, term);
+    const inSummary = summary ? textMatchesQueryTerm(summaryLower, term) : false;
+    return inTranscript && !inSummary;
+  });
+}
+
 function extractOpenTasks(
   tasks: CorpusNoteCandidate['tasks'],
   maxTasks: number,
@@ -78,6 +153,7 @@ function buildCorpusNoteFromCandidate(
   options: {
     summaryMaxChars: number;
     includeTranscriptExcerpt: boolean;
+    queryTerms?: string[];
   },
 ): CorpusNoteForPrompt | null {
   const title = normalizeText(candidate.title).slice(0, NOTE_TITLE_MAX);
@@ -93,10 +169,9 @@ function buildCorpusNoteFromCandidate(
 
   const tasks = extractOpenTasks(candidate.tasks, NOTE_TASKS_MAX);
 
-  const transcriptExcerpt =
-    options.includeTranscriptExcerpt && !summary
-      ? smartTranscriptExcerpt(candidate.transcript, TRANSCRIPT_EXCERPT_MAX)
-      : undefined;
+  const transcriptExcerpt = options.includeTranscriptExcerpt
+    ? queryAwareTranscriptExcerpt(candidate.transcript, options.queryTerms, TRANSCRIPT_EXCERPT_MAX)
+    : undefined;
 
   if (!summary && !transcriptExcerpt && tasks.length === 0 && !keyPhrases?.length) {
     return null;
@@ -118,10 +193,11 @@ function buildCorpusNoteFromCandidate(
 
 export function packCorpusNotesForPrompt(
   candidates: readonly CorpusNoteCandidate[],
-  options?: { maxNotes?: number; maxPayloadChars?: number },
+  options?: { maxNotes?: number; maxPayloadChars?: number; queryTerms?: string[] },
 ): PackCorpusNotesResult {
   const maxNotes = options?.maxNotes ?? INBOX_ASK_MAX_NOTES;
   const maxPayloadChars = options?.maxPayloadChars ?? INBOX_ASK_MAX_PAYLOAD_CHARS;
+  const queryTerms = options?.queryTerms ?? [];
 
   const sorted = [...candidates].sort((a, b) => b.score - a.score);
   let pool = sorted.slice(0, maxNotes);
@@ -133,10 +209,11 @@ export function packCorpusNotesForPrompt(
 
     for (let index = 0; index < pool.length; index += 1) {
       const candidate = pool[index];
-      const includeTranscriptExcerpt = index < 2 && !normalizeText(candidate.summary);
+      const includeTranscriptExcerpt = shouldIncludeTranscriptExcerpt(candidate, index, queryTerms);
       const note = buildCorpusNoteFromCandidate(candidate, {
         summaryMaxChars: summaryMax,
         includeTranscriptExcerpt,
+        queryTerms,
       });
       if (note) notes.push(note);
     }

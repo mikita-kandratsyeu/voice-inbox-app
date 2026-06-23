@@ -3075,6 +3075,7 @@
     "evidenceOpenNote": "Open note",
     "evidenceOpenNoteA11y": "Open note {{title}}",
     "privateDeviceUnavailable": "Use Smart or set up your AI server to ask about Inbox.",
+    "noRelevantNotes": "No relevant notes found. Try rephrasing your question or widening the search scope.",
     "errorTitle": "Couldn't get an answer",
     "errorRetry": "Try again",
     "errorPrivateHint": "The request couldn't complete. Check your AI model or mode, then tap Try again.",
