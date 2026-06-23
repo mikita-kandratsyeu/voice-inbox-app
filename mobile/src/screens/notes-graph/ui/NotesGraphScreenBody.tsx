@@ -51,6 +51,10 @@ import {
   shouldAnimateLayoutTransition,
 } from '../lib/graphLayoutTransition';
 import {
+  NOTES_GRAPH_3D_LOADING_TIP_KEYS,
+  NOTES_GRAPH_LOADING_TIP_KEYS,
+} from '../lib/graphLoadingTips';
+import {
   getGraphMinimapVisible,
   isGraphMinimapAvailable,
   setGraphMinimapVisible,
@@ -199,6 +203,8 @@ export const NotesGraphScreenBody = () => {
   const [minimapVisible, setMinimapVisible] = useState(() => getGraphMinimapVisible());
   const [nodeDisplayMode, setNodeDisplayMode] = useState(() => getGraphNodeDisplayMode());
   const [graphViewMode, setGraphViewMode] = useState<GraphViewMode>('2d');
+  const [isPreparing3dView, setIsPreparing3dView] = useState(false);
+  const [isPreparing2dView, setIsPreparing2dView] = useState(false);
   const exportCaptureTokenRef = useRef(0);
   const exportPreviewBackgroundIdRef = useRef<GraphExportBackgroundId>(
     GRAPH_EXPORT_DEFAULT_BACKGROUND_ID,
@@ -956,14 +962,22 @@ export const NotesGraphScreenBody = () => {
 
   const toggleGraphViewMode = useCallback(() => {
     hapticSelection();
-    setGraphViewMode((prev) => {
-      const next = prev === '2d' ? '3d' : '2d';
-      if (next === '3d') {
-        setSearchBarExplicitOpen(false);
-      }
-      return next;
+    if (graphViewMode === '3d') {
+      setIsPreparing3dView(false);
+      setIsPreparing2dView(true);
+      void waitForNextFrame().then(() => {
+        setGraphViewMode('2d');
+      });
+      return;
+    }
+
+    setIsPreparing2dView(false);
+    setIsPreparing3dView(true);
+    setSearchBarExplicitOpen(false);
+    void waitForNextFrame().then(() => {
+      setGraphViewMode('3d');
     });
-  }, []);
+  }, [graphViewMode]);
 
   const appliedLayoutHeaderSubtitle = useMemo(() => {
     if (recordCount === 0 || !activeSavedVersion || hasUnsavedLayoutChanges || isGraphMapBusy) {
@@ -1395,6 +1409,7 @@ export const NotesGraphScreenBody = () => {
               isExportCapturing={isCapturingExport}
               folderHighlightsVisible={folderHighlightsVisible}
               minimapVisible={minimapVisible}
+              onMountReady={() => setIsPreparing2dView(false)}
             />
           ) : (
             <GraphCanvas3D
@@ -1406,8 +1421,25 @@ export const NotesGraphScreenBody = () => {
               bottomInset={insets.bottom}
               mapStatusActive={isGraphMapBusy}
               mapStatusLabel={graphMapStatusLabel}
+              onPrepareComplete={() => setIsPreparing3dView(false)}
             />
           )}
+
+          {isPreparing3dView ? (
+            <GraphBuildingState
+              label={t('notesGraph.preparing3d')}
+              blockTouches
+              tipKeys={NOTES_GRAPH_3D_LOADING_TIP_KEYS}
+            />
+          ) : null}
+
+          {isPreparing2dView ? (
+            <GraphBuildingState
+              label={t('notesGraph.building')}
+              blockTouches
+              tipKeys={NOTES_GRAPH_LOADING_TIP_KEYS}
+            />
+          ) : null}
         </View>
       )}
 

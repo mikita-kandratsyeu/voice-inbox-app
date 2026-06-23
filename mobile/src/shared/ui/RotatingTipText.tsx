@@ -1,6 +1,6 @@
 import React from 'react';
 import { type TextStyle } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 type RotatingTipTextProps = {
   text: string;
@@ -9,7 +9,7 @@ type RotatingTipTextProps = {
   style?: TextStyle;
 };
 
-/** Cross-fades when `text` changes (rotating AI tips). */
+/** Cross-fades when `text` changes (rotating AI tips). Unmounts instantly with the parent. */
 export function RotatingTipText({ text, color, className, style }: RotatingTipTextProps) {
   if (!text) return null;
 
@@ -17,7 +17,6 @@ export function RotatingTipText({ text, color, className, style }: RotatingTipTe
     <Animated.Text
       key={text}
       entering={FadeIn.duration(320)}
-      exiting={FadeOut.duration(200)}
       className={className ?? 'text-[14px] leading-5'}
       style={[style, { color }]}
     >

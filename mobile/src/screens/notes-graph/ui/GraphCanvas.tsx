@@ -111,6 +111,7 @@ type GraphCanvasProps = {
   onNodeFocus: (nodeId: string) => void;
   onResetView?: () => void;
   onReconcilingChange?: (isReconciling: boolean) => void;
+  onMountReady?: () => void;
   mapStatusActive?: boolean;
   mapStatusLabel?: string;
   onLayoutPositionsChange?: () => void;
@@ -175,6 +176,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     onNodeFocus,
     onResetView,
     onReconcilingChange,
+    onMountReady,
     mapStatusActive = false,
     mapStatusLabel,
     onLayoutPositionsChange,
@@ -537,9 +539,25 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       if (!hasInitiallyFittedRef.current) {
         hasInitiallyFittedRef.current = true;
         fitToScreen(false);
+
+        if (!onMountReady) {
+          return undefined;
+        }
+
+        const task = runAfterInteractions(() => onMountReady());
+        return () => task.cancel();
       }
     }
-  }, [layoutSignature, fitToScreen, nodes.length, viewportSize.height, viewportSize.width]);
+
+    return undefined;
+  }, [
+    fitToScreen,
+    layoutSignature,
+    nodes.length,
+    onMountReady,
+    viewportSize.height,
+    viewportSize.width,
+  ]);
 
   useEffect(() => {
     applyTransform(
