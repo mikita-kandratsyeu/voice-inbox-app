@@ -1,5 +1,11 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
-import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
+import type {
+  AskAnswerKind,
+  AskEvidence,
+  InboxAskToolCall,
+  InboxAskToolResult,
+  InboxAskToolStep,
+} from '@/shared/lib/ai-core/types';
 import type { CorpusNoteForPrompt } from '@/shared/lib/ai-core/types';
 import { requestAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
@@ -69,6 +75,7 @@ export type InboxAskApiResult =
 export type InboxAskMessageResult =
   | {
       ok: true;
+      status: 'done';
       result: {
         answer: string;
         answerKind?: AskAnswerKind;
@@ -77,12 +84,29 @@ export type InboxAskMessageResult =
         interpretations?: string[];
         evidence?: AskEvidence[];
         model?: string;
+        toolSteps?: InboxAskToolStep[];
       };
+    }
+  | {
+      ok: true;
+      status: 'needs_tool';
+      toolCall: InboxAskToolCall;
+      toolSteps?: InboxAskToolStep[];
+      syncToken?: string;
     }
   | { ok: false; error: string };
 
+type InboxAskPollSuccess = Extract<InboxAskMessageResult, { ok: true }>;
+
 type InboxAskResponse =
   | { id: string; status: 'processing'; model?: string }
+  | {
+      id: string;
+      status: 'needs_tool';
+      toolCall: InboxAskToolCall;
+      toolSteps?: InboxAskToolStep[];
+      model?: string;
+    }
   | {
       id: string;
       status: 'done';
@@ -93,6 +117,7 @@ type InboxAskResponse =
       interpretations?: string[];
       evidence?: AskEvidence[];
       model?: string;
+      toolSteps?: InboxAskToolStep[];
     }
   | { id: string; status: 'error'; error: string; model?: string };
 
@@ -176,15 +201,7 @@ export async function pollInboxAskResult(
 
   const url = `${getWebApiUrl()}/api/inbox-ask/${id}`;
 
-  return pollGetLoop<{
-    answer: string;
-    answerKind?: AskAnswerKind;
-    items?: string[];
-    suggestedFollowUps?: string[];
-    interpretations?: string[];
-    evidence?: AskEvidence[];
-    model?: string;
-  }>(
+  const poll = await pollGetLoop<InboxAskPollSuccess>(
     url,
     (json) => {
       const msg = json as InboxAskResponse;
@@ -192,15 +209,32 @@ export async function pollInboxAskResult(
         return {
           ok: true,
           result: {
-            answer: msg.answer,
-            ...(msg.answerKind ? { answerKind: msg.answerKind } : {}),
-            ...(msg.items?.length ? { items: msg.items } : {}),
-            ...(msg.suggestedFollowUps?.length
-              ? { suggestedFollowUps: msg.suggestedFollowUps }
-              : {}),
-            ...(msg.interpretations?.length ? { interpretations: msg.interpretations } : {}),
-            ...(msg.evidence?.length ? { evidence: msg.evidence } : {}),
-            ...(isString(msg.model) && msg.model.trim() ? { model: msg.model.trim() } : {}),
+            ok: true,
+            status: 'done',
+            result: {
+              answer: msg.answer,
+              ...(msg.answerKind ? { answerKind: msg.answerKind } : {}),
+              ...(msg.items?.length ? { items: msg.items } : {}),
+              ...(msg.suggestedFollowUps?.length
+                ? { suggestedFollowUps: msg.suggestedFollowUps }
+                : {}),
+              ...(msg.interpretations?.length ? { interpretations: msg.interpretations } : {}),
+              ...(msg.evidence?.length ? { evidence: msg.evidence } : {}),
+              ...(isString(msg.model) && msg.model.trim() ? { model: msg.model.trim() } : {}),
+              ...(msg.toolSteps?.length ? { toolSteps: msg.toolSteps } : {}),
+            },
+          },
+        };
+      }
+
+      if (msg.status === 'needs_tool') {
+        return {
+          ok: true,
+          result: {
+            ok: true,
+            status: 'needs_tool',
+            toolCall: msg.toolCall,
+            ...(msg.toolSteps?.length ? { toolSteps: msg.toolSteps } : {}),
           },
         };
       }
@@ -214,4 +248,55 @@ export async function pollInboxAskResult(
     },
     { ...options, headers, jobType: 'ask' },
   );
+
+  if (!poll.ok) return poll;
+  return poll.result;
+}
+
+export async function postInboxAskToolResult(
+  id: string,
+  result: InboxAskToolResult,
+  options?: AiFetchOptions,
+): Promise<InboxAskApiResult> {
+  const url = `${getWebApiUrl()}/api/inbox-ask/${id}/tool-result`;
+
+  if (options?.signal?.aborted) {
+    return aiRequestCancelledFailure();
+  }
+
+  let response: Response;
+  try {
+    response = await fetchWithAuth(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...headersForAiOperation('inbox_ask'),
+      },
+      body: JSON.stringify(result),
+      signal: options?.signal,
+    });
+  } catch (err) {
+    if (options?.signal?.aborted || isAbortLikeError(err)) {
+      return aiRequestCancelledFailure();
+    }
+    const errorMsg = err instanceof Error ? err.message : 'Network error';
+    diagWarn('[AI] postInboxAskToolResult: fetch failed', { error: errorMsg, url });
+    return { ok: false, error: errorMsg };
+  }
+
+  if (!response.ok) {
+    const text = await response.text();
+    devWarn('[AI] postInboxAskToolResult: HTTP error', {
+      status: response.status,
+      body: text,
+    });
+    return { ok: false, error: text || `HTTP ${response.status}` };
+  }
+
+  const successBody = await readResponseJson(response);
+  if (!successBody.ok) {
+    return { ok: false, error: successBody.error };
+  }
+
+  return { ok: true, data: successBody.data as InboxAskApiSuccessResponse };
 }

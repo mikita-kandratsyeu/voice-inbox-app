@@ -3,8 +3,9 @@ import { isRetryableAiJobError } from '@/lib/ai-job-retry';
 import { notifyAiJobComplete } from '@/lib/ai-job-push';
 import { aiModelResponseFields } from '@/lib/ai-model-display';
 import { updateAiUsageLedgerMetadata } from '@/lib/ai-usage-ledger';
+import { saveJobPayload } from '@/lib/ai-job-payload';
 import { saveMessage } from '@/lib/redis';
-import { processInboxAskQuestion } from '@/services/ai.service';
+import { processInboxAskQuestionWithTools } from '@/services/ai.service';
 import type { InboxAskJobPayload } from '@/types/ai-job';
 import type { AskMessage, Message } from '@/types';
 
@@ -24,14 +25,38 @@ export async function runInboxAskJob(payload: InboxAskJobPayload): Promise<void>
     saveMessage(msgId, data as unknown as Message, ttl);
 
   try {
-    const result = await processInboxAskQuestion(
+    const loop = await processInboxAskQuestionWithTools({
+      priorTurns,
       corpusNotes,
       question,
       model,
-      priorTurns,
       clientUserAgent,
       deviceId,
-    );
+      toolMessages: payload.toolMessages,
+      toolSteps: payload.toolSteps,
+      toolRound: payload.toolRound,
+    });
+
+    if (loop.status === 'needs_tool') {
+      await saveJobPayload({
+        ...payload,
+        pendingToolCall: loop.toolCall,
+        toolMessages: loop.toolMessages,
+        toolSteps: loop.toolSteps,
+        toolRound: loop.toolCall.round,
+      });
+      await saveAskMessage(id, {
+        id,
+        status: 'needs_tool',
+        ...aiModelResponseFields(model),
+        ...(payload.modelMode ? { modelMode: payload.modelMode } : {}),
+        toolCall: loop.toolCall,
+        toolSteps: loop.toolSteps,
+      });
+      return;
+    }
+
+    const result = loop.result;
     await saveAskMessage(id, {
       id,
       status: 'done',
@@ -45,6 +70,7 @@ export async function runInboxAskJob(payload: InboxAskJobPayload): Promise<void>
       ...(result.suggestedFollowUps?.length
         ? { suggestedFollowUps: result.suggestedFollowUps }
         : {}),
+      ...(loop.toolSteps?.length ? { toolSteps: loop.toolSteps } : {}),
     });
 
     await notifyAiJobComplete({

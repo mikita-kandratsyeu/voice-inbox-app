@@ -3,7 +3,7 @@ import { MESSAGE_TTL_SECONDS } from '@/config/constants';
 import { checkAndIncrement, type AiLimitContext } from '@/lib/ai-rate-limit';
 import type { AiModelMode } from '@/lib/ai-model-router';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
-import { saveJobPayload } from '@/lib/ai-job-payload';
+import { getJobPayload, saveJobPayload } from '@/lib/ai-job-payload';
 import { saveJobMetadata, getJobMetadata } from '@/lib/job-metadata';
 import { enrichWithPollingHints, operationToJobType } from '@/lib/polling-hints';
 import {
@@ -14,6 +14,7 @@ import {
 } from '@/lib/ai-model-display';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import type { CorpusNoteForPrompt } from '@/lib/corpus-notes-prompt';
+import { validateInboxAskToolResult } from '@/lib/inbox-ask-tools';
 import type { InboxAskJobPayload } from '@/types/ai-job';
 import type { AskMessage, Message } from '@/types';
 
@@ -118,6 +119,8 @@ export const getInboxAskById = async (
     interpretations?: unknown;
     evidence?: unknown;
     error?: string;
+    toolCall?: unknown;
+    toolSteps?: unknown;
   };
   if (!msg?.id || !msg?.status) return null;
 
@@ -153,6 +156,20 @@ export const getInboxAskById = async (
     }
     return sanitizeAiModelFieldsForClient(base as AskMessage);
   }
+  if (msg.status === 'needs_tool') {
+    const toolCall =
+      msg.toolCall && typeof msg.toolCall === 'object'
+        ? (msg.toolCall as AskMessage & { status: 'needs_tool' })['toolCall']
+        : undefined;
+    if (!toolCall) return null;
+    return sanitizeAiModelFieldsForClient({
+      id: msg.id,
+      status: 'needs_tool',
+      ...modelFields,
+      toolCall,
+      ...(Array.isArray(msg.toolSteps) ? { toolSteps: msg.toolSteps } : {}),
+    } as AskMessage);
+  }
   if (msg.status === 'done' && typeof msg.answer === 'string') {
     const answerKind =
       msg.answerKind === 'plain' ||
@@ -186,6 +203,9 @@ export const getInboxAskById = async (
       ...(items?.length ? { items } : {}),
       ...(suggestedFollowUps?.length ? { suggestedFollowUps } : {}),
       ...(interpretations?.length ? { interpretations } : {}),
+      ...(Array.isArray(msg.toolSteps) && msg.toolSteps.length > 0
+        ? { toolSteps: msg.toolSteps }
+        : {}),
       ...(Array.isArray(msg.evidence) && msg.evidence.length > 0 ? { evidence: msg.evidence } : {}),
     } as AskMessage);
   }
@@ -200,3 +220,80 @@ export const getInboxAskById = async (
 
   return null;
 };
+
+export async function submitInboxAskToolResult(
+  id: string,
+  deviceId: string,
+  result: import('@/lib/inbox-ask-tools').InboxAskToolResult,
+): Promise<{ ok: true; syncToken?: string } | { ok: false; error: string; status: number }> {
+  if (!validateInboxAskToolResult(result)) {
+    return { ok: false, error: 'Invalid tool result', status: 400 };
+  }
+
+  const payload = await getJobPayload(id);
+  if (!payload || payload.operation !== 'inbox_ask') {
+    return { ok: false, error: 'Not found', status: 404 };
+  }
+  if (payload.deviceId !== deviceId) {
+    return { ok: false, error: 'Forbidden', status: 403 };
+  }
+
+  const pending = payload.pendingToolCall;
+  if (!pending) {
+    const alreadyApplied = payload.toolResults?.some(
+      (item) => item.toolCallId === result.toolCallId,
+    );
+    if (alreadyApplied) {
+      return { ok: true, syncToken: getSyncToken() };
+    }
+    return { ok: false, error: 'No pending tool call', status: 409 };
+  }
+
+  if (
+    pending.toolCallId !== result.toolCallId ||
+    pending.toolName !== result.toolName ||
+    pending.round !== result.round
+  ) {
+    return { ok: false, error: 'Tool result does not match pending call', status: 409 };
+  }
+
+  if (Date.parse(pending.expiresAt) < Date.now()) {
+    return { ok: false, error: 'Tool call expired', status: 410 };
+  }
+
+  const toolMessages = [
+    ...(payload.toolMessages ?? []),
+    {
+      role: 'tool' as const,
+      tool_call_id: result.toolCallId,
+      content: JSON.stringify(result.result),
+    },
+  ];
+  const toolSteps = (payload.toolSteps ?? []).map((step) =>
+    step.toolCallId === result.toolCallId
+      ? { ...step, status: 'completed' as const }
+      : step,
+  );
+  const { pendingToolCall: _pendingToolCall, ...payloadWithoutPending } = payload;
+  const nextPayload: InboxAskJobPayload = {
+    ...payloadWithoutPending,
+    toolResults: [...(payload.toolResults ?? []), result],
+    toolMessages,
+    toolSteps,
+  };
+
+  await saveJobPayload(nextPayload);
+  await saveMessage(
+    id,
+    {
+      id,
+      status: 'processing',
+      ...aiModelResponseFields(payload.model),
+      ...(payload.modelMode ? { modelMode: payload.modelMode } : {}),
+    } as unknown as Message,
+    payload.messageTtlSeconds,
+  );
+  await dispatchAiJob(nextPayload, { deduplicationId: `${id}-tool-${result.toolCallId}` });
+
+  return { ok: true, syncToken: getSyncToken() };
+}

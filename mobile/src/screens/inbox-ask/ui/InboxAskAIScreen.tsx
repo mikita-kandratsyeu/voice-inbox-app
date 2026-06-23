@@ -271,6 +271,13 @@ export function InboxAskAIScreen() {
     showPrivateModeCta: isPrivateMode,
   } as const;
 
+  const loadingStatusTitle =
+    inboxAsk.phase === 'retrieving'
+      ? t('inboxAsk.retrieving')
+      : inboxAsk.phase === 'tool_executing'
+        ? t('inboxAsk.toolExecuting')
+        : t('inboxAsk.processing');
+
   const mainBody = (() => {
     if (inboxAsk.isRestoringSession) {
       return <SessionRestoringSkeleton color={color} />;
@@ -290,9 +297,7 @@ export function InboxAskAIScreen() {
           onCopy={handleCopy}
           onShare={handleShare}
           onCancel={inboxAsk.cancelAsk}
-          statusTitle={
-            inboxAsk.phase === 'retrieving' ? t('inboxAsk.retrieving') : t('inboxAsk.processing')
-          }
+          statusTitle={loadingStatusTitle}
         />
       );
     }

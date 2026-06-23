@@ -9,6 +9,7 @@ import {
   postAiMessage,
   postAskQuestion,
   postInboxAskQuestion,
+  postInboxAskToolResult,
   recordIdFromSummarizeJobId,
   saveCloudSummarizePending,
 } from '@/shared/lib/ai-api';
@@ -303,23 +304,56 @@ export async function runCloudInboxAsk(
     return mapPostError(postResult, ctx.aiExecutionMode, 'AI weekly limit exceeded');
   }
 
-  const pollResult = await pollInboxAskResult(request.id, postResult.data.syncToken, fetchOptions);
-  if (!pollResult.ok) {
-    if (pollResult.error === AI_REQUEST_CANCELLED) {
-      return cloudAskCancelledFailure(ctx.aiExecutionMode);
+  let syncToken = postResult.data.syncToken;
+  for (let round = 0; round < 4; round += 1) {
+    const pollResult = await pollInboxAskResult(request.id, syncToken, fetchOptions);
+    if (!pollResult.ok) {
+      if (pollResult.error === AI_REQUEST_CANCELLED) {
+        return cloudAskCancelledFailure(ctx.aiExecutionMode);
+      }
+      return {
+        ok: false,
+        provider: 'cloud',
+        mode: ctx.aiExecutionMode,
+        error: pollResult.error,
+      };
     }
-    return {
-      ok: false,
-      provider: 'cloud',
-      mode: ctx.aiExecutionMode,
-      error: pollResult.error,
-    };
+
+    if (pollResult.status === 'done') {
+      return {
+        ok: true,
+        provider: 'cloud',
+        mode: ctx.aiExecutionMode,
+        result: pollResult.result,
+      };
+    }
+
+    if (!request.toolExecutor) {
+      return {
+        ok: false,
+        provider: 'cloud',
+        mode: ctx.aiExecutionMode,
+        error: i18n.t('inboxAsk.toolUnavailable'),
+      };
+    }
+
+    request.onInboxAskToolCall?.(pollResult.toolCall);
+    const toolResult = await request.toolExecutor(pollResult.toolCall);
+    request.onInboxAskToolResult?.(toolResult);
+    const postToolResult = await postInboxAskToolResult(request.id, toolResult, fetchOptions);
+    if (!postToolResult.ok) {
+      if ('error' in postToolResult && postToolResult.error === AI_REQUEST_CANCELLED) {
+        return cloudAskCancelledFailure(ctx.aiExecutionMode);
+      }
+      return mapPostError(postToolResult, ctx.aiExecutionMode, 'AI weekly limit exceeded');
+    }
+    syncToken = postToolResult.data.syncToken ?? syncToken;
   }
 
   return {
-    ok: true,
+    ok: false,
     provider: 'cloud',
     mode: ctx.aiExecutionMode,
-    result: pollResult.result,
+    error: i18n.t('inboxAsk.toolLimitExceeded'),
   };
 }

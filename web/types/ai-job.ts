@@ -3,6 +3,17 @@ import type { AiModelMode } from '@/lib/ai-model-router';
 import type { MeetingDialogueTranscriptSegment } from '@/lib/meeting-dialogue-user-prompt';
 import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
 import type { AskLinkedNoteForPrompt } from '@/lib/linked-notes-prompt';
+import type {
+  InboxAskToolCallRequest,
+  InboxAskToolResult,
+  InboxAskToolStep,
+} from '@/lib/inbox-ask-tools';
+
+export type AiChatToolMessage =
+  | { role: 'system'; content: string }
+  | { role: 'user'; content: string }
+  | { role: 'assistant'; content: string | null; tool_calls?: unknown[] }
+  | { role: 'tool'; content: string; tool_call_id: string };
 
 export type MeetingDialogueAuxPayload = {
   transcriptSegments?: MeetingDialogueTranscriptSegment[];
@@ -62,6 +73,11 @@ export type InboxAskJobPayload = {
   modelMode?: AiModelMode;
   priorTurns?: { question: string; answer: string }[];
   clientUserAgent?: string | null;
+  toolRound?: number;
+  pendingToolCall?: InboxAskToolCallRequest;
+  toolResults?: InboxAskToolResult[];
+  toolSteps?: InboxAskToolStep[];
+  toolMessages?: AiChatToolMessage[];
 };
 
 import type { AutoOrganizeMode, AutoOrganizeTemplate } from '@/lib/auto-organize-types';

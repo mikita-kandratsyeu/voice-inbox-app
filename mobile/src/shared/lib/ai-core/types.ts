@@ -101,6 +101,7 @@ export type AskAnswerResult = {
   /** Cautious inferences not literally stated in the note. */
   interpretations?: string[];
   suggestedFollowUps?: string[];
+  toolSteps?: InboxAskToolStep[];
   model?: string;
 };
 
@@ -121,12 +122,87 @@ export type CorpusNoteForPrompt = {
   createdAt?: string;
 };
 
+export const INBOX_ASK_TOOL_NAMES = [
+  'search_notes',
+  'get_note',
+  'list_tasks',
+  'get_related_notes',
+] as const;
+
+export type InboxAskToolName = (typeof INBOX_ASK_TOOL_NAMES)[number];
+
+export type InboxAskToolCall = {
+  toolCallId: string;
+  toolName: InboxAskToolName;
+  arguments: Record<string, unknown>;
+  round: number;
+  expiresAt?: string;
+};
+
+export type InboxAskToolStep = {
+  toolCallId: string;
+  toolName: InboxAskToolName;
+  round: number;
+  status: 'requested' | 'completed' | 'failed';
+};
+
+export type InboxAskSearchNotesToolResult = {
+  toolName: 'search_notes';
+  query: string;
+  notes: CorpusNoteForPrompt[];
+  totalCorpusCount: number;
+  droppedCount: number;
+  retrievalMode: 'hybrid' | 'lexical';
+};
+
+export type InboxAskGetNoteToolResult = {
+  toolName: 'get_note';
+  note:
+    | (CorpusNoteForPrompt & {
+        tags?: string[];
+        status?: string;
+      })
+    | null;
+};
+
+export type InboxAskListTasksToolResult = {
+  toolName: 'list_tasks';
+  tasks: Array<{
+    recordId: string;
+    title: string;
+    text: string;
+    isDone: boolean;
+    deadline?: string | null;
+    priority?: 'high' | 'medium' | 'low';
+  }>;
+};
+
+export type InboxAskRelatedNotesToolResult = {
+  toolName: 'get_related_notes';
+  recordId: string;
+  notes: CorpusNoteForPrompt[];
+};
+
+export type InboxAskToolResultPayload =
+  | InboxAskSearchNotesToolResult
+  | InboxAskGetNoteToolResult
+  | InboxAskListTasksToolResult
+  | InboxAskRelatedNotesToolResult;
+
+export type InboxAskToolResult = {
+  toolCallId: string;
+  toolName: InboxAskToolName;
+  round: number;
+  result: InboxAskToolResultPayload;
+};
+
 export type InboxAskAgentPlan = {
   executionMode: 'smart_cloud' | 'private_remote';
   modelId: string;
   retrievalMode: 'hybrid' | 'lexical';
   packedNotes: CorpusNoteForPrompt[];
   promptBudget: { maxChars: number; usedChars: number; droppedCount: number };
+  toolSteps?: InboxAskToolStep[];
 };
 
 export type InboxAskRequest = {
@@ -134,6 +210,9 @@ export type InboxAskRequest = {
   question: string;
   corpusNotes: CorpusNoteForPrompt[];
   priorTurns?: AskPriorTurn[];
+  toolExecutor?: (call: InboxAskToolCall) => Promise<InboxAskToolResult>;
+  onInboxAskToolCall?: (call: InboxAskToolCall) => void;
+  onInboxAskToolResult?: (result: InboxAskToolResult) => void;
   onLocalGenerationProgress?: (event: AiLocalGenerationProgressEvent) => void;
   abortSignal?: AbortSignal;
 };

@@ -31,11 +31,21 @@ export type SendOpenRouterChatCompletionParams = {
   temperature?: number;
   clientUserAgent?: string | null;
   userId?: string | null;
+  tools?: Array<{
+    type: 'function';
+    function: {
+      name: string;
+      description?: string;
+      parameters?: Record<string, unknown>;
+    };
+  }>;
+  toolChoice?: 'auto' | 'none';
 };
 
 export type OpenRouterChatCompletionResult = {
   content: string;
   message: unknown;
+  toolCalls?: unknown[];
   raw: unknown;
 };
 
@@ -80,6 +90,8 @@ function buildRequestBody(params: SendOpenRouterChatCompletionParams): Record<st
     stream: true,
     provider: openRouterProviderParamsForModel(model),
     ...(params.jsonObject ? { response_format: openRouterJsonObjectResponseFormat() } : {}),
+    ...(params.tools?.length ? { tools: params.tools } : {}),
+    ...(params.toolChoice ? { tool_choice: params.toolChoice } : {}),
     ...(params.temperature != null ? { temperature: params.temperature } : {}),
     ...(reasoning ? { reasoning } : {}),
     ...(user ? { user } : {}),
@@ -245,6 +257,44 @@ function recoveredToCompletion(
   };
 }
 
+async function sendOpenRouterNonStreamingChatCompletion(
+  params: SendOpenRouterChatCompletionParams,
+): Promise<OpenRouterChatCompletionResult> {
+  const headers = buildRequestHeaders(params.clientUserAgent);
+  headers.set('Accept', 'application/json');
+
+  const response = await fetch(OPENROUTER_CHAT_URL, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ ...buildRequestBody(params), stream: false }),
+  });
+
+  if (!response.ok) {
+    const errBody = await response.text().catch(() => '');
+    throw new Error(`OpenRouter chat failed (${response.status}): ${errBody.slice(0, 300)}`);
+  }
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  const choices = Array.isArray(raw.choices) ? raw.choices : [];
+  const first = choices[0];
+  const message =
+    first && typeof first === 'object' && 'message' in first
+      ? (first as { message?: unknown }).message
+      : undefined;
+  const msg = message && typeof message === 'object' ? (message as Record<string, unknown>) : {};
+  const content = typeof msg.content === 'string' ? msg.content.trim() : '';
+  const toolCalls = Array.isArray(msg.tool_calls) ? msg.tool_calls : undefined;
+  if (!content && !toolCalls?.length) {
+    throw new Error('Invalid AI response: missing content');
+  }
+  return {
+    content,
+    message: msg,
+    ...(toolCalls?.length ? { toolCalls } : {}),
+    raw,
+  };
+}
+
 async function persistGenerationIdForJob(generationId: string): Promise<void> {
   const ctx = getAiJobRunContext();
   if (!ctx) return;
@@ -277,6 +327,10 @@ export async function sendOpenRouterChatCompletion(
 ): Promise<OpenRouterChatCompletionResult> {
   const model = params.model.trim();
   const jobCtx = getAiJobRunContext();
+
+  if (params.tools?.length) {
+    return sendOpenRouterNonStreamingChatCompletion(params);
+  }
 
   if (jobCtx) {
     const pending = await tryRecoverOpenRouterPendingGeneration(jobCtx.jobId);

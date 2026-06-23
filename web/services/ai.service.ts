@@ -38,6 +38,16 @@ import { parseOpenRouterJsonContent } from '@/lib/parse-openrouter-json';
 import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
 import { ASK_QUESTION_SYSTEM_PROMPT, INBOX_ASK_SYSTEM_PROMPT } from '@/lib/prompts';
 import type { AiResult, AutoOrganizeResult, RecordClassification } from '@/types';
+import {
+  INBOX_ASK_MAX_TOOL_ROUNDS,
+  INBOX_ASK_TOOL_CALL_TTL_MS,
+  INBOX_ASK_TOOL_DEFINITIONS,
+  isInboxAskToolName,
+  safeParseToolArguments,
+  type InboxAskToolCallRequest,
+  type InboxAskToolStep,
+} from '@/lib/inbox-ask-tools';
+import type { AiChatToolMessage } from '@/types/ai-job';
 
 import {
   MEETING_DIALOGUE_MODEL_FALLBACK_CHAIN,
@@ -215,6 +225,7 @@ type AskAnswerResult = {
   evidence?: AskEvidence[];
   interpretations?: string[];
   suggestedFollowUps?: string[];
+  toolSteps?: InboxAskToolStep[];
 };
 
 const ASK_ANSWER_KINDS = new Set<AskAnswerKind>(['plain', 'list', 'tasks', 'decisions']);
@@ -500,6 +511,151 @@ export async function processInboxAskQuestion(
   const models = filterModelsForAiChat([model, ...USER_AI_MODEL_FALLBACK_CHAIN]);
 
   return withSequentialModelFallback(models, callAsk, isRetryableAiChatTransportError);
+}
+
+export type InboxAskToolLoopResult =
+  | {
+      status: 'done';
+      result: AskAnswerResult;
+      toolMessages?: AiChatToolMessage[];
+      toolSteps?: InboxAskToolStep[];
+    }
+  | {
+      status: 'needs_tool';
+      toolCall: InboxAskToolCallRequest;
+      toolMessages: AiChatToolMessage[];
+      toolSteps: InboxAskToolStep[];
+    };
+
+function extractFirstInboxAskToolCall(
+  toolCalls: unknown[] | undefined,
+  round: number,
+): InboxAskToolCallRequest | null {
+  if (!toolCalls?.length) return null;
+
+  for (const raw of toolCalls) {
+    if (!raw || typeof raw !== 'object') continue;
+    const obj = raw as Record<string, unknown>;
+    const id = typeof obj.id === 'string' && obj.id.trim() ? obj.id.trim() : '';
+    const fn = obj.function && typeof obj.function === 'object' ? obj.function : null;
+    const functionObj = fn as Record<string, unknown> | null;
+    const name = typeof functionObj?.name === 'string' ? functionObj.name.trim() : '';
+    if (!id || !isInboxAskToolName(name)) continue;
+
+    return {
+      toolCallId: id,
+      toolName: name,
+      arguments: safeParseToolArguments(functionObj?.arguments),
+      round,
+      expiresAt: new Date(Date.now() + INBOX_ASK_TOOL_CALL_TTL_MS).toISOString(),
+    };
+  }
+
+  return null;
+}
+
+function isToolUnsupportedError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return /tools?|tool_choice|tool_calls?|function calling|functions?/i.test(message);
+}
+
+export async function processInboxAskQuestionWithTools(params: {
+  corpusNotes: CorpusNoteForPrompt[];
+  question: string;
+  model: string;
+  priorTurns?: { question: string; answer: string }[];
+  clientUserAgent?: string | null;
+  deviceId?: string | null;
+  toolMessages?: AiChatToolMessage[];
+  toolSteps?: InboxAskToolStep[];
+  toolRound?: number;
+}): Promise<InboxAskToolLoopResult> {
+  const {
+    corpusNotes,
+    question,
+    model,
+    priorTurns,
+    clientUserAgent,
+    deviceId,
+    toolMessages,
+    toolSteps = [],
+    toolRound = 0,
+  } = params;
+  const initialMessages: AiChatToolMessage[] = [
+    { role: 'system', content: INBOX_ASK_SYSTEM_PROMPT },
+    { role: 'user', content: buildInboxAskUserMessageContent(corpusNotes, question, priorTurns) },
+  ];
+  const messages = toolMessages?.length ? toolMessages : initialMessages;
+  const nextRound = toolRound + 1;
+  const canUseTools = nextRound <= INBOX_ASK_MAX_TOOL_ROUNDS;
+
+  const callAsk = async (m: string): Promise<InboxAskToolLoopResult> => {
+    const { content, message, toolCalls } = await withTimeout(
+      sendAiChatCompletion({
+        model: m,
+        messages,
+        tools: canUseTools ? INBOX_ASK_TOOL_DEFINITIONS : undefined,
+        toolChoice: canUseTools ? 'auto' : 'none',
+        jsonObject: !canUseTools,
+        temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.3,
+        clientUserAgent,
+        userId: deviceId,
+      }),
+      TIMEOUTS.AI_CHAT,
+      'AI inbox ask processing timeout',
+    );
+
+    const toolCall = canUseTools ? extractFirstInboxAskToolCall(toolCalls, nextRound) : null;
+    if (toolCall) {
+      const assistantMessage: AiChatToolMessage = {
+        role: 'assistant',
+        content: typeof content === 'string' && content.trim() ? content : null,
+        tool_calls: toolCalls,
+      };
+      return {
+        status: 'needs_tool',
+        toolCall,
+        toolMessages: [...messages, assistantMessage],
+        toolSteps: [
+          ...toolSteps,
+          {
+            toolCallId: toolCall.toolCallId,
+            toolName: toolCall.toolName,
+            round: toolCall.round,
+            status: 'requested',
+          },
+        ],
+      };
+    }
+
+    return {
+      status: 'done',
+      result: extractAnswerFromResponse(content),
+      toolMessages: messages,
+      toolSteps,
+    };
+  };
+
+  const models = filterModelsForAiChat([model, ...USER_AI_MODEL_FALLBACK_CHAIN]);
+
+  try {
+    return await withSequentialModelFallback(models, callAsk, isRetryableAiChatTransportError);
+  } catch (err) {
+    if (!toolMessages?.length && isToolUnsupportedError(err)) {
+      return {
+        status: 'done',
+        result: await processInboxAskQuestion(
+          corpusNotes,
+          question,
+          model,
+          priorTurns,
+          clientUserAgent,
+          deviceId,
+        ),
+      };
+    }
+    throw err;
+  }
 }
 
 const DIGEST_SYSTEM_PROMPT = `You write a daily, weekly, or rolling 30-day digest for Voice Inbox AI from already-extracted note metadata.

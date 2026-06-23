@@ -14,6 +14,7 @@ import {
   prepareInboxAskQueryEmbedding,
   retrieveNotesForInboxAsk,
 } from '@/features/inbox-ask-retrieval';
+import { executeInboxAskTool } from '@/features/inbox-ask-tools';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import { createAiAbortHandle, isAiRequestCancelled } from '@/shared/lib/ai-api/abort';
 import { cancelCloudAiJob } from '@/shared/lib/ai-api/cancelCloudAiJob';
@@ -22,7 +23,7 @@ import type { AskPriorTurn } from '@/shared/lib/ai-core';
 import { AIOrchestrator } from '@/shared/lib/ai-core';
 import { INBOX_ASK_MAX_PAYLOAD_CHARS } from '@/shared/lib/ai-core/corpusNotesForPrompt';
 import { mapLocalError } from '@/shared/lib/ai-core/local-provider/localAiMapError';
-import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
+import type { AskAnswerKind, AskEvidence, InboxAskToolStep } from '@/shared/lib/ai-core/types';
 import {
   abortAiGeneration,
   registerAiGeneration,
@@ -51,7 +52,7 @@ export type InboxAskHistoryItem = {
   suggestedFollowUps?: string[];
 };
 
-export type InboxAskPhase = 'idle' | 'retrieving' | 'generating';
+export type InboxAskPhase = 'idle' | 'retrieving' | 'generating' | 'tool_executing';
 
 export type InboxAskState = {
   isLoading: boolean;
@@ -70,6 +71,7 @@ export type InboxAskState = {
   notesTotal: number;
   notesDropped: number;
   lastUsedNotes: Array<{ recordId: string; title: string }>;
+  toolSteps: InboxAskToolStep[];
 };
 
 const INITIAL_STATE: InboxAskState = {
@@ -84,6 +86,7 @@ const INITIAL_STATE: InboxAskState = {
   notesTotal: 0,
   notesDropped: 0,
   lastUsedNotes: [],
+  toolSteps: [],
 };
 
 const INBOX_ASK_GENERATION_KEY = 'inbox-ask';
@@ -109,6 +112,7 @@ function applyInboxAskCancelState(s: InboxAskState, revertPromotedTurn: boolean)
       evidence: undefined,
       interpretations: undefined,
       suggestedFollowUps: undefined,
+      toolSteps: [],
     };
   }
 
@@ -137,6 +141,7 @@ function applyInboxAskCancelState(s: InboxAskState, revertPromotedTurn: boolean)
     evidence: undefined,
     interpretations: undefined,
     suggestedFollowUps: undefined,
+    toolSteps: [],
     ...idleFields,
   };
 }
@@ -231,6 +236,7 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
           notesTotal: restored.notesTotal ?? s.notesTotal,
           notesDropped: restored.notesDropped ?? s.notesDropped,
           lastUsedNotes: restored.lastUsedNotes ?? s.lastUsedNotes,
+          toolSteps: [],
         };
       }
       return s;
@@ -266,6 +272,7 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
           notesTotal: restored.notesTotal ?? resolveCorpusTotal(),
           notesDropped: restored.notesDropped ?? 0,
           lastUsedNotes: restored.lastUsedNotes ?? [],
+          toolSteps: [],
         });
 
         if (!isPending || !restored.question?.trim()) return;
@@ -387,6 +394,7 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
           evidence: undefined,
           interpretations: undefined,
           suggestedFollowUps: undefined,
+          toolSteps: [],
           history: priorHistory,
         };
       });
@@ -448,6 +456,7 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
           notesTotal: retrieval.totalCorpusCount,
           notesDropped: retrieval.droppedCount,
           lastUsedNotes,
+          toolSteps: [],
         }));
 
         void logAnalyticsEvent('inbox_ask_notes_retrieved', {
@@ -462,6 +471,33 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
             question: trimmedQuestion,
             corpusNotes: retrieval.notes,
             priorTurns: trimPriorTurns(priorHistory),
+            toolExecutor: (call) => executeInboxAskTool(call, { records, scope }),
+            onInboxAskToolCall: (call) => {
+              setState((prev) => ({
+                ...prev,
+                phase: 'tool_executing',
+                toolSteps: [
+                  ...prev.toolSteps,
+                  {
+                    toolCallId: call.toolCallId,
+                    toolName: call.toolName,
+                    round: call.round,
+                    status: 'requested',
+                  },
+                ],
+              }));
+            },
+            onInboxAskToolResult: (toolResult) => {
+              setState((prev) => ({
+                ...prev,
+                phase: 'generating',
+                toolSteps: prev.toolSteps.map((step) =>
+                  step.toolCallId === toolResult.toolCallId
+                    ? { ...step, status: 'completed' }
+                    : step,
+                ),
+              }));
+            },
             abortSignal: abortHandle.signal,
           },
           {
@@ -534,6 +570,7 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
             evidence: enrichedEvidence,
             interpretations: runResult.result.interpretations,
             suggestedFollowUps: runResult.result.suggestedFollowUps,
+            toolSteps: runResult.result.toolSteps ?? prev.toolSteps,
           };
           persistSnapshot(next, corpusFp);
           return next;

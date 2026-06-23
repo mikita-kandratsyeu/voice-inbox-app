@@ -6,8 +6,9 @@ import type {
 } from '@/lib/auto-organize-types';
 
 import type { AiModelMode } from '@/lib/ai-model-router';
+import type { InboxAskToolCallRequest, InboxAskToolStep } from '@/lib/inbox-ask-tools';
 
-export type MessageStatus = 'processing' | 'done' | 'error';
+export type MessageStatus = 'processing' | 'needs_tool' | 'done' | 'error';
 
 /** Async meeting-dialogue pass (Pro meeting notes); set when `status` is already `done`. */
 export type MeetingDialogueStatus = 'processing' | 'done' | 'failed' | 'skipped';
@@ -101,6 +102,15 @@ export type AskMessage =
     }
   | {
       id: string;
+      status: 'needs_tool';
+      model?: string;
+      modelLabel?: string;
+      modelMode?: AiModelMode;
+      toolCall: InboxAskToolCallRequest;
+      toolSteps?: InboxAskToolStep[];
+    }
+  | {
+      id: string;
       status: 'done';
       model?: string;
       modelLabel?: string;
@@ -110,6 +120,7 @@ export type AskMessage =
       items?: string[];
       suggestedFollowUps?: string[];
       interpretations?: string[];
+      toolSteps?: InboxAskToolStep[];
       evidence?: Array<{
         quote: string;
         source?:
