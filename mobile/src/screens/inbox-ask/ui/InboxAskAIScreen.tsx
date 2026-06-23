@@ -123,7 +123,7 @@ export function InboxAskAIScreen() {
         setIsScreenFocused(false);
         KeyboardController.dismiss({ animated: false });
       };
-    }, [inboxAsk.syncInboxAskSessionFromDb]),
+    }, [inboxAsk]),
   );
 
   const initialQuestionHandledRef = useRef(false);

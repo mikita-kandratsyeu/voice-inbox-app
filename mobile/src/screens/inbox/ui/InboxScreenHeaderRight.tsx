@@ -82,11 +82,7 @@ function InboxScreenHeaderRightInner({
         imageColor: titleColor,
       };
 
-      if (!useTabletShell) {
-        actions.push(inlineNativeMenuSection('inboxAskSection', titleColor, [inboxAskAction]));
-      } else {
-        actions.push(inboxAskAction);
-      }
+      actions.push(inlineNativeMenuSection('inboxAskSection', titleColor, [inboxAskAction]));
     }
 
     const navigationItems: NativeMenuAction[] = [];
