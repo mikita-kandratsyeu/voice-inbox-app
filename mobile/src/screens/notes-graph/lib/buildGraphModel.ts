@@ -12,6 +12,7 @@ import { graphNodeSearchText } from './graphNodeSearchText';
 import type { GraphEdge, GraphFilters, GraphModel, GraphNode } from './graphTypes';
 import { recordNodeId, taskNodeId } from './graphTypes';
 
+export const MAX_RECORDS_FOR_SIMILAR_EDGES = 100;
 const MAX_SIMILAR_EDGES_PER_RECORD = 3;
 const MAX_TAG_EDGES_PER_RECORD = 5;
 const MAX_FOLDER_MESH_SIZE = 20;
@@ -291,7 +292,7 @@ export function buildGraphModel(allRecords: VoiceRecord[], filters: GraphFilters
     }
   }
 
-  if (filters.edgeVisibility.similar && filtered.length <= 100) {
+  if (filters.edgeVisibility.similar && filtered.length <= MAX_RECORDS_FOR_SIMILAR_EDGES) {
     addSimilarEdges(filtered, edges);
   }
   if (filters.edgeVisibility.sharedTag) {

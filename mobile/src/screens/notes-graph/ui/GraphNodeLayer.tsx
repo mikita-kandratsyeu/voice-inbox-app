@@ -1,4 +1,5 @@
 import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -13,6 +14,7 @@ import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
 import { hapticLight } from '@/shared/lib';
 
+import { buildGraphNodeDotAccessibilityLabel } from '../lib/buildGraphNodeAccessibilityLabel';
 import type { GraphViewportCull } from '../lib/buildGraphRenderedEdges';
 import { buildGraphRenderedNodes } from '../lib/buildGraphRenderedNodes';
 import { snapGraphPointToGrid } from '../lib/graphSnapGrid';
@@ -334,7 +336,12 @@ const GraphNodeItem = React.memo(
     worldHeight,
     layoutRestoreToken = 0,
   }: GraphNodeItemProps) {
+    const { t } = useTranslation();
     const skipNextPressRef = useRef(false);
+    const dotAccessibilityLabel = useMemo(
+      () => buildGraphNodeDotAccessibilityLabel(node, t),
+      [node, t],
+    );
 
     const handlePress = useCallback(() => {
       if (skipNextPressRef.current) {
@@ -386,6 +393,7 @@ const GraphNodeItem = React.memo(
               active={active}
               neighbor={neighbor}
               interactionPhase={interactionPhase}
+              accessibilityLabel={dotAccessibilityLabel}
             />
           ) : (
             <GraphNodeCard
@@ -459,14 +467,14 @@ export const GraphNodeLayer = React.memo(function GraphNodeLayer({
 
   const visualStatesById = useMemo(() => {
     const states = new Map<string, GraphNodeVisualState>();
-    for (const node of nodes) {
+    for (const node of visibleNodes) {
       states.set(
         node.id,
         resolveGraphNodeVisualState(node.id, activeNodeId, activeNeighborIds, matchedNodeIds),
       );
     }
     return states;
-  }, [nodes, activeNodeId, activeNeighborIds, matchedNodeIds]);
+  }, [visibleNodes, activeNodeId, activeNeighborIds, matchedNodeIds]);
 
   return (
     <View

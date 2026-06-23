@@ -352,18 +352,24 @@
     },
     "emptyTitle": "Пока нечего показать",
     "emptyDescription": "Запишите заметку или измените фильтры — связи появятся сами, по тегам, папкам и похожему содержанию.",
-    "largeGraphHint": "Заметок много — отфильтруйте по папке или тегу, так граф будет удобнее.",
+    "largeGraphHint": "Заметок много — отфильтруйте по папке или тегу или включите упрощённый вид для более быстрого просмотра.",
     "searchPlaceholder": "Поиск заметок и задач",
     "searchResultCount": "{{current}} из {{total}}",
     "searchNoResults": "Ничего не найдено",
     "searchPrevious": "Предыдущее совпадение",
     "searchNext": "Следующее совпадение",
-    "simplifyActiveHint": "Упрощённый вид — нажмите, чтобы показать все связи",
+    "simplifyActiveHint": "Упрощённый вид скрывает задачи и часть связей для скорости — нажмите, чтобы показать всё",
+    "similarEdgesLimitedHint": "Связи по похожести скрываются при более чем 100 заметках, чтобы граф работал быстрее.",
     "node": {
       "openTasks_one": "{{count}} задача",
       "openTasks_few": "{{count}} задачи",
       "openTasks_many": "{{count}} задач",
-      "openTasks_other": "{{count}} задач"
+      "openTasks_other": "{{count}} задач",
+      "a11yRecord": "Заметка: {{title}}",
+      "a11yTask": "Задача: {{text}}",
+      "a11yFolder": "Папка: {{folder}}",
+      "a11yDotRecord": "Точка заметки: {{title}}",
+      "a11yDotTask": "Точка задачи: {{text}}"
     },
     "filters": {
       "allFolders": "Все папки",
@@ -385,6 +391,7 @@
       "connectionsCount": "{{count}} связей",
       "connectionsPickerTitle": "Связи на графе",
       "connectionsPickerSubtitle": "Выберите, что показывать на графе — задачи и линии связей.",
+      "similarLimitedNote": "Связи по похожести не показываются, если в фильтре больше 100 заметок.",
       "layoutModePickerTitle": "Построение графа",
       "layoutModePickerSubtitle": "Выберите, как расположить заметки на графе.",
       "layoutMode": {

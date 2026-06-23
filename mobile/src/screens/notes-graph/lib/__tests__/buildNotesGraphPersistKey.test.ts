@@ -15,6 +15,7 @@ import {
   DEFAULT_NODE_DISPLAY_MODE,
   type GraphFilters,
 } from '../graphTypes';
+import { buildNotesGraphRecordsRevision } from '../notesGraphRecordsRevision';
 import { parseNotesGraphPersistKey } from '../parseNotesGraphPersistKey';
 
 function makeRecord(id: string): VoiceRecord {
@@ -51,7 +52,7 @@ describe('buildNotesGraphPersistKey', () => {
 
     expect(key.startsWith('global;')).toBe(true);
     expect(parsed).not.toBeNull();
-    expect(parsed?.recordsRevision).toBe('2:a,b');
+    expect(parsed?.recordsRevision).toBe(buildNotesGraphRecordsRevision(records));
     expect(parsed?.folderIds).toEqual([]);
     expect(parsed?.tags).toEqual([]);
     expect(parsed?.showTasks).toBe(false);
@@ -75,7 +76,9 @@ describe('buildNotesGraphPersistKey', () => {
     });
 
     expect(key.startsWith('local:rec-1;')).toBe(true);
-    expect(parseNotesGraphPersistKey(key)?.recordsRevision).toBe('1:a');
+    expect(parseNotesGraphPersistKey(key)?.recordsRevision).toBe(
+      buildNotesGraphRecordsRevision([makeRecord('a')]),
+    );
   });
 
   it.each(['force', 'circular'] as const)(

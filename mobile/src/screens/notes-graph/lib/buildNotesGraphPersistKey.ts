@@ -6,14 +6,7 @@ import {
   buildNotesGraphHistoryScopePrefix,
   type NotesGraphHistoryScope,
 } from './notesGraphHistoryScope';
-
-function buildRecordsRevision(records: VoiceRecord[]): string {
-  if (records.length === 0) return '0';
-  return `${records.length}:${records
-    .map((record) => record.id)
-    .sort()
-    .join(',')}`;
-}
+import { buildNotesGraphRecordsRevision } from './notesGraphRecordsRevision';
 
 /** Stable DB key for saved layouts (filters + library revision, no viewport). */
 export function buildNotesGraphPersistKey(
@@ -30,7 +23,7 @@ export function buildNotesGraphPersistKey(
     .map(([kind, visible]) => `${kind}:${visible ? 1 : 0}`)
     .join(',');
   const bodyKey = [
-    buildRecordsRevision(records),
+    buildNotesGraphRecordsRevision(records),
     folderKey,
     tagKey,
     filters.showTasks ? 1 : 0,

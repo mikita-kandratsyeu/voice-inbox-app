@@ -49,6 +49,7 @@ type GraphFilterBarProps = {
   isLocalGraphMode?: boolean;
   isProActive: boolean;
   availableTags: string[];
+  filteredRecordCount: number;
   disabled?: boolean;
   onFiltersChange: (patch: Partial<GraphFilters>) => void;
 };
@@ -139,6 +140,7 @@ export function GraphFilterBar({
   isLocalGraphMode = false,
   isProActive,
   availableTags,
+  filteredRecordCount,
   disabled = false,
   onFiltersChange,
 }: GraphFilterBarProps) {
@@ -319,6 +321,7 @@ export function GraphFilterBar({
         showTasks={filters.showTasks}
         showCompletedTasks={filters.showCompletedTasks}
         edgeVisibility={filters.edgeVisibility}
+        filteredRecordCount={filteredRecordCount}
         onClose={() => setConnectionsPickerVisible(false)}
         onApply={({ showTasks, showCompletedTasks, edgeVisibility }) =>
           onFiltersChange({

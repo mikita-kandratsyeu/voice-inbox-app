@@ -37,6 +37,7 @@ type GraphNodeDotProps = {
   neighbor: boolean;
   highlighted: boolean;
   interactionPhase: SharedValue<number>;
+  accessibilityLabel?: string;
 };
 
 export const GraphNodeDot = React.memo(function GraphNodeDot({
@@ -49,6 +50,7 @@ export const GraphNodeDot = React.memo(function GraphNodeDot({
   neighbor,
   highlighted,
   interactionPhase,
+  accessibilityLabel,
 }: GraphNodeDotProps) {
   const label = React.useMemo(() => resolveGraphNodeDotLabel(node), [node]);
 
@@ -171,7 +173,13 @@ export const GraphNodeDot = React.memo(function GraphNodeDot({
   );
 
   return (
-    <View style={{ width: GRAPH_NODE_DOT_CONTAINER_SIZE }} pointerEvents="none">
+    <View
+      style={{ width: GRAPH_NODE_DOT_CONTAINER_SIZE }}
+      pointerEvents="none"
+      accessible={Boolean(accessibilityLabel)}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+    >
       <View
         style={{
           width: GRAPH_NODE_DOT_CONTAINER_SIZE,

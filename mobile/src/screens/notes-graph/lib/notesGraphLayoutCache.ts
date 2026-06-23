@@ -13,6 +13,7 @@ import {
   DEFAULT_NODE_DISPLAY_MODE,
   type GraphFilters,
 } from './graphTypes';
+import { buildNotesGraphRecordsRevision } from './notesGraphRecordsRevision';
 
 export const DEFAULT_NOTES_GRAPH_FILTERS: GraphFilters = {
   folderIds: [],
@@ -24,14 +25,6 @@ export const DEFAULT_NOTES_GRAPH_FILTERS: GraphFilters = {
   layoutMode: DEFAULT_GRAPH_LAYOUT_MODE,
   nodeDisplayMode: DEFAULT_NODE_DISPLAY_MODE,
 };
-
-function buildRecordsRevision(records: VoiceRecord[]): string {
-  if (records.length === 0) return '0';
-  return `${records.length}:${records
-    .map((record) => record.id)
-    .sort()
-    .join(',')}`;
-}
 
 export function buildNotesGraphLayoutCacheKey(
   records: VoiceRecord[],
@@ -48,7 +41,7 @@ export function buildNotesGraphLayoutCacheKey(
     .map(([kind, visible]) => `${kind}:${visible ? 1 : 0}`)
     .join(',');
   return [
-    buildRecordsRevision(records),
+    buildNotesGraphRecordsRevision(records),
     folderKey,
     tagKey,
     filters.showTasks ? 1 : 0,

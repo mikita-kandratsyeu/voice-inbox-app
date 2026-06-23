@@ -14,6 +14,7 @@ import {
   SheetRowIconLeading,
 } from '@/shared/ui';
 
+import { MAX_RECORDS_FOR_SIMILAR_EDGES } from '../lib/buildGraphModel';
 import type { GraphEdgeVisibility } from '../lib/graphTypes';
 
 const CONNECTION_FILTER_ROW_HEIGHT = 52;
@@ -40,6 +41,7 @@ type GraphConnectionsFilterSheetProps = {
   showTasks: boolean;
   showCompletedTasks: boolean;
   edgeVisibility: GraphEdgeVisibility;
+  filteredRecordCount: number;
   onClose: () => void;
   onApply: (value: {
     showTasks: boolean;
@@ -189,6 +191,7 @@ export function GraphConnectionsFilterSheet({
   showTasks,
   showCompletedTasks,
   edgeVisibility,
+  filteredRecordCount,
   onClose,
   onApply,
 }: GraphConnectionsFilterSheetProps) {
@@ -260,6 +263,8 @@ export function GraphConnectionsFilterSheet({
     [draft],
   );
 
+  const showSimilarLimitedNote = filteredRecordCount > MAX_RECORDS_FOR_SIMILAR_EDGES;
+
   return (
     <AppBottomSheetModal visible={visible} onClose={handleClose}>
       <AppBottomSheetContent bottomPadding={12}>
@@ -269,6 +274,19 @@ export function GraphConnectionsFilterSheet({
           color={color}
           marginBottom={10}
         />
+
+        {showSimilarLimitedNote ? (
+          <Text
+            style={{
+              color: color.text.secondary,
+              fontSize: 13,
+              lineHeight: 18,
+              marginBottom: 10,
+            }}
+          >
+            {t('notesGraph.filters.similarLimitedNote')}
+          </Text>
+        ) : null}
 
         <View
           style={{

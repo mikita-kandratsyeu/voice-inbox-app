@@ -228,6 +228,7 @@ type AnimatedNodeCardShellProps = {
   backgroundColor: string;
   accentStripeColor?: string;
   onPress?: () => void;
+  accessibilityLabel?: string;
   children: React.ReactNode;
   taskStyle?: boolean;
 };
@@ -245,6 +246,7 @@ const AnimatedNodeCardShell = React.memo(function AnimatedNodeCardShell({
   backgroundColor,
   accentStripeColor,
   onPress,
+  accessibilityLabel,
   children,
   taskStyle = false,
 }: AnimatedNodeCardShellProps) {
@@ -355,7 +357,12 @@ const AnimatedNodeCardShell = React.memo(function AnimatedNodeCardShell({
   ]);
 
   const content = onPress ? (
-    <Pressable onPress={onPress} accessibilityRole="button" style={{ flex: 1 }}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      style={{ flex: 1 }}
+    >
       {children}
     </Pressable>
   ) : (
@@ -623,6 +630,7 @@ export const GraphAnimatedNodeCard = React.memo(function GraphAnimatedNodeCard({
   nodeKind,
   accentStripeColor,
   onPress,
+  accessibilityLabel,
   children,
 }: {
   interactionPhase: SharedValue<number>;
@@ -634,6 +642,7 @@ export const GraphAnimatedNodeCard = React.memo(function GraphAnimatedNodeCard({
   nodeKind: GraphNode['kind'];
   accentStripeColor?: string;
   onPress?: () => void;
+  accessibilityLabel?: string;
   children: React.ReactNode;
 }) {
   const isTask = nodeKind === 'task';
@@ -654,6 +663,7 @@ export const GraphAnimatedNodeCard = React.memo(function GraphAnimatedNodeCard({
       backgroundColor={isTask ? withAlphaHex(color.background.card, 0.97) : color.background.card}
       accentStripeColor={isTask ? undefined : accentStripeColor}
       onPress={onPress}
+      accessibilityLabel={accessibilityLabel}
       taskStyle={isTask}
     >
       {children}

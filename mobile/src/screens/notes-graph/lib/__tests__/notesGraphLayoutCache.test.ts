@@ -19,6 +19,7 @@ import {
   warmNotesGraphLayoutDebounced,
   warmNotesGraphLayoutWithFilters,
 } from '../notesGraphLayoutCache';
+import { buildNotesGraphRecordsRevision } from '../notesGraphRecordsRevision';
 
 function makeRecord(id: string, title: string): VoiceRecord {
   return {
@@ -48,7 +49,7 @@ describe('notesGraphLayoutCache', () => {
     const records = [makeRecord('b', 'B'), makeRecord('a', 'A')];
     const key = buildNotesGraphLayoutCacheKey(records, filters, null, 390.4, 800.6);
 
-    expect(key).toContain('2:a,b');
+    expect(key).toContain(buildNotesGraphRecordsRevision(records));
     expect(key).toContain('390;801');
     expect(key.endsWith(';2')).toBe(true);
   });

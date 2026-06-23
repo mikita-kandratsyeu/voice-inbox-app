@@ -26,7 +26,11 @@ import {
   ScreenHeader,
 } from '@/shared/ui';
 
-import { collectUniqueTags, countFilteredGraphRecords } from '../lib/buildGraphModel';
+import {
+  collectUniqueTags,
+  countFilteredGraphRecords,
+  MAX_RECORDS_FOR_SIMILAR_EDGES,
+} from '../lib/buildGraphModel';
 import { buildLocalGraphFilters, resolveLocalGraphDepth } from '../lib/buildLocalGraphFilters';
 import { buildLocalGraphNeighborhood } from '../lib/buildLocalGraphNeighborhood';
 import { buildNotesGraphPersistKey } from '../lib/buildNotesGraphPersistKey';
@@ -736,6 +740,10 @@ export const NotesGraphScreenBody = () => {
   );
 
   const showLargeGraphHint = !isBuilding && filteredRecordCount > LARGE_GRAPH_RECORD_THRESHOLD;
+  const showSimilarEdgesLimitedHint =
+    !isBuilding &&
+    filters.edgeVisibility.similar &&
+    filteredRecordCount > MAX_RECORDS_FOR_SIMILAR_EDGES;
 
   const handleLayoutPositionsChange = useCallback(() => {
     syncUnsavedLayoutState();
@@ -1214,6 +1222,7 @@ export const NotesGraphScreenBody = () => {
         isLocalGraphMode={isLocalGraphMode}
         isProActive={isProActive}
         availableTags={availableTags}
+        filteredRecordCount={filteredRecordCount}
         disabled={isGraphReconciling || isCapturingExport}
         onFiltersChange={handleFiltersChange}
       />
@@ -1234,6 +1243,21 @@ export const NotesGraphScreenBody = () => {
             {simplifyActive ? t('notesGraph.simplifyActiveHint') : t('notesGraph.largeGraphHint')}
           </Text>
         </Pressable>
+      ) : null}
+
+      {showSimilarEdgesLimitedHint ? (
+        <View
+          style={{
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            backgroundColor: color.background.tertiary,
+            opacity: isGraphReconciling ? 0.55 : 1,
+          }}
+        >
+          <Text style={{ color: color.text.secondary, fontSize: 13 }}>
+            {t('notesGraph.similarEdgesLimitedHint')}
+          </Text>
+        </View>
       ) : null}
 
       {recordCount === 0 ? (

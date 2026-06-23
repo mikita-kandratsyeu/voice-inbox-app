@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SharedValue } from 'react-native-reanimated';
 import { useAnimatedReaction } from 'react-native-reanimated';
@@ -9,6 +9,10 @@ import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { resolveDisplayFolderColor } from '@/shared/lib';
 
+import {
+  buildGraphRecordNodeAccessibilityLabel,
+  buildGraphTaskNodeAccessibilityLabel,
+} from '../lib/buildGraphNodeAccessibilityLabel';
 import type { GraphNode } from '../lib/graphTypes';
 import {
   GraphAnimatedNodeCard,
@@ -67,6 +71,12 @@ export const GraphNodeCard = React.memo(function GraphNodeCard({
   const scheme = useAppTheme();
   const interacting = useGraphNodeInteracting(interactionPhase);
   const isActive = active || interacting;
+  const accessibilityLabel = useMemo(() => {
+    if (node.kind === 'task') {
+      return buildGraphTaskNodeAccessibilityLabel(node, t);
+    }
+    return buildGraphRecordNodeAccessibilityLabel(node, t, folderName);
+  }, [folderName, node, t]);
 
   if (node.kind === 'task' && node.task) {
     return (
@@ -79,6 +89,7 @@ export const GraphNodeCard = React.memo(function GraphNodeCard({
         highlighted={highlighted}
         nodeKind="task"
         onPress={onPress}
+        accessibilityLabel={accessibilityLabel}
       >
         <GraphTaskNodeCardContent
           text={node.task.text}
@@ -131,6 +142,7 @@ export const GraphNodeCard = React.memo(function GraphNodeCard({
         nodeKind="record"
         accentStripeColor={accentColor}
         onPress={onPress}
+        accessibilityLabel={accessibilityLabel}
       >
         <GraphRecordNodeCardContent
           title={record.title}

@@ -339,16 +339,22 @@
     },
     "emptyTitle": "Nothing in the graph yet",
     "emptyDescription": "Add a note or adjust filters — links appear from tags, folders, and similar content.",
-    "largeGraphHint": "That's a big library. Filter by folder or tag to keep the graph easy to explore.",
+    "largeGraphHint": "That's a big library. Filter by folder or tag, or switch to simplified view for faster exploring.",
     "searchPlaceholder": "Search notes and tasks",
     "searchResultCount": "{{current}} of {{total}}",
     "searchNoResults": "No matches",
     "searchPrevious": "Previous match",
     "searchNext": "Next match",
-    "simplifyActiveHint": "Simplified view — tap to show all links",
+    "simplifyActiveHint": "Simplified view hides task nodes and some links for speed — tap to show all",
+    "similarEdgesLimitedHint": "Related-note links are hidden above 100 notes to keep the graph fast.",
     "node": {
       "openTasks_one": "{{count}} task",
-      "openTasks_other": "{{count}} tasks"
+      "openTasks_other": "{{count}} tasks",
+      "a11yRecord": "Note: {{title}}",
+      "a11yTask": "Task: {{text}}",
+      "a11yFolder": "Folder: {{folder}}",
+      "a11yDotRecord": "Note dot: {{title}}",
+      "a11yDotTask": "Task dot: {{text}}"
     },
     "filters": {
       "allFolders": "All folders",
@@ -370,6 +376,7 @@
       "connectionsCount": "{{count}} connections",
       "connectionsPickerTitle": "Graph connections",
       "connectionsPickerSubtitle": "Choose what to show on the graph — tasks and connection lines.",
+      "similarLimitedNote": "Related links are not shown when more than 100 notes match the current filters.",
       "layoutModePickerTitle": "Graph layout",
       "layoutModePickerSubtitle": "Choose how notes are arranged on the graph.",
       "layoutMode": {
