@@ -1,6 +1,7 @@
 import type { GraphNode } from './graphTypes';
 
 export const GRAPH_LAYOUT_TRANSITION_MS = 280;
+export const GRAPH_LAYOUT_UPDATE_MIN_MS = 220;
 
 const MIN_NODE_OVERLAP_RATIO = 0.5;
 

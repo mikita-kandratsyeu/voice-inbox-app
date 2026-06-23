@@ -19,6 +19,14 @@ const color = {
   accent: { primary: '#3b82f6', success: '#22c55e' },
   text: { primary: '#e5e5e5', secondary: '#6b6b6b', muted: '#6b7280' },
   border: { default: '#2e2e2e' },
+  background: { secondary: '#161616' },
+} as Colors;
+
+const lightColor = {
+  accent: { primary: '#3b82f6', success: '#34C759' },
+  text: { primary: '#1f2937', secondary: '#9ca3af', muted: '#9ca3af' },
+  border: { default: '#f3f4f6' },
+  background: { secondary: '#f9fafb' },
 } as Colors;
 
 describe('resolveGraphEdgeEmphasis', () => {
@@ -81,5 +89,20 @@ describe('getGraphEdgeGlowStyle', () => {
     expect(getGraphEdgeGlowStyle('similar', color)?.stroke).toBe(color.accent.primary);
     expect(getGraphEdgeGlowStyle('linked', color)?.stroke).toBe(color.accent.success);
     expect(getGraphEdgeGlowStyle('sharedTag', color)).toBeNull();
+  });
+});
+
+describe('light graph background contrast', () => {
+  it('uses readable strokes for structural edges on light backgrounds', () => {
+    const sameFolder = getGraphEdgeStrokeStyle('sameFolder', lightColor, 'default');
+    const sharedTag = getGraphEdgeStrokeStyle('sharedTag', lightColor, 'default');
+    const contains = getGraphEdgeStrokeStyle('contains', lightColor, 'default');
+
+    expect(sameFolder.stroke).toBe(lightColor.text.secondary);
+    expect(sameFolder.opacity).toBeGreaterThan(0.8);
+    expect(sharedTag.stroke).toBe(lightColor.text.primary);
+    expect(sharedTag.opacity).toBeGreaterThan(0.45);
+    expect(contains.opacity).toBeGreaterThan(0.8);
+    expect(contains.stroke).not.toBe(lightColor.border.default);
   });
 });

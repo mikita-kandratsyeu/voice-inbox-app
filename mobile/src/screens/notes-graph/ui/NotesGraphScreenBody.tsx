@@ -46,6 +46,7 @@ import {
 } from '../lib/graphFolderHighlightsPreferences';
 import {
   GRAPH_LAYOUT_TRANSITION_MS,
+  GRAPH_LAYOUT_UPDATE_MIN_MS,
   runLayoutTransition,
   shouldAnimateLayoutTransition,
 } from '../lib/graphLayoutTransition';
@@ -172,6 +173,7 @@ export const NotesGraphScreenBody = () => {
   const [recordCount, setRecordCount] = useState(0);
   const [isBuilding, setIsBuilding] = useState(true);
   const [buildProgress, setBuildProgress] = useState<number | null>(null);
+  const [isLayoutTransitioning, setIsLayoutTransitioning] = useState(false);
   const [isGraphReconciling, setIsGraphReconciling] = useState(false);
   const [hasUnsavedLayoutChanges, setHasUnsavedLayoutChanges] = useState(false);
   const [isSavingLayout, setIsSavingLayout] = useState(false);
@@ -199,6 +201,7 @@ export const NotesGraphScreenBody = () => {
   );
   const layoutNodesRef = useRef<GraphNode[]>([]);
   const layoutTransitionCancelRef = useRef<(() => void) | null>(null);
+  const layoutUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const buildProgressPercentRef = useRef(-1);
   const [activeSavedVersion, setActiveSavedVersion] = useState<NotesGraphLayoutVersionEntry | null>(
     null,
@@ -221,6 +224,12 @@ export const NotesGraphScreenBody = () => {
     deadlineTime?: string | null;
     priority?: TaskItem['priority'];
   } | null>(null);
+
+  const isGraphMapBusy = isBuilding || isLayoutTransitioning || isGraphReconciling;
+  const graphMapStatusLabel = isGraphReconciling
+    ? t('notesGraph.reconciling')
+    : t('notesGraph.building');
+  const showFullScreenBuilding = (isBuilding || !persistHydrated) && layoutNodes.length === 0;
 
   const records = useRecordStore((s) => s.records);
   const updateTasks = useRecordStore((s) => s.updateTasks);
@@ -371,6 +380,32 @@ export const NotesGraphScreenBody = () => {
   useEffect(() => {
     if (!persistHydrated) return;
     let cancelled = false;
+    const hadVisibleGraph = layoutNodesRef.current.length > 0;
+
+    if (hadVisibleGraph) {
+      setIsBuilding(true);
+    }
+
+    const clearLayoutUpdateTimeout = () => {
+      if (layoutUpdateTimeoutRef.current) {
+        clearTimeout(layoutUpdateTimeoutRef.current);
+        layoutUpdateTimeoutRef.current = null;
+      }
+    };
+
+    const finishLayoutUpdate = () => {
+      setIsLayoutTransitioning(false);
+      clearLayoutUpdateTimeout();
+    };
+
+    const scheduleLayoutUpdateMinimum = () => {
+      setIsLayoutTransitioning(true);
+      clearLayoutUpdateTimeout();
+      layoutUpdateTimeoutRef.current = setTimeout(() => {
+        layoutUpdateTimeoutRef.current = null;
+        if (!cancelled) finishLayoutUpdate();
+      }, GRAPH_LAYOUT_UPDATE_MIN_MS);
+    };
 
     const applyBuilt = (built: {
       layoutNodes: GraphNode[];
@@ -392,6 +427,7 @@ export const NotesGraphScreenBody = () => {
 
       layoutTransitionCancelRef.current?.();
       layoutTransitionCancelRef.current = null;
+      clearLayoutUpdateTimeout();
 
       const finishApply = () => {
         layoutNodesRef.current = nextNodes;
@@ -400,17 +436,26 @@ export const NotesGraphScreenBody = () => {
       };
 
       if (shouldAnimateLayoutTransition(previousNodes, nextNodes)) {
+        setIsLayoutTransitioning(true);
         layoutTransitionCancelRef.current = runLayoutTransition(
           previousNodes,
           nextNodes,
           GRAPH_LAYOUT_TRANSITION_MS,
           setDisplayNodes,
-          finishApply,
+          () => {
+            finishApply();
+            if (!cancelled) finishLayoutUpdate();
+          },
         );
         return;
       }
 
       finishApply();
+      if (hadVisibleGraph) {
+        scheduleLayoutUpdateMinimum();
+      } else {
+        finishLayoutUpdate();
+      }
     };
 
     void (async () => {
@@ -456,6 +501,10 @@ export const NotesGraphScreenBody = () => {
 
     return () => {
       cancelled = true;
+      layoutTransitionCancelRef.current?.();
+      layoutTransitionCancelRef.current = null;
+      clearLayoutUpdateTimeout();
+      setIsLayoutTransitioning(false);
     };
   }, [
     filteredRecordCount,
@@ -473,7 +522,7 @@ export const NotesGraphScreenBody = () => {
   }, [focusRecordId, layoutCacheKey]);
 
   useEffect(() => {
-    if (!isLocalGraphMode || !focusRecordId || isBuilding || layoutNodes.length === 0) return;
+    if (!isLocalGraphMode || !focusRecordId || isGraphMapBusy || layoutNodes.length === 0) return;
     if (hasFocusedLocalNodeRef.current) return;
 
     const centerNode = layoutNodes.find((node) => node.record?.id === focusRecordId);
@@ -484,7 +533,7 @@ export const NotesGraphScreenBody = () => {
     void waitForNextFrame().then(() => {
       canvasRef.current?.focusNode(centerNode);
     });
-  }, [focusRecordId, isBuilding, isLocalGraphMode, layoutNodes]);
+  }, [focusRecordId, isGraphMapBusy, isLocalGraphMode, layoutNodes]);
 
   useEffect(() => {
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
@@ -569,7 +618,7 @@ export const NotesGraphScreenBody = () => {
   );
 
   const handleSearchHeaderPress = useCallback(() => {
-    if (isGraphReconciling) return;
+    if (isGraphMapBusy) return;
     const barVisible = searchBarExplicitOpen || searchQuery.trim().length > 0;
     if (barVisible && searchQuery.trim() === '') {
       setSearchBarExplicitOpen(false);
@@ -577,7 +626,7 @@ export const NotesGraphScreenBody = () => {
       setSearchBarExplicitOpen(true);
       setSearchFocusSignal((n) => n + 1);
     }
-  }, [isGraphReconciling, searchBarExplicitOpen, searchQuery]);
+  }, [isGraphMapBusy, searchBarExplicitOpen, searchQuery]);
 
   const handleSearchCleared = useCallback(() => {
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
@@ -739,9 +788,9 @@ export const NotesGraphScreenBody = () => {
     [editTaskRecord?.status, editTaskTarget, handleSaveTask],
   );
 
-  const showLargeGraphHint = !isBuilding && filteredRecordCount > LARGE_GRAPH_RECORD_THRESHOLD;
+  const showLargeGraphHint = !isGraphMapBusy && filteredRecordCount > LARGE_GRAPH_RECORD_THRESHOLD;
   const showSimilarEdgesLimitedHint =
-    !isBuilding &&
+    !isGraphMapBusy &&
     filters.edgeVisibility.similar &&
     filteredRecordCount > MAX_RECORDS_FOR_SIMILAR_EDGES;
 
@@ -751,7 +800,7 @@ export const NotesGraphScreenBody = () => {
   }, [syncUnsavedLayoutState]);
 
   const handleDiscardUnsavedLayoutChanges = useCallback(() => {
-    if (!hasUnsavedLayoutChanges || isGraphReconciling || isSavingLayout) return;
+    if (!hasUnsavedLayoutChanges || isGraphMapBusy || isSavingLayout) return;
 
     const positions = deserializeNotesGraphPositions(savedLayoutSnapshotRef.current);
     replaceSessionNodePositions(positions);
@@ -761,15 +810,15 @@ export const NotesGraphScreenBody = () => {
   }, [
     handleClearNodeSelection,
     hasUnsavedLayoutChanges,
-    isGraphReconciling,
+    isGraphMapBusy,
     isSavingLayout,
     syncUnsavedLayoutState,
   ]);
 
   const handleOpenLayoutSaveSheet = useCallback(() => {
-    if (isSavingLayout || isGraphReconciling || !hasUnsavedLayoutChanges) return;
+    if (isSavingLayout || isGraphMapBusy || !hasUnsavedLayoutChanges) return;
     setLayoutSaveSheetVisible(true);
-  }, [hasUnsavedLayoutChanges, isGraphReconciling, isSavingLayout]);
+  }, [hasUnsavedLayoutChanges, isGraphMapBusy, isSavingLayout]);
 
   const handleCancelLayoutSaveSheet = useCallback(() => {
     setLayoutSaveSheetVisible(false);
@@ -777,7 +826,7 @@ export const NotesGraphScreenBody = () => {
 
   const handleConfirmLayoutSave = useCallback(
     async (name: string) => {
-      if (isSavingLayout || isGraphReconciling || !hasUnsavedLayoutChanges) return;
+      if (isSavingLayout || isGraphMapBusy || !hasUnsavedLayoutChanges) return;
 
       setIsSavingLayout(true);
       try {
@@ -793,13 +842,7 @@ export const NotesGraphScreenBody = () => {
         setIsSavingLayout(false);
       }
     },
-    [
-      handleClearNodeSelection,
-      hasUnsavedLayoutChanges,
-      isGraphReconciling,
-      isSavingLayout,
-      persistKey,
-    ],
+    [handleClearNodeSelection, hasUnsavedLayoutChanges, isGraphMapBusy, isSavingLayout, persistKey],
   );
 
   const handleApplyLayoutVersion = useCallback(async (entry: NotesGraphLayoutVersionEntry) => {
@@ -820,7 +863,14 @@ export const NotesGraphScreenBody = () => {
 
   useEffect(() => {
     if (!shouldFitAfterLayoutApplyRef.current) return;
-    if (isBuilding || !persistHydrated || isGraphReconciling || recordCount === 0) return;
+    if (
+      isBuilding ||
+      isLayoutTransitioning ||
+      !persistHydrated ||
+      isGraphReconciling ||
+      recordCount === 0
+    )
+      return;
 
     shouldFitAfterLayoutApplyRef.current = false;
     let innerFrame = 0;
@@ -836,6 +886,7 @@ export const NotesGraphScreenBody = () => {
     };
   }, [
     isBuilding,
+    isLayoutTransitioning,
     isGraphReconciling,
     layoutRestoreToken,
     layoutNodes.length,
@@ -889,22 +940,15 @@ export const NotesGraphScreenBody = () => {
     setHistoryRefreshToken((token) => token + 1);
   }, [historyScope, syncUnsavedLayoutState]);
 
-  const headerControlsDisabled = isGraphReconciling || isSavingLayout || isCapturingExport;
+  const headerControlsDisabled = isGraphMapBusy || isSavingLayout || isCapturingExport;
 
   const appliedLayoutHeaderSubtitle = useMemo(() => {
-    if (recordCount === 0 || !activeSavedVersion || hasUnsavedLayoutChanges || isGraphReconciling) {
+    if (recordCount === 0 || !activeSavedVersion || hasUnsavedLayoutChanges || isGraphMapBusy) {
       return undefined;
     }
 
     return formatGraphAppliedLayoutHeaderSubtitle(activeSavedVersion, i18n.language, t);
-  }, [
-    activeSavedVersion,
-    hasUnsavedLayoutChanges,
-    i18n.language,
-    isGraphReconciling,
-    recordCount,
-    t,
-  ]);
+  }, [activeSavedVersion, hasUnsavedLayoutChanges, i18n.language, isGraphMapBusy, recordCount, t]);
 
   const handleOpenExportPreview = useCallback(() => {
     if (isCapturingExport) return;
@@ -1185,7 +1229,7 @@ export const NotesGraphScreenBody = () => {
       </View>
     ) : null;
 
-  if (isBuilding || !persistHydrated) {
+  if (showFullScreenBuilding) {
     return (
       <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
         <ScreenHeader
@@ -1223,20 +1267,20 @@ export const NotesGraphScreenBody = () => {
         isProActive={isProActive}
         availableTags={availableTags}
         filteredRecordCount={filteredRecordCount}
-        disabled={isGraphReconciling || isCapturingExport}
+        disabled={isGraphMapBusy || isCapturingExport}
         onFiltersChange={handleFiltersChange}
       />
 
       {showLargeGraphHint ? (
         <Pressable
           onPress={toggleSimplifyMode}
-          disabled={isGraphReconciling}
+          disabled={isGraphMapBusy}
           accessibilityRole="button"
           style={{
             paddingHorizontal: 16,
             paddingVertical: 8,
             backgroundColor: color.background.tertiary,
-            opacity: isGraphReconciling ? 0.55 : 1,
+            opacity: isGraphMapBusy ? 0.55 : 1,
           }}
         >
           <Text style={{ color: color.text.secondary, fontSize: 13 }}>
@@ -1251,7 +1295,7 @@ export const NotesGraphScreenBody = () => {
             paddingHorizontal: 16,
             paddingVertical: 8,
             backgroundColor: color.background.tertiary,
-            opacity: isGraphReconciling ? 0.55 : 1,
+            opacity: isGraphMapBusy ? 0.55 : 1,
           }}
         >
           <Text style={{ color: color.text.secondary, fontSize: 13 }}>
@@ -1286,6 +1330,8 @@ export const NotesGraphScreenBody = () => {
             onNodeFocus={handleNodeFocus}
             onResetView={handleClearNodeSelection}
             onReconcilingChange={setIsGraphReconciling}
+            mapStatusActive={isGraphMapBusy}
+            mapStatusLabel={graphMapStatusLabel}
             onLayoutPositionsChange={handleLayoutPositionsChange}
             onResetLayoutLongPress={handleDiscardUnsavedLayoutChanges}
             resetLayoutLongPressEnabled={hasUnsavedLayoutChanges}
@@ -1356,8 +1402,8 @@ export const NotesGraphScreenBody = () => {
       {showGraphSearchBar ? (
         <FloatingFrostedStickyView
           safeAreaBottom={insets.bottom}
-          pointerEvents={isGraphReconciling ? 'none' : 'auto'}
-          style={{ opacity: isGraphReconciling ? 0.55 : 1 }}
+          pointerEvents={isGraphMapBusy ? 'none' : 'auto'}
+          style={{ opacity: isGraphMapBusy ? 0.55 : 1 }}
         >
           <GraphStickySearchBar
             query={searchQuery}

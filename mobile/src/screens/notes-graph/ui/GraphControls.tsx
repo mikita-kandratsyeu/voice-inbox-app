@@ -23,8 +23,8 @@ type GraphControlsProps = {
   resetLayoutLongPressEnabled?: boolean;
   legendVisible: boolean;
   onToggleLegend: () => void;
-  isReconciling?: boolean;
-  reconcilingLabel?: string;
+  statusActive?: boolean;
+  statusLabel?: string;
 };
 
 function ControlButton({
@@ -105,13 +105,13 @@ export function GraphControls({
   resetLayoutLongPressEnabled = false,
   legendVisible,
   onToggleLegend,
-  isReconciling = false,
-  reconcilingLabel,
+  statusActive = false,
+  statusLabel,
 }: GraphControlsProps) {
   const { t } = useTranslation();
   const bottomOffset = bottomInset + 16;
-  const showStatusLoader = isReconciling;
-  const statusLabel = reconcilingLabel;
+  const showStatusLoader = statusActive;
+  const resolvedStatusLabel = statusLabel ?? t('notesGraph.reconciling');
 
   return (
     <>
@@ -167,7 +167,7 @@ export function GraphControls({
           >
             <View
               accessibilityRole="progressbar"
-              accessibilityLabel={statusLabel}
+              accessibilityLabel={resolvedStatusLabel}
               style={{
                 alignSelf: 'stretch',
                 flexDirection: 'row',
@@ -188,7 +188,7 @@ export function GraphControls({
                 }}
                 numberOfLines={1}
               >
-                {statusLabel}
+                {resolvedStatusLabel}
               </Text>
             </View>
           </FrostedChromeSurface>

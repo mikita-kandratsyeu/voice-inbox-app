@@ -111,6 +111,8 @@ type GraphCanvasProps = {
   onNodeFocus: (nodeId: string) => void;
   onResetView?: () => void;
   onReconcilingChange?: (isReconciling: boolean) => void;
+  mapStatusActive?: boolean;
+  mapStatusLabel?: string;
   onLayoutPositionsChange?: () => void;
   onResetLayoutLongPress?: () => void;
   resetLayoutLongPressEnabled?: boolean;
@@ -173,6 +175,8 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     onNodeFocus,
     onResetView,
     onReconcilingChange,
+    mapStatusActive = false,
+    mapStatusLabel,
     onLayoutPositionsChange,
     onResetLayoutLongPress,
     resetLayoutLongPressEnabled = false,
@@ -249,6 +253,9 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     },
     [onReconcilingChange],
   );
+
+  const mapBusy = mapStatusActive || isReconciling;
+  const mapStatusText = mapStatusLabel ?? t('notesGraph.reconciling');
 
   const displayNodes = useMemo(
     () => mergeNodePositions(nodes, positionOverrides),
@@ -1021,7 +1028,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               animatedStyle,
             ]}
           >
-            {!exportBusy && !isReconciling ? (
+            {!exportBusy && !mapBusy ? (
               <GestureDetector gesture={backgroundDoubleTap}>
                 <Pressable
                   style={{
@@ -1048,7 +1055,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               worldWidth={worldWidth}
               worldHeight={worldHeight}
               layoutRestoreToken={layoutRestoreToken}
-              interactionsEnabled={!isReconciling && !exportBusy}
+              interactionsEnabled={!mapBusy && !exportBusy}
               nodeDisplayMode={nodeDisplayMode}
               viewportCull={nodeViewportCull}
               onRecordPress={onRecordPress}
@@ -1087,9 +1094,9 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
           translateX={translateX}
           translateY={translateY}
           scale={scale}
-          disabled={isReconciling || exportBusy}
+          disabled={mapBusy || exportBusy}
           onNavigate={(nextTranslateX, nextTranslateY) => {
-            if (isReconciling || exportBusy) return;
+            if (mapBusy || exportBusy) return;
             applyTransform({
               scale: savedScale.value,
               translateX: nextTranslateX,
@@ -1102,7 +1109,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       <GraphControls
         color={color}
         bottomInset={bottomInset}
-        disabled={isReconciling || exportBusy}
+        disabled={mapBusy || exportBusy}
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}
         onFit={() => fitToScreen(true, displayNodes)}
@@ -1111,16 +1118,16 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         resetLayoutLongPressEnabled={resetLayoutLongPressEnabled}
         legendVisible={legendVisible}
         onToggleLegend={() => setLegendVisible((v) => !v)}
-        isReconciling={isReconciling}
-        reconcilingLabel={t('notesGraph.reconciling')}
+        statusActive={mapBusy}
+        statusLabel={mapStatusText}
       />
 
-      {hasUnsavedLayoutChanges && onSaveLayout && onDiscardLayout && !isReconciling ? (
+      {hasUnsavedLayoutChanges && onSaveLayout && onDiscardLayout && !mapBusy ? (
         <GraphLayoutSaveBar
           color={color}
           bottomInset={bottomInset}
           isSaving={isSavingLayout}
-          disabled={isReconciling || exportBusy}
+          disabled={mapBusy || exportBusy}
           onSave={onSaveLayout}
           onDiscard={onDiscardLayout}
         />
