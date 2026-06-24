@@ -1,6 +1,7 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { WEB_API_FETCH_TIMEOUT_MS } from '@/shared/lib/api-auth/constants';
 import { diagWarn } from '@/shared/lib/appLogger';
+import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { nitroFetch } from '@/shared/lib/fetch';
 
 import {
@@ -21,6 +22,15 @@ export async function fetchRemoteBannerManifest(): Promise<void> {
   const url = `${base.replace(/\/$/, '')}${BANNER_PATH}`;
   const headers: Record<string, string> = { Accept: 'application/json' };
   const etag = getStoredBannerEtag();
+
+  try {
+    const deviceId = await getOrCreateDeviceId();
+    if (deviceId.trim()) {
+      headers['x-device-id'] = deviceId.trim();
+    }
+  } catch (e) {
+    diagWarn('[mobile-banner] device id unavailable', e);
+  }
 
   if (etag) {
     headers['If-None-Match'] = etag;

@@ -15,8 +15,10 @@ import {
   AdminAlert,
   AdminCard,
   AdminFormField,
+  AdminSubNav,
   adminBtnPrimaryClass,
   adminBtnSecondaryClass,
+  adminBtnDangerClass,
   adminInputClass,
 } from './admin-ui';
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from './adminDatetimeLocal';
@@ -30,6 +32,33 @@ type ApiOk = {
 };
 
 type ApiErr = { ok: false; error?: string };
+
+type BannerScope = 'global' | 'device';
+
+const BANNER_SCOPES = [
+  { id: 'global' as const, label: 'Global' },
+  { id: 'device' as const, label: 'Per device' },
+];
+
+type DeviceBannerListItem = {
+  deviceId: string;
+  revision: number;
+  bannerId: string;
+  enabled: boolean;
+  titleEn: string;
+  updatedAt: string;
+};
+
+type DeviceApiOk = {
+  ok: true;
+  editable?: boolean;
+  hint?: string;
+  deviceId: string;
+  banner: MobileBannerConfig | null;
+  revision: number;
+  hasStoredCopy?: boolean;
+  updatedAt?: string | null;
+};
 
 type LocaleDraft = {
   title: string;
@@ -154,6 +183,7 @@ function toBannerPayload(draft: BannerDraft): MobileBannerConfig | null {
 }
 
 export function AdminMobileBannerPanel() {
+  const [scope, setScope] = useState<BannerScope>('global');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editable, setEditable] = useState(false);
@@ -165,6 +195,10 @@ export function AdminMobileBannerPanel() {
   const [localeTab, setLocaleTab] = useState<MobileBannerLocale>('en');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [deviceIdInput, setDeviceIdInput] = useState('');
+  const [deviceIds, setDeviceIds] = useState<string[]>([]);
+  const [deviceItems, setDeviceItems] = useState<DeviceBannerListItem[]>([]);
+  const [deviceListLoading, setDeviceListLoading] = useState(false);
 
   const publicUrl = `${BASE_URL_OR_FALLBACK.replace(/\/$/, '')}/api/public/mobile-banner`;
   const activeLocaleDraft = draft.locales[localeTab];
@@ -193,9 +227,95 @@ export function AdminMobileBannerPanel() {
     }
   }, []);
 
+  const fetchDeviceList = useCallback(async () => {
+    setDeviceListLoading(true);
+    try {
+      const res = await fetch('/api/admin/mobile-banner/devices?limit=100', {
+        credentials: 'include',
+      });
+      const data = (await res.json()) as { ok?: boolean; items?: DeviceBannerListItem[] };
+      setDeviceItems(data.ok && Array.isArray(data.items) ? data.items : []);
+    } catch {
+      setDeviceItems([]);
+    } finally {
+      setDeviceListLoading(false);
+    }
+  }, []);
+
+  const fetchKnownDeviceIds = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/devices', { credentials: 'include' });
+      const data = await res.json();
+      setDeviceIds(
+        Array.isArray((data as { deviceIds?: string[] }).deviceIds) ? data.deviceIds : [],
+      );
+    } catch {
+      setDeviceIds([]);
+    }
+  }, []);
+
+  const fetchDeviceManifest = useCallback(async (deviceId: string) => {
+    const trimmed = deviceId.trim();
+    if (!trimmed) {
+      setDraft(emptyDraft());
+      setRevision(0);
+      setHasStoredCopy(false);
+      setIdTouched(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/admin/mobile-banner/device/${encodeURIComponent(trimmed)}`, {
+        credentials: 'include',
+      });
+      const data = (await res.json()) as DeviceApiOk | ApiErr;
+      if (!res.ok || !data.ok) {
+        setError((data as ApiErr).error ?? 'Failed to load device banner');
+        return;
+      }
+      setEditable(!!data.editable);
+      setHint(data.hint ?? null);
+      setHasStoredCopy(!!data.hasStoredCopy);
+      setRevision(data.revision);
+      setDraft(toDraft(data.banner));
+      setIdTouched(Boolean(data.banner?.id));
+    } catch {
+      setError('Request failed');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    void fetchManifest();
-  }, [fetchManifest]);
+    if (scope === 'global') {
+      void fetchManifest();
+      return;
+    }
+    void fetchDeviceList();
+    void fetchKnownDeviceIds();
+  }, [scope, fetchManifest, fetchDeviceList, fetchKnownDeviceIds]);
+
+  useEffect(() => {
+    if (scope !== 'device') return;
+    const trimmed = deviceIdInput.trim();
+    if (!trimmed) {
+      setDraft(emptyDraft());
+      setRevision(0);
+      setHasStoredCopy(false);
+      setIdTouched(false);
+      setLoading(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      void fetchDeviceManifest(trimmed);
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [scope, deviceIdInput, fetchDeviceManifest]);
 
   const previewTitle = useMemo(
     () => activeLocaleDraft.title.trim() || 'Banner title',
@@ -254,6 +374,43 @@ export function AdminMobileBannerPanel() {
       return;
     }
 
+    if (scope === 'device') {
+      const trimmedDeviceId = deviceIdInput.trim();
+      if (!trimmedDeviceId) {
+        setError('Enter a device id.');
+        setSaving(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `/api/admin/mobile-banner/device/${encodeURIComponent(trimmedDeviceId)}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ banner }),
+          },
+        );
+        const data = (await res.json()) as DeviceApiOk | ApiErr;
+        if (!res.ok || !data.ok) {
+          setError((data as ApiErr).error ?? 'Save failed');
+          return;
+        }
+        setMessage('Device banner saved.');
+        setRevision(data.revision);
+        setDraft(toDraft(data.banner));
+        setIdTouched(Boolean(data.banner?.id));
+        setHasStoredCopy(!!data.hasStoredCopy);
+        void fetchDeviceList();
+      } catch {
+        setError('Request failed');
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
     try {
       const res = await fetch('/api/admin/mobile-banner', {
         method: 'PUT',
@@ -278,6 +435,52 @@ export function AdminMobileBannerPanel() {
     }
   };
 
+  const handleDeleteDeviceBanner = async () => {
+    const trimmedDeviceId = deviceIdInput.trim();
+    if (!trimmedDeviceId) {
+      setError('Enter a device id.');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const res = await fetch(
+        `/api/admin/mobile-banner/device/${encodeURIComponent(trimmedDeviceId)}`,
+        {
+          method: 'DELETE',
+          credentials: 'include',
+        },
+      );
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setError(data.error ?? 'Delete failed');
+        return;
+      }
+      setMessage('Device banner removed — device will see the global banner.');
+      setDraft(emptyDraft());
+      setRevision(0);
+      setHasStoredCopy(false);
+      setIdTouched(false);
+      void fetchDeviceList();
+    } catch {
+      setError('Request failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    if (scope === 'global') {
+      void fetchManifest();
+      return;
+    }
+    void fetchDeviceList();
+    void fetchKnownDeviceIds();
+    void fetchDeviceManifest(deviceIdInput);
+  };
+
   const handleCopyPublicUrl = async () => {
     setError(null);
     try {
@@ -291,19 +494,29 @@ export function AdminMobileBannerPanel() {
   return (
     <AdminCard
       title="Mobile in-app banner"
-      description="Promotional banner shown in the mobile inbox. Fill copy per locale; shared settings apply to all languages."
+      description={
+        scope === 'global'
+          ? 'Global promotional banner shown in the mobile inbox when no per-device override exists.'
+          : 'Target a specific device by id (same x-device-id used for push tokens and API auth). Overrides the global banner for that device only.'
+      }
       headerRight={
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => void fetchManifest()}
-            className={adminBtnSecondaryClass}
-          >
+          <button type="button" onClick={handleRefresh} className={adminBtnSecondaryClass}>
             Refresh
           </button>
+          {scope === 'device' && hasStoredCopy ? (
+            <button
+              type="button"
+              disabled={!editable || saving}
+              onClick={() => void handleDeleteDeviceBanner()}
+              className={adminBtnDangerClass}
+            >
+              Remove override
+            </button>
+          ) : null}
           <button
             type="button"
-            disabled={!editable || saving}
+            disabled={!editable || saving || (scope === 'device' && !deviceIdInput.trim())}
             onClick={() => void handleSave()}
             className={adminBtnPrimaryClass}
           >
@@ -312,10 +525,79 @@ export function AdminMobileBannerPanel() {
         </div>
       }
     >
-      <p className="mb-3 font-mono text-xs text-zinc-600 dark:text-zinc-400">GET {publicUrl}</p>
-      <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">Revision: {revision}</p>
+      <AdminSubNav items={BANNER_SCOPES} value={scope} onChange={setScope} className="mb-4" />
 
-      {!hasStoredCopy && editable ? (
+      <p className="mb-3 font-mono text-xs text-zinc-600 dark:text-zinc-400">GET {publicUrl}</p>
+      <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
+        Revision: {revision}
+        {scope === 'device' ? ' · sends x-device-id from the app for personalized resolution' : ''}
+      </p>
+
+      {scope === 'device' ? (
+        <div className="mb-4 space-y-3">
+          <AdminFormField
+            label="Device id"
+            hint="UUID or 16-char Android id — copy from Support issues, push admin, or the app debug screen."
+          >
+            <input
+              value={deviceIdInput}
+              onChange={(e) => setDeviceIdInput(e.target.value)}
+              list="mobile-banner-device-ids"
+              placeholder="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+              className={`${adminInputClass} font-mono text-xs`}
+            />
+            <datalist id="mobile-banner-device-ids">
+              {deviceIds.map((id) => (
+                <option key={id} value={id} />
+              ))}
+            </datalist>
+          </AdminFormField>
+
+          {deviceListLoading ? (
+            <p className="text-sm text-zinc-500">Loading device overrides…</p>
+          ) : deviceItems.length > 0 ? (
+            <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700">
+              <table className="min-w-full text-left text-xs">
+                <thead className="bg-zinc-50 text-zinc-500 dark:bg-zinc-900/60 dark:text-zinc-400">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">Device id</th>
+                    <th className="px-3 py-2 font-medium">Banner</th>
+                    <th className="px-3 py-2 font-medium">Updated</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deviceItems.map((item) => (
+                    <tr
+                      key={item.deviceId}
+                      className="border-t border-zinc-100 dark:border-zinc-800"
+                    >
+                      <td className="px-3 py-2">
+                        <button
+                          type="button"
+                          onClick={() => setDeviceIdInput(item.deviceId)}
+                          className="font-mono text-indigo-600 hover:underline dark:text-indigo-400"
+                        >
+                          {item.deviceId}
+                        </button>
+                      </td>
+                      <td className="px-3 py-2 text-zinc-700 dark:text-zinc-200">
+                        {item.titleEn || item.bannerId}
+                      </td>
+                      <td className="px-3 py-2 text-zinc-500">
+                        {new Date(item.updatedAt).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-500">No per-device overrides yet.</p>
+          )}
+        </div>
+      ) : null}
+
+      {!hasStoredCopy && editable && scope === 'global' ? (
         <AdminAlert tone="warning" className="mb-3">
           Nothing saved yet — the public API returns an empty default until you save.
         </AdminAlert>

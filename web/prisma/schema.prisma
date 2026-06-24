@@ -164,6 +164,17 @@ model DeviceProEntitlement {
   @@index([expiresAt])
 }
 
+/// Per-device mobile inbox banner override (deviceId = mobile x-device-id / push token id).
+model DeviceMobileBanner {
+  deviceId   String   @id
+  revision   Int      @default(1)
+  bannerJson String   @db.Text
+  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now())
+
+  @@index([updatedAt(sort: Desc)])
+}
+
 model AiUsageLedgerEntry {
   id          String   @id @default(cuid())
   deviceId    String
