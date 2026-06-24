@@ -7,7 +7,13 @@ import {
   resolveEffectivePrivateAiProvider,
   useSettingsStore,
 } from '@/entities/settings';
+import { ensureInboxAskEmbeddings } from '@/features/embedding-generation';
 import { enrichInboxAskEvidence } from '@/features/inbox-ask/lib/enrichInboxAskEvidence';
+import {
+  normalizeInboxAskTurnMode,
+  trimGeneralPriorTurns,
+  trimInboxPriorTurns,
+} from '@/features/inbox-ask/lib/inboxAskHistory';
 import {
   countInboxAskCorpusRecords,
   type InboxAskRetrievalScope,
@@ -15,12 +21,10 @@ import {
   retrieveNotesForInboxAsk,
 } from '@/features/inbox-ask-retrieval';
 import { executeInboxAskTool } from '@/features/inbox-ask-tools';
-import { ensureInboxAskEmbeddings } from '@/features/embedding-generation';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import { createAiAbortHandle, isAiRequestCancelled } from '@/shared/lib/ai-api/abort';
 import { cancelCloudAiJob } from '@/shared/lib/ai-api/cancelCloudAiJob';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
-import type { AskPriorTurn } from '@/shared/lib/ai-core';
 import { AIOrchestrator } from '@/shared/lib/ai-core';
 import { INBOX_ASK_MAX_PAYLOAD_CHARS } from '@/shared/lib/ai-core/corpusNotesForPrompt';
 import { mapLocalError } from '@/shared/lib/ai-core/local-provider/localAiMapError';
@@ -43,9 +47,12 @@ import {
   saveInboxAskSession,
 } from './inboxAskSessionDb';
 
+export type InboxAskTurnMode = 'inbox' | 'general';
+
 export type InboxAskHistoryItem = {
   question: string;
   answer: string;
+  mode?: InboxAskTurnMode;
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
@@ -73,6 +80,8 @@ export type InboxAskState = {
   notesDropped: number;
   lastUsedNotes: Array<{ recordId: string; title: string }>;
   toolSteps: InboxAskToolStep[];
+  canAskWithoutNotes: boolean;
+  answerMode: InboxAskTurnMode | null;
 };
 
 const INITIAL_STATE: InboxAskState = {
@@ -88,6 +97,8 @@ const INITIAL_STATE: InboxAskState = {
   notesDropped: 0,
   lastUsedNotes: [],
   toolSteps: [],
+  canAskWithoutNotes: false,
+  answerMode: null,
 };
 
 const INBOX_ASK_GENERATION_KEY = 'inbox-ask';
@@ -114,6 +125,7 @@ function applyInboxAskCancelState(s: InboxAskState, revertPromotedTurn: boolean)
       interpretations: undefined,
       suggestedFollowUps: undefined,
       toolSteps: [],
+      answerMode: null,
     };
   }
 
@@ -130,6 +142,7 @@ function applyInboxAskCancelState(s: InboxAskState, revertPromotedTurn: boolean)
       interpretations: restored.interpretations,
       suggestedFollowUps: restored.suggestedFollowUps,
       ...idleFields,
+      answerMode: normalizeInboxAskTurnMode(restored),
     };
   }
 
@@ -143,15 +156,9 @@ function applyInboxAskCancelState(s: InboxAskState, revertPromotedTurn: boolean)
     interpretations: undefined,
     suggestedFollowUps: undefined,
     toolSteps: [],
+    answerMode: null,
     ...idleFields,
   };
-}
-
-function trimPriorTurns(history: InboxAskHistoryItem[]): AskPriorTurn[] {
-  return history.slice(-6).map((turn) => ({
-    question: turn.question.slice(0, 800),
-    answer: turn.answer.slice(0, 2000),
-  }));
 }
 
 function toPersistInput(state: InboxAskState): InboxAskSessionPersistInput {
@@ -170,6 +177,7 @@ function toPersistInput(state: InboxAskState): InboxAskSessionPersistInput {
     notesUsed: state.notesUsed,
     notesTotal: state.notesTotal,
     notesDropped: state.notesDropped,
+    answerMode: state.answerMode,
   };
 }
 
@@ -274,6 +282,11 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
           notesDropped: restored.notesDropped ?? 0,
           lastUsedNotes: restored.lastUsedNotes ?? [],
           toolSteps: [],
+          canAskWithoutNotes:
+            !isPending &&
+            restored.error === i18n.t('inboxAsk.noRelevantNotes') &&
+            !restored.answer?.trim(),
+          answerMode: restored.answerMode ?? null,
         });
 
         if (!isPending || !restored.question?.trim()) return;
@@ -376,6 +389,7 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
           priorHistory.push({
             question: prev.question!,
             answer: prev.answer!,
+            mode: prev.answerMode ?? 'inbox',
             answerKind: prev.answerKind,
             items: prev.items,
             evidence: prev.evidence,
@@ -388,6 +402,8 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
           isLoading: true,
           phase: 'retrieving',
           error: null,
+          canAskWithoutNotes: false,
+          answerMode: null,
           question: trimmedQuestion,
           answer: null,
           answerKind: undefined,
@@ -432,6 +448,7 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
         });
 
         if (retrieval.notes.length === 0) {
+          void logAnalyticsEvent('inbox_ask_no_notes', { sessionKey });
           setState((prev) => {
             const next = {
               ...prev,
@@ -439,6 +456,8 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
               phase: 'idle' as const,
               error: i18n.t('inboxAsk.noRelevantNotes'),
               answer: null,
+              canAskWithoutNotes: true,
+              answerMode: null,
             };
             persistSnapshot(next);
             return next;
@@ -473,7 +492,7 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
             id: requestId,
             question: trimmedQuestion,
             corpusNotes: retrieval.notes,
-            priorTurns: trimPriorTurns(priorHistory),
+            priorTurns: trimInboxPriorTurns(priorHistory),
             toolExecutor: (call) => executeInboxAskTool(call, { records, scope }),
             onInboxAskToolCall: (call) => {
               setState((prev) => ({
@@ -574,6 +593,8 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
             interpretations: runResult.result.interpretations,
             suggestedFollowUps: runResult.result.suggestedFollowUps,
             toolSteps: runResult.result.toolSteps ?? prev.toolSteps,
+            answerMode: 'inbox',
+            canAskWithoutNotes: false,
           };
           persistSnapshot(next, corpusFp);
           return next;
@@ -637,6 +658,206 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
     };
   }, [askQuestion]);
 
+  const askWithoutNotes = useCallback(
+    async (questionText?: string) => {
+      const trimmedQuestion = (questionText ?? state.question ?? '').trim();
+      if (!trimmedQuestion) return;
+      if (inFlightRef.current) return;
+      if (inboxAskInFlightSessions.has(sessionKey)) return;
+
+      const settings = useSettingsStore.getState();
+      const effectivePrivateAiProvider = resolveEffectivePrivateAiProvider(
+        settings.privateAiProvider,
+        isProActiveFromStorageSync(),
+      );
+
+      const requestId = `general-ask-${Date.now()}`;
+      const abortHandle = createAiAbortHandle();
+      abortHandlesRef.current.set(INBOX_ASK_GENERATION_KEY, abortHandle);
+      registerAiGeneration(
+        INBOX_ASK_GENERATION_KEY,
+        'ask',
+        abortHandle,
+        settings.aiExecutionMode !== 'private_experimental' ? requestId : null,
+      );
+      inFlightRef.current = true;
+      inboxAskInFlightSessions.add(sessionKey);
+
+      let priorHistory: InboxAskHistoryItem[] = [];
+      setState((prev) => {
+        priorHistory = [...prev.history];
+        const didPromoteCurrentTurn = Boolean(prev.question && prev.answer);
+        promotedTurnPendingRevertRef.current = didPromoteCurrentTurn;
+        if (didPromoteCurrentTurn) {
+          priorHistory.push({
+            question: prev.question!,
+            answer: prev.answer!,
+            mode: prev.answerMode ?? 'inbox',
+            answerKind: prev.answerKind,
+            items: prev.items,
+            evidence: prev.evidence,
+            interpretations: prev.interpretations,
+            suggestedFollowUps: prev.suggestedFollowUps,
+          });
+        }
+        return {
+          ...prev,
+          isLoading: true,
+          phase: 'generating',
+          error: null,
+          canAskWithoutNotes: false,
+          answerMode: null,
+          question: trimmedQuestion,
+          answer: null,
+          answerKind: undefined,
+          items: undefined,
+          evidence: undefined,
+          interpretations: undefined,
+          suggestedFollowUps: undefined,
+          toolSteps: [],
+          history: priorHistory,
+          notesUsed: 0,
+          lastUsedNotes: [],
+        };
+      });
+
+      void logAnalyticsEvent('inbox_ask_general_started', { sessionKey });
+
+      const persistCancelledAsk = () => {
+        setState((s) => {
+          if (!s.isLoading) {
+            return s;
+          }
+          const next = applyInboxAskCancelState(s, promotedTurnPendingRevertRef.current);
+          promotedTurnPendingRevertRef.current = false;
+          queueMicrotask(() => {
+            persistSnapshot(next);
+          });
+          return next;
+        });
+      };
+
+      try {
+        const runResult = await AIOrchestrator.runGeneralAsk(
+          {
+            id: requestId,
+            question: trimmedQuestion,
+            priorTurns: trimGeneralPriorTurns(priorHistory),
+            abortSignal: abortHandle.signal,
+          },
+          {
+            selectedAIModel: settings.selectedAIModel,
+            aiModelRoutingMode: settings.aiModelRoutingMode,
+            selectedLocalAiModel: settings.selectedLocalAiModel ?? DEFAULT_LOCAL_AI_MODEL_ID,
+            isLocalLlmModelDownloaded: false,
+            summaryStyle: settings.summaryStyle,
+            taskStrictness: settings.taskStrictness,
+            aiOutputLanguage: settings.aiOutputLanguage,
+            aiExecutionMode: settings.aiExecutionMode,
+            privateLocalLlmBudget: settings.privateLocalLlmBudget,
+            privateRemoteOutputBudget: settings.privateRemoteOutputBudget,
+            privateRemotePreferJsonObject: settings.privateRemotePreferJsonObject,
+            privateCapabilityTier: settings.privateCapabilityTier,
+            privateAiProvider: effectivePrivateAiProvider,
+            privateRemoteBaseUrl: settings.privateRemoteBaseUrl,
+            privateRemoteApiKey: settings.privateRemoteApiKey,
+            privateRemoteModel: settings.privateRemoteModel,
+            cloudMessageTtlSeconds: settings.cloudAiKvTtlSeconds,
+          },
+        );
+
+        if (abortHandle.cancelled) {
+          persistCancelledAsk();
+          return;
+        }
+
+        if (!runResult.ok) {
+          const errorMsg = runResult.limitExceeded
+            ? getAiWeeklyLimitExceededMessage()
+            : runResult.error;
+          if (runResult.limitExceeded) alertAiLimitExceeded(errorMsg);
+          if (isAiRequestCancelled(errorMsg)) {
+            void logAnalyticsEvent('ai_action_cancelled', {
+              action: 'inbox_ask_general',
+              mode: settings.aiExecutionMode,
+              tier: settings.privateCapabilityTier,
+            });
+            persistCancelledAsk();
+            return;
+          }
+          void logAnalyticsEvent('inbox_ask_general_failed', {
+            mode: runResult.mode ?? settings.aiExecutionMode,
+            provider: runResult.provider,
+          });
+          setState((prev) => {
+            const next = { ...prev, isLoading: false, phase: 'idle' as const, error: errorMsg };
+            persistSnapshot(next);
+            return next;
+          });
+          return;
+        }
+
+        promotedTurnPendingRevertRef.current = false;
+
+        setState((prev) => {
+          const next: InboxAskState = {
+            ...prev,
+            isLoading: false,
+            phase: 'idle',
+            error: null,
+            answer: runResult.result.answer,
+            answerKind: runResult.result.answerKind,
+            items: runResult.result.items,
+            evidence: undefined,
+            interpretations: runResult.result.interpretations,
+            suggestedFollowUps: runResult.result.suggestedFollowUps,
+            toolSteps: [],
+            answerMode: 'general',
+            canAskWithoutNotes: false,
+            notesUsed: 0,
+            lastUsedNotes: [],
+          };
+          persistSnapshot(next);
+          return next;
+        });
+
+        void logAnalyticsEvent('inbox_ask_general_success', {
+          mode: runResult.mode,
+          provider: runResult.provider,
+        });
+      } catch (err) {
+        if (abortHandle.cancelled) {
+          persistCancelledAsk();
+          return;
+        }
+        if (err instanceof Error && isAiRequestCancelled(err.message)) {
+          persistCancelledAsk();
+          return;
+        }
+        diagWarn('[AI] useInboxAsk askWithoutNotes failed', err);
+        void logAnalyticsEvent('inbox_ask_general_failed', {
+          mode: settings.aiExecutionMode,
+        });
+        setState((prev) => {
+          const next = {
+            ...prev,
+            isLoading: false,
+            phase: 'idle' as const,
+            error: mapLocalError(err),
+          };
+          persistSnapshot(next);
+          return next;
+        });
+      } finally {
+        inFlightRef.current = false;
+        inboxAskInFlightSessions.delete(sessionKey);
+        unregisterAiGeneration(INBOX_ASK_GENERATION_KEY, 'ask', abortHandle);
+        abortHandlesRef.current.delete(INBOX_ASK_GENERATION_KEY);
+      }
+    },
+    [persistSnapshot, sessionKey, state.question],
+  );
+
   const cancelAsk = useCallback(() => {
     const settings = useSettingsStore.getState();
     const { cloudJobId } = abortAiGeneration(INBOX_ASK_GENERATION_KEY, 'ask');
@@ -677,6 +898,7 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
   return {
     ...state,
     askQuestion,
+    askWithoutNotes,
     cancelAsk,
     reset,
     syncInboxAskSessionFromDb,

@@ -217,6 +217,14 @@ export type InboxAskRequest = {
   abortSignal?: AbortSignal;
 };
 
+export type GeneralAskRequest = {
+  id: string;
+  question: string;
+  priorTurns?: AskPriorTurn[];
+  onLocalGenerationProgress?: (event: AiLocalGenerationProgressEvent) => void;
+  abortSignal?: AbortSignal;
+};
+
 export type AskRequest = {
   id: string;
   transcript: string;
@@ -253,3 +261,4 @@ export type AiOrchestratorResult<T> = AiOrchestratorSuccess<T> | AiOrchestratorF
 export type SummaryTaskResult = AiOrchestratorResult<AiProcessingResult>;
 export type AskTaskResult = AiOrchestratorResult<AskAnswerResult>;
 export type InboxAskTaskResult = AiOrchestratorResult<AskAnswerResult>;
+export type GeneralAskTaskResult = AiOrchestratorResult<AskAnswerResult>;

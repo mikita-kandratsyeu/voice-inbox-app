@@ -2,7 +2,6 @@ import {
   AlertCircle,
   ArrowLeftRight,
   Cloud,
-  Download,
   FolderTree,
   Gauge,
   History,
@@ -11,6 +10,7 @@ import {
   MessageCircleQuestion,
   Mic,
   Newspaper,
+  Share,
   Sparkles,
   UsersRound,
 } from 'lucide-react-native';
@@ -433,7 +433,7 @@ export const AiUsageDashboardScreen = () => {
         iconOnly
         variant="icon"
         size="md"
-        icon={<Download size={20} color={color.text.primary} strokeWidth={2} />}
+        icon={<Share size={20} color={color.text.primary} strokeWidth={2} />}
         color={color}
         onPress={handleExportCsv}
         loading={exportingCsv}

@@ -30,13 +30,14 @@ import {
 import type { AutoOrganizeMode, AutoOrganizeTemplate } from '@/lib/auto-organize-types';
 import { normalizeAutoOrganizeTemplate } from '@/lib/auto-organize-types';
 import { buildAskUserMessageContent } from '@/lib/ask-user-message';
+import { buildGeneralAskUserMessageContent } from '@/lib/general-ask-user-message';
 import { buildInboxAskUserMessageContent } from '@/lib/inbox-ask-user-message';
 import type { CorpusNoteForPrompt } from '@/lib/corpus-notes-prompt';
 import type { AskLinkedNoteForPrompt } from '@/lib/linked-notes-prompt';
 import { normalizeTaskDeadlineFields } from '@/lib/normalizeTaskDeadlineFields';
 import { parseOpenRouterJsonContent } from '@/lib/parse-openrouter-json';
 import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
-import { ASK_QUESTION_SYSTEM_PROMPT, INBOX_ASK_SYSTEM_PROMPT } from '@/lib/prompts';
+import { ASK_QUESTION_SYSTEM_PROMPT, GENERAL_ASK_SYSTEM_PROMPT, INBOX_ASK_SYSTEM_PROMPT } from '@/lib/prompts';
 import type { AiResult, AutoOrganizeResult, RecordClassification } from '@/types';
 import {
   INBOX_ASK_MAX_TOOL_ROUNDS,
@@ -503,6 +504,40 @@ export async function processInboxAskQuestion(
       }),
       TIMEOUTS.AI_CHAT,
       'AI inbox ask processing timeout',
+    );
+
+    return extractAnswerFromResponse(content);
+  };
+
+  const models = filterModelsForAiChat([model, ...USER_AI_MODEL_FALLBACK_CHAIN]);
+
+  return withSequentialModelFallback(models, callAsk, isRetryableAiChatTransportError);
+}
+
+export async function processGeneralAskQuestion(
+  question: string,
+  model: string,
+  priorTurns?: { question: string; answer: string }[],
+  clientUserAgent?: string | null,
+  deviceId?: string | null,
+): Promise<AskAnswerResult> {
+  const userContent = buildGeneralAskUserMessageContent(question, priorTurns);
+
+  const callAsk = async (m: string): Promise<AskAnswerResult> => {
+    const { content } = await withTimeout(
+      sendAiChatCompletion({
+        model: m,
+        messages: [
+          { role: 'system', content: GENERAL_ASK_SYSTEM_PROMPT },
+          { role: 'user', content: userContent },
+        ],
+        jsonObject: true,
+        temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.3,
+        clientUserAgent,
+        userId: deviceId,
+      }),
+      TIMEOUTS.AI_CHAT,
+      'AI general ask processing timeout',
     );
 
     return extractAnswerFromResponse(content);

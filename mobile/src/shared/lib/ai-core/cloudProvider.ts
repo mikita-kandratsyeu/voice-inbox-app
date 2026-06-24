@@ -5,9 +5,11 @@ import {
   type AskApiResult,
   pollAiMessage,
   pollAskResult,
+  pollGeneralAskResult,
   pollInboxAskResult,
   postAiMessage,
   postAskQuestion,
+  postGeneralAskQuestion,
   postInboxAskQuestion,
   postInboxAskToolResult,
   recordIdFromSummarizeJobId,
@@ -21,6 +23,8 @@ import type {
   AiExecutionContext,
   AskRequest,
   AskTaskResult,
+  GeneralAskRequest,
+  GeneralAskTaskResult,
   InboxAskRequest,
   InboxAskTaskResult,
   SummaryTaskRequest,
@@ -355,5 +359,81 @@ export async function runCloudInboxAsk(
     provider: 'cloud',
     mode: ctx.aiExecutionMode,
     error: i18n.t('inboxAsk.toolLimitExceeded'),
+  };
+}
+
+export async function runCloudGeneralAsk(
+  request: GeneralAskRequest,
+  ctx: AiExecutionContext,
+): Promise<GeneralAskTaskResult> {
+  const consentOk = await ensureCloudAiThirdPartyConsent();
+
+  if (!consentOk) {
+    return {
+      ok: false,
+      provider: 'cloud',
+      mode: ctx.aiExecutionMode,
+      error: i18n.t('cloudAiConsent.declinedHint'),
+    };
+  }
+
+  const fetchOptions = { signal: request.abortSignal };
+
+  if (request.abortSignal?.aborted) {
+    return cloudAskCancelledFailure(ctx.aiExecutionMode);
+  }
+
+  const routingChars =
+    request.question.length +
+    (request.priorTurns?.reduce(
+      (sum, turn) => sum + turn.question.length + turn.answer.length,
+      0,
+    ) ?? 0);
+
+  const postResult = await postGeneralAskQuestion(
+    {
+      id: request.id,
+      question: request.question,
+      model: ctx.selectedAIModel,
+      modelMode: ctx.aiModelRoutingMode,
+      routingContext: {
+        taskType: 'ask',
+        routingChars,
+      },
+      messageTtlSeconds: ctx.cloudMessageTtlSeconds,
+      ...(request.priorTurns?.length ? { priorTurns: request.priorTurns } : {}),
+    },
+    fetchOptions,
+  );
+
+  if (!postResult.ok) {
+    if (isPostCancelled(postResult)) {
+      return cloudAskCancelledFailure(ctx.aiExecutionMode);
+    }
+    return mapPostError(postResult, ctx.aiExecutionMode, 'AI weekly limit exceeded');
+  }
+
+  const pollResult = await pollGeneralAskResult(
+    request.id,
+    postResult.data.syncToken,
+    fetchOptions,
+  );
+  if (!pollResult.ok) {
+    if (pollResult.error === AI_REQUEST_CANCELLED) {
+      return cloudAskCancelledFailure(ctx.aiExecutionMode);
+    }
+    return {
+      ok: false,
+      provider: 'cloud',
+      mode: ctx.aiExecutionMode,
+      error: pollResult.error,
+    };
+  }
+
+  return {
+    ok: true,
+    provider: 'cloud',
+    mode: ctx.aiExecutionMode,
+    result: pollResult.result,
   };
 }

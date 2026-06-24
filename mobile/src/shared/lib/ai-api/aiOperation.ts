@@ -8,6 +8,7 @@ export const AI_OPERATIONS = [
   'transcript_summarize',
   'transcript_ask',
   'inbox_ask',
+  'general_ask',
   'digest',
   'translate',
   'folder_auto_organize',

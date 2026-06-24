@@ -22,12 +22,14 @@ import {
 } from '@/features/ask-chat/ui';
 import {
   buildInboxAskSuggestions,
+  isGeneralAskAvailable,
   useInboxAsk,
   useInboxAskCorpusScope,
 } from '@/features/inbox-ask';
 import { resolveInboxEvidenceRecordId } from '@/features/inbox-ask/lib/enrichInboxAskEvidence';
 import { InboxAskContextDisclosure } from '@/features/inbox-ask/ui/InboxAskContextDisclosure';
 import { InboxAskCorpusScopeChipMenu } from '@/features/inbox-ask/ui/InboxAskCorpusScopeChipMenu';
+import { InboxAskNoNotesFallback } from '@/features/inbox-ask/ui/InboxAskNoNotesFallback';
 import { useProEntitlement } from '@/features/pro-license';
 import { useAskAiShakeBridge } from '@/features/shake-to-record';
 import { useColors } from '@/shared/config';
@@ -81,6 +83,11 @@ export function InboxAskAIScreen() {
   const { syncInboxAskSessionFromDb } = inboxAsk;
   const { isConnected } = useNetworkStatus();
   const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
+  const generalAskAvailable = isGeneralAskAvailable(
+    aiExecutionMode,
+    privateAiProvider,
+    isConnected,
+  );
 
   useEffect(() => {
     void useFolderStore.getState().load();
@@ -186,6 +193,12 @@ export function InboxAskAIScreen() {
     [disableByNetwork, inboxAsk],
   );
 
+  const handleAskWithoutNotes = useCallback(() => {
+    if (inboxAsk.isLoading || !generalAskAvailable) return;
+    KeyboardController.dismiss();
+    void inboxAsk.askWithoutNotes();
+  }, [generalAskAvailable, inboxAsk]);
+
   const shouldShowInputRow = !inboxAsk.isRestoringSession && !inboxAsk.isLoading;
   const canSend = questionInput.trim().length > 0 && !inboxAsk.isLoading && !disableByNetwork;
 
@@ -226,6 +239,7 @@ export function InboxAskAIScreen() {
       {
         question: inboxAsk.question,
         answer: inboxAsk.answer,
+        mode: inboxAsk.answerMode ?? 'inbox',
         answerKind: inboxAsk.answerKind,
         items: inboxAsk.items,
         interpretations: inboxAsk.interpretations,
@@ -235,6 +249,7 @@ export function InboxAskAIScreen() {
   }, [
     inboxAsk.answer,
     inboxAsk.answerKind,
+    inboxAsk.answerMode,
     inboxAsk.evidence,
     inboxAsk.history,
     inboxAsk.interpretations,
@@ -276,7 +291,24 @@ export function InboxAskAIScreen() {
       ? t('inboxAsk.retrieving')
       : inboxAsk.phase === 'tool_executing'
         ? t('inboxAsk.toolExecuting')
-        : t('inboxAsk.processing');
+        : inboxAsk.isLoading && inboxAsk.phase === 'generating' && inboxAsk.notesUsed === 0
+          ? t('inboxAsk.generalAskProcessing')
+          : t('inboxAsk.processing');
+
+  const noNotesFallbackProps = {
+    color,
+    errorMessage: inboxAsk.error,
+    canAskWithoutNotes: inboxAsk.canAskWithoutNotes,
+    generalAskAvailable,
+    onRetry: () => {
+      if (inboxAsk.question) void inboxAsk.askQuestion(inboxAsk.question);
+    },
+    onAskWithoutNotes: handleAskWithoutNotes,
+    showPrivateModeCta: isPrivateMode,
+    errorTitleKey: inboxAskErrorStateProps.titleKey,
+    errorRetryLabelKey: inboxAskErrorStateProps.retryLabelKey,
+    errorFallbackHintKey: inboxAskErrorStateProps.fallbackHintKey,
+  } as const;
 
   const mainBody = (() => {
     if (inboxAsk.isRestoringSession) {
@@ -302,6 +334,9 @@ export function InboxAskAIScreen() {
       );
     }
     if (inboxAsk.error && !hasHistory) {
+      if (inboxAsk.canAskWithoutNotes) {
+        return <InboxAskNoNotesFallback {...noNotesFallbackProps} />;
+      }
       return (
         <ErrorState
           color={color}
@@ -314,6 +349,33 @@ export function InboxAskAIScreen() {
       );
     }
     if (inboxAsk.error && hasHistory && stubRecord) {
+      if (inboxAsk.canAskWithoutNotes) {
+        return (
+          <View className="gap-4 pb-4">
+            {inboxAsk.history.map((turn, index) => (
+              <AnswerTurnBlock
+                key={`${turn.question}-${index}`}
+                color={color}
+                question={turn.question}
+                answer={turn.answer}
+                answerKind={turn.answerKind}
+                items={turn.items}
+                interpretations={turn.interpretations}
+                evidence={turn.mode === 'general' ? undefined : turn.evidence}
+                recordTitle={t('inbox.title')}
+                showDivider={index < inboxAsk.history.length - 1}
+                onCopy={handleCopy}
+                onShare={handleShare}
+                modeBadgeLabel={
+                  turn.mode === 'general' ? t('inboxAsk.answerWithoutNotesBadge') : undefined
+                }
+                {...(turn.mode === 'general' ? {} : turnEvidenceProps)}
+              />
+            ))}
+            <InboxAskNoNotesFallback {...noNotesFallbackProps} />
+          </View>
+        );
+      }
       return (
         <ErrorWithHistoryState
           color={color}
@@ -335,15 +397,18 @@ export function InboxAskAIScreen() {
       );
     }
     if (inboxAsk.question && inboxAsk.answer) {
+      const isGeneralAnswer = inboxAsk.answerMode === 'general';
       return (
         <View className="gap-4 pb-4">
-          <InboxAskContextDisclosure
-            color={color}
-            notesUsed={inboxAsk.notesUsed}
-            notesTotal={inboxAsk.notesTotal}
-            notesDropped={inboxAsk.notesDropped}
-            noteTitles={noteTitles}
-          />
+          {!isGeneralAnswer ? (
+            <InboxAskContextDisclosure
+              color={color}
+              notesUsed={inboxAsk.notesUsed}
+              notesTotal={inboxAsk.notesTotal}
+              notesDropped={inboxAsk.notesDropped}
+              noteTitles={noteTitles}
+            />
+          ) : null}
           {answerTurns.map((turn, index) => (
             <AnswerTurnBlock
               key={`${turn.question}-${index}`}
@@ -353,12 +418,15 @@ export function InboxAskAIScreen() {
               answerKind={turn.answerKind}
               items={turn.items}
               interpretations={turn.interpretations}
-              evidence={turn.evidence}
+              evidence={turn.mode === 'general' ? undefined : turn.evidence}
               recordTitle={t('inbox.title')}
               showDivider={index < answerTurns.length - 1}
               onCopy={handleCopy}
               onShare={handleShare}
-              {...turnEvidenceProps}
+              modeBadgeLabel={
+                turn.mode === 'general' ? t('inboxAsk.answerWithoutNotesBadge') : undefined
+              }
+              {...(turn.mode === 'general' ? {} : turnEvidenceProps)}
             />
           ))}
           <AskAiSuggestedQuestions

@@ -97,6 +97,7 @@ export type AnswerTurnBlockProps = {
   onShare: (text: string, title: string) => void;
   resolveEvidenceRecordId?: (item: AskEvidence) => string | undefined;
   onEvidenceNotePress?: (recordId: string) => void;
+  modeBadgeLabel?: string;
 };
 
 function formatEvidenceOffset(offsetMs: number): string {
@@ -436,6 +437,7 @@ export const AnswerTurnBlock = ({
   onShare,
   resolveEvidenceRecordId,
   onEvidenceNotePress,
+  modeBadgeLabel,
 }: AnswerTurnBlockProps) => {
   const { t } = useTranslation();
   const clipboardText = formatAskTurnForClipboard(question, answer, {
@@ -462,6 +464,16 @@ export const AnswerTurnBlock = ({
       }
     >
       <AskTurnQuestion color={color} question={question} />
+      {modeBadgeLabel ? (
+        <View
+          className="self-start rounded-full px-2.5 py-1"
+          style={{ backgroundColor: color.background.tertiary }}
+        >
+          <Text className="text-[12px] font-medium" style={{ color: color.text.secondary }}>
+            {modeBadgeLabel}
+          </Text>
+        </View>
+      ) : null}
       <AskAiAnswerMarkdown color={color}>{answer}</AskAiAnswerMarkdown>
       <AnswerStructuredItems color={color} answerKind={answerKind} items={items} />
       <AnswerInterpretations color={color} interpretations={interpretations} />

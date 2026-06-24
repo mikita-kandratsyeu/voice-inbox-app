@@ -44,6 +44,8 @@ export {
 export type { DigestAiResult, DigestApiResult } from './digestApi';
 export { generateDigest } from './digestApi';
 export { finalizeAiMessageAfterPollTimeout } from './finalizePollTimeout';
+export type { GeneralAskApiResult, GeneralAskMessageResult } from './generalAskApi';
+export { pollGeneralAskResult, postGeneralAskQuestion } from './generalAskApi';
 export type { InboxAskApiResult, InboxAskMessageResult } from './inboxAskApi';
 export { pollInboxAskResult, postInboxAskQuestion, postInboxAskToolResult } from './inboxAskApi';
 export { AI_POLL_TIMEOUT_ERROR } from './pollGetLoop';

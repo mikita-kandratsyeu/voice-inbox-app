@@ -116,6 +116,15 @@ export function getInboxAskDeduplicationKey(
   return `inbox_ask:${deviceId}:${messageId}:${queryHash}`;
 }
 
+export function getGeneralAskDeduplicationKey(
+  deviceId: string,
+  messageId: string,
+  question: string,
+): string {
+  const queryHash = simpleHash(question);
+  return `general_ask:${deviceId}:${messageId}:${queryHash}`;
+}
+
 /**
  * Simple hash function for deduplication keys.
  */

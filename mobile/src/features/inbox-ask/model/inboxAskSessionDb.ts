@@ -7,6 +7,7 @@ import type { AskAnswerKind, AskEvidence, CorpusNoteForPrompt } from '@/shared/l
 type InboxAskTurn = {
   question: string;
   answer: string;
+  mode?: 'inbox' | 'general';
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
@@ -69,6 +70,7 @@ type PersistedPayloadV1 = {
   notesUsed?: number;
   notesTotal?: number;
   notesDropped?: number;
+  answerMode?: 'inbox' | 'general' | null;
 };
 
 export type InboxAskSessionPersistInput = {
@@ -86,6 +88,7 @@ export type InboxAskSessionPersistInput = {
   notesUsed?: number;
   notesTotal?: number;
   notesDropped?: number;
+  answerMode?: 'inbox' | 'general' | null;
 };
 
 function computePendingAsk(snapshot: InboxAskSessionPersistInput): boolean {
@@ -98,7 +101,9 @@ function computePendingAsk(snapshot: InboxAskSessionPersistInput): boolean {
 }
 
 function isHistoryItem(x: unknown): x is InboxAskTurn {
-  return isRecord(x) && isString(x.question) && isString(x.answer);
+  if (!isRecord(x) || !isString(x.question) || !isString(x.answer)) return false;
+  const mode = x.mode;
+  return mode === undefined || mode === 'inbox' || mode === 'general';
 }
 
 function parsePayload(raw: string | null | undefined): PersistedPayloadV1 | null {
@@ -107,7 +112,13 @@ function parsePayload(raw: string | null | undefined): PersistedPayloadV1 | null
     const parsed = JSON.parse(raw) as unknown;
     if (!isRecord(parsed) || parsed.v !== PERSIST_VERSION) return null;
     const history = Array.isArray(parsed.history)
-      ? parsed.history.filter(isHistoryItem).slice(-MAX_HISTORY_ITEMS)
+      ? parsed.history
+          .filter(isHistoryItem)
+          .map((turn) => ({
+            ...turn,
+            mode: (turn.mode === 'general' ? 'general' : 'inbox') as 'inbox' | 'general',
+          }))
+          .slice(-MAX_HISTORY_ITEMS)
       : [];
     return {
       v: PERSIST_VERSION,
@@ -145,6 +156,8 @@ function parsePayload(raw: string | null | undefined): PersistedPayloadV1 | null
       notesUsed: typeof parsed.notesUsed === 'number' ? parsed.notesUsed : undefined,
       notesTotal: typeof parsed.notesTotal === 'number' ? parsed.notesTotal : undefined,
       notesDropped: typeof parsed.notesDropped === 'number' ? parsed.notesDropped : undefined,
+      answerMode:
+        parsed.answerMode === 'general' || parsed.answerMode === 'inbox' ? parsed.answerMode : null,
     };
   } catch {
     return null;
@@ -189,6 +202,7 @@ export async function saveInboxAskSession(
       ...(typeof snapshot.notesUsed === 'number' ? { notesUsed: snapshot.notesUsed } : {}),
       ...(typeof snapshot.notesTotal === 'number' ? { notesTotal: snapshot.notesTotal } : {}),
       ...(typeof snapshot.notesDropped === 'number' ? { notesDropped: snapshot.notesDropped } : {}),
+      ...(snapshot.answerMode ? { answerMode: snapshot.answerMode } : {}),
     };
     await db
       .insert(inboxAskAiTable)

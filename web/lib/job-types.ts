@@ -29,6 +29,7 @@ export const OPERATION_TO_JOB_TYPE: Record<AiOperation, JobType> = {
   transcript_summarize: 'summary',
   transcript_ask: 'ask',
   inbox_ask: 'ask',
+  general_ask: 'ask',
   digest: 'digest',
   translate: 'translate',
   folder_auto_organize: 'auto_organize',

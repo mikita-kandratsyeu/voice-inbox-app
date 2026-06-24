@@ -8,6 +8,7 @@ import type {
   InboxAskToolResult,
   InboxAskToolStep,
 } from '@/lib/inbox-ask-tools';
+import type { AutoOrganizeMode, AutoOrganizeTemplate } from '@/lib/auto-organize-types';
 
 export type AiChatToolMessage =
   | { role: 'system'; content: string }
@@ -80,7 +81,17 @@ export type InboxAskJobPayload = {
   toolMessages?: AiChatToolMessage[];
 };
 
-import type { AutoOrganizeMode, AutoOrganizeTemplate } from '@/lib/auto-organize-types';
+export type GeneralAskJobPayload = {
+  operation: 'general_ask';
+  jobId: string;
+  deviceId: string;
+  messageTtlSeconds: number;
+  question: string;
+  model: string;
+  modelMode?: AiModelMode;
+  priorTurns?: { question: string; answer: string }[];
+  clientUserAgent?: string | null;
+};
 
 export type AutoOrganizeJobPayload = {
   operation: 'folder_auto_organize';
@@ -119,5 +130,6 @@ export type AiJobPayload =
   | SummarizeJobPayload
   | AskJobPayload
   | InboxAskJobPayload
+  | GeneralAskJobPayload
   | AutoOrganizeJobPayload
   | MeetingDialogueJobPayload;
