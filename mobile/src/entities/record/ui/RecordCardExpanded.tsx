@@ -110,16 +110,7 @@ export function RecordCardExpanded({
   const textPrimaryStyle = { color: color.text.primary };
   const textSecondaryStyle = { color: color.text.secondary };
 
-  const noteKind = useMemo(
-    () => resolveRecordCardNoteKind(item),
-    [
-      item.audioPath,
-      item.classification,
-      item.meetingDialogue,
-      item.meetingDialogueStatus,
-      item.meetingSummaryTemplate,
-    ],
-  );
+  const noteKind = useMemo(() => resolveRecordCardNoteKind(item), [item]);
   const marksCount = item.recordingMarks?.length ?? 0;
   const openTaskPreview = useMemo(
     () => pickOpenTasksForCardPreview(item.tasks ?? []),
@@ -132,7 +123,6 @@ export function RecordCardExpanded({
     return countRecordCardTextFragments(item.transcript || item.summary, item.transcriptSegments);
   }, [item.summary, item.transcript, item.transcriptSegments, noteKind]);
 
-  const hasAudio = Boolean(item.audioPath?.trim());
   const hasTranscriptPreview = Boolean(item.transcript?.trim());
   const previewText = item.summary || item.transcript;
   const hasPreview = Boolean(previewText?.trim());

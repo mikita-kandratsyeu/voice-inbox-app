@@ -37,7 +37,11 @@ import type { AskLinkedNoteForPrompt } from '@/lib/linked-notes-prompt';
 import { normalizeTaskDeadlineFields } from '@/lib/normalizeTaskDeadlineFields';
 import { parseOpenRouterJsonContent } from '@/lib/parse-openrouter-json';
 import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
-import { ASK_QUESTION_SYSTEM_PROMPT, GENERAL_ASK_SYSTEM_PROMPT, INBOX_ASK_SYSTEM_PROMPT } from '@/lib/prompts';
+import {
+  ASK_QUESTION_SYSTEM_PROMPT,
+  GENERAL_ASK_SYSTEM_PROMPT,
+  INBOX_ASK_SYSTEM_PROMPT,
+} from '@/lib/prompts';
 import type { AiResult, AutoOrganizeResult, RecordClassification } from '@/types';
 import {
   INBOX_ASK_MAX_TOOL_ROUNDS,

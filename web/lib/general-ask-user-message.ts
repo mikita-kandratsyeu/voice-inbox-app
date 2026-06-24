@@ -24,7 +24,9 @@ export function parseGeneralAskPriorTurns(
   return out.length ? out : undefined;
 }
 
-function formatPriorTurnsForGeneralAskPrompt(turns: { question: string; answer: string }[]): string {
+function formatPriorTurnsForGeneralAskPrompt(
+  turns: { question: string; answer: string }[],
+): string {
   return turns.map((t, i) => `Turn ${i + 1}\nQ: ${t.question}\nA: ${t.answer}`).join('\n\n---\n\n');
 }
 

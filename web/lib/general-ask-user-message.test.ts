@@ -20,7 +20,9 @@ describe('general ask user message', () => {
 
   it('estimates routing chars from prompt and user content', () => {
     const chars = estimateGeneralAskRoutingChars('Hello');
-    expect(chars).toBe(GENERAL_ASK_SYSTEM_PROMPT.length + buildGeneralAskUserMessageContent('Hello').length);
+    expect(chars).toBe(
+      GENERAL_ASK_SYSTEM_PROMPT.length + buildGeneralAskUserMessageContent('Hello').length,
+    );
   });
 });
 
