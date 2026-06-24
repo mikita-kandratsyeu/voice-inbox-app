@@ -5,6 +5,7 @@ import { Text, useWindowDimensions, View } from 'react-native';
 
 import type { TaskItem } from '@/entities/record';
 import type { RecordCardNoteKind } from '@/entities/record/lib/recordCardExpandedPreview';
+import { shouldRenderRecordCardMetaStrip } from '@/entities/record/lib/recordCardExpandedPreview';
 import type { Colors } from '@/shared/config';
 import { withAlphaHex } from '@/shared/lib';
 
@@ -230,20 +231,23 @@ export const RecordCardMetaStrip = memo(function RecordCardMetaStrip({
   const hasTasks = tasks.length > 0;
   const doneCount = tasks.filter((task) => task.isDone).length;
   const allTasksDone = hasTasks && doneCount === tasks.length;
+
+  if (
+    !shouldRenderRecordCardMetaStrip({
+      noteKind,
+      textFragmentCount,
+      tasks,
+      meetingParticipantCount,
+      linkNeighborCount,
+    })
+  ) {
+    return null;
+  }
+
   const showDuration = noteKind !== 'text';
   const showTextFragments = noteKind === 'text' && textFragmentCount > 0;
   const showMeetingParticipants = meetingParticipantCount > 0;
   const showLinkedNotes = linkNeighborCount > 0;
-
-  if (
-    !showDuration &&
-    !showTextFragments &&
-    !hasTasks &&
-    !showMeetingParticipants &&
-    !showLinkedNotes
-  ) {
-    return null;
-  }
 
   const density: LayoutDensity =
     windowWidth < DENSE_LAYOUT_MAX_WIDTH

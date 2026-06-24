@@ -53,6 +53,27 @@ export function pickOpenTasksForCardPreview(tasks: TaskItem[]): TaskItem[] {
     .slice(0, OPEN_TASK_PREVIEW_LIMIT);
 }
 
+export function shouldRenderRecordCardMetaStrip(input: {
+  noteKind: RecordCardNoteKind;
+  textFragmentCount?: number;
+  tasks?: readonly TaskItem[];
+  meetingParticipantCount?: number;
+  linkNeighborCount?: number;
+}): boolean {
+  const taskCount = input.tasks?.length ?? 0;
+  const textFragmentCount = input.textFragmentCount ?? 0;
+  const meetingParticipantCount = input.meetingParticipantCount ?? 0;
+  const linkNeighborCount = input.linkNeighborCount ?? 0;
+
+  return (
+    input.noteKind !== 'text' ||
+    (input.noteKind === 'text' && textFragmentCount > 0) ||
+    taskCount > 0 ||
+    meetingParticipantCount > 0 ||
+    linkNeighborCount > 0
+  );
+}
+
 export function formatExpandedCardDate(isoDate: string, language: string, t: TFunction): string {
   const dayjsLocale = resolveDayjsLocale(language);
   const date = dayjs(isoDate).locale(dayjsLocale);

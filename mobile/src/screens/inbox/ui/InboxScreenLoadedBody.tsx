@@ -10,6 +10,7 @@ import {
   getFloatingTabBarScrollPaddingBottom,
   getInboxBatchModeScrollPaddingBottom,
 } from '@/app/navigation/config';
+import type { VoiceRecord } from '@/entities/record';
 import type { BatchSelectState } from '@/features/batch-select';
 import type { InboxCardLayout } from '@/features/inbox-card-layout';
 import type {
@@ -218,6 +219,12 @@ type InboxScreenLoadedBodyProps = {
   listStyle: object;
   onEndReached: () => void;
   renderListItem: (props: { item: FlattenedItem }) => React.ReactElement;
+  listExtraData: {
+    cardLayout: InboxCardLayout;
+    records: VoiceRecord[];
+    selectedIds: Set<string>;
+    visibleRecordCount: number;
+  };
   keyExtractor: (item: FlattenedItem) => string;
   getItemType: (item: FlattenedItem) => string;
   onInboxListScroll?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -263,6 +270,7 @@ function InboxScreenLoadedBodyInner({
   listStyle,
   onEndReached,
   renderListItem,
+  listExtraData,
   keyExtractor,
   getItemType,
   onInboxListScroll,
@@ -419,7 +427,7 @@ function InboxScreenLoadedBodyInner({
                 style={[listStyle, { flex: 1 }]}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
-                extraData={{ selectedIds: batchSelect.selectedIds, cardLayout }}
+                extraData={listExtraData}
                 ListHeaderComponent={swipeListHeader}
                 maintainVisibleContentPosition={{ disabled: true }}
               />

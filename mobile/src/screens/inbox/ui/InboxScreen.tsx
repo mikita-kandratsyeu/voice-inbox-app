@@ -134,6 +134,7 @@ export const InboxScreen = () => {
     listContentStyle,
     listStyle,
     renderItem,
+    listExtraData,
     keyExtractor,
     getItemType,
     onListEndReached,
@@ -282,12 +283,13 @@ export const InboxScreen = () => {
           emptyFolderHint={effectiveActiveFolderId ? t('inbox.emptyFolderHint') : undefined}
           effectiveActiveFolderId={effectiveActiveFolderId}
           listRef={listRef}
-          filterStatusKey={`${filterStatus}:${menuFilterStatus ?? 'none'}`}
+          filterStatusKey={`${filterStatus}:${menuFilterStatus ?? 'none'}:${inboxCardLayout}`}
           pagedFlattenedData={pagedFlattenedData}
           listContentStyle={listContentStyle}
           listStyle={listStyle}
           onEndReached={onListEndReached}
           renderListItem={renderItem}
+          listExtraData={listExtraData}
           keyExtractor={keyExtractor}
           getItemType={getItemType}
           onInboxListScroll={onInboxListScroll}

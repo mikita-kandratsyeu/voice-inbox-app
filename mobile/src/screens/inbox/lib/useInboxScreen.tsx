@@ -220,6 +220,11 @@ export function useInboxScreen() {
     return records.filter((r) => r.folderId === effectiveActiveFolderId);
   }, [records, effectiveActiveFolderId]);
 
+  const recordsById = useMemo(
+    () => new Map(records.map((record) => [record.id, record])),
+    [records],
+  );
+
   const folderColorById = useMemo(() => {
     const m = new Map<string, string>();
     for (const f of folders) {
@@ -415,6 +420,10 @@ export function useInboxScreen() {
     () => trimFlattenedInboxItems(flattenedDataWithOptionalBanner, visibleRecordCount),
     [flattenedDataWithOptionalBanner, visibleRecordCount],
   );
+
+  useEffect(() => {
+    listRef.current?.prepareForLayoutAnimationRender();
+  }, [visibleRecordCount, inboxCardLayout, pagedFlattenedData]);
 
   const canLoadMoreInbox = totalFlattenedRecords > visibleRecordCount;
 
@@ -972,7 +981,7 @@ export function useInboxScreen() {
           ? {
               ...item,
               item: {
-                ...item.item,
+                ...(recordsById.get(item.item.id) ?? item.item),
                 isPublicPublished: publishedByRecordId.has(item.item.id),
                 publicShareExpiresAt: publishedByRecordId.get(item.item.id)?.expiresAt ?? null,
               },
@@ -1035,23 +1044,42 @@ export function useInboxScreen() {
       handleOpenNotesGraphForRecord,
       batchSelect,
       publishedByRecordId,
+      recordsById,
     ],
   );
 
-  const getItemType = useCallback(
-    (item: FlattenedItem) => (item.type === 'record' ? 'record' : item.type),
-    [],
+  const listExtraData = useMemo(
+    () => ({
+      cardLayout: inboxCardLayout,
+      records,
+      selectedIds: batchSelect.selectedIds,
+      visibleRecordCount,
+    }),
+    [batchSelect.selectedIds, inboxCardLayout, records, visibleRecordCount],
   );
 
-  const keyExtractor = useCallback((item: FlattenedItem) => {
-    if (item.type === 'header') {
-      return `header-${item.title}`;
-    }
-    if (item.type === 'banner_card') {
-      return `inbox-inline-banner-${item.slotIndex}`;
-    }
-    return item.item.id;
-  }, []);
+  const getItemType = useCallback(
+    (item: FlattenedItem) => {
+      if (item.type === 'record') {
+        return inboxCardLayout === 'expanded' ? 'record-expanded' : 'record-compact';
+      }
+      return item.type;
+    },
+    [inboxCardLayout],
+  );
+
+  const keyExtractor = useCallback(
+    (item: FlattenedItem) => {
+      if (item.type === 'header') {
+        return `header-${item.title}`;
+      }
+      if (item.type === 'banner_card') {
+        return `inbox-inline-banner-${item.slotIndex}`;
+      }
+      return `${item.item.id}:${inboxCardLayout}`;
+    },
+    [inboxCardLayout],
+  );
 
   const onListEndReached = useCallback(() => {
     if (!canLoadMoreInbox) return;
@@ -1264,6 +1292,7 @@ export function useInboxScreen() {
     listContentStyle,
     listStyle,
     renderItem,
+    listExtraData,
     keyExtractor,
     getItemType,
     onListEndReached,

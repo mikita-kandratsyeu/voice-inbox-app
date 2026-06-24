@@ -240,6 +240,7 @@ const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
     keyPhrases: JSON.parse(row.keyPhrases ?? '[]') as string[],
     nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
     meetingDialogue: row.meetingDialogue?.trim() ? row.meetingDialogue.trim() : undefined,
+    meetingDialogueStatus: row.meetingDialogue?.trim() ? ('done' as const) : undefined,
     meetingSpeakerLabels: parseMeetingSpeakerLabelsJson(row.meetingSpeakerLabels),
     meetingSummaryTemplate: sanitizeMeetingSummaryTemplate(row.meetingSummaryTemplate),
     cloudAiJobId: row.cloudAiJobId?.trim() ? row.cloudAiJobId.trim() : undefined,

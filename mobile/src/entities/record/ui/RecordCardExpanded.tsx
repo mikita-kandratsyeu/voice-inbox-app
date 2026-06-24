@@ -1,11 +1,13 @@
 import { MenuView } from '@react-native-menu/menu';
 import { CalendarDays, MoreHorizontal, Pin } from 'lucide-react-native';
-import React, { memo, useContext, useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { VoiceRecord } from '@/entities/record';
+import { useRecordStore } from '@/entities/record';
 import { countMeetingParticipants } from '@/entities/record/lib/countMeetingParticipants';
 import { getRecordCardChromeStyle } from '@/entities/record/lib/recordCardChrome';
 import {
@@ -13,6 +15,7 @@ import {
   formatExpandedCardDate,
   pickOpenTasksForCardPreview,
   resolveRecordCardNoteKind,
+  shouldRenderRecordCardMetaStrip,
 } from '@/entities/record/lib/recordCardExpandedPreview';
 import { useRecordLinkNeighborCount } from '@/features/note-links';
 import type { Colors } from '@/shared/config';
@@ -62,8 +65,8 @@ const sectionTitleStyle = {
   textTransform: 'uppercase' as const,
 };
 
-export const RecordCardExpanded = memo(function RecordCardExpanded({
-  item,
+export function RecordCardExpanded({
+  item: itemProp,
   color,
   folderAccentColor,
   folderName,
@@ -92,10 +95,31 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
   const isDark = theme === 'dark';
   const { isSwiping } = useContext(SwipeableCardContext);
 
+  const storeRecord = useRecordStore(
+    useShallow((s) => s.records.find((r) => r.id === itemProp.id)),
+  );
+  const item = useMemo(
+    () => ({
+      ...(storeRecord ?? itemProp),
+      isPublicPublished: itemProp.isPublicPublished,
+      publicShareExpiresAt: itemProp.publicShareExpiresAt,
+    }),
+    [storeRecord, itemProp],
+  );
+
   const textPrimaryStyle = { color: color.text.primary };
   const textSecondaryStyle = { color: color.text.secondary };
 
-  const noteKind = useMemo(() => resolveRecordCardNoteKind(item), [item]);
+  const noteKind = useMemo(
+    () => resolveRecordCardNoteKind(item),
+    [
+      item.audioPath,
+      item.classification,
+      item.meetingDialogue,
+      item.meetingDialogueStatus,
+      item.meetingSummaryTemplate,
+    ],
+  );
   const marksCount = item.recordingMarks?.length ?? 0;
   const openTaskPreview = useMemo(
     () => pickOpenTasksForCardPreview(item.tasks ?? []),
@@ -170,12 +194,13 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
     [item.meetingDialogue, item.meetingSpeakerLabels, noteKind],
   );
   const linkNeighborCount = useRecordLinkNeighborCount(item.id, item.linkedRecordIds);
-  const showMetaStrip =
-    hasAudio ||
-    noteKind === 'text' ||
-    (item.tasks?.length ?? 0) > 0 ||
-    meetingParticipantCount > 0 ||
-    linkNeighborCount > 0;
+  const showMetaStrip = shouldRenderRecordCardMetaStrip({
+    noteKind,
+    textFragmentCount,
+    tasks: item.tasks,
+    meetingParticipantCount,
+    linkNeighborCount,
+  });
   const showFooter = hasTags || categoryLabel != null;
 
   const menuActions = useMemo(() => {
@@ -641,4 +666,4 @@ export const RecordCardExpanded = memo(function RecordCardExpanded({
       {cardBody}
     </Pressable>
   );
-});
+}

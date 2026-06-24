@@ -122,6 +122,7 @@ function InboxScreenListItemInner({
     if (isExpandedLayout) {
       return (
         <RecordCardExpanded
+          key={`${item.item.id}:${cardLayout}`}
           item={item.item}
           color={color}
           folderAccentColor={folderStripeColor}
