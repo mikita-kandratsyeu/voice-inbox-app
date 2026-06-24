@@ -3,7 +3,7 @@ import { InlineKeyboard } from 'grammy';
 import type { HandlerCtx } from '../context.js';
 import { getListId, setListIds } from '../session/store.js';
 import { escapeHtml, formatIsoShort } from '../ui/format.js';
-import { paginateRow, requirePerm } from '../ui/keyboards.js';
+import { confirmKeyboard, paginateRow, requirePerm } from '../ui/keyboards.js';
 import type { ScreenReply } from '../ui/reply.js';
 import { screenTitle } from '../ui/reply.js';
 
@@ -125,6 +125,67 @@ export async function proKeyDetailScreen(
   }
   kb.text('◀️ List', `pk:l:${page}:${filterFlag}`).row().text('◀️ Menu', 'm');
   return { text: lines.join('\n'), keyboard: kb };
+}
+
+export async function proKeyDeleteConfirm(
+  h: HandlerCtx,
+  page: number,
+  index: number,
+  filterFlag: string,
+): Promise<ScreenReply> {
+  const id = getListId(h.telegramUserId, index);
+  if (!id) return { text: `${screenTitle('Pro Keys')}\nNot found.` };
+  return {
+    text: `${screenTitle('Confirm')}\nDelete unused key <code>${escapeHtml(id.slice(0, 12))}…</code>?`,
+    keyboard: confirmKeyboard(
+      `pk:xs:d:${page}:${index}:${filterFlag}`,
+      `pk:v:${page}:${index}:${filterFlag}`,
+    ),
+  };
+}
+
+export async function proKeyResetConfirm(
+  h: HandlerCtx,
+  page: number,
+  index: number,
+  filterFlag: string,
+): Promise<ScreenReply> {
+  const id = getListId(h.telegramUserId, index);
+  if (!id) return { text: `${screenTitle('Pro Keys')}\nNot found.` };
+  return {
+    text: `${screenTitle('Confirm')}\nReset redemption for key <code>${escapeHtml(id.slice(0, 12))}…</code>?`,
+    keyboard: confirmKeyboard(
+      `pk:xs:r:${page}:${index}:${filterFlag}`,
+      `pk:v:${page}:${index}:${filterFlag}`,
+    ),
+  };
+}
+
+export async function proKeyDeleteApply(
+  h: HandlerCtx,
+  page: number,
+  index: number,
+  filterFlag: string,
+): Promise<ScreenReply> {
+  const id = getListId(h.telegramUserId, index);
+  if (!id || !h.adminApi) return { text: `${screenTitle('Pro Keys')}\nNot found.` };
+  const res = await h.adminApi.delete<{ ok: boolean }>(`/api/admin/pro-licenses/${id}`);
+  if (!res.ok) return { text: `${screenTitle('Pro Keys')}\n❌ ${escapeHtml(res.error)}` };
+  const filter = filterFlag === 'u' ? 'unused' : filterFlag === 'r' ? 'redeemed' : 'all';
+  return proKeysListScreen(h, page, filter);
+}
+
+export async function proKeyResetApply(
+  h: HandlerCtx,
+  page: number,
+  index: number,
+  filterFlag: string,
+): Promise<ScreenReply> {
+  const id = getListId(h.telegramUserId, index);
+  if (!id || !h.adminApi) return { text: `${screenTitle('Pro Keys')}\nNot found.` };
+  const res = await h.adminApi.post<{ ok: boolean }>(`/api/admin/pro-licenses/${id}/reset`);
+  if (!res.ok) return { text: `${screenTitle('Pro Keys')}\n❌ ${escapeHtml(res.error)}` };
+  return proKeyDetailScreen(h, page, index, filterFlag);
 }
 
 export function proKeyGenerateScreen(_h: HandlerCtx): ScreenReply {

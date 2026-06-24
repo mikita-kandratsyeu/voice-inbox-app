@@ -7,6 +7,8 @@ import { paginateRow, requirePerm } from '../ui/keyboards.js';
 import type { ScreenReply } from '../ui/reply.js';
 import { screenTitle } from '../ui/reply.js';
 
+const HISTORY_PAGE_SIZE = 8;
+
 type BroadcastItem = {
   id: string;
   createdAt: string;
@@ -31,9 +33,33 @@ const PUSH_CB_TO_ID: Record<string, string> = Object.fromEntries(
   PUSH_TYPES.map((t) => [t.cb, t.id]),
 );
 
+const BROADCAST_COPY: Record<
+  string,
+  { en: { title: string; body: string }; ru: { title: string; body: string } }
+> = {
+  policy_update: {
+    en: { title: 'Voice Inbox update', body: 'Please review the latest policy update in the app.' },
+    ru: {
+      title: 'Обновление Voice Inbox',
+      body: 'Ознакомьтесь с обновлением политики в приложении.',
+    },
+  },
+  limit_warning: {
+    en: { title: 'Voice Inbox', body: 'You are approaching your weekly AI limit.' },
+    ru: { title: 'Voice Inbox', body: 'Вы приближаетесь к недельному лимиту AI.' },
+  },
+  limit_exceeded: {
+    en: { title: 'Voice Inbox', body: 'Your weekly AI limit has been reached.' },
+    ru: { title: 'Voice Inbox', body: 'Достигнут недельный лимит AI.' },
+  },
+  ai_complete: {
+    en: { title: 'Voice Inbox', body: 'Your AI task has finished processing.' },
+    ru: { title: 'Voice Inbox', body: 'Обработка AI завершена.' },
+  },
+};
+
 function deviceButtonLabel(deviceId: string): string {
-  const short = deviceId.length > 10 ? `${deviceId.slice(0, 8)}…` : deviceId;
-  return short;
+  return deviceId.length > 10 ? `${deviceId.slice(0, 8)}…` : deviceId;
 }
 
 export async function messagingHomeScreen(h: HandlerCtx): Promise<ScreenReply> {
@@ -55,18 +81,24 @@ export async function messagingHomeScreen(h: HandlerCtx): Promise<ScreenReply> {
 export async function messagingHistoryScreen(h: HandlerCtx, page: number): Promise<ScreenReply> {
   if (!h.adminApi) return { text: `${screenTitle('Push')}\nAPI not configured.` };
   const res = await h.adminApi.get<{ ok: boolean; items: BroadcastItem[] }>(
-    `/api/admin/broadcast-history?limit=8`,
+    `/api/admin/broadcast-history?limit=40`,
   );
   if (!res.ok) return { text: `${screenTitle('Push')}\n❌ ${escapeHtml(res.error)}` };
-  const items = res.data.items ?? [];
+
+  const all = res.data.items ?? [];
+  const slice = all.slice(page * HISTORY_PAGE_SIZE, (page + 1) * HISTORY_PAGE_SIZE);
   const lines = [screenTitle('Push history', `Page ${page + 1}`), ''];
-  for (const b of items) {
+  for (const b of slice) {
     lines.push(
       `· ${formatIsoShort(b.createdAt)} ${escapeHtml(b.notifyType)} — ✅${b.sent} ❌${b.failed} / ${b.total}`,
     );
   }
-  if (!items.length) lines.push('(no entries)');
-  const kb = new InlineKeyboard().text('◀️ Push', 'ms').row().text('◀️ Menu', 'm');
+  if (!slice.length) lines.push('(no entries)');
+
+  const kb = new InlineKeyboard();
+  if (page > 0) kb.text('◀️ Prev', `ms:hi:${page - 1}`);
+  if ((page + 1) * HISTORY_PAGE_SIZE < all.length) kb.text('Next ▶️', `ms:hi:${page + 1}`);
+  kb.row().text('◀️ Push', 'ms').row().text('◀️ Menu', 'm');
   return { text: lines.join('\n'), keyboard: kb };
 }
 
@@ -78,6 +110,29 @@ export function messagingBroadcastTypeScreen(_h: HandlerCtx): ScreenReply {
   kb.text('◀️ Push', 'ms');
   return {
     text: screenTitle('Broadcast', 'Choose notification type'),
+    keyboard: kb,
+  };
+}
+
+export function messagingBroadcastPreview(h: HandlerCtx, typeCb: string): ScreenReply {
+  const notifyType = PUSH_CB_TO_ID[typeCb] ?? typeCb;
+  const copy = BROADCAST_COPY[notifyType] ?? BROADCAST_COPY.policy_update!;
+  const kb = new InlineKeyboard()
+    .text('✅ Send broadcast', `ms:bcx:${typeCb}`)
+    .row()
+    .text('❌ Cancel', 'ms:bc');
+  return {
+    text: [
+      screenTitle('Confirm broadcast', notifyType),
+      '',
+      '<b>EN</b>',
+      `${escapeHtml(copy.en.title)} — ${escapeHtml(copy.en.body)}`,
+      '',
+      '<b>RU</b>',
+      `${escapeHtml(copy.ru.title)} — ${escapeHtml(copy.ru.body)}`,
+      '',
+      'This will notify <b>all</b> registered devices.',
+    ].join('\n'),
     keyboard: kb,
   };
 }
@@ -189,26 +244,15 @@ export async function messagingSingleDeviceSend(
   };
 }
 
-export async function messagingBroadcastConfirm(
-  h: HandlerCtx,
-  typeCb: string,
-): Promise<ScreenReply> {
+export async function messagingBroadcastSend(h: HandlerCtx, typeCb: string): Promise<ScreenReply> {
   const notifyType = PUSH_CB_TO_ID[typeCb] ?? typeCb;
   if (!h.adminApi) return { text: `${screenTitle('Broadcast')}\nAPI not configured.` };
+  const copy = BROADCAST_COPY[notifyType] ?? BROADCAST_COPY.policy_update!;
   const res = await h.adminApi.post<{ ok: boolean; sent: number; failed: number; total: number }>(
     '/api/admin/broadcast',
     {
       type: notifyType,
-      i18n: {
-        en: {
-          title: 'Voice Inbox update',
-          body: 'Please review the latest policy update in the app.',
-        },
-        ru: {
-          title: 'Обновление Voice Inbox',
-          body: 'Ознакомьтесь с обновлением политики в приложении.',
-        },
-      },
+      i18n: { en: copy.en, ru: copy.ru },
     },
   );
   if (!res.ok) return { text: `${screenTitle('Broadcast')}\n❌ ${escapeHtml(res.error)}` };

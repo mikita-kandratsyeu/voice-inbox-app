@@ -1,7 +1,7 @@
 import { InlineKeyboard } from 'grammy';
 
 import type { HandlerCtx } from '../context.js';
-import { getListId, setListIds } from '../session/store.js';
+import { clearFlow, getFlow, getListId, setFlow, setListIds } from '../session/store.js';
 import { escapeHtml, formatCents, formatIsoShort } from '../ui/format.js';
 import { confirmKeyboard, requirePerm } from '../ui/keyboards.js';
 import type { ScreenReply } from '../ui/reply.js';
@@ -48,7 +48,8 @@ export async function budgetHomeScreen(h: HandlerCtx): Promise<ScreenReply> {
   if (!recent.length) lines.push('(none)');
 
   const kb = new InlineKeyboard()
-    .text('➕ Add expense', 'bu:add')
+    .text('➕ Quick $10', 'bu:add')
+    .text('➕ Custom', 'bu:add:flow')
     .row()
     .text('📋 All expenses', 'bu:l:0')
     .row()
@@ -124,6 +125,86 @@ export function budgetDeleteConfirm(h: HandlerCtx, page: number, index: number):
     text: `${screenTitle('Confirm')}\nDelete ${label}?`,
     keyboard: confirmKeyboard(`bu:xs:${page}:${index}`, `bu:v:${page}:${index}`),
   };
+}
+
+export function budgetExpenseFlowStart(h: HandlerCtx): ScreenReply {
+  setFlow(h.telegramUserId, { kind: 'budget_expense', step: 'amount', data: {} });
+  const kb = new InlineKeyboard().text('❌ Cancel', 'bu').row();
+  return {
+    text: [
+      screenTitle('Add expense'),
+      '',
+      'Send the amount in USD (e.g. <code>25.50</code>).',
+      '/cancel to abort.',
+    ].join('\n'),
+    keyboard: kb,
+  };
+}
+
+export async function handleBudgetExpenseMessage(
+  h: HandlerCtx,
+  text: string,
+): Promise<ScreenReply | null> {
+  const flow = getFlow(h.telegramUserId);
+  if (!flow || flow.kind !== 'budget_expense') return null;
+  if (!h.adminApi) {
+    clearFlow(h.telegramUserId);
+    return { text: `${screenTitle('Budget')}\nAPI not configured.` };
+  }
+
+  const value = text.trim();
+  if (!value) return { text: `${screenTitle('Add expense')}\nValue cannot be empty.` };
+
+  if (flow.step === 'amount') {
+    if (!/^\d+(\.\d{1,2})?$/.test(value)) {
+      return { text: `${screenTitle('Add expense')}\nInvalid amount. Use format like 12.50` };
+    }
+    setFlow(h.telegramUserId, {
+      kind: 'budget_expense',
+      step: 'category',
+      data: { amount: value },
+    });
+    return {
+      text: `${screenTitle('Add expense')}\nSend category (e.g. hosting, ai, misc).`,
+    };
+  }
+
+  if (flow.step === 'category') {
+    const amount = flow.data.amount;
+    if (typeof amount !== 'string') {
+      clearFlow(h.telegramUserId);
+      return budgetExpenseFlowStart(h);
+    }
+    setFlow(h.telegramUserId, {
+      kind: 'budget_expense',
+      step: 'description',
+      data: { amount, category: value.slice(0, 64) },
+    });
+    return {
+      text: `${screenTitle('Add expense')}\nSend description (optional text).`,
+    };
+  }
+
+  if (flow.step === 'description') {
+    const amount = flow.data.amount;
+    const category = flow.data.category;
+    if (typeof amount !== 'string' || typeof category !== 'string') {
+      clearFlow(h.telegramUserId);
+      return budgetExpenseFlowStart(h);
+    }
+    const res = await h.adminApi.post<{ ok: boolean }>('/api/admin/budget', {
+      description: value.slice(0, 500) || 'Telegram bot expense',
+      category,
+      amount,
+      currency: 'USD',
+    });
+    clearFlow(h.telegramUserId);
+    if (!res.ok) return { text: `${screenTitle('Budget')}\n❌ ${escapeHtml(res.error)}` };
+    return budgetHomeScreen(h);
+  }
+
+  clearFlow(h.telegramUserId);
+  return null;
 }
 
 export async function budgetAddQuick(h: HandlerCtx): Promise<ScreenReply> {

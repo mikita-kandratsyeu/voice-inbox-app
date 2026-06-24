@@ -15,6 +15,7 @@ import {
   retrieveNotesForInboxAsk,
 } from '@/features/inbox-ask-retrieval';
 import { executeInboxAskTool } from '@/features/inbox-ask-tools';
+import { ensureInboxAskEmbeddings } from '@/features/embedding-generation';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import { createAiAbortHandle, isAiRequestCancelled } from '@/shared/lib/ai-api/abort';
 import { cancelCloudAiJob } from '@/shared/lib/ai-api/cancelCloudAiJob';
@@ -418,8 +419,10 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
       };
 
       try {
-        const queryEmbedding = await prepareInboxAskQueryEmbedding(trimmedQuestion);
         embeddingsRef.current = await recordRepository.getEmbeddingsForActiveRecords();
+        await ensureInboxAskEmbeddings(records, embeddingsRef.current, scope);
+        embeddingsRef.current = await recordRepository.getEmbeddingsForActiveRecords();
+        const queryEmbedding = await prepareInboxAskQueryEmbedding(trimmedQuestion);
         const retrieval = retrieveNotesForInboxAsk({
           question: trimmedQuestion,
           records,

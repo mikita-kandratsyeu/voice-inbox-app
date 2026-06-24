@@ -73,10 +73,12 @@ type ScoredRecord = {
   score: number;
 };
 
+export type InboxAskRetrievalMode = 'hybrid' | 'lexical' | 'broad';
+
 export type InboxAskRetrievalResult = {
   candidates: CorpusNoteCandidate[];
   packResult: PackCorpusNotesResult;
-  retrievalMode: 'hybrid' | 'lexical';
+  retrievalMode: InboxAskRetrievalMode;
   totalCorpusCount: number;
   notes: CorpusNoteForPrompt[];
   totalChars: number;
@@ -195,6 +197,22 @@ function toCorpusCandidate(
   };
 }
 
+function hasInboxAskPackableContent(record: VoiceRecord | RecordListItem): boolean {
+  if (record.summary?.trim()) return true;
+  if ('transcript' in record && record.transcript?.trim()) return true;
+  if (record.keyPhrases?.some((phrase) => phrase.trim())) return true;
+  if (record.tasks?.some((task) => task.text.trim())) return true;
+  return false;
+}
+
+function rankBroadFallback(records: Array<VoiceRecord | RecordListItem>): ScoredRecord[] {
+  return [...records]
+    .filter(hasInboxAskPackableContent)
+    .sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf())
+    .slice(0, INBOX_ASK_RETRIEVAL_TOP_K)
+    .map((record) => ({ record, score: 0.01 }));
+}
+
 function rankLexicalOnly(
   records: Array<VoiceRecord | RecordListItem>,
   query: string,
@@ -296,7 +314,7 @@ export function retrieveNotesForInboxAsk(params: {
     corpus.some((record) => params.embeddingsById.has(record.id));
 
   let ranked: ScoredRecord[];
-  let retrievalMode: 'hybrid' | 'lexical';
+  let retrievalMode: InboxAskRetrievalMode;
 
   if (canUseHybrid && params.queryEmbedding) {
     retrievalMode = 'hybrid';
@@ -310,6 +328,14 @@ export function retrieveNotesForInboxAsk(params: {
   } else {
     retrievalMode = 'lexical';
     ranked = rankLexicalOnly(corpus, query);
+  }
+
+  if (ranked.length === 0 && corpus.length > 0) {
+    const broadRanked = rankBroadFallback(corpus);
+    if (broadRanked.length > 0) {
+      retrievalMode = 'broad';
+      ranked = broadRanked;
+    }
   }
 
   const topCandidates = ranked

@@ -157,7 +157,7 @@ describe('retrieveNotesForInboxAsk', () => {
     expect(result.notes.every((note) => note.recordId !== 'other')).toBe(true);
   });
 
-  it('returns empty notes when nothing matches lexically', () => {
+  it('falls back to recent packable notes when nothing matches lexically', () => {
     const older = makeRecord('old', 'Alpha', {
       summary: 'Older note',
       createdAt: '2025-01-01T00:00:00.000Z',
@@ -173,10 +173,26 @@ describe('retrieveNotesForInboxAsk', () => {
       embeddingsById: new Map(),
     });
 
+    expect(result.retrievalMode).toBe('broad');
+    expect(result.candidates).toHaveLength(2);
+    expect(result.notes).toHaveLength(2);
+    expect(result.notes[0]?.recordId).toBe('new');
+    expect(result.totalCorpusCount).toBe(2);
+  });
+
+  it('returns empty notes when corpus has no packable content', () => {
+    const titleOnly = makeRecord('title-only', 'Alpha only');
+
+    const result = retrieveNotesForInboxAsk({
+      question: 'zzzznonexistent',
+      records: [titleOnly],
+      embeddingsById: new Map(),
+    });
+
     expect(result.retrievalMode).toBe('lexical');
     expect(result.candidates).toHaveLength(0);
     expect(result.notes).toHaveLength(0);
-    expect(result.totalCorpusCount).toBe(2);
+    expect(result.totalCorpusCount).toBe(1);
   });
 
   it('keeps final packed notes within max notes even with a wider pre-pack pool', () => {

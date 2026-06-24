@@ -152,7 +152,7 @@ export type InboxAskSearchNotesToolResult = {
   notes: CorpusNoteForPrompt[];
   totalCorpusCount: number;
   droppedCount: number;
-  retrievalMode: 'hybrid' | 'lexical';
+  retrievalMode: 'hybrid' | 'lexical' | 'broad';
 };
 
 export type InboxAskGetNoteToolResult = {
@@ -199,7 +199,7 @@ export type InboxAskToolResult = {
 export type InboxAskAgentPlan = {
   executionMode: 'smart_cloud' | 'private_remote';
   modelId: string;
-  retrievalMode: 'hybrid' | 'lexical';
+  retrievalMode: 'hybrid' | 'lexical' | 'broad';
   packedNotes: CorpusNoteForPrompt[];
   promptBudget: { maxChars: number; usedChars: number; droppedCount: number };
   toolSteps?: InboxAskToolStep[];
