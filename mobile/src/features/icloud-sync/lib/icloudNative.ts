@@ -22,6 +22,11 @@ function ensureCloudAvailabilityListenerRegistered(): void {
   CloudStorage.getDefaultInstance().subscribeToCloudAvailability(noopCloudAvailabilityListener);
 }
 
+if (IS_IOS) {
+  // Register at import time so native CloudKit can emit availability events safely.
+  ensureCloudAvailabilityListenerRegistered();
+}
+
 function ensureConfigured(): void {
   if (configured || !IS_IOS) {
     return;

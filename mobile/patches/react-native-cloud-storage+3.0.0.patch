@@ -1,26 +1,22 @@
 diff --git a/node_modules/react-native-cloud-storage/ios/RCTCloudStorageCloudKit.mm b/node_modules/react-native-cloud-storage/ios/RCTCloudStorageCloudKit.mm
-index 3098fa4..2678614 100644
+index 3098fa4..a8f4c21 100644
 --- a/node_modules/react-native-cloud-storage/ios/RCTCloudStorageCloudKit.mm
 +++ b/node_modules/react-native-cloud-storage/ios/RCTCloudStorageCloudKit.mm
-@@ -16,6 +16,7 @@
- @implementation RCTCloudStorageCloudKit {
-   CloudStorageCloudKit *_cloudStorageCloudKit;
-   id<NSObject> _ubiquityIdentityObserver;
-+  BOOL _eventEmitterReady;
- }
- 
- + (NSString *)moduleName
-@@ -58,11 +59,15 @@
- - (void)setEventEmitterCallback:(EventEmitterCallbackWrapper *)eventEmitterCallbackWrapper
- {
-   [super setEventEmitterCallback:eventEmitterCallbackWrapper];
-+  _eventEmitterReady = eventEmitterCallbackWrapper != nil;
+@@ -61,8 +61,19 @@
    [self emitCloudAvailabilityChanged];
  }
  
++- (void)emitOnCloudAvailabilityChanged:(NSDictionary *)value
++{
++  if (!static_cast<bool>(_eventEmitterCallback)) {
++    return;
++  }
++  [super emitOnCloudAvailabilityChanged:value];
++}
++
  - (void)emitCloudAvailabilityChanged
  {
-+  if (!_eventEmitterReady) {
++  if (!static_cast<bool>(_eventEmitterCallback)) {
 +    return;
 +  }
    BOOL isCloudAvailable = [NSFileManager defaultManager].ubiquityIdentityToken != nil;
