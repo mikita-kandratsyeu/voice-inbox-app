@@ -1,3 +1,4 @@
+import { toUserFacingFetchErrorMessage } from '@/shared/lib/fetch/userFacingFetchError';
 import { i18n } from '@/shared/lib/i18n';
 
 const AI_USER_ERROR_KEYS = [
@@ -35,5 +36,5 @@ export function resolveAiUserFacingError(message: string | null | undefined): st
     }
   }
 
-  return trimmed;
+  return toUserFacingFetchErrorMessage(trimmed);
 }

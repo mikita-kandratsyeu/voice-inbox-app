@@ -507,6 +507,20 @@
       "done": "Done"
     }
   },
+  "api": {
+    "errors": {
+      "notFound": "Request not found. It may have expired — try again.",
+      "unauthorized": "Sign in again to continue.",
+      "forbidden": "You don't have access to this action.",
+      "forbiddenDevice": "This device isn't authorized. Try again or reinstall the app.",
+      "rateLimited": "Too many requests. Wait a moment and try again.",
+      "serviceUnavailable": "The server is temporarily unavailable. Try again later.",
+      "payloadTooLarge": "The request is too large. Shorten the text and try again.",
+      "validationError": "The request couldn't be processed. Check your input and try again.",
+      "invalidRequest": "The request couldn't be processed. Try again.",
+      "generic": "Something went wrong. Try again."
+    }
+  },
   "ai": {
     "limitWeeklyExceeded": "You’ve used this week’s AI credits. Try again next week.",
     "limitWeeklyExceededPro": "You’ve used this week’s AI credits. Reset your limit in Settings, or try again next week.",
