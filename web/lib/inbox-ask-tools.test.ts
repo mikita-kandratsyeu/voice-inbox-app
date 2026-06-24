@@ -1,5 +1,6 @@
 import {
   INBOX_ASK_TOOL_DEFINITIONS,
+  parseStoredInboxAskToolCall,
   safeParseToolArguments,
   validateInboxAskToolResult,
 } from '@/lib/inbox-ask-tools';
@@ -20,6 +21,24 @@ describe('inbox ask tools', () => {
       limit: 3,
     });
     expect(safeParseToolArguments('not json')).toEqual({});
+  });
+
+  it('parses stored needs_tool payloads from KV', () => {
+    expect(
+      parseStoredInboxAskToolCall({
+        toolCallId: 'call_search_1',
+        toolName: 'search_notes',
+        arguments: { query: 'budget' },
+        round: 1,
+        expiresAt: '2026-06-24T12:00:00.000Z',
+      }),
+    ).toEqual({
+      toolCallId: 'call_search_1',
+      toolName: 'search_notes',
+      arguments: { query: 'budget' },
+      round: 1,
+      expiresAt: '2026-06-24T12:00:00.000Z',
+    });
   });
 
   it('rejects oversized or mismatched tool results', () => {

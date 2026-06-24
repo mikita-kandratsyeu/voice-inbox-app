@@ -180,3 +180,26 @@ export function validateInboxAskToolResult(result: InboxAskToolResult): boolean 
   if (result.result.toolName !== result.toolName) return false;
   return JSON.stringify(result.result).length <= INBOX_ASK_TOOL_RESULT_MAX_CHARS;
 }
+
+export function parseStoredInboxAskToolCall(value: unknown): InboxAskToolCallRequest | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const obj = value as Record<string, unknown>;
+  const toolCallId = typeof obj.toolCallId === 'string' ? obj.toolCallId.trim() : '';
+  const toolName = obj.toolName;
+  const round = typeof obj.round === 'number' ? obj.round : NaN;
+  const expiresAt = typeof obj.expiresAt === 'string' ? obj.expiresAt : '';
+  if (!toolCallId || !isInboxAskToolName(toolName) || !Number.isFinite(round) || !expiresAt) {
+    return undefined;
+  }
+  const args = obj.arguments;
+  return {
+    toolCallId,
+    toolName,
+    arguments:
+      args && typeof args === 'object' && !Array.isArray(args)
+        ? (args as Record<string, unknown>)
+        : {},
+    round,
+    expiresAt,
+  };
+}

@@ -14,7 +14,7 @@ import {
 } from '@/lib/ai-model-display';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import type { CorpusNoteForPrompt } from '@/lib/corpus-notes-prompt';
-import { validateInboxAskToolResult } from '@/lib/inbox-ask-tools';
+import { parseStoredInboxAskToolCall, validateInboxAskToolResult } from '@/lib/inbox-ask-tools';
 import type { InboxAskJobPayload } from '@/types/ai-job';
 import type { AskMessage, Message } from '@/types';
 
@@ -157,10 +157,7 @@ export const getInboxAskById = async (
     return sanitizeAiModelFieldsForClient(base as AskMessage);
   }
   if (msg.status === 'needs_tool') {
-    const toolCall =
-      msg.toolCall && typeof msg.toolCall === 'object'
-        ? (msg.toolCall as AskMessage & { status: 'needs_tool' })['toolCall']
-        : undefined;
+    const toolCall = parseStoredInboxAskToolCall(msg.toolCall);
     if (!toolCall) return null;
     return sanitizeAiModelFieldsForClient({
       id: msg.id,
