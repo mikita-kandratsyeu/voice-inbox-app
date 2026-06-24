@@ -3,13 +3,13 @@ import 'dotenv/config';
 import { createServer } from 'node:http';
 
 import { Bot, webhookCallback } from 'grammy';
-import pg from 'pg';
 
 import { startSupportAlerts, stopSupportAlerts } from './alerts/support-alerts.js';
 import { registerIdentityMiddleware } from './auth/middleware.js';
 import { registerUtilityCommands, setBotCommandMenu } from './commands.js';
 import type { AppContext } from './context.js';
 import { registerErrorHandler } from './context.js';
+import { createPgPool } from './lib/pg-connection.js';
 import { logStartupWarnings, registerRouter } from './router.js';
 
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN?.trim();
@@ -28,7 +28,7 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
-const pool = new pg.Pool({ connectionString: DATABASE_URL });
+const pool = createPgPool(DATABASE_URL);
 const startedAt = Date.now();
 
 const app: AppContext = { pool, startedAt };
