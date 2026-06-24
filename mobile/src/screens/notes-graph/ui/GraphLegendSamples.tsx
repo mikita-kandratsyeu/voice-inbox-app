@@ -62,10 +62,10 @@ export function GraphLegendLineRow({
 }
 
 export function GraphLegendDotRow({
-  color,
   dotColor,
   label,
   count,
+  color,
 }: {
   color: Colors;
   dotColor: string;
@@ -80,8 +80,6 @@ export function GraphLegendDotRow({
           height: LEGEND_SWATCH_HEIGHT,
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: 6,
-          backgroundColor: color.background.tertiary,
         }}
       >
         <View
