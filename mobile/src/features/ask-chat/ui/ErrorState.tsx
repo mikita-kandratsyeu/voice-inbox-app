@@ -13,6 +13,7 @@ type ErrorStateProps = {
   titleKey?: string;
   retryLabelKey?: string;
   fallbackHintKey?: string;
+  actionSlot?: React.ReactNode;
 };
 
 export const ErrorState = ({
@@ -23,6 +24,7 @@ export const ErrorState = ({
   titleKey = 'recordingDetail.askError',
   retryLabelKey = 'recordingDetail.summaryRetry',
   fallbackHintKey,
+  actionSlot,
 }: ErrorStateProps) => {
   const { t } = useTranslation();
   const resolvedError = resolveAiUserFacingError(errorMessage);
@@ -39,6 +41,7 @@ export const ErrorState = ({
           : t(fallbackHintKey ?? 'recordingDetail.askErrorContinueHint'))
       }
       retryLabel={t(retryLabelKey)}
+      actionSlot={actionSlot}
     />
   );
 };
