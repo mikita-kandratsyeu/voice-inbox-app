@@ -3185,8 +3185,6 @@
     "contextSheetNotesHeading": "Заметки в последнем ответе",
     "contextFooterCloud": "В режиме Smart выбранный текст заметок отправляется на серверы Voice Inbox AI. Аудиозаписи не загружаются.",
     "contextFooterPrivate": "В Private с вашим ИИ‑сервером (Pro) выдержки заметок отправляются на ваш сервер.",
-    "searchChip": "Спросить по найденному",
-    "searchChipA11y": "Спросить ИИ по поиску: {{query}}",
     "evidenceOpenNote": "Открыть заметку",
     "evidenceOpenNoteA11y": "Открыть заметку {{title}}",
     "privateDeviceUnavailable": "Откройте Smart или настройте ИИ‑сервер, чтобы задавать вопросы по инбоксу.",

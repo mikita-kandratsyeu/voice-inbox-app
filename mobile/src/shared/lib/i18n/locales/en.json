@@ -3113,8 +3113,6 @@
     "contextSheetNotesHeading": "Notes used in the last answer",
     "contextFooterCloud": "In Smart mode, selected note text is sent to Voice Inbox AI servers. Voice recordings are never uploaded.",
     "contextFooterPrivate": "In Private mode with your AI server (Pro), note excerpts are sent to your server.",
-    "searchChip": "Ask about results",
-    "searchChipA11y": "Ask AI about search: {{query}}",
     "evidenceOpenNote": "Open note",
     "evidenceOpenNoteA11y": "Open note {{title}}",
     "privateDeviceUnavailable": "Use Smart or set up your AI server to ask about Inbox.",

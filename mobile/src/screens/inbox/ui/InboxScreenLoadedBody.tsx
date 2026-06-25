@@ -1,10 +1,10 @@
 import type { FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
-import { Folder, MessageCircleQuestion, Search, X } from 'lucide-react-native';
+import { Folder, Search, X } from 'lucide-react-native';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { TextInput, TouchableOpacity, View } from 'react-native';
 
 import {
   getFloatingTabBarScrollPaddingBottom,
@@ -43,8 +43,6 @@ import type { FlattenedItem } from '../lib/inboxScreenTypes';
 import { EmptySearchState } from './EmptySearchState';
 import { InboxSkeleton } from './InboxSkeleton';
 
-const INBOX_ASK_SEARCH_MIN_QUERY = 3;
-
 type StickySearchBarProps = {
   query: string;
   onChangeQuery: (text: string) => void;
@@ -54,7 +52,6 @@ type StickySearchBarProps = {
   onFocus: () => void;
   onBlur: () => void;
   focused: boolean;
-  onAskAboutSearch?: (query: string) => void;
 };
 
 function StickySearchBar({
@@ -66,7 +63,6 @@ function StickySearchBar({
   onFocus,
   onBlur,
   focused,
-  onAskAboutSearch,
 }: StickySearchBarProps) {
   const { t } = useTranslation();
   const inputRef = useRef<TextInput>(null);
@@ -98,88 +94,60 @@ function StickySearchBar({
     />
   );
 
-  const showAskChip = onAskAboutSearch != null && query.trim().length >= INBOX_ASK_SEARCH_MIN_QUERY;
-
   return (
-    <View className="gap-2">
-      <FloatingFrostedInputChrome color={color}>
-        <View
-          style={{
-            ...getFloatingFrostedInputContainerStyle(),
-            ...getFloatingFrostedInputRowStyle(),
-          }}
-        >
-          <View style={getFloatingFrostedInputFieldRowStyle()}>
-            <Search
-              size={FLOATING_FROSTED_INPUT_ICON_SIZE}
-              color={focused || query ? color.accent.primary : color.icon.muted}
-              strokeWidth={FLOATING_FROSTED_INPUT_ICON_STROKE}
-            />
-            <TextInput
-              ref={inputRef}
-              style={[getInputFieldInputStyle(color), { flex: 1 }]}
-              placeholder={t('search.placeholder')}
-              placeholderTextColor={color.text.secondary}
-              value={query}
-              onChangeText={onChangeQuery}
-              onFocus={onFocus}
-              onBlur={onBlur}
-              returnKeyType="search"
-              clearButtonMode="never"
-              autoCapitalize="none"
-            />
-            {query.length > 0 && (
-              <TouchableOpacity
-                onPress={handleClear}
-                hitSlop={iosHitSlopForVisualSize(16, 16)}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={t('common.clear')}
+    <FloatingFrostedInputChrome color={color}>
+      <View
+        style={{
+          ...getFloatingFrostedInputContainerStyle(),
+          ...getFloatingFrostedInputRowStyle(),
+        }}
+      >
+        <View style={getFloatingFrostedInputFieldRowStyle()}>
+          <Search
+            size={FLOATING_FROSTED_INPUT_ICON_SIZE}
+            color={focused || query ? color.accent.primary : color.icon.muted}
+            strokeWidth={FLOATING_FROSTED_INPUT_ICON_STROKE}
+          />
+          <TextInput
+            ref={inputRef}
+            style={[getInputFieldInputStyle(color), { flex: 1 }]}
+            placeholder={t('search.placeholder')}
+            placeholderTextColor={color.text.secondary}
+            value={query}
+            onChangeText={onChangeQuery}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            returnKeyType="search"
+            clearButtonMode="never"
+            autoCapitalize="none"
+          />
+          {query.length > 0 && (
+            <TouchableOpacity
+              onPress={handleClear}
+              hitSlop={iosHitSlopForVisualSize(16, 16)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.clear')}
+            >
+              <View
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: 8,
+                  backgroundColor: color.icon.muted,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               >
-                <View
-                  style={{
-                    width: 16,
-                    height: 16,
-                    borderRadius: 8,
-                    backgroundColor: color.icon.muted,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <X size={10} color={color.background.primary} strokeWidth={2.5} />
-                </View>
-              </TouchableOpacity>
-            )}
-          </View>
-          <FloatingFrostedChromeDivider color={color} />
-          <FloatingFrostedChromeSection>{closeButton}</FloatingFrostedChromeSection>
+                <X size={10} color={color.background.primary} strokeWidth={2.5} />
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
-      </FloatingFrostedInputChrome>
-      {showAskChip ? (
-        <TouchableOpacity
-          onPress={() => onAskAboutSearch?.(query.trim())}
-          activeOpacity={0.75}
-          accessibilityRole="button"
-          accessibilityLabel={t('inboxAsk.searchChipA11y', { query: query.trim() })}
-          className="flex-row items-center gap-2 self-start rounded-full px-3 py-2"
-          style={{
-            backgroundColor: color.background.card,
-            borderWidth: 1,
-            borderColor: color.border.default,
-            marginHorizontal: 12,
-          }}
-        >
-          <MessageCircleQuestion size={16} color={color.accent.primary} strokeWidth={2.1} />
-          <Text
-            className="text-[14px] font-semibold leading-[18px]"
-            style={{ color: color.accent.primary }}
-            numberOfLines={1}
-          >
-            {t('inboxAsk.searchChip')}
-          </Text>
-        </TouchableOpacity>
-      ) : null}
-    </View>
+        <FloatingFrostedChromeDivider color={color} />
+        <FloatingFrostedChromeSection>{closeButton}</FloatingFrostedChromeSection>
+      </View>
+    </FloatingFrostedInputChrome>
   );
 }
 
@@ -229,7 +197,6 @@ type InboxScreenLoadedBodyProps = {
   getItemType: (item: FlattenedItem) => string;
   onInboxListScroll?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
   showInboxScrollResetSkeleton: boolean;
-  onAskAboutSearch?: (query: string) => void;
   adminBanner?: MobileBanner | null;
   onDismissAdminBanner?: () => void;
 };
@@ -275,7 +242,6 @@ function InboxScreenLoadedBodyInner({
   getItemType,
   onInboxListScroll,
   showInboxScrollResetSkeleton,
-  onAskAboutSearch,
   adminBanner,
   onDismissAdminBanner,
 }: InboxScreenLoadedBodyProps) {
@@ -463,7 +429,6 @@ function InboxScreenLoadedBodyInner({
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setSearchFocused(false)}
             focused={searchFocused}
-            onAskAboutSearch={onAskAboutSearch}
           />
         </FloatingFrostedStickyView>
       )}

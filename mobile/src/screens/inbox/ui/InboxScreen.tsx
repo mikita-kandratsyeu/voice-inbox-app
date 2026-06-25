@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { View } from 'react-native';
 
 import { openPlanPaywall } from '@/app/navigation/openPlanPaywall';
@@ -8,10 +8,8 @@ import {
   FolderPickerSheet,
   FolderReorderSheet,
 } from '@/entities/folder';
-import { useSettingsStore } from '@/entities/settings';
 import { BatchActionBar, BatchExportSheet } from '@/features/batch-select';
 import { useImportFileAction } from '@/features/import-audio-file';
-import { isInboxAskAvailable } from '@/features/inbox-ask';
 import {
   AiOrganizeActionSheet,
   AiOrganizeTemplateSheet,
@@ -33,8 +31,6 @@ export const InboxScreen = () => {
   const inbox = useInboxScreen();
   const importFile = useImportFileAction();
   const { banner: adminBanner, dismiss: dismissAdminBanner } = useMobileAdminBanner();
-  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
-  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const {
     t,
     color,
@@ -156,11 +152,6 @@ export const InboxScreen = () => {
     isProActive,
   } = inbox;
 
-  const inboxAskEnabled = useMemo(
-    () => isInboxAskAvailable(aiExecutionMode, privateAiProvider, isProActive),
-    [aiExecutionMode, isProActive, privateAiProvider],
-  );
-
   const handleEnterBatchModeNoHaptic = useCallback(
     () => enterBatchMode(undefined, { haptic: false }),
     [enterBatchMode],
@@ -171,16 +162,6 @@ export const InboxScreen = () => {
   const handleSearchClear = useCallback(
     () => setSearchBarExplicitOpen(false),
     [setSearchBarExplicitOpen],
-  );
-
-  const handleAskAboutSearch = useCallback(
-    (searchQuery: string) => {
-      navigation.navigate('InboxAskAI', {
-        question: searchQuery,
-        folderId: effectiveActiveFolderId ?? undefined,
-      });
-    },
-    [effectiveActiveFolderId, navigation],
   );
 
   return (
@@ -294,7 +275,6 @@ export const InboxScreen = () => {
           getItemType={getItemType}
           onInboxListScroll={onInboxListScroll}
           showInboxScrollResetSkeleton={showInboxScrollResetSkeleton}
-          onAskAboutSearch={inboxAskEnabled ? handleAskAboutSearch : undefined}
           adminBanner={adminBanner && !batchSelect.isSelectMode ? adminBanner : null}
           onDismissAdminBanner={dismissAdminBanner}
         />
