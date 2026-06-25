@@ -73,6 +73,113 @@ static NSMutableData *buildWavHeader(uint32_t sampleRate, uint16_t channels, uin
   return wav;
 }
 
+static const int kVadFrameMs = 30;
+static const int kVadPreRollFrames = 15;
+static const int kVadHangoverFrames = 15;
+static const int kVadOnsetFrames = 2;
+
+typedef struct {
+  BOOL hasSpeech;
+  double trimStartMs;
+  double trimDurationMs;
+} SpeechAnalysisResult;
+
+static SpeechAnalysisResult analyzeMonoPcmSpeech(const int16_t *samples, size_t sampleCount, uint32_t sampleRate) {
+  SpeechAnalysisResult empty = {NO, 0.0, 0.0};
+  if (sampleCount == 0 || sampleRate == 0) {
+    return empty;
+  }
+
+  NSUInteger frameSamples = MAX((NSUInteger)1, (sampleRate * kVadFrameMs) / 1000);
+  NSUInteger frameCount = (sampleCount + frameSamples - 1) / frameSamples;
+  if (frameCount == 0) {
+    return empty;
+  }
+
+  NSMutableArray<NSNumber *> *rmsValues = [NSMutableArray arrayWithCapacity:frameCount];
+  for (NSUInteger frame = 0; frame < frameCount; frame++) {
+    NSUInteger start = frame * frameSamples;
+    NSUInteger end = MIN(start + frameSamples, sampleCount);
+    double sum = 0.0;
+    for (NSUInteger i = start; i < end; i++) {
+      double normalized = (double)samples[i] / 32768.0;
+      sum += normalized * normalized;
+    }
+    NSUInteger count = MAX((NSUInteger)1, end - start);
+    [rmsValues addObject:@(sqrt(sum / (double)count))];
+  }
+
+  NSArray<NSNumber *> *sorted = [rmsValues sortedArrayUsingSelector:@selector(compare:)];
+  NSUInteger noiseIndex = (NSUInteger)floor(sorted.count * 0.2);
+  if (noiseIndex >= sorted.count) noiseIndex = sorted.count - 1;
+  double noiseFloor = sorted[noiseIndex].doubleValue;
+  double threshold = MAX(noiseFloor * 3.5, 0.008);
+
+  BOOL *voiceFrames = (BOOL *)calloc(frameCount, sizeof(BOOL));
+  BOOL *smoothed = (BOOL *)calloc(frameCount, sizeof(BOOL));
+  if (!voiceFrames || !smoothed) {
+    free(voiceFrames);
+    free(smoothed);
+    return empty;
+  }
+
+  for (NSUInteger i = 0; i < frameCount; i++) {
+    voiceFrames[i] = rmsValues[i].doubleValue >= threshold;
+  }
+
+  int hangover = 0;
+  int onset = 0;
+  BOOL inSpeech = NO;
+  for (NSUInteger i = 0; i < frameCount; i++) {
+    BOOL isVoice = voiceFrames[i];
+    if (!inSpeech && isVoice) {
+      onset += 1;
+      if (onset >= kVadOnsetFrames) {
+        inSpeech = YES;
+        hangover = kVadHangoverFrames;
+        onset = 0;
+        NSUInteger preStart = i >= (NSUInteger)kVadPreRollFrames ? i - kVadPreRollFrames : 0;
+        for (NSUInteger j = preStart; j <= i; j++) {
+          smoothed[j] = YES;
+        }
+      }
+    } else if (inSpeech && isVoice) {
+      hangover = kVadHangoverFrames;
+      smoothed[i] = YES;
+    } else if (inSpeech && !isVoice) {
+      if (hangover > 0) {
+        hangover -= 1;
+        smoothed[i] = YES;
+      } else {
+        inSpeech = NO;
+      }
+    } else {
+      onset = 0;
+    }
+  }
+
+  NSInteger firstSpeechFrame = -1;
+  NSInteger lastSpeechFrame = -1;
+  for (NSUInteger i = 0; i < frameCount; i++) {
+    if (smoothed[i]) {
+      if (firstSpeechFrame < 0) firstSpeechFrame = (NSInteger)i;
+      lastSpeechFrame = (NSInteger)i;
+    }
+  }
+
+  free(voiceFrames);
+  free(smoothed);
+
+  if (firstSpeechFrame < 0 || lastSpeechFrame < 0) {
+    return empty;
+  }
+
+  double trimStartMs = firstSpeechFrame * kVadFrameMs;
+  double trimEndMs = (lastSpeechFrame + 1) * kVadFrameMs;
+  double trimDurationMs = MAX(0.0, trimEndMs - trimStartMs);
+  return (SpeechAnalysisResult){ trimDurationMs > 0.0, trimStartMs, trimDurationMs };
+}
+
 @implementation AudioConverter
 
 RCT_EXPORT_MODULE()
@@ -342,6 +449,123 @@ RCT_EXPORT_METHOD(createWavChunk:(NSString *)inputPath
   } @catch (NSException *exception) {
     [inFile closeFile];
     reject(@"E_WAV_CHUNK", exception.reason ?: @"Failed to create WAV chunk", nil);
+  }
+}
+
+RCT_EXPORT_METHOD(analyzeWavSpeech:(NSString *)inputPath
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject)
+{
+  NSString *input = nil;
+  if ([inputPath hasPrefix:@"file://"]) {
+    NSURL *u = [NSURL URLWithString:inputPath];
+    if (u.path.length) input = u.path;
+  }
+  if (!input.length) input = [inputPath hasPrefix:@"file://"] ? [inputPath substringFromIndex:7] : inputPath;
+  NSString *resolved = [NSURL fileURLWithPath:input].path;
+  if (resolved.length) input = resolved;
+
+  NSFileManager *fm = [NSFileManager defaultManager];
+  if (![fm fileExistsAtPath:input]) {
+    reject(@"E_VAD", @"File not found", nil);
+    return;
+  }
+
+  NSFileHandle *inFile = [NSFileHandle fileHandleForReadingAtPath:input];
+  if (!inFile) {
+    reject(@"E_VAD", @"Could not open input WAV", nil);
+    return;
+  }
+
+  @try {
+    NSData *riffHeader = [inFile readDataOfLength:12];
+    if (riffHeader.length < 12 ||
+        memcmp(riffHeader.bytes, "RIFF", 4) != 0 ||
+        memcmp((const uint8_t *)riffHeader.bytes + 8, "WAVE", 4) != 0) {
+      reject(@"E_VAD", @"Unsupported WAV header", nil);
+      [inFile closeFile];
+      return;
+    }
+
+    uint16_t audioFormat = 0;
+    uint16_t channels = 0;
+    uint32_t sampleRate = 0;
+    uint16_t bitsPerSample = 0;
+    uint64_t dataOffset = 0;
+
+    while (true) {
+      NSData *chunkHeader = [inFile readDataOfLength:8];
+      if (chunkHeader.length < 8) break;
+
+      const char *chunkId = (const char *)chunkHeader.bytes;
+      uint32_t chunkSize = readUInt32LE(chunkHeader, 4);
+      uint64_t chunkDataOffset = inFile.offsetInFile;
+
+      if (memcmp(chunkId, "fmt ", 4) == 0) {
+        NSData *fmt = [inFile readDataOfLength:chunkSize];
+        if (fmt.length < 16) {
+          reject(@"E_VAD", @"Invalid WAV fmt chunk", nil);
+          [inFile closeFile];
+          return;
+        }
+        audioFormat = readUInt16LE(fmt, 0);
+        channels = readUInt16LE(fmt, 2);
+        sampleRate = readUInt32LE(fmt, 4);
+        bitsPerSample = readUInt16LE(fmt, 14);
+        if (chunkSize % 2 != 0) {
+          [inFile seekToFileOffset:chunkDataOffset + chunkSize + 1];
+        }
+      } else if (memcmp(chunkId, "data", 4) == 0) {
+        dataOffset = chunkDataOffset;
+        break;
+      } else {
+        [inFile seekToFileOffset:chunkDataOffset + chunkSize + (chunkSize % 2)];
+      }
+    }
+
+    if (audioFormat != 1 || channels == 0 || sampleRate == 0 || bitsPerSample != 16 || dataOffset == 0) {
+      reject(@"E_VAD", @"Only PCM WAV speech analysis is supported", nil);
+      [inFile closeFile];
+      return;
+    }
+
+    NSDictionary *fileAttrs = [fm attributesOfItemAtPath:input error:nil];
+    uint64_t fileSize = fileAttrs ? [fileAttrs fileSize] : 0;
+    uint64_t availableBytes = fileSize > dataOffset ? fileSize - dataOffset : 0;
+    uint32_t bytesPerFrame = channels * (bitsPerSample / 8);
+    uint64_t frameCount = bytesPerFrame > 0 ? availableBytes / bytesPerFrame : 0;
+    if (frameCount == 0) {
+      reject(@"E_VAD", @"No audio data", nil);
+      [inFile closeFile];
+      return;
+    }
+
+    [inFile seekToFileOffset:dataOffset];
+    NSData *pcmData = [inFile readDataOfLength:(NSUInteger)MIN(availableBytes, (uint64_t)NSUIntegerMax)];
+    [inFile closeFile];
+
+    const int16_t *pcmSamples = (const int16_t *)pcmData.bytes;
+    size_t pcmSampleCount = pcmData.length / 2;
+    NSMutableData *monoData = [NSMutableData dataWithCapacity:(pcmSampleCount / channels) * sizeof(int16_t)];
+    int16_t *monoSamples = (int16_t *)monoData.mutableBytes;
+    size_t monoCount = 0;
+    for (size_t frame = 0; frame < pcmSampleCount / channels; frame++) {
+      int32_t sum = 0;
+      for (uint16_t ch = 0; ch < channels; ch++) {
+        sum += pcmSamples[frame * channels + ch];
+      }
+      monoSamples[monoCount++] = (int16_t)(sum / (int32_t)channels);
+    }
+
+  SpeechAnalysisResult analysis = analyzeMonoPcmSpeech(monoSamples, monoCount, sampleRate);
+    resolve(@{
+      @"hasSpeech": @(analysis.hasSpeech),
+      @"trimStartMs": @(analysis.trimStartMs),
+      @"trimDurationMs": @(analysis.trimDurationMs),
+    });
+  } @catch (NSException *exception) {
+    [inFile closeFile];
+    reject(@"E_VAD", exception.reason ?: @"Speech analysis failed", nil);
   }
 }
 

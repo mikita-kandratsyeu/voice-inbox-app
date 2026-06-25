@@ -65,6 +65,7 @@ const KEYS = {
   WHISPER_SELECTED_MODEL_FORMAT: 'settings.whisperSelectedModelFormat',
   WHISPER_STATUSES: 'settings.whisperStatuses',
   TRANSCRIPTION_LANGUAGE: 'settings.transcriptionLanguage',
+  TRANSCRIPTION_CUSTOM_WORDS: 'settings.transcriptionCustomWords',
   SUMMARY_STYLE: 'settings.summaryStyle',
   TASK_STRICTNESS: 'settings.taskStrictness',
   AI_OUTPUT_LANGUAGE: 'settings.aiOutputLanguage',
@@ -248,6 +249,18 @@ const getStoredTranscriptionLanguage = (): TranscriptionLanguage => {
   const val = storage.getString(KEYS.TRANSCRIPTION_LANGUAGE);
 
   return (val as TranscriptionLanguage) ?? 'auto';
+};
+
+const getStoredTranscriptionCustomWords = (): string[] => {
+  try {
+    const raw = storage.getString(KEYS.TRANSCRIPTION_CUSTOM_WORDS);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+  } catch {
+    return [];
+  }
 };
 
 const getStoredAutoTranscribeOnSave = (): boolean => {
@@ -523,6 +536,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   selectedWhisperModelFormat: getStoredSelectedWhisperModelFormat(),
   whisperModelWeightsFormat: getStoredWhisperModelWeightsFormat(),
   transcriptionLanguage: getStoredTranscriptionLanguage(),
+  transcriptionCustomWords: getStoredTranscriptionCustomWords(),
   summaryStyle: getStoredSummaryStyle(),
   taskStrictness: getStoredTaskStrictness(),
   aiOutputLanguage: getStoredAiOutputLanguage(),
@@ -627,6 +641,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => {
     storage.set(KEYS.TRANSCRIPTION_LANGUAGE, lang);
     set({ transcriptionLanguage: lang });
+  },
+
+  setTranscriptionCustomWords: (words: string[]) => {
+    const cleaned = words.map((word) => word.trim()).filter((word) => word.length > 0);
+    storage.set(KEYS.TRANSCRIPTION_CUSTOM_WORDS, JSON.stringify(cleaned));
+    set({ transcriptionCustomWords: cleaned });
   },
 
   setSummaryStyle: (value: SummaryStyle) => {

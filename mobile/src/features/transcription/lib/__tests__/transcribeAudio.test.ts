@@ -27,6 +27,10 @@ jest.mock('../whisperNativeLifecycle', () => ({
   endWhisperNativeWork: jest.fn(),
 }));
 
+jest.mock('../audioVad', () => ({
+  analyzeWavSpeech: jest.fn().mockResolvedValue(null),
+}));
+
 import { AppState } from 'react-native';
 import type { WhisperContext } from 'whisper.rn';
 
@@ -258,6 +262,62 @@ describe('transcribeAudio', () => {
     expect(result.segments.map((segment) => segment.id)).toEqual(['0', '1']);
   });
 
+  it('deduplicates overlapped text when merging long transcription chunks', async () => {
+    const transcribe = jest.fn((path: string) => {
+      const isSecondChunk = path.includes('.chunk-1.wav');
+      return {
+        stop: jest.fn().mockResolvedValue(undefined),
+        promise: Promise.resolve(
+          isSecondChunk
+            ? {
+                result: 'world again tomorrow',
+                segments: [{ text: 'world again tomorrow', t0: 0, t1: 1000 }],
+              }
+            : {
+                result: 'hello world again',
+                segments: [{ text: 'hello world again', t0: 0, t1: 2000 }],
+              },
+        ),
+      };
+    });
+    const context = { transcribe } as unknown as WhisperContext;
+
+    const result = await runTimersUntilSettled(
+      transcribeAudio({
+        context,
+        audioPath: '/tmp/audio.wav',
+        durationMs: 30_000,
+        chunkProfile: { chunkDurationSec: 20, chunkOverlapSec: 5 },
+      }).promise,
+    );
+
+    expect(result.fullText).toBe('hello world again tomorrow');
+  });
+
+  it('passes custom vocabulary in the whisper prompt', async () => {
+    const transcribe = jest.fn(() => ({
+      stop: jest.fn().mockResolvedValue(undefined),
+      promise: Promise.resolve({
+        result: 'hello',
+        segments: [{ text: 'hello', t0: 0, t1: 100 }],
+      }),
+    }));
+    const context = { transcribe } as unknown as WhisperContext;
+
+    await transcribeAudio({
+      context,
+      audioPath: '/tmp/audio.wav',
+      durationMs: 10_000,
+      customWords: ['OpenAI', 'ChargeBee'],
+    }).promise;
+
+    expect(transcribe).toHaveBeenCalledWith('/tmp/audio.wav', {
+      ...baseTranscribeOptions,
+      language: 'auto',
+      prompt: 'OpenAI, ChargeBee',
+    });
+  });
+
   it('filters obvious repeated-token hallucinations and does not use them as prompt', async () => {
     const transcribe = jest.fn((path: string, _options: { prompt?: string }) => {
       const firstChunk = path.includes('.chunk-0.wav');
@@ -287,7 +347,7 @@ describe('transcribeAudio', () => {
       }).promise,
     );
 
-    expect(transcribe.mock.calls[1]?.[1]).toMatchObject({ prompt: undefined });
+    expect(transcribe.mock.calls[1]?.[1]?.prompt).toBeUndefined();
     expect(result.fullText).toBe('normal speech');
     expect(result.segments.map((segment) => segment.text)).toEqual(['normal speech']);
   });

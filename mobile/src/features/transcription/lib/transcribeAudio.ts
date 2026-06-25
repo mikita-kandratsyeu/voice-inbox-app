@@ -7,7 +7,15 @@ import { createWavChunk, splitAudioIntoChunks } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
 import { isArray, isRecord, isString } from '@/shared/lib/type-guards';
 
-import { MIN_TRANSCRIBE_MS } from '../config/constants';
+import {
+  MIN_TRANSCRIBE_MS,
+  PROMPT_TAIL_LENGTH,
+  TRANSCRIPTION_VAD_ENABLED,
+} from '../config/constants';
+import { analyzeWavSpeech } from './audioVad';
+import { buildWhisperPrompt } from './buildWhisperPrompt';
+import { dedupeChunkTextOverlap } from './chunkTextDedup';
+import { collapseRepeatedTokenStutters, isUsableTranscriptText } from './cleanTranscriptText';
 import { TranscriptionError } from './transcriptionErrors';
 import { canRunWhisperGpuWork } from './whisperAppState';
 import { beginWhisperNativeWork, endWhisperNativeWork } from './whisperNativeLifecycle';
@@ -24,8 +32,6 @@ const DEFAULT_CHUNK_PROFILE: TranscriptionChunkProfile = {
   chunkOverlapSec: 3,
 };
 
-const PROMPT_TAIL_LENGTH = 200;
-const MAX_REPEATED_TOKEN_RUN = 5;
 const BASE_TRANSCRIBE_OPTIONS: Pick<
   TranscribeFileOptions,
   'maxLen' | 'temperature' | 'temperatureInc'
@@ -41,6 +47,8 @@ export type TranscribeAudioOptions = {
   audioPath: string;
   durationMs: number;
   language?: string;
+  customWords?: string[];
+  vadEnabled?: boolean;
   chunkProfile?: TranscriptionChunkProfile;
   contextRecycleChunks?: number;
   onProgress?: (current: number, total: number) => void;
@@ -90,44 +98,66 @@ const normalizeResult = (raw: unknown): WhisperTranscribeResult => {
   return { result: '', segments: [] };
 };
 
-const normalizeToken = (value: string): string =>
-  value
-    .trim()
-    .toLowerCase()
-    .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
-
-const hasExcessiveRepeatedTokenRun = (text: string): boolean => {
-  const tokens = text
-    .split(/\s+/)
-    .map(normalizeToken)
-    .filter((token) => token.length > 0);
-
-  let previous = '';
-  let run = 0;
-  for (const token of tokens) {
-    run = token === previous ? run + 1 : 1;
-    previous = token;
-    if (run >= MAX_REPEATED_TOKEN_RUN) return true;
-  }
-
-  return false;
-};
-
-const isUsableTranscriptText = (text: string): boolean => {
-  const trimmed = text.trim();
-  if (trimmed.length === 0) return false;
-  if (/(\S)\1{12,}/u.test(trimmed)) return false;
-  if (hasExcessiveRepeatedTokenRun(trimmed)) return false;
-
-  const meaningfulChars = trimmed.match(/[\p{L}\p{N}]/gu)?.length ?? 0;
-  if (trimmed.length >= 8 && meaningfulChars / trimmed.length < 0.25) return false;
-
-  return true;
-};
-
 const getPromptTail = (text: string): string | undefined => {
   const tail = text.trim().slice(-PROMPT_TAIL_LENGTH).trim();
   return isUsableTranscriptText(tail) ? tail : undefined;
+};
+
+const buildChunkPrompt = (fullText: string, customWords: readonly string[]): string | undefined => {
+  const vocabulary = buildWhisperPrompt('', customWords);
+  const tail = getPromptTail(fullText);
+  if (vocabulary && tail) {
+    return `${vocabulary} ${tail}`.trim();
+  }
+  if (vocabulary) return vocabulary;
+  return tail;
+};
+
+const finalizeTranscriptText = (text: string): string => collapseRepeatedTokenStutters(text.trim());
+
+type ResolvedTranscriptionPath = {
+  path: string;
+  timestampOffsetMs: number;
+  skipped: boolean;
+};
+
+const resolveTranscriptionPath = async (
+  sourcePath: string,
+  vadEnabled: boolean,
+): Promise<ResolvedTranscriptionPath> => {
+  if (!vadEnabled || !TRANSCRIPTION_VAD_ENABLED) {
+    return { path: sourcePath, timestampOffsetMs: 0, skipped: false };
+  }
+
+  const analysis = await analyzeWavSpeech(sourcePath);
+  if (!analysis) {
+    return { path: sourcePath, timestampOffsetMs: 0, skipped: false };
+  }
+
+  if (!analysis.hasSpeech) {
+    return { path: sourcePath, timestampOffsetMs: 0, skipped: true };
+  }
+
+  if (analysis.trimDurationMs < MIN_TRANSCRIBE_MS) {
+    return { path: sourcePath, timestampOffsetMs: 0, skipped: false };
+  }
+
+  const trimmedPath = `${sourcePath}.vad-trim.wav`;
+  const trimmed = await createWavChunk(
+    sourcePath,
+    trimmedPath,
+    analysis.trimStartMs,
+    analysis.trimDurationMs,
+  );
+  if (!trimmed) {
+    return { path: sourcePath, timestampOffsetMs: 0, skipped: false };
+  }
+
+  return {
+    path: trimmed,
+    timestampOffsetMs: analysis.trimStartMs,
+    skipped: false,
+  };
 };
 
 const normalizeTranscriptionResult = (raw: unknown): WhisperTranscribeResult => {
@@ -211,6 +241,8 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
     audioPath,
     durationMs,
     language = 'auto',
+    customWords = [],
+    vadEnabled = TRANSCRIPTION_VAD_ENABLED,
     chunkProfile = DEFAULT_CHUNK_PROFILE,
     contextRecycleChunks = 12,
     onProgress,
@@ -253,6 +285,8 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
           context,
           audioPath,
           language,
+          customWords,
+          vadEnabled,
           cancelled: () => cancelled,
           setStop: (fn) => {
             activeStop = fn;
@@ -270,6 +304,8 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
           : undefined,
         audioPath,
         language,
+        customWords,
+        vadEnabled,
         totalDurationSec: durationMs / 1000,
         chunkProfile,
         contextRecycleChunks,
@@ -293,6 +329,8 @@ type ShortOptions = {
   context: WhisperContext;
   audioPath: string;
   language: string;
+  customWords: string[];
+  vadEnabled: boolean;
   cancelled: () => boolean;
   setStop: (fn: () => Promise<void>) => void;
 };
@@ -301,6 +339,8 @@ const transcribeShort = async ({
   context,
   audioPath,
   language,
+  customWords,
+  vadEnabled,
   cancelled,
   setStop,
 }: ShortOptions): Promise<TranscribeAudioResult> => {
@@ -308,11 +348,18 @@ const transcribeShort = async ({
     throw new TranscriptionError('native_abort');
   }
 
+  const resolved = await resolveTranscriptionPath(audioPath, vadEnabled);
+  if (resolved.skipped) {
+    return { segments: [], fullText: '', skipped: true };
+  }
+
   beginWhisperNativeWork();
   try {
-    const { stop, promise: rawPromise } = context.transcribe(audioPath, {
+    const prompt = buildChunkPrompt('', customWords);
+    const { stop, promise: rawPromise } = context.transcribe(resolved.path, {
       ...BASE_TRANSCRIBE_OPTIONS,
       language,
+      ...(prompt ? { prompt } : {}),
     });
 
     setStop(stop);
@@ -339,10 +386,13 @@ const transcribeShort = async ({
 
     const result = normalizeTranscriptionResult(raw);
     return {
-      segments: mapSegments(result, 0, 0),
-      fullText: (result.result ?? '').trim(),
+      segments: mapSegments(result, 0, resolved.timestampOffsetMs),
+      fullText: finalizeTranscriptText(result.result ?? ''),
     };
   } finally {
+    if (resolved.path !== audioPath) {
+      void NitroFS.unlink(resolved.path).catch(() => {});
+    }
     endWhisperNativeWork();
   }
 };
@@ -352,6 +402,8 @@ type LongOptions = {
   recycleContext?: () => Promise<void>;
   audioPath: string;
   language: string;
+  customWords: string[];
+  vadEnabled: boolean;
   totalDurationSec: number;
   chunkProfile: TranscriptionChunkProfile;
   contextRecycleChunks: number;
@@ -371,11 +423,53 @@ type LongOptions = {
   setStop: (fn: () => Promise<void>) => void;
 };
 
+type ChunkTranscribeParams = {
+  getContext: () => WhisperContext;
+  transcribePath: string;
+  language: string;
+  prompt: string | undefined;
+  setStop: (fn: () => Promise<void>) => void;
+  cancelled: () => boolean;
+};
+
+const transcribeChunkFile = async ({
+  getContext,
+  transcribePath,
+  language,
+  prompt,
+  setStop,
+  cancelled,
+}: ChunkTranscribeParams): Promise<unknown> => {
+  if (cancelled() || !canRunWhisperGpuWork()) {
+    throw new TranscriptionError('native_abort');
+  }
+
+  const { stop: chunkStop, promise: rawPromise } = getContext().transcribe(transcribePath, {
+    ...BASE_TRANSCRIBE_OPTIONS,
+    language,
+    ...(prompt ? { prompt } : {}),
+  });
+
+  setStop(chunkStop);
+
+  try {
+    const raw = await rawPromise;
+    if (cancelled()) {
+      throw new TranscriptionError('native_abort');
+    }
+    return raw;
+  } finally {
+    setStop(async () => {});
+  }
+};
+
 const transcribeLong = async ({
   getContext,
   recycleContext,
   audioPath,
   language,
+  customWords,
+  vadEnabled,
   totalDurationSec,
   chunkProfile,
   contextRecycleChunks,
@@ -408,7 +502,7 @@ const transcribeLong = async ({
 
     const chunk = chunks[i];
 
-    const prompt = getPromptTail(fullText);
+    const prompt = buildChunkPrompt(fullText, customWords);
 
     if (!canRunWhisperGpuWork()) {
       throw new TranscriptionError('native_abort');
@@ -416,7 +510,10 @@ const transcribeLong = async ({
 
     beginWhisperNativeWork();
     let raw: unknown;
+    let result: WhisperTranscribeResult = { result: '', segments: [] };
     const chunkAudioPath = `${audioPath}.chunk-${chunk.index}.wav`;
+    let vadTrimPath: string | null = null;
+    let chunkVadOffsetMs = 0;
     try {
       const chunkPath = await createWavChunk(
         audioPath,
@@ -431,34 +528,57 @@ const transcribeLong = async ({
         throw new TranscriptionError('native_abort');
       }
 
-      const { stop: chunkStop, promise: rawPromise } = getContext().transcribe(chunkPath, {
-        ...BASE_TRANSCRIBE_OPTIONS,
+      const resolved = await resolveTranscriptionPath(chunkPath, vadEnabled);
+      if (resolved.skipped) {
+        onChunkCompleted?.({
+          chunkIndex: i,
+          totalChunks: total,
+          fullText,
+          segments: allSegments,
+        });
+        onProgress?.(i + 1, total);
+        continue;
+      }
+
+      const transcribePath = resolved.path;
+      chunkVadOffsetMs = resolved.timestampOffsetMs;
+      const usedVadTrim = transcribePath !== chunkPath;
+      if (usedVadTrim) {
+        vadTrimPath = transcribePath;
+      }
+
+      raw = await transcribeChunkFile({
+        getContext,
+        transcribePath,
         language,
         prompt,
+        setStop,
+        cancelled,
       });
+      result = normalizeTranscriptionResult(raw);
 
-      setStop(chunkStop);
-
-      try {
-        raw = await rawPromise;
-      } catch (chunkErr) {
-        if (cancelled() || !canRunWhisperGpuWork()) {
-          throw new TranscriptionError('native_abort');
-        }
-        throw chunkErr;
-      }
-      setStop(async () => {});
-
-      if (cancelled()) {
-        throw new TranscriptionError('native_abort');
+      if (result.segments.length === 0 && usedVadTrim) {
+        raw = await transcribeChunkFile({
+          getContext,
+          transcribePath: chunkPath,
+          language,
+          prompt,
+          setStop,
+          cancelled,
+        });
+        chunkVadOffsetMs = 0;
+        result = normalizeTranscriptionResult(raw);
       }
     } finally {
       endWhisperNativeWork();
+      if (vadTrimPath) {
+        void NitroFS.unlink(vadTrimPath).catch(() => {});
+      }
       void NitroFS.unlink(chunkAudioPath).catch(() => {});
     }
 
-    const result = normalizeTranscriptionResult(raw);
-    const timestampOffsetMs = chunk.offsetMs;
+    const timestampOffsetMs = chunk.offsetMs + chunkVadOffsetMs;
+
     const previousEndMs = getLatestSegmentEndMs(allSegments);
     const chunkSegments = removeFullyOverlappedSegments(
       mapSegments(result, 0, timestampOffsetMs),
@@ -475,7 +595,9 @@ const transcribeLong = async ({
       .filter((text) => text.length > 0)
       .join(' ');
     const fallbackText = result.segments.length === 0 ? result.result : '';
-    fullText = appendText(fullText, acceptedSegmentText || fallbackText);
+    const nextText = acceptedSegmentText || fallbackText;
+    const dedupedText = dedupeChunkTextOverlap(fullText, nextText);
+    fullText = appendText(fullText, dedupedText);
 
     onChunkCompleted?.({
       chunkIndex: i,
@@ -496,5 +618,5 @@ const transcribeLong = async ({
     await new Promise<void>((resolve) => setTimeout(resolve, 200));
   }
 
-  return { segments: allSegments, fullText };
+  return { segments: allSegments, fullText: finalizeTranscriptText(fullText) };
 };

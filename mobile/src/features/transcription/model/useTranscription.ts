@@ -140,6 +140,7 @@ export const useTranscription = () => {
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const setWhisperModelStatus = useSettingsStore((s) => s.setWhisperModelStatus);
   const transcriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
+  const transcriptionCustomWords = useSettingsStore((s) => s.transcriptionCustomWords);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
@@ -253,6 +254,7 @@ export const useTranscription = () => {
       currentRecordIdRef.current = record.id;
 
       const language = languageOverride ?? transcriptionLanguage;
+
       let usedContext = false;
       let transcodeWavPath: string | null = null;
       let keepCheckpointSnapshot = false;
@@ -349,6 +351,7 @@ export const useTranscription = () => {
             audioPath: transcribeInputPath,
             durationMs: record.durationMs ?? 0,
             language,
+            customWords: transcriptionCustomWords,
             chunkProfile,
             contextRecycleChunks: performanceProfile.contextRecycleChunks,
             onProgress: throttledProgress,
@@ -531,6 +534,7 @@ export const useTranscription = () => {
       selectedWhisperModelFormat,
       whisperModelStatuses,
       transcriptionLanguage,
+      transcriptionCustomWords,
       aiExecutionMode,
       autoAiAfterTranscription,
       isProActive,
