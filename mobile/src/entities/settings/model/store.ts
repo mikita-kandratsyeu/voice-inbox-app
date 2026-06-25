@@ -43,6 +43,7 @@ import type {
   SummaryStyle,
   TaskStrictness,
   TranscriptionLanguage,
+  TranscriptionQualityMode,
   UserSelectableAIModelId,
   WhisperDownloadPhase,
   WhisperModelId,
@@ -65,6 +66,7 @@ const KEYS = {
   WHISPER_SELECTED_MODEL_FORMAT: 'settings.whisperSelectedModelFormat',
   WHISPER_STATUSES: 'settings.whisperStatuses',
   TRANSCRIPTION_LANGUAGE: 'settings.transcriptionLanguage',
+  TRANSCRIPTION_QUALITY_MODE: 'settings.transcriptionQualityMode',
   TRANSCRIPTION_CUSTOM_WORDS: 'settings.transcriptionCustomWords',
   SUMMARY_STYLE: 'settings.summaryStyle',
   TASK_STRICTNESS: 'settings.taskStrictness',
@@ -249,6 +251,14 @@ const getStoredTranscriptionLanguage = (): TranscriptionLanguage => {
   const val = storage.getString(KEYS.TRANSCRIPTION_LANGUAGE);
 
   return (val as TranscriptionLanguage) ?? 'auto';
+};
+
+const getStoredTranscriptionQualityMode = (): TranscriptionQualityMode => {
+  const val = storage.getString(KEYS.TRANSCRIPTION_QUALITY_MODE);
+  if (val === 'fast' || val === 'balanced' || val === 'quality') {
+    return val;
+  }
+  return 'balanced';
 };
 
 const getStoredTranscriptionCustomWords = (): string[] => {
@@ -538,6 +548,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   selectedWhisperModelFormat: getStoredSelectedWhisperModelFormat(),
   whisperModelWeightsFormat: getStoredWhisperModelWeightsFormat(),
   transcriptionLanguage: getStoredTranscriptionLanguage(),
+  transcriptionQualityMode: getStoredTranscriptionQualityMode(),
   transcriptionCustomWords: getStoredTranscriptionCustomWords(),
   summaryStyle: getStoredSummaryStyle(),
   taskStrictness: getStoredTaskStrictness(),
@@ -643,6 +654,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => {
     storage.set(KEYS.TRANSCRIPTION_LANGUAGE, lang);
     set({ transcriptionLanguage: lang });
+  },
+
+  setTranscriptionQualityMode: (mode: TranscriptionQualityMode) => {
+    storage.set(KEYS.TRANSCRIPTION_QUALITY_MODE, mode);
+    set({ transcriptionQualityMode: mode });
   },
 
   setTranscriptionCustomWords: (words: string[]) => {

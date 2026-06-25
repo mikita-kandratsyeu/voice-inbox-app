@@ -93,6 +93,7 @@ export type {
   SummaryStyle,
   TaskStrictness,
   TranscriptionLanguage,
+  TranscriptionQualityMode,
   UserFacingAIModel,
   UserSelectableAIModelId,
   WhisperDownloadPhase,

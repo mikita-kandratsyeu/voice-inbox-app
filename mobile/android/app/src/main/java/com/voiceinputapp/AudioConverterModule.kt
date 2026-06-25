@@ -21,6 +21,78 @@ private const val VAD_PRE_ROLL_FRAMES = 15
 private const val VAD_HANGOVER_FRAMES = 15
 private const val VAD_ONSET_FRAMES = 2
 
+private class StreamingLinearResampler(
+  private val inputRate: Int,
+  private val outputRate: Int,
+) {
+  private val ratio = inputRate.toDouble() / outputRate
+  private var srcPos = 0.0
+  private var pending = ShortArray(0)
+
+  fun append(input: ShortArray): ByteArray {
+    if (inputRate == outputRate) {
+      return shortsToPcm16LE(input)
+    }
+    if (input.isEmpty()) {
+      return ByteArray(0)
+    }
+
+    pending = pending + input
+    val out = java.io.ByteArrayOutputStream()
+    while (srcPos + 1 < pending.size) {
+      val idx = srcPos.toInt()
+      val frac = srcPos - idx
+      val sample0 = pending[idx].toInt()
+      val sample1 = pending[idx + 1].toInt()
+      val value = (sample0 + (sample1 - sample0) * frac).toInt().toShort()
+      out.write(value.toInt() and 0xff)
+      out.write((value.toInt() shr 8) and 0xff)
+      srcPos += ratio
+    }
+
+    val drop = srcPos.toInt()
+    if (drop > 0) {
+      pending = pending.copyOfRange(drop, pending.size)
+      srcPos -= drop
+    }
+
+    return out.toByteArray()
+  }
+
+  fun flush(): ByteArray {
+    if (inputRate == outputRate || pending.isEmpty()) {
+      return ByteArray(0)
+    }
+
+    val out = java.io.ByteArrayOutputStream()
+    while (srcPos < pending.size) {
+      val idx = srcPos.toInt().coerceAtMost(pending.lastIndex)
+      val nextIdx = (idx + 1).coerceAtMost(pending.lastIndex)
+      val frac = srcPos - idx
+      val sample0 = pending[idx].toInt()
+      val sample1 = pending[nextIdx].toInt()
+      val value = (sample0 + (sample1 - sample0) * frac).toInt().toShort()
+      out.write(value.toInt() and 0xff)
+      out.write((value.toInt() shr 8) and 0xff)
+      srcPos += ratio
+    }
+
+    pending = ShortArray(0)
+    srcPos = 0.0
+    return out.toByteArray()
+  }
+}
+
+private fun shortsToPcm16LE(samples: ShortArray): ByteArray {
+  val bytes = ByteArray(samples.size * 2)
+  for (i in samples.indices) {
+    val value = samples[i].toInt()
+    bytes[i * 2] = (value and 0xff).toByte()
+    bytes[i * 2 + 1] = ((value shr 8) and 0xff).toByte()
+  }
+  return bytes
+}
+
 class AudioConverterModule(reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
 
@@ -58,43 +130,61 @@ class AudioConverterModule(reactContext: ReactApplicationContext) :
       codec.start()
 
       val bufferInfo = MediaCodec.BufferInfo()
-      val pcmData = mutableListOf<ByteArray>()
+      val tempPcm = File("$output.pcm.tmp")
+      tempPcm.parentFile?.mkdirs()
+      var sourceSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+      var sourceChannelCount = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+      var pcmBytesWritten = 0
       var inputDone = false
       var outputDone = false
       var outFormat: MediaFormat? = null
 
-      while (!outputDone) {
-        if (!inputDone) {
-          val inputBufferIndex = codec.dequeueInputBuffer(10000)
-          if (inputBufferIndex >= 0) {
-            val inputBuffer = codec.getInputBuffer(inputBufferIndex)!!
-            val sampleSize = extractor.readSampleData(inputBuffer, 0)
-            if (sampleSize < 0) {
-              codec.queueInputBuffer(inputBufferIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
-              inputDone = true
-            } else {
-              codec.queueInputBuffer(inputBufferIndex, 0, sampleSize, extractor.sampleTime, 0)
-              extractor.advance()
+      RandomAccessFile(tempPcm, "rw").use { tempPcmFile ->
+        tempPcmFile.setLength(0)
+        while (!outputDone) {
+          if (!inputDone) {
+            val inputBufferIndex = codec.dequeueInputBuffer(10000)
+            if (inputBufferIndex >= 0) {
+              val inputBuffer = codec.getInputBuffer(inputBufferIndex)!!
+              val sampleSize = extractor.readSampleData(inputBuffer, 0)
+              if (sampleSize < 0) {
+                codec.queueInputBuffer(
+                  inputBufferIndex,
+                  0,
+                  0,
+                  0,
+                  MediaCodec.BUFFER_FLAG_END_OF_STREAM,
+                )
+                inputDone = true
+              } else {
+                codec.queueInputBuffer(inputBufferIndex, 0, sampleSize, extractor.sampleTime, 0)
+                extractor.advance()
+              }
             }
           }
-        }
 
-        val outputBufferIndex = codec.dequeueOutputBuffer(bufferInfo, 10000)
-        when {
-          outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
-            outFormat = codec.outputFormat
-          }
-          outputBufferIndex >= 0 -> {
-            val outputBuffer = codec.getOutputBuffer(outputBufferIndex)!!
-            if (bufferInfo.size > 0) {
-              val chunk = ByteArray(bufferInfo.size)
-              outputBuffer.get(chunk)
-              outputBuffer.clear()
-              pcmData.add(chunk)
+          val outputBufferIndex = codec.dequeueOutputBuffer(bufferInfo, 10000)
+          when {
+            outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+              outFormat = codec.outputFormat
+              sourceSampleRate = outFormat!!.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+              sourceChannelCount = outFormat!!.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
             }
-            codec.releaseOutputBuffer(outputBufferIndex, false)
-            if ((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-              outputDone = true
+            outputBufferIndex >= 0 -> {
+              val outputBuffer = codec.getOutputBuffer(outputBufferIndex)!!
+              if (bufferInfo.size > 0) {
+                val chunk = ByteArray(bufferInfo.size)
+                outputBuffer.get(chunk)
+                outputBuffer.clear()
+                val mono = pcmBytesToMono16Bit(chunk, sourceChannelCount)
+                val pcmBytes = shortsToPcm16LE(mono)
+                tempPcmFile.write(pcmBytes)
+                pcmBytesWritten += pcmBytes.size
+              }
+              codec.releaseOutputBuffer(outputBufferIndex, false)
+              if ((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                outputDone = true
+              }
             }
           }
         }
@@ -104,26 +194,22 @@ class AudioConverterModule(reactContext: ReactApplicationContext) :
       codec.release()
       extractor.release()
 
-      val totalBytes = pcmData.sumOf { it.size }
-      if (totalBytes == 0) {
+      if (pcmBytesWritten == 0) {
+        tempPcm.delete()
         promise.reject("E_CONVERT", "No audio data")
         return
       }
 
-      val wavFormat = outFormat ?: format
-      val sampleRate = wavFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
-      val channelCount = wavFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-      val pcm16 = pcmData.flatMap { it.toList() }.toByteArray()
-      val mono = pcmBytesToMono16Bit(pcm16, channelCount)
-      val resampled = resampleLinear(mono, sampleRate, TARGET_SAMPLE_RATE)
-      val normalizedPcm = shortsToPcm16LE(resampled)
-
       val wavFile = File(output)
+      wavFile.parentFile?.mkdirs()
       RandomAccessFile(wavFile, "rw").use { raf ->
         raf.setLength(0)
-        writeWavHeader(raf, TARGET_SAMPLE_RATE, TARGET_CHANNELS, 16, normalizedPcm.size)
-        raf.write(normalizedPcm)
+        writeWavHeader(raf, TARGET_SAMPLE_RATE, TARGET_CHANNELS, 16, 0)
+        val dataSize = streamResamplePcmFileToWav(tempPcm, sourceSampleRate, raf)
+        raf.seek(0)
+        writeWavHeader(raf, TARGET_SAMPLE_RATE, TARGET_CHANNELS, 16, dataSize)
       }
+      tempPcm.delete()
 
       promise.resolve(output)
     } catch (e: Exception) {
@@ -457,6 +543,54 @@ class AudioConverterModule(reactContext: ReactApplicationContext) :
     return mono
   }
 
+  private fun streamResamplePcmFileToWav(
+    pcmFile: File,
+    inputRate: Int,
+    outputRaf: RandomAccessFile,
+  ): Int {
+    if (inputRate == TARGET_SAMPLE_RATE) {
+      RandomAccessFile(pcmFile, "r").use { input ->
+        val buffer = ByteArray(64 * 1024)
+        var total = 0
+        while (true) {
+          val read = input.read(buffer)
+          if (read <= 0) break
+          outputRaf.write(buffer, 0, read)
+          total += read
+        }
+        return total
+      }
+    }
+
+    val resampler = StreamingLinearResampler(inputRate, TARGET_SAMPLE_RATE)
+    var totalBytes = 0
+    RandomAccessFile(pcmFile, "r").use { input ->
+      val byteBuffer = ByteArray(64 * 1024)
+      while (true) {
+        val read = input.read(byteBuffer)
+        if (read <= 0) break
+        val sampleCount = read / 2
+        val samples = ShortArray(sampleCount)
+        for (i in 0 until sampleCount) {
+          val low = byteBuffer[i * 2].toInt() and 0xff
+          val high = byteBuffer[i * 2 + 1].toInt() shl 8
+          samples[i] = (low or high).toShort()
+        }
+        val out = resampler.append(samples)
+        if (out.isNotEmpty()) {
+          outputRaf.write(out)
+          totalBytes += out.size
+        }
+      }
+      val tail = resampler.flush()
+      if (tail.isNotEmpty()) {
+        outputRaf.write(tail)
+        totalBytes += tail.size
+      }
+    }
+    return totalBytes
+  }
+
   private fun resampleLinear(input: ShortArray, inputRate: Int, outputRate: Int): ShortArray {
     if (inputRate == outputRate || input.isEmpty()) return input
     val ratio = inputRate.toDouble() / outputRate
@@ -472,16 +606,6 @@ class AudioConverterModule(reactContext: ReactApplicationContext) :
       output[i] = (sample0 + (sample1 - sample0) * frac).toInt().toShort()
     }
     return output
-  }
-
-  private fun shortsToPcm16LE(samples: ShortArray): ByteArray {
-    val bytes = ByteArray(samples.size * 2)
-    for (i in samples.indices) {
-      val value = samples[i].toInt()
-      bytes[i * 2] = (value and 0xff).toByte()
-      bytes[i * 2 + 1] = ((value shr 8) and 0xff).toByte()
-    }
-    return bytes
   }
 
   private fun writeWavHeader(

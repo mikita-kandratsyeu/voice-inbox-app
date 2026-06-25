@@ -33,9 +33,9 @@ describe('resolveTranscriptionChunkProfile', () => {
   });
 
   it('uses device-appropriate profile for medium tier', () => {
-    expect(resolveTranscriptionChunkProfile()).toEqual({
-      chunkDurationSec: 24,
-      chunkOverlapSec: 3,
+    expect(resolveTranscriptionChunkProfile('balanced')).toEqual({
+      chunkDurationSec: 45,
+      chunkOverlapSec: 4,
     });
   });
 
@@ -46,9 +46,9 @@ describe('resolveTranscriptionChunkProfile', () => {
       configurable: true,
     });
 
-    expect(resolveTranscriptionChunkProfile()).toEqual({
-      chunkDurationSec: 30,
-      chunkOverlapSec: 2,
+    expect(resolveTranscriptionChunkProfile('balanced')).toEqual({
+      chunkDurationSec: 60,
+      chunkOverlapSec: 5,
     });
   });
 
@@ -59,8 +59,8 @@ describe('resolveTranscriptionChunkProfile', () => {
       configurable: true,
     });
 
-    expect(resolveTranscriptionChunkProfile()).toEqual({
-      chunkDurationSec: 18,
+    expect(resolveTranscriptionChunkProfile('balanced')).toEqual({
+      chunkDurationSec: 30,
       chunkOverlapSec: 3,
     });
   });
@@ -78,9 +78,9 @@ describe('resolveTranscriptionChunkProfile', () => {
     });
 
     // High tier downgraded to medium due to low power mode
-    expect(resolveTranscriptionChunkProfile()).toEqual({
-      chunkDurationSec: 24,
-      chunkOverlapSec: 3,
+    expect(resolveTranscriptionChunkProfile('balanced')).toEqual({
+      chunkDurationSec: 45,
+      chunkOverlapSec: 4,
     });
   });
 
@@ -93,9 +93,9 @@ describe('resolveTranscriptionChunkProfile', () => {
     mockIsLowBatteryLevel.mockReturnValue(true);
 
     // High tier downgraded to medium due to low battery
-    expect(resolveTranscriptionChunkProfile()).toEqual({
-      chunkDurationSec: 24,
-      chunkOverlapSec: 3,
+    expect(resolveTranscriptionChunkProfile('balanced')).toEqual({
+      chunkDurationSec: 45,
+      chunkOverlapSec: 4,
     });
   });
 
@@ -105,7 +105,7 @@ describe('resolveTranscriptionChunkProfile', () => {
     });
 
     // Should still return a valid profile (medium tier fallback)
-    const profile = resolveTranscriptionChunkProfile();
+    const profile = resolveTranscriptionChunkProfile('balanced');
     expect(profile).toHaveProperty('chunkDurationSec');
     expect(profile).toHaveProperty('chunkOverlapSec');
     expect(profile.chunkDurationSec).toBeGreaterThan(0);

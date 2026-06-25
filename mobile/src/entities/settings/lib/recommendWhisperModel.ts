@@ -15,7 +15,7 @@ export function getRecommendedWhisperModelId(
 
     const totalRamMB = readTotalRamMb();
     if (totalRamMB == null) {
-      return 'whisper-base';
+      return 'whisper-small';
     }
 
     if (format === 'full') {
@@ -35,6 +35,6 @@ export function getRecommendedWhisperModelId(
 
     return 'whisper-small';
   } catch {
-    return 'whisper-base';
+    return 'whisper-small';
   }
 }

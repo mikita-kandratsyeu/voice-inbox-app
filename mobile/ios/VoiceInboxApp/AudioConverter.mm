@@ -252,8 +252,38 @@ RCT_EXPORT_METHOD(convertToWav:(NSString *)inputPath
   UInt32 numChannels = clientFormat.mChannelsPerFrame;
   UInt32 bufSize = frameSize * clientFormat.mBytesPerFrame;
   char *buf = (char *)malloc(bufSize);
-  NSMutableData *pcmData = [NSMutableData data];
+  if (!buf) {
+    ExtAudioFileDispose(extFile);
+    [fm removeItemAtPath:tempInput error:nil];
+    reject(@"E_CONVERT", @"Out of memory", nil);
+    return;
+  }
 
+  ensureOutputDirectory(output);
+  [fm removeItemAtPath:output error:nil];
+  if (![fm createFileAtPath:output contents:nil attributes:nil]) {
+    free(buf);
+    ExtAudioFileDispose(extFile);
+    [fm removeItemAtPath:tempInput error:nil];
+    reject(@"E_CONVERT", @"Could not create output WAV", nil);
+    return;
+  }
+
+  NSFileHandle *outFile = [NSFileHandle fileHandleForWritingAtPath:output];
+  if (!outFile) {
+    free(buf);
+    ExtAudioFileDispose(extFile);
+    [fm removeItemAtPath:tempInput error:nil];
+    reject(@"E_CONVERT", @"Could not open output WAV", nil);
+    return;
+  }
+
+  uint32_t sampleRate = (uint32_t)clientFormat.mSampleRate;
+  uint16_t channels = (uint16_t)clientFormat.mChannelsPerFrame;
+  uint16_t bitsPerSample = 16;
+  [outFile writeData:buildWavHeader(sampleRate, channels, bitsPerSample, 0)];
+
+  uint32_t totalDataSize = 0;
   while (1) {
     AudioBufferList bufList;
     bufList.mNumberBuffers = 1;
@@ -267,47 +297,26 @@ RCT_EXPORT_METHOD(convertToWav:(NSString *)inputPath
       free(buf);
       ExtAudioFileDispose(extFile);
       [fm removeItemAtPath:tempInput error:nil];
+      [outFile closeFile];
+      [fm removeItemAtPath:output error:nil];
       reject(@"E_CONVERT", osStatusDetail(err), nil);
       return;
     }
     if (numFrames == 0) break;
-    [pcmData appendBytes:buf length:numFrames * clientFormat.mBytesPerFrame];
+
+    NSUInteger bytesRead = numFrames * clientFormat.mBytesPerFrame;
+    NSData *chunk = [NSData dataWithBytes:buf length:bytesRead];
+    [outFile writeData:chunk];
+    totalDataSize += (uint32_t)bytesRead;
   }
 
   free(buf);
   ExtAudioFileDispose(extFile);
   [fm removeItemAtPath:tempInput error:nil];
 
-  uint32_t sampleRate = (uint32_t)clientFormat.mSampleRate;
-  uint16_t channels = (uint16_t)clientFormat.mChannelsPerFrame;
-  uint16_t bitsPerSample = 16;
-  uint32_t dataSize = (uint32_t)pcmData.length;
-  uint32_t byteRate = sampleRate * channels * (bitsPerSample / 8);
-  uint32_t blockAlign = channels * (bitsPerSample / 8);
-  uint32_t chunkSize = 36 + dataSize;
-
-  NSMutableData *wav = [NSMutableData dataWithCapacity:44 + dataSize];
-  [wav appendBytes:"RIFF" length:4];
-  [wav appendBytes:&chunkSize length:4];
-  [wav appendBytes:"WAVE" length:4];
-  [wav appendBytes:"fmt " length:4];
-  uint32_t fmtChunkSize = 16;
-  [wav appendBytes:&fmtChunkSize length:4];
-  uint16_t audioFormat = 1;
-  [wav appendBytes:&audioFormat length:2];
-  [wav appendBytes:&channels length:2];
-  [wav appendBytes:&sampleRate length:4];
-  [wav appendBytes:&byteRate length:4];
-  [wav appendBytes:&blockAlign length:2];
-  [wav appendBytes:&bitsPerSample length:2];
-  [wav appendBytes:"data" length:4];
-  [wav appendBytes:&dataSize length:4];
-  [wav appendData:pcmData];
-
-  if (![wav writeToFile:output atomically:YES]) {
-    reject(@"E_CONVERT", @"Failed to write WAV file", nil);
-    return;
-  }
+  [outFile seekToFileOffset:0];
+  [outFile writeData:buildWavHeader(sampleRate, channels, bitsPerSample, totalDataSize)];
+  [outFile closeFile];
   resolve(output);
 }
 

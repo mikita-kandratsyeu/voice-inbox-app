@@ -18,6 +18,7 @@ import {
 } from '../lib/devicePerformanceProfile';
 import { getWhisperContext, resetWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
 import { resolveTranscriptionChunkProfile } from '../lib/resolveTranscriptionChunkProfile';
+import { resolveVadPolicyForMode } from '../lib/transcriptionQualityMode';
 import { transcribeAudio } from '../lib/transcribeAudio';
 import {
   getTranscriptionCheckpoint,
@@ -140,6 +141,7 @@ export const useTranscription = () => {
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const setWhisperModelStatus = useSettingsStore((s) => s.setWhisperModelStatus);
   const transcriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
+  const transcriptionQualityMode = useSettingsStore((s) => s.transcriptionQualityMode);
   const transcriptionCustomWords = useSettingsStore((s) => s.transcriptionCustomWords);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
@@ -279,7 +281,8 @@ export const useTranscription = () => {
         setTranscriptionRuntimeState('transcribing', record.id);
 
         const throttledProgress = createThrottledProgress(record.id, jobGen, updateAiStatus);
-        const chunkProfile = resolveTranscriptionChunkProfile();
+        const baseChunkProfile = resolveTranscriptionChunkProfile(transcriptionQualityMode);
+        const vadPolicy = resolveVadPolicyForMode(transcriptionQualityMode);
         const performanceProfile = getDevicePerformanceProfile({ respectPowerMode: true });
         const checkpointInterval = getAdaptiveCheckpointInterval(
           record.durationMs ?? 0,
@@ -321,9 +324,9 @@ export const useTranscription = () => {
           checkpoint.audioPath === normalizedAudioPath &&
           checkpoint.modelId === selectedWhisperModel &&
           checkpoint.modelFormat === selectedWhisperModelFormat &&
-          checkpoint.language === language &&
-          checkpoint.chunkProfile.chunkDurationSec === chunkProfile.chunkDurationSec &&
-          checkpoint.chunkProfile.chunkOverlapSec === chunkProfile.chunkOverlapSec;
+          checkpoint.language === language;
+        const chunkProfile =
+          canResumeFromCheckpoint && checkpoint ? checkpoint.chunkProfile : baseChunkProfile;
         const resume =
           canResumeFromCheckpoint && checkpoint
             ? {
@@ -352,11 +355,18 @@ export const useTranscription = () => {
             durationMs: record.durationMs ?? 0,
             language,
             customWords: transcriptionCustomWords,
+            vadPolicy,
             chunkProfile,
             contextRecycleChunks: performanceProfile.contextRecycleChunks,
             onProgress: throttledProgress,
             resume: resumePayload,
-            onChunkCompleted: ({ chunkIndex, totalChunks, fullText, segments }) => {
+            onChunkCompleted: ({
+              chunkIndex,
+              totalChunks,
+              fullText,
+              segments,
+              chunkProfile: activeChunkProfile,
+            }) => {
               if (!isActiveTranscriptionJob(record.id, jobGen)) {
                 return;
               }
@@ -367,7 +377,7 @@ export const useTranscription = () => {
                 modelId: selectedWhisperModel,
                 modelFormat: selectedWhisperModelFormat,
                 language,
-                chunkProfile,
+                chunkProfile: activeChunkProfile,
                 totalChunks,
                 lastCompletedChunkIndex: chunkIndex,
                 fullText,
@@ -534,6 +544,7 @@ export const useTranscription = () => {
       selectedWhisperModelFormat,
       whisperModelStatuses,
       transcriptionLanguage,
+      transcriptionQualityMode,
       transcriptionCustomWords,
       aiExecutionMode,
       autoAiAfterTranscription,

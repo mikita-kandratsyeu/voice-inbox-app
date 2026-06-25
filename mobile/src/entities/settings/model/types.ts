@@ -21,6 +21,7 @@ export type LocalAiModelId =
 export type AIModelId = UserSelectableAIModelId;
 
 export type TranscriptionLanguage = 'auto' | 'ru' | 'en' | 'de' | 'fr' | 'es' | 'zh' | 'ja';
+export type TranscriptionQualityMode = 'fast' | 'balanced' | 'quality';
 export type SummaryStyle = 'brief' | 'standard' | 'detailed';
 export type TaskStrictness = 'strict' | 'balanced' | 'soft';
 export type AiOutputLanguage = 'same' | 'ru' | 'en';
@@ -112,6 +113,7 @@ export type SettingsState = {
   selectedWhisperModelFormat: WhisperModelWeightsFormat;
   whisperModelWeightsFormat: WhisperModelWeightsFormat;
   transcriptionLanguage: TranscriptionLanguage;
+  transcriptionQualityMode: TranscriptionQualityMode;
   /** Names, brands, and terms passed to Whisper as initial prompt hints. */
   transcriptionCustomWords: string[];
   summaryStyle: SummaryStyle;
@@ -171,6 +173,7 @@ export type SettingsState = {
   setWhisperModel: (id: WhisperModelId) => void;
   setWhisperModelWeightsFormat: (value: WhisperModelWeightsFormat) => void;
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => void;
+  setTranscriptionQualityMode: (mode: TranscriptionQualityMode) => void;
   setTranscriptionCustomWords: (words: string[]) => void;
   setSummaryStyle: (value: SummaryStyle) => void;
   setTaskStrictness: (value: TaskStrictness) => void;

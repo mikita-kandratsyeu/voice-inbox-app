@@ -25,6 +25,7 @@ import { formatFileSize, isWhisperCoreMlEncoderInstalled } from '@/shared/lib/wh
 import { ScreenHeader } from '@/shared/ui';
 
 import { WhisperDefaultLanguageSection } from './WhisperDefaultLanguageSection';
+import { WhisperQualityModeSection } from './WhisperQualityModeSection';
 import { WhisperModelCard } from './WhisperModelCard';
 
 export const WhisperModelPickerScreen = () => {
@@ -194,6 +195,7 @@ export const WhisperModelPickerScreen = () => {
           <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
             {t('whisper.modelDescription')}
           </Text>
+          <WhisperQualityModeSection color={color} />
           <WhisperDefaultLanguageSection color={color} />
           <View
             className="mb-6 gap-2 rounded-2xl p-4"

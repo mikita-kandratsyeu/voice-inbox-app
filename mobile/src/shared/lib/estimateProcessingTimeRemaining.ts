@@ -20,6 +20,8 @@ export type ProcessingTimeEstimateInput = {
   transcriptCharCount?: number;
   durationMs?: number;
   transcriptionSegments?: { current: number; total: number };
+  avgSecondsPerChunk?: number;
+  transcriptionChunkStepSec?: number;
   privateLlmBudget?: PrivateLocalLlmBudget;
   /** Extra cloud time when meeting speaker breakdown runs after summary. */
   cloudMeetingDialogue?: boolean;
@@ -32,7 +34,11 @@ function clampProgress(progressPercent: number): number {
   return Math.min(100, Math.max(0, progressPercent));
 }
 
-function estimateTranscriptionTotalSeconds(durationMs: number): number {
+function estimateTranscriptionTotalSeconds(
+  durationMs: number,
+  chunkStepSec = 41,
+  avgSecondsPerChunk = 18,
+): number {
   const audioSec = Math.max(0, durationMs / 1000);
   const modelLoadSec = 14;
 
@@ -40,8 +46,8 @@ function estimateTranscriptionTotalSeconds(durationMs: number): number {
     return modelLoadSec + Math.max(10, Math.round(audioSec * 1.1));
   }
 
-  const chunkCount = Math.max(1, Math.ceil(audioSec / 21));
-  return modelLoadSec + chunkCount * 20;
+  const chunkCount = Math.max(1, Math.ceil(audioSec / chunkStepSec));
+  return modelLoadSec + chunkCount * avgSecondsPerChunk;
 }
 
 function estimatePrivateModelLoadSeconds(): number {
@@ -81,13 +87,19 @@ export function estimateProcessingSecondsRemaining(input: ProcessingTimeEstimate
 
   if (input.context === 'transcription') {
     const segments = input.transcriptionSegments;
+    const perChunkSec = input.avgSecondsPerChunk ?? 18;
     if (segments && segments.total > 0) {
       const remainingChunks = Math.max(0, segments.total - segments.current);
       const modelTail = input.phase === 'loading_model' ? 14 : 4;
-      return Math.max(MIN_REMAINING_SEC, remainingChunks * 20 + modelTail);
+      return Math.max(MIN_REMAINING_SEC, remainingChunks * perChunkSec + modelTail);
     }
 
-    const total = estimateTranscriptionTotalSeconds(input.durationMs ?? 0);
+    const chunkStepSec = input.transcriptionChunkStepSec ?? 41;
+    const total = estimateTranscriptionTotalSeconds(
+      input.durationMs ?? 0,
+      chunkStepSec,
+      perChunkSec,
+    );
     const fromProgress = ((100 - progress) / 100) * total;
     if (input.startedAtMs == null) {
       return Math.max(MIN_REMAINING_SEC, Math.round(fromProgress));

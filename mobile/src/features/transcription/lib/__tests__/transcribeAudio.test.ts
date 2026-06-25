@@ -395,6 +395,42 @@ describe('transcribeAudio', () => {
     expect(result.fullText).toBe('long chunk speech');
   });
 
+  it('skips VAD trim when policy is skipSilentOnly', async () => {
+    mockAnalyzeWavSpeech.mockResolvedValue({
+      hasSpeech: true,
+      trimStartMs: 2_000,
+      trimDurationMs: 15_000,
+    });
+    const transcribe = jest.fn(() => ({
+      stop: jest.fn().mockResolvedValue(undefined),
+      promise: Promise.resolve({
+        result: 'speech without trim',
+        segments: [{ text: 'speech without trim', t0: 0, t1: 100 }],
+      }),
+    }));
+    const context = { transcribe } as unknown as WhisperContext;
+
+    await runTimersUntilSettled(
+      transcribeAudio({
+        context,
+        audioPath: '/tmp/audio.wav',
+        durationMs: 20_000,
+        vadPolicy: 'skipSilentOnly',
+      }).promise,
+    );
+
+    expect(mockCreateWavChunk).not.toHaveBeenCalledWith(
+      '/tmp/audio.wav',
+      '/tmp/audio.wav.vad-trim.wav',
+      expect.any(Number),
+      expect.any(Number),
+    );
+    expect(transcribe).toHaveBeenCalledWith('/tmp/audio.wav', {
+      ...baseTranscribeOptions,
+      language: 'auto',
+    });
+  });
+
   it('resumes long transcription from checkpoint state', async () => {
     const transcribe = jest.fn((path: string) => ({
       stop: jest.fn().mockResolvedValue(undefined),

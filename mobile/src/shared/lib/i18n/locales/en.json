@@ -2146,6 +2146,17 @@
     "modelDescription": "Choose a Whisper model for on-device transcription. Larger models are more accurate but require more storage.",
     "defaultLanguageTitle": "Default transcription language",
     "defaultLanguageHint": "Used when you transcribe and when you open a recording. You can override the language on each recording’s transcript tab.",
+    "qualityModeTitle": "Long recording mode",
+    "qualityMode": {
+      "fast": "Fast",
+      "balanced": "Balanced",
+      "quality": "Quality"
+    },
+    "qualityModeHint": {
+      "fast": "Shorter chunks and silence trimming for quicker transcription.",
+      "balanced": "Balanced chunk size and accuracy for most recordings.",
+      "quality": "Larger chunks and conservative silence handling for best accuracy."
+    },
     "downloadModel": "Download model",
     "downloadConfirm": "Download will require ~{{ size }} MB. Continue?",
     "deleteModel": "Delete model",

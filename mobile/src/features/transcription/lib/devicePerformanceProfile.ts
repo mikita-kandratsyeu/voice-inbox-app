@@ -69,24 +69,24 @@ const ANDROID_SOC_PERFORMANCE_PATTERNS: Array<{
 const PERFORMANCE_PROFILES: Record<DevicePerformanceTier, DevicePerformanceProfile> = {
   high: {
     tier: 'high',
-    optimalChunkDurationSec: 30, // Larger chunks for better throughput
-    optimalChunkOverlapSec: 2,
-    checkpointIntervalMs: 6_000, // Less frequent saves
-    contextRecycleChunks: 15, // Recycle less often
+    optimalChunkDurationSec: 60,
+    optimalChunkOverlapSec: 5,
+    checkpointIntervalMs: 6_000,
+    contextRecycleChunks: 15,
   },
   medium: {
     tier: 'medium',
-    optimalChunkDurationSec: 24, // Balanced
-    optimalChunkOverlapSec: 3,
+    optimalChunkDurationSec: 45,
+    optimalChunkOverlapSec: 4,
     checkpointIntervalMs: 4_000,
     contextRecycleChunks: 12,
   },
   low: {
     tier: 'low',
-    optimalChunkDurationSec: 18, // Smaller chunks to avoid OOM
+    optimalChunkDurationSec: 30,
     optimalChunkOverlapSec: 3,
-    checkpointIntervalMs: 3_000, // More frequent saves
-    contextRecycleChunks: 8, // Recycle more often
+    checkpointIntervalMs: 3_000,
+    contextRecycleChunks: 8,
   },
 };
 

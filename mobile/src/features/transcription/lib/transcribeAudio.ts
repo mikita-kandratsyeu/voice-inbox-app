@@ -11,19 +11,23 @@ import { isArray, isRecord, isString } from '@/shared/lib/type-guards';
 import {
   MIN_TRANSCRIBE_MS,
   PROMPT_TAIL_LENGTH,
+  SUSPICIOUS_VAD_TRIM_RATIO,
   TRANSCRIPTION_VAD_ENABLED,
+  VAD_RISKY_MIDDLE_SPEECH_RATIO,
+  VAD_TRIM_PADDING_MS,
 } from '../config/constants';
 import { analyzeWavSpeech } from './audioVad';
 import { buildWhisperPrompt } from './buildWhisperPrompt';
 import { dedupeChunkTextOverlap } from './chunkTextDedup';
 import { collapseRepeatedTokenStutters, isUsableTranscriptText } from './cleanTranscriptText';
 import { TranscriptionError } from './transcriptionErrors';
+import { TranscriptionRuntimeBenchmark } from './transcriptionRuntimeBenchmark';
+import type { TranscriptionVadPolicy } from './transcriptionQualityMode';
 import { canRunWhisperGpuWork } from './whisperAppState';
 import { beginWhisperNativeWork, endWhisperNativeWork } from './whisperNativeLifecycle';
 
 const CHUNK_THRESHOLD_MS = 30_000;
 const MIN_VAD_TRIM_SOURCE_MS = 10_000;
-const SUSPICIOUS_VAD_TRIM_RATIO = 0.25;
 
 export type TranscriptionChunkProfile = {
   chunkDurationSec: number;
@@ -31,8 +35,8 @@ export type TranscriptionChunkProfile = {
 };
 
 const DEFAULT_CHUNK_PROFILE: TranscriptionChunkProfile = {
-  chunkDurationSec: 24,
-  chunkOverlapSec: 3,
+  chunkDurationSec: 45,
+  chunkOverlapSec: 4,
 };
 
 const BASE_TRANSCRIBE_OPTIONS: Pick<
@@ -52,6 +56,7 @@ export type TranscribeAudioOptions = {
   language?: string;
   customWords?: string[];
   vadEnabled?: boolean;
+  vadPolicy?: TranscriptionVadPolicy;
   chunkProfile?: TranscriptionChunkProfile;
   contextRecycleChunks?: number;
   onProgress?: (current: number, total: number) => void;
@@ -65,6 +70,8 @@ export type TranscribeAudioOptions = {
     totalChunks: number;
     fullText: string;
     segments: TranscriptSegment[];
+    chunkProfile: TranscriptionChunkProfile;
+    avgSecondsPerChunk?: number;
   }) => void;
 };
 
@@ -124,10 +131,48 @@ type ResolvedTranscriptionPath = {
   skipped: boolean;
 };
 
+const extractDetectedLanguage = (raw: unknown): string | undefined => {
+  if (!raw || !isRecord(raw)) return undefined;
+  const language = raw.language;
+  return isString(language) && language.length > 0 && language !== 'auto' ? language : undefined;
+};
+
+const applyVadPadding = (
+  trimStartMs: number,
+  trimDurationMs: number,
+  sourceDurationMs: number,
+): { trimStartMs: number; trimDurationMs: number } => {
+  const paddedStartMs = Math.max(0, trimStartMs - VAD_TRIM_PADDING_MS);
+  const paddedEndMs = Math.min(
+    sourceDurationMs,
+    trimStartMs + trimDurationMs + VAD_TRIM_PADDING_MS,
+  );
+  return {
+    trimStartMs: paddedStartMs,
+    trimDurationMs: Math.max(0, paddedEndMs - paddedStartMs),
+  };
+};
+
+const isRiskyMiddleSpeechTrim = (
+  trimStartMs: number,
+  trimDurationMs: number,
+  sourceDurationMs: number,
+): boolean => {
+  if (sourceDurationMs <= 0) return false;
+  const trimEndMs = trimStartMs + trimDurationMs;
+  const leadingSilenceRatio = trimStartMs / sourceDurationMs;
+  const trailingSilenceRatio = (sourceDurationMs - trimEndMs) / sourceDurationMs;
+  return (
+    leadingSilenceRatio >= VAD_RISKY_MIDDLE_SPEECH_RATIO &&
+    trailingSilenceRatio >= VAD_RISKY_MIDDLE_SPEECH_RATIO
+  );
+};
+
 const resolveTranscriptionPath = async (
   sourcePath: string,
   vadEnabled: boolean,
   sourceDurationMs: number,
+  vadPolicy: TranscriptionVadPolicy = 'skipSilentOnly',
 ): Promise<ResolvedTranscriptionPath> => {
   if (!vadEnabled || !TRANSCRIPTION_VAD_ENABLED) {
     return { path: sourcePath, timestampOffsetMs: 0, skipped: false };
@@ -142,20 +187,39 @@ const resolveTranscriptionPath = async (
     return { path: sourcePath, timestampOffsetMs: 0, skipped: true };
   }
 
+  if (vadPolicy === 'skipSilentOnly') {
+    return { path: sourcePath, timestampOffsetMs: 0, skipped: false };
+  }
+
+  let trimStartMs = analysis.trimStartMs;
+  let trimDurationMs = analysis.trimDurationMs;
+  const padded = applyVadPadding(trimStartMs, trimDurationMs, sourceDurationMs);
+  trimStartMs = padded.trimStartMs;
+  trimDurationMs = padded.trimDurationMs;
+
   if (
     sourceDurationMs >= MIN_VAD_TRIM_SOURCE_MS &&
-    analysis.trimDurationMs > 0 &&
-    analysis.trimDurationMs / sourceDurationMs < SUSPICIOUS_VAD_TRIM_RATIO
+    trimDurationMs > 0 &&
+    trimDurationMs / sourceDurationMs < SUSPICIOUS_VAD_TRIM_RATIO
   ) {
     diagWarn('[transcription] suspicious VAD trim ignored', {
       sourceDurationMs,
-      trimStartMs: analysis.trimStartMs,
-      trimDurationMs: analysis.trimDurationMs,
+      trimStartMs,
+      trimDurationMs,
     });
     return { path: sourcePath, timestampOffsetMs: 0, skipped: false };
   }
 
-  if (analysis.trimDurationMs < MIN_TRANSCRIBE_MS) {
+  if (isRiskyMiddleSpeechTrim(trimStartMs, trimDurationMs, sourceDurationMs)) {
+    diagWarn('[transcription] risky middle VAD trim ignored', {
+      sourceDurationMs,
+      trimStartMs,
+      trimDurationMs,
+    });
+    return { path: sourcePath, timestampOffsetMs: 0, skipped: false };
+  }
+
+  if (trimDurationMs < MIN_TRANSCRIBE_MS) {
     return { path: sourcePath, timestampOffsetMs: 0, skipped: false };
   }
 
@@ -163,8 +227,8 @@ const resolveTranscriptionPath = async (
   const trimmed = await createWavChunk(
     sourcePath,
     trimmedPath,
-    analysis.trimStartMs,
-    analysis.trimDurationMs,
+    trimStartMs,
+    trimDurationMs,
   );
   if (!trimmed) {
     return { path: sourcePath, timestampOffsetMs: 0, skipped: false };
@@ -172,7 +236,7 @@ const resolveTranscriptionPath = async (
 
   return {
     path: trimmed,
-    timestampOffsetMs: analysis.trimStartMs,
+    timestampOffsetMs: trimStartMs,
     skipped: false,
   };
 };
@@ -234,21 +298,77 @@ const appendText = (existing: string, next: string): string => {
   return existing.length > 0 ? `${existing} ${trimmed}` : trimmed;
 };
 
-const removeFullyOverlappedSegments = (
+const trimOverlappedSegments = (
   segments: TranscriptSegment[],
   previousEndMs: number | null,
 ): TranscriptSegment[] => {
   if (previousEndMs == null) return segments;
 
-  return segments
-    .filter((segment) => segment.endMs == null || segment.endMs > previousEndMs)
-    .map((segment) => {
-      const tokens = segment.tokens?.filter((token) => token.endMs > previousEndMs);
-      return {
+  const trimmed: TranscriptSegment[] = [];
+  for (const segment of segments) {
+    if (segment.endMs != null && segment.endMs <= previousEndMs) {
+      continue;
+    }
+
+    if (segment.tokens && segment.tokens.length > 0) {
+      const tokens = segment.tokens.filter((token) => token.endMs > previousEndMs);
+      if (tokens.length === 0) {
+        continue;
+      }
+
+      const text = tokens
+        .map((token) => token.text)
+        .join('')
+        .trim();
+      trimmed.push({
         ...segment,
-        ...(tokens ? { tokens } : {}),
-      };
-    });
+        startMs: tokens[0]?.startMs ?? segment.startMs,
+        endMs: tokens[tokens.length - 1]?.endMs ?? segment.endMs,
+        text: text.length > 0 ? text : segment.text,
+        tokens,
+      });
+      continue;
+    }
+
+    if (segment.startMs != null && segment.startMs < previousEndMs) {
+      if (segment.endMs == null || segment.endMs <= previousEndMs) {
+        continue;
+      }
+    }
+
+    trimmed.push(segment);
+  }
+
+  return trimmed;
+};
+
+const rebuildRemainingChunks = (
+  chunks: AudioChunk[],
+  fromIndex: number,
+  totalDurationSec: number,
+  profile: TranscriptionChunkProfile,
+): AudioChunk[] => {
+  const currentChunk = chunks[fromIndex];
+  if (!currentChunk) return chunks;
+
+  const processedEndSec =
+    (currentChunk.offsetMs + currentChunk.durationMs) / 1000 - profile.chunkOverlapSec;
+  const remainingDurationSec = Math.max(0, totalDurationSec - processedEndSec);
+  if (remainingDurationSec <= profile.chunkOverlapSec) {
+    return chunks.slice(0, fromIndex + 1);
+  }
+
+  const remainingChunks = splitAudioIntoChunks(
+    remainingDurationSec,
+    profile.chunkDurationSec,
+    profile.chunkOverlapSec,
+  ).map((chunk, offset) => ({
+    ...chunk,
+    offsetMs: chunk.offsetMs + Math.round(processedEndSec * 1000),
+    index: fromIndex + 1 + offset,
+  }));
+
+  return [...chunks.slice(0, fromIndex + 1), ...remainingChunks];
 };
 
 export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudioHandle => {
@@ -260,6 +380,7 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
     language = 'auto',
     customWords = [],
     vadEnabled = TRANSCRIPTION_VAD_ENABLED,
+    vadPolicy = 'skipSilentOnly',
     chunkProfile = DEFAULT_CHUNK_PROFILE,
     contextRecycleChunks = 12,
     onProgress,
@@ -305,6 +426,7 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
           language,
           customWords,
           vadEnabled,
+          vadPolicy,
           cancelled: () => cancelled,
           setStop: (fn) => {
             activeStop = fn;
@@ -324,6 +446,7 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
         language,
         customWords,
         vadEnabled,
+        vadPolicy,
         totalDurationSec: durationMs / 1000,
         chunkProfile,
         contextRecycleChunks,
@@ -350,6 +473,7 @@ type ShortOptions = {
   language: string;
   customWords: string[];
   vadEnabled: boolean;
+  vadPolicy: TranscriptionVadPolicy;
   cancelled: () => boolean;
   setStop: (fn: () => Promise<void>) => void;
 };
@@ -361,6 +485,7 @@ const transcribeShort = async ({
   language,
   customWords,
   vadEnabled,
+  vadPolicy,
   cancelled,
   setStop,
 }: ShortOptions): Promise<TranscribeAudioResult> => {
@@ -368,7 +493,12 @@ const transcribeShort = async ({
     throw new TranscriptionError('native_abort');
   }
 
-  const resolved = await resolveTranscriptionPath(audioPath, vadEnabled, durationMs);
+  const resolved = await resolveTranscriptionPath(
+    audioPath,
+    vadEnabled,
+    durationMs,
+    vadPolicy,
+  );
   if (resolved.skipped) {
     return { segments: [], fullText: '', skipped: true };
   }
@@ -424,6 +554,7 @@ type LongOptions = {
   language: string;
   customWords: string[];
   vadEnabled: boolean;
+  vadPolicy: TranscriptionVadPolicy;
   totalDurationSec: number;
   chunkProfile: TranscriptionChunkProfile;
   contextRecycleChunks: number;
@@ -438,6 +569,8 @@ type LongOptions = {
     totalChunks: number;
     fullText: string;
     segments: TranscriptSegment[];
+    chunkProfile: TranscriptionChunkProfile;
+    avgSecondsPerChunk?: number;
   }) => void;
   cancelled: () => boolean;
   setStop: (fn: () => Promise<void>) => void;
@@ -490,6 +623,7 @@ const transcribeLong = async ({
   language,
   customWords,
   vadEnabled,
+  vadPolicy,
   totalDurationSec,
   chunkProfile,
   contextRecycleChunks,
@@ -499,17 +633,20 @@ const transcribeLong = async ({
   cancelled,
   setStop,
 }: LongOptions): Promise<TranscribeAudioResult> => {
-  const chunks: AudioChunk[] = splitAudioIntoChunks(
+  let activeChunkProfile = chunkProfile;
+  let chunks: AudioChunk[] = splitAudioIntoChunks(
     totalDurationSec,
-    chunkProfile.chunkDurationSec,
-    chunkProfile.chunkOverlapSec,
+    activeChunkProfile.chunkDurationSec,
+    activeChunkProfile.chunkOverlapSec,
   );
 
-  const total = chunks.length;
+  let total = chunks.length;
   const startChunkIndex = Math.max(0, Math.min(resume?.startChunkIndex ?? 0, total));
   const allSegments: TranscriptSegment[] = [...(resume?.segments ?? [])];
   let fullText = (resume?.fullText ?? '').trim();
   let segmentOffset = allSegments.length;
+  let resolvedLanguage = language;
+  const benchmark = new TranscriptionRuntimeBenchmark();
 
   if (startChunkIndex > 0) {
     onProgress?.(startChunkIndex, total);
@@ -521,6 +658,7 @@ const transcribeLong = async ({
     }
 
     const chunk = chunks[i];
+    const chunkLanguage = resolvedLanguage;
 
     const prompt = buildChunkPrompt(fullText, customWords);
 
@@ -529,6 +667,7 @@ const transcribeLong = async ({
     }
 
     beginWhisperNativeWork();
+    const chunkStartedAt = Date.now();
     let raw: unknown;
     let result: WhisperTranscribeResult = { result: '', segments: [] };
     const chunkAudioPath = `${audioPath}.chunk-${chunk.index}.wav`;
@@ -548,13 +687,20 @@ const transcribeLong = async ({
         throw new TranscriptionError('native_abort');
       }
 
-      const resolved = await resolveTranscriptionPath(chunkPath, vadEnabled, chunk.durationMs);
+      const resolved = await resolveTranscriptionPath(
+        chunkPath,
+        vadEnabled,
+        chunk.durationMs,
+        vadPolicy,
+      );
       if (resolved.skipped) {
         onChunkCompleted?.({
           chunkIndex: i,
           totalChunks: total,
           fullText,
           segments: allSegments,
+          chunkProfile: activeChunkProfile,
+          avgSecondsPerChunk: benchmark.getAverageSecondsPerChunk() ?? undefined,
         });
         onProgress?.(i + 1, total);
         continue;
@@ -570,24 +716,37 @@ const transcribeLong = async ({
       raw = await transcribeChunkFile({
         getContext,
         transcribePath,
-        language,
+        language: chunkLanguage,
         prompt,
         setStop,
         cancelled,
       });
       result = normalizeTranscriptionResult(raw);
 
+      if (language === 'auto' && resolvedLanguage === 'auto') {
+        const detectedLanguage = extractDetectedLanguage(raw);
+        if (detectedLanguage) {
+          resolvedLanguage = detectedLanguage;
+        }
+      }
+
       if (result.segments.length === 0 && usedVadTrim) {
         raw = await transcribeChunkFile({
           getContext,
           transcribePath: chunkPath,
-          language,
+          language: chunkLanguage,
           prompt,
           setStop,
           cancelled,
         });
         chunkVadOffsetMs = 0;
         result = normalizeTranscriptionResult(raw);
+        if (language === 'auto' && resolvedLanguage === 'auto') {
+          const detectedLanguage = extractDetectedLanguage(raw);
+          if (detectedLanguage) {
+            resolvedLanguage = detectedLanguage;
+          }
+        }
       }
     } finally {
       endWhisperNativeWork();
@@ -597,10 +756,12 @@ const transcribeLong = async ({
       void NitroFS.unlink(chunkAudioPath).catch(() => {});
     }
 
+    benchmark.record(chunk.durationMs / 1000, Date.now() - chunkStartedAt);
+
     const timestampOffsetMs = chunk.offsetMs + chunkVadOffsetMs;
 
     const previousEndMs = getLatestSegmentEndMs(allSegments);
-    const chunkSegments = removeFullyOverlappedSegments(
+    const chunkSegments = trimOverlappedSegments(
       mapSegments(result, 0, timestampOffsetMs),
       previousEndMs,
     ).map((segment, idx) => ({
@@ -624,8 +785,22 @@ const transcribeLong = async ({
       totalChunks: total,
       fullText,
       segments: allSegments,
+      chunkProfile: activeChunkProfile,
+      avgSecondsPerChunk: benchmark.getAverageSecondsPerChunk() ?? undefined,
     });
     onProgress?.(i + 1, total);
+
+    if (benchmark.shouldAdaptProfile()) {
+      const adaptedProfile = benchmark.adaptChunkProfile(activeChunkProfile);
+      if (
+        adaptedProfile &&
+        adaptedProfile.chunkDurationSec !== activeChunkProfile.chunkDurationSec
+      ) {
+        activeChunkProfile = adaptedProfile;
+        chunks = rebuildRemainingChunks(chunks, i, totalDurationSec, activeChunkProfile);
+        total = chunks.length;
+      }
+    }
 
     if (
       recycleContext &&

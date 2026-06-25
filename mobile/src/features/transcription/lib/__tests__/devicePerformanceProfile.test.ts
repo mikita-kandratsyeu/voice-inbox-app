@@ -74,7 +74,7 @@ describe('devicePerformanceProfile', () => {
       const profile = getDevicePerformanceProfile({ respectPowerMode: false });
 
       expect(profile.tier).toBe('high');
-      expect(profile.optimalChunkDurationSec).toBe(30);
+      expect(profile.optimalChunkDurationSec).toBe(60);
       expect(profile.contextRecycleChunks).toBe(15);
       expect(profile.checkpointIntervalMs).toBe(6000);
     });
@@ -86,7 +86,7 @@ describe('devicePerformanceProfile', () => {
       const profile = getDevicePerformanceProfile({ respectPowerMode: true });
 
       expect(profile.tier).toBe('medium');
-      expect(profile.optimalChunkDurationSec).toBe(24);
+      expect(profile.optimalChunkDurationSec).toBe(45);
     });
 
     it('should downgrade tier when battery is low', () => {
@@ -131,8 +131,8 @@ describe('devicePerformanceProfile', () => {
   describe('getAdaptiveCheckpointInterval', () => {
     const baseProfile: DevicePerformanceProfile = {
       tier: 'medium',
-      optimalChunkDurationSec: 24,
-      optimalChunkOverlapSec: 3,
+      optimalChunkDurationSec: 45,
+      optimalChunkOverlapSec: 4,
       checkpointIntervalMs: 4000,
       contextRecycleChunks: 12,
     };

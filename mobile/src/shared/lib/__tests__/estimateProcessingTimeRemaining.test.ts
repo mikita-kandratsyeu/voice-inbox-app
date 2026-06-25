@@ -68,7 +68,7 @@ describe('estimateProcessingSecondsRemaining', () => {
       transcriptionSegments: { current: 2, total: 6 },
       elapsedSec: 10,
     });
-    expect(remaining).toBeGreaterThanOrEqual(4 * 20);
+    expect(remaining).toBeGreaterThanOrEqual(4 * 18);
   });
 
   it('longer transcript increases cloud estimate at start', () => {
