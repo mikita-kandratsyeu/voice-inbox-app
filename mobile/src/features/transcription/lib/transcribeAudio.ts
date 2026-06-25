@@ -2,6 +2,7 @@ import { AppState } from 'react-native';
 import type { TranscribeFileOptions, WhisperContext } from 'whisper.rn';
 
 import type { TranscriptSegment, WordToken } from '@/entities/record';
+import { diagWarn } from '@/shared/lib/appLogger';
 import type { AudioChunk } from '@/shared/lib/audio';
 import { createWavChunk, splitAudioIntoChunks } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
@@ -21,6 +22,8 @@ import { canRunWhisperGpuWork } from './whisperAppState';
 import { beginWhisperNativeWork, endWhisperNativeWork } from './whisperNativeLifecycle';
 
 const CHUNK_THRESHOLD_MS = 30_000;
+const MIN_VAD_TRIM_SOURCE_MS = 10_000;
+const SUSPICIOUS_VAD_TRIM_RATIO = 0.25;
 
 export type TranscriptionChunkProfile = {
   chunkDurationSec: number;
@@ -124,6 +127,7 @@ type ResolvedTranscriptionPath = {
 const resolveTranscriptionPath = async (
   sourcePath: string,
   vadEnabled: boolean,
+  sourceDurationMs: number,
 ): Promise<ResolvedTranscriptionPath> => {
   if (!vadEnabled || !TRANSCRIPTION_VAD_ENABLED) {
     return { path: sourcePath, timestampOffsetMs: 0, skipped: false };
@@ -136,6 +140,19 @@ const resolveTranscriptionPath = async (
 
   if (!analysis.hasSpeech) {
     return { path: sourcePath, timestampOffsetMs: 0, skipped: true };
+  }
+
+  if (
+    sourceDurationMs >= MIN_VAD_TRIM_SOURCE_MS &&
+    analysis.trimDurationMs > 0 &&
+    analysis.trimDurationMs / sourceDurationMs < SUSPICIOUS_VAD_TRIM_RATIO
+  ) {
+    diagWarn('[transcription] suspicious VAD trim ignored', {
+      sourceDurationMs,
+      trimStartMs: analysis.trimStartMs,
+      trimDurationMs: analysis.trimDurationMs,
+    });
+    return { path: sourcePath, timestampOffsetMs: 0, skipped: false };
   }
 
   if (analysis.trimDurationMs < MIN_TRANSCRIBE_MS) {
@@ -284,6 +301,7 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
         return transcribeShort({
           context,
           audioPath,
+          durationMs,
           language,
           customWords,
           vadEnabled,
@@ -328,6 +346,7 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
 type ShortOptions = {
   context: WhisperContext;
   audioPath: string;
+  durationMs: number;
   language: string;
   customWords: string[];
   vadEnabled: boolean;
@@ -338,6 +357,7 @@ type ShortOptions = {
 const transcribeShort = async ({
   context,
   audioPath,
+  durationMs,
   language,
   customWords,
   vadEnabled,
@@ -348,7 +368,7 @@ const transcribeShort = async ({
     throw new TranscriptionError('native_abort');
   }
 
-  const resolved = await resolveTranscriptionPath(audioPath, vadEnabled);
+  const resolved = await resolveTranscriptionPath(audioPath, vadEnabled, durationMs);
   if (resolved.skipped) {
     return { segments: [], fullText: '', skipped: true };
   }
@@ -528,7 +548,7 @@ const transcribeLong = async ({
         throw new TranscriptionError('native_abort');
       }
 
-      const resolved = await resolveTranscriptionPath(chunkPath, vadEnabled);
+      const resolved = await resolveTranscriptionPath(chunkPath, vadEnabled, chunk.durationMs);
       if (resolved.skipped) {
         onChunkCompleted?.({
           chunkIndex: i,

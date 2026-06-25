@@ -546,7 +546,7 @@ RCT_EXPORT_METHOD(analyzeWavSpeech:(NSString *)inputPath
 
     const int16_t *pcmSamples = (const int16_t *)pcmData.bytes;
     size_t pcmSampleCount = pcmData.length / 2;
-    NSMutableData *monoData = [NSMutableData dataWithCapacity:(pcmSampleCount / channels) * sizeof(int16_t)];
+    NSMutableData *monoData = [NSMutableData dataWithLength:(pcmSampleCount / channels) * sizeof(int16_t)];
     int16_t *monoSamples = (int16_t *)monoData.mutableBytes;
     size_t monoCount = 0;
     for (size_t frame = 0; frame < pcmSampleCount / channels; frame++) {
@@ -557,7 +557,7 @@ RCT_EXPORT_METHOD(analyzeWavSpeech:(NSString *)inputPath
       monoSamples[monoCount++] = (int16_t)(sum / (int32_t)channels);
     }
 
-  SpeechAnalysisResult analysis = analyzeMonoPcmSpeech(monoSamples, monoCount, sampleRate);
+    SpeechAnalysisResult analysis = analyzeMonoPcmSpeech(monoSamples, monoCount, sampleRate);
     resolve(@{
       @"hasSpeech": @(analysis.hasSpeech),
       @"trimStartMs": @(analysis.trimStartMs),

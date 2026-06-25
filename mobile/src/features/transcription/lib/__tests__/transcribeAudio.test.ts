@@ -18,6 +18,10 @@ jest.mock('@/shared/lib/fs', () => ({
   },
 }));
 
+jest.mock('@/shared/lib/appLogger', () => ({
+  diagWarn: jest.fn(),
+}));
+
 jest.mock('../whisperAppState', () => ({
   canRunWhisperGpuWork: jest.fn(),
 }));
@@ -37,12 +41,14 @@ import type { WhisperContext } from 'whisper.rn';
 import { createWavChunk } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
 
+import { analyzeWavSpeech } from '../audioVad';
 import { transcribeAudio } from '../transcribeAudio';
 import { canRunWhisperGpuWork } from '../whisperAppState';
 
 const mockAddAppStateListener = jest.mocked(AppState.addEventListener);
 const mockCreateWavChunk = jest.mocked(createWavChunk);
 const mockUnlink = jest.mocked(NitroFS.unlink);
+const mockAnalyzeWavSpeech = jest.mocked(analyzeWavSpeech);
 const mockCanRunWhisperGpuWork = jest.mocked(canRunWhisperGpuWork);
 let mockAppStateRemove: jest.Mock;
 
@@ -92,6 +98,7 @@ describe('transcribeAudio', () => {
     mockCreateWavChunk.mockImplementation((_input: string, output: string) =>
       Promise.resolve(output),
     );
+    mockAnalyzeWavSpeech.mockResolvedValue(null);
     mockUnlink.mockResolvedValue(true);
   });
 
@@ -350,6 +357,42 @@ describe('transcribeAudio', () => {
     expect(transcribe.mock.calls[1]?.[1]?.prompt).toBeUndefined();
     expect(result.fullText).toBe('normal speech');
     expect(result.segments.map((segment) => segment.text)).toEqual(['normal speech']);
+  });
+
+  it('ignores suspiciously tiny VAD trims for long chunks', async () => {
+    mockAnalyzeWavSpeech.mockResolvedValue({
+      hasSpeech: true,
+      trimStartMs: 10_000,
+      trimDurationMs: 1_000,
+    });
+    const transcribe = jest.fn(() => ({
+      stop: jest.fn().mockResolvedValue(undefined),
+      promise: Promise.resolve({
+        result: 'long chunk speech',
+        segments: [{ text: 'long chunk speech', t0: 0, t1: 100 }],
+      }),
+    }));
+    const context = { transcribe } as unknown as WhisperContext;
+
+    const result = await runTimersUntilSettled(
+      transcribeAudio({
+        context,
+        audioPath: '/tmp/audio.wav',
+        durationMs: 20_000,
+      }).promise,
+    );
+
+    expect(mockCreateWavChunk).not.toHaveBeenCalledWith(
+      '/tmp/audio.wav',
+      '/tmp/audio.wav.vad-trim.wav',
+      10_000,
+      1_000,
+    );
+    expect(transcribe).toHaveBeenCalledWith('/tmp/audio.wav', {
+      ...baseTranscribeOptions,
+      language: 'auto',
+    });
+    expect(result.fullText).toBe('long chunk speech');
   });
 
   it('resumes long transcription from checkpoint state', async () => {
