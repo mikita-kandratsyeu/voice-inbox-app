@@ -209,9 +209,12 @@ class AudioConverterModule(reactContext: ReactApplicationContext) :
         }
 
         val bytesPerFrame = channelCount * (bitsPerSample / 8)
+        // Use on-disk PCM length; WAV headers may under-report data chunk size for long recordings.
+        val availableBytes =
+          if (inputFile.length() > dataOffset) inputFile.length() - dataOffset else 0L
+        val availableFrames = availableBytes / bytesPerFrame
         val startFrame = (startMs * sampleRate / 1000.0).roundToLong()
         val requestedFrames = (durationMs * sampleRate / 1000.0).roundToLong()
-        val availableFrames = dataSize / bytesPerFrame
         if (startFrame >= availableFrames || requestedFrames <= 0) {
           promise.reject("E_WAV_CHUNK", "Chunk is outside WAV data")
           return

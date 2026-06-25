@@ -289,9 +289,16 @@ RCT_EXPORT_METHOD(createWavChunk:(NSString *)inputPath
     }
 
     uint32_t bytesPerFrame = channels * (bitsPerSample / 8);
+    uint64_t fileSize = 0;
+    NSDictionary *fileAttrs = [fm attributesOfItemAtPath:input error:nil];
+    if (fileAttrs) {
+      fileSize = [fileAttrs fileSize];
+    }
+    // Use on-disk PCM length; WAV headers may under-report data chunk size for long recordings.
+    uint64_t availableBytes = fileSize > dataOffset ? fileSize - dataOffset : 0;
+    uint64_t availableFrames = availableBytes / bytesPerFrame;
     uint64_t startFrame = (uint64_t)llround((startMs.doubleValue * sampleRate) / 1000.0);
     uint64_t requestedFrames = (uint64_t)llround((durationMs.doubleValue * sampleRate) / 1000.0);
-    uint64_t availableFrames = dataSize / bytesPerFrame;
     if (startFrame >= availableFrames || requestedFrames == 0) {
       reject(@"E_WAV_CHUNK", @"Chunk is outside WAV data", nil);
       [inFile closeFile];

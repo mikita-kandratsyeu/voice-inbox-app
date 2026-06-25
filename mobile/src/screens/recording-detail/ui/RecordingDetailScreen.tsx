@@ -174,20 +174,29 @@ export const RecordingDetailScreen = () => {
     whisperModelStatuses,
     selectedWhisperModel,
     selectedWhisperModelFormat,
-    globalTranscriptionLanguage,
+    transcriptionLanguage,
     aiExecutionMode,
     privateAiProvider,
+    setTranscriptionLanguage,
     setAiExecutionMode,
   } = useSettingsStore(
     useShallow((s) => ({
       whisperModelStatuses: s.whisperModelStatuses,
       selectedWhisperModel: s.selectedWhisperModel,
       selectedWhisperModelFormat: s.selectedWhisperModelFormat,
-      globalTranscriptionLanguage: s.transcriptionLanguage,
+      transcriptionLanguage: s.transcriptionLanguage,
       aiExecutionMode: s.aiExecutionMode,
       privateAiProvider: s.privateAiProvider,
+      setTranscriptionLanguage: s.setTranscriptionLanguage,
       setAiExecutionMode: s.setAiExecutionMode,
     })),
+  );
+
+  const handleSelectTranscriptionLanguage = useCallback(
+    (lang: TranscriptionLanguage) => {
+      setTranscriptionLanguage(lang);
+    },
+    [setTranscriptionLanguage],
   );
 
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
@@ -201,9 +210,6 @@ export const RecordingDetailScreen = () => {
   const [emailSending, setEmailSending] = useState(false);
   const [renameTarget, setRenameTarget] = useState<{ id: string; title: string } | null>(null);
   const { currentPositionMs, onPositionUpdate } = usePlaybackPosition();
-  const [recordLanguage, setRecordLanguage] = useState<TranscriptionLanguage>(
-    globalTranscriptionLanguage,
-  );
 
   const scrollRef = useRef<React.ElementRef<typeof KeyboardAwareScrollView>>(null);
   const audioPlayerRef = useRef<AudioPlayerRef>(null);
@@ -226,11 +232,9 @@ export const RecordingDetailScreen = () => {
   );
 
   useEffect(() => {
-    setRecordLanguage(globalTranscriptionLanguage);
     scrollRef.current?.scrollTo({ y: 0, animated: true });
     setActiveTab('transcript');
     setMountedTabs(new Set(['transcript']));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only reset when switching records
   }, [routeRecord.id]);
 
   useEffect(() => {
@@ -446,7 +450,7 @@ export const RecordingDetailScreen = () => {
       }
     }
 
-    startTranscription(liveRecord, recordLanguage);
+    startTranscription(liveRecord);
   }, [
     t,
     whisperModelStatuses,
@@ -454,7 +458,6 @@ export const RecordingDetailScreen = () => {
     selectedWhisperModelFormat,
     navigation,
     liveRecord,
-    recordLanguage,
     clearAudioPath,
     startTranscription,
   ]);
@@ -1031,9 +1034,9 @@ export const RecordingDetailScreen = () => {
               <View className="flex-row flex-wrap gap-2">
                 {hasAudio ? (
                   <AudioLanguageSelector
-                    value={recordLanguage}
+                    value={transcriptionLanguage}
                     color={color}
-                    onSelect={setRecordLanguage}
+                    onSelect={handleSelectTranscriptionLanguage}
                     surfaceBackgroundColor={color.background.tertiary}
                   />
                 ) : null}

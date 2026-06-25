@@ -42,6 +42,12 @@ const mockUnlink = jest.mocked(NitroFS.unlink);
 const mockCanRunWhisperGpuWork = jest.mocked(canRunWhisperGpuWork);
 let mockAppStateRemove: jest.Mock;
 
+const baseTranscribeOptions = {
+  maxLen: 80,
+  temperature: 0,
+  temperatureInc: 0,
+};
+
 type Deferred<T> = {
   promise: Promise<T>;
   resolve: (value: T) => void;
@@ -117,8 +123,10 @@ describe('transcribeAudio', () => {
       language: 'en',
     }).promise;
 
-    expect(transcribe).toHaveBeenCalledWith('/tmp/audio.wav', { language: 'en' });
-    expect(mockCreateWavChunk).not.toHaveBeenCalled();
+    expect(transcribe).toHaveBeenCalledWith('/tmp/audio.wav', {
+      ...baseTranscribeOptions,
+      language: 'en',
+    });
     expect(result).toEqual({
       fullText: 'hello',
       segments: [
@@ -135,7 +143,7 @@ describe('transcribeAudio', () => {
     expect(mockAppStateRemove).toHaveBeenCalled();
   });
 
-  it('creates one temporary WAV per long chunk, transcribes chunk files, offsets timestamps, and cleans up', async () => {
+  it('creates temporary WAV windows for long audio and offsets timestamps', async () => {
     const onProgress = jest.fn();
     const onChunkCompleted = jest.fn();
     const transcribe = jest.fn((path: string, _options: { prompt?: string }) => ({
@@ -159,21 +167,38 @@ describe('transcribeAudio', () => {
       }).promise,
     );
 
-    expect(mockCreateWavChunk).toHaveBeenCalledTimes(4);
     expect(mockCreateWavChunk.mock.calls.map((call) => call.slice(0, 4))).toEqual([
       ['/tmp/audio.wav', '/tmp/audio.wav.chunk-0.wav', 0, 20000],
       ['/tmp/audio.wav', '/tmp/audio.wav.chunk-1.wav', 15000, 20000],
       ['/tmp/audio.wav', '/tmp/audio.wav.chunk-2.wav', 30000, 20000],
       ['/tmp/audio.wav', '/tmp/audio.wav.chunk-3.wav', 45000, 5000],
     ]);
+    expect(transcribe).toHaveBeenCalledTimes(4);
     expect(transcribe.mock.calls.map((call) => call[0])).toEqual([
       '/tmp/audio.wav.chunk-0.wav',
       '/tmp/audio.wav.chunk-1.wav',
       '/tmp/audio.wav.chunk-2.wav',
       '/tmp/audio.wav.chunk-3.wav',
     ]);
-    expect(transcribe.mock.calls.every(([, options]) => !('offset' in options))).toBe(true);
-    expect(transcribe.mock.calls.every(([, options]) => !('duration' in options))).toBe(true);
+    expect(transcribe.mock.calls.map(([, options]) => options)).toEqual([
+      { ...baseTranscribeOptions, language: 'ru', prompt: undefined },
+      {
+        ...baseTranscribeOptions,
+        language: 'ru',
+        prompt: 'seg:/tmp/audio.wav.chunk-0.wav',
+      },
+      {
+        ...baseTranscribeOptions,
+        language: 'ru',
+        prompt: 'seg:/tmp/audio.wav.chunk-0.wav seg:/tmp/audio.wav.chunk-1.wav',
+      },
+      {
+        ...baseTranscribeOptions,
+        language: 'ru',
+        prompt:
+          'seg:/tmp/audio.wav.chunk-0.wav seg:/tmp/audio.wav.chunk-1.wav seg:/tmp/audio.wav.chunk-2.wav',
+      },
+    ]);
     expect(mockUnlink.mock.calls.map((call) => call[0])).toEqual([
       '/tmp/audio.wav.chunk-0.wav',
       '/tmp/audio.wav.chunk-1.wav',
@@ -181,6 +206,12 @@ describe('transcribeAudio', () => {
       '/tmp/audio.wav.chunk-3.wav',
     ]);
     expect(result.segments.map((segment) => segment.startMs)).toEqual([100, 15100, 30100, 45100]);
+    expect(result.segments.map((segment) => segment.startTime)).toEqual([
+      '00:00',
+      '00:15',
+      '00:30',
+      '00:45',
+    ]);
     expect(onProgress.mock.calls).toEqual([
       [1, 4],
       [2, 4],
@@ -191,7 +222,7 @@ describe('transcribeAudio', () => {
   });
 
   it('drops fully overlapped segments when merging long transcription chunks', async () => {
-    const transcribe = jest.fn((path: string) => {
+    const transcribe = jest.fn((path: string, _options: { prompt?: string }) => {
       const isSecondChunk = path.includes('.chunk-1.wav');
       return {
         stop: jest.fn().mockResolvedValue(undefined),
@@ -227,6 +258,40 @@ describe('transcribeAudio', () => {
     expect(result.segments.map((segment) => segment.id)).toEqual(['0', '1']);
   });
 
+  it('filters obvious repeated-token hallucinations and does not use them as prompt', async () => {
+    const transcribe = jest.fn((path: string, _options: { prompt?: string }) => {
+      const firstChunk = path.includes('.chunk-0.wav');
+      return {
+        stop: jest.fn().mockResolvedValue(undefined),
+        promise: Promise.resolve(
+          firstChunk
+            ? {
+                result: 'але але але але але але',
+                segments: [{ text: 'але але але але але але', t0: 0, t1: 1000 }],
+              }
+            : {
+                result: 'normal speech',
+                segments: [{ text: 'normal speech', t0: 0, t1: 1000 }],
+              },
+        ),
+      };
+    });
+    const context = { transcribe } as unknown as WhisperContext;
+
+    const result = await runTimersUntilSettled(
+      transcribeAudio({
+        context,
+        audioPath: '/tmp/audio.wav',
+        durationMs: 30_000,
+        chunkProfile: { chunkDurationSec: 20, chunkOverlapSec: 5 },
+      }).promise,
+    );
+
+    expect(transcribe.mock.calls[1]?.[1]).toMatchObject({ prompt: undefined });
+    expect(result.fullText).toBe('normal speech');
+    expect(result.segments.map((segment) => segment.text)).toEqual(['normal speech']);
+  });
+
   it('resumes long transcription from checkpoint state', async () => {
     const transcribe = jest.fn((path: string) => ({
       stop: jest.fn().mockResolvedValue(undefined),
@@ -254,7 +319,7 @@ describe('transcribeAudio', () => {
       }).promise,
     );
 
-    expect(mockCreateWavChunk.mock.calls.map((call) => call[1])).toEqual([
+    expect(transcribe.mock.calls.map((call) => call[0])).toEqual([
       '/tmp/audio.wav.chunk-2.wav',
       '/tmp/audio.wav.chunk-3.wav',
     ]);
@@ -264,10 +329,10 @@ describe('transcribeAudio', () => {
   });
 
   it('recycles Whisper context every twelve completed chunks during long transcription', async () => {
-    const transcribe = jest.fn((path: string) => ({
+    const transcribe = jest.fn(() => ({
       stop: jest.fn().mockResolvedValue(undefined),
       promise: Promise.resolve({
-        result: path,
+        result: 'chunk',
         segments: [],
       }),
     }));
