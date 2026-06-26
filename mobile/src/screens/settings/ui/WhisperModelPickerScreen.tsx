@@ -34,7 +34,7 @@ import {
 import { getWhisperKitEstimatedDownloadMb } from '@/shared/lib/whisper/whisperKitModelPath';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
 
-import { IOS_WHISPER_KIT_MODELS } from '../lib/useWhisperKitModelListState';
+import { IOS_WHISPER_KIT_MODELS } from '../lib/iosWhisperKitModels';
 import { WhisperDefaultLanguageSection } from './WhisperDefaultLanguageSection';
 import { WhisperEngineModeSection } from './WhisperEngineModeSection';
 import { WhisperModelCard } from './WhisperModelCard';
@@ -64,8 +64,13 @@ export const WhisperModelPickerScreen = () => {
 
   const compatibility = useWhisperModelCompatibility();
   const recommendedModelId = useRecommendedWhisperModelId();
-  const { startDownload, cancelDownload, removeModel, syncWhisperKitDownloadedStatuses, syncDownloadedStatusesForFormat } =
-    useModelManager();
+  const {
+    startDownload,
+    cancelDownload,
+    removeModel,
+    syncWhisperKitDownloadedStatuses,
+    syncDownloadedStatusesForFormat,
+  } = useModelManager();
 
   const useIosWhisperKit = IS_IOS && iosWhisperKitEngineEnabled;
   const showIosEnginePicker = IS_IOS;

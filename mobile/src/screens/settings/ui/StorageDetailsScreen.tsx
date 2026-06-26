@@ -491,7 +491,9 @@ export const StorageDetailsScreen = () => {
               await deleteWhisperModel(model.id, fmt);
               useSettingsStore.getState().removeWhisperModelStatus(model.id, fmt);
             }
-            useSettingsStore.getState().removeWhisperModelStatus(model.id, WHISPER_KIT_STORAGE_FORMAT);
+            useSettingsStore
+              .getState()
+              .removeWhisperModelStatus(model.id, WHISPER_KIT_STORAGE_FORMAT);
           }
 
           await deleteAllArgmaxTranscriptionModels();

@@ -16,7 +16,6 @@ import { ensureRecordingsDir, i18n, RECORDINGS_DIR, useNetworkStatus } from '@/s
 import { diagWarn } from '@/shared/lib/appLogger';
 import { convertToWav } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
-import { getWhisperKitModelsDir, mapWhisperModelIdToWhisperKitModel } from '@/shared/lib/whisper';
 
 import { shouldUseIosWhisperKitEngine } from '../config/transcriptionEngine';
 import { buildNativeTranscriptionJobId } from '../lib/buildNativeTranscriptionJobId';
@@ -31,7 +30,6 @@ import {
 } from '../lib/nativeMeetingSpeakers';
 import {
   invalidateNativeTranscriptionEngineCaches,
-  isWhisperKitModelDownloaded,
 } from '../lib/nativeTranscription';
 import { resolveTranscriptionChunkProfile } from '../lib/resolveTranscriptionChunkProfile';
 import { transcribeAudio } from '../lib/transcribeAudio';
@@ -354,32 +352,6 @@ export const useTranscription = () => {
           return;
         }
 
-        if (useIosWhisperKit) {
-          const whisperKitModel = mapWhisperModelIdToWhisperKitModel(selectedWhisperModel);
-          const modelCachePath = getWhisperKitModelsDir();
-          const modelDownloaded = await isWhisperKitModelDownloaded(
-            whisperKitModel,
-            modelCachePath,
-          );
-
-          if (!isActiveTranscriptionJob(record.id, jobGen)) {
-            updateAiStatus(record.id, 'idle');
-            return;
-          }
-
-          if (isTranscriptionBackgroundCancelled(record.id)) {
-            keepCheckpointSnapshot = true;
-            updateAiStatus(record.id, 'paused');
-            return;
-          }
-
-          if (!modelDownloaded) {
-            currentRecordIdRef.current = null;
-            updateAiStatus(record.id, 'error');
-            return;
-          }
-        }
-
         updateAiStatus(record.id, 'processing', 0, undefined, null);
         setTranscriptionRuntimeState('transcribing', record.id);
 
@@ -683,7 +655,9 @@ export const useTranscription = () => {
           if (errorCode === 'model_load_failed' || errorCode === 'model_missing') {
             setWhisperModelStatus(
               selectedWhisperModel,
-              shouldUseIosWhisperKitEngine() ? WHISPER_KIT_STORAGE_FORMAT : selectedWhisperModelFormat,
+              shouldUseIosWhisperKitEngine()
+                ? WHISPER_KIT_STORAGE_FORMAT
+                : selectedWhisperModelFormat,
               'not_downloaded',
             );
           }

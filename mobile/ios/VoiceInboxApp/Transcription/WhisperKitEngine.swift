@@ -30,13 +30,15 @@ enum WhisperKitEngine {
     onProgress: @escaping (_ fraction: Double, _ phase: String, _ bytesOnDisk: Int) -> Void,
   ) async throws {
     #if canImport(WhisperKit)
+    var progressThrottle = DownloadProgressThrottleState()
     let reportProgress: (Double, String) -> Void = { fraction, phase in
-      let bytes = WhisperKitEngine.downloadStorageBytes(modelName: modelName, cacheFolder: cacheFolder)
-      let resolved = bytes > 0 ? bytes : WhisperKitEngine.resolvedModelStorageBytes(
+      let bytes = progressThrottle.resolvedBytes(
         modelName: modelName,
         cacheFolder: cacheFolder,
+        fraction: fraction,
+        phase: phase,
       )
-      onProgress(min(1.0, max(0, fraction)), phase, resolved)
+      onProgress(min(1.0, max(0, fraction)), phase, bytes)
     }
 
     if isModelCached(modelName: modelName, cacheFolder: cacheFolder) {
@@ -456,6 +458,35 @@ enum WhisperKitEngine {
     }
 
     return Array(roots)
+  }
+
+  private struct DownloadProgressThrottleState {
+    private var lastBytesScanAt: TimeInterval = 0
+    private var lastBytesOnDisk: Int = 0
+    private var lastPhase: String = ""
+    private let bytesScanInterval: TimeInterval = 0.5
+
+    mutating func resolvedBytes(
+      modelName: String,
+      cacheFolder: String,
+      fraction: Double,
+      phase: String,
+    ) -> Int {
+      let now = ProcessInfo.processInfo.systemUptime
+      let phaseChanged = phase != lastPhase
+      let shouldScan = phaseChanged || fraction >= 1.0 || (now - lastBytesScanAt) >= bytesScanInterval
+
+      if shouldScan {
+        let bytes = WhisperKitEngine.downloadStorageBytes(modelName: modelName, cacheFolder: cacheFolder)
+        lastBytesOnDisk = bytes > 0
+          ? bytes
+          : WhisperKitEngine.resolvedModelStorageBytes(modelName: modelName, cacheFolder: cacheFolder)
+        lastBytesScanAt = now
+      }
+
+      lastPhase = phase
+      return lastBytesOnDisk
+    }
   }
 
   /// Bytes on disk while download is in progress (includes HF cache and partial model dir).

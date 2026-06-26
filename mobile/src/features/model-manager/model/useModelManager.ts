@@ -49,6 +49,7 @@ import {
   deleteAllArgmaxTranscriptionModels,
   deleteWhisperKitModel,
   getWhisperKitModelStorageBytes,
+  IOS_WHISPER_KIT_STORAGE_MODEL_IDS,
   isWhisperKitModelOnDisk,
 } from '../lib/whisperKitModelStorage';
 
@@ -231,9 +232,9 @@ export const useModelManager = () => {
 
   const syncWhisperKitDownloadedStatuses = useCallback(async (): Promise<void> => {
     const checks = await Promise.all(
-      WHISPER_MODELS.map(async (model) => ({
-        id: model.id,
-        downloaded: await isWhisperKitModelOnDisk(model.id),
+      IOS_WHISPER_KIT_STORAGE_MODEL_IDS.map(async (id) => ({
+        id,
+        downloaded: await isWhisperKitModelOnDisk(id),
       })),
     );
 
