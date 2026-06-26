@@ -48,6 +48,7 @@ import {
   useTaskCompletionFlow,
 } from '@/features/task-outcome';
 import { useTranscription } from '@/features/transcription';
+import { shouldUseIosWhisperKitEngine } from '@/features/transcription/config/transcriptionEngine';
 import { canStartOfflineTranscription } from '@/features/transcription/lib/canStartOfflineTranscription';
 import { shouldUseNativeMeetingSpeakers } from '@/features/transcription/lib/nativeMeetingSpeakers';
 import { useOpenNotesGraphForRecord } from '@/screens/notes-graph';
@@ -61,6 +62,7 @@ import {
   resolveAudioPath,
   resolveFolderListTintHex,
   useIsTablet,
+  useNetworkStatus,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
 import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
@@ -253,6 +255,7 @@ export const RecordingDetailScreen = () => {
 
   const { startTranscription, cancelTranscription, discardPausedTranscription } =
     useTranscription();
+  const { isConnected } = useNetworkStatus();
   const { generateSummary, extractTasks, cancelAiGeneration, regenerateMeetingDialogue } =
     useAiProcessing();
   const handleCancelAiGeneration = useCallback(() => {
@@ -422,20 +425,30 @@ export const RecordingDetailScreen = () => {
   const handleRetranscribe = useCallback(async () => {
     const variantId = getWhisperModelVariantId(selectedWhisperModel, selectedWhisperModelFormat);
     const modelStatus = whisperModelStatuses[variantId] ?? 'not_downloaded';
+    const useWhisperKit = shouldUseIosWhisperKitEngine();
 
-    if (!(await canStartOfflineTranscription(modelStatus))) {
+    if (
+      isConnected === false &&
+      !(await canStartOfflineTranscription(selectedWhisperModel, modelStatus))
+    ) {
       Alert.alert(
         t('recordingDetail.modelNotDownloaded'),
-        t('recordingDetail.modelNotDownloadedHint'),
-        [
-          { text: t('common.ok') },
-          {
-            text: t('recordingDetail.goToWhisperSettings'),
-            onPress: () => {
-              navigation.push('WhisperModelPickerRoot');
-            },
-          },
-        ],
+        t(
+          useWhisperKit
+            ? 'recordingDetail.whisperKitModelOfflineHint'
+            : 'recordingDetail.modelNotDownloadedHint',
+        ),
+        useWhisperKit
+          ? [{ text: t('common.ok') }]
+          : [
+              { text: t('common.ok') },
+              {
+                text: t('recordingDetail.goToWhisperSettings'),
+                onPress: () => {
+                  navigation.push('WhisperModelPickerRoot');
+                },
+              },
+            ],
       );
       return;
     }
@@ -455,6 +468,7 @@ export const RecordingDetailScreen = () => {
     startTranscription(liveRecord);
   }, [
     t,
+    isConnected,
     whisperModelStatuses,
     selectedWhisperModel,
     selectedWhisperModelFormat,

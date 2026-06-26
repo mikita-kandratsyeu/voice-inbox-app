@@ -73,8 +73,7 @@ export const WhisperModelCard = ({
 }: WhisperModelCardProps) => {
   const { t } = useTranslation();
   const isDownloaded = status === 'downloaded';
-  const isIosManaged = iosWhisperKitManaged && !isDownloaded;
-  const isReadyForUse = isDownloaded || isIosManaged;
+  const isReadyForUse = isDownloaded;
   const isDownloading = status === 'downloading';
   const isError = status === 'error';
   const isLast = index === total - 1;
@@ -211,7 +210,9 @@ export const WhisperModelCard = ({
                 <Text className="text-[12px] leading-4" style={{ color: color.text.muted }}>
                   {downloadPhase === 'coreml'
                     ? t('whisper.downloadPhaseCoreMl')
-                    : t('whisper.downloadPhaseWeights')}
+                    : downloadPhase === 'whisperkit'
+                      ? t('whisper.downloadPhaseWhisperKit')
+                      : t('whisper.downloadPhaseWeights')}
                 </Text>
               )}
               <TouchableOpacity
@@ -228,10 +229,6 @@ export const WhisperModelCard = ({
           ) : isError ? (
             <Text className="mt-1.5 text-[14px] font-medium" style={{ color: color.accent.delete }}>
               {t('whisper.downloadError')}
-            </Text>
-          ) : isIosManaged ? (
-            <Text className="mt-1.5 text-[14px]" style={{ color: color.text.secondary }}>
-              {t('whisper.iosModelOnDemandHint')}
             </Text>
           ) : !isDownloaded ? (
             <Text className="mt-1.5 text-[14px]" style={{ color: color.text.secondary }}>

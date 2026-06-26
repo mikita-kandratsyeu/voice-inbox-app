@@ -12,6 +12,19 @@ export const getSpeakerKitModelsDir = (): string => `${argmaxModelsDir()}/speake
 export const getTranscriptionJobsCacheDir = (): string =>
   `${getDocumentDirectoryPath()}/transcription-jobs`;
 
+/** Approximate WhisperKit Core ML download sizes for the settings picker. */
+export const WHISPER_KIT_ESTIMATED_DOWNLOAD_MB: Partial<Record<WhisperModelId, number>> = {
+  'whisper-base': 77,
+  'whisper-small': 250,
+  'whisper-medium': 626,
+};
+
+export const getWhisperKitEstimatedDownloadMb = (modelId: WhisperModelId): number =>
+  WHISPER_KIT_ESTIMATED_DOWNLOAD_MB[modelId] ?? 150;
+
+export const getWhisperKitEstimatedDownloadBytes = (modelId: WhisperModelId): number =>
+  getWhisperKitEstimatedDownloadMb(modelId) * 1024 * 1024;
+
 /** Maps app WhisperModelId settings to WhisperKit HuggingFace variant names. */
 export const mapWhisperModelIdToWhisperKitModel = (modelId: WhisperModelId): string => {
   switch (modelId) {

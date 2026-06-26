@@ -14,6 +14,7 @@ import { convertToWav } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
 import { getWhisperKitModelsDir, mapWhisperModelIdToWhisperKitModel } from '@/shared/lib/whisper';
 
+import { buildNativeTranscriptionJobId } from '../lib/buildNativeTranscriptionJobId';
 import { shouldUseIosWhisperKitEngine } from '../config/transcriptionEngine';
 import {
   getAdaptiveCheckpointInterval,
@@ -25,8 +26,8 @@ import {
   shouldRunTranscriptionDiarization,
 } from '../lib/nativeMeetingSpeakers';
 import {
+  invalidateNativeTranscriptionEngineCaches,
   isWhisperKitModelDownloaded,
-  prepareNativeTranscriptionModel,
 } from '../lib/nativeTranscription';
 import { resolveTranscriptionChunkProfile } from '../lib/resolveTranscriptionChunkProfile';
 import { transcribeAudio } from '../lib/transcribeAudio';
@@ -133,7 +134,11 @@ export type StartTranscriptionOptions = {
   enforceMinDuration?: boolean;
 };
 
-const shouldFullyResetWhisperBeforeStart = (record: VoiceRecord): boolean => {
+const shouldFullyResetWhisperContextBeforeStart = (record: VoiceRecord): boolean => {
+  if (shouldUseIosWhisperKitEngine()) {
+    return false;
+  }
+
   const runtime = getTranscriptionRuntimeSnapshot();
   return (
     pendingWhisperResetRecordIds.has(record.id) ||
@@ -143,6 +148,12 @@ const shouldFullyResetWhisperBeforeStart = (record: VoiceRecord): boolean => {
     (runtime.recordId === record.id &&
       (runtime.state === 'stopping' || runtime.state === 'resetting'))
   );
+};
+
+const releaseTranscriptionStartGuards = (recordId: string): void => {
+  invalidateTranscriptionJob(recordId);
+  endTranscriptionSession(recordId);
+  unregisterActiveTranscription(recordId);
 };
 
 export const useTranscription = () => {
@@ -197,11 +208,16 @@ export const useTranscription = () => {
       }
 
       if (shouldResetBeforeStart) {
-        updateAiStatus(record.id, 'loading_model', 0, i18n.t('transcription.loadingModel'), null);
+        if (!shouldUseIosWhisperKitEngine()) {
+          updateAiStatus(record.id, 'loading_model', 0, i18n.t('transcription.loadingModel'), null);
+        }
         try {
-          const needsFullReset = shouldFullyResetWhisperBeforeStart(record);
           await resetTranscriptionRuntimeForRestart(record.id);
-          if (needsFullReset) {
+          if (shouldUseIosWhisperKitEngine()) {
+            await invalidateNativeTranscriptionEngineCaches();
+            pendingWhisperResetRecordIds.delete(record.id);
+            rememberWhisperResetResult(true);
+          } else if (shouldFullyResetWhisperContextBeforeStart(record)) {
             const reset = await resetWhisperContext();
             rememberWhisperResetResult(reset);
             if (!reset) {
@@ -210,6 +226,10 @@ export const useTranscription = () => {
                 record.aiStatus === 'paused' ||
                 record.aiStatus === 'resumable' ||
                 (record.transcriptProgress ?? 0) > 0;
+              releaseTranscriptionStartGuards(record.id);
+              if (currentRecordIdRef.current === record.id) {
+                currentRecordIdRef.current = null;
+              }
               updateAiStatus(
                 record.id,
                 canResume ? 'resumable' : 'error',
@@ -217,12 +237,18 @@ export const useTranscription = () => {
               );
               return;
             }
+            pendingWhisperResetRecordIds.delete(record.id);
           }
-          pendingWhisperResetRecordIds.delete(record.id);
         } catch (err) {
           diagWarn('[transcription] restart reset failed', err);
           rememberWhisperResetResult(false);
-          pendingWhisperResetRecordIds.add(record.id);
+          if (!shouldUseIosWhisperKitEngine()) {
+            pendingWhisperResetRecordIds.add(record.id);
+          }
+          releaseTranscriptionStartGuards(record.id);
+          if (currentRecordIdRef.current === record.id) {
+            currentRecordIdRef.current = null;
+          }
           updateAiStatus(record.id, 'error', record.transcriptProgress ?? 0);
           return;
         }
@@ -242,6 +268,7 @@ export const useTranscription = () => {
         appIsActive: AppState.currentState === 'active',
         transcriptionBusy:
           otherRecordBusy || (isNativeTranscriptionRunning() && !nativeBusyForThisRecord),
+        networkAvailable: isConnected !== false,
       });
 
       if (!preflight.ok) {
@@ -252,7 +279,18 @@ export const useTranscription = () => {
           await clearAudioPath(record.id).catch(() => {});
         }
 
-        updateAiStatus(record.id, 'error');
+        releaseTranscriptionStartGuards(record.id);
+        if (currentRecordIdRef.current === record.id) {
+          currentRecordIdRef.current = null;
+        }
+
+        const nextStatus =
+          preflight.reason === 'model_not_downloaded' ||
+          preflight.reason === 'model_missing' ||
+          preflight.reason === 'transcription_busy'
+            ? 'idle'
+            : 'error';
+        updateAiStatus(record.id, nextStatus, 0);
         return;
       }
 
@@ -263,6 +301,7 @@ export const useTranscription = () => {
       clearTranscriptionBackgroundCancelled(record.id);
 
       const jobGen = beginTranscriptionJob(record.id);
+      const nativeJobId = buildNativeTranscriptionJobId(record.id, jobGen);
       beginTranscriptionSession(record.id);
       registerActiveTranscription(record.id, async () => {
         if (stopRef.current) {
@@ -323,31 +362,9 @@ export const useTranscription = () => {
           }
 
           if (!modelDownloaded) {
-            updateAiStatus(
-              record.id,
-              'loading_model',
-              0,
-              i18n.t('transcription.downloadingModel'),
-              null,
-            );
-
-            const prepared = await prepareNativeTranscriptionModel(whisperKitModel, modelCachePath);
-            if (!prepared) {
-              currentRecordIdRef.current = null;
-              updateAiStatus(record.id, 'error');
-              return;
-            }
-
-            if (!isActiveTranscriptionJob(record.id, jobGen)) {
-              updateAiStatus(record.id, 'idle');
-              return;
-            }
-
-            if (isTranscriptionBackgroundCancelled(record.id)) {
-              keepCheckpointSnapshot = true;
-              updateAiStatus(record.id, 'paused');
-              return;
-            }
+            currentRecordIdRef.current = null;
+            updateAiStatus(record.id, 'error');
+            return;
           }
         }
 
@@ -418,7 +435,7 @@ export const useTranscription = () => {
         }) => {
           if (useIosWhisperKit) {
             const iosHandle = transcribeAudioIos({
-              jobId: record.id,
+              jobId: nativeJobId,
               audioPath: transcribeInputPath,
               durationMs: record.durationMs ?? 0,
               language,
@@ -454,7 +471,7 @@ export const useTranscription = () => {
                   fullText,
                   segments,
                   engine: checkpointEngine,
-                  nativeJobId: record.id,
+                  nativeJobId,
                 };
                 rememberTranscriptionCheckpointSnapshot(snapshot);
 
@@ -640,7 +657,7 @@ export const useTranscription = () => {
         keepCheckpointSnapshot = pausedForBackground;
 
         if (isCancelled || pausedForBackground) {
-          if (shouldQueueWhisperResetForError(err)) {
+          if (shouldQueueWhisperResetForError(err) && !shouldUseIosWhisperKitEngine()) {
             pendingWhisperResetRecordIds.add(record.id);
           }
           if (!pausedForBackground) {
@@ -661,13 +678,21 @@ export const useTranscription = () => {
           if (errorCode === 'audio_missing' || isFileNotFoundError(err)) {
             await clearAudioPath(record.id).catch(() => {});
           }
-          if (shouldQueueWhisperResetForError(err)) {
+          if (shouldQueueWhisperResetForError(err) && !shouldUseIosWhisperKitEngine()) {
             pendingWhisperResetRecordIds.add(record.id);
           }
           diagWarn('[transcription] Failed:', errorCode, err instanceof Error ? err.message : err);
-          updateAiStatus(record.id, 'error');
+          const isModelError = errorCode === 'model_load_failed' || errorCode === 'model_missing';
+          updateAiStatus(
+            record.id,
+            shouldUseIosWhisperKitEngine() && isModelError ? 'idle' : 'error',
+            0,
+          );
         }
       } finally {
+        if (currentRecordIdRef.current === record.id) {
+          currentRecordIdRef.current = null;
+        }
         const transcodePathNorm = transcodeWavPath?.startsWith('file://')
           ? transcodeWavPath.slice(7)
           : transcodeWavPath;

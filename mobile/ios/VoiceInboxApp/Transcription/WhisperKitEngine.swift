@@ -15,15 +15,85 @@ enum WhisperKitEngine {
 
   static func prepare(modelName: String, cacheFolder: String) async throws {
     #if canImport(WhisperKit)
+    guard isModelCached(modelName: modelName, cacheFolder: cacheFolder) else {
+      throw TranscriptionJobError.modelNotDownloaded
+    }
     _ = try await loadPipeline(modelName: modelName, cacheFolder: cacheFolder)
     #else
     throw TranscriptionJobError.modelUnavailable
     #endif
   }
 
+  static func downloadModel(
+    modelName: String,
+    cacheFolder: String,
+    onProgress: @escaping (Double) -> Void,
+  ) async throws {
+    #if canImport(WhisperKit)
+    if isModelCached(modelName: modelName, cacheFolder: cacheFolder) {
+      onProgress(1.0)
+      _ = try await loadPipeline(modelName: modelName, cacheFolder: cacheFolder)
+      return
+    }
+
+    downloadCancelled = false
+    try purgeIncompleteWhisperKitArtifacts(modelName: modelName, cacheFolder: cacheFolder)
+    try ensureWhisperKitDownloadDirectories(modelName: modelName, cacheFolder: cacheFolder)
+
+    let downloadBase = cacheURL(from: cacheFolder)
+    let variant = whisperKitDownloadVariant(from: modelName)
+
+    do {
+      let modelFolder = try await WhisperKit.download(
+        variant: variant,
+        downloadBase: downloadBase,
+        useBackgroundSession: false,
+        from: whisperKitModelRepo,
+        progressCallback: { progress in
+          guard !downloadCancelled, !Task.isCancelled else { return }
+          onProgress(progress.fractionCompleted)
+        },
+      )
+
+      guard !downloadCancelled, !Task.isCancelled else {
+        throw TranscriptionJobError.cancelled
+      }
+
+      guard isModelCached(modelName: modelName, cacheFolder: cacheFolder) else {
+        throw TranscriptionJobError.unknown("download_incomplete")
+      }
+
+      let pipeline = try await createPipeline(
+        modelName: modelName,
+        cacheFolder: cacheFolder,
+        modelFolder: modelFolder,
+      )
+      cachedPipeline = pipeline
+      cachedModelName = modelName
+      onProgress(1.0)
+    } catch {
+      if downloadCancelled || Task.isCancelled || (error as? TranscriptionJobError) == .cancelled {
+        throw TranscriptionJobError.cancelled
+      }
+      if isWhisperKitDownloadCorruptionError(error) {
+        try? purgeIncompleteWhisperKitArtifacts(modelName: modelName, cacheFolder: cacheFolder)
+      }
+      throw error
+    }
+    #else
+    throw TranscriptionJobError.modelUnavailable
+    #endif
+  }
+
+  static func cancelModelDownload() {
+    #if canImport(WhisperKit)
+    downloadCancelled = true
+    #endif
+  }
+
   static func isModelCached(modelName: String, cacheFolder: String) -> Bool {
     #if canImport(WhisperKit)
-    return !findModelRootURLs(modelName: modelName, cacheFolder: cacheFolder).isEmpty
+    return hasCompleteWhisperKitArtifacts(modelName: modelName, cacheFolder: cacheFolder)
     #else
     return false
     #endif
@@ -31,9 +101,7 @@ enum WhisperKitEngine {
 
   static func getModelStorageBytes(modelName: String, cacheFolder: String) -> Int {
     #if canImport(WhisperKit)
-    return findModelRootURLs(modelName: modelName, cacheFolder: cacheFolder).reduce(0) { partial, url in
-      partial + directorySizeBytes(at: url)
-    }
+    return resolvedModelStorageBytes(modelName: modelName, cacheFolder: cacheFolder)
     #else
     return 0
     #endif
@@ -48,6 +116,7 @@ enum WhisperKitEngine {
 
   static func deleteModel(modelName: String, cacheFolder: String) throws {
     #if canImport(WhisperKit)
+    try purgeIncompleteWhisperKitArtifacts(modelName: modelName, cacheFolder: cacheFolder)
     let roots = findModelRootURLs(modelName: modelName, cacheFolder: cacheFolder)
     let fileManager = FileManager.default
     for root in roots where fileManager.fileExists(atPath: root.path) {
@@ -63,25 +132,83 @@ enum WhisperKitEngine {
   }
 
   #if canImport(WhisperKit)
+  private static let requiredModelComponents = [
+    "MelSpectrogram.mlmodelc",
+    "AudioEncoder.mlmodelc",
+    "TextDecoder.mlmodelc",
+  ]
   private static var cachedPipeline: WhisperKit?
   private static var cachedModelName: String?
+  private static var downloadCancelled = false
+
+  private static let whisperKitModelRepo = "argmaxinc/whisperkit-coreml"
 
   private static func loadPipeline(modelName: String, cacheFolder: String) async throws -> WhisperKit {
     if let cachedPipeline, cachedModelName == modelName {
       return cachedPipeline
     }
 
+    try ensureWhisperKitDownloadDirectories(modelName: modelName, cacheFolder: cacheFolder)
+
+    do {
+      let pipeline = try await createPipeline(modelName: modelName, cacheFolder: cacheFolder)
+      cachedPipeline = pipeline
+      cachedModelName = modelName
+      return pipeline
+    } catch {
+      guard isWhisperKitDownloadCorruptionError(error) else {
+        throw error
+      }
+
+      NSLog(
+        "[Transcription] WhisperKit download cache corrupted for %@, purging and retrying once: %@",
+        modelName,
+        error.localizedDescription,
+      )
+      try purgeIncompleteWhisperKitArtifacts(modelName: modelName, cacheFolder: cacheFolder)
+      try ensureWhisperKitDownloadDirectories(modelName: modelName, cacheFolder: cacheFolder)
+      let pipeline = try await createPipeline(modelName: modelName, cacheFolder: cacheFolder)
+      cachedPipeline = pipeline
+      cachedModelName = modelName
+      return pipeline
+    }
+  }
+
+  private static func whisperKitDownloadVariant(from modelName: String) -> String {
+    let prefix = "openai_whisper-"
+    if modelName.hasPrefix(prefix) {
+      return String(modelName.dropFirst(prefix.count))
+    }
+    return modelName
+  }
+
+  private static func resolvedModelFolderURL(modelName: String, cacheFolder: String) -> URL? {
+    guard hasCompleteWhisperKitArtifacts(modelName: modelName, cacheFolder: cacheFolder) else {
+      return nil
+    }
+    return huggingFaceModelDir(modelName: modelName, downloadBase: cacheURL(from: cacheFolder))
+  }
+
+  private static func createPipeline(
+    modelName: String,
+    cacheFolder: String,
+    modelFolder: URL? = nil,
+  ) async throws -> WhisperKit {
+    let downloadBase = cacheURL(from: cacheFolder)
+    let folder = modelFolder ?? resolvedModelFolderURL(modelName: modelName, cacheFolder: cacheFolder)
+    guard let folder else {
+      throw TranscriptionJobError.modelNotDownloaded
+    }
+
     let config = WhisperKitConfig(
       model: modelName,
-      downloadBase: cacheURL(from: cacheFolder),
+      downloadBase: downloadBase,
+      modelFolder: folder.path,
       verbose: false,
       logLevel: .none,
       load: true,
     )
-    let pipeline = try await WhisperKit(config)
-    cachedPipeline = pipeline
-    cachedModelName = modelName
-    return pipeline
+    return try await WhisperKit(config)
   }
 
   static func transcribe(
@@ -184,41 +311,161 @@ enum WhisperKitEngine {
     return URL(fileURLWithPath: path)
   }
 
-  private static func findModelRootURLs(modelName: String, cacheFolder: String) -> [URL] {
-    let base = cacheURL(from: cacheFolder)
+  private static func whisperKitRepoRoot(downloadBase: URL) -> URL {
+    downloadBase.appendingPathComponent("models/argmaxinc/whisperkit-coreml", isDirectory: true)
+  }
+
+  private static func hasCompleteWhisperKitArtifacts(modelName: String, cacheFolder: String) -> Bool {
     let fileManager = FileManager.default
-    guard fileManager.fileExists(atPath: base.path) else {
-      return []
+    let candidates = [
+      huggingFaceModelDir(modelName: modelName, downloadBase: cacheURL(from: cacheFolder)),
+      legacyHuggingFaceModelDir(modelName: modelName),
+    ].compactMap { $0 }
+
+    for modelDir in candidates where fileManager.fileExists(atPath: modelDir.path) {
+      let complete = requiredModelComponents.allSatisfy { component in
+        let coreData = modelDir
+          .appendingPathComponent(component, isDirectory: true)
+          .appendingPathComponent("coremldata.bin")
+        return fileManager.fileExists(atPath: coreData.path)
+      }
+      if complete {
+        return true
+      }
     }
 
-    guard let enumerator = fileManager.enumerator(
-      at: base,
-      includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
-      options: [.skipsHiddenFiles],
-    ) else {
-      return []
+    return false
+  }
+
+  private static func ensureWhisperKitDownloadDirectories(modelName: String, cacheFolder: String) throws {
+    let downloadBase = cacheURL(from: cacheFolder)
+    let fileManager = FileManager.default
+    let directories = [
+      downloadBase,
+      whisperKitRepoRoot(downloadBase: downloadBase),
+      huggingFaceModelDir(modelName: modelName, downloadBase: downloadBase),
+    ]
+
+    for directory in directories {
+      try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+    }
+  }
+
+  private static func purgeIncompleteWhisperKitArtifacts(modelName: String, cacheFolder: String) throws {
+    let downloadBase = cacheURL(from: cacheFolder)
+    let fileManager = FileManager.default
+    let repoRoot = whisperKitRepoRoot(downloadBase: downloadBase)
+    let cacheDir = repoRoot.appendingPathComponent(".cache", isDirectory: true)
+
+    if fileManager.fileExists(atPath: cacheDir.path) {
+      try fileManager.removeItem(at: cacheDir)
     }
 
+    let modelDir = huggingFaceModelDir(modelName: modelName, downloadBase: downloadBase)
+    if fileManager.fileExists(atPath: modelDir.path),
+       !hasCompleteWhisperKitArtifacts(modelName: modelName, cacheFolder: cacheFolder) {
+      try fileManager.removeItem(at: modelDir)
+    }
+  }
+
+  private static func isWhisperKitDownloadCorruptionError(_ error: Error) -> Bool {
+    let lower = error.localizedDescription.lowercased()
+    return lower.contains("incomplete") ||
+      lower.contains("weight.bin") ||
+      lower.contains("couldn't be moved") ||
+      lower.contains("could not be moved") ||
+      lower.contains("не удалось переместить") ||
+      (lower.contains("model") && lower.contains("not found"))
+  }
+
+  private static func huggingFaceModelDir(modelName: String, downloadBase: URL) -> URL {
+    downloadBase
+      .appendingPathComponent("models/argmaxinc/whisperkit-coreml", isDirectory: true)
+      .appendingPathComponent(modelName, isDirectory: true)
+  }
+
+  private static func legacyHuggingFaceModelDir(modelName: String) -> URL? {
+    guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+      return nil
+    }
+    return docs
+      .appendingPathComponent("huggingface/models/argmaxinc/whisperkit-coreml", isDirectory: true)
+      .appendingPathComponent(modelName, isDirectory: true)
+  }
+
+  private static func modelSearchBases(modelName: String, cacheFolder: String) -> [URL] {
+    let downloadBase = cacheURL(from: cacheFolder)
+    var bases = [downloadBase]
+    let hfDir = huggingFaceModelDir(modelName: modelName, downloadBase: downloadBase)
+    bases.append(hfDir)
+    if let legacyDir = legacyHuggingFaceModelDir(modelName: modelName) {
+      bases.append(legacyDir)
+    }
+    return bases
+  }
+
+  private static func findModelRootURLs(modelName: String, cacheFolder: String) -> [URL] {
+    let fileManager = FileManager.default
     let modelSlug = modelName.replacingOccurrences(of: "openai_whisper-", with: "")
     var roots = Set<URL>()
 
-    for case let url as URL in enumerator {
-      guard url.lastPathComponent == "AudioEncoder.mlmodelc" else { continue }
-      let path = url.path
-      guard pathMatchesModel(path, modelName: modelName) else { continue }
+    for searchBase in modelSearchBases(modelName: modelName, cacheFolder: cacheFolder) {
+      guard fileManager.fileExists(atPath: searchBase.path) else { continue }
 
-      var current = url.deletingLastPathComponent()
-      while current.path.hasPrefix(base.path), current.path != base.path {
-        let name = current.lastPathComponent
-        if name == modelName || name.contains(modelSlug) || pathMatchesModel(name, modelName: modelName) {
-          roots.insert(current)
-          break
+      if searchBase.lastPathComponent == modelName || pathMatchesModel(searchBase.path, modelName: modelName) {
+        roots.insert(searchBase)
+      }
+
+      guard let enumerator = fileManager.enumerator(
+        at: searchBase,
+        includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
+        options: [.skipsHiddenFiles],
+      ) else {
+        continue
+      }
+
+      for case let url as URL in enumerator {
+        guard url.lastPathComponent == "AudioEncoder.mlmodelc" else { continue }
+        let path = url.path
+        guard pathMatchesModel(path, modelName: modelName) else { continue }
+
+        var current = url.deletingLastPathComponent()
+        while current.path.hasPrefix(searchBase.path), current.path != searchBase.path {
+          let name = current.lastPathComponent
+          if name == modelName || name.contains(modelSlug) || pathMatchesModel(name, modelName: modelName) {
+            roots.insert(current)
+            break
+          }
+          current = current.deletingLastPathComponent()
         }
-        current = current.deletingLastPathComponent()
       }
     }
 
     return Array(roots)
+  }
+
+  private static func resolvedModelStorageBytes(modelName: String, cacheFolder: String) -> Int {
+    guard hasCompleteWhisperKitArtifacts(modelName: modelName, cacheFolder: cacheFolder) else {
+      return 0
+    }
+
+    let roots = findModelRootURLs(modelName: modelName, cacheFolder: cacheFolder)
+    if !roots.isEmpty {
+      return roots.reduce(0) { partial, url in
+        max(partial, directorySizeBytes(at: url))
+      }
+    }
+
+    let fileManager = FileManager.default
+    let modelDir = huggingFaceModelDir(
+      modelName: modelName,
+      downloadBase: cacheURL(from: cacheFolder),
+    )
+    if fileManager.fileExists(atPath: modelDir.path) {
+      return directorySizeBytes(at: modelDir)
+    }
+
+    return 0
   }
 
   private static func directorySizeBytes(at url: URL) -> Int {

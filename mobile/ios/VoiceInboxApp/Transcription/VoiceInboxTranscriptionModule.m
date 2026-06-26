@@ -26,6 +26,15 @@ RCT_EXTERN_METHOD(deleteModel:(NSString *)modelName
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(startModelDownload:(NSString *)modelName
+                  modelCachePath:(NSString *)modelCachePath
+                  jobId:(NSString *)jobId
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(cancelModelDownload:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(isSpeakerKitDownloaded:(NSString *)speakerKitCachePath
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)

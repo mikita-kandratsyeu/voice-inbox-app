@@ -1,4 +1,4 @@
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, useWindowDimensions, View } from 'react-native';
@@ -17,6 +17,7 @@ import {
 } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import {
+  getWhisperKitModelStorageBytes,
   getWhisperVariantDisplaySizeBytes,
   isWhisperModelSelectable,
   useModelManager,
@@ -30,11 +31,11 @@ import {
   getWhisperModelShortLabelKey,
   isWhisperCoreMlEncoderInstalled,
 } from '@/shared/lib/whisper';
+import { getWhisperKitEstimatedDownloadMb } from '@/shared/lib/whisper/whisperKitModelPath';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
 
 import {
   IOS_WHISPER_KIT_MODELS,
-  useWhisperKitModelListState,
 } from '../lib/useWhisperKitModelListState';
 import { WhisperDefaultLanguageSection } from './WhisperDefaultLanguageSection';
 import { WhisperEngineModeSection } from './WhisperEngineModeSection';
@@ -65,8 +66,8 @@ export const WhisperModelPickerScreen = () => {
 
   const compatibility = useWhisperModelCompatibility();
   const recommendedModelId = useRecommendedWhisperModelId();
-  const { startDownload, cancelDownload, removeModel } = useModelManager();
-  const { kitDownloaded, kitDisplaySizes, refreshKitModelState } = useWhisperKitModelListState();
+  const { startDownload, cancelDownload, removeModel, syncWhisperKitDownloadedStatuses } =
+    useModelManager();
 
   const useIosWhisperKit = IS_IOS && IOS_WHISPERKIT_ROLLOUT_ENABLED && iosWhisperKitEngineEnabled;
   const showIosEnginePicker = IS_IOS && IOS_WHISPERKIT_ROLLOUT_ENABLED;
@@ -81,13 +82,32 @@ export const WhisperModelPickerScreen = () => {
     (status) => status === 'downloading',
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      if (useIosWhisperKit) {
+        void syncWhisperKitDownloadedStatuses();
+      }
+    }, [syncWhisperKitDownloadedStatuses, useIosWhisperKit]),
+  );
+
   const refreshRealSizes = useCallback(async () => {
     const requestId = ++refreshRequestIdRef.current;
+    const models = useIosWhisperKit ? IOS_WHISPER_KIT_MODELS : WHISPER_MODELS;
+
     const entries = await Promise.all(
-      WHISPER_MODELS.map(async (m) => {
+      models.map(async (m) => {
         const variantId = getWhisperModelVariantId(m.id, whisperModelWeightsFormat);
         const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
         const downloaded = status === 'downloaded';
+
+        if (useIosWhisperKit) {
+          const bytes = downloaded ? await getWhisperKitModelStorageBytes(m.id) : 0;
+          if (bytes <= 0) {
+            return [variantId, null] as const;
+          }
+          return [variantId, formatFileSize(bytes)] as const;
+        }
+
         const bytes = await getWhisperVariantDisplaySizeBytes(m.id, whisperModelWeightsFormat, {
           downloaded,
         });
@@ -108,10 +128,10 @@ export const WhisperModelPickerScreen = () => {
       }
       return next;
     });
-  }, [whisperModelStatuses, whisperModelWeightsFormat]);
+  }, [useIosWhisperKit, whisperModelStatuses, whisperModelWeightsFormat]);
 
   const refreshCoreMlEncoderPresence = useCallback(async () => {
-    if (!IS_IOS) {
+    if (!IS_IOS || useIosWhisperKit) {
       setCoreMlEncoderActive({});
       return;
     }
@@ -129,7 +149,7 @@ export const WhisperModelPickerScreen = () => {
     }
 
     setCoreMlEncoderActive(Object.fromEntries(entries) as Record<WhisperModelId, boolean>);
-  }, []);
+  }, [useIosWhisperKit]);
 
   useEffect(() => {
     refreshRealSizes();
@@ -140,10 +160,12 @@ export const WhisperModelPickerScreen = () => {
   }, [refreshCoreMlEncoderPresence]);
 
   const handleDownload = async (id: WhisperModelId) => {
-    const coreMlInstalled = IS_IOS ? coreMlEncoderActive[id] === true : false;
-    const sizeMb = getWhisperEstimatedDownloadSizeMb(id, whisperModelWeightsFormat, {
-      coreMlAlreadyInstalled: coreMlInstalled,
-    });
+    const sizeMb = useIosWhisperKit
+      ? getWhisperKitEstimatedDownloadMb(id)
+      : getWhisperEstimatedDownloadSizeMb(id, whisperModelWeightsFormat, {
+          coreMlAlreadyInstalled: IS_IOS ? coreMlEncoderActive[id] === true : false,
+        });
+
     Alert.alert(t('whisper.downloadModel'), t('whisper.downloadConfirm', { size: sizeMb }), [
       { text: t('common.cancel'), style: 'cancel' },
       {
@@ -177,7 +199,9 @@ export const WhisperModelPickerScreen = () => {
             await removeModel(id);
             await refreshRealSizes();
             await refreshCoreMlEncoderPresence();
-            await refreshKitModelState();
+            if (useIosWhisperKit) {
+              await syncWhisperKitDownloadedStatuses();
+            }
           },
         },
       ],
@@ -188,7 +212,7 @@ export const WhisperModelPickerScreen = () => {
     const variantId = getWhisperModelVariantId(id, whisperModelWeightsFormat);
     const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
     if (status === 'downloading') return;
-    if (!isWhisperModelSelectable(status, useIosWhisperKit)) {
+    if (!isWhisperModelSelectable(status)) {
       const model = WHISPER_MODELS.find((m) => m.id === id);
       if (model) void handleDownload(id);
       return;
@@ -197,13 +221,11 @@ export const WhisperModelPickerScreen = () => {
     navigation.goBack();
   };
 
-  const handleSelectKitModel = (id: WhisperModelId) => {
-    setWhisperModel(id);
-  };
-
   const classicModels = WHISPER_MODELS.filter(
     (model) => !(whisperModelWeightsFormat === 'q5_1' && model.id === 'whisper-medium'),
   );
+
+  const pickerModels = useIosWhisperKit ? IOS_WHISPER_KIT_MODELS : classicModels;
 
   const modelSectionTitle = useIosWhisperKit
     ? t('whisper.sectionRecognition')
@@ -253,70 +275,50 @@ export const WhisperModelPickerScreen = () => {
               />
             ) : null}
 
-            {useIosWhisperKit
-              ? IOS_WHISPER_KIT_MODELS.map((model, index) => {
-                  const downloaded = kitDownloaded[model.id] === true;
-
-                  return (
-                    <WhisperModelCard
-                      key={model.id}
-                      model={model}
-                      index={index}
-                      total={IOS_WHISPER_KIT_MODELS.length}
-                      status={downloaded ? 'downloaded' : 'not_downloaded'}
-                      iosWhisperKitManaged
-                      embedded
-                      isSelected={selectedWhisperModel === model.id}
-                      displaySize={kitDisplaySizes[model.id] ?? model.sizeLabel}
-                      recommendedModelId={recommendedModelId}
-                      compatibility={null}
-                      color={color}
-                      onPress={handleSelectKitModel}
-                      onDelete={handleDelete}
-                      onCancelDownload={() => {}}
-                      coreMlEncoderActive={false}
-                    />
-                  );
-                })
-              : classicModels.map((model, index) => {
-                  const variantId = getWhisperModelVariantId(model.id, whisperModelWeightsFormat);
-                  const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
-                  const displaySize =
-                    realSizes[variantId] ??
-                    formatFileSize(
-                      getWhisperEstimatedDownloadSizeMb(model.id, whisperModelWeightsFormat, {
+            {pickerModels.map((model, index) => {
+              const variantId = getWhisperModelVariantId(model.id, whisperModelWeightsFormat);
+              const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
+              const displaySize =
+                realSizes[variantId] ??
+                formatFileSize(
+                  (useIosWhisperKit
+                    ? getWhisperKitEstimatedDownloadMb(model.id)
+                    : getWhisperEstimatedDownloadSizeMb(model.id, whisperModelWeightsFormat, {
                         coreMlAlreadyInstalled: coreMlEncoderActive[model.id] === true,
-                      }) *
-                        1024 *
-                        1024,
-                    );
+                      })) *
+                    1024 *
+                    1024,
+                );
 
-                  return (
-                    <WhisperModelCard
-                      key={model.id}
-                      model={model}
-                      index={index}
-                      total={classicModels.length}
-                      status={status}
-                      embedded
-                      isSelected={
-                        model.id === selectedWhisperModel &&
+              return (
+                <WhisperModelCard
+                  key={model.id}
+                  model={model}
+                  index={index}
+                  total={pickerModels.length}
+                  status={status}
+                  iosWhisperKitManaged={useIosWhisperKit}
+                  embedded
+                  isSelected={
+                    useIosWhisperKit
+                      ? selectedWhisperModel === model.id
+                      : model.id === selectedWhisperModel &&
                         selectedWhisperModelFormat === whisperModelWeightsFormat
-                      }
-                      displaySize={displaySize}
-                      recommendedModelId={recommendedModelId}
-                      compatibility={compatibility ? compatibility[model.id] : null}
-                      color={color}
-                      onPress={handleSelect}
-                      onDelete={handleDelete}
-                      onCancelDownload={cancelDownload}
-                      downloadPercent={whisperDownloadProgress[variantId]}
-                      downloadBytes={whisperDownloadBytes[variantId]}
-                      downloadPhase={whisperDownloadPhase[variantId]}
-                      coreMlEncoderActive={coreMlEncoderActive[model.id] === true}
-                    />
-                  );
-                })}
+                  }
+                  displaySize={displaySize}
+                  recommendedModelId={recommendedModelId}
+                  compatibility={useIosWhisperKit ? null : compatibility ? compatibility[model.id] : null}
+                  color={color}
+                  onPress={handleSelect}
+                  onDelete={handleDelete}
+                  onCancelDownload={cancelDownload}
+                  downloadPercent={whisperDownloadProgress[variantId]}
+                  downloadBytes={whisperDownloadBytes[variantId]}
+                  downloadPhase={whisperDownloadPhase[variantId]}
+                  coreMlEncoderActive={coreMlEncoderActive[model.id] === true}
+                />
+              );
+            })}
           </SettingsSection>
 
           {useIosWhisperKit ? (

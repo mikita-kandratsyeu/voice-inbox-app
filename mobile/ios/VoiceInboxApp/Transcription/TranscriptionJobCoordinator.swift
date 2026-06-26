@@ -8,6 +8,7 @@ final class TranscriptionJobCoordinator {
 
   private let queue = DispatchQueue(label: "com.voiceinbox.transcription.jobs", qos: .userInitiated)
   private var activeJobs: [String: TranscriptionJobState] = [:]
+  private var modelDownloadTask: Task<Void, Never>?
 
   private struct TranscriptionJobState {
     var cancelled = false
@@ -54,6 +55,59 @@ final class TranscriptionJobCoordinator {
     }
   }
 
+  func startModelDownload(
+    jobId: String,
+    modelName: String,
+    cacheFolder: String,
+    emit: @escaping EventEmitter,
+    completion: @escaping (Result<Void, Error>) -> Void,
+  ) {
+    queue.async { [weak self] in
+      guard let self else { return }
+      self.modelDownloadTask?.cancel()
+      self.modelDownloadTask = Task {
+        do {
+          try await WhisperKitEngine.downloadModel(modelName: modelName, cacheFolder: cacheFolder) { fraction in
+            let progress = Int(min(100, max(0, fraction * 100)))
+            emit("whisperKitModelDownloadProgress", [
+              "jobId": jobId,
+              "modelName": modelName,
+              "progress": progress,
+              "fraction": fraction,
+            ])
+          }
+          emit("whisperKitModelDownloadCompleted", [
+            "jobId": jobId,
+            "modelName": modelName,
+          ])
+          completion(.success(()))
+        } catch {
+          if (error as? TranscriptionJobError) == .cancelled || Task.isCancelled {
+            emit("whisperKitModelDownloadCancelled", ["jobId": jobId])
+          } else {
+            emit("whisperKitModelDownloadFailed", [
+              "jobId": jobId,
+              "modelName": modelName,
+              "message": error.localizedDescription,
+            ])
+          }
+          completion(.failure(error))
+        }
+        self.queue.async {
+          self.modelDownloadTask = nil
+        }
+      }
+    }
+  }
+
+  func cancelModelDownload() {
+    queue.async { [weak self] in
+      self?.modelDownloadTask?.cancel()
+      self?.modelDownloadTask = nil
+      WhisperKitEngine.cancelModelDownload()
+    }
+  }
+
   func isSpeakerKitDownloaded(cacheFolder: String, completion: @escaping (Bool) -> Void) {
     queue.async {
       completion(SpeakerKitEngine.isModelCached(cacheFolder: cacheFolder))
@@ -84,9 +138,13 @@ final class TranscriptionJobCoordinator {
   ) {
     queue.async { [weak self] in
       guard let self else { return }
-      if self.activeJobs[request.jobId] != nil {
-        completion(.failure(TranscriptionJobError.unknown("job_already_running")))
-        return
+
+      if let existing = self.activeJobs[request.jobId] {
+        var cancelled = existing
+        cancelled.cancelled = true
+        self.activeJobs[request.jobId] = cancelled
+        cancelled.task?.cancel()
+        self.activeJobs.removeValue(forKey: request.jobId)
       }
 
       var state = TranscriptionJobState()
@@ -130,6 +188,7 @@ final class TranscriptionJobCoordinator {
   }
 
   func cleanupJob(jobId: String) {
+    cancelJob(jobId: jobId)
     let jobDir = TranscriptionTempFileManager.jobDirectory(jobId: jobId)
     try? FileManager.default.removeItem(at: jobDir)
   }
@@ -166,6 +225,13 @@ final class TranscriptionJobCoordinator {
   private func runJob(request: TranscriptionJobRequest, emit: EventEmitter) async throws {
     guard WhisperKitEngine.isAvailable() else {
       throw TranscriptionJobError.modelUnavailable
+    }
+
+    guard WhisperKitEngine.isModelCached(
+      modelName: request.whisperKitModel,
+      cacheFolder: request.modelCachePath,
+    ) else {
+      throw TranscriptionJobError.modelNotDownloaded
     }
 
     emitProgress(request: request, emit: emit, phase: "modelLoading", progress: 5)

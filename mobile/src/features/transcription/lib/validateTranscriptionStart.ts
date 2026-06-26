@@ -5,8 +5,15 @@ import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/setti
 import { NitroFS } from '@/shared/lib/fs';
 import { resolveAudioPath } from '@/shared/lib/recordings';
 import { getWhisperModelPath } from '@/shared/lib/whisper';
+import {
+  getWhisperKitModelsDir,
+  mapWhisperModelIdToWhisperKitModel,
+} from '@/shared/lib/whisper/whisperKitModelPath';
 
-import { isIosNativeTranscriptionAvailable } from './nativeTranscription';
+import {
+  isIosNativeTranscriptionAvailable,
+  isWhisperKitModelDownloaded,
+} from './nativeTranscription';
 import { shouldSkipGgmlPreflightForIos } from './transcriptionModelEngine';
 
 const MIN_FREE_SPACE_BUFFER_BYTES = 100 * 1024 * 1024;
@@ -57,6 +64,8 @@ export async function validateTranscriptionStart(input: {
   modelStatus: string;
   appIsActive: boolean;
   transcriptionBusy: boolean;
+  /** When false, WhisperKit must already be on disk (no Hugging Face download). */
+  networkAvailable?: boolean;
 }): Promise<TranscriptionStartValidationResult> {
   if (!input.appIsActive) {
     return { ok: false, reason: 'app_in_background' };
@@ -81,6 +90,12 @@ export async function validateTranscriptionStart(input: {
     const nativeAvailable = await isIosNativeTranscriptionAvailable();
     if (!nativeAvailable) {
       return { ok: false, reason: 'model_missing', normalizedAudioPath, modelPath };
+    }
+
+    const whisperKitModel = mapWhisperModelIdToWhisperKitModel(input.modelId);
+    const modelOnDisk = await isWhisperKitModelDownloaded(whisperKitModel, getWhisperKitModelsDir());
+    if (!modelOnDisk) {
+      return { ok: false, reason: 'model_not_downloaded', normalizedAudioPath, modelPath };
     }
   } else {
     if (input.modelStatus !== 'downloaded') {

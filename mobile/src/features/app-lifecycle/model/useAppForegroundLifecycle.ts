@@ -10,6 +10,7 @@ import { maybeRunScheduledGithubSync } from '@/features/github-sync/lib/githubSy
 import { maybeRunScheduledGitlabSync } from '@/features/gitlab-sync/lib/gitlabSyncSchedule';
 import { maybeRunScheduledIcloudSync } from '@/features/icloud-sync/lib/icloudSyncSchedule';
 import { localLlmModelDownloader } from '@/features/model-manager/lib/local-llm-download';
+import { whisperKitModelDownloader } from '@/features/model-manager/lib/whisper-kit-download';
 import { whisperModelDownloader } from '@/features/model-manager/lib/whisper-download';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import {
@@ -27,11 +28,14 @@ const FOREGROUND_ON_ACTIVE_THROTTLE_MS = 15_000;
 
 const isModelDownloading = (): boolean => {
   const whisperState = whisperModelDownloader.getSnapshot().machineState;
+  const whisperKitState = whisperKitModelDownloader.getSnapshot().machineState;
   const llmState = localLlmModelDownloader.getSnapshot().machineState;
 
   return (
     whisperState === 'downloading' ||
     whisperState === 'pending' ||
+    whisperKitState === 'downloading' ||
+    whisperKitState === 'pending' ||
     llmState === 'downloading' ||
     llmState === 'pending'
   );

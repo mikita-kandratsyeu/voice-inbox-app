@@ -49,6 +49,7 @@ struct DiarizationTurnPayload: Codable {
 enum TranscriptionJobError: LocalizedError, Equatable {
   case cancelled
   case modelUnavailable
+  case modelNotDownloaded
   case audioMissing
   case diarizationUnavailable
   case unknown(String)
@@ -59,6 +60,8 @@ enum TranscriptionJobError: LocalizedError, Equatable {
       return "native_abort"
     case .modelUnavailable:
       return "model_missing"
+    case .modelNotDownloaded:
+      return "model_not_downloaded"
     case .audioMissing:
       return "audio_missing"
     case .diarizationUnavailable:
@@ -231,18 +234,22 @@ func mapTranscriptionFailure(_ error: Error) -> (code: String, message: String) 
     return ("native_abort", description)
   }
   if
+    lower.contains("model") &&
+    (lower.contains("not found") ||
+      lower.contains("unavailable") ||
+      lower.contains("failed to load") ||
+      lower.contains("weight.bin") ||
+      lower.contains("incomplete"))
+  {
+    return ("model_load_failed", description)
+  }
+  if
     lower.contains("audio") ||
     lower.contains("enoent") ||
     (lower.contains("file") && lower.contains("not found")) ||
     lower.contains("audio_file_missing")
   {
     return ("audio_missing", description)
-  }
-  if
-    lower.contains("model") &&
-    (lower.contains("not found") || lower.contains("unavailable") || lower.contains("failed to load"))
-  {
-    return ("model_load_failed", description)
   }
 
   return ("unknown", description)

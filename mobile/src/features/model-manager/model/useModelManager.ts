@@ -22,6 +22,11 @@ import { diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 import { getWhisperEstimatedDownloadBytes, getWhisperModelPath } from '@/shared/lib/whisper';
+import {
+  getWhisperKitEstimatedDownloadBytes,
+  getWhisperKitModelsDir,
+  mapWhisperModelIdToWhisperKitModel,
+} from '@/shared/lib/whisper/whisperKitModelPath';
 
 import { deleteLocalLlmModel } from '../lib/deleteLocalLlmModel';
 import { deleteWhisperModel } from '../lib/deleteWhisperModel';
@@ -34,6 +39,10 @@ import {
   updateWhisperDownloadLiveActivity,
 } from '../lib/downloadLiveActivity';
 import { cancelWhisperModelDownload, whisperModelDownloader } from '../lib/whisper-download';
+import {
+  cancelWhisperKitModelDownload,
+  whisperKitModelDownloader,
+} from '../lib/whisper-kit-download';
 import {
   deleteAllArgmaxTranscriptionModels,
   deleteWhisperKitModel,
@@ -55,11 +64,71 @@ export const useModelManager = () => {
   const removeLocalLlmModelStatus = useSettingsStore((s) => s.removeLocalLlmModelStatus);
   const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
 
+  const startWhisperKitDownload = useCallback(
+    async (
+      modelId: WhisperModelId,
+      options?: { expectedBytes?: number },
+    ): Promise<void> => {
+      const format = whisperModelWeightsFormat;
+      setWhisperModelStatus(modelId, format, 'downloading');
+      setDownloadProgress(modelId, format, 0, 0, 0, 'whisperkit');
+      const expectedBytes =
+        options?.expectedBytes ?? getWhisperKitEstimatedDownloadBytes(modelId);
+      const whisperKitModel = mapWhisperModelIdToWhisperKitModel(modelId);
+
+      await startWhisperDownloadLiveActivity(modelId).catch(() => {});
+
+      try {
+        await whisperKitModelDownloader.startDownload({
+          modelId,
+          whisperKitModel,
+          modelCachePath: getWhisperKitModelsDir(),
+          expectedBytes,
+          onProgress: (progress, bytesWritten, contentLength) => {
+            setDownloadProgress(
+              modelId,
+              format,
+              progress,
+              bytesWritten,
+              contentLength,
+              'whisperkit',
+            );
+            void updateWhisperDownloadLiveActivity(progress / 100, modelId).catch(() => {});
+          },
+        });
+
+        setWhisperModelStatus(modelId, format, 'downloaded');
+        setDownloadProgress(modelId, format, 100);
+        await stopWhisperDownloadLiveActivity();
+      } catch (err) {
+        const isCancelled =
+          err instanceof Error &&
+          (err.message.includes('cancel') || err.message.includes('abort'));
+
+        if (!isCancelled) {
+          setWhisperModelStatus(modelId, format, 'error');
+        } else {
+          setWhisperModelStatus(modelId, format, 'not_downloaded');
+        }
+        setDownloadProgress(modelId, format, 0);
+        await stopWhisperDownloadLiveActivity();
+      }
+    },
+    [setDownloadProgress, setWhisperModelStatus, whisperModelWeightsFormat],
+  );
+
   const startDownload = useCallback(
     async (
       modelId: WhisperModelId,
       options?: { format?: WhisperModelWeightsFormat; expectedBytes?: number },
     ): Promise<void> => {
+      if (shouldUseIosWhisperKitEngine()) {
+        await startWhisperKitDownload(modelId, {
+          expectedBytes: options?.expectedBytes,
+        });
+        return;
+      }
+
       const format = options?.format ?? whisperModelWeightsFormat;
       setWhisperModelStatus(modelId, format, 'downloading');
       setDownloadProgress(modelId, format, 0);
@@ -95,30 +164,42 @@ export const useModelManager = () => {
         await stopWhisperDownloadLiveActivity();
       }
     },
-    [setWhisperModelStatus, setDownloadProgress, whisperModelWeightsFormat],
+    [setWhisperModelStatus, setDownloadProgress, whisperModelWeightsFormat, startWhisperKitDownload],
   );
 
   const cancelDownload = useCallback(
     async (modelId: WhisperModelId): Promise<void> => {
+      const format = whisperModelWeightsFormat;
+      setWhisperModelStatus(modelId, format, 'not_downloaded');
+      setDownloadProgress(modelId, format, 0);
+      await stopWhisperDownloadLiveActivity().catch(() => {});
+
+      if (shouldUseIosWhisperKitEngine()) {
+        void cancelWhisperKitModelDownload().catch((err) => {
+          diagWarn('[whisperkit-download] background cancel failed', err);
+        });
+        return;
+      }
+
       // Immediate UI reset for both formats to avoid stuck "downloading" flags.
       setWhisperModelStatus(modelId, 'q5_1', 'not_downloaded');
       setWhisperModelStatus(modelId, 'full', 'not_downloaded');
       setDownloadProgress(modelId, 'q5_1', 0);
       setDownloadProgress(modelId, 'full', 0);
-      await stopWhisperDownloadLiveActivity().catch(() => {});
 
       // Do native/network cancellation in background so UI remains responsive.
       void cancelWhisperModelDownload(modelId).catch((err) => {
         diagWarn('[whisper-download] background cancel failed', err);
       });
     },
-    [setWhisperModelStatus, setDownloadProgress],
+    [setWhisperModelStatus, setDownloadProgress, whisperModelWeightsFormat],
   );
 
   const removeModel = useCallback(
     async (modelId: WhisperModelId): Promise<void> => {
       if (shouldUseIosWhisperKitEngine()) {
         await deleteWhisperKitModel(modelId);
+        removeWhisperModelStatus(modelId, whisperModelWeightsFormat);
       } else {
         await deleteWhisperModel(modelId, whisperModelWeightsFormat);
         removeWhisperModelStatus(modelId, whisperModelWeightsFormat);
@@ -155,6 +236,9 @@ export const useModelManager = () => {
     const nextStatuses = { ...useSettingsStore.getState().whisperModelStatuses };
     for (const item of checks) {
       const key = getWhisperModelVariantId(item.id, whisperModelWeightsFormat);
+      if (nextStatuses[key] === 'downloading') {
+        continue;
+      }
       if (item.downloaded) {
         nextStatuses[key] = 'downloaded';
       } else if (nextStatuses[key] === 'downloaded') {

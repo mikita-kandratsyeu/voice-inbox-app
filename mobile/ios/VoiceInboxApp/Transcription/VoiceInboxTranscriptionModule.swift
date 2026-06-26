@@ -16,6 +16,10 @@ class VoiceInboxTranscriptionModule: RCTEventEmitter {
       "transcriptionCompleted",
       "transcriptionFailed",
       "transcriptionCancelled",
+      "whisperKitModelDownloadProgress",
+      "whisperKitModelDownloadCompleted",
+      "whisperKitModelDownloadFailed",
+      "whisperKitModelDownloadCancelled",
     ]
   }
 
@@ -83,6 +87,45 @@ class VoiceInboxTranscriptionModule: RCTEventEmitter {
         reject("E_DELETE", error.localizedDescription, error)
       }
     }
+  }
+
+  @objc(startModelDownload:modelCachePath:jobId:resolver:rejecter:)
+  func startModelDownload(
+    _ modelName: String,
+    modelCachePath: String,
+    jobId: String,
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock,
+  ) {
+    coordinator.startModelDownload(
+      jobId: jobId,
+      modelName: modelName,
+      cacheFolder: modelCachePath,
+      emit: { [weak self] name, body in
+        self?.sendEvent(withName: name, body: body)
+      },
+      completion: { result in
+        switch result {
+        case .success:
+          resolve(["jobId": jobId])
+        case .failure(let error):
+          if (error as? TranscriptionJobError) == .cancelled {
+            resolve(["jobId": jobId, "cancelled": true])
+          } else {
+            reject("E_DOWNLOAD", error.localizedDescription, error)
+          }
+        }
+      },
+    )
+  }
+
+  @objc(cancelModelDownload:rejecter:)
+  func cancelModelDownload(
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock,
+  ) {
+    coordinator.cancelModelDownload()
+    resolve(nil)
   }
 
   @objc(isSpeakerKitDownloaded:resolver:rejecter:)
