@@ -6,14 +6,14 @@ import {
   mapWhisperModelIdToWhisperKitModel,
 } from '@/shared/lib/whisper/whisperKitModelPath';
 
-import type { TranscriptionChunkProfile } from './transcribeAudio';
 import { cleanTranscriptSegmentText } from './cleanTranscriptText';
-import { resolveNativeTranscriptionFailure, TranscriptionError } from './transcriptionErrors';
 import { mapEngineSegmentsToTranscriptSegments } from './mapEngineSegments';
 import {
   isIosNativeTranscriptionAvailable,
   startNativeTranscriptionJob,
 } from './nativeTranscription';
+import type { TranscriptionChunkProfile } from './transcribeAudio';
+import { resolveNativeTranscriptionFailure, TranscriptionError } from './transcriptionErrors';
 import { canRunWhisperGpuWork } from './whisperAppState';
 
 export type TranscribeAudioIosOptions = {
@@ -59,7 +59,9 @@ const DEFAULT_CHUNK_PROFILE: TranscriptionChunkProfile = {
   chunkOverlapSec: 4,
 };
 
-export const transcribeAudioIos = (options: TranscribeAudioIosOptions): TranscribeAudioIosHandle => {
+export const transcribeAudioIos = (
+  options: TranscribeAudioIosOptions,
+): TranscribeAudioIosHandle => {
   const {
     jobId,
     audioPath,
@@ -131,7 +133,10 @@ export const transcribeAudioIos = (options: TranscribeAudioIosOptions): Transcri
             }
             onChunkCompleted?.({
               chunkIndex: payload.checkpointIndex,
-              totalChunks: Math.max(1, Math.ceil(durationMs / (chunkProfile.chunkDurationSec * 1000))),
+              totalChunks: Math.max(
+                1,
+                Math.ceil(durationMs / (chunkProfile.chunkDurationSec * 1000)),
+              ),
               fullText: payload.fullText,
               segments: payload.segments,
               chunkProfile,

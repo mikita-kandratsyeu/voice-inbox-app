@@ -7,12 +7,8 @@ export type DiarizationSegment = {
   confidence?: number;
 };
 
-const overlapMs = (
-  aStart: number,
-  aEnd: number,
-  bStart: number,
-  bEnd: number,
-): number => Math.max(0, Math.min(aEnd, bEnd) - Math.max(aStart, bStart));
+const overlapMs = (aStart: number, aEnd: number, bStart: number, bEnd: number): number =>
+  Math.max(0, Math.min(aEnd, bEnd) - Math.max(aStart, bStart));
 
 /**
  * Assigns speakerId to ASR segments by maximum temporal overlap with diarization turns.

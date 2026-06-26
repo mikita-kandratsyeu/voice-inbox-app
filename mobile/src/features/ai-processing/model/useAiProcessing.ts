@@ -20,11 +20,11 @@ import {
 } from '@/features/ai-processing/lib/cloudSummarizeInFlight';
 import { markUnreadAfterSummaryRegenerationIfNeeded } from '@/features/ai-processing/lib/markUnreadAfterSummaryRegeneration';
 import { shouldIncludeMeetingSpeakerBreakdown } from '@/features/ai-processing/lib/meetingSpeakerBreakdown';
-import { recordHasNativeSpeakerDiarization } from '@/features/transcription/lib/nativeMeetingSpeakers';
 import { regenerateMeetingDialogue as runRegenerateMeetingDialogue } from '@/features/ai-processing/lib/regenerateMeetingDialogue';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
+import { recordHasNativeSpeakerDiarization } from '@/features/transcription/lib/nativeMeetingSpeakers';
 import type { AiProcessingResult } from '@/shared/lib/ai-api';
 import {
   AI_POLL_TIMEOUT_ERROR,

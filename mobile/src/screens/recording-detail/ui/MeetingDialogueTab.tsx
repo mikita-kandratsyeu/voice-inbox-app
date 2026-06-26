@@ -5,12 +5,12 @@ import { Switch, Text, View } from 'react-native';
 
 import type { RecordingStatus, TranscriptSegment } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import { hasNativeSpeakerSegments } from '@/features/transcription/lib/nativeMeetingSpeakers';
 import type { Colors } from '@/shared/config';
 import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
 import { AiTabErrorBanner, AiTabHintIcon, Button, TabEmptyState } from '@/shared/ui';
 
 import { buildSpeakerRoster, shouldShowInlineSpeakerLabel } from '../lib/buildSpeakerRoster';
-import { buildNativeMeetingUtterances } from '../lib/nativeMeetingDialogue';
 import {
   analyzeMeetingDialogueHeuristics,
   applySpeakerLabelsToUtterances,
@@ -18,7 +18,7 @@ import {
   type MeetingSpeakerLabels,
   normalizeSpeakerLabelKey,
 } from '../lib/meetingSpeakerLabels';
-import { hasNativeSpeakerSegments } from '@/features/transcription/lib/nativeMeetingSpeakers';
+import { buildNativeMeetingUtterances } from '../lib/nativeMeetingDialogue';
 import { parseMeetingDialogue } from '../lib/parseMeetingDialogue';
 import { AiTabProcessing } from './AiTabProcessing';
 import { MeetingDialogueSpeakerRoster } from './MeetingDialogueSpeakerRoster';

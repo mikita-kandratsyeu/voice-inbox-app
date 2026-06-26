@@ -24,8 +24,8 @@ import { useRecordStore } from '@/entities/record';
 import { recordRepository } from '@/entities/record/model/repository';
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
 import {
-  getRecommendedWhisperModelId,
   getOfflineWhisperStorageLabel,
+  getRecommendedWhisperModelId,
   LOCAL_AI_MODELS,
   useSettingsStore,
   WHISPER_MODELS,

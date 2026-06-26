@@ -1,6 +1,5 @@
-import { IS_IOS } from '@/shared/lib/platform';
-
 import { useSettingsStore } from '@/entities/settings';
+import { IS_IOS } from '@/shared/lib/platform';
 
 /** Offline ASR runtime used for transcription. */
 export type TranscriptionEngineId = 'whisper-rn' | 'whisperkit-ios';

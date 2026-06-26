@@ -10,10 +10,7 @@ const WHISPER_SPECIAL_TOKEN_PATTERN = /<\|[^|>]*\|>/gu;
 
 /** Removes Whisper control tokens such as <|ru|>, <|transcribe|>, <|12.34|>. */
 export const stripWhisperSpecialTokens = (text: string): string =>
-  text
-    .replace(WHISPER_SPECIAL_TOKEN_PATTERN, ' ')
-    .replace(/\s+/gu, ' ')
-    .trim();
+  text.replace(WHISPER_SPECIAL_TOKEN_PATTERN, ' ').replace(/\s+/gu, ' ').trim();
 
 const hasExcessiveRepeatedTokenRun = (text: string): boolean => {
   const tokens = text

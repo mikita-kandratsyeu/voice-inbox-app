@@ -2,9 +2,7 @@ import type { TranscriptionQualityMode } from '@/entities/settings/model/types';
 
 import { getDevicePerformanceProfile } from './devicePerformanceProfile';
 import type { TranscriptionChunkProfile } from './transcribeAudio';
-import {
-  applyQualityModeToChunkProfile,
-} from './transcriptionQualityMode';
+import { applyQualityModeToChunkProfile } from './transcriptionQualityMode';
 
 /**
  * Resolves optimal chunk profile based on device performance, power state, and quality mode.

@@ -7,9 +7,8 @@ export type TranscriptionDiarizationContext = {
   autoRefreshSpeakers: boolean;
 };
 
-export const hasNativeSpeakerSegments = (
-  segments: TranscriptSegment[] | undefined,
-): boolean => segments?.some((segment) => Boolean(segment.speakerId?.trim())) ?? false;
+export const hasNativeSpeakerSegments = (segments: TranscriptSegment[] | undefined): boolean =>
+  segments?.some((segment) => Boolean(segment.speakerId?.trim())) ?? false;
 
 /** Pro meeting notes with improved iOS transcription get on-device voice diarization. */
 export function shouldRunTranscriptionDiarization(
@@ -41,7 +40,5 @@ export function shouldUseNativeMeetingSpeakers(
   if (!shouldUseIosWhisperKitEngine() || record.classification !== 'meeting') {
     return false;
   }
-  return (
-    recordHasNativeSpeakerDiarization(record) || Boolean(record.meetingDialogue?.trim())
-  );
+  return recordHasNativeSpeakerDiarization(record) || Boolean(record.meetingDialogue?.trim());
 }

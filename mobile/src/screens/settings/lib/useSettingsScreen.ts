@@ -32,6 +32,7 @@ import {
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { openPlanPaywall } from '@/features/plan-paywall';
 import { isStoreProEntitlementActiveNow, useProEntitlement } from '@/features/pro-license';
+import { IOS_WHISPERKIT_ROLLOUT_ENABLED } from '@/features/transcription/config/transcriptionEngine';
 import { useAppTheme, useColors } from '@/shared/config';
 import { getAiUsage } from '@/shared/lib/ai-api';
 import { fetchProAccountPortalUrl } from '@/shared/lib/ai-api/proLicenseApi';
@@ -45,7 +46,6 @@ import {
   openAppSettings,
   requestMicPermission,
 } from '@/shared/lib/permissions';
-import { IOS_WHISPERKIT_ROLLOUT_ENABLED } from '@/features/transcription/config/transcriptionEngine';
 import { IS_IOS } from '@/shared/lib/platform';
 import { getWhisperLabel, getWhisperModelShortLabelKey } from '@/shared/lib/whisper';
 
@@ -306,8 +306,7 @@ export function useSettingsScreen() {
   );
   const whisperStatus = whisperModelStatuses[whisperVariantId] ?? 'not_downloaded';
 
-  const useIosWhisperKit =
-    IS_IOS && IOS_WHISPERKIT_ROLLOUT_ENABLED && iosWhisperKitEngineEnabled;
+  const useIosWhisperKit = IS_IOS && IOS_WHISPERKIT_ROLLOUT_ENABLED && iosWhisperKitEngineEnabled;
   const transcriptionValue = useIosWhisperKit
     ? t(getWhisperModelShortLabelKey(selectedWhisperModel))
     : whisperStatus === 'not_downloaded' || whisperStatus === 'downloading'

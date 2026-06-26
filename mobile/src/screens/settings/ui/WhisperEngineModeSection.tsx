@@ -37,7 +37,9 @@ export const WhisperEngineModeSection = ({
         accessibilityLabel={t('whisper.sectionEngine')}
       />
       <Text className="mt-2.5 text-xs leading-4" style={{ color: color.text.muted }}>
-        {mode === 'improved' ? t('whisper.engineModeHint.improved') : t('whisper.engineModeHint.standard')}
+        {mode === 'improved'
+          ? t('whisper.engineModeHint.improved')
+          : t('whisper.engineModeHint.standard')}
       </Text>
     </>
   );

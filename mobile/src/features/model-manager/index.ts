@@ -1,18 +1,6 @@
 export { deleteLocalLlmModel } from './lib/deleteLocalLlmModel';
 export { deleteWhisperModel } from './lib/deleteWhisperModel';
 export {
-  deleteAllArgmaxTranscriptionModels,
-  deleteAllWhisperKitModels,
-  deleteSpeakerKitModelFromDisk,
-  deleteWhisperKitModel,
-  getSpeakerKitStorageBytesOnDisk,
-  getWhisperKitModelStorageBytes,
-  IOS_WHISPER_KIT_STORAGE_MODEL_IDS,
-  isSpeakerKitModelOnDisk,
-  isWhisperKitModelOnDisk,
-  listDownloadedWhisperKitModels,
-} from './lib/whisperKitModelStorage';
-export {
   getLocalLlmModelFileSizeBytes,
   getModelFileSizeBytes,
   getModelFileSizeFormatted,
@@ -22,6 +10,7 @@ export {
   applySharedCoreMlToWhisperVariantBytes,
   getWhisperVariantStorageBytes,
 } from './lib/getWhisperVariantStorageBytes';
+export { isWhisperModelSelectable } from './lib/isWhisperModelSelectable';
 export type {
   LocalLlmDownloadMachineState,
   LocalLlmDownloadProgressHandler,
@@ -36,5 +25,16 @@ export type {
   WhisperDownloadSnapshot,
 } from './lib/whisper-download';
 export { cancelWhisperModelDownload, whisperModelDownloader } from './lib/whisper-download';
-export { isWhisperModelSelectable } from './lib/isWhisperModelSelectable';
+export {
+  deleteAllArgmaxTranscriptionModels,
+  deleteAllWhisperKitModels,
+  deleteSpeakerKitModelFromDisk,
+  deleteWhisperKitModel,
+  getSpeakerKitStorageBytesOnDisk,
+  getWhisperKitModelStorageBytes,
+  IOS_WHISPER_KIT_STORAGE_MODEL_IDS,
+  isSpeakerKitModelOnDisk,
+  isWhisperKitModelOnDisk,
+  listDownloadedWhisperKitModels,
+} from './lib/whisperKitModelStorage';
 export { useModelManager } from './model/useModelManager';

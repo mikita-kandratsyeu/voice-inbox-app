@@ -15,7 +15,10 @@ jest.mock('react-native', () => ({
 
 import { NativeEventEmitter, NativeModules } from 'react-native';
 
-import { isIosNativeTranscriptionAvailable, startNativeTranscriptionJob } from '../nativeTranscription';
+import {
+  isIosNativeTranscriptionAvailable,
+  startNativeTranscriptionJob,
+} from '../nativeTranscription';
 
 describe('nativeTranscription', () => {
   beforeEach(() => {

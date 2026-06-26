@@ -16,21 +16,15 @@ import {
   cancelLocalLlmModelDownload,
   localLlmModelDownloader,
 } from '@/features/model-manager/lib/local-llm-download';
+import { shouldUseIosWhisperKitEngine } from '@/features/transcription/config/transcriptionEngine';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 import { getWhisperEstimatedDownloadBytes, getWhisperModelPath } from '@/shared/lib/whisper';
 
-import { shouldUseIosWhisperKitEngine } from '@/features/transcription/config/transcriptionEngine';
-
 import { deleteLocalLlmModel } from '../lib/deleteLocalLlmModel';
 import { deleteWhisperModel } from '../lib/deleteWhisperModel';
-import {
-  deleteAllArgmaxTranscriptionModels,
-  deleteWhisperKitModel,
-  isWhisperKitModelOnDisk,
-} from '../lib/whisperKitModelStorage';
 import {
   startLocalAiDownloadLiveActivity,
   startWhisperDownloadLiveActivity,
@@ -40,6 +34,11 @@ import {
   updateWhisperDownloadLiveActivity,
 } from '../lib/downloadLiveActivity';
 import { cancelWhisperModelDownload, whisperModelDownloader } from '../lib/whisper-download';
+import {
+  deleteAllArgmaxTranscriptionModels,
+  deleteWhisperKitModel,
+  isWhisperKitModelOnDisk,
+} from '../lib/whisperKitModelStorage';
 
 export const useModelManager = () => {
   const setWhisperModelStatus = useSettingsStore((s) => s.setWhisperModelStatus);
@@ -127,8 +126,7 @@ export const useModelManager = () => {
 
       if (
         selectedWhisperModel === modelId &&
-        (shouldUseIosWhisperKitEngine() ||
-          selectedWhisperModelFormat === whisperModelWeightsFormat)
+        (shouldUseIosWhisperKitEngine() || selectedWhisperModelFormat === whisperModelWeightsFormat)
       ) {
         setWhisperModel(getRecommendedWhisperModelId(whisperModelWeightsFormat));
       }

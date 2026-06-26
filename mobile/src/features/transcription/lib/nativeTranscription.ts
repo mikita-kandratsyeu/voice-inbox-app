@@ -4,7 +4,6 @@ import type { TranscriptSegment } from '@/entities/record';
 import { isArray, isNumber, isRecord, isString } from '@/shared/lib/type-guards';
 
 import { cleanTranscriptSegmentText } from './cleanTranscriptText';
-
 import type {
   TranscriptionChunkProfile,
   TranscriptionProgressEvent,
@@ -140,7 +139,9 @@ export const startNativeTranscriptionJob = (
       }
       listeners.onProgress?.({
         jobId: event.jobId,
-        phase: (isString(event.phase) ? event.phase : 'transcribingChunk') as TranscriptionProgressEvent['phase'],
+        phase: (isString(event.phase)
+          ? event.phase
+          : 'transcribingChunk') as TranscriptionProgressEvent['phase'],
         currentChunk: isNumber(event.currentChunk) ? event.currentChunk : undefined,
         totalChunks: isNumber(event.totalChunks) ? event.totalChunks : undefined,
         progress: isNumber(event.progress) ? event.progress : 0,

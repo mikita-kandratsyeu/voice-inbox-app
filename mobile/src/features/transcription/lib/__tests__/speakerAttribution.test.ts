@@ -57,10 +57,9 @@ describe('buildDefaultSpeakers', () => {
   });
 
   it('reuses existing labels when provided', () => {
-    const speakers = buildDefaultSpeakers(
-      [{ speakerId: 'spk_a', startMs: 0, endMs: 1000 }],
-      { spk_a: 'Alice' },
-    );
+    const speakers = buildDefaultSpeakers([{ speakerId: 'spk_a', startMs: 0, endMs: 1000 }], {
+      spk_a: 'Alice',
+    });
 
     expect(speakers).toEqual([{ id: 'spk_a', label: 'Alice' }]);
   });

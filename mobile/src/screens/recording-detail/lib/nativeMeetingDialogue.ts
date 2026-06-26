@@ -8,9 +8,7 @@ const speakerDisplayLabel = (speakerId: string, order: Map<string, number>): str
 };
 
 /** Groups timed transcript segments into meeting utterance cards (voice diarization). */
-export const buildNativeMeetingUtterances = (
-  segments: TranscriptSegment[],
-): MeetingUtterance[] => {
+export const buildNativeMeetingUtterances = (segments: TranscriptSegment[]): MeetingUtterance[] => {
   const speakerOrder = new Map<string, number>();
   let nextSpeakerIndex = 1;
   const labelToSlot = new Map<string, number>();
@@ -69,8 +67,6 @@ export const buildMeetingDialogueMarkdownFromNativeSegments = (
 ): string =>
   buildNativeMeetingUtterances(segments)
     .map((utterance) =>
-      utterance.speakerLabel
-        ? `${utterance.speakerLabel}: ${utterance.body}`
-        : utterance.body,
+      utterance.speakerLabel ? `${utterance.speakerLabel}: ${utterance.body}` : utterance.body,
     )
     .join('\n\n');

@@ -15,9 +15,9 @@ describe('stripWhisperSpecialTokens', () => {
 
 describe('cleanTranscriptSegmentText', () => {
   it('strips tokens and collapses stutters', () => {
-    expect(
-      cleanTranscriptSegmentText('<|23.00|> мы будем иметь три сайлла <|28.00|>'),
-    ).toBe('мы будем иметь три сайлла');
+    expect(cleanTranscriptSegmentText('<|23.00|> мы будем иметь три сайлла <|28.00|>')).toBe(
+      'мы будем иметь три сайлла',
+    );
   });
 });
 

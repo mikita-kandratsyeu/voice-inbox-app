@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
-import { useSettingsStore, type TranscriptionQualityMode } from '@/entities/settings';
+import { type TranscriptionQualityMode, useSettingsStore } from '@/entities/settings';
 import { TRANSCRIPTION_QUALITY_MODES } from '@/features/transcription/lib/transcriptionQualityMode';
 import type { Colors } from '@/shared/config';
 

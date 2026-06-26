@@ -18,16 +18,17 @@ jest.mock('@/features/transcription/lib/nativeTranscription', () => ({
 }));
 
 import {
+  deleteNativeWhisperKitModel,
+  getNativeWhisperKitModelStorageBytes,
+  isWhisperKitModelDownloaded,
+} from '@/features/transcription/lib/nativeTranscription';
+
+import {
   deleteWhisperKitModel,
   getWhisperKitModelStorageBytes,
   isWhisperKitModelOnDisk,
   listDownloadedWhisperKitModels,
 } from '../whisperKitModelStorage';
-import {
-  deleteNativeWhisperKitModel,
-  getNativeWhisperKitModelStorageBytes,
-  isWhisperKitModelDownloaded,
-} from '@/features/transcription/lib/nativeTranscription';
 
 const mockIsWhisperKitModelDownloaded = jest.mocked(isWhisperKitModelDownloaded);
 const mockGetNativeWhisperKitModelStorageBytes = jest.mocked(getNativeWhisperKitModelStorageBytes);

@@ -11,7 +11,11 @@ import type {
   WhisperModelStatus,
 } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
-import { formatFileSize, getWhisperLabel, getWhisperModelShortLabelKey } from '@/shared/lib/whisper';
+import {
+  formatFileSize,
+  getWhisperLabel,
+  getWhisperModelShortLabelKey,
+} from '@/shared/lib/whisper';
 
 import { getSpeedLabel } from '../config';
 import { getCardRadiusClass } from '../lib';

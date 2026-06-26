@@ -16,12 +16,20 @@ import {
   type WhisperModelVariantId,
 } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
-import { getWhisperVariantDisplaySizeBytes, isWhisperModelSelectable, useModelManager } from '@/features/model-manager';
+import {
+  getWhisperVariantDisplaySizeBytes,
+  isWhisperModelSelectable,
+  useModelManager,
+} from '@/features/model-manager';
 import { IOS_WHISPERKIT_ROLLOUT_ENABLED } from '@/features/transcription/config/transcriptionEngine';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { IS_IOS } from '@/shared/lib/platform';
-import { formatFileSize, getWhisperModelShortLabelKey, isWhisperCoreMlEncoderInstalled } from '@/shared/lib/whisper';
+import {
+  formatFileSize,
+  getWhisperModelShortLabelKey,
+  isWhisperCoreMlEncoderInstalled,
+} from '@/shared/lib/whisper';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
 
 import {
@@ -30,9 +38,9 @@ import {
 } from '../lib/useWhisperKitModelListState';
 import { WhisperDefaultLanguageSection } from './WhisperDefaultLanguageSection';
 import { WhisperEngineModeSection } from './WhisperEngineModeSection';
+import { WhisperModelCard } from './WhisperModelCard';
 import { WhisperQualityModeSection } from './WhisperQualityModeSection';
 import { WhisperWeightsFormatSection } from './WhisperWeightsFormatSection';
-import { WhisperModelCard } from './WhisperModelCard';
 
 export const WhisperModelPickerScreen = () => {
   const { t } = useTranslation();
@@ -221,7 +229,9 @@ export const WhisperModelPickerScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           <Text className="mb-6 px-1 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-            {useIosWhisperKit ? t('whisper.modelDescriptionIosShort') : t('whisper.modelDescriptionShort')}
+            {useIosWhisperKit
+              ? t('whisper.modelDescriptionIosShort')
+              : t('whisper.modelDescriptionShort')}
           </Text>
 
           <SettingsSection title={t('whisper.sectionGeneral')}>

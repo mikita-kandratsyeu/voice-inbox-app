@@ -37,8 +37,6 @@ describe('nativeMeetingSpeakers', () => {
 
   it('does not use native meeting speakers when WhisperKit is off', () => {
     mockShouldUseIosWhisperKitEngine.mockReturnValue(false);
-    expect(
-      shouldRunTranscriptionDiarization({ classification: 'meeting' }, true),
-    ).toBe(false);
+    expect(shouldRunTranscriptionDiarization({ classification: 'meeting' }, true)).toBe(false);
   });
 });
