@@ -1,5 +1,5 @@
-import type { Colors } from '@/shared/config';
-import { isDarkSurfaceColor } from '@/shared/lib';
+import type { Colors } from '@/shared/config/colors';
+import { isDarkSurfaceColor } from '@/shared/lib/folderColor';
 
 /** Four hues chosen to stay distinguishable regardless of user accent color. */
 const SPEAKER_STRIPE_COLORS_LIGHT = ['#2563eb', '#059669', '#d97706', '#db2777'] as const;
