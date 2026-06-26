@@ -276,6 +276,7 @@ export const WhisperModelPickerScreen = () => {
 
           <SettingsSection title={t('whisper.sectionGeneral')}>
             <WhisperDefaultLanguageSection color={color} embedded />
+            <WhisperQualityModeSection color={color} embedded />
           </SettingsSection>
 
           {showIosEnginePicker ? (
@@ -350,10 +351,6 @@ export const WhisperModelPickerScreen = () => {
               {t('whisper.iosModelQualityHint')}
             </Text>
           ) : null}
-
-          <SettingsSection title={t('whisper.sectionLongRecordings')}>
-            <WhisperQualityModeSection color={color} embedded />
-          </SettingsSection>
 
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>

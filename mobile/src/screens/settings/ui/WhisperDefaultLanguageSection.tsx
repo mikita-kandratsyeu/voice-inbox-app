@@ -94,7 +94,11 @@ export const WhisperDefaultLanguageSection = ({
   );
 
   if (embedded) {
-    return <View className="px-4 py-3.5">{content}</View>;
+    return (
+      <View className="border-b px-4 py-3.5" style={{ borderBottomColor: color.border.default }}>
+        {content}
+      </View>
+    );
   }
 
   return (

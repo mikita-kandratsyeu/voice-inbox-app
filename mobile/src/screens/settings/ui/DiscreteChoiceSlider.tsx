@@ -55,6 +55,8 @@ export type DiscreteChoiceSliderProps = {
   tickLabel: (value: number) => string;
   sliderAccessibilityLabel: string;
   color: Colors;
+  /** Inside SettingsSection card — skip outer card padding/background. */
+  embedded?: boolean;
 };
 
 export function DiscreteChoiceSlider({
@@ -65,6 +67,7 @@ export function DiscreteChoiceSlider({
   tickLabel,
   sliderAccessibilityLabel,
   color,
+  embedded = false,
 }: DiscreteChoiceSliderProps) {
   const maxIndex = choices.length - 1;
   const [trackWidth, setTrackWidth] = useState(0);
@@ -89,13 +92,21 @@ export function DiscreteChoiceSlider({
   const labelWidth = Math.min(56, Math.max(34, labelSlot * 0.92));
 
   const cardStyle = useMemo(
-    () => ({
-      backgroundColor: color.background.card,
-      paddingHorizontal: 16,
-      paddingTop: 14,
-      paddingBottom: 12,
-    }),
-    [color],
+    () =>
+      embedded
+        ? {
+            backgroundColor: 'transparent',
+            paddingHorizontal: 0,
+            paddingTop: 0,
+            paddingBottom: 0,
+          }
+        : {
+            backgroundColor: color.background.card,
+            paddingHorizontal: 16,
+            paddingTop: 14,
+            paddingBottom: 12,
+          },
+    [color, embedded],
   );
 
   const railTop = (SLIDER_ROW_H - RAIL_H) / 2;

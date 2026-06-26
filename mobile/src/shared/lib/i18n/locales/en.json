@@ -2175,6 +2175,7 @@
     "defaultLanguageTitle": "Default transcription language",
     "defaultLanguageHint": "Used when you transcribe and when you open a recording. You can override the language on each recording’s transcript tab.",
     "qualityModeTitle": "Long recording mode",
+    "qualityModeSliderA11yLabel": "Long recording quality mode",
     "qualityMode": {
       "fast": "Fast",
       "balanced": "Balanced",
