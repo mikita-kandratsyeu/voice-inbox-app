@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 import { Alert } from 'react-native';
+import * as AddCalendarEvent from 'react-native-add-calendar-event';
+import RNCalendarEvents from 'react-native-calendar-events';
 
 import type { TaskItem } from '@/entities/record';
-import { addTaskToCalendarEvent, requestCalendarPermission } from '@/shared/lib/event-kit/calendar';
 import { parseTaskDeadline } from '@/shared/lib/parseTaskDeadline';
 
 const DEFAULT_EVENT_HOUR = 9;
@@ -30,7 +31,8 @@ const getEventStartDate = (task: TaskItem): Date => {
 
 export function useAddToCalendar() {
   const requestPermission = useCallback(async (): Promise<boolean> => {
-    return requestCalendarPermission();
+    const status = await RNCalendarEvents.requestPermissions();
+    return status === 'authorized';
   }, []);
 
   const addTaskToCalendar = useCallback(
@@ -50,13 +52,13 @@ export function useAddToCalendar() {
       const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
 
       try {
-        const saved = await addTaskToCalendarEvent({
+        const result = await AddCalendarEvent.presentEventCreatingDialog({
           title: task.text,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
           notes: recordTitle,
-          startDateMs: startDate.getTime(),
-          endDateMs: endDate.getTime(),
         });
-        if (saved) {
+        if (result?.action === 'SAVED') {
           onSuccess?.();
           return true;
         }

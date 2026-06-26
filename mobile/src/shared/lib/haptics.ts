@@ -1,31 +1,38 @@
-import { Haptics } from 'react-native-nitro-haptics';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 import { devWarn } from '@/shared/lib/appLogger';
 
-const trigger = (fn: () => void) => {
+type HapticType =
+  | 'selection'
+  | 'impactLight'
+  | 'impactMedium'
+  | 'notificationSuccess'
+  | 'notificationError';
+
+const trigger = (type: HapticType) => {
   try {
-    fn();
+    ReactNativeHapticFeedback.trigger(type, { enableVibrateFallback: true });
   } catch {
     devWarn('Haptic feedback failed');
   }
 };
 
 export const hapticSelection = () => {
-  trigger(() => Haptics.selection());
+  trigger('selection');
 };
 
 export const hapticLight = () => {
-  trigger(() => Haptics.impact('light'));
+  trigger('impactLight');
 };
 
 export const hapticMedium = () => {
-  trigger(() => Haptics.impact('medium'));
+  trigger('impactMedium');
 };
 
 export const hapticSuccess = () => {
-  trigger(() => Haptics.notification('success'));
+  trigger('notificationSuccess');
 };
 
 export const hapticError = () => {
-  trigger(() => Haptics.notification('error'));
+  trigger('notificationError');
 };

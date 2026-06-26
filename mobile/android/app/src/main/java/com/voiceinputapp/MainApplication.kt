@@ -17,7 +17,6 @@ class MainApplication : Application(), ReactApplication {
           add(AudioConverterPackage())
           add(SecureWindowPackage())
           add(SharedAudioImportPackage())
-          add(VoiceInboxRemindersPackage())
         },
     )
   }

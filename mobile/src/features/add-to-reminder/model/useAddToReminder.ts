@@ -1,8 +1,8 @@
+import Reminders from '@wiicamp/react-native-reminders';
 import { useCallback } from 'react';
 import { Alert } from 'react-native';
 
 import type { TaskItem } from '@/entities/record';
-import { addTaskReminder, requestReminderPermission } from '@/shared/lib/native-reminders';
 import { getTaskDeadlineTimestamp } from '@/shared/lib/taskDeadlineTimestamp';
 
 const FALLBACK_REMINDER_DELAY_MS = 60 * 60 * 1000;
@@ -23,7 +23,7 @@ const getReminderTimestamp = (
 
 export function useAddToReminder() {
   const requestPermission = useCallback(async (): Promise<boolean> => {
-    return requestReminderPermission();
+    return Reminders.requestPermission();
   }, []);
 
   const addTaskToReminder = useCallback(
@@ -43,12 +43,13 @@ export function useAddToReminder() {
       const priority = task.priority ? REMINDER_PRIORITY[task.priority] : undefined;
 
       try {
-        await addTaskReminder({
+        const reminderConfig = {
           title: task.text,
           note: recordTitle,
           timestamp,
           priority,
-        });
+        };
+        await Reminders.addReminder(reminderConfig);
         onSuccess?.();
         return true;
       } catch (err) {

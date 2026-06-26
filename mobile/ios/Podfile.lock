@@ -342,29 +342,6 @@ PODS:
   - nanopb/encode (3.30910.0)
   - NitroDeviceInfo (1.8.0):
     - NitroModules
-  - NitroEventKit (1.8.0):
-    - hermes-engine
-    - NitroModules
-    - RCTRequired
-    - RCTTypeSafety
-    - React-callinvoker
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
   - NitroFetch (1.4.2):
     - hermes-engine
     - NitroModules
@@ -389,29 +366,6 @@ PODS:
     - ReactNativeDependencies
     - Yoga
   - NitroFS (0.9.0):
-    - hermes-engine
-    - NitroModules
-    - RCTRequired
-    - RCTTypeSafety
-    - React-callinvoker
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
-  - NitroHaptics (0.2.3):
     - hermes-engine
     - NitroModules
     - RCTRequired
@@ -537,27 +491,6 @@ PODS:
     - RCTRequired
     - RCTTypeSafety
     - React-callinvoker
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
-  - ratex-react-native (0.1.12):
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
     - React-Core
     - React-debug
     - React-Fabric
@@ -2091,10 +2024,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-nitro-markdown (0.8.1):
-    - NitroModules
-    - React-Core
-    - React-Fabric
   - react-native-quick-base64 (3.0.0):
     - hermes-engine
     - RCTRequired
@@ -2702,6 +2631,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNCalendarEvents (2.2.0):
+    - React
   - RNCClipboard (1.16.3):
     - hermes-engine
     - RCTRequired
@@ -2977,6 +2908,27 @@ PODS:
   - RNPurchases (10.4.0):
     - PurchasesHybridCommon (= 18.15.1)
     - React-Core
+  - RNReactNativeHapticFeedback (3.0.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNReanimated (4.4.1):
     - hermes-engine
     - RCTRequired
@@ -3048,6 +3000,8 @@ PODS:
     - ReactNativeDependencies
     - RNWorklets
     - Yoga
+  - RNReminders (2.1.1):
+    - React
   - RNScreens (4.25.2):
     - hermes-engine
     - RCTRequired
@@ -3206,9 +3160,29 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNZlib (0.3.1):
-    - NitroModules
+  - RNZipArchive (8.0.1):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - SSZipArchive (~> 2.5.5)
+    - Yoga
+  - SSZipArchive (2.5.5)
   - whisper-rn (0.6.0):
     - hermes-engine
     - RCTRequired
@@ -3271,16 +3245,13 @@ DEPENDENCIES:
   - "LiquidGlass (from `../node_modules/@callstack/liquid-glass`)"
   - llama-rn (from `../node_modules/llama.rn`)
   - NitroDeviceInfo (from `../node_modules/react-native-nitro-device-info`)
-  - NitroEventKit (from `../node_modules/react-native-nitro-event-kit`)
   - NitroFetch (from `../node_modules/react-native-nitro-fetch`)
   - NitroFS (from `../node_modules/react-native-nitro-fs`)
-  - NitroHaptics (from `../node_modules/react-native-nitro-haptics`)
   - NitroMmkv (from `../node_modules/react-native-mmkv`)
   - NitroModules (from `../node_modules/react-native-nitro-modules`)
   - NitroSound (from `../node_modules/react-native-nitro-sound`)
   - "op-sqlite (from `../node_modules/@op-engineering/op-sqlite`)"
   - QuickCrypto (from `../node_modules/react-native-quick-crypto`)
-  - ratex-react-native (from `../node_modules/ratex-react-native`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
   - RCTRequired (from `../node_modules/react-native/Libraries/Required`)
   - RCTSwiftUI (from `../node_modules/react-native/ReactApple/RCTSwiftUI`)
@@ -3328,7 +3299,6 @@ DEPENDENCIES:
   - react-native-keyboard-controller (from `../node_modules/react-native-keyboard-controller`)
   - "react-native-menu (from `../node_modules/@react-native-menu/menu`)"
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
-  - react-native-nitro-markdown (from `../node_modules/react-native-nitro-markdown`)
   - react-native-quick-base64 (from `../node_modules/react-native-quick-base64`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - "react-native-skia (from `../node_modules/@shopify/react-native-skia`)"
@@ -3372,6 +3342,7 @@ DEPENDENCIES:
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - ReactNativeEnrichedMarkdown (from `../node_modules/react-native-enriched-markdown`)
   - RNBootSplash (from `../node_modules/react-native-bootsplash`)
+  - RNCalendarEvents (from `../node_modules/react-native-calendar-events`)
   - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - "RNFBAnalytics (from `../node_modules/@react-native-firebase/analytics`)"
@@ -3386,12 +3357,14 @@ DEPENDENCIES:
   - "RNNotifee (from `../node_modules/@notifee/react-native`)"
   - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNPurchases (from `../node_modules/react-native-purchases`)
+  - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
+  - "RNReminders (from `../node_modules/@wiicamp/react-native-reminders`)"
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSensors (from `../node_modules/react-native-sensors`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
-  - RNZlib (from `../node_modules/react-native-nitro-zlib`)
+  - RNZipArchive (from `../node_modules/react-native-zip-archive`)
   - whisper-rn (from `../node_modules/whisper.rn`)
   - yandex-mobile-ads (from `../node_modules/yandex-mobile-ads`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
@@ -3445,6 +3418,7 @@ SPEC REPOS:
     - PurchasesHybridCommon
     - RecaptchaInterop
     - RevenueCat
+    - SSZipArchive
     - YandexMobileAds
 
 EXTERNAL SOURCES:
@@ -3465,14 +3439,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/llama.rn"
   NitroDeviceInfo:
     :path: "../node_modules/react-native-nitro-device-info"
-  NitroEventKit:
-    :path: "../node_modules/react-native-nitro-event-kit"
   NitroFetch:
     :path: "../node_modules/react-native-nitro-fetch"
   NitroFS:
     :path: "../node_modules/react-native-nitro-fs"
-  NitroHaptics:
-    :path: "../node_modules/react-native-nitro-haptics"
   NitroMmkv:
     :path: "../node_modules/react-native-mmkv"
   NitroModules:
@@ -3483,8 +3453,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@op-engineering/op-sqlite"
   QuickCrypto:
     :path: "../node_modules/react-native-quick-crypto"
-  ratex-react-native:
-    :path: "../node_modules/ratex-react-native"
   RCTDeprecation:
     :path: "../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation"
   RCTRequired:
@@ -3577,8 +3545,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-menu/menu"
   react-native-netinfo:
     :path: "../node_modules/@react-native-community/netinfo"
-  react-native-nitro-markdown:
-    :path: "../node_modules/react-native-nitro-markdown"
   react-native-quick-base64:
     :path: "../node_modules/react-native-quick-base64"
   react-native-safe-area-context:
@@ -3665,6 +3631,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-enriched-markdown"
   RNBootSplash:
     :path: "../node_modules/react-native-bootsplash"
+  RNCalendarEvents:
+    :path: "../node_modules/react-native-calendar-events"
   RNCClipboard:
     :path: "../node_modules/@react-native-clipboard/clipboard"
   RNDateTimePicker:
@@ -3693,8 +3661,12 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-permissions"
   RNPurchases:
     :path: "../node_modules/react-native-purchases"
+  RNReactNativeHapticFeedback:
+    :path: "../node_modules/react-native-haptic-feedback"
   RNReanimated:
     :path: "../node_modules/react-native-reanimated"
+  RNReminders:
+    :path: "../node_modules/@wiicamp/react-native-reminders"
   RNScreens:
     :path: "../node_modules/react-native-screens"
   RNSensors:
@@ -3703,8 +3675,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-svg"
   RNWorklets:
     :path: "../node_modules/react-native-worklets"
-  RNZlib:
-    :path: "../node_modules/react-native-nitro-zlib"
+  RNZipArchive:
+    :path: "../node_modules/react-native-zip-archive"
   whisper-rn:
     :path: "../node_modules/whisper.rn"
   yandex-mobile-ads:
@@ -3762,10 +3734,8 @@ SPEC CHECKSUMS:
   MMKVCore: 3d16ce9f7d411e135020915fde98a056859a1efa
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   NitroDeviceInfo: 87c71a4fc33faf71bf616789dda68d9bc60d1e4d
-  NitroEventKit: fc56cfe33603ed8197779792a62fafb02f520425
   NitroFetch: 29b991e1f4d54101acab17f71bab85a8c4c1cef6
   NitroFS: 671a78596568ba42758ff3ca8cbd8c2fa3b43486
-  NitroHaptics: 1534f04507c4c880a585cf78926ef4e29d3211d4
   NitroMmkv: 21968ae5bd91f4569b8a69b2e75357845dac2ca1
   NitroModules: 675efe9b98bac1359517fd33549c7191badebcbc
   NitroSound: 0179b5e66a465e303fb58d4d21db25215c22133a
@@ -3775,7 +3745,6 @@ SPEC CHECKSUMS:
   PromisesSwift: 217dea0fd5d2ad65222a109c48698add13cc1c5b
   PurchasesHybridCommon: eed735a411c1aee8c05d62933fa7c4a40ede4009
   QuickCrypto: 17e1a9b8417df15179272bc363e2849b8e33ddc8
-  ratex-react-native: 300620d84f065da6c42ed07e141e1391f5cc708c
   RCTDeprecation: 8f1dc8057e54ea6fd01df47d0d29487adc92c1a9
   RCTRequired: 9d02105f758490fab48d77fead2599a449321ab7
   RCTSwiftUI: 714ca60953e8b7779821eea889ebdc891851682b
@@ -3822,7 +3791,6 @@ SPEC CHECKSUMS:
   react-native-keyboard-controller: 4b73d5f65531163a8952986a018157707ae96981
   react-native-menu: 2f87618b07c3ce5eeb0ef17d3ffee52e2575673b
   react-native-netinfo: c9fa0172bba6414449ea5b67fc92f2c99c20cb1d
-  react-native-nitro-markdown: 775757ed78f6a9468c4ffe98a7e33f97f2002049
   react-native-quick-base64: d141c938c88e6c2e6199d5f7c515fe8dc0c0120d
   react-native-safe-area-context: c20a2b66c37a6fd0e6d448dbec5b6fe0cc53bb11
   react-native-skia: 59686b8bb9c11f2a118c17ec54db09e80aeec665
@@ -3868,6 +3836,7 @@ SPEC CHECKSUMS:
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   RevenueCat: f3641992451c1426da8d8d1466cec3bbdb765962
   RNBootSplash: faa63b812a8c7fd603c0c779cba68e683bc060a1
+  RNCalendarEvents: 7e65eb4a94f53c1744d1e275f7fafcfaa619f7a3
   RNCClipboard: 26237d7fcfc6359e674655b02d03d6178d63d085
   RNDateTimePicker: 0e47a3a4b2c71c1625ff31d69c929e314c995fc1
   RNFBAnalytics: 8296729b64550b80af04d20b7ff0d921f0e913a4
@@ -3882,12 +3851,15 @@ SPEC CHECKSUMS:
   RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
   RNPermissions: 5e62c19b0f9453e223fc2494d981b78c4e3183ff
   RNPurchases: e42a93515b5d8994b2c4954da925470b0f5a92df
+  RNReactNativeHapticFeedback: 50fb580f22705e3407d44d208fd113aab5f324bc
   RNReanimated: 3567ec1c7151c623ac5685cf80db16142b2d1b5d
+  RNReminders: e7bdf59616634b7ae180b18f6bf86dba531b0007
   RNScreens: cca7e1ec9184d91c7681160df11bdb7bf1ab0235
   RNSensors: 117ba71c7eeeea0407ea0c0bb79e3495d602049b
   RNSVG: 82a575b4e2734cfbd4482afd9ee7766a29251bd5
   RNWorklets: 3af77a2f7988ccd8439a61b66c09b68c86e6d99e
-  RNZlib: dfd69ad5029fc6c4bf190cee36b6a52fdc738404
+  RNZipArchive: 071aee69059e0347cb7519c5354aa436b8a23e73
+  SSZipArchive: c69881e8ac5521f0e622291387add5f60f30f3c4
   whisper-rn: 2e0c586294fbc0c00e5ad4bbdbb8394c2fc902d0
   yandex-mobile-ads: 0338956981fccce8200e11b57852f207d6809119
   YandexMobileAds: 47d9d0ce6705e79e3801138e8c1d9898e4c79a51

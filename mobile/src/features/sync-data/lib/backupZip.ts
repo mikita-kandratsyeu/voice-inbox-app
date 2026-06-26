@@ -1,4 +1,4 @@
-/** WinZip AES-256 — matches @zip.js/zip.js folder export on mobile and web. */
+/** WinZip AES-256 — matches `react-native-zip-archive` folder export and @zip.js on web. */
 export const BACKUP_ZIP_ENCRYPTION = 'AES-256' as const;
 
 export const BACKUP_PASSWORD_MIN_LENGTH = 8;
