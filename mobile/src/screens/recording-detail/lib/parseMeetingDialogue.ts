@@ -1,4 +1,9 @@
 import type { Colors } from '@/shared/config';
+import { isDarkSurfaceColor } from '@/shared/lib';
+
+/** Four hues chosen to stay distinguishable regardless of user accent color. */
+const SPEAKER_STRIPE_COLORS_LIGHT = ['#2563eb', '#059669', '#d97706', '#db2777'] as const;
+const SPEAKER_STRIPE_COLORS_DARK = ['#60a5fa', '#34d399', '#fbbf24', '#f472b6'] as const;
 
 /** One estimated speaker turn from pseudo-diarization markdown. */
 export type MeetingUtterance = {
@@ -238,11 +243,8 @@ export function parseMeetingDialogue(raw: string): MeetingUtterance[] {
 }
 
 export function utteranceStripeColor(color: Colors, slot: number): string {
-  const accents = [
-    color.accent.primary,
-    color.accent.transcript,
-    color.accent.aiData,
-    color.accent.models,
-  ] as const;
-  return accents[slot % accents.length];
+  const palette = isDarkSurfaceColor(color)
+    ? SPEAKER_STRIPE_COLORS_DARK
+    : SPEAKER_STRIPE_COLORS_LIGHT;
+  return palette[slot % palette.length];
 }
