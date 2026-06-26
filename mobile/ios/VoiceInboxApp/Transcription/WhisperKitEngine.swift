@@ -27,12 +27,22 @@ enum WhisperKitEngine {
   static func downloadModel(
     modelName: String,
     cacheFolder: String,
-    onProgress: @escaping (Double) -> Void,
+    onProgress: @escaping (_ fraction: Double, _ phase: String, _ bytesOnDisk: Int) -> Void,
   ) async throws {
     #if canImport(WhisperKit)
+    let reportProgress: (Double, String) -> Void = { fraction, phase in
+      let bytes = WhisperKitEngine.downloadStorageBytes(modelName: modelName, cacheFolder: cacheFolder)
+      let resolved = bytes > 0 ? bytes : WhisperKitEngine.resolvedModelStorageBytes(
+        modelName: modelName,
+        cacheFolder: cacheFolder,
+      )
+      onProgress(min(1.0, max(0, fraction)), phase, resolved)
+    }
+
     if isModelCached(modelName: modelName, cacheFolder: cacheFolder) {
-      onProgress(1.0)
+      reportProgress(0.05, "preparing")
       _ = try await loadPipeline(modelName: modelName, cacheFolder: cacheFolder)
+      reportProgress(1.0, "preparing")
       return
     }
 
@@ -42,6 +52,7 @@ enum WhisperKitEngine {
 
     let downloadBase = cacheURL(from: cacheFolder)
     let variant = whisperKitDownloadVariant(from: modelName)
+    let downloadFractionCap = 0.82
 
     do {
       let modelFolder = try await WhisperKit.download(
@@ -51,7 +62,8 @@ enum WhisperKitEngine {
         from: whisperKitModelRepo,
         progressCallback: { progress in
           guard !downloadCancelled, !Task.isCancelled else { return }
-          onProgress(progress.fractionCompleted)
+          let fraction = min(downloadFractionCap, progress.fractionCompleted * downloadFractionCap)
+          reportProgress(fraction, "downloading")
         },
       )
 
@@ -63,6 +75,7 @@ enum WhisperKitEngine {
         throw TranscriptionJobError.unknown("download_incomplete")
       }
 
+      reportProgress(downloadFractionCap, "preparing")
       let pipeline = try await createPipeline(
         modelName: modelName,
         cacheFolder: cacheFolder,
@@ -70,7 +83,8 @@ enum WhisperKitEngine {
       )
       cachedPipeline = pipeline
       cachedModelName = modelName
-      onProgress(1.0)
+      reportProgress(0.96, "preparing")
+      reportProgress(1.0, "preparing")
     } catch {
       if downloadCancelled || Task.isCancelled || (error as? TranscriptionJobError) == .cancelled {
         throw TranscriptionJobError.cancelled
@@ -442,6 +456,23 @@ enum WhisperKitEngine {
     }
 
     return Array(roots)
+  }
+
+  /// Bytes on disk while download is in progress (includes HF cache and partial model dir).
+  fileprivate static func downloadStorageBytes(modelName: String, cacheFolder: String) -> Int {
+    let downloadBase = cacheURL(from: cacheFolder)
+    let repoRoot = whisperKitRepoRoot(downloadBase: downloadBase)
+    let modelDir = huggingFaceModelDir(modelName: modelName, downloadBase: downloadBase)
+    let cacheDir = repoRoot.appendingPathComponent(".cache", isDirectory: true)
+    let fileManager = FileManager.default
+    var total = 0
+    if fileManager.fileExists(atPath: modelDir.path) {
+      total += directorySizeBytes(at: modelDir)
+    }
+    if fileManager.fileExists(atPath: cacheDir.path) {
+      total += directorySizeBytes(at: cacheDir)
+    }
+    return total
   }
 
   private static func resolvedModelStorageBytes(modelName: String, cacheFolder: String) -> Int {

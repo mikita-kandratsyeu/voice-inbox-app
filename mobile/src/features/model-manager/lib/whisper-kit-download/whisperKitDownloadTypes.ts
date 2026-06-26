@@ -1,4 +1,4 @@
-import type { WhisperModelId } from '@/entities/settings';
+import type { WhisperDownloadPhase, WhisperModelId } from '@/entities/settings';
 
 export type WhisperKitDownloadMachineState = 'idle' | 'pending' | 'downloading';
 
@@ -6,6 +6,7 @@ export type WhisperKitDownloadProgressHandler = (
   progress: number,
   bytesWritten: number,
   contentLength: number,
+  phase: Extract<WhisperDownloadPhase, 'whisperkit' | 'whisperkit_prepare'>,
 ) => void;
 
 export type WhisperKitDownloadSnapshot = {

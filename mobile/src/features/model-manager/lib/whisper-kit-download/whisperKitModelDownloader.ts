@@ -133,7 +133,13 @@ class WhisperKitModelDownloader {
     await new Promise<void>((resolve, reject) => {
       this.eventSubscription = emitter.addListener(
         'whisperKitModelDownloadProgress',
-        (payload: { jobId?: string; progress?: number; fraction?: number }) => {
+        (payload: {
+          jobId?: string;
+          progress?: number;
+          fraction?: number;
+          phase?: string;
+          bytesOnDisk?: number;
+        }) => {
           if (payload.jobId !== jobId) return;
           const fraction =
             typeof payload.fraction === 'number'
@@ -142,8 +148,18 @@ class WhisperKitModelDownloader {
                 ? payload.progress / 100
                 : 0;
           const progress = Math.min(100, Math.max(0, Math.round(fraction * 100)));
-          const bytesWritten = Math.round(expectedBytes * fraction);
-          onProgress(progress, bytesWritten, expectedBytes);
+          const phase =
+            payload.phase === 'preparing' ? 'whisperkit_prepare' : ('whisperkit' as const);
+          const bytesOnDisk =
+            typeof payload.bytesOnDisk === 'number' && Number.isFinite(payload.bytesOnDisk)
+              ? Math.max(0, payload.bytesOnDisk)
+              : 0;
+          const totalBytes = Math.max(expectedBytes, bytesOnDisk);
+          const writtenBytes =
+            phase === 'whisperkit_prepare'
+              ? Math.max(bytesOnDisk, Math.round(totalBytes * 0.82))
+              : Math.max(bytesOnDisk, Math.round(totalBytes * fraction));
+          onProgress(progress, writtenBytes, totalBytes, phase);
         },
       );
 
@@ -213,4 +229,5 @@ class WhisperKitModelDownloader {
 
 export const whisperKitModelDownloader = new WhisperKitModelDownloader();
 
-export const cancelWhisperKitModelDownload = (): Promise<void> => whisperKitModelDownloader.cancel();
+export const cancelWhisperKitModelDownload = (): Promise<void> =>
+  whisperKitModelDownloader.cancel();

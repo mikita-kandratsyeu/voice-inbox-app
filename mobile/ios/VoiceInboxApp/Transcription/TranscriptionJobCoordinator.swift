@@ -67,13 +67,18 @@ final class TranscriptionJobCoordinator {
       self.modelDownloadTask?.cancel()
       self.modelDownloadTask = Task {
         do {
-          try await WhisperKitEngine.downloadModel(modelName: modelName, cacheFolder: cacheFolder) { fraction in
+          try await WhisperKitEngine.downloadModel(modelName: modelName, cacheFolder: cacheFolder) {
+            fraction,
+            phase,
+            bytesOnDisk in
             let progress = Int(min(100, max(0, fraction * 100)))
             emit("whisperKitModelDownloadProgress", [
               "jobId": jobId,
               "modelName": modelName,
               "progress": progress,
               "fraction": fraction,
+              "phase": phase,
+              "bytesOnDisk": bytesOnDisk,
             ])
           }
           emit("whisperKitModelDownloadCompleted", [

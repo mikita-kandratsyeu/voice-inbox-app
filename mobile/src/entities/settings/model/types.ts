@@ -100,7 +100,12 @@ export type DownloadBytes = {
   total: number;
 };
 
-export type WhisperDownloadPhase = 'weights' | 'coreml' | 'whisperkit' | 'speakerkit';
+export type WhisperDownloadPhase =
+  | 'weights'
+  | 'coreml'
+  | 'whisperkit'
+  | 'whisperkit_prepare'
+  | 'speakerkit';
 
 export type SettingsState = {
   appTheme: AppTheme;

@@ -2211,6 +2211,7 @@
     "downloadPhaseWeights": "Downloading model weights…",
     "downloadPhaseCoreMl": "Downloading Core ML encoder (Neural Engine).",
     "downloadPhaseWhisperKit": "Downloading speech recognition model…",
+    "downloadPhaseWhisperKitPrepare": "Preparing model for use…",
     "coreMlChip": "Core ML",
     "coreMlAcceleratedA11y": "Core ML encoder on device",
     "downloadError": "Download error — tap to retry",

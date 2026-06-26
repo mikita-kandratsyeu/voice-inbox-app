@@ -2257,6 +2257,7 @@
     "downloadPhaseWeights": "Загружаются веса модели…",
     "downloadPhaseCoreMl": "Загружается Core ML encoder (Neural Engine).",
     "downloadPhaseWhisperKit": "Загружается модель распознавания речи…",
+    "downloadPhaseWhisperKitPrepare": "Подготовка модели к работе…",
     "coreMlChip": "Core ML",
     "coreMlAcceleratedA11y": "Энкодер Core ML на устройстве",
     "downloadError": "Ошибка загрузки — нажмите для повтора",

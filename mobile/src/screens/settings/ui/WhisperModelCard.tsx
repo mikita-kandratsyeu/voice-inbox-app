@@ -210,9 +210,11 @@ export const WhisperModelCard = ({
                 <Text className="text-[12px] leading-4" style={{ color: color.text.muted }}>
                   {downloadPhase === 'coreml'
                     ? t('whisper.downloadPhaseCoreMl')
-                    : downloadPhase === 'whisperkit'
-                      ? t('whisper.downloadPhaseWhisperKit')
-                      : t('whisper.downloadPhaseWeights')}
+                    : downloadPhase === 'whisperkit_prepare'
+                      ? t('whisper.downloadPhaseWhisperKitPrepare')
+                      : downloadPhase === 'whisperkit'
+                        ? t('whisper.downloadPhaseWhisperKit')
+                        : t('whisper.downloadPhaseWeights')}
                 </Text>
               )}
               <TouchableOpacity

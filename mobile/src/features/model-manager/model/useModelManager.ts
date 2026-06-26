@@ -46,6 +46,7 @@ import {
 import {
   deleteAllArgmaxTranscriptionModels,
   deleteWhisperKitModel,
+  getWhisperKitModelStorageBytes,
   isWhisperKitModelOnDisk,
 } from '../lib/whisperKitModelStorage';
 
@@ -65,15 +66,11 @@ export const useModelManager = () => {
   const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
 
   const startWhisperKitDownload = useCallback(
-    async (
-      modelId: WhisperModelId,
-      options?: { expectedBytes?: number },
-    ): Promise<void> => {
+    async (modelId: WhisperModelId, options?: { expectedBytes?: number }): Promise<void> => {
       const format = whisperModelWeightsFormat;
       setWhisperModelStatus(modelId, format, 'downloading');
       setDownloadProgress(modelId, format, 0, 0, 0, 'whisperkit');
-      const expectedBytes =
-        options?.expectedBytes ?? getWhisperKitEstimatedDownloadBytes(modelId);
+      const expectedBytes = options?.expectedBytes ?? getWhisperKitEstimatedDownloadBytes(modelId);
       const whisperKitModel = mapWhisperModelIdToWhisperKitModel(modelId);
 
       await startWhisperDownloadLiveActivity(modelId).catch(() => {});
@@ -84,26 +81,23 @@ export const useModelManager = () => {
           whisperKitModel,
           modelCachePath: getWhisperKitModelsDir(),
           expectedBytes,
-          onProgress: (progress, bytesWritten, contentLength) => {
-            setDownloadProgress(
-              modelId,
-              format,
-              progress,
-              bytesWritten,
-              contentLength,
-              'whisperkit',
-            );
+          onProgress: (progress, bytesWritten, contentLength, phase) => {
+            setDownloadProgress(modelId, format, progress, bytesWritten, contentLength, phase);
             void updateWhisperDownloadLiveActivity(progress / 100, modelId).catch(() => {});
           },
         });
 
+        const actualBytes = await getWhisperKitModelStorageBytes(modelId);
         setWhisperModelStatus(modelId, format, 'downloaded');
-        setDownloadProgress(modelId, format, 100);
+        if (actualBytes > 0) {
+          setDownloadProgress(modelId, format, 100, actualBytes, actualBytes);
+        } else {
+          setDownloadProgress(modelId, format, 100);
+        }
         await stopWhisperDownloadLiveActivity();
       } catch (err) {
         const isCancelled =
-          err instanceof Error &&
-          (err.message.includes('cancel') || err.message.includes('abort'));
+          err instanceof Error && (err.message.includes('cancel') || err.message.includes('abort'));
 
         if (!isCancelled) {
           setWhisperModelStatus(modelId, format, 'error');
@@ -164,7 +158,12 @@ export const useModelManager = () => {
         await stopWhisperDownloadLiveActivity();
       }
     },
-    [setWhisperModelStatus, setDownloadProgress, whisperModelWeightsFormat, startWhisperKitDownload],
+    [
+      setWhisperModelStatus,
+      setDownloadProgress,
+      whisperModelWeightsFormat,
+      startWhisperKitDownload,
+    ],
   );
 
   const cancelDownload = useCallback(

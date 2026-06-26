@@ -12,11 +12,11 @@ export const getSpeakerKitModelsDir = (): string => `${argmaxModelsDir()}/speake
 export const getTranscriptionJobsCacheDir = (): string =>
   `${getDocumentDirectoryPath()}/transcription-jobs`;
 
-/** Approximate WhisperKit Core ML download sizes for the settings picker. */
+/** Approximate WhisperKit Core ML download sizes for the settings picker (on-disk total). */
 export const WHISPER_KIT_ESTIMATED_DOWNLOAD_MB: Partial<Record<WhisperModelId, number>> = {
-  'whisper-base': 77,
-  'whisper-small': 250,
-  'whisper-medium': 626,
+  'whisper-base': 150,
+  'whisper-small': 280,
+  'whisper-medium': 640,
 };
 
 export const getWhisperKitEstimatedDownloadMb = (modelId: WhisperModelId): number =>
