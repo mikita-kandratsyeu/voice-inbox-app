@@ -64,6 +64,9 @@ export {
   getWhisperModelDisplayName,
   getWhisperModelSizeMb,
   getWhisperModelVariantId,
+  getWhisperKitModelVariantId,
+  getActiveWhisperModelVariantId,
+  WHISPER_KIT_STORAGE_FORMAT,
   LOCAL_AI_MODELS,
   USER_FACING_AI_MODELS,
   USER_FACING_AI_MODELS_BY_SPEED,
@@ -102,6 +105,7 @@ export type {
   WhisperModel,
   WhisperModelId,
   WhisperModelStatus,
+  WhisperModelStorageFormat,
   WhisperModelVariantId,
   WhisperModelWeightsFormat,
 } from './model/types';

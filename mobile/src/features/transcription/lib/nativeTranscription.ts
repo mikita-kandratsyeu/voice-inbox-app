@@ -282,18 +282,6 @@ export const startNativeTranscriptionJob = (
   };
 };
 
-export const prepareNativeTranscriptionModel = async (
-  whisperKitModel: string,
-  modelCachePath: string,
-): Promise<boolean> => {
-  const mod = getNativeModule();
-  if (!mod) {
-    return false;
-  }
-  const result = await mod.prepareModel(whisperKitModel, modelCachePath);
-  return result?.ready === true;
-};
-
 export const isWhisperKitModelDownloaded = async (
   whisperKitModel: string,
   modelCachePath: string,

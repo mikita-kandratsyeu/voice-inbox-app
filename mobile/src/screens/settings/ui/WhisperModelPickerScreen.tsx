@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import {
   getWhisperEstimatedDownloadSizeMb,
+  getWhisperKitModelVariantId,
   getWhisperModelVariantId,
   useRecommendedWhisperModelId,
   useSettingsStore,
@@ -22,7 +23,6 @@ import {
   isWhisperModelSelectable,
   useModelManager,
 } from '@/features/model-manager';
-import { IOS_WHISPERKIT_ROLLOUT_ENABLED } from '@/features/transcription/config/transcriptionEngine';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { IS_IOS } from '@/shared/lib/platform';
@@ -64,11 +64,19 @@ export const WhisperModelPickerScreen = () => {
 
   const compatibility = useWhisperModelCompatibility();
   const recommendedModelId = useRecommendedWhisperModelId();
-  const { startDownload, cancelDownload, removeModel, syncWhisperKitDownloadedStatuses } =
+  const { startDownload, cancelDownload, removeModel, syncWhisperKitDownloadedStatuses, syncDownloadedStatusesForFormat } =
     useModelManager();
 
-  const useIosWhisperKit = IS_IOS && IOS_WHISPERKIT_ROLLOUT_ENABLED && iosWhisperKitEngineEnabled;
-  const showIosEnginePicker = IS_IOS && IOS_WHISPERKIT_ROLLOUT_ENABLED;
+  const useIosWhisperKit = IS_IOS && iosWhisperKitEngineEnabled;
+  const showIosEnginePicker = IS_IOS;
+
+  const resolveModelVariantId = useCallback(
+    (modelId: WhisperModelId): WhisperModelVariantId =>
+      useIosWhisperKit
+        ? getWhisperKitModelVariantId(modelId)
+        : getWhisperModelVariantId(modelId, whisperModelWeightsFormat),
+    [useIosWhisperKit, whisperModelWeightsFormat],
+  );
 
   const [realSizes, setRealSizes] = useState<Partial<Record<WhisperModelVariantId, string>>>({});
   const [coreMlEncoderActive, setCoreMlEncoderActive] = useState<
@@ -84,8 +92,15 @@ export const WhisperModelPickerScreen = () => {
     useCallback(() => {
       if (useIosWhisperKit) {
         void syncWhisperKitDownloadedStatuses();
+      } else {
+        void syncDownloadedStatusesForFormat(whisperModelWeightsFormat);
       }
-    }, [syncWhisperKitDownloadedStatuses, useIosWhisperKit]),
+    }, [
+      syncDownloadedStatusesForFormat,
+      syncWhisperKitDownloadedStatuses,
+      useIosWhisperKit,
+      whisperModelWeightsFormat,
+    ]),
   );
 
   const refreshRealSizes = useCallback(async () => {
@@ -94,7 +109,7 @@ export const WhisperModelPickerScreen = () => {
 
     const entries = await Promise.all(
       models.map(async (m) => {
-        const variantId = getWhisperModelVariantId(m.id, whisperModelWeightsFormat);
+        const variantId = resolveModelVariantId(m.id);
         const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
         const downloaded = status === 'downloaded';
 
@@ -126,7 +141,7 @@ export const WhisperModelPickerScreen = () => {
       }
       return next;
     });
-  }, [useIosWhisperKit, whisperModelStatuses, whisperModelWeightsFormat]);
+  }, [resolveModelVariantId, useIosWhisperKit, whisperModelStatuses, whisperModelWeightsFormat]);
 
   const refreshCoreMlEncoderPresence = useCallback(async () => {
     if (!IS_IOS || useIosWhisperKit) {
@@ -207,7 +222,7 @@ export const WhisperModelPickerScreen = () => {
   };
 
   const handleSelect = (id: WhisperModelId) => {
-    const variantId = getWhisperModelVariantId(id, whisperModelWeightsFormat);
+    const variantId = resolveModelVariantId(id);
     const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
     if (status === 'downloading') return;
     if (!isWhisperModelSelectable(status)) {
@@ -260,7 +275,11 @@ export const WhisperModelPickerScreen = () => {
 
           {showIosEnginePicker ? (
             <SettingsSection title={t('whisper.sectionEngine')}>
-              <WhisperEngineModeSection color={color} embedded />
+              <WhisperEngineModeSection
+                color={color}
+                embedded
+                hasActiveWhisperDownload={hasActiveWhisperDownload}
+              />
             </SettingsSection>
           ) : null}
 
@@ -274,7 +293,7 @@ export const WhisperModelPickerScreen = () => {
             ) : null}
 
             {pickerModels.map((model, index) => {
-              const variantId = getWhisperModelVariantId(model.id, whisperModelWeightsFormat);
+              const variantId = resolveModelVariantId(model.id);
               const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
               const displaySize =
                 realSizes[variantId] ??

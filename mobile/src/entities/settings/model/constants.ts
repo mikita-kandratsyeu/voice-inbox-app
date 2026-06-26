@@ -7,6 +7,7 @@ import type {
   UserSelectableAIModelId,
   WhisperModel,
   WhisperModelId,
+  WhisperModelStorageFormat,
   WhisperModelVariantId,
   WhisperModelWeightsFormat,
 } from './types';
@@ -309,10 +310,24 @@ export const getWhisperEstimatedDownloadSizeMb = (
   return weightsMb + getWhisperCoreMlSizeMb(modelId);
 };
 
+export const WHISPER_KIT_STORAGE_FORMAT = 'whisperkit' as const;
+
 export const getWhisperModelVariantId = (
   modelId: WhisperModelId,
-  format: WhisperModelWeightsFormat,
+  format: WhisperModelStorageFormat,
 ): WhisperModelVariantId => `${modelId}:${format}`;
+
+export const getWhisperKitModelVariantId = (modelId: WhisperModelId): WhisperModelVariantId =>
+  getWhisperModelVariantId(modelId, WHISPER_KIT_STORAGE_FORMAT);
+
+export const getActiveWhisperModelVariantId = (input: {
+  modelId: WhisperModelId;
+  weightsFormat: WhisperModelWeightsFormat;
+  useWhisperKit: boolean;
+}): WhisperModelVariantId =>
+  input.useWhisperKit
+    ? getWhisperKitModelVariantId(input.modelId)
+    : getWhisperModelVariantId(input.modelId, input.weightsFormat);
 
 export const getWhisperModelDisplayName = (
   modelId: WhisperModelId,

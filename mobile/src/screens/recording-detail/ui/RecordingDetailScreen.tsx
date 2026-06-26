@@ -28,7 +28,7 @@ import {
 import type { TranscriptionLanguage } from '@/entities/settings';
 import {
   areFoldersEnabledInAiMode,
-  getWhisperModelVariantId,
+  getActiveWhisperModelVariantId,
   isPrivateCustomServerMode,
   useSettingsStore,
 } from '@/entities/settings';
@@ -423,9 +423,13 @@ export const RecordingDetailScreen = () => {
   );
 
   const handleRetranscribe = useCallback(async () => {
-    const variantId = getWhisperModelVariantId(selectedWhisperModel, selectedWhisperModelFormat);
-    const modelStatus = whisperModelStatuses[variantId] ?? 'not_downloaded';
     const useWhisperKit = shouldUseIosWhisperKitEngine();
+    const variantId = getActiveWhisperModelVariantId({
+      modelId: selectedWhisperModel,
+      weightsFormat: selectedWhisperModelFormat,
+      useWhisperKit,
+    });
+    const modelStatus = whisperModelStatuses[variantId] ?? 'not_downloaded';
 
     if (
       isConnected === false &&
@@ -438,17 +442,15 @@ export const RecordingDetailScreen = () => {
             ? 'recordingDetail.whisperKitModelOfflineHint'
             : 'recordingDetail.modelNotDownloadedHint',
         ),
-        useWhisperKit
-          ? [{ text: t('common.ok') }]
-          : [
-              { text: t('common.ok') },
-              {
-                text: t('recordingDetail.goToWhisperSettings'),
-                onPress: () => {
-                  navigation.push('WhisperModelPickerRoot');
-                },
-              },
-            ],
+        [
+          { text: t('common.ok') },
+          {
+            text: t('recordingDetail.goToWhisperSettings'),
+            onPress: () => {
+              navigation.push('WhisperModelPickerRoot');
+            },
+          },
+        ],
       );
       return;
     }

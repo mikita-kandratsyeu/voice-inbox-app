@@ -64,8 +64,6 @@ export async function validateTranscriptionStart(input: {
   modelStatus: string;
   appIsActive: boolean;
   transcriptionBusy: boolean;
-  /** When false, WhisperKit must already be on disk (no Hugging Face download). */
-  networkAvailable?: boolean;
 }): Promise<TranscriptionStartValidationResult> {
   if (!input.appIsActive) {
     return { ok: false, reason: 'app_in_background' };

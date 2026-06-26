@@ -4,9 +4,11 @@ import {
   getLocalAiModelEntry,
   getRecommendedWhisperModelId,
   getWhisperModelVariantId,
+  getWhisperKitModelVariantId,
   LOCAL_AI_MODELS,
   type LocalAiModelId,
   useSettingsStore,
+  WHISPER_KIT_STORAGE_FORMAT,
   WHISPER_MODELS,
   type WhisperModelId,
   type WhisperModelStatus,
@@ -67,13 +69,13 @@ export const useModelManager = () => {
 
   const startWhisperKitDownload = useCallback(
     async (modelId: WhisperModelId, options?: { expectedBytes?: number }): Promise<void> => {
-      const format = whisperModelWeightsFormat;
-      setWhisperModelStatus(modelId, format, 'downloading');
-      setDownloadProgress(modelId, format, 0, 0, 0, 'whisperkit');
+      const kitFormat = WHISPER_KIT_STORAGE_FORMAT;
+      setWhisperModelStatus(modelId, kitFormat, 'downloading');
+      setDownloadProgress(modelId, kitFormat, 0, 0, 0, 'whisperkit');
       const expectedBytes = options?.expectedBytes ?? getWhisperKitEstimatedDownloadBytes(modelId);
       const whisperKitModel = mapWhisperModelIdToWhisperKitModel(modelId);
 
-      await startWhisperDownloadLiveActivity(modelId).catch(() => {});
+      await startWhisperDownloadLiveActivity(modelId, 'whisperkit').catch(() => {});
 
       try {
         await whisperKitModelDownloader.startDownload({
@@ -82,33 +84,36 @@ export const useModelManager = () => {
           modelCachePath: getWhisperKitModelsDir(),
           expectedBytes,
           onProgress: (progress, bytesWritten, contentLength, phase) => {
-            setDownloadProgress(modelId, format, progress, bytesWritten, contentLength, phase);
-            void updateWhisperDownloadLiveActivity(progress / 100, modelId).catch(() => {});
+            setDownloadProgress(modelId, kitFormat, progress, bytesWritten, contentLength, phase);
+            void updateWhisperDownloadLiveActivity(progress / 100, modelId, 'whisperkit').catch(
+              () => {},
+            );
           },
         });
 
         const actualBytes = await getWhisperKitModelStorageBytes(modelId);
-        setWhisperModelStatus(modelId, format, 'downloaded');
+        setWhisperModelStatus(modelId, kitFormat, 'downloaded');
         if (actualBytes > 0) {
-          setDownloadProgress(modelId, format, 100, actualBytes, actualBytes);
+          setDownloadProgress(modelId, kitFormat, 100, actualBytes, actualBytes);
         } else {
-          setDownloadProgress(modelId, format, 100);
+          setDownloadProgress(modelId, kitFormat, 100);
         }
         await stopWhisperDownloadLiveActivity();
       } catch (err) {
-        const isCancelled =
-          err instanceof Error && (err.message.includes('cancel') || err.message.includes('abort'));
+        const message = err instanceof Error ? err.message : String(err);
+        const isCancelled = message.includes('cancel') || message.includes('abort');
+        const isAnotherDownload = message.includes('already in progress');
 
-        if (!isCancelled) {
-          setWhisperModelStatus(modelId, format, 'error');
+        if (isCancelled || isAnotherDownload) {
+          setWhisperModelStatus(modelId, kitFormat, 'not_downloaded');
         } else {
-          setWhisperModelStatus(modelId, format, 'not_downloaded');
+          setWhisperModelStatus(modelId, kitFormat, 'error');
         }
-        setDownloadProgress(modelId, format, 0);
+        setDownloadProgress(modelId, kitFormat, 0);
         await stopWhisperDownloadLiveActivity();
       }
     },
-    [setDownloadProgress, setWhisperModelStatus, whisperModelWeightsFormat],
+    [setDownloadProgress, setWhisperModelStatus],
   );
 
   const startDownload = useCallback(
@@ -168,17 +173,21 @@ export const useModelManager = () => {
 
   const cancelDownload = useCallback(
     async (modelId: WhisperModelId): Promise<void> => {
-      const format = whisperModelWeightsFormat;
-      setWhisperModelStatus(modelId, format, 'not_downloaded');
-      setDownloadProgress(modelId, format, 0);
-      await stopWhisperDownloadLiveActivity().catch(() => {});
-
       if (shouldUseIosWhisperKitEngine()) {
+        const kitFormat = WHISPER_KIT_STORAGE_FORMAT;
+        setWhisperModelStatus(modelId, kitFormat, 'not_downloaded');
+        setDownloadProgress(modelId, kitFormat, 0);
+        await stopWhisperDownloadLiveActivity().catch(() => {});
         void cancelWhisperKitModelDownload().catch((err) => {
           diagWarn('[whisperkit-download] background cancel failed', err);
         });
         return;
       }
+
+      const format = whisperModelWeightsFormat;
+      setWhisperModelStatus(modelId, format, 'not_downloaded');
+      setDownloadProgress(modelId, format, 0);
+      await stopWhisperDownloadLiveActivity().catch(() => {});
 
       // Immediate UI reset for both formats to avoid stuck "downloading" flags.
       setWhisperModelStatus(modelId, 'q5_1', 'not_downloaded');
@@ -198,7 +207,7 @@ export const useModelManager = () => {
     async (modelId: WhisperModelId): Promise<void> => {
       if (shouldUseIosWhisperKitEngine()) {
         await deleteWhisperKitModel(modelId);
-        removeWhisperModelStatus(modelId, whisperModelWeightsFormat);
+        removeWhisperModelStatus(modelId, WHISPER_KIT_STORAGE_FORMAT);
       } else {
         await deleteWhisperModel(modelId, whisperModelWeightsFormat);
         removeWhisperModelStatus(modelId, whisperModelWeightsFormat);
@@ -221,10 +230,6 @@ export const useModelManager = () => {
   );
 
   const syncWhisperKitDownloadedStatuses = useCallback(async (): Promise<void> => {
-    if (!shouldUseIosWhisperKitEngine()) {
-      return;
-    }
-
     const checks = await Promise.all(
       WHISPER_MODELS.map(async (model) => ({
         id: model.id,
@@ -233,19 +238,30 @@ export const useModelManager = () => {
     );
 
     const nextStatuses = { ...useSettingsStore.getState().whisperModelStatuses };
+    const legacyFormats: WhisperModelWeightsFormat[] = ['q5_1', 'full'];
+
     for (const item of checks) {
-      const key = getWhisperModelVariantId(item.id, whisperModelWeightsFormat);
-      if (nextStatuses[key] === 'downloading') {
+      const kitKey = getWhisperKitModelVariantId(item.id);
+
+      if (nextStatuses[kitKey] === 'downloading') {
         continue;
       }
+
       if (item.downloaded) {
-        nextStatuses[key] = 'downloaded';
-      } else if (nextStatuses[key] === 'downloaded') {
-        delete nextStatuses[key];
+        nextStatuses[kitKey] = 'downloaded';
+        for (const legacyFormat of legacyFormats) {
+          const legacyKey = getWhisperModelVariantId(item.id, legacyFormat);
+          if (nextStatuses[legacyKey] === 'downloaded') {
+            delete nextStatuses[legacyKey];
+          }
+        }
+      } else if (nextStatuses[kitKey] === 'downloaded') {
+        delete nextStatuses[kitKey];
       }
     }
+
     setWhisperModelStatuses(nextStatuses);
-  }, [setWhisperModelStatuses, whisperModelWeightsFormat]);
+  }, [setWhisperModelStatuses]);
 
   const startLocalLlmDownload = useCallback(
     async (modelId: LocalAiModelId): Promise<void> => {

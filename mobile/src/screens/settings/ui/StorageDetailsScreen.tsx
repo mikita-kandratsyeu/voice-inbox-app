@@ -28,6 +28,7 @@ import {
   getRecommendedWhisperModelId,
   LOCAL_AI_MODELS,
   useSettingsStore,
+  WHISPER_KIT_STORAGE_FORMAT,
   WHISPER_MODELS,
 } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
@@ -490,6 +491,7 @@ export const StorageDetailsScreen = () => {
               await deleteWhisperModel(model.id, fmt);
               useSettingsStore.getState().removeWhisperModelStatus(model.id, fmt);
             }
+            useSettingsStore.getState().removeWhisperModelStatus(model.id, WHISPER_KIT_STORAGE_FORMAT);
           }
 
           await deleteAllArgmaxTranscriptionModels();

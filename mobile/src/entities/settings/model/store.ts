@@ -48,6 +48,7 @@ import type {
   WhisperDownloadPhase,
   WhisperModelId,
   WhisperModelStatus,
+  WhisperModelStorageFormat,
   WhisperModelVariantId,
   WhisperModelWeightsFormat,
 } from './types';
@@ -1035,7 +1036,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setWhisperModelStatus: (
     id: WhisperModelId,
-    format: WhisperModelWeightsFormat,
+    format: WhisperModelStorageFormat,
     status: WhisperModelStatus,
   ) => {
     const current = get().whisperModelStatuses;
@@ -1055,7 +1056,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setDownloadProgress: (
     id: WhisperModelId,
-    format: WhisperModelWeightsFormat,
+    format: WhisperModelStorageFormat,
     progress: number,
     bytesWritten?: number,
     contentLength?: number,
@@ -1086,7 +1087,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     });
   },
 
-  removeWhisperModelStatus: (id: WhisperModelId, format: WhisperModelWeightsFormat) => {
+  removeWhisperModelStatus: (id: WhisperModelId, format: WhisperModelStorageFormat) => {
     const key = getWhisperModelVariantId(id, format);
     const currentStatuses = get().whisperModelStatuses;
     const currentProgress = get().whisperDownloadProgress;

@@ -77,7 +77,10 @@ class WhisperKitModelDownloader {
 
   startDownload = (options: StartWhisperKitModelDownloadOptions): Promise<void> => {
     if (this.runPromise) {
-      return this.runPromise;
+      if (this.snapshot.modelId === options.modelId) {
+        return this.runPromise;
+      }
+      throw new Error('Another WhisperKit model download is already in progress');
     }
 
     this.runPromise = this.runDownloadPipeline(options).finally(() => {

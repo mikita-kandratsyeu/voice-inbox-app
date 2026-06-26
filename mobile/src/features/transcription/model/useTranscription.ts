@@ -3,7 +3,11 @@ import { AppState } from 'react-native';
 
 import type { TranscriptSegment, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { getWhisperModelVariantId, useSettingsStore } from '@/entities/settings';
+import {
+  getActiveWhisperModelVariantId,
+  WHISPER_KIT_STORAGE_FORMAT,
+  useSettingsStore,
+} from '@/entities/settings';
 import { dispatchAutoAiAfterTranscription } from '@/features/ai-task-queue';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
@@ -258,7 +262,12 @@ export const useTranscription = () => {
       const otherRecordBusy = isTranscriptionBlockedForRecord(record.id, records);
       const nativeBusyForThisRecord =
         isNativeTranscriptionRunning() && getActiveTranscriptionRecordId() === record.id;
-      const variantId = getWhisperModelVariantId(selectedWhisperModel, selectedWhisperModelFormat);
+      const useIosWhisperKitPreflight = shouldUseIosWhisperKitEngine();
+      const variantId = getActiveWhisperModelVariantId({
+        modelId: selectedWhisperModel,
+        weightsFormat: selectedWhisperModelFormat,
+        useWhisperKit: useIosWhisperKitPreflight,
+      });
       const modelStatus = whisperModelStatuses[variantId] ?? 'not_downloaded';
       const preflight = await validateTranscriptionStart({
         record,
@@ -268,12 +277,15 @@ export const useTranscription = () => {
         appIsActive: AppState.currentState === 'active',
         transcriptionBusy:
           otherRecordBusy || (isNativeTranscriptionRunning() && !nativeBusyForThisRecord),
-        networkAvailable: isConnected !== false,
       });
 
       if (!preflight.ok) {
         if (preflight.reason === 'model_file_missing') {
-          setWhisperModelStatus(selectedWhisperModel, selectedWhisperModelFormat, 'not_downloaded');
+          setWhisperModelStatus(
+            selectedWhisperModel,
+            useIosWhisperKitPreflight ? WHISPER_KIT_STORAGE_FORMAT : selectedWhisperModelFormat,
+            'not_downloaded',
+          );
         }
         if (preflight.reason === 'audio_file_missing') {
           await clearAudioPath(record.id).catch(() => {});
@@ -671,7 +683,7 @@ export const useTranscription = () => {
           if (errorCode === 'model_load_failed' || errorCode === 'model_missing') {
             setWhisperModelStatus(
               selectedWhisperModel,
-              selectedWhisperModelFormat,
+              shouldUseIosWhisperKitEngine() ? WHISPER_KIT_STORAGE_FORMAT : selectedWhisperModelFormat,
               'not_downloaded',
             );
           }

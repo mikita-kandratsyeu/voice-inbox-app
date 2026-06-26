@@ -12,7 +12,7 @@ import { useRecordStore } from '@/entities/record';
 import type { AutoArchiveAfterDays } from '@/entities/settings';
 import {
   findCloudAiModelCatalogEntry,
-  getWhisperModelVariantId,
+  getActiveWhisperModelVariantId,
   isDigestAiEnabled,
   isPrivateCustomServerMode,
   LOCAL_AI_MODELS,
@@ -32,7 +32,6 @@ import {
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { openPlanPaywall } from '@/features/plan-paywall';
 import { isStoreProEntitlementActiveNow, useProEntitlement } from '@/features/pro-license';
-import { IOS_WHISPERKIT_ROLLOUT_ENABLED } from '@/features/transcription/config/transcriptionEngine';
 import { useAppTheme, useColors } from '@/shared/config';
 import { getAiUsage } from '@/shared/lib/ai-api';
 import { fetchProAccountPortalUrl } from '@/shared/lib/ai-api/proLicenseApi';
@@ -300,13 +299,14 @@ export function useSettingsScreen() {
   const aiModelLockedByPrivateRemote = privateCustomServerModeActive;
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const digestAiEnabled = isDigestAiEnabled(aiExecutionMode, privateAiProvider);
-  const whisperVariantId = getWhisperModelVariantId(
-    selectedWhisperModel,
-    selectedWhisperModelFormat,
-  );
+  const useIosWhisperKit = IS_IOS && iosWhisperKitEngineEnabled;
+  const whisperVariantId = getActiveWhisperModelVariantId({
+    modelId: selectedWhisperModel,
+    weightsFormat: selectedWhisperModelFormat,
+    useWhisperKit: useIosWhisperKit,
+  });
   const whisperStatus = whisperModelStatuses[whisperVariantId] ?? 'not_downloaded';
 
-  const useIosWhisperKit = IS_IOS && IOS_WHISPERKIT_ROLLOUT_ENABLED && iosWhisperKitEngineEnabled;
   const transcriptionValue = useIosWhisperKit
     ? t(getWhisperModelShortLabelKey(selectedWhisperModel))
     : whisperStatus === 'not_downloaded' || whisperStatus === 'downloading'

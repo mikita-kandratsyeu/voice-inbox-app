@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 
 import { useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
@@ -12,11 +12,13 @@ type WhisperEngineMode = 'standard' | 'improved';
 type WhisperEngineModeSectionProps = {
   color: Colors;
   embedded?: boolean;
+  hasActiveWhisperDownload: boolean;
 };
 
 export const WhisperEngineModeSection = ({
   color,
   embedded = false,
+  hasActiveWhisperDownload,
 }: WhisperEngineModeSectionProps) => {
   const { t } = useTranslation();
   const iosWhisperKitEngineEnabled = useSettingsStore((s) => s.iosWhisperKitEngineEnabled);
@@ -32,7 +34,19 @@ export const WhisperEngineModeSection = ({
           { value: 'standard', label: t('whisper.engineMode.standard') },
           { value: 'improved', label: t('whisper.engineMode.improved') },
         ]}
-        onChange={(next) => setIosWhisperKitEngineEnabled(next === 'improved')}
+        onChange={(next) => {
+          if (next === mode) {
+            return;
+          }
+          if (hasActiveWhisperDownload && next === 'standard') {
+            Alert.alert(
+              t('whisper.weightsFormatChangeBlockedTitle'),
+              t('whisper.engineModeChangeBlockedBody'),
+            );
+            return;
+          }
+          setIosWhisperKitEngineEnabled(next === 'improved');
+        }}
         color={color}
         accessibilityLabel={t('whisper.sectionEngine')}
       />

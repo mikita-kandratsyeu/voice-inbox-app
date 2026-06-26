@@ -45,7 +45,7 @@ type WhisperModelCardProps = {
   downloadPhase?: WhisperDownloadPhase;
   /** iOS: Core ML encoder present on disk for this model (matches runtime init). */
   coreMlEncoderActive: boolean;
-  /** iOS WhisperKit: model is used on demand without a local ggml file. */
+  /** iOS WhisperKit: model is stored as Core ML artifacts, not a local ggml file. */
   iosWhisperKitManaged?: boolean;
   /** Render inside a SettingsSection card (no standalone card chrome). */
   embedded?: boolean;

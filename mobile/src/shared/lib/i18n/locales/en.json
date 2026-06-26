@@ -1,6 +1,7 @@
 {
   "download": {
-    "whisperLabel": "Downloading model"
+    "whisperLabel": "Downloading model",
+    "whisperKitLabel": "Downloading speech model"
   },
   "push": {
     "policyUpdateTitle": "Important Update",
@@ -760,7 +761,7 @@
     "cancel": "Cancel",
     "modelNotDownloaded": "Model not downloaded",
     "modelNotDownloadedHint": "Download the Whisper model in Settings to transcribe.",
-    "whisperKitModelOfflineHint": "Connect to the internet and transcribe once — the speech model downloads automatically. After that, transcription works offline.",
+    "whisperKitModelOfflineHint": "Download the speech recognition model in Whisper settings while online. After that, transcription works offline.",
     "goToWhisperSettings": "Open Settings",
     "shareFailed": "Share failed",
     "summaryNotCreated": "Summary not created",
@@ -2165,7 +2166,7 @@
       "improved": "Apple on-device engine — faster, fully offline, auto-downloads models."
     },
     "iosModelQualityTitle": "Recognition quality",
-    "iosModelQualityHint": "Downloads on first transcription. Larger models are more accurate but take longer.",
+    "iosModelQualityHint": "Download a model before transcribing. Larger models are more accurate but take longer.",
     "iosModelQuality": {
       "whisper-base": "Fastest — good for short voice notes.",
       "whisper-small": "Balanced speed and accuracy for most recordings.",
@@ -2186,7 +2187,7 @@
     },
     "iosEngineTitle": "Improved transcription",
     "iosEngineHint": "Apple’s on-device speech engine — faster and fully offline.",
-    "iosModelOnDemandHint": "Downloads automatically the first time you transcribe.",
+    "iosModelOnDemandHint": "Download the model in settings before transcribing.",
     "whisperKitStorageLabel": "on-device",
     "speakerKitStorageLabel": "Meeting speakers (on-device)",
     "diarizationTitle": "Speaker labels on all notes",
@@ -2222,6 +2223,7 @@
     "weightsFormatFullHint": "Best for precise transcription.",
     "weightsFormatChangeBlockedTitle": "Finish the current download first",
     "weightsFormatChangeBlockedBody": "A model is downloading now. Wait until it finishes or cancel the download to switch quality mode.",
+    "engineModeChangeBlockedBody": "A model is downloading now. Wait until it finishes or cancel the download to switch back to standard recognition.",
     "qualityLabel": "Quality",
     "speedLabel": "Speed",
     "accuracy": {

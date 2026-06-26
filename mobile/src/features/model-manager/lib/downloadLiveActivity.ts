@@ -2,12 +2,14 @@ import { NativeModules } from 'react-native';
 
 import { IS_IOS } from '@/shared/lib';
 import { i18n } from '@/shared/lib/i18n';
-import { getWhisperLabel } from '@/shared/lib/whisper';
+import { getWhisperLabel, getWhisperModelShortLabelKey } from '@/shared/lib/whisper';
 
 const { DownloadActivityModule } = NativeModules;
 
 let lastUpdateTime = 0;
 const UPDATE_INTERVAL_MS = 1000;
+
+export type WhisperDownloadLiveActivityVariant = 'ggml' | 'whisperkit';
 
 const isAvailable = (): boolean => IS_IOS && Boolean(DownloadActivityModule);
 
@@ -21,15 +23,34 @@ const localAiKind = {
   settingsDeeplinkPath: 'ai-models',
 } as const;
 
-export const startWhisperDownloadLiveActivity = async (modelId: string): Promise<void> => {
+const resolveWhisperDownloadLiveActivityText = (
+  modelId: string,
+  variant: WhisperDownloadLiveActivityVariant,
+): { title: string; label: string } => {
+  if (variant === 'whisperkit') {
+    return {
+      title: i18n.t(getWhisperModelShortLabelKey(modelId)),
+      label: i18n.t('download.whisperKitLabel'),
+    };
+  }
+
+  return {
+    title: getWhisperLabel(modelId),
+    label: i18n.t('download.whisperLabel'),
+  };
+};
+
+export const startWhisperDownloadLiveActivity = async (
+  modelId: string,
+  variant: WhisperDownloadLiveActivityVariant = 'ggml',
+): Promise<void> => {
   if (!isAvailable()) {
     return;
   }
 
   lastUpdateTime = 0;
 
-  const title = getWhisperLabel(modelId) ?? 'Whisper model';
-  const label = i18n.t('download.whisperLabel');
+  const { title, label } = resolveWhisperDownloadLiveActivityText(modelId, variant);
   const sessionId = `whisper-${modelId}-${Date.now()}`;
 
   return DownloadActivityModule.start(
@@ -45,6 +66,7 @@ export const startWhisperDownloadLiveActivity = async (modelId: string): Promise
 export const updateWhisperDownloadLiveActivity = async (
   progress: number,
   modelId: string,
+  variant: WhisperDownloadLiveActivityVariant = 'ggml',
 ): Promise<void> => {
   if (!isAvailable()) {
     return;
@@ -57,8 +79,7 @@ export const updateWhisperDownloadLiveActivity = async (
 
   lastUpdateTime = now;
 
-  const title = getWhisperLabel(modelId) ?? 'Whisper model';
-  const label = i18n.t('download.whisperLabel');
+  const { title, label } = resolveWhisperDownloadLiveActivityText(modelId, variant);
 
   return DownloadActivityModule.update(progress, title, label);
 };
