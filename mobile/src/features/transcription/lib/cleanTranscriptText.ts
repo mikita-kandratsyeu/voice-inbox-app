@@ -6,6 +6,14 @@ const normalizeToken = (value: string): string =>
 
 const MAX_REPEATED_TOKEN_RUN = 5;
 const WHISPER_HALLUCINATION_SCRIPTS = /[\u0C00-\u0C7F\u0F00-\u0FFF]/u;
+const WHISPER_SPECIAL_TOKEN_PATTERN = /<\|[^|>]*\|>/gu;
+
+/** Removes Whisper control tokens such as <|ru|>, <|transcribe|>, <|12.34|>. */
+export const stripWhisperSpecialTokens = (text: string): string =>
+  text
+    .replace(WHISPER_SPECIAL_TOKEN_PATTERN, ' ')
+    .replace(/\s+/gu, ' ')
+    .trim();
 
 const hasExcessiveRepeatedTokenRun = (text: string): boolean => {
   const tokens = text
@@ -103,3 +111,7 @@ export const collapseRepeatedTokenStutters = (text: string): string => {
 
   return result.join(' ');
 };
+
+/** Normalizes segment text from any Whisper runtime before saving or displaying. */
+export const cleanTranscriptSegmentText = (text: string): string =>
+  collapseRepeatedTokenStutters(stripWhisperSpecialTokens(text));

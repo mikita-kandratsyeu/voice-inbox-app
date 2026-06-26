@@ -3,6 +3,8 @@ import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 import type { TranscriptSegment } from '@/entities/record';
 import { isArray, isNumber, isRecord, isString } from '@/shared/lib/type-guards';
 
+import { cleanTranscriptSegmentText } from './cleanTranscriptText';
+
 import type {
   TranscriptionChunkProfile,
   TranscriptionProgressEvent,
@@ -12,6 +14,12 @@ import type {
 type NativeTranscriptionModule = {
   isAvailable: () => Promise<boolean>;
   prepareModel: (model: string, modelCachePath: string) => Promise<{ ready: boolean }>;
+  isModelDownloaded: (model: string, modelCachePath: string) => Promise<boolean>;
+  getModelStorageBytes: (model: string, modelCachePath: string) => Promise<number>;
+  deleteModel: (model: string, modelCachePath: string) => Promise<void>;
+  isSpeakerKitDownloaded: (speakerKitCachePath: string) => Promise<boolean>;
+  getSpeakerKitStorageBytes: (speakerKitCachePath: string) => Promise<number>;
+  deleteSpeakerKitModel: (speakerKitCachePath: string) => Promise<void>;
   startTranscriptionJob: (options: Record<string, unknown>) => Promise<{ jobId: string }>;
   cancelTranscriptionJob: (jobId: string) => Promise<void>;
   cleanupTranscriptionJob: (jobId: string) => Promise<void>;
@@ -71,6 +79,18 @@ export type NativeTranscriptionListeners = {
   onCancelled?: (payload: { jobId: string; checkpointAvailable: boolean }) => void;
 };
 
+const dedupeSegmentIds = (segments: TranscriptSegment[]): TranscriptSegment[] => {
+  const seen = new Set<string>();
+  return segments.map((segment, index) => {
+    let id = segment.id;
+    if (seen.has(id)) {
+      id = `${id}-${segment.startMs ?? index}`;
+    }
+    seen.add(id);
+    return id === segment.id ? segment : { ...segment, id };
+  });
+};
+
 const parseSegments = (raw: unknown): TranscriptSegment[] => {
   if (!isArray(raw)) {
     return [];
@@ -82,7 +102,7 @@ const parseSegments = (raw: unknown): TranscriptSegment[] => {
     }
     segments.push({
       id: item.id,
-      text: item.text,
+      text: cleanTranscriptSegmentText(item.text),
       startTime: isString(item.startTime) ? item.startTime : '00:00',
       startMs: isNumber(item.startMs) ? item.startMs : undefined,
       endMs: isNumber(item.endMs) ? item.endMs : undefined,
@@ -100,7 +120,7 @@ const parseSegments = (raw: unknown): TranscriptSegment[] => {
         : undefined,
     });
   }
-  return segments;
+  return dedupeSegmentIds(segments);
 };
 
 export const startNativeTranscriptionJob = (
@@ -233,4 +253,83 @@ export const prepareNativeTranscriptionModel = async (
   }
   const result = await mod.prepareModel(whisperKitModel, modelCachePath);
   return result?.ready === true;
+};
+
+export const isWhisperKitModelDownloaded = async (
+  whisperKitModel: string,
+  modelCachePath: string,
+): Promise<boolean> => {
+  const mod = getNativeModule();
+  if (!mod?.isModelDownloaded) {
+    return false;
+  }
+  try {
+    return await mod.isModelDownloaded(whisperKitModel, modelCachePath);
+  } catch {
+    return false;
+  }
+};
+
+export const getNativeWhisperKitModelStorageBytes = async (
+  whisperKitModel: string,
+  modelCachePath: string,
+): Promise<number> => {
+  const mod = getNativeModule();
+  if (!mod?.getModelStorageBytes) {
+    return 0;
+  }
+  try {
+    const bytes = await mod.getModelStorageBytes(whisperKitModel, modelCachePath);
+    return typeof bytes === 'number' && Number.isFinite(bytes) ? bytes : 0;
+  } catch {
+    return 0;
+  }
+};
+
+export const deleteNativeWhisperKitModel = async (
+  whisperKitModel: string,
+  modelCachePath: string,
+): Promise<void> => {
+  const mod = getNativeModule();
+  if (!mod?.deleteModel) {
+    throw new Error('native_transcription_unavailable');
+  }
+  await mod.deleteModel(whisperKitModel, modelCachePath);
+};
+
+export const isSpeakerKitModelDownloaded = async (
+  speakerKitCachePath: string,
+): Promise<boolean> => {
+  const mod = getNativeModule();
+  if (!mod?.isSpeakerKitDownloaded) {
+    return false;
+  }
+  try {
+    return await mod.isSpeakerKitDownloaded(speakerKitCachePath);
+  } catch {
+    return false;
+  }
+};
+
+export const getNativeSpeakerKitStorageBytes = async (
+  speakerKitCachePath: string,
+): Promise<number> => {
+  const mod = getNativeModule();
+  if (!mod?.getSpeakerKitStorageBytes) {
+    return 0;
+  }
+  try {
+    const bytes = await mod.getSpeakerKitStorageBytes(speakerKitCachePath);
+    return typeof bytes === 'number' && Number.isFinite(bytes) ? bytes : 0;
+  } catch {
+    return 0;
+  }
+};
+
+export const deleteNativeSpeakerKitModel = async (speakerKitCachePath: string): Promise<void> => {
+  const mod = getNativeModule();
+  if (!mod?.deleteSpeakerKitModel) {
+    throw new Error('native_transcription_unavailable');
+  }
+  await mod.deleteSpeakerKitModel(speakerKitCachePath);
 };

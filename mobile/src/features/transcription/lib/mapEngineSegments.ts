@@ -1,5 +1,6 @@
 import type { TranscriptSegment } from '@/entities/record';
 
+import { cleanTranscriptSegmentText } from './cleanTranscriptText';
 import type { TranscriptionEngineSegment } from './transcriptionEngineTypes';
 
 const formatTimestamp = (startMs: number): string => {
@@ -13,14 +14,16 @@ export const mapEngineSegmentsToTranscriptSegments = (
   segments: TranscriptionEngineSegment[],
   offset = 0,
 ): TranscriptSegment[] =>
-  segments.map((segment, index) => ({
-    id: segment.id || String(offset + index),
-    startTime: formatTimestamp(segment.startMs),
-    startMs: segment.startMs,
-    endMs: segment.endMs,
-    text: segment.text.trim(),
-    speakerId: segment.speakerId,
-    language: segment.language,
-    isOverlapping: segment.isOverlapping,
-    tokens: segment.tokens,
-  }));
+  segments
+    .map((segment, index) => ({
+      id: segment.id || String(offset + index),
+      startTime: formatTimestamp(segment.startMs),
+      startMs: segment.startMs,
+      endMs: segment.endMs,
+      text: cleanTranscriptSegmentText(segment.text),
+      speakerId: segment.speakerId,
+      language: segment.language,
+      isOverlapping: segment.isOverlapping,
+      tokens: segment.tokens,
+    }))
+    .filter((segment) => segment.text.length > 0);

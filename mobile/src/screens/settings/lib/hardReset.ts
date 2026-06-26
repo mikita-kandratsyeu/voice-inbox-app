@@ -86,6 +86,7 @@ export async function performHardReset(): Promise<void> {
   const cacheRoot = getCachesDirectoryPath();
   await removePathRecursive(`${docRoot}/recordings`);
   await removePathRecursive(`${docRoot}/whisper-models`);
+  await removePathRecursive(`${docRoot}/argmax-models`);
   await removePathRecursive(`${docRoot}/local-llm-models`);
   await removePathRecursive(`${docRoot}/transcription-checkpoints`);
   await removePathRecursive(cacheRoot);

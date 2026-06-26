@@ -803,6 +803,8 @@
     "renameSpeakerHint": "Set a custom name — it’s saved with this note",
     "hideSpeakerLabels": "Hide participant labels in the text",
     "meetingDialogueTabEmptyTitle": "Nothing here yet",
+    "meetingDialogueNativeEmptyTitle": "Speaker breakdown not ready",
+    "meetingDialogueNativeEmptyDesc": "Turn on improved transcription and transcribe this meeting again. Speaker labels come from voice.",
     "meetingDialogueTabEmptyDesc": "You need a summary first — then we’ll split replies by participant. You can refresh the breakdown anytime.",
     "meetingDialogueTabEmptyDescNeedSummary": "One Smart run: summary plus replies split by participant.",
     "meetingDialogueTabEmptyDescReady": "Summary is ready — split replies by participant next.",
@@ -2146,6 +2148,21 @@
     "modelTitle": "Transcription model",
     "modelDescription": "Choose a Whisper model for on-device transcription. Larger models are more accurate but require more storage.",
     "modelDescriptionIos": "With improved transcription, models download automatically when needed. Pick a quality tier — no manual downloads.",
+    "modelDescriptionShort": "Offline speech recognition on your device.",
+    "modelDescriptionIosShort": "Pick a quality tier. Models download automatically when needed.",
+    "sectionGeneral": "General",
+    "sectionEngine": "Transcription engine",
+    "sectionModel": "Model",
+    "sectionRecognition": "Recognition quality",
+    "sectionLongRecordings": "Long recordings",
+    "engineMode": {
+      "standard": "Standard",
+      "improved": "Improved"
+    },
+    "engineModeHint": {
+      "standard": "Classic Whisper models — download manually, works on all platforms.",
+      "improved": "Apple on-device engine — faster, fully offline, auto-downloads models."
+    },
     "iosModelQualityTitle": "Recognition quality",
     "iosModelQualityHint": "Downloads on first transcription. Larger models are more accurate but take longer.",
     "iosModelQuality": {
@@ -2166,9 +2183,11 @@
       "balanced": "Balanced chunk size and accuracy for most recordings.",
       "quality": "Larger chunks and conservative silence handling for best accuracy."
     },
-    "iosEngineTitle": "Improved transcription (iPhone & iPad)",
-    "iosEngineHint": "Apple’s on-device speech engine — faster and fully offline on iPhone and iPad.",
+    "iosEngineTitle": "Improved transcription",
+    "iosEngineHint": "Apple’s on-device speech engine — faster and fully offline.",
     "iosModelOnDemandHint": "Downloads automatically the first time you transcribe.",
+    "whisperKitStorageLabel": "on-device",
+    "speakerKitStorageLabel": "Meeting speakers (on-device)",
     "diarizationTitle": "Speaker labels on all notes",
     "diarizationHint": "Pro feature. Meeting notes label speakers automatically — turn on for your other notes too.",
     "downloadModel": "Download model",
@@ -2892,6 +2911,7 @@
     "secondsLeft": "~{{ count }} sec left",
     "minutesLeft": "~{{ count }} min left",
     "loadingModel": "Preparing model…",
+    "downloadingModel": "Downloading speech model…",
     "tooShortForAuto": "Recording is shorter than {{seconds}} sec — auto-transcription was skipped.",
     "batteryHint": "Transcription works only while the app is open. Battery usage may increase.",
     "resumeTitle": "Continue transcription?",

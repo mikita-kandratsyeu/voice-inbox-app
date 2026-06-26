@@ -78,6 +78,11 @@ export const getWhisperCoreMlZipTempPath = (modelId: WhisperModelId): string =>
 export const getWhisperCoreMlDownloadUrl = (modelId: WhisperModelId): string =>
   `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/${WHISPER_COREML_ENCODER_ZIP[modelId]}`;
 
+export const getWhisperModelShortLabelKey = (modelId: string): `whisper.models.${string}` => {
+  const suffix = modelId.replace(/^whisper-/, '').replace(/-/g, '_');
+  return `whisper.models.${suffix}`;
+};
+
 export const getWhisperLabel = (modelId: string): string => {
   const model = WHISPER_MODELS.find((model) => model.id === modelId);
 

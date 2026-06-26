@@ -1,6 +1,18 @@
 export { deleteLocalLlmModel } from './lib/deleteLocalLlmModel';
 export { deleteWhisperModel } from './lib/deleteWhisperModel';
 export {
+  deleteAllArgmaxTranscriptionModels,
+  deleteAllWhisperKitModels,
+  deleteSpeakerKitModelFromDisk,
+  deleteWhisperKitModel,
+  getSpeakerKitStorageBytesOnDisk,
+  getWhisperKitModelStorageBytes,
+  IOS_WHISPER_KIT_STORAGE_MODEL_IDS,
+  isSpeakerKitModelOnDisk,
+  isWhisperKitModelOnDisk,
+  listDownloadedWhisperKitModels,
+} from './lib/whisperKitModelStorage';
+export {
   getLocalLlmModelFileSizeBytes,
   getModelFileSizeBytes,
   getModelFileSizeFormatted,

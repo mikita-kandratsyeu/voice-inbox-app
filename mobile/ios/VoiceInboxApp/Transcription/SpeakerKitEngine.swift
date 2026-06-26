@@ -25,6 +25,36 @@ enum SpeakerKitEngine {
     #endif
   }
 
+  static func isModelCached(cacheFolder: String) -> Bool {
+    #if canImport(SpeakerKit) && canImport(WhisperKit)
+    return directorySizeBytes(at: cacheURL(from: cacheFolder)) > 0
+    #else
+    return false
+    #endif
+  }
+
+  static func getStorageBytes(cacheFolder: String) -> Int {
+    #if canImport(SpeakerKit) && canImport(WhisperKit)
+    return directorySizeBytes(at: cacheURL(from: cacheFolder))
+    #else
+    return 0
+    #endif
+  }
+
+  static func deleteModel(cacheFolder: String) throws {
+    #if canImport(SpeakerKit) && canImport(WhisperKit)
+    let url = cacheURL(from: cacheFolder)
+    let fileManager = FileManager.default
+    if fileManager.fileExists(atPath: url.path) {
+      try fileManager.removeItem(at: url)
+    }
+    cachedSpeakerKit = nil
+    cachedSpeakerKitCacheFolder = nil
+    #else
+    throw TranscriptionJobError.diarizationUnavailable
+    #endif
+  }
+
   static func diarize(
     audioPath: String,
     maxSpeakers: Int?,
@@ -59,6 +89,39 @@ enum SpeakerKitEngine {
   #if canImport(SpeakerKit) && canImport(WhisperKit)
   private static var cachedSpeakerKit: SpeakerKit?
   private static var cachedSpeakerKitCacheFolder: String?
+
+  private static func cacheURL(from path: String) -> URL {
+    if path.hasPrefix("file://") {
+      return URL(string: path) ?? URL(fileURLWithPath: String(path.dropFirst(7)))
+    }
+    return URL(fileURLWithPath: path)
+  }
+
+  private static func directorySizeBytes(at url: URL) -> Int {
+    let fileManager = FileManager.default
+    guard fileManager.fileExists(atPath: url.path) else {
+      return 0
+    }
+
+    guard let enumerator = fileManager.enumerator(
+      at: url,
+      includingPropertiesForKeys: [.fileSizeKey, .isDirectoryKey],
+      options: [.skipsHiddenFiles],
+    ) else {
+      return 0
+    }
+
+    var total = 0
+    for case let item as URL in enumerator {
+      guard let values = try? item.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey]) else {
+        continue
+      }
+      if values.isDirectory != true {
+        total += values.fileSize ?? 0
+      }
+    }
+    return total
+  }
 
   private static func loadSpeakerKit(cacheFolder: String) async throws -> SpeakerKit {
     if let cachedSpeakerKit, cachedSpeakerKitCacheFolder == cacheFolder {

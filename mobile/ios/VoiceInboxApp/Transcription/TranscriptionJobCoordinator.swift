@@ -31,6 +31,52 @@ final class TranscriptionJobCoordinator {
     }
   }
 
+  func isModelDownloaded(modelName: String, cacheFolder: String, completion: @escaping (Bool) -> Void) {
+    queue.async {
+      completion(WhisperKitEngine.isModelCached(modelName: modelName, cacheFolder: cacheFolder))
+    }
+  }
+
+  func getModelStorageBytes(modelName: String, cacheFolder: String, completion: @escaping (Int) -> Void) {
+    queue.async {
+      completion(WhisperKitEngine.getModelStorageBytes(modelName: modelName, cacheFolder: cacheFolder))
+    }
+  }
+
+  func deleteModel(modelName: String, cacheFolder: String, completion: @escaping (Result<Void, Error>) -> Void) {
+    queue.async {
+      do {
+        try WhisperKitEngine.deleteModel(modelName: modelName, cacheFolder: cacheFolder)
+        completion(.success(()))
+      } catch {
+        completion(.failure(error))
+      }
+    }
+  }
+
+  func isSpeakerKitDownloaded(cacheFolder: String, completion: @escaping (Bool) -> Void) {
+    queue.async {
+      completion(SpeakerKitEngine.isModelCached(cacheFolder: cacheFolder))
+    }
+  }
+
+  func getSpeakerKitStorageBytes(cacheFolder: String, completion: @escaping (Int) -> Void) {
+    queue.async {
+      completion(SpeakerKitEngine.getStorageBytes(cacheFolder: cacheFolder))
+    }
+  }
+
+  func deleteSpeakerKitModel(cacheFolder: String, completion: @escaping (Result<Void, Error>) -> Void) {
+    queue.async {
+      do {
+        try SpeakerKitEngine.deleteModel(cacheFolder: cacheFolder)
+        completion(.success(()))
+      } catch {
+        completion(.failure(error))
+      }
+    }
+  }
+
   func startJob(
     request: TranscriptionJobRequest,
     emit: @escaping EventEmitter,
@@ -250,9 +296,10 @@ final class TranscriptionJobCoordinator {
           prompt: chunkPrompt.isEmpty ? nil : chunkPrompt,
         )
 
-        let offsetSegments = result.segments.map { segment in
+        let segmentIdBase = allSegments.count
+        let offsetSegments = result.segments.enumerated().map { localIndex, segment in
           TranscriptionSegmentPayload(
-            id: segment.id,
+            id: String(segmentIdBase + localIndex),
             text: segment.text,
             startMs: segment.startMs + chunk.offsetMs,
             endMs: segment.endMs + chunk.offsetMs,

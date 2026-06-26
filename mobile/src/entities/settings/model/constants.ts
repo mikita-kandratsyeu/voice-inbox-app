@@ -325,3 +325,25 @@ export const getWhisperModelDisplayName = (
 
   return `Whisper ${modelName} (${formatLabel})`;
 };
+
+export type OfflineWhisperStorageFormat = WhisperModelWeightsFormat | 'whisperkit' | 'speakerkit';
+
+export const getOfflineWhisperStorageLabel = (
+  modelId: WhisperModelId | 'speaker-kit',
+  format: OfflineWhisperStorageFormat,
+  t: (key: string) => string,
+): string => {
+  if (format === 'speakerkit') {
+    return t('whisper.speakerKitStorageLabel');
+  }
+
+  const modelName =
+    WHISPER_MODELS.find((model) => model.id === modelId)?.name ??
+    String(modelId).replace(/^whisper-/, '');
+
+  if (format === 'whisperkit') {
+    return `${modelName} (${t('whisper.whisperKitStorageLabel')})`;
+  }
+
+  return getWhisperModelDisplayName(modelId as WhisperModelId, format);
+};

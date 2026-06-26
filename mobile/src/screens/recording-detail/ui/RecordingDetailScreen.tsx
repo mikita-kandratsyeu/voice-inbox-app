@@ -49,6 +49,7 @@ import {
 } from '@/features/task-outcome';
 import { useTranscription } from '@/features/transcription';
 import { canStartOfflineTranscription } from '@/features/transcription/lib/canStartOfflineTranscription';
+import { shouldUseNativeMeetingSpeakers } from '@/features/transcription/lib/nativeMeetingSpeakers';
 import { useOpenNotesGraphForRecord } from '@/screens/notes-graph';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { useAppTheme, useColors } from '@/shared/config';
@@ -717,10 +718,16 @@ export const RecordingDetailScreen = () => {
   }, [liveRecord, regenerateMeetingDialogue]);
 
   const canRegenerateMeetingDialogueOnly = useMemo(() => {
+    if (shouldUseNativeMeetingSpeakers(liveRecord)) return false;
     if (!meetingPresetUiActive || !liveRecord.summary?.trim()) return false;
     if (isPrivateMode) return true;
     return Boolean(liveRecord.cloudAiJobId?.trim());
-  }, [meetingPresetUiActive, isPrivateMode, liveRecord.summary, liveRecord.cloudAiJobId]);
+  }, [meetingPresetUiActive, isPrivateMode, liveRecord]);
+
+  const usesNativeVoiceDiarization = useMemo(
+    () => shouldUseNativeMeetingSpeakers(liveRecord),
+    [liveRecord],
+  );
 
   const detailTabs = useMemo<Tab[]>(() => {
     const row: Tab[] = ['transcript', 'summary'];
@@ -1184,6 +1191,8 @@ export const RecordingDetailScreen = () => {
               <MeetingDialogueTab
                 meetingDialogue={liveRecord.meetingDialogue}
                 speakerLabels={liveRecord.meetingSpeakerLabels}
+                nativeVoiceDiarization={usesNativeVoiceDiarization}
+                transcriptSegments={liveRecord.transcriptSegments}
                 onRenameSpeaker={handleRenameSpeaker}
                 hasTranscript={Boolean(liveRecord.transcript)}
                 hasSummary={Boolean(liveRecord.summary?.trim())}

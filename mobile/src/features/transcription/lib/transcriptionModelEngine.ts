@@ -8,7 +8,7 @@ import {
 import { shouldUseIosWhisperKitEngine } from '../config/transcriptionEngine';
 import {
   isIosNativeTranscriptionAvailable,
-  prepareNativeTranscriptionModel,
+  isWhisperKitModelDownloaded,
 } from './nativeTranscription';
 
 export type TranscriptionModelEngine = 'whisper-rn' | 'whisperkit-ios';
@@ -25,7 +25,7 @@ export async function isWhisperKitModelReady(modelId: WhisperModelId): Promise<b
   if (!available) {
     return false;
   }
-  return prepareNativeTranscriptionModel(
+  return isWhisperKitModelDownloaded(
     mapWhisperModelIdToWhisperKitModel(modelId),
     getWhisperKitModelsDir(),
   );

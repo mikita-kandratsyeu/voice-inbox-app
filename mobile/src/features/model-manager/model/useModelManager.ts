@@ -22,8 +22,15 @@ import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 import { getWhisperEstimatedDownloadBytes, getWhisperModelPath } from '@/shared/lib/whisper';
 
+import { shouldUseIosWhisperKitEngine } from '@/features/transcription/config/transcriptionEngine';
+
 import { deleteLocalLlmModel } from '../lib/deleteLocalLlmModel';
 import { deleteWhisperModel } from '../lib/deleteWhisperModel';
+import {
+  deleteAllArgmaxTranscriptionModels,
+  deleteWhisperKitModel,
+  isWhisperKitModelOnDisk,
+} from '../lib/whisperKitModelStorage';
 import {
   startLocalAiDownloadLiveActivity,
   startWhisperDownloadLiveActivity,
@@ -111,12 +118,17 @@ export const useModelManager = () => {
 
   const removeModel = useCallback(
     async (modelId: WhisperModelId): Promise<void> => {
-      await deleteWhisperModel(modelId, whisperModelWeightsFormat);
-      removeWhisperModelStatus(modelId, whisperModelWeightsFormat);
+      if (shouldUseIosWhisperKitEngine()) {
+        await deleteWhisperKitModel(modelId);
+      } else {
+        await deleteWhisperModel(modelId, whisperModelWeightsFormat);
+        removeWhisperModelStatus(modelId, whisperModelWeightsFormat);
+      }
 
       if (
         selectedWhisperModel === modelId &&
-        selectedWhisperModelFormat === whisperModelWeightsFormat
+        (shouldUseIosWhisperKitEngine() ||
+          selectedWhisperModelFormat === whisperModelWeightsFormat)
       ) {
         setWhisperModel(getRecommendedWhisperModelId(whisperModelWeightsFormat));
       }
@@ -129,6 +141,30 @@ export const useModelManager = () => {
       whisperModelWeightsFormat,
     ],
   );
+
+  const syncWhisperKitDownloadedStatuses = useCallback(async (): Promise<void> => {
+    if (!shouldUseIosWhisperKitEngine()) {
+      return;
+    }
+
+    const checks = await Promise.all(
+      WHISPER_MODELS.map(async (model) => ({
+        id: model.id,
+        downloaded: await isWhisperKitModelOnDisk(model.id),
+      })),
+    );
+
+    const nextStatuses = { ...useSettingsStore.getState().whisperModelStatuses };
+    for (const item of checks) {
+      const key = getWhisperModelVariantId(item.id, whisperModelWeightsFormat);
+      if (item.downloaded) {
+        nextStatuses[key] = 'downloaded';
+      } else if (nextStatuses[key] === 'downloaded') {
+        delete nextStatuses[key];
+      }
+    }
+    setWhisperModelStatuses(nextStatuses);
+  }, [setWhisperModelStatuses, whisperModelWeightsFormat]);
 
   const startLocalLlmDownload = useCallback(
     async (modelId: LocalAiModelId): Promise<void> => {
@@ -249,6 +285,8 @@ export const useModelManager = () => {
     cancelDownload,
     removeModel,
     syncDownloadedStatusesForFormat,
+    syncWhisperKitDownloadedStatuses,
+    removeAllArgmaxTranscriptionModels: deleteAllArgmaxTranscriptionModels,
     startLocalLlmDownload,
     cancelLocalLlmDownload: cancelLocalLlmDownloadFn,
     removeLocalLlmModel: removeLocalLlmModelFn,

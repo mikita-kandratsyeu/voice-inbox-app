@@ -19,7 +19,7 @@ import {
 import { analyzeWavSpeech } from './audioVad';
 import { buildWhisperPrompt } from './buildWhisperPrompt';
 import { dedupeChunkTextOverlap } from './chunkTextDedup';
-import { collapseRepeatedTokenStutters, isUsableTranscriptText } from './cleanTranscriptText';
+import { cleanTranscriptSegmentText, collapseRepeatedTokenStutters, isUsableTranscriptText } from './cleanTranscriptText';
 import { TranscriptionError } from './transcriptionErrors';
 import { TranscriptionRuntimeBenchmark } from './transcriptionRuntimeBenchmark';
 import type { TranscriptionVadPolicy } from './transcriptionQualityMode';
@@ -123,7 +123,7 @@ const buildChunkPrompt = (fullText: string, customWords: readonly string[]): str
   return tail;
 };
 
-const finalizeTranscriptText = (text: string): string => collapseRepeatedTokenStutters(text.trim());
+const finalizeTranscriptText = (text: string): string => cleanTranscriptSegmentText(text);
 
 type ResolvedTranscriptionPath = {
   path: string;

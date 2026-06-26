@@ -8,7 +8,7 @@ jest.mock('../../config/transcriptionEngine', () => ({
 
 jest.mock('../nativeTranscription', () => ({
   isIosNativeTranscriptionAvailable: jest.fn(),
-  prepareNativeTranscriptionModel: jest.fn(),
+  isWhisperKitModelDownloaded: jest.fn(),
 }));
 
 jest.mock('@/shared/lib/whisper/whisperKitModelPath', () => ({

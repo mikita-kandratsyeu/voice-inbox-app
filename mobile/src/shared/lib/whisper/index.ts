@@ -15,6 +15,7 @@ export {
   getWhisperCoreMlEncoderPath,
   getWhisperCoreMlZipTempPath,
   getWhisperLabel,
+  getWhisperModelShortLabelKey,
   getWhisperModelDownloadUrl,
   getWhisperModelFileName,
   getWhisperModelPath,

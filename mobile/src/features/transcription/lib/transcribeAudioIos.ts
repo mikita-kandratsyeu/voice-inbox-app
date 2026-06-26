@@ -7,11 +7,11 @@ import {
 } from '@/shared/lib/whisper/whisperKitModelPath';
 
 import type { TranscriptionChunkProfile } from './transcribeAudio';
+import { cleanTranscriptSegmentText } from './cleanTranscriptText';
 import { resolveNativeTranscriptionFailure, TranscriptionError } from './transcriptionErrors';
 import { mapEngineSegmentsToTranscriptSegments } from './mapEngineSegments';
 import {
   isIosNativeTranscriptionAvailable,
-  prepareNativeTranscriptionModel,
   startNativeTranscriptionJob,
 } from './nativeTranscription';
 import { canRunWhisperGpuWork } from './whisperAppState';
@@ -99,10 +99,6 @@ export const transcribeAudioIos = (options: TranscribeAudioIosOptions): Transcri
     const whisperKitModel = mapWhisperModelIdToWhisperKitModel(modelId);
     const modelCachePath = getWhisperKitModelsDir();
     const speakerKitCachePath = getSpeakerKitModelsDir();
-    const prepared = await prepareNativeTranscriptionModel(whisperKitModel, modelCachePath);
-    if (!prepared) {
-      throw new TranscriptionError('model_load_failed');
-    }
 
     return await new Promise<TranscribeAudioIosResult>((resolve, reject) => {
       const handle = startNativeTranscriptionJob(
@@ -146,10 +142,15 @@ export const transcribeAudioIos = (options: TranscribeAudioIosOptions): Transcri
               reject(new TranscriptionError('native_abort'));
               return;
             }
-            const segments = mapEngineSegmentsToTranscriptSegments(result.segments);
+            const segments = mapEngineSegmentsToTranscriptSegments(result.segments).filter(
+              (segment) => segment.text.length > 0,
+            );
+            const fullText = cleanTranscriptSegmentText(
+              segments.map((segment) => segment.text).join(' ') || result.fullText,
+            );
             resolve({
               segments,
-              fullText: result.fullText,
+              fullText,
               speakers: result.speakers,
               detectedLanguage: result.detectedLanguage,
               skipped: result.skipped,

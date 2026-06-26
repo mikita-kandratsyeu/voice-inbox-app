@@ -44,6 +44,85 @@ class VoiceInboxTranscriptionModule: RCTEventEmitter {
     }
   }
 
+  @objc(isModelDownloaded:modelCachePath:resolver:rejecter:)
+  func isModelDownloaded(
+    _ modelName: String,
+    modelCachePath: String,
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock,
+  ) {
+    coordinator.isModelDownloaded(modelName: modelName, cacheFolder: modelCachePath) { downloaded in
+      resolve(downloaded)
+    }
+  }
+
+  @objc(getModelStorageBytes:modelCachePath:resolver:rejecter:)
+  func getModelStorageBytes(
+    _ modelName: String,
+    modelCachePath: String,
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock,
+  ) {
+    coordinator.getModelStorageBytes(modelName: modelName, cacheFolder: modelCachePath) { bytes in
+      resolve(bytes)
+    }
+  }
+
+  @objc(deleteModel:modelCachePath:resolver:rejecter:)
+  func deleteModel(
+    _ modelName: String,
+    modelCachePath: String,
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock,
+  ) {
+    coordinator.deleteModel(modelName: modelName, cacheFolder: modelCachePath) { result in
+      switch result {
+      case .success:
+        resolve(nil)
+      case .failure(let error):
+        reject("E_DELETE", error.localizedDescription, error)
+      }
+    }
+  }
+
+  @objc(isSpeakerKitDownloaded:resolver:rejecter:)
+  func isSpeakerKitDownloaded(
+    _ speakerKitCachePath: String,
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock,
+  ) {
+    coordinator.isSpeakerKitDownloaded(cacheFolder: speakerKitCachePath) { downloaded in
+      resolve(downloaded)
+    }
+  }
+
+  @objc(getSpeakerKitStorageBytes:resolver:rejecter:)
+  func getSpeakerKitStorageBytes(
+    _ speakerKitCachePath: String,
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock,
+  ) {
+    coordinator.getSpeakerKitStorageBytes(cacheFolder: speakerKitCachePath) { bytes in
+      resolve(bytes)
+    }
+  }
+
+  @objc(deleteSpeakerKitModel:resolver:rejecter:)
+  func deleteSpeakerKitModel(
+    _ speakerKitCachePath: String,
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock,
+  ) {
+    coordinator.deleteSpeakerKitModel(cacheFolder: speakerKitCachePath) { result in
+      switch result {
+      case .success:
+        resolve(nil)
+      case .failure(let error):
+        reject("E_DELETE", error.localizedDescription, error)
+      }
+    }
+  }
+
   @objc(startTranscriptionJob:resolver:rejecter:)
   func startTranscriptionJob(
     _ options: NSDictionary,

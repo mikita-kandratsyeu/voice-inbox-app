@@ -1,32 +1,46 @@
-import { shouldRunTranscriptionDiarization } from '../shouldRunTranscriptionDiarization';
+import { shouldRunTranscriptionDiarization } from '../nativeMeetingSpeakers';
+
+jest.mock('../../config/transcriptionEngine', () => ({
+  shouldUseIosWhisperKitEngine: jest.fn(() => true),
+}));
 
 describe('shouldRunTranscriptionDiarization', () => {
-  it('runs for meeting records when Pro is active and the global toggle is off', () => {
+  it('runs for meeting records when Pro is active and WhisperKit is enabled', () => {
     expect(
-      shouldRunTranscriptionDiarization({ classification: 'meeting' }, false, true),
+      shouldRunTranscriptionDiarization({ classification: 'meeting' }, true),
     ).toBe(true);
   });
 
-  it('runs for all records when Pro is active and the global toggle is on', () => {
+  it('skips non-meeting records', () => {
     expect(
-      shouldRunTranscriptionDiarization({ classification: 'personal' }, true, true),
+      shouldRunTranscriptionDiarization({ classification: 'work' }, true),
+    ).toBe(false);
+    expect(shouldRunTranscriptionDiarization({}, true)).toBe(false);
+  });
+
+  it('never runs without Pro', () => {
+    expect(
+      shouldRunTranscriptionDiarization({ classification: 'meeting' }, false),
+    ).toBe(false);
+  });
+
+  it('skips retranscribe when auto-refresh speakers is off', () => {
+    expect(
+      shouldRunTranscriptionDiarization(
+        { classification: 'meeting' },
+        true,
+        { isRetranscribe: true, autoRefreshSpeakers: false },
+      ),
+    ).toBe(false);
+  });
+
+  it('runs retranscribe when auto-refresh speakers is on', () => {
+    expect(
+      shouldRunTranscriptionDiarization(
+        { classification: 'meeting' },
+        true,
+        { isRetranscribe: true, autoRefreshSpeakers: true },
+      ),
     ).toBe(true);
-    expect(shouldRunTranscriptionDiarization({}, true, true)).toBe(true);
-  });
-
-  it('skips non-meeting records when the global toggle is off', () => {
-    expect(
-      shouldRunTranscriptionDiarization({ classification: 'work' }, false, true),
-    ).toBe(false);
-    expect(shouldRunTranscriptionDiarization({}, false, true)).toBe(false);
-  });
-
-  it('never runs without Pro, including meeting records', () => {
-    expect(
-      shouldRunTranscriptionDiarization({ classification: 'meeting' }, false, false),
-    ).toBe(false);
-    expect(
-      shouldRunTranscriptionDiarization({ classification: 'meeting' }, true, false),
-    ).toBe(false);
   });
 });

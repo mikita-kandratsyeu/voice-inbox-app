@@ -20,6 +20,7 @@ import {
 } from '@/features/ai-processing/lib/cloudSummarizeInFlight';
 import { markUnreadAfterSummaryRegenerationIfNeeded } from '@/features/ai-processing/lib/markUnreadAfterSummaryRegeneration';
 import { shouldIncludeMeetingSpeakerBreakdown } from '@/features/ai-processing/lib/meetingSpeakerBreakdown';
+import { recordHasNativeSpeakerDiarization } from '@/features/transcription/lib/nativeMeetingSpeakers';
 import { regenerateMeetingDialogue as runRegenerateMeetingDialogue } from '@/features/ai-processing/lib/regenerateMeetingDialogue';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
@@ -337,6 +338,7 @@ export const useAiProcessing = () => {
         const includeMeetingPreset = isProActive && recordIsMeeting;
         const meetingSummaryTemplate =
           snapshot?.meetingSummaryTemplate ?? record.meetingSummaryTemplate;
+        const transcriptSegments = snapshot?.transcriptSegments ?? record.transcriptSegments;
         includeMeetingSpeakerBreakdown =
           includeMeetingPreset &&
           shouldIncludeMeetingSpeakerBreakdown({
@@ -346,6 +348,9 @@ export const useAiProcessing = () => {
             aiExecutionMode,
             privateAiProvider: effectivePrivateAiProvider,
             autoRefreshMeetingSpeakersOnRegen,
+            hasNativeSpeakerDiarization: recordHasNativeSpeakerDiarization({
+              transcriptSegments,
+            }),
           });
 
         const getLatestRecord = (id: string) =>

@@ -23,8 +23,10 @@ export function shouldIncludeMeetingSpeakerBreakdown(input: {
   aiExecutionMode: AiExecutionMode;
   privateAiProvider: PrivateAiProvider;
   autoRefreshMeetingSpeakersOnRegen: boolean;
+  hasNativeSpeakerDiarization?: boolean;
 }): boolean {
   if (!input.isProActive || !input.recordIsMeeting) return false;
+  if (input.hasNativeSpeakerDiarization) return false;
   if (
     !isMeetingSpeakerSettingsAvailable(
       input.aiExecutionMode,

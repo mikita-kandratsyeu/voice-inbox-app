@@ -25,20 +25,23 @@ import { recordRepository } from '@/entities/record/model/repository';
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
 import {
   getRecommendedWhisperModelId,
+  getOfflineWhisperStorageLabel,
   LOCAL_AI_MODELS,
   useSettingsStore,
   WHISPER_MODELS,
 } from '@/entities/settings';
-import { getWhisperModelDisplayName } from '@/entities/settings/model/constants';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import {
   applySharedCoreMlToWhisperVariantBytes,
   cancelLocalLlmModelDownload,
   cancelWhisperModelDownload,
+  deleteAllArgmaxTranscriptionModels,
   deleteLocalLlmModel,
   deleteWhisperModel,
   getLocalLlmModelFileSizeBytes,
   getModelFileSizeBytes,
+  getSpeakerKitStorageBytesOnDisk,
+  listDownloadedWhisperKitModels,
 } from '@/features/model-manager';
 import {
   stopLocalAiDownloadLiveActivity,
@@ -61,7 +64,7 @@ import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
-import { IS_ANDROID } from '@/shared/lib/platform';
+import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 import runAfterInteractions from '@/shared/lib/runAfterInteractions';
 import { formatFileSize, getWhisperModelPath } from '@/shared/lib/whisper';
 import {
@@ -108,9 +111,9 @@ const STORAGE_BREAKDOWN_MIN_BYTES = 1024;
 const STORAGE_BREAKDOWN_ENTER = FadeIn.duration(220).easing(Easing.out(Easing.cubic));
 
 type DownloadedModelVariant = {
-  id: WhisperModelId;
+  id: WhisperModelId | 'speaker-kit';
   name: string;
-  format: WhisperModelWeightsFormat;
+  format: WhisperModelWeightsFormat | 'whisperkit' | 'speakerkit';
   bytes: number;
 };
 
@@ -161,9 +164,43 @@ export const StorageDetailsScreen = () => {
         }),
       ),
     );
-    const whisperEntries = await applySharedCoreMlToWhisperVariantBytes(
-      whisperEntriesRaw.filter((x): x is DownloadedModelVariant => x != null),
+    const ggmlEntries = await applySharedCoreMlToWhisperVariantBytes(
+      whisperEntriesRaw.filter(
+        (
+          entry,
+        ): entry is {
+          id: WhisperModelId;
+          name: string;
+          format: WhisperModelWeightsFormat;
+          bytes: number;
+        } => entry != null,
+      ),
     );
+    const whisperEntries: DownloadedModelVariant[] = [...ggmlEntries];
+
+    if (IS_IOS) {
+      const kitModels = await listDownloadedWhisperKitModels();
+      for (const { id, bytes } of kitModels) {
+        const model = WHISPER_MODELS.find((entry) => entry.id === id);
+        whisperEntries.push({
+          id,
+          name: model?.name ?? id,
+          format: 'whisperkit',
+          bytes,
+        });
+      }
+
+      const speakerKitBytes = await getSpeakerKitStorageBytesOnDisk();
+      if (speakerKitBytes > 0) {
+        whisperEntries.push({
+          id: 'speaker-kit',
+          name: 'SpeakerKit',
+          format: 'speakerkit',
+          bytes: speakerKitBytes,
+        });
+      }
+    }
+
     const localEntries = await Promise.all(
       LOCAL_AI_MODELS.map(async (m) => {
         const path = getLocalLlmModelPath(m.id);
@@ -454,6 +491,8 @@ export const StorageDetailsScreen = () => {
               useSettingsStore.getState().removeWhisperModelStatus(model.id, fmt);
             }
           }
+
+          await deleteAllArgmaxTranscriptionModels();
 
           const fmt = useSettingsStore.getState().whisperModelWeightsFormat;
           useSettingsStore.getState().setWhisperModel(getRecommendedWhisperModelId(fmt));
@@ -976,7 +1015,7 @@ export const StorageDetailsScreen = () => {
                                           }}
                                           numberOfLines={2}
                                         >
-                                          {getWhisperModelDisplayName(model.id, model.format)}
+                                          {getOfflineWhisperStorageLabel(model.id, model.format, t)}
                                         </Text>
                                         <Text
                                           style={{

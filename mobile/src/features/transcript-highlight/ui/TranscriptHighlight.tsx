@@ -64,14 +64,15 @@ export const TranscriptHighlight = ({
 
   return (
     <View style={{ gap: 12 }}>
-      {segments.map((seg) => {
+      {segments.map((seg, segmentIndex) => {
+        const segmentKey = `${seg.id}-${seg.startMs ?? segmentIndex}`;
         const isActiveSegment = active?.segmentId === seg.id;
         const hasTokens = seg.tokens && seg.tokens.length > 0;
         const speakerLabel = seg.speakerId ? speakerLabelById.get(seg.speakerId) : undefined;
 
         return (
           <View
-            key={seg.id}
+            key={segmentKey}
             style={{
               flexDirection: 'row',
               alignItems: 'flex-start',
@@ -120,7 +121,7 @@ export const TranscriptHighlight = ({
                     const isActiveWord = isActiveSegment && active?.activeWordIdx === idx;
                     return (
                       <Text
-                        key={idx}
+                        key={`${segmentKey}-tok-${idx}`}
                         style={{
                           color: isActiveWord ? color.accent.primary : color.text.primary,
                           backgroundColor: isActiveWord

@@ -47,7 +47,7 @@ import {
 } from '@/shared/lib/permissions';
 import { IOS_WHISPERKIT_ROLLOUT_ENABLED } from '@/features/transcription/config/transcriptionEngine';
 import { IS_IOS } from '@/shared/lib/platform';
-import { getWhisperLabel } from '@/shared/lib/whisper';
+import { getWhisperLabel, getWhisperModelShortLabelKey } from '@/shared/lib/whisper';
 
 import type { AutomationFeatureKind } from '../ui/AutomationComingSoonSheet';
 
@@ -309,7 +309,7 @@ export function useSettingsScreen() {
   const useIosWhisperKit =
     IS_IOS && IOS_WHISPERKIT_ROLLOUT_ENABLED && iosWhisperKitEngineEnabled;
   const transcriptionValue = useIosWhisperKit
-    ? getWhisperLabel(selectedWhisperModel)
+    ? t(getWhisperModelShortLabelKey(selectedWhisperModel))
     : whisperStatus === 'not_downloaded' || whisperStatus === 'downloading'
       ? t('settings.whisperModelNotSet')
       : getWhisperLabel(selectedWhisperModel);

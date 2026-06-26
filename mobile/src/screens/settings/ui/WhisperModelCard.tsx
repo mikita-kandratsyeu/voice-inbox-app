@@ -11,7 +11,7 @@ import type {
   WhisperModelStatus,
 } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
-import { formatFileSize, getWhisperLabel } from '@/shared/lib/whisper';
+import { formatFileSize, getWhisperLabel, getWhisperModelShortLabelKey } from '@/shared/lib/whisper';
 
 import { getSpeedLabel } from '../config';
 import { getCardRadiusClass } from '../lib';
@@ -43,6 +43,8 @@ type WhisperModelCardProps = {
   coreMlEncoderActive: boolean;
   /** iOS WhisperKit: model is used on demand without a local ggml file. */
   iosWhisperKitManaged?: boolean;
+  /** Render inside a SettingsSection card (no standalone card chrome). */
+  embedded?: boolean;
 };
 
 export const WhisperModelCard = ({
@@ -63,6 +65,7 @@ export const WhisperModelCard = ({
   downloadPhase,
   coreMlEncoderActive,
   iosWhisperKitManaged = false,
+  embedded = false,
 }: WhisperModelCardProps) => {
   const { t } = useTranslation();
   const isDownloaded = status === 'downloaded';
@@ -74,7 +77,7 @@ export const WhisperModelCard = ({
   const isRecommended = model.id === recommendedModelId;
   // speed → size → Core ML (no provider row; behavior → specs → platform)
   const metaChips: ModelMetaChip[] = [
-    { key: 'speed', label: getSpeedLabel(model.speed) },
+    ...(iosWhisperKitManaged ? [] : [{ key: 'speed', label: getSpeedLabel(model.speed) }]),
     { key: 'size', label: displaySize },
     ...(coreMlEncoderActive ? [{ key: 'coreml', label: t('whisper.coreMlChip') }] : []),
   ];
@@ -90,6 +93,15 @@ export const WhisperModelCard = ({
     : {};
   const radiusClass = getCardRadiusClass(index, total);
 
+  const displayTitle = iosWhisperKitManaged
+    ? t(getWhisperModelShortLabelKey(model.id))
+    : getWhisperLabel(model.id);
+  const descriptionText = iosWhisperKitManaged
+    ? t(`whisper.iosModelQuality.${model.id}`)
+    : t(
+        `whisper.models.${model.id.replace('whisper-', '').replace('-', '_')}Desc` as 'whisper.models.tinyDesc',
+      );
+
   const rowStatusA11y = isError
     ? t('whisper.a11yRowError')
     : isDownloading
@@ -100,7 +112,9 @@ export const WhisperModelCard = ({
           : t('whisper.a11yRowDownloaded')
         : t('whisper.a11yRowNotDownloaded');
   const cardA11yLabel = [
-    t('whisper.a11yModelPrefix', { name: model.name }),
+    t('whisper.a11yModelPrefix', {
+      name: iosWhisperKitManaged ? t(getWhisperModelShortLabelKey(model.id)) : model.name,
+    }),
     coreMlEncoderActive ? t('whisper.coreMlAcceleratedA11y') : null,
     isRecommended ? t('whisper.recommended') : null,
     rowStatusA11y,
@@ -119,14 +133,17 @@ export const WhisperModelCard = ({
         selected: isReadyForUse && isSelected,
         disabled: isDownloading,
       }}
-      className={`px-4 py-4 ${radiusClass}`}
-      style={[{ backgroundColor: color.background.card }, borderStyle]}
+      className={`px-4 py-3.5 ${radiusClass}`}
+      style={[
+        { backgroundColor: embedded ? color.background.card : color.background.card },
+        borderStyle,
+      ]}
     >
       <View className="flex-row items-center justify-between">
         <View className="mr-3 flex-1">
           <View className="mb-1 flex-row flex-wrap items-center gap-2">
             <Text className="text-[16px] font-semibold" style={{ color: color.text.primary }}>
-              {getWhisperLabel(model.id)}
+              {displayTitle}
             </Text>
             {isRecommended ? (
               <View
@@ -144,12 +161,10 @@ export const WhisperModelCard = ({
           </View>
 
           <Text className="mb-2 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-            {t(
-              `whisper.models.${model.id.replace('whisper-', '').replace('-', '_')}Desc` as 'whisper.models.tinyDesc',
-            )}
+            {descriptionText}
           </Text>
           <ModelMetaChips color={color} chips={metaChips} className="mb-1.5" />
-          {compatibility && (
+          {!iosWhisperKitManaged && compatibility && (
             <View className="mt-1.5 flex-row items-center gap-2">
               <Smartphone
                 size={14}
