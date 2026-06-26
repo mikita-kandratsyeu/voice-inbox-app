@@ -157,6 +157,26 @@ enum WhisperKitEngine {
       .trimmingCharacters(in: .whitespacesAndNewlines)
   }
 
+  private static func pathMatchesModel(_ path: String, modelName: String) -> Bool {
+    if path.contains(modelName) {
+      return true
+    }
+
+    let slug = modelName.replacingOccurrences(of: "openai_whisper-", with: "")
+    if !slug.isEmpty, path.contains(slug) {
+      return true
+    }
+
+    if slug.hasPrefix("large-v3"), path.contains("large-v3") {
+      return true
+    }
+    if slug.hasPrefix("large-v2"), path.contains("large-v2") {
+      return true
+    }
+
+    return false
+  }
+
   private static func cacheURL(from path: String) -> URL {
     if path.hasPrefix("file://") {
       return URL(string: path) ?? URL(fileURLWithPath: String(path.dropFirst(7)))
@@ -185,12 +205,12 @@ enum WhisperKitEngine {
     for case let url as URL in enumerator {
       guard url.lastPathComponent == "AudioEncoder.mlmodelc" else { continue }
       let path = url.path
-      guard path.contains(modelName) || path.contains(modelSlug) else { continue }
+      guard pathMatchesModel(path, modelName: modelName) else { continue }
 
       var current = url.deletingLastPathComponent()
       while current.path.hasPrefix(base.path), current.path != base.path {
         let name = current.lastPathComponent
-        if name == modelName || name.contains(modelSlug) {
+        if name == modelName || name.contains(modelSlug) || pathMatchesModel(name, modelName: modelName) {
           roots.insert(current)
           break
         }

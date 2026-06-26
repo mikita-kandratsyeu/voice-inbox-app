@@ -270,7 +270,10 @@ export const useTranscription = () => {
         }
       });
 
-      updateAiStatus(record.id, 'loading_model', 0, i18n.t('transcription.loadingModel'), null);
+      const useIosWhisperKit = shouldUseIosWhisperKitEngine();
+      if (!useIosWhisperKit) {
+        updateAiStatus(record.id, 'loading_model', 0, i18n.t('transcription.loadingModel'), null);
+      }
       currentRecordIdRef.current = record.id;
 
       const language = languageOverride ?? transcriptionLanguage;
@@ -281,7 +284,6 @@ export const useTranscription = () => {
       let completedSuccessfully = false;
 
       try {
-        const useIosWhisperKit = shouldUseIosWhisperKitEngine();
         const checkpointEngine = resolveCheckpointEngine();
         let context: Awaited<ReturnType<typeof getWhisperContext>> | null = null;
 
@@ -328,24 +330,24 @@ export const useTranscription = () => {
               i18n.t('transcription.downloadingModel'),
               null,
             );
-          }
 
-          const prepared = await prepareNativeTranscriptionModel(whisperKitModel, modelCachePath);
-          if (!prepared) {
-            currentRecordIdRef.current = null;
-            updateAiStatus(record.id, 'error');
-            return;
-          }
+            const prepared = await prepareNativeTranscriptionModel(whisperKitModel, modelCachePath);
+            if (!prepared) {
+              currentRecordIdRef.current = null;
+              updateAiStatus(record.id, 'error');
+              return;
+            }
 
-          if (!isActiveTranscriptionJob(record.id, jobGen)) {
-            updateAiStatus(record.id, 'idle');
-            return;
-          }
+            if (!isActiveTranscriptionJob(record.id, jobGen)) {
+              updateAiStatus(record.id, 'idle');
+              return;
+            }
 
-          if (isTranscriptionBackgroundCancelled(record.id)) {
-            keepCheckpointSnapshot = true;
-            updateAiStatus(record.id, 'paused');
-            return;
+            if (isTranscriptionBackgroundCancelled(record.id)) {
+              keepCheckpointSnapshot = true;
+              updateAiStatus(record.id, 'paused');
+              return;
+            }
           }
         }
 
