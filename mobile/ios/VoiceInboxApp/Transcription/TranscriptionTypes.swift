@@ -155,6 +155,70 @@ func buildChunkPlan(
   return chunks
 }
 
+private struct ChunkWordSpan {
+  let text: String
+  let normalized: String
+}
+
+private func normalizeChunkToken(_ value: String) -> String {
+  let lowered = value.lowercased()
+  let stripped = lowered.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) }.map(String.init).joined()
+  return stripped
+}
+
+private func extractChunkWordSpans(_ value: String) -> [ChunkWordSpan] {
+  guard let regex = try? NSRegularExpression(
+    pattern: "[\\p{L}\\p{N}]+(?:[''][\\p{L}\\p{N}]+)*",
+    options: [],
+  ) else {
+    return []
+  }
+
+  let nsValue = value as NSString
+  let range = NSRange(location: 0, length: nsValue.length)
+  let matches = regex.matches(in: value, options: [], range: range)
+
+  return matches.compactMap { match in
+    guard match.numberOfRanges > 0 else { return nil }
+    let tokenRange = match.range(at: 0)
+    let token = nsValue.substring(with: tokenRange)
+    let normalized = normalizeChunkToken(token)
+    guard !normalized.isEmpty else { return nil }
+    return ChunkWordSpan(text: token, normalized: normalized)
+  }
+}
+
+/// Removes duplicated prefix from the next chunk when it repeats the tail of the previous chunk.
+func dedupeChunkTextOverlap(previousText: String, nextText: String) -> String {
+  let trimmedNext = nextText.trimmingCharacters(in: .whitespacesAndNewlines)
+  if trimmedNext.isEmpty {
+    return ""
+  }
+
+  let previousSpans = extractChunkWordSpans(previousText)
+  let nextSpans = extractChunkWordSpans(trimmedNext)
+  let previousTokens = previousSpans.map(\.normalized)
+  let nextTokens = nextSpans.map(\.normalized)
+
+  if previousTokens.isEmpty || nextTokens.isEmpty {
+    return trimmedNext
+  }
+
+  let maxOverlap = min(previousTokens.count, nextTokens.count, 12)
+  if maxOverlap >= 2 {
+    for overlap in stride(from: maxOverlap, through: 2, by: -1) {
+      let previousTail = previousTokens.suffix(overlap)
+      let nextHead = nextTokens.prefix(overlap)
+      if zip(previousTail, nextHead).allSatisfy({ $0 == $1 }) {
+        let remaining = nextSpans.dropFirst(overlap).map(\.text).joined(separator: " ")
+        return remaining.trimmingCharacters(in: .whitespacesAndNewlines)
+      }
+    }
+  }
+
+  return trimmedNext
+}
+
 func mapTranscriptionFailure(_ error: Error) -> (code: String, message: String) {
   if let jobError = error as? TranscriptionJobError, let code = jobError.errorDescription {
     return (code, error.localizedDescription)

@@ -39,6 +39,13 @@ enum WhisperKitEngine {
     #endif
   }
 
+  static func invalidatePipelineCache() {
+    #if canImport(WhisperKit)
+    cachedPipeline = nil
+    cachedModelName = nil
+    #endif
+  }
+
   static func deleteModel(modelName: String, cacheFolder: String) throws {
     #if canImport(WhisperKit)
     let roots = findModelRootURLs(modelName: modelName, cacheFolder: cacheFolder)
@@ -87,7 +94,7 @@ enum WhisperKitEngine {
     let pipeline = try await loadPipeline(modelName: modelName, cacheFolder: cacheFolder)
     var options = DecodingOptions()
     options.skipSpecialTokens = true
-    options.withoutTimestamps = true
+    options.withoutTimestamps = false
     if language != "auto" {
       options.language = language
       options.detectLanguage = false

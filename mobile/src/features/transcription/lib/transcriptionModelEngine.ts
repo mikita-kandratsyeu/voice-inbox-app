@@ -31,7 +31,7 @@ export async function isWhisperKitModelReady(modelId: WhisperModelId): Promise<b
   );
 }
 
-export function shouldSkipGgmlPreflightForIos(modelId: WhisperModelId): boolean {
+export function shouldSkipGgmlPreflightForIos(_modelId: WhisperModelId): boolean {
   return shouldUseIosWhisperKitEngine();
 }
 

@@ -22,6 +22,7 @@ type NativeTranscriptionModule = {
   startTranscriptionJob: (options: Record<string, unknown>) => Promise<{ jobId: string }>;
   cancelTranscriptionJob: (jobId: string) => Promise<void>;
   cleanupTranscriptionJob: (jobId: string) => Promise<void>;
+  invalidateEngineCaches: () => Promise<void>;
 };
 
 const MODULE_NAME = 'VoiceInboxTranscriptionModule';
@@ -72,6 +73,7 @@ export type NativeTranscriptionListeners = {
     fullText: string;
     segments: TranscriptSegment[];
     checkpointIndex: number;
+    totalChunks: number;
   }) => void;
   onCompleted?: (result: TranscriptionResult) => void;
   onFailed?: (payload: { jobId: string; code: string; message: string }) => void;
@@ -122,6 +124,22 @@ const parseSegments = (raw: unknown): TranscriptSegment[] => {
   return dedupeSegmentIds(segments);
 };
 
+export const cleanupNativeTranscriptionJob = async (jobId: string): Promise<void> => {
+  const mod = getNativeModule();
+  if (!mod?.cleanupTranscriptionJob) {
+    return;
+  }
+  await mod.cleanupTranscriptionJob(jobId).catch(() => {});
+};
+
+export const invalidateNativeTranscriptionEngineCaches = async (): Promise<void> => {
+  const mod = getNativeModule();
+  if (!mod?.invalidateEngineCaches) {
+    return;
+  }
+  await mod.invalidateEngineCaches().catch(() => {});
+};
+
 export const startNativeTranscriptionJob = (
   options: StartNativeTranscriptionJobOptions,
   listeners: NativeTranscriptionListeners,
@@ -132,6 +150,8 @@ export const startNativeTranscriptionJob = (
   }
 
   const emitter = new NativeEventEmitter(NativeModules[MODULE_NAME]);
+  let settled = false;
+
   const subscriptions = [
     emitter.addListener('transcriptionProgress', (event: unknown) => {
       if (!isRecord(event) || !isString(event.jobId) || event.jobId !== options.jobId) {
@@ -158,6 +178,7 @@ export const startNativeTranscriptionJob = (
         fullText: isString(event.fullText) ? event.fullText : '',
         segments: parseSegments(event.segments),
         checkpointIndex: isNumber(event.checkpointIndex) ? event.checkpointIndex : 0,
+        totalChunks: isNumber(event.totalChunks) ? event.totalChunks : 1,
       });
     }),
     emitter.addListener('transcriptionCompleted', (event: unknown) => {
@@ -172,6 +193,7 @@ export const startNativeTranscriptionJob = (
             )
             .map((s) => ({ id: String(s.id), label: String(s.label) }))
         : [];
+      void finishJob();
       listeners.onCompleted?.({
         jobId: event.jobId,
         detectedLanguage: isString(event.detectedLanguage) ? event.detectedLanguage : undefined,
@@ -195,6 +217,7 @@ export const startNativeTranscriptionJob = (
       if (!isRecord(event) || !isString(event.jobId) || event.jobId !== options.jobId) {
         return;
       }
+      void finishJob();
       listeners.onFailed?.({
         jobId: event.jobId,
         code: isString(event.code) ? event.code : 'unknown',
@@ -205,12 +228,26 @@ export const startNativeTranscriptionJob = (
       if (!isRecord(event) || !isString(event.jobId) || event.jobId !== options.jobId) {
         return;
       }
+      void finishJob();
       listeners.onCancelled?.({
         jobId: event.jobId,
         checkpointAvailable: event.checkpointAvailable === true,
       });
     }),
   ];
+
+  const teardown = (): void => {
+    if (settled) {
+      return;
+    }
+    settled = true;
+    subscriptions.forEach((sub) => sub.remove());
+  };
+
+  const finishJob = async (): Promise<void> => {
+    teardown();
+    await cleanupNativeTranscriptionJob(options.jobId);
+  };
 
   void mod
     .startTranscriptionJob({
@@ -229,6 +266,7 @@ export const startNativeTranscriptionJob = (
       resume: options.resume,
     })
     .catch((err: unknown) => {
+      void finishJob();
       listeners.onFailed?.({
         jobId: options.jobId,
         code: 'native_start_failed',
@@ -238,8 +276,8 @@ export const startNativeTranscriptionJob = (
 
   return {
     cancel: async () => {
-      subscriptions.forEach((sub) => sub.remove());
       await mod.cancelTranscriptionJob(options.jobId).catch(() => {});
+      await finishJob();
     },
   };
 };

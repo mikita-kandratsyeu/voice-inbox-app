@@ -19,11 +19,7 @@ import {
 import { analyzeWavSpeech } from './audioVad';
 import { buildWhisperPrompt } from './buildWhisperPrompt';
 import { dedupeChunkTextOverlap } from './chunkTextDedup';
-import {
-  cleanTranscriptSegmentText,
-  collapseRepeatedTokenStutters,
-  isUsableTranscriptText,
-} from './cleanTranscriptText';
+import { cleanTranscriptSegmentText, isUsableTranscriptText } from './cleanTranscriptText';
 import { TranscriptionError } from './transcriptionErrors';
 import type { TranscriptionVadPolicy } from './transcriptionQualityMode';
 import { TranscriptionRuntimeBenchmark } from './transcriptionRuntimeBenchmark';

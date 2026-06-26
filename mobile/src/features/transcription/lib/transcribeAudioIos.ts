@@ -133,10 +133,7 @@ export const transcribeAudioIos = (
             }
             onChunkCompleted?.({
               chunkIndex: payload.checkpointIndex,
-              totalChunks: Math.max(
-                1,
-                Math.ceil(durationMs / (chunkProfile.chunkDurationSec * 1000)),
-              ),
+              totalChunks: payload.totalChunks,
               fullText: payload.fullText,
               segments: payload.segments,
               chunkProfile,

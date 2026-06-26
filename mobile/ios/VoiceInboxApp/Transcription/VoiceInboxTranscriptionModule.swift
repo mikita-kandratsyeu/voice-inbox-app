@@ -214,4 +214,13 @@ class VoiceInboxTranscriptionModule: RCTEventEmitter {
     coordinator.cleanupJob(jobId: jobId)
     resolve(nil)
   }
+
+  @objc(invalidateEngineCaches:rejecter:)
+  func invalidateEngineCaches(
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock,
+  ) {
+    coordinator.invalidateEngineCaches()
+    resolve(nil)
+  }
 }

@@ -95,6 +95,7 @@ final class TranscriptionJobCoordinator {
           try await self.runJob(request: request, emit: emit)
           completion(.success(()))
         } catch {
+          self.cleanupJob(jobId: request.jobId)
           if (error as? TranscriptionJobError) == .cancelled {
             emit("transcriptionCancelled", [
               "jobId": request.jobId,
@@ -131,6 +132,11 @@ final class TranscriptionJobCoordinator {
   func cleanupJob(jobId: String) {
     let jobDir = TranscriptionTempFileManager.jobDirectory(jobId: jobId)
     try? FileManager.default.removeItem(at: jobDir)
+  }
+
+  func invalidateEngineCaches() {
+    WhisperKitEngine.invalidatePipelineCache()
+    SpeakerKitEngine.invalidatePipelineCache()
   }
 
   private func isCancelled(jobId: String) -> Bool {
@@ -246,6 +252,7 @@ final class TranscriptionJobCoordinator {
     let promptTail = fullText.trimmingCharacters(in: .whitespacesAndNewlines)
     let promptPrefix = request.customWords.joined(separator: " ")
     let prompt = [promptPrefix, String(promptTail.suffix(200))].filter { !$0.isEmpty }.joined(separator: " ")
+    var detectedLanguage: String?
 
   #if canImport(WhisperKit)
     if totalChunks == 1 || request.durationMs < 30_000 {
@@ -259,6 +266,7 @@ final class TranscriptionJobCoordinator {
       )
       allSegments = result.segments
       fullText = result.text
+      detectedLanguage = result.detectedLanguage
       if !diarization.isEmpty {
         allSegments = SpeakerKitEngine.applySpeakerInfo(
           transcriptionSegments: allSegments,
@@ -312,7 +320,13 @@ final class TranscriptionJobCoordinator {
 
         allSegments.append(contentsOf: offsetSegments)
         if !result.text.isEmpty {
-          fullText = fullText.isEmpty ? result.text : "\(fullText) \(result.text)"
+          let dedupedChunkText = dedupeChunkTextOverlap(previousText: fullText, nextText: result.text)
+          if !dedupedChunkText.isEmpty {
+            fullText = fullText.isEmpty ? dedupedChunkText : "\(fullText) \(dedupedChunkText)"
+          }
+        }
+        if detectedLanguage == nil, let language = result.detectedLanguage {
+          detectedLanguage = language
         }
 
         let payloadSegments = allSegments.map { $0.dictionary }
@@ -321,6 +335,7 @@ final class TranscriptionJobCoordinator {
           "fullText": fullText,
           "segments": payloadSegments,
           "checkpointIndex": loopIndex,
+          "totalChunks": totalChunks,
         ])
         try? FileManager.default.removeItem(atPath: chunkPath)
       }
@@ -336,14 +351,18 @@ final class TranscriptionJobCoordinator {
 
     emitProgress(request: request, emit: emit, phase: "merging", progress: 95)
     let speakers = buildSpeakerRoster(from: allSegments)
-    emit("transcriptionCompleted", [
+    var completionPayload: [String: Any] = [
       "jobId": request.jobId,
       "durationMs": request.durationMs,
       "fullText": fullText,
       "segments": allSegments.map { $0.dictionary },
       "speakers": speakers,
       "skipped": fullText.isEmpty && allSegments.isEmpty,
-    ])
+    ]
+    if let detectedLanguage {
+      completionPayload["detectedLanguage"] = detectedLanguage
+    }
+    emit("transcriptionCompleted", completionPayload)
     cleanupJob(jobId: request.jobId)
   }
 
@@ -372,23 +391,40 @@ final class TranscriptionJobCoordinator {
     startMs: Int,
     durationMs: Int,
   ) throws {
-    let data = try Data(contentsOf: URL(fileURLWithPath: sourcePath))
-    guard data.count > 44 else {
+    let sampleRate = 16_000
+    let bytesPerSample = 2
+    let headerSize = 44
+    let startByte = headerSize + (startMs * sampleRate * bytesPerSample) / 1000
+    let chunkBytes = (durationMs * sampleRate * bytesPerSample) / 1000
+
+    let sourceURL = URL(fileURLWithPath: sourcePath)
+    let fileSize =
+      (try? sourceURL.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+    guard fileSize > headerSize else {
       throw TranscriptionJobError.unknown("invalid_wav")
     }
 
-    let sampleRate = 16_000
-    let bytesPerSample = 2
-    let startByte = 44 + (startMs * sampleRate * bytesPerSample) / 1000
-    let chunkBytes = (durationMs * sampleRate * bytesPerSample) / 1000
-    let endByte = min(data.count, startByte + chunkBytes)
+    let endByte = min(fileSize, startByte + chunkBytes)
     guard startByte < endByte else {
       throw TranscriptionJobError.unknown("invalid_chunk_bounds")
     }
 
-    var header = data.prefix(44)
-  #if swift(>=5.0)
-    let pcm = data.subdata(in: startByte..<endByte)
+    let sourceHandle = try FileHandle(forReadingFrom: sourceURL)
+    defer {
+      try? sourceHandle.close()
+    }
+
+    let header = sourceHandle.readData(ofLength: headerSize)
+    guard header.count == headerSize else {
+      throw TranscriptionJobError.unknown("invalid_wav_header")
+    }
+
+    try sourceHandle.seek(toOffset: UInt64(startByte))
+    let pcm = sourceHandle.readData(ofLength: endByte - startByte)
+    guard !pcm.isEmpty else {
+      throw TranscriptionJobError.unknown("invalid_chunk_bounds")
+    }
+
     var mutableHeader = Data(header)
     let dataSize = UInt32(pcm.count)
     mutableHeader.replaceSubrange(4..<8, with: withUnsafeBytes(of: (36 + dataSize).littleEndian) { Data($0) })
@@ -397,7 +433,6 @@ final class TranscriptionJobCoordinator {
     output.append(mutableHeader)
     output.append(pcm)
     try output.write(to: URL(fileURLWithPath: outputPath), options: .atomic)
-  #endif
   }
 }
 

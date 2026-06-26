@@ -41,6 +41,13 @@ enum SpeakerKitEngine {
     #endif
   }
 
+  static func invalidatePipelineCache() {
+    #if canImport(SpeakerKit) && canImport(WhisperKit)
+    cachedSpeakerKit = nil
+    cachedSpeakerKitCacheFolder = nil
+    #endif
+  }
+
   static func deleteModel(cacheFolder: String) throws {
     #if canImport(SpeakerKit) && canImport(WhisperKit)
     let url = cacheURL(from: cacheFolder)

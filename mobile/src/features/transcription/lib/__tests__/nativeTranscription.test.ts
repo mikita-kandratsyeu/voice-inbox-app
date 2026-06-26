@@ -8,6 +8,8 @@ jest.mock('react-native', () => ({
       prepareModel: jest.fn().mockResolvedValue({ ready: true }),
       startTranscriptionJob: jest.fn().mockResolvedValue({ jobId: 'job-1' }),
       cancelTranscriptionJob: jest.fn().mockResolvedValue(undefined),
+      cleanupTranscriptionJob: jest.fn().mockResolvedValue(undefined),
+      invalidateEngineCaches: jest.fn().mockResolvedValue(undefined),
     },
   },
   Platform: { OS: 'ios' },
