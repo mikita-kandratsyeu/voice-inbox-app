@@ -68,7 +68,11 @@ const SettingsSectionInner = ({
     ) : (
       <View
         className="overflow-hidden rounded-2xl"
-        style={{ borderWidth: 1, borderColor: color.border.default }}
+        style={{
+          borderWidth: 1,
+          borderColor: color.border.default,
+          backgroundColor: color.background.card,
+        }}
       >
         {children}
       </View>
