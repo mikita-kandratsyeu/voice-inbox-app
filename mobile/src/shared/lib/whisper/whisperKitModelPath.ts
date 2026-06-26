@@ -12,11 +12,14 @@ export const getSpeakerKitModelsDir = (): string => `${argmaxModelsDir()}/speake
 export const getTranscriptionJobsCacheDir = (): string =>
   `${getDocumentDirectoryPath()}/transcription-jobs`;
 
-/** Approximate WhisperKit Core ML download sizes for the settings picker (on-disk total). */
+/**
+ * WhisperKit on-disk totals (MelSpectrogram + AudioEncoder + TextDecoder Core ML bundles).
+ * Source: argmaxinc/whisperkit-coreml on Hugging Face, rounded up for HF cache during download.
+ */
 export const WHISPER_KIT_ESTIMATED_DOWNLOAD_MB: Partial<Record<WhisperModelId, number>> = {
-  'whisper-base': 150,
-  'whisper-small': 280,
-  'whisper-medium': 640,
+  'whisper-base': 145,
+  'whisper-small': 470,
+  'whisper-medium': 630,
 };
 
 export const getWhisperKitEstimatedDownloadMb = (modelId: WhisperModelId): number =>
