@@ -15977,19 +15977,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-haptic-feedback@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "react-native-haptic-feedback@npm:3.0.0"
-  peerDependencies:
-    react: ">=18.0.0"
-    react-native: ">=0.71.0"
-  peerDependenciesMeta:
-    react:
-      optional: true
-  checksum: 10c0/209566a098470b33e209aafc333dc897f911dc71243a41ab5486cb067e995dde78daa276b33b6c13b004bf1168352452bf39c4d9c536b6d3c9c210b6d78028cf
-  languageName: node
-  linkType: hard
-
 "react-native-html-to-pdf@npm:^1.3.0":
   version: 1.3.0
   resolution: "react-native-html-to-pdf@npm:1.3.0"
@@ -16123,6 +16110,17 @@ __metadata:
     react-native: "*"
     react-native-nitro-modules: "*"
   checksum: 10c0/0076782a159bdf6340f26e31215b72ff77234acbcb23d3d15fd66bf2bee9b27b324f500c7e2cce6587e06471439775f4d0536453c34c9281f46e8d6089bc347c
+  languageName: node
+  linkType: hard
+
+"react-native-nitro-haptics@npm:^0.2.3":
+  version: 0.2.3
+  resolution: "react-native-nitro-haptics@npm:0.2.3"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: "*"
+  checksum: 10c0/f132db1ac101f3552e1447a634efed993dd701c8d5b70a857a568c1f0ea863d10987c9619d27c96a528bca6a5a49a32eeb9593448447b1247d88d8350d69a57f
   languageName: node
   linkType: hard
 
@@ -19104,7 +19102,6 @@ __metadata:
     react-native-draggable-flatlist: "npm:^4.0.3"
     react-native-enriched-markdown: "npm:^0.6.0"
     react-native-gesture-handler: "npm:^3.0.2"
-    react-native-haptic-feedback: "npm:^3.0.0"
     react-native-html-to-pdf: "npm:^1.3.0"
     react-native-in-app-review: "npm:^4.4.2"
     react-native-inappbrowser-nitro: "npm:^3.0.1"
@@ -19116,6 +19113,7 @@ __metadata:
     react-native-nitro-device-info: "npm:^1.8.0"
     react-native-nitro-fetch: "npm:^1.4.2"
     react-native-nitro-fs: "npm:^0.9.0"
+    react-native-nitro-haptics: "npm:^0.2.3"
     react-native-nitro-modules: "npm:^0.35.9"
     react-native-nitro-sound: "npm:^0.2.15"
     react-native-permissions: "npm:^5.6.0"
