@@ -1712,6 +1712,7 @@
         "accentCustomization": "Accent color",
         "folderColors": "Custom folder colors",
         "meetingModeAndPinnedMoments": "Meeting mode and pinned moments",
+        "speakerLabelsInTranscript": "Speaker labels in transcript (iPhone & iPad)",
         "premiumAiModels": "Advanced models and your AI server",
         "extendedShareAndBatchExport": "Extended export",
         "aiFolderOrganize": "Advanced AI folder organization",
@@ -2144,6 +2145,14 @@
   "whisper": {
     "modelTitle": "Transcription model",
     "modelDescription": "Choose a Whisper model for on-device transcription. Larger models are more accurate but require more storage.",
+    "modelDescriptionIos": "With improved transcription, models download automatically when needed. Pick a quality tier — no manual downloads.",
+    "iosModelQualityTitle": "Recognition quality",
+    "iosModelQualityHint": "Downloads on first transcription. Larger models are more accurate but take longer.",
+    "iosModelQuality": {
+      "whisper-base": "Fastest — good for short voice notes.",
+      "whisper-small": "Balanced speed and accuracy for most recordings.",
+      "whisper-medium": "Best accuracy — slower, uses more storage."
+    },
     "defaultLanguageTitle": "Default transcription language",
     "defaultLanguageHint": "Used when you transcribe and when you open a recording. You can override the language on each recording’s transcript tab.",
     "qualityModeTitle": "Long recording mode",
@@ -2157,6 +2166,11 @@
       "balanced": "Balanced chunk size and accuracy for most recordings.",
       "quality": "Larger chunks and conservative silence handling for best accuracy."
     },
+    "iosEngineTitle": "Improved transcription (iPhone & iPad)",
+    "iosEngineHint": "Apple’s on-device speech engine — faster and fully offline on iPhone and iPad.",
+    "iosModelOnDemandHint": "Downloads automatically the first time you transcribe.",
+    "diarizationTitle": "Speaker labels on all notes",
+    "diarizationHint": "Pro feature. Meeting notes label speakers automatically — turn on for your other notes too.",
     "downloadModel": "Download model",
     "downloadConfirm": "Download will require ~{{ size }} MB. Continue?",
     "deleteModel": "Delete model",

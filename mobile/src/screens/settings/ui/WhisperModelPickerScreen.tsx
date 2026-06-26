@@ -17,7 +17,8 @@ import {
   type WhisperModelVariantId,
 } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
-import { getWhisperVariantDisplaySizeBytes, useModelManager } from '@/features/model-manager';
+import { getWhisperVariantDisplaySizeBytes, isWhisperModelSelectable, useModelManager } from '@/features/model-manager';
+import { IOS_WHISPERKIT_ROLLOUT_ENABLED } from '@/features/transcription/config/transcriptionEngine';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { IS_IOS } from '@/shared/lib/platform';
@@ -25,6 +26,8 @@ import { formatFileSize, isWhisperCoreMlEncoderInstalled } from '@/shared/lib/wh
 import { ScreenHeader } from '@/shared/ui';
 
 import { WhisperDefaultLanguageSection } from './WhisperDefaultLanguageSection';
+import { WhisperIosEngineSection } from './WhisperIosEngineSection';
+import { WhisperIosModelQualitySection } from './WhisperIosModelQualitySection';
 import { WhisperQualityModeSection } from './WhisperQualityModeSection';
 import { WhisperModelCard } from './WhisperModelCard';
 
@@ -46,12 +49,14 @@ export const WhisperModelPickerScreen = () => {
   const whisperDownloadPhase = useSettingsStore((s) => s.whisperDownloadPhase);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelWeightsFormat = useSettingsStore((s) => s.whisperModelWeightsFormat);
+  const iosWhisperKitEngineEnabled = useSettingsStore((s) => s.iosWhisperKitEngineEnabled);
   const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
   const setWhisperModelWeightsFormat = useSettingsStore((s) => s.setWhisperModelWeightsFormat);
 
   const compatibility = useWhisperModelCompatibility();
   const recommendedModelId = useRecommendedWhisperModelId();
   const { startDownload, cancelDownload, removeModel } = useModelManager();
+  const useIosWhisperKit = IS_IOS && IOS_WHISPERKIT_ROLLOUT_ENABLED && iosWhisperKitEngineEnabled;
 
   const [realSizes, setRealSizes] = useState<Partial<Record<WhisperModelVariantId, string>>>({});
   const [coreMlEncoderActive, setCoreMlEncoderActive] = useState<
@@ -164,7 +169,7 @@ export const WhisperModelPickerScreen = () => {
     const variantId = getWhisperModelVariantId(id, whisperModelWeightsFormat);
     const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
     if (status === 'downloading') return;
-    if (status !== 'downloaded') {
+    if (!isWhisperModelSelectable(status, useIosWhisperKit)) {
       const model = WHISPER_MODELS.find((m) => m.id === id);
       if (model) void handleDownload(id);
       return;
@@ -193,10 +198,14 @@ export const WhisperModelPickerScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-            {t('whisper.modelDescription')}
+            {useIosWhisperKit ? t('whisper.modelDescriptionIos') : t('whisper.modelDescription')}
           </Text>
           <WhisperQualityModeSection color={color} />
+          <WhisperIosEngineSection color={color} />
           <WhisperDefaultLanguageSection color={color} />
+          {useIosWhisperKit ? (
+            <WhisperIosModelQualitySection color={color} />
+          ) : (
           <View
             className="mb-6 gap-2 rounded-2xl p-4"
             style={{ backgroundColor: color.background.card }}
@@ -269,10 +278,13 @@ export const WhisperModelPickerScreen = () => {
                 : t('whisper.weightsFormatFullHint')}
             </Text>
           </View>
+          )}
+          {!useIosWhisperKit ? (
           <View className="overflow-hidden rounded-2xl">
             {WHISPER_MODELS.map((model, index) => {
               const variantId = getWhisperModelVariantId(model.id, whisperModelWeightsFormat);
               const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
+              const iosWhisperKitManaged = useIosWhisperKit && status !== 'downloaded';
               const displaySize =
                 realSizes[variantId] ??
                 formatFileSize(
@@ -294,6 +306,7 @@ export const WhisperModelPickerScreen = () => {
                   index={index}
                   total={WHISPER_MODELS.length}
                   status={status}
+                  iosWhisperKitManaged={iosWhisperKitManaged}
                   isSelected={
                     model.id === selectedWhisperModel &&
                     selectedWhisperModelFormat === whisperModelWeightsFormat
@@ -313,6 +326,7 @@ export const WhisperModelPickerScreen = () => {
               );
             })}
           </View>
+          ) : null}
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>

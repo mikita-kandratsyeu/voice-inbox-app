@@ -4,9 +4,11 @@ import { getDocumentDirectoryPath, NitroFS } from '@/shared/lib/fs';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
 import type { TranscriptionChunkProfile } from './transcribeAudio';
+import type { TranscriptionModelEngine } from './transcriptionModelEngine';
 
 const CHECKPOINTS_DIR = `${getDocumentDirectoryPath()}/transcription-checkpoints`;
-const CHECKPOINT_SCHEMA_VERSION = 2;
+const CHECKPOINT_SCHEMA_VERSION = 3;
+const CHECKPOINT_SCHEMA_VERSIONS = new Set([2, CHECKPOINT_SCHEMA_VERSION]);
 const CHECKPOINT_TTL_MS = 12 * 60 * 60 * 1000;
 
 export type TranscriptionCheckpoint = {
@@ -22,6 +24,9 @@ export type TranscriptionCheckpoint = {
   fullText: string;
   segments: TranscriptSegment[];
   updatedAt: number;
+  engine?: TranscriptionModelEngine;
+  nativeJobId?: string;
+  detectedLanguage?: string;
 };
 
 const getCheckpointPath = (recordId: string): string => `${CHECKPOINTS_DIR}/${recordId}.json`;
@@ -99,7 +104,8 @@ export const getTranscriptionCheckpoint = async (
     const parsed = JSON.parse(raw) as Partial<TranscriptionCheckpoint>;
 
     if (
-      parsed.schemaVersion !== CHECKPOINT_SCHEMA_VERSION ||
+      !isNumber(parsed.schemaVersion) ||
+      !CHECKPOINT_SCHEMA_VERSIONS.has(parsed.schemaVersion) ||
       !isString(parsed.recordId) ||
       !isString(parsed.audioPath) ||
       !isString(parsed.modelId) ||
@@ -116,7 +122,7 @@ export const getTranscriptionCheckpoint = async (
     }
 
     return {
-      schemaVersion: parsed.schemaVersion,
+      schemaVersion: parsed.schemaVersion as number,
       recordId: parsed.recordId,
       audioPath: normalizeAudioPath(parsed.audioPath),
       modelId: parsed.modelId as WhisperModelId,
@@ -128,6 +134,9 @@ export const getTranscriptionCheckpoint = async (
       fullText: parsed.fullText,
       segments: parsed.segments as TranscriptSegment[],
       updatedAt: parsed.updatedAt,
+      engine: parsed.engine as TranscriptionModelEngine | undefined,
+      nativeJobId: isString(parsed.nativeJobId) ? parsed.nativeJobId : undefined,
+      detectedLanguage: isString(parsed.detectedLanguage) ? parsed.detectedLanguage : undefined,
     };
   } catch {
     return null;
@@ -181,7 +190,7 @@ export const listTranscriptionCheckpoints = async (): Promise<TranscriptionCheck
       .filter((x): x is Partial<TranscriptionCheckpoint> => x != null)
       .filter(
         (x) =>
-          x.schemaVersion === CHECKPOINT_SCHEMA_VERSION &&
+          CHECKPOINT_SCHEMA_VERSIONS.has(x.schemaVersion ?? -1) &&
           isString(x.recordId) &&
           isString(x.audioPath) &&
           isString(x.modelId) &&
@@ -207,6 +216,9 @@ export const listTranscriptionCheckpoints = async (): Promise<TranscriptionCheck
         fullText: x.fullText as string,
         segments: x.segments as TranscriptSegment[],
         updatedAt: x.updatedAt as number,
+        engine: x.engine as TranscriptionModelEngine | undefined,
+        nativeJobId: isString(x.nativeJobId) ? x.nativeJobId : undefined,
+        detectedLanguage: isString(x.detectedLanguage) ? x.detectedLanguage : undefined,
       }));
 
     const now = Date.now();

@@ -67,6 +67,8 @@ const KEYS = {
   WHISPER_STATUSES: 'settings.whisperStatuses',
   TRANSCRIPTION_LANGUAGE: 'settings.transcriptionLanguage',
   TRANSCRIPTION_QUALITY_MODE: 'settings.transcriptionQualityMode',
+  TRANSCRIPTION_DIARIZATION_ENABLED: 'settings.transcriptionDiarizationEnabled',
+  IOS_WHISPERKIT_ENGINE_ENABLED: 'settings.iosWhisperKitEngineEnabled',
   TRANSCRIPTION_CUSTOM_WORDS: 'settings.transcriptionCustomWords',
   SUMMARY_STYLE: 'settings.summaryStyle',
   TASK_STRICTNESS: 'settings.taskStrictness',
@@ -260,6 +262,12 @@ const getStoredTranscriptionQualityMode = (): TranscriptionQualityMode => {
   }
   return 'balanced';
 };
+
+const getStoredTranscriptionDiarizationEnabled = (): boolean =>
+  storage.getString(KEYS.TRANSCRIPTION_DIARIZATION_ENABLED) === 'true';
+
+const getStoredIosWhisperKitEngineEnabled = (): boolean =>
+  storage.getString(KEYS.IOS_WHISPERKIT_ENGINE_ENABLED) === 'true';
 
 const getStoredTranscriptionCustomWords = (): string[] => {
   try {
@@ -549,6 +557,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   whisperModelWeightsFormat: getStoredWhisperModelWeightsFormat(),
   transcriptionLanguage: getStoredTranscriptionLanguage(),
   transcriptionQualityMode: getStoredTranscriptionQualityMode(),
+  transcriptionDiarizationEnabled: getStoredTranscriptionDiarizationEnabled(),
+  iosWhisperKitEngineEnabled: getStoredIosWhisperKitEngineEnabled(),
   transcriptionCustomWords: getStoredTranscriptionCustomWords(),
   summaryStyle: getStoredSummaryStyle(),
   taskStrictness: getStoredTaskStrictness(),
@@ -659,6 +669,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setTranscriptionQualityMode: (mode: TranscriptionQualityMode) => {
     storage.set(KEYS.TRANSCRIPTION_QUALITY_MODE, mode);
     set({ transcriptionQualityMode: mode });
+  },
+
+  setTranscriptionDiarizationEnabled: (value: boolean) => {
+    storage.set(KEYS.TRANSCRIPTION_DIARIZATION_ENABLED, value ? 'true' : 'false');
+    set({ transcriptionDiarizationEnabled: value });
+  },
+
+  setIosWhisperKitEngineEnabled: (value: boolean) => {
+    storage.set(KEYS.IOS_WHISPERKIT_ENGINE_ENABLED, value ? 'true' : 'false');
+    set({ iosWhisperKitEngineEnabled: value });
   },
 
   setTranscriptionCustomWords: (words: string[]) => {

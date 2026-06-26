@@ -18,8 +18,15 @@ import {
 } from '../lib/devicePerformanceProfile';
 import { getWhisperContext, resetWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
 import { resolveTranscriptionChunkProfile } from '../lib/resolveTranscriptionChunkProfile';
+import { shouldRunTranscriptionDiarization } from '../lib/shouldRunTranscriptionDiarization';
 import { resolveVadPolicyForMode } from '../lib/transcriptionQualityMode';
+import { shouldUseIosWhisperKitEngine } from '../config/transcriptionEngine';
 import { transcribeAudio } from '../lib/transcribeAudio';
+import { transcribeAudioIos } from '../lib/transcribeAudioIos';
+import {
+  isSameCheckpointEngine,
+  resolveCheckpointEngine,
+} from '../lib/transcriptionModelEngine';
 import {
   getTranscriptionCheckpoint,
   removeTranscriptionCheckpoint,
@@ -142,6 +149,7 @@ export const useTranscription = () => {
   const setWhisperModelStatus = useSettingsStore((s) => s.setWhisperModelStatus);
   const transcriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
   const transcriptionQualityMode = useSettingsStore((s) => s.transcriptionQualityMode);
+  const transcriptionDiarizationEnabled = useSettingsStore((s) => s.transcriptionDiarizationEnabled);
   const transcriptionCustomWords = useSettingsStore((s) => s.transcriptionCustomWords);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
@@ -263,8 +271,14 @@ export const useTranscription = () => {
       let completedSuccessfully = false;
 
       try {
-        const context = await getWhisperContext(selectedWhisperModel, selectedWhisperModelFormat);
-        usedContext = true;
+        const useIosWhisperKit = shouldUseIosWhisperKitEngine();
+        const checkpointEngine = resolveCheckpointEngine();
+        let context: Awaited<ReturnType<typeof getWhisperContext>> | null = null;
+
+        if (!useIosWhisperKit) {
+          context = await getWhisperContext(selectedWhisperModel, selectedWhisperModelFormat);
+          usedContext = true;
+        }
 
         if (!isActiveTranscriptionJob(record.id, jobGen)) {
           updateAiStatus(record.id, 'idle');
@@ -324,7 +338,8 @@ export const useTranscription = () => {
           checkpoint.audioPath === normalizedAudioPath &&
           checkpoint.modelId === selectedWhisperModel &&
           checkpoint.modelFormat === selectedWhisperModelFormat &&
-          checkpoint.language === language;
+          checkpoint.language === language &&
+          isSameCheckpointEngine(checkpoint.engine, checkpointEngine);
         const chunkProfile =
           canResumeFromCheckpoint && checkpoint ? checkpoint.chunkProfile : baseChunkProfile;
         const resume =
@@ -341,6 +356,73 @@ export const useTranscription = () => {
           fullText: string;
           segments: TranscriptSegment[];
         }) => {
+          if (useIosWhisperKit) {
+            const iosHandle = transcribeAudioIos({
+              jobId: record.id,
+              audioPath: transcribeInputPath,
+              durationMs: record.durationMs ?? 0,
+              language,
+              modelId: selectedWhisperModel,
+              diarization: shouldRunTranscriptionDiarization(
+                record,
+                transcriptionDiarizationEnabled,
+                isProActive,
+              ),
+              customWords: transcriptionCustomWords,
+              chunkProfile,
+              onProgress: throttledProgress,
+              resume: resumePayload,
+              onChunkCompleted: ({
+                chunkIndex,
+                totalChunks,
+                fullText,
+                segments,
+                chunkProfile: activeChunkProfile,
+              }) => {
+                if (!isActiveTranscriptionJob(record.id, jobGen)) {
+                  return;
+                }
+
+                const snapshot = {
+                  recordId: record.id,
+                  audioPath: normalizedAudioPath,
+                  modelId: selectedWhisperModel,
+                  modelFormat: selectedWhisperModelFormat,
+                  language,
+                  chunkProfile: activeChunkProfile,
+                  totalChunks,
+                  lastCompletedChunkIndex: chunkIndex,
+                  fullText,
+                  segments,
+                  engine: checkpointEngine,
+                  nativeJobId: record.id,
+                };
+                rememberTranscriptionCheckpointSnapshot(snapshot);
+
+                const now = Date.now();
+                const shouldPersist =
+                  now - lastCheckpointPersistAt >= checkpointInterval ||
+                  chunkIndex + 1 >= totalChunks;
+                if (!shouldPersist) {
+                  return;
+                }
+
+                lastCheckpointPersistAt = now;
+                saveTranscriptionCheckpoint(snapshot).catch((err) => {
+                  diagWarn('[transcription] checkpoint save failed', err);
+                });
+              },
+            });
+            const { stop, promise } = iosHandle;
+            stopRef.current = stop;
+            registerActiveTranscription(record.id, stop);
+            return promise;
+          }
+
+          if (!context) {
+            throw new Error('whisper_context_missing');
+          }
+
           const transcribeHandle = transcribeAudio({
             context,
             recycleContext: async () => {
@@ -371,18 +453,19 @@ export const useTranscription = () => {
                 return;
               }
 
-              const snapshot = {
-                recordId: record.id,
-                audioPath: normalizedAudioPath,
-                modelId: selectedWhisperModel,
-                modelFormat: selectedWhisperModelFormat,
-                language,
-                chunkProfile: activeChunkProfile,
-                totalChunks,
-                lastCompletedChunkIndex: chunkIndex,
-                fullText,
-                segments,
-              };
+                const snapshot = {
+                  recordId: record.id,
+                  audioPath: normalizedAudioPath,
+                  modelId: selectedWhisperModel,
+                  modelFormat: selectedWhisperModelFormat,
+                  language,
+                  chunkProfile: activeChunkProfile,
+                  totalChunks,
+                  lastCompletedChunkIndex: chunkIndex,
+                  fullText,
+                  segments,
+                  engine: checkpointEngine,
+                };
               rememberTranscriptionCheckpointSnapshot(snapshot);
 
               const now = Date.now();
@@ -505,7 +588,7 @@ export const useTranscription = () => {
           if (shouldQueueWhisperResetForError(err)) {
             pendingWhisperResetRecordIds.add(record.id);
           }
-          diagWarn('[transcription] Failed:', err);
+          diagWarn('[transcription] Failed:', errorCode, err instanceof Error ? err.message : err);
           updateAiStatus(record.id, 'error');
         }
       } finally {
@@ -545,6 +628,7 @@ export const useTranscription = () => {
       whisperModelStatuses,
       transcriptionLanguage,
       transcriptionQualityMode,
+      transcriptionDiarizationEnabled,
       transcriptionCustomWords,
       aiExecutionMode,
       autoAiAfterTranscription,

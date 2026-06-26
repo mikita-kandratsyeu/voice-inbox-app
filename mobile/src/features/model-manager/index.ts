@@ -24,4 +24,5 @@ export type {
   WhisperDownloadSnapshot,
 } from './lib/whisper-download';
 export { cancelWhisperModelDownload, whisperModelDownloader } from './lib/whisper-download';
+export { isWhisperModelSelectable } from './lib/isWhisperModelSelectable';
 export { useModelManager } from './model/useModelManager';

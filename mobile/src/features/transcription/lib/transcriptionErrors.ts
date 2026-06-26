@@ -27,6 +27,28 @@ export const createTranscriptionError = (
   return new TranscriptionError(code, message, { cause });
 };
 
+const KNOWN_TRANSCRIPTION_ERROR_CODES = new Set<TranscriptionErrorCode>([
+  'native_abort',
+  'native_busy',
+  'audio_missing',
+  'checkpoint_unreadable',
+  'model_missing',
+  'model_load_failed',
+  'unknown',
+]);
+
+export const resolveNativeTranscriptionFailure = (payload: {
+  code: string;
+  message: string;
+}): TranscriptionError => {
+  if (KNOWN_TRANSCRIPTION_ERROR_CODES.has(payload.code as TranscriptionErrorCode)) {
+    return new TranscriptionError(payload.code as TranscriptionErrorCode, payload.message);
+  }
+
+  const inferred = getTranscriptionErrorCode(new Error(payload.message || payload.code));
+  return new TranscriptionError(inferred, payload.message || payload.code);
+};
+
 export const getTranscriptionErrorCode = (err: unknown): TranscriptionErrorCode => {
   if (err instanceof TranscriptionError) {
     return err.code;

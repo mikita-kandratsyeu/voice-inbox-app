@@ -21,3 +21,11 @@ export {
   getWhisperModelsDir,
   WHISPER_COREML_ENCODER_ZIP,
 } from './whisperModelPath';
+export {
+  getArgmaxModelsDir,
+  getSpeakerKitModelsDir,
+  getTranscriptionJobsCacheDir,
+  getWhisperKitModelsDir,
+  mapWhisperKitModelToPublicSize,
+  mapWhisperModelIdToWhisperKitModel,
+} from './whisperKitModelPath';

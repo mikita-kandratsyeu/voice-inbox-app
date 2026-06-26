@@ -100,7 +100,7 @@ export type DownloadBytes = {
   total: number;
 };
 
-export type WhisperDownloadPhase = 'weights' | 'coreml';
+export type WhisperDownloadPhase = 'weights' | 'coreml' | 'whisperkit' | 'speakerkit';
 
 export type SettingsState = {
   appTheme: AppTheme;
@@ -114,6 +114,10 @@ export type SettingsState = {
   whisperModelWeightsFormat: WhisperModelWeightsFormat;
   transcriptionLanguage: TranscriptionLanguage;
   transcriptionQualityMode: TranscriptionQualityMode;
+  /** iOS-only rollout flag for WhisperKit transcription engine. */
+  iosWhisperKitEngineEnabled: boolean;
+  /** iOS-only: enable on-device diarization during transcription (WhisperKit path). */
+  transcriptionDiarizationEnabled: boolean;
   /** Names, brands, and terms passed to Whisper as initial prompt hints. */
   transcriptionCustomWords: string[];
   summaryStyle: SummaryStyle;
@@ -174,6 +178,8 @@ export type SettingsState = {
   setWhisperModelWeightsFormat: (value: WhisperModelWeightsFormat) => void;
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => void;
   setTranscriptionQualityMode: (mode: TranscriptionQualityMode) => void;
+  setIosWhisperKitEngineEnabled: (value: boolean) => void;
+  setTranscriptionDiarizationEnabled: (value: boolean) => void;
   setTranscriptionCustomWords: (words: string[]) => void;
   setSummaryStyle: (value: SummaryStyle) => void;
   setTaskStrictness: (value: TaskStrictness) => void;

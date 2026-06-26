@@ -48,6 +48,7 @@ import {
   useTaskCompletionFlow,
 } from '@/features/task-outcome';
 import { useTranscription } from '@/features/transcription';
+import { canStartOfflineTranscription } from '@/features/transcription/lib/canStartOfflineTranscription';
 import { useOpenNotesGraphForRecord } from '@/screens/notes-graph';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { useAppTheme, useColors } from '@/shared/config';
@@ -421,7 +422,7 @@ export const RecordingDetailScreen = () => {
     const variantId = getWhisperModelVariantId(selectedWhisperModel, selectedWhisperModelFormat);
     const modelStatus = whisperModelStatuses[variantId] ?? 'not_downloaded';
 
-    if (modelStatus !== 'downloaded') {
+    if (!(await canStartOfflineTranscription(modelStatus))) {
       Alert.alert(
         t('recordingDetail.modelNotDownloaded'),
         t('recordingDetail.modelNotDownloadedHint'),

@@ -43,6 +43,13 @@
 		C4D5E6F7A8B9C0D1E2F3A4 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = C4D5E6F7A8B9C0D1E2F3A0 /* InfoPlist.strings */; };
 		D4E5F6A7B8C9D0E1F2A3B4C1 /* VoiceInboxAppIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E5F6A7B8C9D0E1F2A3B4C0 /* VoiceInboxAppIntents.swift */; };
 		F1A2B3C4D5E6F7A8B9C0D1E2 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6F7A8B9C0D1E3 /* GoogleService-Info.plist */; };
+		A1B2C3D4E5F607180001 /* VoiceInboxTranscriptionModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607181001 /* VoiceInboxTranscriptionModule.swift */; };
+		A1B2C3D4E5F607180002 /* VoiceInboxTranscriptionModule.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607182001 /* VoiceInboxTranscriptionModule.m */; };
+		A1B2C3D4E5F607180003 /* AudioNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607183001 /* AudioNormalizer.swift */; };
+		A1B2C3D4E5F607180004 /* TranscriptionJobCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607184001 /* TranscriptionJobCoordinator.swift */; };
+		A1B2C3D4E5F607180005 /* TranscriptionTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607185001 /* TranscriptionTypes.swift */; };
+		A1B2C3D4E5F607180006 /* WhisperKitEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607186001 /* WhisperKitEngine.swift */; };
+		A1B2C3D4E5F607180007 /* SpeakerKitEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607187001 /* SpeakerKitEngine.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -120,6 +127,13 @@
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		EE891B88985ED259648B1BB1 /* Pods_VoiceInboxApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_VoiceInboxApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F1A2B3C4D5E6F7A8B9C0D1E3 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "VoiceInboxApp/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		A1B2C3D4E5F607181001 /* VoiceInboxTranscriptionModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInboxTranscriptionModule.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F607182001 /* VoiceInboxTranscriptionModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VoiceInboxTranscriptionModule.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F607183001 /* AudioNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioNormalizer.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F607184001 /* TranscriptionJobCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionJobCoordinator.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F607185001 /* TranscriptionTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionTypes.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F607186001 /* WhisperKitEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhisperKitEngine.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F607187001 /* SpeakerKitEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerKitEngine.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -206,6 +220,7 @@
 				A3B4C5D6E7F8A9B0C1D2E6F7 /* Localization */,
 				A4B5C6D7E8F9A0B1C2D3E7F8 /* Resources */,
 				A5B6C7D8E9F0A1B2C3D4E8F9 /* Audio */,
+				A8B9C0D1E2F3A4B5C6D7E0F2 /* Transcription */,
 				A6B7C8D9E0F1A2B3C4D5E9FA /* NativeModules */,
 			);
 			name = VoiceInboxApp;
@@ -340,6 +355,20 @@
 			name = Audio;
 			sourceTree = "<group>";
 		};
+		A8B9C0D1E2F3A4B5C6D7E0F2 /* Transcription */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F607181001 /* VoiceInboxTranscriptionModule.swift */,
+				A1B2C3D4E5F607182001 /* VoiceInboxTranscriptionModule.m */,
+				A1B2C3D4E5F607183001 /* AudioNormalizer.swift */,
+				A1B2C3D4E5F607184001 /* TranscriptionJobCoordinator.swift */,
+				A1B2C3D4E5F607185001 /* TranscriptionTypes.swift */,
+				A1B2C3D4E5F607186001 /* WhisperKitEngine.swift */,
+				A1B2C3D4E5F607187001 /* SpeakerKitEngine.swift */,
+			);
+			path = VoiceInboxApp/Transcription;
+			sourceTree = "<group>";
+		};
 		A6B7C8D9E0F1A2B3C4D5E9FA /* NativeModules */ = {
 			isa = PBXGroup;
 			children = (
@@ -402,6 +431,10 @@
 				2AADFDE22F6B33CA0005C039 /* PBXTargetDependency */,
 			);
 			name = VoiceInboxApp;
+			packageProductDependencies = (
+				E7A1B2C3D4E5F60718293A4C /* WhisperKit */,
+				E7A1B2C3D4E5F60718293A4D /* SpeakerKit */,
+			);
 			productName = VoiceInboxApp;
 			productReference = 13B07F961A680F5B00A75B9A /* VoiceInboxApp.app */;
 			productType = "com.apple.product-type.application";
@@ -480,6 +513,9 @@
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
+			packageReferences = (
+				E7A1B2C3D4E5F60718293A4B /* XCRemoteSwiftPackageReference "argmax-oss-swift" */,
+			);
 			targets = (
 				13B07F861A680F5B00A75B9A /* VoiceInboxApp */,
 				2A15FAF02F6ABCF900177049 /* RecordingWidgetExtension */,
@@ -663,6 +699,13 @@
 				A1C2E3F405060708090A0B03 /* AudioConverter.mm in Sources */,
 				B0C1D2E3F4A5B6C7D8E9F0A1 /* AppShortcuts.swift in Sources */,
 				D4E5F6A7B8C9D0E1F2A3B4C1 /* VoiceInboxAppIntents.swift in Sources */,
+				A1B2C3D4E5F607180001 /* VoiceInboxTranscriptionModule.swift in Sources */,
+				A1B2C3D4E5F607180002 /* VoiceInboxTranscriptionModule.m in Sources */,
+				A1B2C3D4E5F607180003 /* AudioNormalizer.swift in Sources */,
+				A1B2C3D4E5F607180004 /* TranscriptionJobCoordinator.swift in Sources */,
+				A1B2C3D4E5F607180005 /* TranscriptionTypes.swift in Sources */,
+				A1B2C3D4E5F607180006 /* WhisperKitEngine.swift in Sources */,
+				A1B2C3D4E5F607180007 /* SpeakerKitEngine.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1224,6 +1267,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E7A1B2C3D4E5F60718293A4B /* XCRemoteSwiftPackageReference "argmax-oss-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/argmaxinc/argmax-oss-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E7A1B2C3D4E5F60718293A4C /* WhisperKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E7A1B2C3D4E5F60718293A4B /* XCRemoteSwiftPackageReference "argmax-oss-swift" */;
+			productName = WhisperKit;
+		};
+		E7A1B2C3D4E5F60718293A4D /* SpeakerKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E7A1B2C3D4E5F60718293A4B /* XCRemoteSwiftPackageReference "argmax-oss-swift" */;
+			productName = SpeakerKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
 }

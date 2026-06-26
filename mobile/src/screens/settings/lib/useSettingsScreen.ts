@@ -45,6 +45,8 @@ import {
   openAppSettings,
   requestMicPermission,
 } from '@/shared/lib/permissions';
+import { IOS_WHISPERKIT_ROLLOUT_ENABLED } from '@/features/transcription/config/transcriptionEngine';
+import { IS_IOS } from '@/shared/lib/platform';
 import { getWhisperLabel } from '@/shared/lib/whisper';
 
 import type { AutomationFeatureKind } from '../ui/AutomationComingSoonSheet';
@@ -65,6 +67,7 @@ export function useSettingsScreen() {
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
+  const iosWhisperKitEngineEnabled = useSettingsStore((s) => s.iosWhisperKitEngineEnabled);
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
   const setAutoTranscribeOnSave = useSettingsStore((s) => s.setAutoTranscribeOnSave);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
@@ -303,8 +306,11 @@ export function useSettingsScreen() {
   );
   const whisperStatus = whisperModelStatuses[whisperVariantId] ?? 'not_downloaded';
 
-  const transcriptionValue =
-    whisperStatus === 'not_downloaded' || whisperStatus === 'downloading'
+  const useIosWhisperKit =
+    IS_IOS && IOS_WHISPERKIT_ROLLOUT_ENABLED && iosWhisperKitEngineEnabled;
+  const transcriptionValue = useIosWhisperKit
+    ? getWhisperLabel(selectedWhisperModel)
+    : whisperStatus === 'not_downloaded' || whisperStatus === 'downloading'
       ? t('settings.whisperModelNotSet')
       : getWhisperLabel(selectedWhisperModel);
   const privateAiModeValue = t(`aiSettings.executionMode.${aiExecutionMode}`);

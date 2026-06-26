@@ -49,11 +49,25 @@ export const TranscriptHighlight = ({
     [segments, currentPositionMs],
   );
 
+  const speakerLabelById = useMemo(() => {
+    const labels = new Map<string, string>();
+    let counter = 1;
+    for (const segment of segments) {
+      if (!segment.speakerId || labels.has(segment.speakerId)) {
+        continue;
+      }
+      labels.set(segment.speakerId, `Speaker ${counter}`);
+      counter += 1;
+    }
+    return labels;
+  }, [segments]);
+
   return (
     <View style={{ gap: 12 }}>
       {segments.map((seg) => {
         const isActiveSegment = active?.segmentId === seg.id;
         const hasTokens = seg.tokens && seg.tokens.length > 0;
+        const speakerLabel = seg.speakerId ? speakerLabelById.get(seg.speakerId) : undefined;
 
         return (
           <View
@@ -87,6 +101,19 @@ export const TranscriptHighlight = ({
             </Text>
 
             <View style={{ flex: 1 }}>
+              {speakerLabel ? (
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: '600',
+                    color: color.text.secondary,
+                    marginBottom: 4,
+                  }}
+                >
+                  {speakerLabel}
+                  {seg.isOverlapping ? ' · overlap' : ''}
+                </Text>
+              ) : null}
               {hasTokens ? (
                 <Text style={{ fontSize: 14, lineHeight: 24, flexWrap: 'wrap' }}>
                   {seg.tokens!.map((tok, idx) => {

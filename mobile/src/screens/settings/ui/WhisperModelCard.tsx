@@ -41,6 +41,8 @@ type WhisperModelCardProps = {
   downloadPhase?: WhisperDownloadPhase;
   /** iOS: Core ML encoder present on disk for this model (matches runtime init). */
   coreMlEncoderActive: boolean;
+  /** iOS WhisperKit: model is used on demand without a local ggml file. */
+  iosWhisperKitManaged?: boolean;
 };
 
 export const WhisperModelCard = ({
@@ -60,9 +62,12 @@ export const WhisperModelCard = ({
   downloadBytes,
   downloadPhase,
   coreMlEncoderActive,
+  iosWhisperKitManaged = false,
 }: WhisperModelCardProps) => {
   const { t } = useTranslation();
   const isDownloaded = status === 'downloaded';
+  const isIosManaged = iosWhisperKitManaged && !isDownloaded;
+  const isReadyForUse = isDownloaded || isIosManaged;
   const isDownloading = status === 'downloading';
   const isError = status === 'error';
   const isLast = index === total - 1;
@@ -89,7 +94,7 @@ export const WhisperModelCard = ({
     ? t('whisper.a11yRowError')
     : isDownloading
       ? t('whisper.a11yRowDownloading')
-      : isDownloaded
+      : isReadyForUse
         ? isSelected
           ? t('whisper.a11yRowSelected')
           : t('whisper.a11yRowDownloaded')
@@ -111,7 +116,7 @@ export const WhisperModelCard = ({
       accessibilityRole="button"
       accessibilityLabel={cardA11yLabel}
       accessibilityState={{
-        selected: isDownloaded && isSelected,
+        selected: isReadyForUse && isSelected,
         disabled: isDownloading,
       }}
       className={`px-4 py-4 ${radiusClass}`}
@@ -205,6 +210,10 @@ export const WhisperModelCard = ({
             <Text className="mt-1.5 text-[14px] font-medium" style={{ color: color.accent.delete }}>
               {t('whisper.downloadError')}
             </Text>
+          ) : isIosManaged ? (
+            <Text className="mt-1.5 text-[14px]" style={{ color: color.text.secondary }}>
+              {t('whisper.iosModelOnDemandHint')}
+            </Text>
           ) : !isDownloaded ? (
             <Text className="mt-1.5 text-[14px]" style={{ color: color.text.secondary }}>
               {t('whisper.tapToDownload')}
@@ -225,14 +234,14 @@ export const WhisperModelCard = ({
           )}
         </View>
         <View className="items-center">
-          {isDownloaded && isSelected ? (
+          {isReadyForUse && isSelected ? (
             <View
               className="h-8 w-8 items-center justify-center rounded-full"
               style={{ backgroundColor: color.accent.primary }}
             >
               <Check size={16} color={color.icon.onAccent} strokeWidth={2.5} />
             </View>
-          ) : isDownloaded ? (
+          ) : isReadyForUse ? (
             <View
               className="h-8 w-8 rounded-full"
               style={{ borderWidth: 2, borderColor: color.border.default }}
