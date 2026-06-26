@@ -4,6 +4,7 @@ import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitl
 import { parseAccentColorId } from '@/shared/config';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { storage } from '@/shared/lib/async-storage';
+import { IS_IOS } from '@/shared/lib/platform';
 import { isNumber, isRecord, isString } from '@/shared/lib/type-guards';
 
 import { CLOUD_AI_KV_TTL_DEFAULT_SECONDS, snapCloudAiKvTtlToChoice } from '../lib/cloudAiKvTtl';
@@ -267,8 +268,13 @@ const getStoredTranscriptionQualityMode = (): TranscriptionQualityMode => {
 const getStoredTranscriptionDiarizationEnabled = (): boolean =>
   storage.getString(KEYS.TRANSCRIPTION_DIARIZATION_ENABLED) === 'true';
 
-const getStoredIosWhisperKitEngineEnabled = (): boolean =>
-  storage.getString(KEYS.IOS_WHISPERKIT_ENGINE_ENABLED) === 'true';
+const getStoredIosWhisperKitEngineEnabled = (): boolean => {
+  const val = storage.getString(KEYS.IOS_WHISPERKIT_ENGINE_ENABLED);
+  if (val == null) {
+    return IS_IOS;
+  }
+  return val === 'true';
+};
 
 const getStoredTranscriptionCustomWords = (): string[] => {
   try {

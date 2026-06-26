@@ -31,8 +31,8 @@ export const WhisperEngineModeSection = ({
       <WhisperSegmentedControl
         value={mode}
         options={[
-          { value: 'standard', label: t('whisper.engineMode.standard') },
           { value: 'improved', label: t('whisper.engineMode.improved') },
+          { value: 'standard', label: t('whisper.engineMode.standard') },
         ]}
         onChange={(next) => {
           if (next === mode) {
