@@ -1,6 +1,5 @@
 import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 
-import type { WhisperModelId } from '@/entities/settings';
 import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 
 import type {

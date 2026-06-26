@@ -10,8 +10,8 @@ import { maybeRunScheduledGithubSync } from '@/features/github-sync/lib/githubSy
 import { maybeRunScheduledGitlabSync } from '@/features/gitlab-sync/lib/gitlabSyncSchedule';
 import { maybeRunScheduledIcloudSync } from '@/features/icloud-sync/lib/icloudSyncSchedule';
 import { localLlmModelDownloader } from '@/features/model-manager/lib/local-llm-download';
-import { whisperKitModelDownloader } from '@/features/model-manager/lib/whisper-kit-download';
 import { whisperModelDownloader } from '@/features/model-manager/lib/whisper-download';
+import { whisperKitModelDownloader } from '@/features/model-manager/lib/whisper-kit-download';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import {
   abortTranscriptionForAppBackground,

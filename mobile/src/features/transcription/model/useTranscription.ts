@@ -14,8 +14,8 @@ import { convertToWav } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
 import { getWhisperKitModelsDir, mapWhisperModelIdToWhisperKitModel } from '@/shared/lib/whisper';
 
-import { buildNativeTranscriptionJobId } from '../lib/buildNativeTranscriptionJobId';
 import { shouldUseIosWhisperKitEngine } from '../config/transcriptionEngine';
+import { buildNativeTranscriptionJobId } from '../lib/buildNativeTranscriptionJobId';
 import {
   getAdaptiveCheckpointInterval,
   getDevicePerformanceProfile,
