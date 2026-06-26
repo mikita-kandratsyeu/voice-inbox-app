@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-/** ZIP store (no compression); compatible with react-native-zip-archive. */
+/** ZIP store (no compression); compatible with mobile @zip.js/zip.js archives. */
 function crc32(buf) {
   let c = 0xffffffff;
   for (let i = 0; i < buf.length; i += 1) {

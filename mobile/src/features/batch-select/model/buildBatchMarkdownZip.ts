@@ -1,5 +1,3 @@
-import { zip } from 'react-native-zip-archive';
-
 import type { VoiceRecord } from '@/entities/record';
 import {
   batchMarkdownFileName,
@@ -15,6 +13,7 @@ import {
 } from '@/features/share-record/lib/shareExportContext';
 import { i18n } from '@/shared/lib';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
+import { zip } from '@/shared/lib/zip';
 
 export type BuildBatchMarkdownZipResult = {
   zipPath: string;

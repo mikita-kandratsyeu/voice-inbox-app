@@ -1,14 +1,13 @@
 import { Share } from 'react-native';
-import { type EncryptionMethods, zip, zipWithPassword } from 'react-native-zip-archive';
 
 import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
 import { i18n } from '@/shared/lib';
 import { diagWarn } from '@/shared/lib/appLogger';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
+import { zip, zipWithPassword } from '@/shared/lib/zip';
 
 import { buildBackupAuxiliarySettingsFiles } from './backupAuxiliarySettings';
-import { BACKUP_ZIP_ENCRYPTION } from './backupZip';
 import { buildBackupPayload, prepareBackupExportDirectory } from './buildBackupPayload';
 
 const METADATA_FILENAME = 'metadata.json';
@@ -83,12 +82,7 @@ export const exportData = async (
     }
 
     if (password) {
-      await zipWithPassword(
-        exportDir,
-        zipPath,
-        password,
-        BACKUP_ZIP_ENCRYPTION as EncryptionMethods,
-      );
+      await zipWithPassword(exportDir, zipPath, password);
     } else {
       await zip(exportDir, zipPath);
     }

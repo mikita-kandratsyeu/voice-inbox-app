@@ -1,5 +1,4 @@
 import RNBlobUtil from 'react-native-blob-util';
-import { unzip } from 'react-native-zip-archive';
 
 import type { WhisperModelId } from '@/entities/settings';
 import { getWhisperCoreMlSizeMb } from '@/entities/settings/model/constants';
@@ -17,6 +16,7 @@ import {
   isWhisperCoreMlEncoderInstalled,
   removeWhisperCoreMlEncoder,
 } from '@/shared/lib/whisper';
+import { unzip } from '@/shared/lib/zip';
 
 import type {
   StartWhisperModelDownloadOptions,

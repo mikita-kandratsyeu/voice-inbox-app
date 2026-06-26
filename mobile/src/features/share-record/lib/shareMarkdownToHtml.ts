@@ -1,7 +1,7 @@
-import { createSharePdfMarkdownIt } from './createSharePdfMarkdownIt';
-import { stripShareSectionMarkers } from './shareSectionMarkers';
+import { parseMarkdownWithOptions } from 'react-native-nitro-markdown/headless';
 
-const md = createSharePdfMarkdownIt();
+import { markdownAstToHtml } from './markdownAstToHtml';
+import { stripShareSectionMarkers } from './shareSectionMarkers';
 
 const SHARE_PDF_HTML_STYLES = `
   @page { margin: 28pt; }
@@ -85,9 +85,19 @@ const SHARE_PDF_HTML_STYLES = `
   a { color: #2563eb; text-decoration: none; }
 `;
 
+function renderSharePdfMarkdownHtml(markdown: string): string {
+  const ast = parseMarkdownWithOptions(stripShareSectionMarkers(markdown), {
+    gfm: true,
+    math: false,
+    html: false,
+    sourceOffsets: false,
+  });
+  return markdownAstToHtml(ast);
+}
+
 /** Renders export markdown into a full HTML document for on-device PDF generation. */
 export function shareMarkdownToHtmlDocument(markdown: string, documentTitle: string): string {
-  const bodyHtml = md.render(stripShareSectionMarkers(markdown));
+  const bodyHtml = renderSharePdfMarkdownHtml(markdown);
   const safeTitle = documentTitle.replace(/[<>&]/g, '');
 
   return `<!DOCTYPE html>

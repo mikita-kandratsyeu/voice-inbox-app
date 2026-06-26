@@ -1,5 +1,4 @@
 import { types } from '@react-native-documents/picker';
-import { isPasswordProtected, unzip, unzipWithPassword } from 'react-native-zip-archive';
 
 import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
@@ -12,6 +11,7 @@ import {
   NitroFS,
   pickSingleFileToCachesDirectory,
 } from '@/shared/lib/fs';
+import { isPasswordProtected, unzip, unzipWithPassword } from '@/shared/lib/zip';
 
 import { readBackupAuxiliarySettings } from './backupAuxiliarySettings';
 import {

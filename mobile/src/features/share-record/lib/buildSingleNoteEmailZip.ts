@@ -1,7 +1,6 @@
-import { zip } from 'react-native-zip-archive';
-
 import type { VoiceRecord } from '@/entities/record';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
+import { zip } from '@/shared/lib/zip';
 
 import { batchMarkdownFileName } from './batchShareMarkdown';
 import { buildShareText, type ShareBriefTemplate } from './buildShareText';
