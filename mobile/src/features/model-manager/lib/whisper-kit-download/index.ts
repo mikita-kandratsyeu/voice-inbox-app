@@ -4,4 +4,7 @@ export type {
   WhisperKitDownloadProgressHandler,
   WhisperKitDownloadSnapshot,
 } from './whisperKitDownloadTypes';
-export { cancelWhisperKitModelDownload, whisperKitModelDownloader } from './whisperKitModelDownloader';
+export {
+  cancelWhisperKitModelDownload,
+  whisperKitModelDownloader,
+} from './whisperKitModelDownloader';

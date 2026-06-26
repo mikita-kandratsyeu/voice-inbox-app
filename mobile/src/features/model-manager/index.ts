@@ -31,7 +31,10 @@ export type {
   WhisperKitDownloadProgressHandler,
   WhisperKitDownloadSnapshot,
 } from './lib/whisper-kit-download';
-export { cancelWhisperKitModelDownload, whisperKitModelDownloader } from './lib/whisper-kit-download';
+export {
+  cancelWhisperKitModelDownload,
+  whisperKitModelDownloader,
+} from './lib/whisper-kit-download';
 export {
   deleteAllArgmaxTranscriptionModels,
   deleteAllWhisperKitModels,

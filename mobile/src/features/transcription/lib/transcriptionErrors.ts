@@ -58,7 +58,12 @@ export const getTranscriptionErrorCode = (err: unknown): TranscriptionErrorCode 
   if (msg.includes('abort') || msg.includes('cancel') || msg.includes('stop')) {
     return 'native_abort';
   }
-  if (msg.includes('busy') || msg.includes('lock') || msg.includes('timeout') || msg.includes('already_running')) {
+  if (
+    msg.includes('busy') ||
+    msg.includes('lock') ||
+    msg.includes('timeout') ||
+    msg.includes('already_running')
+  ) {
     return 'native_busy';
   }
   if (
@@ -77,11 +82,7 @@ export const getTranscriptionErrorCode = (err: unknown): TranscriptionErrorCode 
   ) {
     return 'audio_missing';
   }
-  if (
-    msg.includes('enoent') ||
-    msg.includes('no such file') ||
-    msg.includes('file not found')
-  ) {
+  if (msg.includes('enoent') || msg.includes('no such file') || msg.includes('file not found')) {
     return 'audio_missing';
   }
   if (msg.includes('failed to load the model')) {

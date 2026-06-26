@@ -93,7 +93,10 @@ export async function validateTranscriptionStart(input: {
     }
 
     const whisperKitModel = mapWhisperModelIdToWhisperKitModel(input.modelId);
-    const modelOnDisk = await isWhisperKitModelDownloaded(whisperKitModel, getWhisperKitModelsDir());
+    const modelOnDisk = await isWhisperKitModelDownloaded(
+      whisperKitModel,
+      getWhisperKitModelsDir(),
+    );
     if (!modelOnDisk) {
       return { ok: false, reason: 'model_not_downloaded', normalizedAudioPath, modelPath };
     }

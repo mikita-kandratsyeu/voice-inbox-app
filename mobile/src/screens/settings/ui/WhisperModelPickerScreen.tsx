@@ -34,9 +34,7 @@ import {
 import { getWhisperKitEstimatedDownloadMb } from '@/shared/lib/whisper/whisperKitModelPath';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
 
-import {
-  IOS_WHISPER_KIT_MODELS,
-} from '../lib/useWhisperKitModelListState';
+import { IOS_WHISPER_KIT_MODELS } from '../lib/useWhisperKitModelListState';
 import { WhisperDefaultLanguageSection } from './WhisperDefaultLanguageSection';
 import { WhisperEngineModeSection } from './WhisperEngineModeSection';
 import { WhisperModelCard } from './WhisperModelCard';
@@ -307,7 +305,9 @@ export const WhisperModelPickerScreen = () => {
                   }
                   displaySize={displaySize}
                   recommendedModelId={recommendedModelId}
-                  compatibility={useIosWhisperKit ? null : compatibility ? compatibility[model.id] : null}
+                  compatibility={
+                    useIosWhisperKit ? null : compatibility ? compatibility[model.id] : null
+                  }
                   color={color}
                   onPress={handleSelect}
                   onDelete={handleDelete}
