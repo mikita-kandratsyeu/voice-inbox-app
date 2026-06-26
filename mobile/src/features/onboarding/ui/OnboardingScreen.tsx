@@ -959,7 +959,6 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
     screenWidth.value = windowWidth;
   }, [windowWidth, screenWidth]);
 
-  const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const { startDownload } = useModelManager();
 
@@ -1191,7 +1190,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         },
       },
     ]);
-  }, [selectedWhisperModel, whisperModelStatuses, t, startDownload, finishOnboardingCore]);
+  }, [whisperModelStatuses, t, startDownload, finishOnboardingCore]);
 
   const requestFinishOnboardingFromSkip = useCallback(() => {
     queueAfterTermsAccepted(() => finishOnboardingCore());

@@ -5,8 +5,8 @@ import type { TranscriptSegment, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import {
   getActiveWhisperModelVariantId,
-  WHISPER_KIT_STORAGE_FORMAT,
   useSettingsStore,
+  WHISPER_KIT_STORAGE_FORMAT,
 } from '@/entities/settings';
 import { dispatchAutoAiAfterTranscription } from '@/features/ai-task-queue';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
@@ -28,9 +28,7 @@ import {
   hasNativeSpeakerSegments,
   shouldRunTranscriptionDiarization,
 } from '../lib/nativeMeetingSpeakers';
-import {
-  invalidateNativeTranscriptionEngineCaches,
-} from '../lib/nativeTranscription';
+import { invalidateNativeTranscriptionEngineCaches } from '../lib/nativeTranscription';
 import { resolveTranscriptionChunkProfile } from '../lib/resolveTranscriptionChunkProfile';
 import { transcribeAudio } from '../lib/transcribeAudio';
 import { transcribeAudioIos } from '../lib/transcribeAudioIos';

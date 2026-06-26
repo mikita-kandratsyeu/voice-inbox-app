@@ -1,16 +1,16 @@
+import { WHISPER_KIT_STORAGE_FORMAT } from '@/entities/settings/model/constants';
 import type {
   WhisperModelId,
   WhisperModelStatus,
   WhisperModelVariantId,
   WhisperModelWeightsFormat,
 } from '@/entities/settings/model/types';
-import { WHISPER_KIT_STORAGE_FORMAT } from '@/entities/settings/model/constants';
 import { diagWarn } from '@/shared/lib/appLogger';
 import { storage } from '@/shared/lib/async-storage';
 
 import { deleteWhisperModel } from './deleteWhisperModel';
-import { deleteWhisperKitModel } from './whisperKitModelStorage';
 import { stopWhisperDownloadLiveActivity } from './downloadLiveActivity';
+import { deleteWhisperKitModel } from './whisperKitModelStorage';
 
 const WHISPER_STATUSES_STORAGE_KEY = 'settings.whisperStatuses';
 

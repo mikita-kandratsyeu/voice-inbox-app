@@ -3,8 +3,8 @@ import { useCallback } from 'react';
 import {
   getLocalAiModelEntry,
   getRecommendedWhisperModelId,
-  getWhisperModelVariantId,
   getWhisperKitModelVariantId,
+  getWhisperModelVariantId,
   LOCAL_AI_MODELS,
   type LocalAiModelId,
   useSettingsStore,
