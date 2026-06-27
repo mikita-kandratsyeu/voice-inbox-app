@@ -16,7 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
-import { hapticSelection, useIsTablet, withAlphaHex } from '@/shared/lib';
+import { hapticSelection, iosHitSlopForVisualSize, useIsTablet, withAlphaHex } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 
 import {
@@ -62,10 +62,10 @@ function WeekNavControls({
   nextWeekA11y: string;
 }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: metrics.navButtonGap }}>
       <Pressable
         onPress={onPreviousWeek}
-        hitSlop={10}
+        hitSlop={iosHitSlopForVisualSize(metrics.navButtonSize, metrics.navButtonSize)}
         accessibilityRole="button"
         accessibilityLabel={previousWeekA11y}
         style={({ pressed }) => [
@@ -78,11 +78,15 @@ function WeekNavControls({
           pressed ? { opacity: 0.7 } : null,
         ]}
       >
-        <ChevronLeft size={metrics.navIconSize} color={color.text.secondary} strokeWidth={2.5} />
+        <ChevronLeft
+          size={metrics.navIconSize}
+          color={color.text.secondary}
+          strokeWidth={metrics.navIconStrokeWidth}
+        />
       </Pressable>
       <Pressable
         onPress={onNextWeek}
-        hitSlop={10}
+        hitSlop={iosHitSlopForVisualSize(metrics.navButtonSize, metrics.navButtonSize)}
         accessibilityRole="button"
         accessibilityLabel={nextWeekA11y}
         style={({ pressed }) => [
@@ -95,7 +99,11 @@ function WeekNavControls({
           pressed ? { opacity: 0.7 } : null,
         ]}
       >
-        <ChevronRight size={metrics.navIconSize} color={color.text.secondary} strokeWidth={2.5} />
+        <ChevronRight
+          size={metrics.navIconSize}
+          color={color.text.secondary}
+          strokeWidth={metrics.navIconStrokeWidth}
+        />
       </Pressable>
     </View>
   );
