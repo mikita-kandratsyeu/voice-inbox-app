@@ -137,6 +137,13 @@
     "copyright": "© {year} Voice Inbox AI. Все права защищены.",
     "disclaimer": "Записи и транскрипты хранятся на устройстве. Облачный ИИ — по вашему выбору в настройках."
   },
+  "cookieConsent": {
+    "bannerAria": "Согласие на cookies",
+    "message": "Мы используем cookies, чтобы запоминать настройки и, с вашего согласия, понимать, как пользуются сайтом. <privacy>Политика конфиденциальности</privacy>",
+    "accept": "Принять",
+    "reject": "Отклонить",
+    "settingsLink": "Cookies"
+  },
   "header": {
     "appName": "Voice Inbox AI",
     "releases": "Блог",

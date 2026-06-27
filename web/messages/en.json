@@ -137,6 +137,13 @@
     "copyright": "© {year} Voice Inbox AI. All rights reserved.",
     "disclaimer": "Recordings and transcripts stay on your device. Cloud AI is optional in settings."
   },
+  "cookieConsent": {
+    "bannerAria": "Cookie consent",
+    "message": "We use cookies to remember your settings and, if you agree, understand how the site is used. <privacy>Privacy Policy</privacy>",
+    "accept": "Accept",
+    "reject": "Decline",
+    "settingsLink": "Cookies"
+  },
   "header": {
     "appName": "Voice Inbox AI",
     "releases": "Blog",

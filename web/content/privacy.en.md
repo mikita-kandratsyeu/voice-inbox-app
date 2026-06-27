@@ -30,6 +30,18 @@ We use waitlist information only to **operate the waitlist**, **invite you to An
 
 You may **contact us** at **hello@voice-inbox.online** to ask questions about this processing or to **request removal from the waitlist** where applicable law allows. Marketing-style emails include an unsubscribe link where required.
 
+**Website — cookies and analytics:** When you browse our public website (for example the landing page, blog, support page, or backup viewer), we use the following technologies:
+
+- **Vercel Web Analytics** — helps us measure aggregated page views and Web Vitals performance. This service is designed to work without third-party advertising cookies.
+- **Google Analytics** (when enabled on our site) — loads only if you click **Accept** on our cookie notice. Google may set cookies and process usage data under [Google’s privacy policy](https://policies.google.com/privacy).
+- **Yandex Metrica** (when enabled on our site) — loads only if you accept cookies on our notice. Yandex may set cookies and use session replay (Webvisor), click maps, and link tracking under [Yandex’s privacy policy](https://yandex.com/legal/confidential/).
+
+**Strictly necessary cookies:** Administrators who sign in to our internal admin panel receive an HTTP-only session cookie required to keep the session secure. Regular visitors do not receive this cookie.
+
+**Your browser storage:** We store your cookie choice and optional theme preference (light/dark) in your browser’s local storage so the site remembers your settings.
+
+**Your choice:** Non-essential analytics scripts (Google Analytics and Yandex Metrica) load only after you consent via our cookie banner. You can reopen the cookie notice from the site footer (**Cookie settings**) or clear site data in your browser to reset your choice.
+
 ## 2. Our Web API
 
 Our API temporarily stores AI outputs (for example summaries, tasks, tags, and Ask AI answers) in a short-lived key-value cache. Entries expire automatically after a time-to-live you choose in the app’s Smart mode AI settings (between **5 minutes** and **1 hour**; **1 hour** is the default). That preference is stored only on your device and sent with each request; we do not keep a separate server-side profile of it. Each time the server updates a job’s status, the expiry is refreshed from that moment. We never store transcripts permanently.
@@ -98,6 +110,7 @@ You retain full control over your data. You have the right to:
 - **Object to processing** — if you have questions about data handling, contact us at the email below.
 - **Support data** — for information you submitted through in-app support, you may contact us using the address below to ask questions or request deletion where applicable law allows.
 - **Waitlist data** — for information you submitted through the website Android waitlist, contact us using the address below to ask questions or request removal or deletion where applicable law allows.
+- **Cookie preferences** — you may refuse non-essential website analytics cookies via our cookie banner; reopen **Cookie settings** in the site footer to change your choice, or clear site data in your browser.
 
 ## 7. Security
 

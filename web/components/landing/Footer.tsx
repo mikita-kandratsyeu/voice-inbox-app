@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
 import { VERIFIED_METRICS_URL } from '@/config/constants';
+import { CookieSettingsLink } from '@/components/analytics/CookieConsentProvider';
 import { marketingContentClass, marketingGutterClass } from '@/components/landing/marketing-layout';
 import { Link } from '@/lib/i18n';
 
@@ -90,6 +91,7 @@ export function Footer({ mobileStickyCtaClearance = false }: FooterProps): React
                   </Link>
                 ),
               )}
+              <CookieSettingsLink />
             </nav>
           </div>
 
