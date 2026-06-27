@@ -61,7 +61,20 @@ export {
   withAlphaHex,
 } from './folderColor';
 export { formatStorageSharePercent } from './format-storage-share-percent';
-export { hapticError, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from './haptics';
+export {
+  hapticError,
+  hapticLight,
+  hapticMedium,
+  hapticPlaybackMarkCrossed,
+  hapticRecordingControl,
+  hapticRecordingFinishIntent,
+  hapticRecordingLimitWarning,
+  hapticRecordingPause,
+  hapticRecordingResume,
+  hapticRecordingStart,
+  hapticSelection,
+  hapticSuccess,
+} from './haptics';
 export type { SupportedLocale } from './i18n';
 export { applyAppLanguage, i18n, initI18n } from './i18n';
 export { IOS_MIN_TOUCH_TARGET, iosHitSlopForVisualSize } from './iosTouchTarget';

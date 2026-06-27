@@ -48,6 +48,12 @@ import {
   cancelTranscriptionPausedNotification,
   showTranscriptionPausedNotification,
 } from '../lib/transcriptionPausedNotification';
+import {
+  hapticTranscriptionChunk,
+  hapticTranscriptionComplete,
+  hapticTranscriptionFailed,
+  hapticTranscriptionProcessingStart,
+} from '../lib/transcriptionHaptics';
 import { resolveVadPolicyForMode } from '../lib/transcriptionQualityMode';
 import { validateTranscriptionStart } from '../lib/validateTranscriptionStart';
 import { clearPendingBackgroundTranscriptionRecord } from './pendingBackgroundTranscriptionRecord';
@@ -250,6 +256,7 @@ export const useTranscription = () => {
             currentRecordIdRef.current = null;
           }
           updateAiStatus(record.id, 'error', record.transcriptProgress ?? 0);
+          hapticTranscriptionFailed();
           return;
         }
       }
@@ -352,6 +359,7 @@ export const useTranscription = () => {
 
         updateAiStatus(record.id, 'processing', 0, undefined, null);
         setTranscriptionRuntimeState('transcribing', record.id);
+        hapticTranscriptionProcessingStart();
 
         const throttledProgress = createThrottledProgress(record.id, jobGen, updateAiStatus);
         const baseChunkProfile = resolveTranscriptionChunkProfile(transcriptionQualityMode);
@@ -372,6 +380,7 @@ export const useTranscription = () => {
             diagWarn('[transcription] convert to wav failed', record.id);
             currentRecordIdRef.current = null;
             updateAiStatus(record.id, 'error');
+            hapticTranscriptionFailed();
             return;
           }
           transcodeWavPath = converted.startsWith('file://') ? converted.slice(7) : converted;
@@ -440,6 +449,7 @@ export const useTranscription = () => {
                 if (!isActiveTranscriptionJob(record.id, jobGen)) {
                   return;
                 }
+                hapticTranscriptionChunk();
 
                 const snapshot = {
                   recordId: record.id,
@@ -510,6 +520,7 @@ export const useTranscription = () => {
               if (!isActiveTranscriptionJob(record.id, jobGen)) {
                 return;
               }
+              hapticTranscriptionChunk();
 
               const snapshot = {
                 recordId: record.id,
@@ -578,6 +589,7 @@ export const useTranscription = () => {
         }
 
         await updateTranscript(record.id, fullText, segments);
+        hapticTranscriptionComplete();
 
         if (
           useIosWhisperKit &&
@@ -672,6 +684,7 @@ export const useTranscription = () => {
             shouldUseIosWhisperKitEngine() && isModelError ? 'idle' : 'error',
             0,
           );
+          hapticTranscriptionFailed();
         }
       } finally {
         if (currentRecordIdRef.current === record.id) {

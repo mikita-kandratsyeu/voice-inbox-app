@@ -703,6 +703,10 @@ export const RecordingDetailScreen = () => {
   ]);
 
   const hasRecordingMarks = (liveRecord.recordingMarks?.length ?? 0) > 0;
+  const playbackMarkOffsetsMs = useMemo(
+    () => liveRecord.recordingMarks?.map((mark) => mark.offsetMs) ?? [],
+    [liveRecord.recordingMarks],
+  );
   const meetingPresetUiActive = useMemo(
     () => isProActive && liveRecord.classification === 'meeting',
     [isProActive, liveRecord.classification],
@@ -1051,6 +1055,7 @@ export const RecordingDetailScreen = () => {
                   duration={liveRecord.duration}
                   color={color}
                   audioPath={liveRecord.audioPath}
+                  playbackMarkOffsetsMs={playbackMarkOffsetsMs}
                   onPositionChange={onPositionUpdate}
                   embedded
                 />
