@@ -38,7 +38,11 @@ const MODEL_MIN_FREE_DISK_MB: Record<WhisperModelWeightsFormat, Record<WhisperMo
   },
 };
 
-const HEAVY_MODELS: WhisperModelId[] = ['whisper-small', 'whisper-medium', 'whisper-large-v3-turbo'];
+const HEAVY_MODELS: WhisperModelId[] = [
+  'whisper-small',
+  'whisper-medium',
+  'whisper-large-v3-turbo',
+];
 
 export type DeviceCompatibilityResult = {
   isCompatible: boolean;

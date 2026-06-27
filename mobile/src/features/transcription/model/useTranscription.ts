@@ -43,17 +43,17 @@ import {
   isAbortTranscriptionError,
   shouldQueueWhisperResetForError,
 } from '../lib/transcriptionErrors';
-import { isSameCheckpointEngine, resolveCheckpointEngine } from '../lib/transcriptionModelEngine';
-import {
-  cancelTranscriptionPausedNotification,
-  showTranscriptionPausedNotification,
-} from '../lib/transcriptionPausedNotification';
 import {
   hapticTranscriptionChunk,
   hapticTranscriptionComplete,
   hapticTranscriptionFailed,
   hapticTranscriptionProcessingStart,
 } from '../lib/transcriptionHaptics';
+import { isSameCheckpointEngine, resolveCheckpointEngine } from '../lib/transcriptionModelEngine';
+import {
+  cancelTranscriptionPausedNotification,
+  showTranscriptionPausedNotification,
+} from '../lib/transcriptionPausedNotification';
 import { resolveVadPolicyForMode } from '../lib/transcriptionQualityMode';
 import { validateTranscriptionStart } from '../lib/validateTranscriptionStart';
 import { clearPendingBackgroundTranscriptionRecord } from './pendingBackgroundTranscriptionRecord';

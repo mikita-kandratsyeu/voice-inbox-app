@@ -45,9 +45,9 @@ export {
   IOS_WHISPER_KIT_STORAGE_MODEL_IDS,
   isSpeakerKitModelOnDisk,
   isWhisperKitModelOnDisk,
+  isWhisperKitOnlyModelId,
   listDownloadedWhisperKitModels,
   reconcileWhisperKitDownloadStatuses,
-  isWhisperKitOnlyModelId,
   WHISPER_KIT_ONLY_MODEL_IDS,
 } from './lib/whisperKitModelStorage';
 export { useModelManager } from './model/useModelManager';

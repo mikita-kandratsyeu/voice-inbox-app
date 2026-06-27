@@ -2,7 +2,10 @@ jest.mock('@/shared/lib/fs', () => ({
   getDocumentDirectoryPath: () => '/docs',
 }));
 
-import { getWhisperKitEstimatedDownloadMb, mapWhisperModelIdToWhisperKitModel } from '../whisperKitModelPath';
+import {
+  getWhisperKitEstimatedDownloadMb,
+  mapWhisperModelIdToWhisperKitModel,
+} from '../whisperKitModelPath';
 
 describe('getWhisperKitEstimatedDownloadMb', () => {
   it('includes full Core ML bundle sizes, not ggml weights only', () => {

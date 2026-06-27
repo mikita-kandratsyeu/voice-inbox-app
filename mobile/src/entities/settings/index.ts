@@ -66,13 +66,13 @@ export {
   getWhisperModelDisplayName,
   getWhisperModelSizeMb,
   getWhisperModelVariantId,
+  isWhisperKitOnlyModelId,
   LOCAL_AI_MODELS,
   USER_FACING_AI_MODELS,
   USER_FACING_AI_MODELS_BY_SPEED,
-  WHISPER_KIT_STORAGE_FORMAT,
   WHISPER_KIT_ONLY_MODEL_IDS,
+  WHISPER_KIT_STORAGE_FORMAT,
   WHISPER_MODELS,
-  isWhisperKitOnlyModelId,
 } from './model/constants';
 export { useSettingsStore } from './model/store';
 export type {

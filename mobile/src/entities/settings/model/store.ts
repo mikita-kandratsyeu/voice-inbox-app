@@ -18,6 +18,7 @@ import {
   setPrivateRemoteProfileApiKey,
 } from '../lib/privateRemoteSecrets';
 import { RECOMMENDED_AI_MODEL_ID } from '../lib/recommendAiModel';
+import { getRecommendedWhisperModelId } from '../lib/recommendWhisperModel';
 import { resolveEffectivePrivateAiProvider } from '../lib/resolveEffectivePrivateAiProvider';
 import {
   ALL_SELECTABLE_CLOUD_AI_MODEL_IDS,
@@ -27,7 +28,6 @@ import {
   isWhisperKitOnlyModelId,
   LOCAL_AI_MODELS,
 } from './constants';
-import { getRecommendedWhisperModelId } from '../lib/recommendWhisperModel';
 import type {
   AiExecutionMode,
   AiModelRoutingMode,

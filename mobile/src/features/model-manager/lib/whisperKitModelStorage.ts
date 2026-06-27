@@ -28,7 +28,10 @@ export const IOS_WHISPER_KIT_STORAGE_MODEL_IDS = [
   'whisper-large-v3-turbo',
 ] as const satisfies readonly WhisperModelId[];
 
-export { isWhisperKitOnlyModelId, WHISPER_KIT_ONLY_MODEL_IDS } from '@/entities/settings/model/constants';
+export {
+  isWhisperKitOnlyModelId,
+  WHISPER_KIT_ONLY_MODEL_IDS,
+} from '@/entities/settings/model/constants';
 
 export async function isWhisperKitModelOnDisk(modelId: WhisperModelId): Promise<boolean> {
   if (!IS_IOS) {

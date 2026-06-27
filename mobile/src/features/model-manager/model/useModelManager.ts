@@ -48,7 +48,6 @@ import {
   deleteAllArgmaxTranscriptionModels,
   deleteWhisperKitModel,
   getWhisperKitModelStorageBytes,
-  isWhisperKitModelOnDisk,
   reconcileWhisperKitDownloadStatuses,
 } from '../lib/whisperKitModelStorage';
 
