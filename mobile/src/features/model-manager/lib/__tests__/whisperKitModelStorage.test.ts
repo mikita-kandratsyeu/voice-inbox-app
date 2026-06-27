@@ -2,6 +2,11 @@ jest.mock('@/shared/lib/platform', () => ({
   IS_IOS: true,
 }));
 
+jest.mock('@/entities/settings', () => ({
+  ...jest.requireActual('@/entities/settings/model/constants'),
+  useSettingsStore: { getState: jest.fn(), setState: jest.fn() },
+}));
+
 jest.mock('@/shared/lib/whisper/whisperKitModelPath', () => ({
   getWhisperKitModelsDir: () => '/docs/argmax-models/whisperkit',
   getSpeakerKitModelsDir: () => '/docs/argmax-models/speakerkit',

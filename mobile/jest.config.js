@@ -7,6 +7,9 @@ module.exports = {
   coverageDirectory: 'coverage',
   moduleNameMapper: {
     '^@react-native-firebase/app$': '<rootDir>/__mocks__/@react-native-firebase/app.js',
+    '^@react-native-firebase/app-check$': '<rootDir>/__mocks__/@react-native-firebase/app-check.js',
+    '^@react-native-firebase/app-check/dist/module/ReactNativeFirebaseAppCheckProvider$':
+      '<rootDir>/__mocks__/@react-native-firebase/app-check.js',
     '^@react-native-firebase/remote-config$':
       '<rootDir>/__mocks__/@react-native-firebase/remote-config.js',
     '^react-native-worklets$': '<rootDir>/__mocks__/react-native-worklets.js',
