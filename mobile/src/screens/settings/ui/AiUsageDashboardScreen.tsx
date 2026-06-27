@@ -5,9 +5,8 @@ import {
   FolderTree,
   Gauge,
   History,
-  Inbox,
   Languages,
-  MessageCircleQuestion,
+  MessageSquare,
   Mic,
   Newspaper,
   Share,
@@ -470,14 +469,16 @@ export const AiUsageDashboardScreen = () => {
       },
       {
         key: 'ask',
-        icon: <MessageCircleQuestion size={20} color={color.accent.transcript} strokeWidth={1.8} />,
+        icon: (
+          <MessageSquare size={20} color={getSettingsIconColor(color, 'bot')} strokeWidth={1.8} />
+        ),
         label: t('settings.aiUsageDashboard.features.ask.title'),
         value: t('settings.aiUsageDashboard.hybridBadge'),
         subtitle: t('settings.aiUsageDashboard.features.ask.subtitle'),
       },
       {
         key: 'inboxAsk',
-        icon: <Inbox size={20} color={color.accent.aiData} strokeWidth={1.8} />,
+        icon: <Sparkles size={20} color={color.accent.aiData} strokeWidth={1.8} />,
         label: t('settings.aiUsageDashboard.features.inboxAsk.title'),
         value: t('settings.aiUsageDashboard.hybridBadge'),
         subtitle: t('settings.aiUsageDashboard.features.inboxAsk.subtitle'),

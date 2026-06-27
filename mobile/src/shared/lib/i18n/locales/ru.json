@@ -1150,7 +1150,7 @@
       "remainingCredits_many": "Осталось {{count}}",
       "remainingCredits_other": "Осталось {{count}}",
       "exhausted": "Лимит на неделю исчерпан",
-      "resetAt": "Обновится {{date}}",
+      "resetAt": "Обновление: {{date}}",
       "loading": "Загрузка...",
       "unavailable": "—",
       "loadFailed": "Не удалось подключиться к серверу",

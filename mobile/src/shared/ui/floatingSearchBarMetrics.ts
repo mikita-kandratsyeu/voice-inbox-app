@@ -78,19 +78,18 @@ export function estimateFloatingFrostedInputHeight(): number {
   );
 }
 
-/** Extra height for the Ask AI model chip row inside the frosted composer pill. */
-export const ASK_AI_MODEL_CHIP_ROW_EXTRA_CLEARANCE = 40;
+/** Extra height for the Ask AI text row above the bottom toolbar. */
+export const ASK_AI_COMPOSER_TEXT_ROW_EXTRA = 44;
 
 /** Total bottom clearance when the keyboard is closed. */
 export function estimateFloatingFrostedInputBottomClearance(safeAreaBottom: number): number {
   return safeAreaBottom + FLOATING_SEARCH_BAR_BOTTOM_GAP + estimateFloatingFrostedInputHeight();
 }
 
-/** Bottom clearance for Ask AI composer with the model chip row. */
+/** Bottom clearance for Ask AI composer with the text row + bottom toolbar. */
 export function estimateAskAiComposerBottomClearance(safeAreaBottom: number): number {
   return (
-    estimateFloatingFrostedInputBottomClearance(safeAreaBottom) +
-    ASK_AI_MODEL_CHIP_ROW_EXTRA_CLEARANCE
+    estimateFloatingFrostedInputBottomClearance(safeAreaBottom) + ASK_AI_COMPOSER_TEXT_ROW_EXTRA
   );
 }
 
