@@ -189,6 +189,7 @@ class VoiceInboxTranscriptionModule: RCTEventEmitter {
     let customWords = (options["customWords"] as? [String]) ?? []
     let chunkDurationSec = (options["chunkDurationSec"] as? NSNumber)?.doubleValue ?? 45
     let chunkOverlapSec = (options["chunkOverlapSec"] as? NSNumber)?.doubleValue ?? 4
+    let whisperTask = (options["whisperTask"] as? String) ?? "transcribe"
 
     var resume: TranscriptionResumeState?
     if let resumeDict = options["resume"] as? [String: Any] {
@@ -219,6 +220,7 @@ class VoiceInboxTranscriptionModule: RCTEventEmitter {
       customWords: customWords,
       chunkDurationSec: chunkDurationSec,
       chunkOverlapSec: chunkOverlapSec,
+      whisperTask: whisperTask,
       resume: resume,
     )
 

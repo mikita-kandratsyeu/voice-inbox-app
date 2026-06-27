@@ -19,6 +19,7 @@ struct TranscriptionJobRequest: Codable {
   let customWords: [String]
   let chunkDurationSec: Double
   let chunkOverlapSec: Double
+  let whisperTask: String
   let resume: TranscriptionResumeState?
 }
 

@@ -3,7 +3,6 @@ import { useCallback } from 'react';
 import {
   getLocalAiModelEntry,
   getRecommendedWhisperModelId,
-  getWhisperKitModelVariantId,
   getWhisperModelVariantId,
   LOCAL_AI_MODELS,
   type LocalAiModelId,
@@ -49,8 +48,8 @@ import {
   deleteAllArgmaxTranscriptionModels,
   deleteWhisperKitModel,
   getWhisperKitModelStorageBytes,
-  IOS_WHISPER_KIT_STORAGE_MODEL_IDS,
   isWhisperKitModelOnDisk,
+  reconcileWhisperKitDownloadStatuses,
 } from '../lib/whisperKitModelStorage';
 
 export const useModelManager = () => {
@@ -231,38 +230,8 @@ export const useModelManager = () => {
   );
 
   const syncWhisperKitDownloadedStatuses = useCallback(async (): Promise<void> => {
-    const checks = await Promise.all(
-      IOS_WHISPER_KIT_STORAGE_MODEL_IDS.map(async (id) => ({
-        id,
-        downloaded: await isWhisperKitModelOnDisk(id),
-      })),
-    );
-
-    const nextStatuses = { ...useSettingsStore.getState().whisperModelStatuses };
-    const legacyFormats: WhisperModelWeightsFormat[] = ['q5_1', 'full'];
-
-    for (const item of checks) {
-      const kitKey = getWhisperKitModelVariantId(item.id);
-
-      if (nextStatuses[kitKey] === 'downloading') {
-        continue;
-      }
-
-      if (item.downloaded) {
-        nextStatuses[kitKey] = 'downloaded';
-        for (const legacyFormat of legacyFormats) {
-          const legacyKey = getWhisperModelVariantId(item.id, legacyFormat);
-          if (nextStatuses[legacyKey] === 'downloaded') {
-            delete nextStatuses[legacyKey];
-          }
-        }
-      } else if (nextStatuses[kitKey] === 'downloaded') {
-        delete nextStatuses[kitKey];
-      }
-    }
-
-    setWhisperModelStatuses(nextStatuses);
-  }, [setWhisperModelStatuses]);
+    await reconcileWhisperKitDownloadStatuses();
+  }, []);
 
   const startLocalLlmDownload = useCallback(
     async (modelId: LocalAiModelId): Promise<void> => {

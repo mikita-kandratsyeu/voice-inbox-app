@@ -46,5 +46,8 @@ export {
   isSpeakerKitModelOnDisk,
   isWhisperKitModelOnDisk,
   listDownloadedWhisperKitModels,
+  reconcileWhisperKitDownloadStatuses,
+  isWhisperKitOnlyModelId,
+  WHISPER_KIT_ONLY_MODEL_IDS,
 } from './lib/whisperKitModelStorage';
 export { useModelManager } from './model/useModelManager';

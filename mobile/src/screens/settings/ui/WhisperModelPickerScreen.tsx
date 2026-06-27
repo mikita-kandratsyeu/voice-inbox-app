@@ -330,9 +330,7 @@ export const WhisperModelPickerScreen = () => {
                   }
                   displaySize={displaySize}
                   recommendedModelId={recommendedModelId}
-                  compatibility={
-                    useIosWhisperKit ? null : compatibility ? compatibility[model.id] : null
-                  }
+                  compatibility={compatibility ? compatibility[model.id] : null}
                   color={color}
                   onPress={handleSelect}
                   onDelete={handleDelete}

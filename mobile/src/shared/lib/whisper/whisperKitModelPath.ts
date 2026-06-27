@@ -20,6 +20,7 @@ export const WHISPER_KIT_ESTIMATED_DOWNLOAD_MB: Partial<Record<WhisperModelId, n
   'whisper-base': 145,
   'whisper-small': 470,
   'whisper-medium': 630,
+  'whisper-large-v3-turbo': 960,
 };
 
 export const getWhisperKitEstimatedDownloadMb = (modelId: WhisperModelId): number =>
@@ -39,6 +40,8 @@ export const mapWhisperModelIdToWhisperKitModel = (modelId: WhisperModelId): str
       return 'openai_whisper-small';
     case 'whisper-medium':
       return 'openai_whisper-large-v3-v20240930_626MB';
+    case 'whisper-large-v3-turbo':
+      return 'openai_whisper-large-v3-v20240930_turbo';
     default:
       return 'openai_whisper-base';
   }
@@ -46,7 +49,7 @@ export const mapWhisperModelIdToWhisperKitModel = (modelId: WhisperModelId): str
 
 export const mapWhisperKitModelToPublicSize = (
   modelId: WhisperModelId,
-): 'base' | 'small' | 'medium' => {
+): 'base' | 'small' | 'medium' | 'large' => {
   switch (modelId) {
     case 'whisper-tiny':
     case 'whisper-base':
@@ -55,6 +58,8 @@ export const mapWhisperKitModelToPublicSize = (
       return 'small';
     case 'whisper-medium':
       return 'medium';
+    case 'whisper-large-v3-turbo':
+      return 'large';
     default:
       return 'base';
   }

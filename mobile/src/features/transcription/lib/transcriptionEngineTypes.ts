@@ -55,3 +55,5 @@ export type TranscriptionChunkProfile = {
   chunkDurationSec: number;
   chunkOverlapSec: number;
 };
+
+export type WhisperKitDecodingTask = 'transcribe' | 'translate';

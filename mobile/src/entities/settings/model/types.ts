@@ -44,7 +44,12 @@ export type PrivateRemoteProfile = PrivateRemoteConfig & {
   updatedAt: number;
 };
 
-export type WhisperModelId = 'whisper-tiny' | 'whisper-base' | 'whisper-small' | 'whisper-medium';
+export type WhisperModelId =
+  | 'whisper-tiny'
+  | 'whisper-base'
+  | 'whisper-small'
+  | 'whisper-medium'
+  | 'whisper-large-v3-turbo';
 export type WhisperModelWeightsFormat = 'q5_1' | 'full';
 /** GGML weights format or WhisperKit Core ML bundle (iOS). */
 export type WhisperModelStorageFormat = WhisperModelWeightsFormat | 'whisperkit';

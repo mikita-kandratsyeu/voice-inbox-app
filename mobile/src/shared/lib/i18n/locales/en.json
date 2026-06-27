@@ -2170,7 +2170,8 @@
     "iosModelQuality": {
       "whisper-base": "Fastest — good for short voice notes.",
       "whisper-small": "Balanced speed and accuracy for most recordings.",
-      "whisper-medium": "Best accuracy — slower, uses more storage."
+      "whisper-medium": "High accuracy — compressed model.",
+      "whisper-large-v3-turbo": "Top tier — best speed and accuracy."
     },
     "defaultLanguageTitle": "Default transcription language",
     "defaultLanguageHint": "Used when you transcribe and when you open a recording. You can override the language on each recording’s transcript tab.",
@@ -2249,7 +2250,10 @@
       "baseDesc": "Good balance between speed and quality.",
       "smallDesc": "Improved quality for most languages.",
       "mediumDesc": "High transcription quality.",
-      "large_v3Desc": "Maximum quality, 99 languages support."
+      "large_v3": "Large v3",
+      "large_v3_turbo": "Turbo",
+      "large_v3Desc": "Maximum quality.",
+      "large_v3_turboDesc": "Best accuracy and speed on powerful devices."
     }
   },
   "aiSettings": {

@@ -13,12 +13,14 @@ const MODEL_FILE_NAMES: Record<WhisperModelWeightsFormat, Record<WhisperModelId,
     'whisper-base': 'ggml-base-q5_1.bin',
     'whisper-small': 'ggml-small-q5_1.bin',
     'whisper-medium': 'ggml-medium.bin',
+    'whisper-large-v3-turbo': 'ggml-medium.bin',
   },
   full: {
     'whisper-tiny': 'ggml-tiny.bin',
     'whisper-base': 'ggml-base.bin',
     'whisper-small': 'ggml-small.bin',
     'whisper-medium': 'ggml-medium.bin',
+    'whisper-large-v3-turbo': 'ggml-medium.bin',
   },
 };
 
@@ -44,12 +46,16 @@ const WHISPER_MODEL_DOWNLOAD_URLS_BY_FORMAT: Record<
     'whisper-small':
       'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q5_1.bin',
     'whisper-medium': 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium.bin',
+    'whisper-large-v3-turbo':
+      'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium.bin',
   },
   full: {
     'whisper-tiny': 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.bin',
     'whisper-base': 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin',
     'whisper-small': 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin',
     'whisper-medium': 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium.bin',
+    'whisper-large-v3-turbo':
+      'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium.bin',
   },
 };
 
@@ -63,6 +69,7 @@ export const WHISPER_COREML_ENCODER_ZIP: Record<WhisperModelId, string> = {
   'whisper-base': 'ggml-base-encoder.mlmodelc.zip',
   'whisper-small': 'ggml-small-encoder.mlmodelc.zip',
   'whisper-medium': 'ggml-medium-encoder.mlmodelc.zip',
+  'whisper-large-v3-turbo': 'ggml-medium-encoder.mlmodelc.zip',
 };
 
 export const getWhisperCoreMlEncoderDirName = (modelId: WhisperModelId): string =>

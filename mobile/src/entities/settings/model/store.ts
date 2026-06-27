@@ -24,8 +24,10 @@ import {
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
   getWhisperModelVariantId,
+  isWhisperKitOnlyModelId,
   LOCAL_AI_MODELS,
 } from './constants';
+import { getRecommendedWhisperModelId } from '../lib/recommendWhisperModel';
 import type {
   AiExecutionMode,
   AiModelRoutingMode,
@@ -685,7 +687,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setIosWhisperKitEngineEnabled: (value: boolean) => {
     storage.set(KEYS.IOS_WHISPERKIT_ENGINE_ENABLED, value ? 'true' : 'false');
-    set({ iosWhisperKitEngineEnabled: value });
+    const state = get();
+    const patch: Partial<SettingsState> = { iosWhisperKitEngineEnabled: value };
+    if (!value && isWhisperKitOnlyModelId(state.selectedWhisperModel)) {
+      patch.selectedWhisperModel = getRecommendedWhisperModelId(state.whisperModelWeightsFormat);
+    }
+    set(patch);
   },
 
   setTranscriptionCustomWords: (words: string[]) => {

@@ -12,6 +12,7 @@ import { maybeRunScheduledIcloudSync } from '@/features/icloud-sync/lib/icloudSy
 import { localLlmModelDownloader } from '@/features/model-manager/lib/local-llm-download';
 import { whisperModelDownloader } from '@/features/model-manager/lib/whisper-download';
 import { whisperKitModelDownloader } from '@/features/model-manager/lib/whisper-kit-download';
+import { reconcileWhisperKitDownloadStatuses } from '@/features/model-manager/lib/whisperKitModelStorage';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import {
   abortTranscriptionForAppBackground,
@@ -100,6 +101,7 @@ export function useAppForegroundLifecycle(webApiReady = false): void {
           lastHeartbeatAt = 0;
           sendForegroundHeartbeat();
           lastForegroundAt = now;
+          void reconcileWhisperKitDownloadStatuses();
           scheduleResumeAllPendingCloudSummarize();
           scheduleDrainPrivateAiTaskQueue();
           void syncAllBackupReminderNotifications();

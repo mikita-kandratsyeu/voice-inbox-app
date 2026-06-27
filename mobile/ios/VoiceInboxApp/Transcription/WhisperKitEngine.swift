@@ -60,7 +60,7 @@ enum WhisperKitEngine {
       let modelFolder = try await WhisperKit.download(
         variant: variant,
         downloadBase: downloadBase,
-        useBackgroundSession: false,
+        useBackgroundSession: true,
         from: whisperKitModelRepo,
         progressCallback: { progress in
           guard !downloadCancelled, !Task.isCancelled else { return }
@@ -233,11 +233,15 @@ enum WhisperKitEngine {
     cacheFolder: String,
     language: String,
     prompt: String?,
+    task: String = "transcribe",
   ) async throws -> (text: String, segments: [TranscriptionSegmentPayload], detectedLanguage: String?) {
     let pipeline = try await loadPipeline(modelName: modelName, cacheFolder: cacheFolder)
     var options = DecodingOptions()
     options.skipSpecialTokens = true
     options.withoutTimestamps = false
+    if task == "translate" {
+      options.task = .translate
+    }
     if language != "auto" {
       options.language = language
       options.detectLanguage = false
@@ -313,7 +317,7 @@ enum WhisperKitEngine {
     if slug.hasPrefix("large-v3"), path.contains("large-v3") {
       return true
     }
-    if slug.hasPrefix("large-v2"), path.contains("large-v2") {
+    if slug.contains("turbo"), path.contains("turbo") {
       return true
     }
 

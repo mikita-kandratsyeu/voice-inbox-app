@@ -8,6 +8,7 @@ import type {
   TranscriptionChunkProfile,
   TranscriptionProgressEvent,
   TranscriptionResult,
+  WhisperKitDecodingTask,
 } from './transcriptionEngineTypes';
 
 type NativeTranscriptionModule = {
@@ -47,6 +48,8 @@ export const isIosNativeTranscriptionAvailable = async (): Promise<boolean> => {
   }
 };
 
+export type { WhisperKitDecodingTask };
+
 export type StartNativeTranscriptionJobOptions = {
   jobId: string;
   audioPath: string;
@@ -58,6 +61,7 @@ export type StartNativeTranscriptionJobOptions = {
   diarization: boolean;
   maxSpeakers?: number;
   customWords?: string[];
+  whisperTask?: WhisperKitDecodingTask;
   chunkProfile: TranscriptionChunkProfile;
   resume?: {
     startChunkIndex: number;
@@ -261,6 +265,7 @@ export const startNativeTranscriptionJob = (
       diarization: options.diarization,
       maxSpeakers: options.maxSpeakers,
       customWords: options.customWords ?? [],
+      whisperTask: options.whisperTask ?? 'transcribe',
       chunkDurationSec: options.chunkProfile.chunkDurationSec,
       chunkOverlapSec: options.chunkProfile.chunkOverlapSec,
       resume: options.resume,

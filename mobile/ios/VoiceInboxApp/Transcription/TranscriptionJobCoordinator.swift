@@ -240,8 +240,9 @@ final class TranscriptionJobCoordinator {
     }
 
     emitProgress(request: request, emit: emit, phase: "modelLoading", progress: 5)
+    let isTranslateTask = request.whisperTask == "translate"
     try await WhisperKitEngine.prepare(modelName: request.whisperKitModel, cacheFolder: request.modelCachePath)
-    if request.diarization, SpeakerKitEngine.isAvailable() {
+    if request.diarization, !isTranslateTask, SpeakerKitEngine.isAvailable() {
       do {
         try await SpeakerKitEngine.prepare(cacheFolder: speakerKitCachePath(for: request))
       } catch {
@@ -269,7 +270,7 @@ final class TranscriptionJobCoordinator {
     if isCancelled(jobId: request.jobId) { throw TranscriptionJobError.cancelled }
 
     var diarization: [DiarizationTurnPayload] = []
-    if request.diarization {
+    if request.diarization, !isTranslateTask {
       emitProgress(request: request, emit: emit, phase: "diarizing", progress: 20)
       if SpeakerKitEngine.isAvailable(), request.durationMs <= 90 * 60 * 1000 {
         let speakerKitFolder = speakerKitCachePath(for: request)
@@ -334,6 +335,7 @@ final class TranscriptionJobCoordinator {
         cacheFolder: request.modelCachePath,
         language: request.language,
         prompt: prompt.isEmpty ? nil : prompt,
+        task: request.whisperTask,
       )
       allSegments = result.segments
       fullText = result.text
@@ -373,6 +375,7 @@ final class TranscriptionJobCoordinator {
           cacheFolder: request.modelCachePath,
           language: request.language,
           prompt: chunkPrompt.isEmpty ? nil : chunkPrompt,
+          task: request.whisperTask,
         )
 
         let segmentIdBase = allSegments.count

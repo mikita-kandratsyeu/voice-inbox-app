@@ -10,6 +10,7 @@ const MODEL_MIN_RAM_MB: Record<WhisperModelId, number> = {
   'whisper-base': 1500,
   'whisper-small': 3200,
   'whisper-medium': 6000,
+  'whisper-large-v3-turbo': 8000,
 };
 
 const MODEL_MIN_YEAR_CLASS: Record<WhisperModelId, number> = {
@@ -17,6 +18,7 @@ const MODEL_MIN_YEAR_CLASS: Record<WhisperModelId, number> = {
   'whisper-base': 2015,
   'whisper-small': 2017,
   'whisper-medium': 2019,
+  'whisper-large-v3-turbo': 2020,
 };
 
 const MODEL_MIN_FREE_DISK_MB: Record<WhisperModelWeightsFormat, Record<WhisperModelId, number>> = {
@@ -25,16 +27,18 @@ const MODEL_MIN_FREE_DISK_MB: Record<WhisperModelWeightsFormat, Record<WhisperMo
     'whisper-base': 300,
     'whisper-small': 600,
     'whisper-medium': 2500,
+    'whisper-large-v3-turbo': 2500,
   },
   full: {
     'whisper-tiny': 300,
     'whisper-base': 450,
     'whisper-small': 1100,
     'whisper-medium': 2500,
+    'whisper-large-v3-turbo': 2500,
   },
 };
 
-const HEAVY_MODELS: WhisperModelId[] = ['whisper-small', 'whisper-medium'];
+const HEAVY_MODELS: WhisperModelId[] = ['whisper-small', 'whisper-medium', 'whisper-large-v3-turbo'];
 
 export type DeviceCompatibilityResult = {
   isCompatible: boolean;
@@ -124,6 +128,7 @@ export const checkAllModelsCompatibilityByFormat = async (
     'whisper-base',
     'whisper-small',
     'whisper-medium',
+    'whisper-large-v3-turbo',
   ];
 
   const results = await Promise.all(

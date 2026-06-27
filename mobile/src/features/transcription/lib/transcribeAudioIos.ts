@@ -13,6 +13,7 @@ import {
   startNativeTranscriptionJob,
 } from './nativeTranscription';
 import type { TranscriptionChunkProfile } from './transcribeAudio';
+import type { WhisperKitDecodingTask } from './transcriptionEngineTypes';
 import { resolveNativeTranscriptionFailure, TranscriptionError } from './transcriptionErrors';
 import { canRunWhisperGpuWork } from './whisperAppState';
 
@@ -25,6 +26,7 @@ export type TranscribeAudioIosOptions = {
   diarization?: boolean;
   maxSpeakers?: number;
   customWords?: string[];
+  whisperTask?: WhisperKitDecodingTask;
   chunkProfile?: TranscriptionChunkProfile;
   onProgress?: (current: number, total: number) => void;
   resume?: {
@@ -71,6 +73,7 @@ export const transcribeAudioIos = (
     diarization = false,
     maxSpeakers,
     customWords = [],
+    whisperTask = 'transcribe',
     chunkProfile = DEFAULT_CHUNK_PROFILE,
     onProgress,
     resume,
@@ -115,6 +118,7 @@ export const transcribeAudioIos = (
           diarization,
           maxSpeakers,
           customWords,
+          whisperTask,
           chunkProfile,
           resume,
         },

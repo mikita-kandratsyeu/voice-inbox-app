@@ -1,4 +1,10 @@
-import type { WhisperModelId } from '@/entities/settings';
+import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
+import {
+  getWhisperKitModelVariantId,
+  getWhisperModelVariantId,
+  useSettingsStore,
+  WHISPER_KIT_STORAGE_FORMAT,
+} from '@/entities/settings';
 import { IS_IOS } from '@/shared/lib/platform';
 import {
   getSpeakerKitModelsDir,
@@ -19,7 +25,10 @@ export const IOS_WHISPER_KIT_STORAGE_MODEL_IDS = [
   'whisper-base',
   'whisper-small',
   'whisper-medium',
+  'whisper-large-v3-turbo',
 ] as const satisfies readonly WhisperModelId[];
+
+export { isWhisperKitOnlyModelId, WHISPER_KIT_ONLY_MODEL_IDS } from '@/entities/settings/model/constants';
 
 export async function isWhisperKitModelOnDisk(modelId: WhisperModelId): Promise<boolean> {
   if (!IS_IOS) {
@@ -102,4 +111,66 @@ export async function deleteSpeakerKitModelFromDisk(): Promise<void> {
 export async function deleteAllArgmaxTranscriptionModels(): Promise<void> {
   await deleteAllWhisperKitModels();
   await deleteSpeakerKitModelFromDisk();
+}
+
+/** Promotes in-progress WhisperKit downloads that finished while the app was backgrounded. */
+export async function reconcileWhisperKitDownloadStatuses(): Promise<void> {
+  if (!IS_IOS) {
+    return;
+  }
+
+  const { whisperModelStatuses, setWhisperModelStatuses, setDownloadProgress } =
+    useSettingsStore.getState();
+  const legacyFormats: WhisperModelWeightsFormat[] = ['q5_1', 'full'];
+  const nextStatuses = { ...whisperModelStatuses };
+  let changed = false;
+
+  const checks = await Promise.all(
+    IOS_WHISPER_KIT_STORAGE_MODEL_IDS.map(async (id) => ({
+      id,
+      downloaded: await isWhisperKitModelOnDisk(id),
+      bytes: await getWhisperKitModelStorageBytes(id),
+    })),
+  );
+
+  for (const item of checks) {
+    const kitKey = getWhisperKitModelVariantId(item.id);
+    const status = nextStatuses[kitKey];
+
+    if (status === 'downloading' && item.downloaded) {
+      nextStatuses[kitKey] = 'downloaded';
+      if (item.bytes > 0) {
+        setDownloadProgress(item.id, WHISPER_KIT_STORAGE_FORMAT, 100, item.bytes, item.bytes);
+      } else {
+        setDownloadProgress(item.id, WHISPER_KIT_STORAGE_FORMAT, 100);
+      }
+      changed = true;
+      continue;
+    }
+
+    if (status === 'downloading') {
+      continue;
+    }
+
+    if (item.downloaded) {
+      if (status !== 'downloaded') {
+        nextStatuses[kitKey] = 'downloaded';
+        changed = true;
+      }
+      for (const legacyFormat of legacyFormats) {
+        const legacyKey = getWhisperModelVariantId(item.id, legacyFormat);
+        if (nextStatuses[legacyKey] === 'downloaded') {
+          delete nextStatuses[legacyKey];
+          changed = true;
+        }
+      }
+    } else if (status === 'downloaded') {
+      delete nextStatuses[kitKey];
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    setWhisperModelStatuses(nextStatuses);
+  }
 }

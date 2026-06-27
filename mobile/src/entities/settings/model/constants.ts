@@ -257,10 +257,29 @@ export const WHISPER_MODELS: WhisperModel[] = [
     speed: 'slow',
     status: 'not_downloaded',
   },
+  {
+    id: 'whisper-large-v3-turbo',
+    name: 'Turbo',
+    description: 'whisper.models.large_v3_turboDesc',
+    sizeLabel: '960 MB',
+    sizeMb: 960,
+    accuracy: 'very_high',
+    speed: 'medium',
+    status: 'not_downloaded',
+  },
 ];
 
 export const DEFAULT_SELECTED_WHISPER_MODEL_ID: WhisperModelId = 'whisper-base';
 export const DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT: WhisperModelWeightsFormat = 'q5_1';
+
+/** Improved-engine-only tiers (no whisper.rn / GGML weights). */
+export const WHISPER_KIT_ONLY_MODEL_IDS = [
+  'whisper-large-v3-turbo',
+] as const satisfies readonly WhisperModelId[];
+
+export function isWhisperKitOnlyModelId(modelId: WhisperModelId): boolean {
+  return (WHISPER_KIT_ONLY_MODEL_IDS as readonly WhisperModelId[]).includes(modelId);
+}
 
 const WHISPER_MODEL_WEIGHTS_SIZES_MB: Record<
   WhisperModelWeightsFormat,
@@ -271,12 +290,14 @@ const WHISPER_MODEL_WEIGHTS_SIZES_MB: Record<
     'whisper-base': 57,
     'whisper-small': 182,
     'whisper-medium': 1500,
+    'whisper-large-v3-turbo': 1500,
   },
   full: {
     'whisper-tiny': 75,
     'whisper-base': 145,
     'whisper-small': 466,
     'whisper-medium': 1500,
+    'whisper-large-v3-turbo': 1500,
   },
 };
 
@@ -286,6 +307,7 @@ const WHISPER_COREML_ENCODER_SIZES_MB: Record<WhisperModelId, number> = {
   'whisper-base': 37,
   'whisper-small': 156,
   'whisper-medium': 542,
+  'whisper-large-v3-turbo': 542,
 };
 
 /** Weights-only size (ggml `.bin`). */
