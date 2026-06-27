@@ -40,6 +40,17 @@ export type TranscriptSegment = {
   endMs?: number;
   text: string;
   tokens?: WordToken[];
+  /** On-device diarization speaker id (not a real person identity). */
+  speakerId?: string;
+  /** Detected language code for this segment, when available. */
+  language?: string;
+  /** True when overlapping speech was detected during diarization. */
+  isOverlapping?: boolean;
+};
+
+export type TranscriptSpeaker = {
+  id: string;
+  label: string;
 };
 
 export type TaskSource = 'manual' | 'ai';
@@ -92,6 +103,8 @@ export type VoiceRecord = {
   title: string;
   transcript: string;
   transcriptSegments?: TranscriptSegment[];
+  /** Display labels for on-device diarized speakers (speakerId → label). */
+  transcriptSpeakerLabels?: Record<string, string>;
   summary?: string;
   summaryStatus?: RecordingStatus;
   summaryError?: string;

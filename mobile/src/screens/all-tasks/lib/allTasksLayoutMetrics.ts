@@ -1,3 +1,5 @@
+import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
+
 export type AllTasksCalendarMetrics = {
   cardPaddingH: number;
   cardPaddingV: number;
@@ -12,6 +14,10 @@ export type AllTasksCalendarMetrics = {
   selectedDayRadius: number;
   navButtonSize: number;
   navIconSize: number;
+  /** Chevron stroke — matches SF Symbol medium weight in iOS Calendar. */
+  navIconStrokeWidth: number;
+  /** Space between previous/next week chevrons (iOS Calendar–like). */
+  navButtonGap: number;
   dotSize: number;
 };
 
@@ -29,8 +35,10 @@ export function getAllTasksCalendarMetrics(isTablet: boolean): AllTasksCalendarM
       dayNumberFontSize: 18,
       dayCellHeight: 64,
       selectedDayRadius: 14,
-      navButtonSize: 36,
-      navIconSize: 24,
+      navButtonSize: IOS_MIN_TOUCH_TARGET,
+      navIconSize: 22,
+      navIconStrokeWidth: 2,
+      navButtonGap: 20,
       dotSize: 4,
     };
   }
@@ -47,8 +55,10 @@ export function getAllTasksCalendarMetrics(isTablet: boolean): AllTasksCalendarM
     dayNumberFontSize: 16,
     dayCellHeight: 56,
     selectedDayRadius: 12,
-    navButtonSize: 32,
-    navIconSize: 22,
+    navButtonSize: IOS_MIN_TOUCH_TARGET,
+    navIconSize: 20,
+    navIconStrokeWidth: 1.75,
+    navButtonGap: 16,
     dotSize: 3.5,
   };
 }

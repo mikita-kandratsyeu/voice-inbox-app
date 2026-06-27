@@ -37,7 +37,11 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
-import { getWhisperModelVariantId, useSettingsStore } from '@/entities/settings';
+import {
+  getWhisperModelVariantId,
+  useSettingsStore,
+  WHISPER_KIT_STORAGE_FORMAT,
+} from '@/entities/settings';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { useModelManager } from '@/features/model-manager';
 import {
@@ -955,7 +959,6 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
     screenWidth.value = windowWidth;
   }, [windowWidth, screenWidth]);
 
-  const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const { startDownload } = useModelManager();
 
@@ -1154,7 +1157,11 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   }, []);
 
   const runLastSlideWhisperFlow = useCallback(() => {
-    const selectedVariantId = getWhisperModelVariantId(selectedWhisperModel, 'q5_1');
+    const { iosWhisperKitEngineEnabled, selectedWhisperModel } = useSettingsStore.getState();
+    const useIosWhisperKit = IS_IOS && iosWhisperKitEngineEnabled;
+    const selectedVariantId = useIosWhisperKit
+      ? getWhisperModelVariantId(selectedWhisperModel, WHISPER_KIT_STORAGE_FORMAT)
+      : getWhisperModelVariantId(selectedWhisperModel, 'q5_1');
     const whisperStatus = whisperModelStatuses[selectedVariantId] ?? 'not_downloaded';
     const anyWhisperDownloading = Object.values(whisperModelStatuses).some(
       (s) => s === 'downloading',
@@ -1174,12 +1181,16 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
       {
         text: t('common.download'),
         onPress: () => {
-          void startDownload(selectedWhisperModel, { format: 'q5_1' }).catch(() => {});
+          if (useIosWhisperKit) {
+            void startDownload(selectedWhisperModel).catch(() => {});
+          } else {
+            void startDownload(selectedWhisperModel, { format: 'q5_1' }).catch(() => {});
+          }
           setTimeout(finishOnboardingCore, 120);
         },
       },
     ]);
-  }, [selectedWhisperModel, whisperModelStatuses, t, startDownload, finishOnboardingCore]);
+  }, [whisperModelStatuses, t, startDownload, finishOnboardingCore]);
 
   const requestFinishOnboardingFromSkip = useCallback(() => {
     queueAfterTermsAccepted(() => finishOnboardingCore());

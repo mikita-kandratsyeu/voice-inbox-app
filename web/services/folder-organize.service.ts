@@ -1,5 +1,10 @@
 import { AUTO_ORGANIZE_CHARGED_USAGE_UNITS } from '@/lib/auto-organize-types';
-import { checkAndIncrement, decrementBy, getResetAt } from '@/lib/ai-rate-limit';
+import {
+  checkAndIncrement,
+  decrementBy,
+  getAutoOrganizeWeeklyKey,
+  resolveDeviceUsagePeriod,
+} from '@/lib/ai-rate-limit';
 import { aiModelResponseFields } from '@/lib/ai-model-display';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
@@ -13,7 +18,6 @@ import type { AutoOrganizeMessage, AutoOrganizeResult, Message } from '@/types';
 import { MESSAGE_TTL_SECONDS, SYSTEM_MICRO_TASK_MODEL, WEEK_TTL_SECONDS } from '@/config/constants';
 
 const AUTO_ORGANIZE_FREE_WEEKLY_LIMIT = 2;
-const AUTO_ORGANIZE_WEEKLY_KEY_PREFIX = 'ai_auto_organize_weekly:';
 
 type CreateAutoOrganizeResult =
   | { created: true; syncToken?: string }
@@ -25,16 +29,6 @@ type CreateAutoOrganizeResult =
     }
   | { created: false };
 
-function getAutoOrganizeWeekKey(deviceId: string): string {
-  const now = new Date();
-  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-
-  return `${AUTO_ORGANIZE_WEEKLY_KEY_PREFIX}${deviceId}:${d.getUTCFullYear()}:${weekNo}`;
-}
-
 async function checkAndIncrementAutoOrganize(
   deviceId: string,
 ): Promise<{ allowed: true } | { allowed: false; usage: import('@/lib/ai-rate-limit').AiUsage }> {
@@ -43,13 +37,13 @@ async function checkAndIncrementAutoOrganize(
     return { allowed: true };
   }
 
-  const key = getAutoOrganizeWeekKey(deviceId);
+  const period = await resolveDeviceUsagePeriod(deviceId);
+  const key = getAutoOrganizeWeeklyKey(deviceId);
   const count = await redis.incr(key);
   if (count === 1) {
     await redis.expire(key, WEEK_TTL_SECONDS);
   }
 
-  const resetAt = getResetAt();
   if (count > AUTO_ORGANIZE_FREE_WEEKLY_LIMIT) {
     await redis.decr(key);
     return {
@@ -58,8 +52,8 @@ async function checkAndIncrementAutoOrganize(
         used: AUTO_ORGANIZE_FREE_WEEKLY_LIMIT,
         limit: AUTO_ORGANIZE_FREE_WEEKLY_LIMIT,
         remaining: 0,
-        resetAt: resetAt.toISOString(),
-        resetAtUtc: resetAt.toISOString().replace('T', ' ').replace('.000Z', ' UTC'),
+        resetAt: period.resetAt.toISOString(),
+        resetAtUtc: period.resetAt.toISOString().replace('T', ' ').replace('.000Z', ' UTC'),
       },
     };
   }

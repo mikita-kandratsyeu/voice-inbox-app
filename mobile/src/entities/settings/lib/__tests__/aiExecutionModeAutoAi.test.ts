@@ -31,6 +31,10 @@ jest.mock('@/shared/lib/ai-core/localLlmSession', () => ({
   releaseLocalLlmSession: jest.fn(),
 }));
 
+jest.mock('../recommendWhisperModel', () => ({
+  getRecommendedWhisperModelId: () => 'whisper-small',
+}));
+
 import { useSettingsStore } from '../../model/store';
 
 const testStorageMap = (globalThis as unknown as { __settingsTestStorageMap: Map<string, string> })

@@ -101,7 +101,7 @@ describe('transcriptionCheckpoint', () => {
     const raw = files.get(`${checkpointsDir}/rec_1.json`);
     expect(raw).toBeTruthy();
     expect(JSON.parse(raw as string)).toMatchObject({
-      schemaVersion: 2,
+      schemaVersion: 3,
       recordId: 'rec_1',
       audioPath: '/docs/recordings/rec_1.wav',
       modelId: 'whisper-small',
@@ -169,6 +169,53 @@ describe('transcriptionCheckpoint', () => {
 
     expect(result.map((item) => item.recordId)).toEqual(['rec_new']);
     expect(mockUnlink).toHaveBeenCalledWith(`${checkpointsDir}/rec_old.json`);
+  });
+
+  it('loads v2 checkpoints for resume compatibility', async () => {
+    seedCheckpoint('rec_v2', {
+      schemaVersion: 2,
+      recordId: 'rec_v2',
+      audioPath: '/docs/audio.wav',
+      modelId: 'whisper-base',
+      modelFormat: 'q5_1',
+      language: 'ru',
+      chunkProfile: { chunkDurationSec: 24, chunkOverlapSec: 3 },
+      totalChunks: 2,
+      lastCompletedChunkIndex: 0,
+      fullText: 'partial',
+      segments: [],
+      updatedAt: 1_000_000,
+    });
+
+    const checkpoint = await getTranscriptionCheckpoint('rec_v2');
+    expect(checkpoint?.schemaVersion).toBe(2);
+    expect(checkpoint?.fullText).toBe('partial');
+  });
+
+  it('persists v3 engine metadata', async () => {
+    await saveTranscriptionCheckpoint({
+      recordId: 'rec_ios',
+      audioPath: '/docs/audio.wav',
+      modelId: 'whisper-small',
+      modelFormat: 'q5_1',
+      language: 'en',
+      chunkProfile: { chunkDurationSec: 45, chunkOverlapSec: 4 },
+      totalChunks: 3,
+      lastCompletedChunkIndex: 1,
+      fullText: 'hello world',
+      segments: [],
+      engine: 'whisperkit-ios',
+      nativeJobId: 'rec_ios',
+      detectedLanguage: 'en',
+    });
+
+    const checkpoint = await getTranscriptionCheckpoint('rec_ios');
+    expect(checkpoint).toMatchObject({
+      schemaVersion: 3,
+      engine: 'whisperkit-ios',
+      nativeJobId: 'rec_ios',
+      detectedLanguage: 'en',
+    });
   });
 
   it('removes checkpoint files when present', async () => {

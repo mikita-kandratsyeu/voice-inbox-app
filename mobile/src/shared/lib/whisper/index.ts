@@ -10,6 +10,14 @@ export {
   type WhisperContextInitOptions,
 } from './resolveWhisperContextInitOptions';
 export {
+  getArgmaxModelsDir,
+  getSpeakerKitModelsDir,
+  getTranscriptionJobsCacheDir,
+  getWhisperKitModelsDir,
+  mapWhisperKitModelToPublicSize,
+  mapWhisperModelIdToWhisperKitModel,
+} from './whisperKitModelPath';
+export {
   getWhisperCoreMlDownloadUrl,
   getWhisperCoreMlEncoderDirName,
   getWhisperCoreMlEncoderPath,
@@ -19,5 +27,6 @@ export {
   getWhisperModelFileName,
   getWhisperModelPath,
   getWhisperModelsDir,
+  getWhisperModelShortLabelKey,
   WHISPER_COREML_ENCODER_ZIP,
 } from './whisperModelPath';

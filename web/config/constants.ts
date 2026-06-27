@@ -76,6 +76,12 @@ export const ADMIN_LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5;
 export const FREE_WEEKLY_LIMIT = 10;
 export const PRO_WEEKLY_LIMIT = 75;
 export const AI_WEEKLY_KEY_PREFIX = 'ai_weekly:';
+/** Rolling usage period anchor per device (`ai_period_start:{deviceId}` → epoch ms). */
+export const AI_PERIOD_START_KEY_PREFIX = 'ai_period_start:';
+/** Free-tier auto-organize run counter within the same rolling period as AI credits. */
+export const AI_AUTO_ORGANIZE_WEEKLY_KEY_PREFIX = 'ai_auto_organize_weekly:';
+/** Length of a personal AI usage period (7 days). */
+export const AI_USAGE_PERIOD_MS = 7 * 24 * 3600 * 1000;
 export const WEEK_TTL_SECONDS = 8 * 24 * 3600;
 /** Idempotency keys for AI credit debits (`ai_debit:*`). */
 export const AI_DEBIT_IDEMPOTENCY_TTL_SECONDS = 24 * 3600;

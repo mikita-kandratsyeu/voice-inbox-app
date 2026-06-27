@@ -12,9 +12,13 @@ import { hapticSelection, inlineNativeMenuSection, type NativeMenuAction } from 
 
 type WhisperDefaultLanguageSectionProps = {
   color: Colors;
+  embedded?: boolean;
 };
 
-export const WhisperDefaultLanguageSection = ({ color }: WhisperDefaultLanguageSectionProps) => {
+export const WhisperDefaultLanguageSection = ({
+  color,
+  embedded = false,
+}: WhisperDefaultLanguageSectionProps) => {
   const { t } = useTranslation();
   const theme = useAppTheme();
   const isDark = theme === 'dark';
@@ -47,14 +51,16 @@ export const WhisperDefaultLanguageSection = ({ color }: WhisperDefaultLanguageS
     [t, titleColor, transcriptionLanguage],
   );
 
-  return (
-    <View className="mb-6 gap-2 rounded-2xl p-4" style={{ backgroundColor: color.background.card }}>
-      <View className="flex-row items-center gap-2">
-        <Languages size={18} color={color.icon.muted} strokeWidth={2} />
-        <Text className="text-sm font-medium" style={{ color: color.text.primary }}>
-          {t('whisper.defaultLanguageTitle')}
-        </Text>
-      </View>
+  const content = (
+    <>
+      {!embedded ? (
+        <View className="flex-row items-center gap-2">
+          <Languages size={18} color={color.icon.muted} strokeWidth={2} />
+          <Text className="text-sm font-medium" style={{ color: color.text.primary }}>
+            {t('whisper.defaultLanguageTitle')}
+          </Text>
+        </View>
+      ) : null}
       <MenuView
         key={theme}
         themeVariant={isDark ? 'dark' : 'light'}
@@ -81,9 +87,23 @@ export const WhisperDefaultLanguageSection = ({ color }: WhisperDefaultLanguageS
           <ChevronDown size={18} color={color.text.secondary} strokeWidth={2} />
         </TouchableOpacity>
       </MenuView>
-      <Text className="text-xs" style={{ color: color.text.muted }}>
+      <Text className="mt-2.5 text-xs leading-4" style={{ color: color.text.muted }}>
         {t('whisper.defaultLanguageHint')}
       </Text>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <View className="border-b px-4 py-3.5" style={{ borderBottomColor: color.border.default }}>
+        {content}
+      </View>
+    );
+  }
+
+  return (
+    <View className="mb-6 gap-2 rounded-2xl p-4" style={{ backgroundColor: color.background.card }}>
+      {content}
     </View>
   );
 };

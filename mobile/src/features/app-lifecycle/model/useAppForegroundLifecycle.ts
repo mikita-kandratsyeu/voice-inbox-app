@@ -11,6 +11,8 @@ import { maybeRunScheduledGitlabSync } from '@/features/gitlab-sync/lib/gitlabSy
 import { maybeRunScheduledIcloudSync } from '@/features/icloud-sync/lib/icloudSyncSchedule';
 import { localLlmModelDownloader } from '@/features/model-manager/lib/local-llm-download';
 import { whisperModelDownloader } from '@/features/model-manager/lib/whisper-download';
+import { whisperKitModelDownloader } from '@/features/model-manager/lib/whisper-kit-download';
+import { reconcileWhisperKitDownloadStatuses } from '@/features/model-manager/lib/whisperKitModelStorage';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import {
   abortTranscriptionForAppBackground,
@@ -27,11 +29,14 @@ const FOREGROUND_ON_ACTIVE_THROTTLE_MS = 15_000;
 
 const isModelDownloading = (): boolean => {
   const whisperState = whisperModelDownloader.getSnapshot().machineState;
+  const whisperKitState = whisperKitModelDownloader.getSnapshot().machineState;
   const llmState = localLlmModelDownloader.getSnapshot().machineState;
 
   return (
     whisperState === 'downloading' ||
     whisperState === 'pending' ||
+    whisperKitState === 'downloading' ||
+    whisperKitState === 'pending' ||
     llmState === 'downloading' ||
     llmState === 'pending'
   );
@@ -96,6 +101,7 @@ export function useAppForegroundLifecycle(webApiReady = false): void {
           lastHeartbeatAt = 0;
           sendForegroundHeartbeat();
           lastForegroundAt = now;
+          void reconcileWhisperKitDownloadStatuses();
           scheduleResumeAllPendingCloudSummarize();
           scheduleDrainPrivateAiTaskQueue();
           void syncAllBackupReminderNotifications();

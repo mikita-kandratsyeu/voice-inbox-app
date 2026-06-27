@@ -1,6 +1,7 @@
 {
   "download": {
-    "whisperLabel": "Downloading model"
+    "whisperLabel": "Downloading model",
+    "whisperKitLabel": "Downloading speech model"
   },
   "push": {
     "policyUpdateTitle": "Important Update",
@@ -760,6 +761,7 @@
     "cancel": "Cancel",
     "modelNotDownloaded": "Model not downloaded",
     "modelNotDownloadedHint": "Download the Whisper model in Settings to transcribe.",
+    "whisperKitModelOfflineHint": "Download the speech recognition model in Whisper settings while online. After that, transcription works offline.",
     "goToWhisperSettings": "Open Settings",
     "shareFailed": "Share failed",
     "summaryNotCreated": "Summary not created",
@@ -803,6 +805,8 @@
     "renameSpeakerHint": "Set a custom name — it’s saved with this note",
     "hideSpeakerLabels": "Hide participant labels in the text",
     "meetingDialogueTabEmptyTitle": "Nothing here yet",
+    "meetingDialogueNativeEmptyTitle": "Speaker breakdown not ready",
+    "meetingDialogueNativeEmptyDesc": "Turn on improved transcription and transcribe this meeting again. Speaker labels come from voice.",
     "meetingDialogueTabEmptyDesc": "You need a summary first — then we’ll split replies by participant. You can refresh the breakdown anytime.",
     "meetingDialogueTabEmptyDescNeedSummary": "One Smart run: summary plus replies split by participant.",
     "meetingDialogueTabEmptyDescReady": "Summary is ready — split replies by participant next.",
@@ -1712,6 +1716,7 @@
         "accentCustomization": "Accent color",
         "folderColors": "Custom folder colors",
         "meetingModeAndPinnedMoments": "Meeting mode and pinned moments",
+        "speakerLabelsInTranscript": "Speaker labels in transcript",
         "premiumAiModels": "Advanced models and your AI server",
         "extendedShareAndBatchExport": "Extended export",
         "aiFolderOrganize": "Advanced AI folder organization",
@@ -2144,9 +2149,34 @@
   "whisper": {
     "modelTitle": "Transcription model",
     "modelDescription": "Choose a Whisper model for on-device transcription. Larger models are more accurate but require more storage.",
+    "modelDescriptionIos": "With improved transcription, download a model here before transcribing. Pick a quality tier that fits your device.",
+    "modelDescriptionShort": "Offline speech recognition on your device.",
+    "modelDescriptionIosShort": "Download a model before transcribing. Pick a quality tier that fits your device.",
+    "sectionGeneral": "General",
+    "sectionEngine": "Transcription engine",
+    "sectionModel": "Model",
+    "sectionRecognition": "Recognition quality",
+    "sectionLongRecordings": "Long recordings",
+    "engineMode": {
+      "standard": "Standard",
+      "improved": "Improved"
+    },
+    "engineModeHint": {
+      "standard": "Classic Whisper models — download manually, works on all platforms.",
+      "improved": "Apple on-device engine — faster, fully offline, auto-downloads models."
+    },
+    "iosModelQualityTitle": "Recognition quality",
+    "iosModelQualityHint": "Download a model before transcribing. Larger models are more accurate but take longer.",
+    "iosModelQuality": {
+      "whisper-base": "Fastest — good for short voice notes.",
+      "whisper-small": "Balanced speed and accuracy for most recordings.",
+      "whisper-medium": "High accuracy — compressed model.",
+      "whisper-large-v3-turbo": "Top tier — best speed and accuracy."
+    },
     "defaultLanguageTitle": "Default transcription language",
     "defaultLanguageHint": "Used when you transcribe and when you open a recording. You can override the language on each recording’s transcript tab.",
     "qualityModeTitle": "Long recording mode",
+    "qualityModeSliderA11yLabel": "Long recording quality mode",
     "qualityMode": {
       "fast": "Fast",
       "balanced": "Balanced",
@@ -2157,6 +2187,13 @@
       "balanced": "Balanced chunk size and accuracy for most recordings.",
       "quality": "Larger chunks and conservative silence handling for best accuracy."
     },
+    "iosEngineTitle": "Improved transcription",
+    "iosEngineHint": "Apple’s on-device speech engine — faster and fully offline.",
+    "iosModelOnDemandHint": "Download the model in settings before transcribing.",
+    "whisperKitStorageLabel": "on-device",
+    "speakerKitStorageLabel": "Meeting speakers (on-device)",
+    "diarizationTitle": "Speaker labels on all notes",
+    "diarizationHint": "Pro feature. Meeting notes label speakers automatically — turn on for your other notes too.",
     "downloadModel": "Download model",
     "downloadConfirm": "Download will require ~{{ size }} MB. Continue?",
     "deleteModel": "Delete model",
@@ -2176,6 +2213,8 @@
     "downloadProgressPercent": "{{percent}}%",
     "downloadPhaseWeights": "Downloading model weights…",
     "downloadPhaseCoreMl": "Downloading Core ML encoder (Neural Engine).",
+    "downloadPhaseWhisperKit": "Downloading speech recognition model…",
+    "downloadPhaseWhisperKitPrepare": "Preparing model for use…",
     "coreMlChip": "Core ML",
     "coreMlAcceleratedA11y": "Core ML encoder on device",
     "downloadError": "Download error — tap to retry",
@@ -2186,6 +2225,7 @@
     "weightsFormatFullHint": "Best for precise transcription.",
     "weightsFormatChangeBlockedTitle": "Finish the current download first",
     "weightsFormatChangeBlockedBody": "A model is downloading now. Wait until it finishes or cancel the download to switch quality mode.",
+    "engineModeChangeBlockedBody": "A model is downloading now. Wait until it finishes or cancel the download to switch back to standard recognition.",
     "qualityLabel": "Quality",
     "speedLabel": "Speed",
     "accuracy": {
@@ -2210,7 +2250,10 @@
       "baseDesc": "Good balance between speed and quality.",
       "smallDesc": "Improved quality for most languages.",
       "mediumDesc": "High transcription quality.",
-      "large_v3Desc": "Maximum quality, 99 languages support."
+      "large_v3": "Large v3",
+      "large_v3_turbo": "Turbo",
+      "large_v3Desc": "Maximum quality.",
+      "large_v3_turboDesc": "Best accuracy and speed on powerful devices."
     }
   },
   "aiSettings": {
@@ -2878,6 +2921,7 @@
     "secondsLeft": "~{{ count }} sec left",
     "minutesLeft": "~{{ count }} min left",
     "loadingModel": "Preparing model…",
+    "downloadingModel": "Downloading speech model…",
     "tooShortForAuto": "Recording is shorter than {{seconds}} sec — auto-transcription was skipped.",
     "batteryHint": "Transcription works only while the app is open. Battery usage may increase.",
     "resumeTitle": "Continue transcription?",

@@ -1,38 +1,61 @@
-import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import { Haptics } from 'react-native-nitro-haptics';
 
 import { devWarn } from '@/shared/lib/appLogger';
 
-type HapticType =
-  | 'selection'
-  | 'impactLight'
-  | 'impactMedium'
-  | 'notificationSuccess'
-  | 'notificationError';
-
-const trigger = (type: HapticType) => {
+const trigger = (fn: () => void) => {
   try {
-    ReactNativeHapticFeedback.trigger(type, { enableVibrateFallback: true });
+    fn();
   } catch {
     devWarn('Haptic feedback failed');
   }
 };
 
 export const hapticSelection = () => {
-  trigger('selection');
+  trigger(() => Haptics.selection());
 };
 
 export const hapticLight = () => {
-  trigger('impactLight');
+  trigger(() => Haptics.impact('light'));
 };
 
 export const hapticMedium = () => {
-  trigger('impactMedium');
+  trigger(() => Haptics.impact('medium'));
 };
 
 export const hapticSuccess = () => {
-  trigger('notificationSuccess');
+  trigger(() => Haptics.notification('success'));
 };
 
 export const hapticError = () => {
-  trigger('notificationError');
+  trigger(() => Haptics.notification('error'));
+};
+
+export const hapticRecordingStart = () => {
+  trigger(() => Haptics.impact('medium'));
+};
+
+export const hapticRecordingPause = () => {
+  trigger(() => Haptics.impact('light'));
+};
+
+export const hapticRecordingResume = () => {
+  trigger(() => Haptics.selection());
+};
+
+export const hapticRecordingLimitWarning = (final: boolean) => {
+  trigger(() => Haptics.impact(final ? 'medium' : 'light'));
+};
+
+/** Pin moment / secondary recording controls. */
+export const hapticRecordingControl = () => {
+  trigger(() => Haptics.impact('medium'));
+};
+
+/** Opens save sheet — success haptic fires on confirm. */
+export const hapticRecordingFinishIntent = () => {
+  trigger(() => Haptics.impact('light'));
+};
+
+export const hapticPlaybackMarkCrossed = () => {
+  trigger(() => Haptics.selection());
 };

@@ -28,7 +28,7 @@ import {
 import type { TranscriptionLanguage } from '@/entities/settings';
 import {
   areFoldersEnabledInAiMode,
-  getWhisperModelVariantId,
+  getActiveWhisperModelVariantId,
   isPrivateCustomServerMode,
   useSettingsStore,
 } from '@/entities/settings';
@@ -48,6 +48,9 @@ import {
   useTaskCompletionFlow,
 } from '@/features/task-outcome';
 import { useTranscription } from '@/features/transcription';
+import { shouldUseIosWhisperKitEngine } from '@/features/transcription/config/transcriptionEngine';
+import { canStartOfflineTranscription } from '@/features/transcription/lib/canStartOfflineTranscription';
+import { shouldUseNativeMeetingSpeakers } from '@/features/transcription/lib/nativeMeetingSpeakers';
 import { useOpenNotesGraphForRecord } from '@/screens/notes-graph';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { useAppTheme, useColors } from '@/shared/config';
@@ -59,6 +62,7 @@ import {
   resolveAudioPath,
   resolveFolderListTintHex,
   useIsTablet,
+  useNetworkStatus,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
 import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
@@ -251,6 +255,7 @@ export const RecordingDetailScreen = () => {
 
   const { startTranscription, cancelTranscription, discardPausedTranscription } =
     useTranscription();
+  const { isConnected } = useNetworkStatus();
   const { generateSummary, extractTasks, cancelAiGeneration, regenerateMeetingDialogue } =
     useAiProcessing();
   const handleCancelAiGeneration = useCallback(() => {
@@ -418,13 +423,25 @@ export const RecordingDetailScreen = () => {
   );
 
   const handleRetranscribe = useCallback(async () => {
-    const variantId = getWhisperModelVariantId(selectedWhisperModel, selectedWhisperModelFormat);
+    const useWhisperKit = shouldUseIosWhisperKitEngine();
+    const variantId = getActiveWhisperModelVariantId({
+      modelId: selectedWhisperModel,
+      weightsFormat: selectedWhisperModelFormat,
+      useWhisperKit,
+    });
     const modelStatus = whisperModelStatuses[variantId] ?? 'not_downloaded';
 
-    if (modelStatus !== 'downloaded') {
+    if (
+      isConnected === false &&
+      !(await canStartOfflineTranscription(selectedWhisperModel, modelStatus))
+    ) {
       Alert.alert(
         t('recordingDetail.modelNotDownloaded'),
-        t('recordingDetail.modelNotDownloadedHint'),
+        t(
+          useWhisperKit
+            ? 'recordingDetail.whisperKitModelOfflineHint'
+            : 'recordingDetail.modelNotDownloadedHint',
+        ),
         [
           { text: t('common.ok') },
           {
@@ -453,6 +470,7 @@ export const RecordingDetailScreen = () => {
     startTranscription(liveRecord);
   }, [
     t,
+    isConnected,
     whisperModelStatuses,
     selectedWhisperModel,
     selectedWhisperModelFormat,
@@ -685,6 +703,10 @@ export const RecordingDetailScreen = () => {
   ]);
 
   const hasRecordingMarks = (liveRecord.recordingMarks?.length ?? 0) > 0;
+  const playbackMarkOffsetsMs = useMemo(
+    () => liveRecord.recordingMarks?.map((mark) => mark.offsetMs) ?? [],
+    [liveRecord.recordingMarks],
+  );
   const meetingPresetUiActive = useMemo(
     () => isProActive && liveRecord.classification === 'meeting',
     [isProActive, liveRecord.classification],
@@ -716,10 +738,16 @@ export const RecordingDetailScreen = () => {
   }, [liveRecord, regenerateMeetingDialogue]);
 
   const canRegenerateMeetingDialogueOnly = useMemo(() => {
+    if (shouldUseNativeMeetingSpeakers(liveRecord)) return false;
     if (!meetingPresetUiActive || !liveRecord.summary?.trim()) return false;
     if (isPrivateMode) return true;
     return Boolean(liveRecord.cloudAiJobId?.trim());
-  }, [meetingPresetUiActive, isPrivateMode, liveRecord.summary, liveRecord.cloudAiJobId]);
+  }, [meetingPresetUiActive, isPrivateMode, liveRecord]);
+
+  const usesNativeVoiceDiarization = useMemo(
+    () => shouldUseNativeMeetingSpeakers(liveRecord),
+    [liveRecord],
+  );
 
   const detailTabs = useMemo<Tab[]>(() => {
     const row: Tab[] = ['transcript', 'summary'];
@@ -1027,6 +1055,7 @@ export const RecordingDetailScreen = () => {
                   duration={liveRecord.duration}
                   color={color}
                   audioPath={liveRecord.audioPath}
+                  playbackMarkOffsetsMs={playbackMarkOffsetsMs}
                   onPositionChange={onPositionUpdate}
                   embedded
                 />
@@ -1183,6 +1212,8 @@ export const RecordingDetailScreen = () => {
               <MeetingDialogueTab
                 meetingDialogue={liveRecord.meetingDialogue}
                 speakerLabels={liveRecord.meetingSpeakerLabels}
+                nativeVoiceDiarization={usesNativeVoiceDiarization}
+                transcriptSegments={liveRecord.transcriptSegments}
                 onRenameSpeaker={handleRenameSpeaker}
                 hasTranscript={Boolean(liveRecord.transcript)}
                 hasSummary={Boolean(liveRecord.summary?.trim())}

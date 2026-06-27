@@ -12,7 +12,7 @@ import { useRecordStore } from '@/entities/record';
 import type { AutoArchiveAfterDays } from '@/entities/settings';
 import {
   findCloudAiModelCatalogEntry,
-  getWhisperModelVariantId,
+  getActiveWhisperModelVariantId,
   isDigestAiEnabled,
   isPrivateCustomServerMode,
   LOCAL_AI_MODELS,
@@ -45,7 +45,8 @@ import {
   openAppSettings,
   requestMicPermission,
 } from '@/shared/lib/permissions';
-import { getWhisperLabel } from '@/shared/lib/whisper';
+import { IS_IOS } from '@/shared/lib/platform';
+import { getWhisperLabel, getWhisperModelShortLabelKey } from '@/shared/lib/whisper';
 
 import type { AutomationFeatureKind } from '../ui/AutomationComingSoonSheet';
 
@@ -65,6 +66,7 @@ export function useSettingsScreen() {
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
+  const iosWhisperKitEngineEnabled = useSettingsStore((s) => s.iosWhisperKitEngineEnabled);
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
   const setAutoTranscribeOnSave = useSettingsStore((s) => s.setAutoTranscribeOnSave);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
@@ -297,14 +299,17 @@ export function useSettingsScreen() {
   const aiModelLockedByPrivateRemote = privateCustomServerModeActive;
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const digestAiEnabled = isDigestAiEnabled(aiExecutionMode, privateAiProvider);
-  const whisperVariantId = getWhisperModelVariantId(
-    selectedWhisperModel,
-    selectedWhisperModelFormat,
-  );
+  const useIosWhisperKit = IS_IOS && iosWhisperKitEngineEnabled;
+  const whisperVariantId = getActiveWhisperModelVariantId({
+    modelId: selectedWhisperModel,
+    weightsFormat: selectedWhisperModelFormat,
+    useWhisperKit: useIosWhisperKit,
+  });
   const whisperStatus = whisperModelStatuses[whisperVariantId] ?? 'not_downloaded';
 
-  const transcriptionValue =
-    whisperStatus === 'not_downloaded' || whisperStatus === 'downloading'
+  const transcriptionValue = useIosWhisperKit
+    ? t(getWhisperModelShortLabelKey(selectedWhisperModel))
+    : whisperStatus === 'not_downloaded' || whisperStatus === 'downloading'
       ? t('settings.whisperModelNotSet')
       : getWhisperLabel(selectedWhisperModel);
   const privateAiModeValue = t(`aiSettings.executionMode.${aiExecutionMode}`);

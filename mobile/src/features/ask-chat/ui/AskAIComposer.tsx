@@ -1,23 +1,14 @@
-import { ArrowRight, MessageSquare, X } from 'lucide-react-native';
-import React, { memo, useCallback, useRef, useState } from 'react';
+import { ArrowRight } from 'lucide-react-native';
+import React, { memo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TextInput, TouchableOpacity, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { hapticLight, iosHitSlopForVisualSize } from '@/shared/lib';
 import {
-  FLOATING_FROSTED_ACCESSORY_BUTTON_SIZE,
   FLOATING_FROSTED_INPUT_HORIZONTAL_PAD,
-  FLOATING_FROSTED_INPUT_ICON_SIZE,
-  FLOATING_FROSTED_INPUT_ICON_STROKE,
-  FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
-  FloatingFrostedChromeDivider,
-  FloatingFrostedChromeSection,
   FloatingFrostedInputChrome,
   FloatingFrostedStickyView,
-  getFloatingFrostedInputContainerStyle,
-  getFloatingFrostedInputFieldRowStyle,
-  getFloatingFrostedInputRowStyle,
   getInputFieldInputStyle,
 } from '@/shared/ui';
 
@@ -38,8 +29,11 @@ type AskAIComposerProps = {
   sendA11yKey?: string;
 };
 
-const SEND_BUTTON_SIZE = FLOATING_FROSTED_ACCESSORY_BUTTON_SIZE;
-const ASK_AI_CHIP_ROW_VERTICAL_PAD = 8;
+const SEND_BUTTON_SIZE = 32;
+const SEND_ICON_SIZE = 15;
+const COMPOSER_TOP_PAD = 12;
+const COMPOSER_BOTTOM_PAD = 10;
+const COMPOSER_TOOLBAR_TOP_GAP = 8;
 
 const AskAIComposerInner = ({
   color,
@@ -56,9 +50,6 @@ const AskAIComposerInner = ({
 }: AskAIComposerProps) => {
   const { t } = useTranslation();
   const inputRef = useRef<TextInput>(null);
-  const [focused, setFocused] = useState(false);
-  const hasInputText = questionInput.length > 0;
-  const isActive = focused || hasInputText;
 
   const handleChangeText = useCallback(
     (text: string) => {
@@ -66,11 +57,6 @@ const AskAIComposerInner = ({
     },
     [onChangeQuestion],
   );
-
-  const handleClear = useCallback(() => {
-    onChangeQuestion('');
-    inputRef.current?.focus();
-  }, [onChangeQuestion]);
 
   const handleSend = useCallback(() => {
     if (!canSend) return;
@@ -92,83 +78,48 @@ const AskAIComposerInner = ({
           <View
             style={{
               paddingHorizontal: FLOATING_FROSTED_INPUT_HORIZONTAL_PAD,
-              paddingTop: ASK_AI_CHIP_ROW_VERTICAL_PAD,
-              paddingBottom: 6,
+              paddingTop: COMPOSER_TOP_PAD,
             }}
           >
-            <View
-              style={{
-                flexDirection: 'row',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: 8,
-              }}
-            >
-              <AskAiModelChipMenu color={color} />
-              {extraChips}
-            </View>
-          </View>
-          <View
-            style={{
-              height: 1,
-              marginHorizontal: FLOATING_FROSTED_INPUT_HORIZONTAL_PAD,
-              backgroundColor: color.border.default,
-              opacity: 0.65,
-            }}
-          />
-          <View
-            style={{
-              ...getFloatingFrostedInputContainerStyle(),
-              ...getFloatingFrostedInputRowStyle(),
-              paddingTop: FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
-            }}
-          >
-            <View style={getFloatingFrostedInputFieldRowStyle()}>
-              <MessageSquare
-                size={FLOATING_FROSTED_INPUT_ICON_SIZE}
-                color={isActive ? color.accent.primary : color.icon.muted}
-                strokeWidth={FLOATING_FROSTED_INPUT_ICON_STROKE}
-              />
+            <View style={{ minHeight: 24 }}>
               <TextInput
                 ref={inputRef}
-                style={[getInputFieldInputStyle(color), { flex: 1 }]}
+                style={getInputFieldInputStyle(color)}
                 placeholder={t(placeholderKey)}
                 placeholderTextColor={color.text.secondary}
                 accessibilityLabel={t(placeholderKey)}
                 value={questionInput}
                 onChangeText={handleChangeText}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
                 returnKeyType="send"
                 submitBehavior="submit"
                 editable={!disableByNetwork}
                 onSubmitEditing={handleSend}
+                selectionColor={color.accent.primary}
               />
-              {hasInputText ? (
-                <TouchableOpacity
-                  onPress={handleClear}
-                  hitSlop={iosHitSlopForVisualSize(16, 16)}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('common.clear')}
-                >
-                  <View
-                    style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: 8,
-                      backgroundColor: color.icon.muted,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <X size={10} color={color.background.primary} strokeWidth={2.5} />
-                  </View>
-                </TouchableOpacity>
-              ) : null}
             </View>
-            <FloatingFrostedChromeDivider color={color} />
-            <FloatingFrostedChromeSection>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+                paddingTop: COMPOSER_TOOLBAR_TOP_GAP,
+                paddingBottom: COMPOSER_BOTTOM_PAD,
+              }}
+            >
+              <View
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <AskAiModelChipMenu color={color} />
+                {extraChips}
+              </View>
               <TouchableOpacity
                 onPress={handleSend}
                 disabled={!canSend}
@@ -176,7 +127,7 @@ const AskAIComposerInner = ({
                 accessibilityRole="button"
                 accessibilityLabel={t(sendA11yKey)}
                 accessibilityState={{ disabled: !canSend }}
-                hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+                hitSlop={iosHitSlopForVisualSize(SEND_BUTTON_SIZE, SEND_BUTTON_SIZE)}
                 style={{
                   width: SEND_BUTTON_SIZE,
                   height: SEND_BUTTON_SIZE,
@@ -184,15 +135,16 @@ const AskAIComposerInner = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: canSend ? color.accent.primary : color.background.tertiary,
+                  flexShrink: 0,
                 }}
               >
                 <ArrowRight
-                  size={17}
+                  size={SEND_ICON_SIZE}
                   color={canSend ? color.icon.onAccent : color.text.muted}
-                  strokeWidth={2.5}
+                  strokeWidth={2.4}
                 />
               </TouchableOpacity>
-            </FloatingFrostedChromeSection>
+            </View>
           </View>
         </FloatingFrostedInputChrome>
       </View>

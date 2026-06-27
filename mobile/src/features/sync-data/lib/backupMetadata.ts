@@ -54,6 +54,9 @@ const TranscriptSegmentSchema = z.looseObject({
   startMs: z.number().optional(),
   endMs: z.number().optional(),
   text: safeOptionalString,
+  speakerId: safeOptionalString,
+  language: safeOptionalString,
+  isOverlapping: z.boolean().optional(),
 });
 
 const VoiceRecordSchema = z.looseObject({

@@ -27,6 +27,28 @@ export const createTranscriptionError = (
   return new TranscriptionError(code, message, { cause });
 };
 
+const KNOWN_TRANSCRIPTION_ERROR_CODES = new Set<TranscriptionErrorCode>([
+  'native_abort',
+  'native_busy',
+  'audio_missing',
+  'checkpoint_unreadable',
+  'model_missing',
+  'model_load_failed',
+  'unknown',
+]);
+
+export const resolveNativeTranscriptionFailure = (payload: {
+  code: string;
+  message: string;
+}): TranscriptionError => {
+  if (KNOWN_TRANSCRIPTION_ERROR_CODES.has(payload.code as TranscriptionErrorCode)) {
+    return new TranscriptionError(payload.code as TranscriptionErrorCode, payload.message);
+  }
+
+  const inferred = getTranscriptionErrorCode(new Error(payload.message || payload.code));
+  return new TranscriptionError(inferred, payload.message || payload.code);
+};
+
 export const getTranscriptionErrorCode = (err: unknown): TranscriptionErrorCode => {
   if (err instanceof TranscriptionError) {
     return err.code;
@@ -36,15 +58,31 @@ export const getTranscriptionErrorCode = (err: unknown): TranscriptionErrorCode 
   if (msg.includes('abort') || msg.includes('cancel') || msg.includes('stop')) {
     return 'native_abort';
   }
-  if (msg.includes('busy') || msg.includes('lock') || msg.includes('timeout')) {
+  if (
+    msg.includes('busy') ||
+    msg.includes('lock') ||
+    msg.includes('timeout') ||
+    msg.includes('already_running')
+  ) {
     return 'native_busy';
   }
   if (
-    msg.includes('enoent') ||
-    msg.includes('no such file') ||
-    msg.includes('file not found') ||
-    msg.includes('not found')
+    msg.includes('model') &&
+    (msg.includes('not found') ||
+      msg.includes('weight.bin') ||
+      msg.includes('incomplete') ||
+      msg.includes('whisperkit') ||
+      msg.includes('failed to load'))
   ) {
+    return 'model_load_failed';
+  }
+  if (
+    msg.includes('audio') &&
+    (msg.includes('missing') || msg.includes('not found') || msg.includes('enoent'))
+  ) {
+    return 'audio_missing';
+  }
+  if (msg.includes('enoent') || msg.includes('no such file') || msg.includes('file not found')) {
     return 'audio_missing';
   }
   if (msg.includes('failed to load the model')) {

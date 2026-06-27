@@ -4,6 +4,7 @@ import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitl
 import { parseAccentColorId } from '@/shared/config';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { storage } from '@/shared/lib/async-storage';
+import { IS_IOS } from '@/shared/lib/platform';
 import { isNumber, isRecord, isString } from '@/shared/lib/type-guards';
 
 import { CLOUD_AI_KV_TTL_DEFAULT_SECONDS, snapCloudAiKvTtlToChoice } from '../lib/cloudAiKvTtl';
@@ -17,12 +18,14 @@ import {
   setPrivateRemoteProfileApiKey,
 } from '../lib/privateRemoteSecrets';
 import { RECOMMENDED_AI_MODEL_ID } from '../lib/recommendAiModel';
+import { getRecommendedWhisperModelId } from '../lib/recommendWhisperModel';
 import { resolveEffectivePrivateAiProvider } from '../lib/resolveEffectivePrivateAiProvider';
 import {
   ALL_SELECTABLE_CLOUD_AI_MODEL_IDS,
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
   getWhisperModelVariantId,
+  isWhisperKitOnlyModelId,
   LOCAL_AI_MODELS,
 } from './constants';
 import type {
@@ -48,6 +51,7 @@ import type {
   WhisperDownloadPhase,
   WhisperModelId,
   WhisperModelStatus,
+  WhisperModelStorageFormat,
   WhisperModelVariantId,
   WhisperModelWeightsFormat,
 } from './types';
@@ -67,6 +71,8 @@ const KEYS = {
   WHISPER_STATUSES: 'settings.whisperStatuses',
   TRANSCRIPTION_LANGUAGE: 'settings.transcriptionLanguage',
   TRANSCRIPTION_QUALITY_MODE: 'settings.transcriptionQualityMode',
+  TRANSCRIPTION_DIARIZATION_ENABLED: 'settings.transcriptionDiarizationEnabled',
+  IOS_WHISPERKIT_ENGINE_ENABLED: 'settings.iosWhisperKitEngineEnabled',
   TRANSCRIPTION_CUSTOM_WORDS: 'settings.transcriptionCustomWords',
   SUMMARY_STYLE: 'settings.summaryStyle',
   TASK_STRICTNESS: 'settings.taskStrictness',
@@ -259,6 +265,17 @@ const getStoredTranscriptionQualityMode = (): TranscriptionQualityMode => {
     return val;
   }
   return 'balanced';
+};
+
+const getStoredTranscriptionDiarizationEnabled = (): boolean =>
+  storage.getString(KEYS.TRANSCRIPTION_DIARIZATION_ENABLED) === 'true';
+
+const getStoredIosWhisperKitEngineEnabled = (): boolean => {
+  const val = storage.getString(KEYS.IOS_WHISPERKIT_ENGINE_ENABLED);
+  if (val == null) {
+    return IS_IOS;
+  }
+  return val === 'true';
 };
 
 const getStoredTranscriptionCustomWords = (): string[] => {
@@ -549,6 +566,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   whisperModelWeightsFormat: getStoredWhisperModelWeightsFormat(),
   transcriptionLanguage: getStoredTranscriptionLanguage(),
   transcriptionQualityMode: getStoredTranscriptionQualityMode(),
+  transcriptionDiarizationEnabled: getStoredTranscriptionDiarizationEnabled(),
+  iosWhisperKitEngineEnabled: getStoredIosWhisperKitEngineEnabled(),
   transcriptionCustomWords: getStoredTranscriptionCustomWords(),
   summaryStyle: getStoredSummaryStyle(),
   taskStrictness: getStoredTaskStrictness(),
@@ -659,6 +678,21 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setTranscriptionQualityMode: (mode: TranscriptionQualityMode) => {
     storage.set(KEYS.TRANSCRIPTION_QUALITY_MODE, mode);
     set({ transcriptionQualityMode: mode });
+  },
+
+  setTranscriptionDiarizationEnabled: (value: boolean) => {
+    storage.set(KEYS.TRANSCRIPTION_DIARIZATION_ENABLED, value ? 'true' : 'false');
+    set({ transcriptionDiarizationEnabled: value });
+  },
+
+  setIosWhisperKitEngineEnabled: (value: boolean) => {
+    storage.set(KEYS.IOS_WHISPERKIT_ENGINE_ENABLED, value ? 'true' : 'false');
+    const state = get();
+    const patch: Partial<SettingsState> = { iosWhisperKitEngineEnabled: value };
+    if (!value && isWhisperKitOnlyModelId(state.selectedWhisperModel)) {
+      patch.selectedWhisperModel = getRecommendedWhisperModelId(state.whisperModelWeightsFormat);
+    }
+    set(patch);
   },
 
   setTranscriptionCustomWords: (words: string[]) => {
@@ -1015,7 +1049,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setWhisperModelStatus: (
     id: WhisperModelId,
-    format: WhisperModelWeightsFormat,
+    format: WhisperModelStorageFormat,
     status: WhisperModelStatus,
   ) => {
     const current = get().whisperModelStatuses;
@@ -1035,7 +1069,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setDownloadProgress: (
     id: WhisperModelId,
-    format: WhisperModelWeightsFormat,
+    format: WhisperModelStorageFormat,
     progress: number,
     bytesWritten?: number,
     contentLength?: number,
@@ -1066,7 +1100,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     });
   },
 
-  removeWhisperModelStatus: (id: WhisperModelId, format: WhisperModelWeightsFormat) => {
+  removeWhisperModelStatus: (id: WhisperModelId, format: WhisperModelStorageFormat) => {
     const key = getWhisperModelVariantId(id, format);
     const currentStatuses = get().whisperModelStatuses;
     const currentProgress = get().whisperDownloadProgress;

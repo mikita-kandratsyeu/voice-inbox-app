@@ -246,6 +246,11 @@ export function SettingsPlanPaywallSheet({
                 text={t('settings.planPaywall.features.meetingModeAndPinnedMoments')}
                 emphasized
               />
+              <FeatureRow
+                color={color}
+                text={t('settings.planPaywall.features.speakerLabelsInTranscript')}
+                emphasized
+              />
               <FeatureRow color={color} text={t('settings.planPaywall.features.premiumAiModels')} />
               <FeatureRow color={color} text={t('settings.planPaywall.features.cloudSync')} />
             </View>

@@ -13,14 +13,23 @@ import {
   useRecommendedWhisperModelId,
   useSettingsStore,
   useWhisperModelCompatibility,
+  WHISPER_KIT_STORAGE_FORMAT,
   WHISPER_MODELS,
 } from '@/entities/settings';
 import { useModelManager } from '@/features/model-manager';
 import { useProEntitlement } from '@/features/pro-license';
 import { getSpeedLabel } from '@/screens/settings/config';
+import { IOS_WHISPER_KIT_MODELS } from '@/screens/settings/lib/iosWhisperKitModels';
+import { WhisperEngineModeSection } from '@/screens/settings/ui/WhisperEngineModeSection';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
-import { formatFileSize, getWhisperLabel } from '@/shared/lib/whisper';
+import { IS_IOS } from '@/shared/lib/platform';
+import {
+  formatFileSize,
+  getWhisperLabel,
+  getWhisperModelShortLabelKey,
+} from '@/shared/lib/whisper';
+import { getWhisperKitEstimatedDownloadMb } from '@/shared/lib/whisper/whisperKitModelPath';
 
 import { OnboardingCloudModelRow } from './OnboardingCloudModelRow';
 import { OnboardingWhisperModelRow } from './OnboardingWhisperModelRow';
@@ -41,6 +50,7 @@ export const OnboardingSetupStep = ({
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const aiModelRoutingMode = useSettingsStore((s) => s.aiModelRoutingMode);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
+  const iosWhisperKitEngineEnabled = useSettingsStore((s) => s.iosWhisperKitEngineEnabled);
   const setAIModel = useSettingsStore((s) => s.setAIModel);
   const setAiModelRoutingMode = useSettingsStore((s) => s.setAiModelRoutingMode);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
@@ -49,35 +59,6 @@ export const OnboardingSetupStep = ({
   const compatibility = useWhisperModelCompatibility();
   const recommendedModelId = useRecommendedWhisperModelId();
   const { startDownload } = useModelManager();
-
-  const handleWhisperSelect = (id: WhisperModelId) => {
-    hapticSelection();
-    setWhisperModel(id);
-  };
-
-  const handleWhisperDownload = (id: WhisperModelId) => {
-    const variantId = getWhisperModelVariantId(id, 'q5_1');
-    const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
-    if (status === 'downloading') return;
-    if (status === 'downloaded') return;
-
-    const sizeMb = getWhisperEstimatedDownloadSizeMb(id, 'q5_1');
-    const isSmallModel = sizeMb <= 150;
-
-    const doDownload = () => {
-      setWhisperModel(id);
-      startDownload(id, { format: 'q5_1', expectedBytes: sizeMb * 1024 * 1024 });
-    };
-
-    if (isSmallModel) {
-      doDownload();
-    } else {
-      Alert.alert(t('whisper.downloadModel'), t('whisper.downloadConfirm', { size: sizeMb }), [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('common.download'), onPress: doDownload },
-      ]);
-    }
-  };
 
   const listCardStyle = {
     backgroundColor: color.background.card,
@@ -150,8 +131,59 @@ export const OnboardingSetupStep = ({
     );
   }
 
+  const useIosWhisperKit = IS_IOS && iosWhisperKitEngineEnabled;
+  const whisperWeightsFormat = useIosWhisperKit ? WHISPER_KIT_STORAGE_FORMAT : 'q5_1';
+
+  const resolveWhisperVariantId = (id: WhisperModelId) =>
+    getWhisperModelVariantId(id, whisperWeightsFormat);
+
+  const hasActiveWhisperDownload = Object.values(whisperModelStatuses).some(
+    (status) => status === 'downloading',
+  );
+
+  const handleWhisperSelect = (id: WhisperModelId) => {
+    hapticSelection();
+    setWhisperModel(id);
+  };
+
+  const getWhisperDownloadSizeMb = (id: WhisperModelId) =>
+    useIosWhisperKit
+      ? getWhisperKitEstimatedDownloadMb(id)
+      : getWhisperEstimatedDownloadSizeMb(id, 'q5_1');
+
+  const handleWhisperDownload = (id: WhisperModelId) => {
+    const variantId = resolveWhisperVariantId(id);
+    const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
+    if (status === 'downloading') return;
+    if (status === 'downloaded') return;
+
+    const sizeMb = getWhisperDownloadSizeMb(id);
+    const isSmallModel = sizeMb <= 150;
+
+    const doDownload = () => {
+      setWhisperModel(id);
+      if (useIosWhisperKit) {
+        startDownload(id, { expectedBytes: sizeMb * 1024 * 1024 });
+        return;
+      }
+      startDownload(id, {
+        format: 'q5_1',
+        expectedBytes: sizeMb * 1024 * 1024,
+      });
+    };
+
+    if (isSmallModel) {
+      doDownload();
+    } else {
+      Alert.alert(t('whisper.downloadModel'), t('whisper.downloadConfirm', { size: sizeMb }), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.download'), onPress: doDownload },
+      ]);
+    }
+  };
+
   const handleWhisperRowPress = (id: WhisperModelId) => {
-    const variantId = getWhisperModelVariantId(id, 'q5_1');
+    const variantId = resolveWhisperVariantId(id);
     const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
     if (status === 'downloading') return;
     if (status === 'downloaded') {
@@ -161,7 +193,9 @@ export const OnboardingSetupStep = ({
     }
   };
 
-  const visibleWhisperModels = WHISPER_MODELS.filter((model) => model.id !== 'whisper-medium');
+  const visibleWhisperModels = useIosWhisperKit
+    ? IOS_WHISPER_KIT_MODELS
+    : WHISPER_MODELS.filter((model) => model.id !== 'whisper-medium');
 
   return (
     <ScrollView
@@ -169,31 +203,48 @@ export const OnboardingSetupStep = ({
       contentContainerStyle={{ paddingBottom: 16 }}
       showsVerticalScrollIndicator={true}
     >
+      {IS_IOS ? (
+        <View className="mb-4 overflow-hidden rounded-2xl" style={listCardStyle}>
+          <WhisperEngineModeSection
+            color={color}
+            embedded
+            hasActiveWhisperDownload={hasActiveWhisperDownload}
+          />
+        </View>
+      ) : null}
+
       <View className="overflow-hidden rounded-2xl" style={listCardStyle}>
         {visibleWhisperModels.map((model, index) => {
-          const variantId = getWhisperModelVariantId(model.id, 'q5_1');
+          const variantId = resolveWhisperVariantId(model.id);
           const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
           const isDownloading = status === 'downloading';
           const isDownloaded = status === 'downloaded';
           const compat = compatibility?.[model.id];
           const isLast = index === visibleWhisperModels.length - 1;
           const isSelected = model.id === selectedWhisperModel;
-          const displaySize = formatFileSize(
-            getWhisperEstimatedDownloadSizeMb(model.id, 'q5_1') * 1024 * 1024,
-          );
-          const compatHint =
-            compat && !compat.isCompatible
+          const displaySize = formatFileSize(getWhisperDownloadSizeMb(model.id) * 1024 * 1024);
+          const compatHint = useIosWhisperKit
+            ? t('whisper.iosModelOnDemandHint')
+            : compat && !compat.isCompatible
               ? compat.reason
               : t(model.description as 'whisper.models.tinyDesc');
 
           return (
             <OnboardingWhisperModelRow
               key={model.id}
-              title={getWhisperLabel(model.id)}
-              metaChips={[
-                { key: 'speed', label: getSpeedLabel(model.speed) },
-                { key: 'size', label: displaySize },
-              ]}
+              title={
+                useIosWhisperKit
+                  ? t(getWhisperModelShortLabelKey(model.id))
+                  : getWhisperLabel(model.id)
+              }
+              metaChips={
+                useIosWhisperKit
+                  ? [{ key: 'size', label: displaySize }]
+                  : [
+                      { key: 'speed', label: getSpeedLabel(model.speed) },
+                      { key: 'size', label: displaySize },
+                    ]
+              }
               compatHint={compatHint}
               isSelected={isSelected}
               isRecommended={model.id === recommendedModelId}

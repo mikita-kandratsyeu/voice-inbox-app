@@ -1373,7 +1373,7 @@ export const NotesGraphScreenBody = () => {
           description={t('notesGraph.emptyDescription')}
         />
       ) : (
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, minHeight: 0 }}>
           {graphViewMode === '2d' ? (
             <GraphCanvas
               ref={canvasRef}
@@ -1424,24 +1424,50 @@ export const NotesGraphScreenBody = () => {
               onPrepareComplete={() => setIsPreparing3dView(false)}
             />
           )}
-
-          {isPreparing3dView ? (
-            <GraphBuildingState
-              label={t('notesGraph.preparing3d')}
-              blockTouches
-              tipKeys={NOTES_GRAPH_3D_LOADING_TIP_KEYS}
-            />
-          ) : null}
-
-          {isPreparing2dView ? (
-            <GraphBuildingState
-              label={t('notesGraph.building')}
-              blockTouches
-              tipKeys={NOTES_GRAPH_LOADING_TIP_KEYS}
-            />
-          ) : null}
         </View>
       )}
+
+      {isPreparing3dView ? (
+        <View
+          pointerEvents="box-none"
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            zIndex: 100,
+            elevation: 100,
+          }}
+        >
+          <GraphBuildingState
+            label={t('notesGraph.preparing3d')}
+            blockTouches
+            tipKeys={NOTES_GRAPH_3D_LOADING_TIP_KEYS}
+          />
+        </View>
+      ) : null}
+
+      {isPreparing2dView ? (
+        <View
+          pointerEvents="box-none"
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            zIndex: 100,
+            elevation: 100,
+          }}
+        >
+          <GraphBuildingState
+            label={t('notesGraph.building')}
+            blockTouches
+            tipKeys={NOTES_GRAPH_LOADING_TIP_KEYS}
+          />
+        </View>
+      ) : null}
 
       {editTaskSheet}
 

@@ -27,7 +27,6 @@ import type {
   TaskStrictness,
 } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
-import { type CloudAiKvTtlSeconds } from '@/entities/settings/lib/cloudAiKvTtl';
 import { isMeetingSpeakerSettingsAvailable } from '@/features/ai-processing/lib/meetingSpeakerBreakdown';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
@@ -190,8 +189,6 @@ export const AiSettingsScreen = () => {
     }
   }, [customProviderLocked, privateAiProvider, setPrivateAiProvider]);
 
-  const cloudRetentionLabel = (sec: CloudAiKvTtlSeconds) =>
-    t(`aiSettings.smartModeCloudRetention.m${sec}`);
   const hasSavedRemoteConfig =
     privateRemoteLastSuccessfulBaseUrl.trim().length > 0 &&
     privateRemoteLastSuccessfulModel.trim().length > 0;
@@ -657,7 +654,6 @@ export const AiSettingsScreen = () => {
                 <CloudAiKvTtlSlider
                   valueSeconds={cloudAiKvTtlSeconds}
                   onChangeSeconds={setCloudAiKvTtlSeconds}
-                  fullLabel={cloudRetentionLabel}
                   tickLabel={(sec) => t(`aiSettings.smartModeCloudRetention.tick${sec}`)}
                   sliderAccessibilityLabel={t('aiSettings.smartModeCloudRetention.sliderA11yLabel')}
                   color={color}

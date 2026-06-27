@@ -22,8 +22,10 @@ import {
 } from '@/features/live-activity-recording';
 import {
   ensureRecordingsDir,
-  hapticLight,
-  hapticMedium,
+  hapticRecordingLimitWarning,
+  hapticRecordingPause,
+  hapticRecordingResume,
+  hapticRecordingStart,
   IS_IOS,
   RECORDINGS_DIR,
 } from '@/shared/lib';
@@ -156,12 +158,12 @@ export const useRecording = ({
       if (remainingMs <= RECORDING_FINAL_WARNING_REMAINING_MS) {
         if (!finalLimitWarningFiredRef.current) {
           finalLimitWarningFiredRef.current = true;
-          hapticMedium();
+          hapticRecordingLimitWarning(true);
         }
       } else if (remainingMs <= RECORDING_SOFT_WARNING_REMAINING_MS) {
         if (!softLimitWarningFiredRef.current) {
           softLimitWarningFiredRef.current = true;
-          hapticLight();
+          hapticRecordingLimitWarning(false);
         }
       }
 
@@ -228,7 +230,7 @@ export const useRecording = ({
       addRecordBackListener();
       audioLevelShared.value = 0;
       setState('recording');
-      hapticLight();
+      hapticRecordingStart();
 
       lastLiveActivityDriftSyncRef.current = Date.now();
       startRecordingLiveActivity().catch(() => {});
@@ -245,6 +247,7 @@ export const useRecording = ({
       const secs = elapsedRef.current;
       setState('paused');
       audioLevelShared.value = 0;
+      hapticRecordingPause();
 
       updateRecordingLiveActivity(secs, undefined, false).catch(() => {});
     } catch (err) {
@@ -261,6 +264,7 @@ export const useRecording = ({
       addRecordBackListener();
       audioLevelShared.value = 0;
       setState('recording');
+      hapticRecordingResume();
 
       lastLiveActivityDriftSyncRef.current = Date.now();
       updateRecordingLiveActivity(elapsedRef.current, undefined, true).catch(() => {});

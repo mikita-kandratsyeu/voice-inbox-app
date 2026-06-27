@@ -16,7 +16,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
-import { type PrivateRemoteQueueConcurrency, useSettingsStore } from '@/entities/settings';
+import { useSettingsStore } from '@/entities/settings';
 import { useProEntitlement } from '@/features/pro-license';
 import { type Colors, useColors } from '@/shared/config';
 import { hapticLight, IS_IOS, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
@@ -144,8 +144,6 @@ export const PrivateRemoteServerScreen = () => {
   const setPrivateRemoteQueueConcurrency = useSettingsStore(
     (s) => s.setPrivateRemoteQueueConcurrency,
   );
-  const queueConcurrencyLabel = (value: PrivateRemoteQueueConcurrency) =>
-    t(`aiSettings.privateProvider.queueConcurrency.m${value}`);
 
   if (!isProActive) {
     return null;
@@ -512,7 +510,6 @@ export const PrivateRemoteServerScreen = () => {
               <PrivateRemoteQueueConcurrencySlider
                 value={privateRemoteQueueConcurrency}
                 onChange={setPrivateRemoteQueueConcurrency}
-                fullLabel={queueConcurrencyLabel}
                 tickLabel={(value) => t(`aiSettings.privateProvider.queueConcurrency.tick${value}`)}
                 sliderAccessibilityLabel={t(
                   'aiSettings.privateProvider.queueConcurrency.sliderA11yLabel',

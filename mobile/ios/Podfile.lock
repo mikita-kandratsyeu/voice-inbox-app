@@ -388,6 +388,29 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - NitroHaptics (0.2.3):
+    - hermes-engine
+    - NitroModules
+    - RCTRequired
+    - RCTTypeSafety
+    - React-callinvoker
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - NitroMmkv (4.3.1):
     - hermes-engine
     - MMKVCore (= 2.4.0)
@@ -2908,27 +2931,6 @@ PODS:
   - RNPurchases (10.4.0):
     - PurchasesHybridCommon (= 18.15.1)
     - React-Core
-  - RNReactNativeHapticFeedback (3.0.0):
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
   - RNReanimated (4.4.1):
     - hermes-engine
     - RCTRequired
@@ -3247,6 +3249,7 @@ DEPENDENCIES:
   - NitroDeviceInfo (from `../node_modules/react-native-nitro-device-info`)
   - NitroFetch (from `../node_modules/react-native-nitro-fetch`)
   - NitroFS (from `../node_modules/react-native-nitro-fs`)
+  - NitroHaptics (from `../node_modules/react-native-nitro-haptics`)
   - NitroMmkv (from `../node_modules/react-native-mmkv`)
   - NitroModules (from `../node_modules/react-native-nitro-modules`)
   - NitroSound (from `../node_modules/react-native-nitro-sound`)
@@ -3357,7 +3360,6 @@ DEPENDENCIES:
   - "RNNotifee (from `../node_modules/@notifee/react-native`)"
   - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNPurchases (from `../node_modules/react-native-purchases`)
-  - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - "RNReminders (from `../node_modules/@wiicamp/react-native-reminders`)"
   - RNScreens (from `../node_modules/react-native-screens`)
@@ -3443,6 +3445,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-nitro-fetch"
   NitroFS:
     :path: "../node_modules/react-native-nitro-fs"
+  NitroHaptics:
+    :path: "../node_modules/react-native-nitro-haptics"
   NitroMmkv:
     :path: "../node_modules/react-native-mmkv"
   NitroModules:
@@ -3661,8 +3665,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-permissions"
   RNPurchases:
     :path: "../node_modules/react-native-purchases"
-  RNReactNativeHapticFeedback:
-    :path: "../node_modules/react-native-haptic-feedback"
   RNReanimated:
     :path: "../node_modules/react-native-reanimated"
   RNReminders:
@@ -3736,6 +3738,7 @@ SPEC CHECKSUMS:
   NitroDeviceInfo: 87c71a4fc33faf71bf616789dda68d9bc60d1e4d
   NitroFetch: 29b991e1f4d54101acab17f71bab85a8c4c1cef6
   NitroFS: 671a78596568ba42758ff3ca8cbd8c2fa3b43486
+  NitroHaptics: 1534f04507c4c880a585cf78926ef4e29d3211d4
   NitroMmkv: 21968ae5bd91f4569b8a69b2e75357845dac2ca1
   NitroModules: 675efe9b98bac1359517fd33549c7191badebcbc
   NitroSound: 0179b5e66a465e303fb58d4d21db25215c22133a
@@ -3851,7 +3854,6 @@ SPEC CHECKSUMS:
   RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
   RNPermissions: 5e62c19b0f9453e223fc2494d981b78c4e3183ff
   RNPurchases: e42a93515b5d8994b2c4954da925470b0f5a92df
-  RNReactNativeHapticFeedback: 50fb580f22705e3407d44d208fd113aab5f324bc
   RNReanimated: 3567ec1c7151c623ac5685cf80db16142b2d1b5d
   RNReminders: e7bdf59616634b7ae180b18f6bf86dba531b0007
   RNScreens: cca7e1ec9184d91c7681160df11bdb7bf1ab0235

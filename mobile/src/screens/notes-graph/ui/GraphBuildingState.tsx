@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
 import { ProgressStatusCard, RotatingTipText } from '@/shared/ui';
@@ -31,16 +31,7 @@ export function GraphBuildingState({
   return (
     <View
       pointerEvents={blockTouches ? 'auto' : 'box-none'}
-      style={{
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        top: 0,
-        bottom: 0,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 24,
-      }}
+      style={[StyleSheet.absoluteFill, styles.overlay]}
     >
       <ProgressStatusCard
         title={label}
@@ -58,3 +49,11 @@ export function GraphBuildingState({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  overlay: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+});

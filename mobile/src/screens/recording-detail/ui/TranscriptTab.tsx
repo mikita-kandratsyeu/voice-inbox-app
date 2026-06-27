@@ -26,13 +26,14 @@ import {
   type TranscriptSegment,
 } from '@/entities/record';
 import {
-  getWhisperModelVariantId,
+  getActiveWhisperModelVariantId,
   TRANSLATE_LANGUAGES,
   useSettingsStore,
 } from '@/entities/settings';
 import { getWhisperModelDisplayName } from '@/entities/settings/model/constants';
 import { TranscriptHighlight } from '@/features/transcript-highlight';
 import { useTranscriptionBlockedForRecord } from '@/features/transcription';
+import { shouldUseIosWhisperKitEngine } from '@/features/transcription/config/transcriptionEngine';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { inlineNativeMenuSection } from '@/shared/lib';
@@ -160,10 +161,12 @@ export const TranscriptTab = ({
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
-  const whisperVariantId = getWhisperModelVariantId(
-    selectedWhisperModel,
-    selectedWhisperModelFormat,
-  );
+  const useIosWhisperKit = shouldUseIosWhisperKitEngine();
+  const whisperVariantId = getActiveWhisperModelVariantId({
+    modelId: selectedWhisperModel,
+    weightsFormat: selectedWhisperModelFormat,
+    useWhisperKit: useIosWhisperKit,
+  });
   const whisperStatus = whisperModelStatuses[whisperVariantId] ?? 'not_downloaded';
   const transcriptionBlocked = useTranscriptionBlockedForRecord(recordId);
   const transcribeDisabled = isAiProcessing || transcriptionBlocked || isDiscardingResume;

@@ -44,9 +44,16 @@ export type PrivateRemoteProfile = PrivateRemoteConfig & {
   updatedAt: number;
 };
 
-export type WhisperModelId = 'whisper-tiny' | 'whisper-base' | 'whisper-small' | 'whisper-medium';
+export type WhisperModelId =
+  | 'whisper-tiny'
+  | 'whisper-base'
+  | 'whisper-small'
+  | 'whisper-medium'
+  | 'whisper-large-v3-turbo';
 export type WhisperModelWeightsFormat = 'q5_1' | 'full';
-export type WhisperModelVariantId = `${WhisperModelId}:${WhisperModelWeightsFormat}`;
+/** GGML weights format or WhisperKit Core ML bundle (iOS). */
+export type WhisperModelStorageFormat = WhisperModelWeightsFormat | 'whisperkit';
+export type WhisperModelVariantId = `${WhisperModelId}:${WhisperModelStorageFormat}`;
 
 export type WhisperModelStatus = 'not_downloaded' | 'downloading' | 'downloaded' | 'error';
 
@@ -100,7 +107,12 @@ export type DownloadBytes = {
   total: number;
 };
 
-export type WhisperDownloadPhase = 'weights' | 'coreml';
+export type WhisperDownloadPhase =
+  | 'weights'
+  | 'coreml'
+  | 'whisperkit'
+  | 'whisperkit_prepare'
+  | 'speakerkit';
 
 export type SettingsState = {
   appTheme: AppTheme;
@@ -114,6 +126,10 @@ export type SettingsState = {
   whisperModelWeightsFormat: WhisperModelWeightsFormat;
   transcriptionLanguage: TranscriptionLanguage;
   transcriptionQualityMode: TranscriptionQualityMode;
+  /** iOS-only rollout flag for WhisperKit transcription engine. */
+  iosWhisperKitEngineEnabled: boolean;
+  /** iOS-only: enable on-device diarization during transcription (WhisperKit path). */
+  transcriptionDiarizationEnabled: boolean;
   /** Names, brands, and terms passed to Whisper as initial prompt hints. */
   transcriptionCustomWords: string[];
   summaryStyle: SummaryStyle;
@@ -174,6 +190,8 @@ export type SettingsState = {
   setWhisperModelWeightsFormat: (value: WhisperModelWeightsFormat) => void;
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => void;
   setTranscriptionQualityMode: (mode: TranscriptionQualityMode) => void;
+  setIosWhisperKitEngineEnabled: (value: boolean) => void;
+  setTranscriptionDiarizationEnabled: (value: boolean) => void;
   setTranscriptionCustomWords: (words: string[]) => void;
   setSummaryStyle: (value: SummaryStyle) => void;
   setTaskStrictness: (value: TaskStrictness) => void;
@@ -209,7 +227,7 @@ export type SettingsState = {
   setAutoRefreshMeetingSpeakersOnRegen: (value: boolean) => void;
   setWhisperModelStatus: (
     id: WhisperModelId,
-    format: WhisperModelWeightsFormat,
+    format: WhisperModelStorageFormat,
     status: WhisperModelStatus,
   ) => void;
   setWhisperModelStatuses: (
@@ -217,13 +235,13 @@ export type SettingsState = {
   ) => void;
   setDownloadProgress: (
     id: WhisperModelId,
-    format: WhisperModelWeightsFormat,
+    format: WhisperModelStorageFormat,
     progress: number,
     bytesWritten?: number,
     contentLength?: number,
     phase?: WhisperDownloadPhase,
   ) => void;
-  removeWhisperModelStatus: (id: WhisperModelId, format: WhisperModelWeightsFormat) => void;
+  removeWhisperModelStatus: (id: WhisperModelId, format: WhisperModelStorageFormat) => void;
   setLocalLlmModelStatus: (id: LocalAiModelId, status: WhisperModelStatus) => void;
   setLocalLlmModelStatuses: (statuses: Partial<Record<LocalAiModelId, WhisperModelStatus>>) => void;
   setLocalLlmDownloadProgress: (

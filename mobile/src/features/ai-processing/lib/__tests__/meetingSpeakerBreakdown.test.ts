@@ -67,5 +67,14 @@ describe('meetingSpeakerBreakdown gates', () => {
         }),
       ).toBe(false);
     });
+
+    it('skips AI pseudo-diarization when native speaker segments exist', () => {
+      expect(
+        shouldIncludeMeetingSpeakerBreakdown({
+          ...base,
+          hasNativeSpeakerDiarization: true,
+        }),
+      ).toBe(false);
+    });
   });
 });

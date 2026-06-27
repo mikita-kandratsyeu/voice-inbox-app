@@ -24,6 +24,7 @@ import { regenerateMeetingDialogue as runRegenerateMeetingDialogue } from '@/fea
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
+import { recordHasNativeSpeakerDiarization } from '@/features/transcription/lib/nativeMeetingSpeakers';
 import type { AiProcessingResult } from '@/shared/lib/ai-api';
 import {
   AI_POLL_TIMEOUT_ERROR,
@@ -337,6 +338,7 @@ export const useAiProcessing = () => {
         const includeMeetingPreset = isProActive && recordIsMeeting;
         const meetingSummaryTemplate =
           snapshot?.meetingSummaryTemplate ?? record.meetingSummaryTemplate;
+        const transcriptSegments = snapshot?.transcriptSegments ?? record.transcriptSegments;
         includeMeetingSpeakerBreakdown =
           includeMeetingPreset &&
           shouldIncludeMeetingSpeakerBreakdown({
@@ -346,6 +348,9 @@ export const useAiProcessing = () => {
             aiExecutionMode,
             privateAiProvider: effectivePrivateAiProvider,
             autoRefreshMeetingSpeakersOnRegen,
+            hasNativeSpeakerDiarization: recordHasNativeSpeakerDiarization({
+              transcriptSegments,
+            }),
           });
 
         const getLatestRecord = (id: string) =>

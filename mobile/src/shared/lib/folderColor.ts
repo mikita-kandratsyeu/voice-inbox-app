@@ -6,7 +6,7 @@ import {
   type ColorScheme,
   DEFAULT_ACCENT_COLOR_ID,
   getAccentPreviewHex,
-} from '@/shared/config';
+} from '@/shared/config/colors';
 
 export const DEFAULT_FOLDER_BRAND_HEX = ACCENT_COLOR_SWATCHES[0].previewHex;
 

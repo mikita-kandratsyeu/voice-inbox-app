@@ -6,6 +6,12 @@ module.exports = {
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.test.{ts,tsx}', '!src/**/__tests__/**'],
   coverageDirectory: 'coverage',
   moduleNameMapper: {
+    '^@react-native-firebase/app$': '<rootDir>/__mocks__/@react-native-firebase/app.js',
+    '^@react-native-firebase/app-check$': '<rootDir>/__mocks__/@react-native-firebase/app-check.js',
+    '^@react-native-firebase/app-check/dist/module/ReactNativeFirebaseAppCheckProvider$':
+      '<rootDir>/__mocks__/@react-native-firebase/app-check.js',
+    '^@react-native-firebase/remote-config$':
+      '<rootDir>/__mocks__/@react-native-firebase/remote-config.js',
     '^react-native-worklets$': '<rootDir>/__mocks__/react-native-worklets.js',
     '^react-native-in-app-review$': '<rootDir>/__mocks__/react-native-in-app-review.js',
     '\\.(css|less|scss|sass)$': '<rootDir>/__mocks__/styleMock.js',

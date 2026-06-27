@@ -1,6 +1,7 @@
 {
   "download": {
-    "whisperLabel": "Загрузка модели"
+    "whisperLabel": "Загрузка модели",
+    "whisperKitLabel": "Загрузка модели распознавания"
   },
   "push": {
     "policyUpdateTitle": "Важное обновление",
@@ -777,6 +778,7 @@
     "cancel": "Отменить",
     "modelNotDownloaded": "Модель не скачана",
     "modelNotDownloadedHint": "Для транскрипции необходимо скачать модель Whisper в настройках.",
+    "whisperKitModelOfflineHint": "Скачайте модель распознавания в настройках Whisper при подключении к интернету. После этого транскрибация работает офлайн.",
     "goToWhisperSettings": "Открыть настройки",
     "shareFailed": "Ошибка при отправке",
     "summaryNotCreated": "Сводка не создана",
@@ -820,6 +822,8 @@
     "renameSpeakerHint": "Можно задать своё имя — оно сохранится в этой записи",
     "hideSpeakerLabels": "Скрыть подписи участников в тексте",
     "meetingDialogueTabEmptyTitle": "Пока пусто",
+    "meetingDialogueNativeEmptyTitle": "Разбивка по спикерам ещё не готова",
+    "meetingDialogueNativeEmptyDesc": "Включите улучшенную транскрибацию и перетранскрибируйте встречу. Спикеры определяются по голосу.",
     "meetingDialogueTabEmptyDesc": "Сначала нужна сводка — затем разложим реплики по участникам. Разбивку можно обновить отдельно в любой момент.",
     "meetingDialogueTabEmptyDescNeedSummary": "Сделаем сводку и разложим реплики по участникам за один запуск в Smart.",
     "meetingDialogueTabEmptyDescReady": "Сводка готова — осталось разложить реплики по участникам.",
@@ -1146,7 +1150,7 @@
       "remainingCredits_many": "Осталось {{count}}",
       "remainingCredits_other": "Осталось {{count}}",
       "exhausted": "Лимит на неделю исчерпан",
-      "resetAt": "Обновится {{date}}",
+      "resetAt": "Обновление: {{date}}",
       "loading": "Загрузка...",
       "unavailable": "—",
       "loadFailed": "Не удалось подключиться к серверу",
@@ -1754,6 +1758,7 @@
         "accentCustomization": "Цвет акцента",
         "folderColors": "Персональные цвета папок",
         "meetingModeAndPinnedMoments": "Режим встречи и отметки моментов",
+        "speakerLabelsInTranscript": "Подписи спикеров в транскрипте",
         "premiumAiModels": "Продвинутые модели и свой ИИ-сервер",
         "extendedShareAndBatchExport": "Расширенный экспорт",
         "aiFolderOrganize": "Расширенная ИИ-организация",
@@ -2190,9 +2195,34 @@
   "whisper": {
     "modelTitle": "Модель транскрипции",
     "modelDescription": "Выберите модель Whisper для офлайн-транскрипции. Большие модели точнее, но требуют больше места.",
+    "modelDescriptionIos": "При улучшенной транскрибации скачайте модель здесь до начала транскрибации. Выберите уровень качества под ваше устройство.",
+    "modelDescriptionShort": "Офлайн-распознавание речи на устройстве.",
+    "modelDescriptionIosShort": "Скачайте модель до транскрибации. Выберите уровень качества под ваше устройство.",
+    "sectionGeneral": "Общее",
+    "sectionEngine": "Движок транскрипции",
+    "sectionModel": "Модель",
+    "sectionRecognition": "Качество распознавания",
+    "sectionLongRecordings": "Длинные записи",
+    "engineMode": {
+      "standard": "Стандарт",
+      "improved": "Улучшенный"
+    },
+    "engineModeHint": {
+      "standard": "Классические модели Whisper — скачиваются вручную, работают на всех платформах.",
+      "improved": "Движок Apple на устройстве — быстрее, полностью офлайн, модели скачиваются сами."
+    },
+    "iosModelQualityTitle": "Качество распознавания",
+    "iosModelQualityHint": "Скачайте модель до транскрибации. Более крупные модели точнее, но работают дольше.",
+    "iosModelQuality": {
+      "whisper-base": "Самая быстрая — для коротких заметок.",
+      "whisper-small": "Баланс скорости и точности для большинства записей.",
+      "whisper-medium": "Высокая точность — сжатая модель.",
+      "whisper-large-v3-turbo": "Высший уровень — лучшая скорость и точность."
+    },
     "defaultLanguageTitle": "Язык транскрипции по умолчанию",
     "defaultLanguageHint": "Используется при транскрипции и при открытии записи. Для отдельной записи язык можно сменить на вкладке транскрипта.",
     "qualityModeTitle": "Режим длинных записей",
+    "qualityModeSliderA11yLabel": "Режим качества для длинных записей",
     "qualityMode": {
       "fast": "Быстро",
       "balanced": "Баланс",
@@ -2203,6 +2233,13 @@
       "balanced": "Сбалансированный размер чанков и точность для большинства записей.",
       "quality": "Длинные чанки и бережная обработка тишины для лучшей точности."
     },
+    "iosEngineTitle": "Улучшенная транскрипция",
+    "iosEngineHint": "Речевой движок Apple на устройстве — быстрее и полностью офлайн. Для встреч спикеры определяются по голосу.",
+    "iosModelOnDemandHint": "Скачайте модель в настройках до транскрибации.",
+    "whisperKitStorageLabel": "на устройстве",
+    "speakerKitStorageLabel": "Спикеры встреч (на устройстве)",
+    "diarizationTitle": "Подписи спикеров на всех заметках",
+    "diarizationHint": "Функция Pro. На встречах спикеры помечаются сами — включите и для остальных заметок.",
     "downloadModel": "Скачать модель",
     "downloadConfirm": "Для загрузки потребуется ~{{ size }} MB. Продолжить?",
     "deleteModel": "Удалить модель",
@@ -2222,6 +2259,8 @@
     "downloadProgressPercent": "{{percent}}%",
     "downloadPhaseWeights": "Загружаются веса модели…",
     "downloadPhaseCoreMl": "Загружается Core ML encoder (Neural Engine).",
+    "downloadPhaseWhisperKit": "Загружается модель распознавания речи…",
+    "downloadPhaseWhisperKitPrepare": "Подготовка модели к работе…",
     "coreMlChip": "Core ML",
     "coreMlAcceleratedA11y": "Энкодер Core ML на устройстве",
     "downloadError": "Ошибка загрузки — нажмите для повтора",
@@ -2232,6 +2271,7 @@
     "weightsFormatFullHint": "Лучше распознает речь, но работает медленнее. Подходит для точного распознавания.",
     "weightsFormatChangeBlockedTitle": "Сначала завершите загрузку",
     "weightsFormatChangeBlockedBody": "Сейчас загружается модель. Дождитесь завершения загрузки или отмените её, чтобы сменить режим качества.",
+    "engineModeChangeBlockedBody": "Сейчас загружается модель. Дождитесь завершения загрузки или отмените её, чтобы вернуться к стандартному распознаванию.",
     "qualityLabel": "Качество",
     "speedLabel": "Скорость",
     "accuracy": {
@@ -2256,7 +2296,9 @@
       "baseDesc": "Хороший баланс между скоростью и качеством.",
       "smallDesc": "Улучшенное качество для большинства языков.",
       "mediumDesc": "Высокое качество транскрипции.",
-      "large_v3Desc": "Максимальное качество, поддержка 99 языков."
+      "large_v3Desc": "Максимальное качество.",
+      "large_v3_turbo": "Turbo",
+      "large_v3_turboDesc": "Лучшая точность и скорость на мощных устройствах."
     }
   },
   "aiSettings": {
@@ -2930,6 +2972,7 @@
     "secondsLeft": "~{{ count }} сек осталось",
     "minutesLeft": "~{{ count }} мин осталось",
     "loadingModel": "Загрузка модели…",
+    "downloadingModel": "Скачивание модели распознавания…",
     "tooShortForAuto": "Запись короче {{seconds}} с — авто-транскрипция пропущена.",
     "batteryHint": "Транскрипция работает только при открытом приложении. Возможен повышенный расход батареи.",
     "resumeTitle": "Продолжить транскрипцию?",

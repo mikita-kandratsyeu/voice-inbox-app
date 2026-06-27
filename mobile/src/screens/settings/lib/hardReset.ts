@@ -15,6 +15,7 @@ import {
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
 } from '@/entities/settings/model/constants';
 import { useSettingsStore } from '@/entities/settings/model/store';
+import { invalidateNativeTranscriptionEngineCaches } from '@/features/transcription/lib/nativeTranscription';
 import { DEFAULT_ACCENT_COLOR_ID } from '@/shared/config';
 import { storage } from '@/shared/lib/async-storage';
 import { getDB } from '@/shared/lib/db/client';
@@ -86,9 +87,11 @@ export async function performHardReset(): Promise<void> {
   const cacheRoot = getCachesDirectoryPath();
   await removePathRecursive(`${docRoot}/recordings`);
   await removePathRecursive(`${docRoot}/whisper-models`);
+  await removePathRecursive(`${docRoot}/argmax-models`);
   await removePathRecursive(`${docRoot}/local-llm-models`);
   await removePathRecursive(`${docRoot}/transcription-checkpoints`);
   await removePathRecursive(cacheRoot);
+  await invalidateNativeTranscriptionEngineCaches();
 
   storage.clearAll();
 
@@ -113,6 +116,7 @@ export async function performHardReset(): Promise<void> {
     whisperModelWeightsFormat: DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
     transcriptionLanguage: 'auto',
     transcriptionQualityMode: 'balanced',
+    iosWhisperKitEngineEnabled: false,
     summaryStyle: 'standard',
     taskStrictness: 'balanced',
     aiOutputLanguage: 'same',

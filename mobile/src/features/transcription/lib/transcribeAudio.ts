@@ -19,10 +19,10 @@ import {
 import { analyzeWavSpeech } from './audioVad';
 import { buildWhisperPrompt } from './buildWhisperPrompt';
 import { dedupeChunkTextOverlap } from './chunkTextDedup';
-import { collapseRepeatedTokenStutters, isUsableTranscriptText } from './cleanTranscriptText';
+import { cleanTranscriptSegmentText, isUsableTranscriptText } from './cleanTranscriptText';
 import { TranscriptionError } from './transcriptionErrors';
-import { TranscriptionRuntimeBenchmark } from './transcriptionRuntimeBenchmark';
 import type { TranscriptionVadPolicy } from './transcriptionQualityMode';
+import { TranscriptionRuntimeBenchmark } from './transcriptionRuntimeBenchmark';
 import { canRunWhisperGpuWork } from './whisperAppState';
 import { beginWhisperNativeWork, endWhisperNativeWork } from './whisperNativeLifecycle';
 
@@ -123,7 +123,7 @@ const buildChunkPrompt = (fullText: string, customWords: readonly string[]): str
   return tail;
 };
 
-const finalizeTranscriptText = (text: string): string => collapseRepeatedTokenStutters(text.trim());
+const finalizeTranscriptText = (text: string): string => cleanTranscriptSegmentText(text);
 
 type ResolvedTranscriptionPath = {
   path: string;
@@ -224,12 +224,7 @@ const resolveTranscriptionPath = async (
   }
 
   const trimmedPath = `${sourcePath}.vad-trim.wav`;
-  const trimmed = await createWavChunk(
-    sourcePath,
-    trimmedPath,
-    trimStartMs,
-    trimDurationMs,
-  );
+  const trimmed = await createWavChunk(sourcePath, trimmedPath, trimStartMs, trimDurationMs);
   if (!trimmed) {
     return { path: sourcePath, timestampOffsetMs: 0, skipped: false };
   }
@@ -493,12 +488,7 @@ const transcribeShort = async ({
     throw new TranscriptionError('native_abort');
   }
 
-  const resolved = await resolveTranscriptionPath(
-    audioPath,
-    vadEnabled,
-    durationMs,
-    vadPolicy,
-  );
+  const resolved = await resolveTranscriptionPath(audioPath, vadEnabled, durationMs, vadPolicy);
   if (resolved.skipped) {
     return { segments: [], fullText: '', skipped: true };
   }

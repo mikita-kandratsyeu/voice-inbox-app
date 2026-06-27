@@ -1,4 +1,6 @@
+import { WHISPER_KIT_STORAGE_FORMAT } from '@/entities/settings/model/constants';
 import type {
+  WhisperModelId,
   WhisperModelStatus,
   WhisperModelVariantId,
   WhisperModelWeightsFormat,
@@ -8,6 +10,7 @@ import { storage } from '@/shared/lib/async-storage';
 
 import { deleteWhisperModel } from './deleteWhisperModel';
 import { stopWhisperDownloadLiveActivity } from './downloadLiveActivity';
+import { deleteWhisperKitModel } from './whisperKitModelStorage';
 
 const WHISPER_STATUSES_STORAGE_KEY = 'settings.whisperStatuses';
 
@@ -39,11 +42,13 @@ const recoverInterruptedWhisperDownloads = (): void => {
       void stopWhisperDownloadLiveActivity().catch(() => {});
       void Promise.all(
         interrupted.map((variantId) => {
-          const [modelId, format] = variantId.split(':');
-          return deleteWhisperModel(
-            modelId as Parameters<typeof deleteWhisperModel>[0],
-            format as WhisperModelWeightsFormat,
-          );
+          const separatorIndex = variantId.lastIndexOf(':');
+          const modelId = variantId.slice(0, separatorIndex) as WhisperModelId;
+          const format = variantId.slice(separatorIndex + 1);
+          if (format === WHISPER_KIT_STORAGE_FORMAT) {
+            return deleteWhisperKitModel(modelId);
+          }
+          return deleteWhisperModel(modelId, format as WhisperModelWeightsFormat);
         }),
       ).catch(() => {});
     });

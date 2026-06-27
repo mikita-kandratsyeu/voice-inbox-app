@@ -1,4 +1,25 @@
-import { collapseRepeatedTokenStutters, isUsableTranscriptText } from '../cleanTranscriptText';
+import {
+  cleanTranscriptSegmentText,
+  collapseRepeatedTokenStutters,
+  isUsableTranscriptText,
+  stripWhisperSpecialTokens,
+} from '../cleanTranscriptText';
+
+describe('stripWhisperSpecialTokens', () => {
+  it('removes whisper control and timestamp tokens', () => {
+    const raw =
+      '<|startoftranscript|><|ru|><|transcribe|><|0.00|> Я думаю, это еще самое, <|9.00|>';
+    expect(stripWhisperSpecialTokens(raw)).toBe('Я думаю, это еще самое,');
+  });
+});
+
+describe('cleanTranscriptSegmentText', () => {
+  it('strips tokens and collapses stutters', () => {
+    expect(cleanTranscriptSegmentText('<|23.00|> мы будем иметь три сайлла <|28.00|>')).toBe(
+      'мы будем иметь три сайлла',
+    );
+  });
+});
 
 describe('isUsableTranscriptText', () => {
   it('rejects telugu looping hallucinations from device logs', () => {

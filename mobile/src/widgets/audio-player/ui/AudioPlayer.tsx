@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -13,7 +14,7 @@ import AudioRecorderPlayer, { type PlayBackType } from 'react-native-nitro-sound
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
-import { formatTime, hapticSelection } from '@/shared/lib';
+import { formatTime, hapticPlaybackMarkCrossed, hapticSelection } from '@/shared/lib';
 import { diagWarn } from '@/shared/lib/appLogger';
 import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
 
@@ -27,6 +28,8 @@ type AudioPlayerProps = {
   duration: string;
   color: Colors;
   audioPath?: string;
+  /** Sorted offsets for haptic ticks while playing forward. */
+  playbackMarkOffsetsMs?: readonly number[];
   onPositionChange?: (positionMs: number) => void;
   surfaceBackgroundColor?: string;
   embedded?: boolean;
@@ -49,7 +52,15 @@ const parseDuration = (d: string) => {
 const player = AudioRecorderPlayer;
 
 export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function AudioPlayer(
-  { duration, color, audioPath, onPositionChange, surfaceBackgroundColor, embedded = false },
+  {
+    duration,
+    color,
+    audioPath,
+    playbackMarkOffsetsMs,
+    onPositionChange,
+    surfaceBackgroundColor,
+    embedded = false,
+  },
   ref,
 ) {
   const { t } = useTranslation();
@@ -64,10 +75,52 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
   const lastDisplayedSecsRef = useRef(0);
   const isPlayerLoadedRef = useRef(false);
   const skipHoldIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const crossedMarkIndicesRef = useRef<Set<number>>(new Set());
+  const lastPlaybackPositionMsRef = useRef(0);
   const onPositionChangeRef = useRef(onPositionChange);
   onPositionChangeRef.current = onPositionChange;
   const totalMs = totalSeconds * 1000;
   const playbackSpeed = PLAYBACK_SPEEDS[speedIndex];
+
+  const sortedMarkOffsetsMs = useMemo(
+    () =>
+      [...(playbackMarkOffsetsMs ?? [])]
+        .map((offsetMs) => Math.max(0, Math.round(offsetMs)))
+        .sort((a, b) => a - b),
+    [playbackMarkOffsetsMs],
+  );
+
+  const resetMarkCrossingsFrom = useCallback(
+    (positionMs: number) => {
+      for (let index = 0; index < sortedMarkOffsetsMs.length; index += 1) {
+        if (sortedMarkOffsetsMs[index] >= positionMs) {
+          crossedMarkIndicesRef.current.delete(index);
+        }
+      }
+    },
+    [sortedMarkOffsetsMs],
+  );
+
+  const notifyPlaybackPosition = useCallback(
+    (positionMs: number) => {
+      const prevPositionMs = lastPlaybackPositionMsRef.current;
+      if (sortedMarkOffsetsMs.length > 0 && positionMs > prevPositionMs) {
+        for (let index = 0; index < sortedMarkOffsetsMs.length; index += 1) {
+          if (crossedMarkIndicesRef.current.has(index)) continue;
+          const markMs = sortedMarkOffsetsMs[index];
+          if (prevPositionMs < markMs && positionMs >= markMs) {
+            crossedMarkIndicesRef.current.add(index);
+            hapticPlaybackMarkCrossed();
+          }
+        }
+      } else if (positionMs < prevPositionMs) {
+        resetMarkCrossingsFrom(positionMs);
+      }
+      lastPlaybackPositionMsRef.current = positionMs;
+      onPositionChangeRef.current?.(positionMs);
+    },
+    [resetMarkCrossingsFrom, sortedMarkOffsetsMs],
+  );
 
   const clampElapsedSecs = useCallback(
     (secs: number) => (totalSeconds > 0 ? Math.min(totalSeconds, Math.max(0, secs)) : 0),
@@ -96,6 +149,8 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
     elapsedRef.current = 0;
     lastDisplayedSecsRef.current = 0;
     progressValue.value = 0;
+    crossedMarkIndicesRef.current.clear();
+    lastPlaybackPositionMsRef.current = 0;
   }, [progressValue]);
 
   const seekTo = useCallback(
@@ -107,11 +162,13 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
         lastDisplayedSecsRef.current = secs;
         setElapsed(secs);
         progressValue.value = progressFromSecs(secs);
+        resetMarkCrossingsFrom(seekMs);
+        lastPlaybackPositionMsRef.current = seekMs;
       } catch (err) {
         diagWarn('[AudioPlayer] seekToPlayer failed:', err);
       }
     },
-    [clampElapsedSecs, progressFromSecs, progressValue],
+    [clampElapsedSecs, progressFromSecs, progressValue, resetMarkCrossingsFrom],
   );
 
   const startPlayback = useCallback(
@@ -128,7 +185,7 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
           elapsedRef.current = secs;
           progressValue.value = progressFromSecs(secs);
           setElapsed(secs);
-          onPositionChangeRef.current?.(e.currentPosition);
+          notifyPlaybackPosition(e.currentPosition);
         });
 
         player.addPlaybackEndListener(() => {
@@ -138,7 +195,7 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
           setElapsed(totalSeconds);
           elapsedRef.current = totalSeconds;
           progressValue.value = 1;
-          onPositionChangeRef.current?.(totalSeconds * 1000);
+          notifyPlaybackPosition(totalSeconds * 1000);
         });
 
         await player.startPlayer(audioPath, {
@@ -167,6 +224,7 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
       progressValue,
       clampElapsedSecs,
       progressFromSecs,
+      notifyPlaybackPosition,
     ],
   );
 
@@ -181,7 +239,7 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
         lastDisplayedSecsRef.current = secs;
         setElapsed(secs);
         progressValue.value = progressFromSecs(secs);
-        onPositionChangeRef.current?.(ms);
+        notifyPlaybackPosition(ms);
         if (!isPlayerLoadedRef.current) {
           await startPlayback(secs);
         } else {
@@ -198,6 +256,7 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
       progressValue,
       clampElapsedSecs,
       progressFromSecs,
+      notifyPlaybackPosition,
     ],
   );
 
@@ -230,7 +289,7 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
           const secs = clampElapsedSecs(Math.floor(e.currentPosition / 1000));
           elapsedRef.current = secs;
           progressValue.value = progressFromSecs(secs);
-          onPositionChangeRef.current?.(e.currentPosition);
+          notifyPlaybackPosition(e.currentPosition);
           if (secs !== lastDisplayedSecsRef.current) {
             lastDisplayedSecsRef.current = secs;
             setElapsed(secs);
@@ -245,7 +304,7 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
           elapsedRef.current = totalSeconds;
           lastDisplayedSecsRef.current = totalSeconds;
           progressValue.value = 1;
-          onPositionChangeRef.current?.(totalSeconds * 1000);
+          notifyPlaybackPosition(totalSeconds * 1000);
         });
 
         if (isPlayerLoadedRef.current) {

@@ -26,7 +26,7 @@
     "db:check-local": "yarn workspace voice-inbox-web db:check-local"
   },
   "devDependencies": {
-    "turbo": "^2.9.18"
+    "turbo": "^2.10.0"
   },
   "resolutions": {
     "react": "19.2.7",

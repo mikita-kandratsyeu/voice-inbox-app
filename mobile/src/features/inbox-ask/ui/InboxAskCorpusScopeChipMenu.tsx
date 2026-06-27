@@ -2,13 +2,17 @@ import { MenuView } from '@react-native-menu/menu';
 import { Archive, ChevronDown, Folder, Inbox } from 'lucide-react-native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 import type { Folder as FolderModel } from '@/entities/folder';
+import {
+  ASK_CHAT_CHIP_CHEVRON_SIZE,
+  ASK_CHAT_CHIP_ICON_SIZE,
+} from '@/features/ask-chat/ui/askChatChipStyles';
+import { getAskComposerChipSurfaceStyle } from '@/features/ask-chat/ui/askComposerChipStyles';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { hapticSelection, inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
-import { FrostedChromeSurface } from '@/shared/ui';
 
 type InboxAskCorpusScopeChipMenuProps = {
   color: Colors;
@@ -133,10 +137,10 @@ export function InboxAskCorpusScopeChipMenu({
       accessibilityRole="button"
       accessibilityLabel={t('inboxAsk.corpusScopeChipA11y', { scope: chipLabel })}
       activeOpacity={0.75}
-      className="max-w-full min-h-8 flex-row items-center gap-1 px-3 py-1.5"
+      className="max-w-full min-h-8 flex-row items-center gap-1.5 px-3 py-1.5"
       hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
     >
-      <ScopeIcon size={14} color={color.icon.muted} strokeWidth={2.1} />
+      <ScopeIcon size={ASK_CHAT_CHIP_ICON_SIZE} color={color.icon.muted} strokeWidth={2} />
       <Text
         className="shrink text-[13px] font-semibold leading-[18px]"
         numberOfLines={1}
@@ -144,7 +148,11 @@ export function InboxAskCorpusScopeChipMenu({
       >
         {chipLabel}
       </Text>
-      <ChevronDown size={14} color={color.text.secondary} strokeWidth={2.2} />
+      <ChevronDown
+        size={ASK_CHAT_CHIP_CHEVRON_SIZE}
+        color={color.text.secondary}
+        strokeWidth={2.2}
+      />
     </TouchableOpacity>
   );
 
@@ -158,14 +166,7 @@ export function InboxAskCorpusScopeChipMenu({
       }}
       actions={menuActions}
     >
-      <FrostedChromeSurface
-        color={color}
-        borderRadius={9999}
-        shadow="subtle"
-        style={{ alignSelf: 'flex-start', maxWidth: '100%' }}
-      >
-        {chipBody}
-      </FrostedChromeSurface>
+      <View style={getAskComposerChipSurfaceStyle(color)}>{chipBody}</View>
     </MenuView>
   );
 }

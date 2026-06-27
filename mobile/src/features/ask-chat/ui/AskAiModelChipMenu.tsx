@@ -2,7 +2,7 @@ import { MenuView } from '@react-native-menu/menu';
 import { ChevronDown, Sparkles } from 'lucide-react-native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { KeyboardController } from 'react-native-keyboard-controller';
 
 import { navigateSettingsStackScreen } from '@/app/navigation/tablet/tabletTabNavigation';
@@ -11,7 +11,6 @@ import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { hapticSelection, type NativeMenuAction } from '@/shared/lib';
-import { FrostedChromeSurface } from '@/shared/ui';
 
 import {
   ASK_CHAT_CHIP_CHEVRON_SIZE,
@@ -19,6 +18,7 @@ import {
   ASK_CHAT_CHIP_TEXT_CLASS,
   ASK_CHAT_CHIP_TOUCHABLE_CLASS,
 } from './askChatChipStyles';
+import { getAskComposerChipSurfaceStyle } from './askComposerChipStyles';
 import {
   type AskAiModelMenuPlacement,
   buildAskAiModelMenuActions,
@@ -135,7 +135,7 @@ export function AskAiModelChipMenu({
       className={
         isInline
           ? ASK_CHAT_CHIP_TOUCHABLE_CLASS
-          : 'max-w-full min-h-8 flex-row items-center gap-1 px-3 py-1.5'
+          : 'max-w-full min-h-8 flex-row items-center gap-1.5 px-3 py-1.5'
       }
       hitSlop={isInline ? undefined : { top: 4, bottom: 4, left: 4, right: 4 }}
       style={
@@ -144,9 +144,7 @@ export function AskAiModelChipMenu({
           : undefined
       }
     >
-      {isInline ? (
-        <Sparkles size={ASK_CHAT_CHIP_ICON_SIZE} color={color.icon.muted} strokeWidth={2} />
-      ) : null}
+      <Sparkles size={ASK_CHAT_CHIP_ICON_SIZE} color={color.icon.muted} strokeWidth={2} />
       <Text
         className={
           isInline ? ASK_CHAT_CHIP_TEXT_CLASS : 'shrink text-[13px] font-semibold leading-[18px]'
@@ -157,7 +155,7 @@ export function AskAiModelChipMenu({
         {chipLabel}
       </Text>
       <ChevronDown
-        size={isInline ? ASK_CHAT_CHIP_CHEVRON_SIZE : 14}
+        size={ASK_CHAT_CHIP_CHEVRON_SIZE}
         color={color.text.secondary}
         strokeWidth={isInline ? 2 : 2.2}
       />
@@ -174,18 +172,7 @@ export function AskAiModelChipMenu({
       }}
       actions={menuActions}
     >
-      {isInline ? (
-        chipBody
-      ) : (
-        <FrostedChromeSurface
-          color={color}
-          borderRadius={9999}
-          shadow="subtle"
-          style={{ alignSelf: 'flex-start', maxWidth: '100%' }}
-        >
-          {chipBody}
-        </FrostedChromeSurface>
-      )}
+      {isInline ? chipBody : <View style={getAskComposerChipSurfaceStyle(color)}>{chipBody}</View>}
     </MenuView>
   );
 }

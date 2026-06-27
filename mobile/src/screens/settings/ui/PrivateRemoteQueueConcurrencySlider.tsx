@@ -11,7 +11,6 @@ import { DiscreteChoiceSlider } from './DiscreteChoiceSlider';
 type PrivateRemoteQueueConcurrencySliderProps = {
   value: PrivateRemoteQueueConcurrency;
   onChange: (value: PrivateRemoteQueueConcurrency) => void;
-  fullLabel: (value: PrivateRemoteQueueConcurrency) => string;
   tickLabel: (value: PrivateRemoteQueueConcurrency) => string;
   sliderAccessibilityLabel: string;
   color: Colors;
@@ -20,7 +19,6 @@ type PrivateRemoteQueueConcurrencySliderProps = {
 export function PrivateRemoteQueueConcurrencySlider({
   value,
   onChange,
-  fullLabel,
   tickLabel,
   sliderAccessibilityLabel,
   color,
@@ -30,7 +28,6 @@ export function PrivateRemoteQueueConcurrencySlider({
       choices={PRIVATE_REMOTE_QUEUE_CONCURRENCY_OPTIONS}
       value={value}
       onChange={(next) => onChange(next as PrivateRemoteQueueConcurrency)}
-      fullLabel={(next) => fullLabel(next as PrivateRemoteQueueConcurrency)}
       tickLabel={(next) => tickLabel(next as PrivateRemoteQueueConcurrency)}
       sliderAccessibilityLabel={sliderAccessibilityLabel}
       color={color}
