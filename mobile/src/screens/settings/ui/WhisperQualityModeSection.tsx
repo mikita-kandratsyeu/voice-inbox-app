@@ -24,7 +24,6 @@ export const WhisperQualityModeSection = ({
     <TranscriptionQualityModeSlider
       value={transcriptionQualityMode}
       onChange={setTranscriptionQualityMode}
-      fullLabel={(mode: TranscriptionQualityMode) => t(`whisper.qualityMode.${mode}`)}
       tickLabel={(mode: TranscriptionQualityMode) => t(`whisper.qualityMode.${mode}`)}
       sliderAccessibilityLabel={t('whisper.qualityModeSliderA11yLabel')}
       color={color}

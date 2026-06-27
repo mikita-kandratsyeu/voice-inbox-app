@@ -10,6 +10,7 @@ const SLIDER_ROW_H = 44;
 const RAIL_H = 7;
 const DOT_INACTIVE = 6;
 const DOT_ACTIVE = 9;
+const LABEL_ROW_H = 26;
 
 function indexForValue(choices: readonly number[], value: number): number {
   let best = 0;
@@ -24,34 +25,40 @@ function indexForValue(choices: readonly number[], value: number): number {
   return best;
 }
 
+/** Center of each equal-width choice slot — same grid used for dots, rail, and labels. */
+function choiceAnchorX(trackWidth: number, index: number, choiceCount: number): number {
+  return ((index + 0.5) / choiceCount) * trackWidth;
+}
+
 /**
- * Horizontal range where the native Slider thumb centers actually move.
- * @react-native-community/slider draws the track inset from the control bounds; values are tuned for alignment with tick marks.
+ * Native Slider thumb insets from its bounds; symmetric margins align stops with slot centers.
  */
 function sliderThumbGeometry(
-  trackWidth: number,
+  sliderWidth: number,
   maxIndex: number,
 ): { inset: number; span: number } {
-  if (trackWidth <= 0 || maxIndex <= 0) return { inset: 0, span: 0 };
+  if (sliderWidth <= 0 || maxIndex <= 0) return { inset: 0, span: 0 };
   const inset = selectPlatform({
-    ios: Math.min(16, trackWidth * 0.078),
-    android: Math.min(12, trackWidth * 0.056),
+    ios: Math.min(16, sliderWidth * 0.078),
+    android: Math.min(12, sliderWidth * 0.056),
     default: 14,
   });
-  const span = Math.max(0, trackWidth - 2 * inset);
+  const span = Math.max(0, sliderWidth - 2 * inset);
   return { inset, span };
 }
 
-function thumbCenterX(trackWidth: number, index: number, maxIndex: number): number {
-  const { inset, span } = sliderThumbGeometry(trackWidth, maxIndex);
-  return inset + (span * index) / maxIndex;
+function sliderHorizontalMargin(trackWidth: number, choiceCount: number): number {
+  if (trackWidth <= 0 || choiceCount <= 1) return 0;
+  const maxIndex = choiceCount - 1;
+  const firstAnchor = choiceAnchorX(trackWidth, 0, choiceCount);
+  const { inset } = sliderThumbGeometry(trackWidth, maxIndex);
+  return Math.max(0, firstAnchor - inset);
 }
 
 export type DiscreteChoiceSliderProps = {
   choices: readonly number[];
   value: number;
   onChange: (value: number) => void;
-  fullLabel: (value: number) => string;
   tickLabel: (value: number) => string;
   sliderAccessibilityLabel: string;
   color: Colors;
@@ -63,13 +70,13 @@ export function DiscreteChoiceSlider({
   choices,
   value,
   onChange,
-  fullLabel,
   tickLabel,
   sliderAccessibilityLabel,
   color,
   embedded = false,
 }: DiscreteChoiceSliderProps) {
-  const maxIndex = choices.length - 1;
+  const choiceCount = choices.length;
+  const maxIndex = choiceCount - 1;
   const [trackWidth, setTrackWidth] = useState(0);
   const lastHapticIndexRef = useRef(indexForValue(choices, value));
 
@@ -78,18 +85,27 @@ export function DiscreteChoiceSlider({
   }, []);
 
   const index = useMemo(() => indexForValue(choices, value), [choices, value]);
-  const selected = choices[index]!;
 
   useEffect(() => {
     lastHapticIndexRef.current = index;
   }, [index]);
 
-  const { inset, span } = useMemo(
-    () => sliderThumbGeometry(trackWidth, maxIndex),
-    [trackWidth, maxIndex],
+  const sliderMargin = useMemo(
+    () => sliderHorizontalMargin(trackWidth, choiceCount),
+    [trackWidth, choiceCount],
   );
-  const labelSlot = span > 0 && maxIndex > 0 ? span / maxIndex : 0;
-  const labelWidth = Math.min(56, Math.max(34, labelSlot * 0.92));
+
+  const railLeft = useMemo(
+    () => (trackWidth > 0 ? choiceAnchorX(trackWidth, 0, choiceCount) : 0),
+    [trackWidth, choiceCount],
+  );
+  const railWidth = useMemo(
+    () =>
+      trackWidth > 0 && maxIndex > 0
+        ? choiceAnchorX(trackWidth, maxIndex, choiceCount) - railLeft
+        : 0,
+    [trackWidth, choiceCount, maxIndex, railLeft],
+  );
 
   const cardStyle = useMemo(
     () =>
@@ -114,35 +130,12 @@ export function DiscreteChoiceSlider({
 
   return (
     <View style={cardStyle}>
-      <View className="mb-3 items-center">
-        <View
-          className="max-w-full px-4 py-2"
-          style={{
-            borderRadius: 999,
-            backgroundColor: withAlphaHex(color.accent.primary, 0.14),
-            borderWidth: 1,
-            borderColor: withAlphaHex(color.accent.primary, 0.28),
-          }}
-        >
-          <Text
-            className="text-center text-[15px] font-semibold"
-            style={{ color: color.accent.primary }}
-            accessibilityRole="text"
-            numberOfLines={2}
-            adjustsFontSizeToFit
-            minimumFontScale={0.85}
-          >
-            {fullLabel(selected)}
-          </Text>
-        </View>
-      </View>
-
       <View onLayout={onTrackLayout}>
         <View style={{ height: TICK_ROW_H, position: 'relative', marginBottom: 2 }}>
           {trackWidth > 0 &&
             choices.map((choice, i) => {
               const active = i === index;
-              const cx = thumbCenterX(trackWidth, i, maxIndex);
+              const cx = choiceAnchorX(trackWidth, i, choiceCount);
               const d = active ? DOT_ACTIVE : DOT_INACTIVE;
               return (
                 <View
@@ -175,13 +168,13 @@ export function DiscreteChoiceSlider({
         </View>
 
         <View style={{ height: SLIDER_ROW_H, position: 'relative', justifyContent: 'center' }}>
-          {trackWidth > 0 && span > 0 && (
+          {trackWidth > 0 && railWidth > 0 && (
             <View
               pointerEvents="none"
               style={{
                 position: 'absolute',
-                left: inset,
-                width: span,
+                left: railLeft,
+                width: railWidth,
                 height: RAIL_H,
                 top: railTop,
                 borderRadius: RAIL_H / 2,
@@ -209,41 +202,39 @@ export function DiscreteChoiceSlider({
             minimumTrackTintColor={color.accent.primary}
             maximumTrackTintColor={color.background.tertiary}
             thumbTintColor={color.icon.onAccent}
-            style={{ width: '100%', height: SLIDER_ROW_H }}
+            style={{
+              width: trackWidth > 0 ? trackWidth - sliderMargin * 2 : '100%',
+              height: SLIDER_ROW_H,
+              marginHorizontal: sliderMargin,
+              alignSelf: 'center',
+            }}
           />
         </View>
 
-        <View style={{ height: 24, position: 'relative', marginTop: 4 }}>
-          {trackWidth > 0 &&
-            choices.map((choice, i) => {
-              const active = i === index;
-              const cx = thumbCenterX(trackWidth, i, maxIndex);
-              return (
-                <View
-                  key={choice}
-                  pointerEvents="none"
+        <View style={{ flexDirection: 'row', height: LABEL_ROW_H, marginTop: 4 }}>
+          {choices.map((choice, i) => {
+            const active = i === index;
+            return (
+              <View
+                key={choice}
+                pointerEvents="none"
+                style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-start' }}
+              >
+                <Text
+                  className={`text-xs leading-4 ${active ? 'font-semibold' : 'font-normal'}`}
                   style={{
-                    position: 'absolute',
-                    left: cx - labelWidth / 2,
-                    top: 0,
-                    width: labelWidth,
+                    color: active ? color.accent.primary : color.text.muted,
+                    textAlign: 'center',
                   }}
+                  numberOfLines={2}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.75}
                 >
-                  <Text
-                    className={`text-[11px] leading-3 ${active ? 'font-semibold' : 'font-normal'}`}
-                    style={{
-                      color: active ? color.accent.primary : color.text.muted,
-                      textAlign: 'center',
-                    }}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.7}
-                  >
-                    {tickLabel(choice)}
-                  </Text>
-                </View>
-              );
-            })}
+                  {tickLabel(choice)}
+                </Text>
+              </View>
+            );
+          })}
         </View>
       </View>
     </View>

@@ -11,7 +11,6 @@ import { DiscreteChoiceSlider } from './DiscreteChoiceSlider';
 type CloudAiKvTtlSliderProps = {
   valueSeconds: number;
   onChangeSeconds: (seconds: number) => void;
-  fullLabel: (sec: CloudAiKvTtlSeconds) => string;
   tickLabel: (sec: CloudAiKvTtlSeconds) => string;
   sliderAccessibilityLabel: string;
   color: Colors;
@@ -20,7 +19,6 @@ type CloudAiKvTtlSliderProps = {
 export function CloudAiKvTtlSlider({
   valueSeconds,
   onChangeSeconds,
-  fullLabel,
   tickLabel,
   sliderAccessibilityLabel,
   color,
@@ -30,7 +28,6 @@ export function CloudAiKvTtlSlider({
       choices={CLOUD_AI_KV_TTL_CHOICES}
       value={valueSeconds}
       onChange={onChangeSeconds}
-      fullLabel={(sec) => fullLabel(sec as CloudAiKvTtlSeconds)}
       tickLabel={(sec) => tickLabel(sec as CloudAiKvTtlSeconds)}
       sliderAccessibilityLabel={sliderAccessibilityLabel}
       color={color}

@@ -144,8 +144,6 @@ export const PrivateRemoteServerScreen = () => {
   const setPrivateRemoteQueueConcurrency = useSettingsStore(
     (s) => s.setPrivateRemoteQueueConcurrency,
   );
-  const queueConcurrencyLabel = (value: PrivateRemoteQueueConcurrency) =>
-    t(`aiSettings.privateProvider.queueConcurrency.m${value}`);
 
   if (!isProActive) {
     return null;
@@ -512,7 +510,6 @@ export const PrivateRemoteServerScreen = () => {
               <PrivateRemoteQueueConcurrencySlider
                 value={privateRemoteQueueConcurrency}
                 onChange={setPrivateRemoteQueueConcurrency}
-                fullLabel={queueConcurrencyLabel}
                 tickLabel={(value) => t(`aiSettings.privateProvider.queueConcurrency.tick${value}`)}
                 sliderAccessibilityLabel={t(
                   'aiSettings.privateProvider.queueConcurrency.sliderA11yLabel',

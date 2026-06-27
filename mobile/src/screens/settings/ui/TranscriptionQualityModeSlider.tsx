@@ -11,7 +11,6 @@ const QUALITY_MODE_CHOICE_INDICES = TRANSCRIPTION_QUALITY_MODES.map((_, index) =
 type TranscriptionQualityModeSliderProps = {
   value: TranscriptionQualityMode;
   onChange: (mode: TranscriptionQualityMode) => void;
-  fullLabel: (mode: TranscriptionQualityMode) => string;
   tickLabel: (mode: TranscriptionQualityMode) => string;
   sliderAccessibilityLabel: string;
   color: Colors;
@@ -21,7 +20,6 @@ type TranscriptionQualityModeSliderProps = {
 export function TranscriptionQualityModeSlider({
   value,
   onChange,
-  fullLabel,
   tickLabel,
   sliderAccessibilityLabel,
   color,
@@ -42,7 +40,6 @@ export function TranscriptionQualityModeSlider({
       choices={QUALITY_MODE_CHOICE_INDICES}
       value={valueIndex}
       onChange={(index) => onChange(modeAtIndex(index))}
-      fullLabel={(index) => fullLabel(modeAtIndex(index))}
       tickLabel={(index) => tickLabel(modeAtIndex(index))}
       sliderAccessibilityLabel={sliderAccessibilityLabel}
       color={color}
