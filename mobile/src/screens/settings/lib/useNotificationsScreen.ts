@@ -8,6 +8,7 @@ import { useSettingsStore } from '@/entities/settings';
 import {
   disableBackupReminderNotifications,
   enableBackupReminderNotifications,
+  suspendBackupReminderNotifications,
   syncAllBackupReminderNotifications,
 } from '@/features/backup-reminder-notifications';
 import {
@@ -15,6 +16,7 @@ import {
   disableTaskDeadlineNotifications,
   enableTaskDeadlineNotifications,
   requestTaskNotificationPermission,
+  suspendTaskDeadlineNotifications,
   syncAllTaskDeadlineNotifications,
 } from '@/features/task-deadline-notifications';
 import { useColors } from '@/shared/config';
@@ -23,8 +25,10 @@ import { openAppSettings } from '@/shared/lib/permissions';
 import {
   checkPushPermission,
   disableAiProcessingAlerts,
+  enableAiProcessingAlerts,
   ensurePushRegistered,
   type PushPermissionStatus,
+  requestPushPermission,
 } from '@/shared/lib/push';
 
 async function readNotificationPermission(): Promise<PushPermissionStatus> {
@@ -34,10 +38,16 @@ async function readNotificationPermission(): Promise<PushPermissionStatus> {
   return checkTaskNotificationPermission();
 }
 
+async function requestNotificationPermission(): Promise<PushPermissionStatus> {
+  if (IS_IOS) {
+    return requestPushPermission();
+  }
+  return requestTaskNotificationPermission();
+}
+
 async function syncFeaturesWithNotificationPermission(status: PushPermissionStatus): Promise<void> {
   if (status === 'granted') {
-    if (IS_IOS) {
-      useSettingsStore.getState().setAiProcessingAlertsEnabled(true);
+    if (IS_IOS && useSettingsStore.getState().aiProcessingAlertsEnabled) {
       await ensurePushRegistered();
     }
     if (useSettingsStore.getState().taskDeadlineNotificationsEnabled) {
@@ -49,16 +59,31 @@ async function syncFeaturesWithNotificationPermission(status: PushPermissionStat
     return;
   }
 
-  if (IS_IOS) {
-    await disableAiProcessingAlerts();
-  }
-  await disableTaskDeadlineNotifications();
-  await disableBackupReminderNotifications();
+  await suspendTaskDeadlineNotifications();
+  await suspendBackupReminderNotifications();
+}
+
+function showPermissionDeniedAlert(
+  t: ReturnType<typeof useTranslation>['t'],
+  titleKey: string,
+  messageKey: string,
+): void {
+  Alert.alert(t(titleKey), t(messageKey), [
+    { text: t('common.cancel'), style: 'cancel' },
+    { text: t('settings.permissionOpenSettings'), onPress: () => openAppSettings() },
+  ]);
 }
 
 export function useNotificationsScreen() {
   const { t } = useTranslation();
   const color = useColors();
+  const aiProcessingAlertsEnabled = useSettingsStore((s) => s.aiProcessingAlertsEnabled);
+  const transcriptionRecoveryNotificationsEnabled = useSettingsStore(
+    (s) => s.transcriptionRecoveryNotificationsEnabled,
+  );
+  const appLockRecordingNotificationsEnabled = useSettingsStore(
+    (s) => s.appLockRecordingNotificationsEnabled,
+  );
   const taskDeadlineNotificationsEnabled = useSettingsStore(
     (s) => s.taskDeadlineNotificationsEnabled,
   );
@@ -66,6 +91,12 @@ export function useNotificationsScreen() {
     (s) => s.backupReminderNotificationsEnabled,
   );
   const backupReminderPeriodDays = useSettingsStore((s) => s.backupReminderPeriodDays);
+  const setTranscriptionRecoveryNotificationsEnabled = useSettingsStore(
+    (s) => s.setTranscriptionRecoveryNotificationsEnabled,
+  );
+  const setAppLockRecordingNotificationsEnabled = useSettingsStore(
+    (s) => s.setAppLockRecordingNotificationsEnabled,
+  );
   const setBackupReminderPeriodDays = useSettingsStore((s) => s.setBackupReminderPeriodDays);
   const [notificationPermission, setNotificationPermission] = useState<PushPermissionStatus | null>(
     null,
@@ -96,23 +127,91 @@ export function useNotificationsScreen() {
       return;
     }
 
-    const status = await requestTaskNotificationPermission();
+    const status = await requestNotificationPermission();
     setNotificationPermission(status);
     await syncFeaturesWithNotificationPermission(status);
   }, [notificationPermission]);
+
+  const ensurePermissionForToggle = useCallback(async (): Promise<boolean> => {
+    const permission = await readNotificationPermission();
+    if (permission === 'granted') {
+      return true;
+    }
+    return false;
+  }, []);
+
+  const handleAiProcessingAlertsChange = useCallback(
+    async (value: boolean) => {
+      if (value) {
+        if (!(await ensurePermissionForToggle())) {
+          showPermissionDeniedAlert(
+            t,
+            'settings.notificationsScreen.aiAlertsDeniedTitle',
+            'settings.notificationsScreen.aiAlertsDeniedMessage',
+          );
+          return;
+        }
+
+        if (IS_IOS) {
+          const enabled = await enableAiProcessingAlerts();
+          if (!enabled) {
+            showPermissionDeniedAlert(
+              t,
+              'settings.notificationsScreen.aiAlertsDeniedTitle',
+              'settings.notificationsScreen.aiAlertsDeniedMessage',
+            );
+          }
+          return;
+        }
+
+        useSettingsStore.getState().setAiProcessingAlertsEnabled(true);
+        return;
+      }
+
+      await disableAiProcessingAlerts();
+    },
+    [ensurePermissionForToggle, t],
+  );
+
+  const handleTranscriptionRecoveryNotificationsChange = useCallback(
+    async (value: boolean) => {
+      if (value && !(await ensurePermissionForToggle())) {
+        showPermissionDeniedAlert(
+          t,
+          'settings.notificationsScreen.aiAlertsDeniedTitle',
+          'settings.notificationsScreen.aiAlertsDeniedMessage',
+        );
+        return;
+      }
+      setTranscriptionRecoveryNotificationsEnabled(value);
+    },
+    [ensurePermissionForToggle, setTranscriptionRecoveryNotificationsEnabled, t],
+  );
+
+  const handleAppLockRecordingNotificationsChange = useCallback(
+    async (value: boolean) => {
+      if (value && !(await ensurePermissionForToggle())) {
+        showPermissionDeniedAlert(
+          t,
+          'settings.notificationsScreen.aiAlertsDeniedTitle',
+          'settings.notificationsScreen.aiAlertsDeniedMessage',
+        );
+        return;
+      }
+      setAppLockRecordingNotificationsEnabled(value);
+    },
+    [ensurePermissionForToggle, setAppLockRecordingNotificationsEnabled, t],
+  );
 
   const handleTaskDeadlineNotificationsChange = useCallback(
     async (value: boolean) => {
       if (value) {
         const permission = await readNotificationPermission();
         if (permission !== 'granted') {
-          Alert.alert(
-            t('settings.notificationsScreen.taskRemindersDeniedTitle'),
-            t('settings.notificationsScreen.taskRemindersDeniedMessage'),
-            [
-              { text: t('common.cancel'), style: 'cancel' },
-              { text: t('settings.permissionOpenSettings'), onPress: () => openAppSettings() },
-            ],
+          showPermissionDeniedAlert(
+            t,
+            'settings.notificationsScreen.taskRemindersDeniedTitle',
+            'settings.notificationsScreen.taskRemindersDeniedMessage',
           );
           return;
         }
@@ -131,13 +230,10 @@ export function useNotificationsScreen() {
       if (value) {
         const permission = await readNotificationPermission();
         if (permission !== 'granted') {
-          Alert.alert(
-            t('settings.notificationsScreen.backupRemindersDeniedTitle'),
-            t('settings.notificationsScreen.backupRemindersDeniedMessage'),
-            [
-              { text: t('common.cancel'), style: 'cancel' },
-              { text: t('settings.permissionOpenSettings'), onPress: () => openAppSettings() },
-            ],
+          showPermissionDeniedAlert(
+            t,
+            'settings.notificationsScreen.backupRemindersDeniedTitle',
+            'settings.notificationsScreen.backupRemindersDeniedMessage',
           );
           return;
         }
@@ -174,11 +270,17 @@ export function useNotificationsScreen() {
     t,
     color,
     notificationPermission,
+    aiProcessingAlertsEnabled,
+    transcriptionRecoveryNotificationsEnabled,
+    appLockRecordingNotificationsEnabled,
     taskDeadlineNotificationsEnabled,
     backupReminderNotificationsEnabled,
     backupReminderPeriodDays,
     backupReminderPeriodSheetVisible,
     handleNotificationPermission,
+    handleAiProcessingAlertsChange,
+    handleTranscriptionRecoveryNotificationsChange,
+    handleAppLockRecordingNotificationsChange,
     handleTaskDeadlineNotificationsChange,
     handleBackupReminderNotificationsChange,
     handleBackupReminderPeriodPress,

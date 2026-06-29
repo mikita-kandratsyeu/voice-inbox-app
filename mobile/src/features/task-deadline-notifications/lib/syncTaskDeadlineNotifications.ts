@@ -135,6 +135,11 @@ export async function disableTaskDeadlineNotifications(): Promise<void> {
   await cancelAllTaskDeadlineNotifications();
 }
 
+/** Cancel scheduled reminders without changing the stored preference. */
+export async function suspendTaskDeadlineNotifications(): Promise<void> {
+  await cancelAllTaskDeadlineNotifications();
+}
+
 export function resetTaskDeadlineNotificationSyncForTests(): void {
   if (syncTimer) {
     clearTimeout(syncTimer);

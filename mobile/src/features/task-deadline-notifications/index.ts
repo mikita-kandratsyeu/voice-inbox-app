@@ -23,5 +23,6 @@ export {
   disableTaskDeadlineNotifications,
   enableTaskDeadlineNotifications,
   scheduleTaskDeadlineNotificationSync,
+  suspendTaskDeadlineNotifications,
   syncAllTaskDeadlineNotifications,
 } from './lib/syncTaskDeadlineNotifications';

@@ -96,3 +96,8 @@ export async function disableBackupReminderNotifications(): Promise<void> {
   useSettingsStore.getState().setBackupReminderNotificationsEnabled(false);
   await cancelAllBackupReminderNotifications();
 }
+
+/** Cancel scheduled reminders without changing the stored preference. */
+export async function suspendBackupReminderNotifications(): Promise<void> {
+  await cancelAllBackupReminderNotifications();
+}

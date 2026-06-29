@@ -21,6 +21,34 @@ import { useNotificationsScreen } from '../lib/useNotificationsScreen';
 import { BackupReminderPeriodSheet } from './BackupReminderPeriodSheet';
 import { SettingsPermissionStatusBadge } from './SettingsPermissionStatusBadge';
 
+function NotificationSwitch({
+  value,
+  onValueChange,
+  disabled,
+  accessibilityLabel,
+  color,
+}: {
+  value: boolean;
+  onValueChange: (next: boolean) => void;
+  disabled: boolean;
+  accessibilityLabel: string;
+  color: ReturnType<typeof useNotificationsScreen>['color'];
+}) {
+  return (
+    <Switch
+      value={value}
+      onValueChange={onValueChange}
+      disabled={disabled}
+      accessibilityLabel={accessibilityLabel}
+      trackColor={{
+        false: color.background.tertiary,
+        true: color.accent.primary,
+      }}
+      thumbColor={color.icon.onAccent}
+    />
+  );
+}
+
 export const NotificationsScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -30,6 +58,7 @@ export const NotificationsScreen = () => {
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const screen = useNotificationsScreen();
   const permissionGranted = screen.notificationPermission === 'granted';
+  const switchesDisabled = !permissionGranted;
 
   return (
     <View style={{ flex: 1, backgroundColor: screen.color.background.secondary }}>
@@ -84,27 +113,42 @@ export const NotificationsScreen = () => {
             />
           </SettingsSection>
 
-          <SettingsSection title={screen.t('settings.notificationsScreen.sectionTitle')}>
-            {IS_IOS ? (
-              <SettingsRow
-                label={screen.t('settings.permissionNotifications')}
-                subtitle={screen.t('settings.permissionNotificationsDesc')}
-                leftIcon={
-                  <CloudCheck
-                    size={20}
-                    color={getSettingsIconColor(screen.color, 'cloudCheck')}
-                    strokeWidth={1.8}
-                  />
-                }
-                value={
-                  permissionGranted
-                    ? screen.t('settings.notificationsScreen.aiAlertsFollowsSystem')
-                    : undefined
-                }
-                showChevron={false}
-                isFirst
-              />
-            ) : null}
+          {!permissionGranted && screen.notificationPermission === 'denied' ? (
+            <Text
+              className="mb-4 mt-1 text-[13px] leading-[18px]"
+              style={{ color: screen.color.text.muted }}
+            >
+              {screen.t('settings.notificationsScreen.systemDeniedHint')}
+            </Text>
+          ) : null}
+
+          <SettingsSection title={screen.t('settings.notificationsScreen.notesSectionTitle')}>
+            <SettingsRow
+              label={screen.t('settings.permissionNotifications')}
+              subtitle={
+                IS_IOS
+                  ? screen.t('settings.permissionNotificationsDesc')
+                  : screen.t('settings.permissionNotificationsDescAndroid')
+              }
+              leftIcon={
+                <CloudCheck
+                  size={20}
+                  color={getSettingsIconColor(screen.color, 'cloudCheck')}
+                  strokeWidth={1.8}
+                />
+              }
+              rightSlot={
+                <NotificationSwitch
+                  value={screen.aiProcessingAlertsEnabled}
+                  onValueChange={screen.handleAiProcessingAlertsChange}
+                  disabled={switchesDisabled}
+                  accessibilityLabel={screen.t('settings.permissionNotifications')}
+                  color={screen.color}
+                />
+              }
+              showChevron={false}
+              isFirst
+            />
             <SettingsRow
               label={screen.t('settings.transcriptionRecoveryNotifications')}
               subtitle={screen.t('settings.transcriptionRecoveryNotificationsHint')}
@@ -115,13 +159,16 @@ export const NotificationsScreen = () => {
                   strokeWidth={1.8}
                 />
               }
-              value={
-                permissionGranted
-                  ? screen.t('settings.notificationsScreen.aiAlertsFollowsSystem')
-                  : undefined
+              rightSlot={
+                <NotificationSwitch
+                  value={screen.transcriptionRecoveryNotificationsEnabled}
+                  onValueChange={screen.handleTranscriptionRecoveryNotificationsChange}
+                  disabled={switchesDisabled}
+                  accessibilityLabel={screen.t('settings.transcriptionRecoveryNotifications')}
+                  color={screen.color}
+                />
               }
               showChevron={false}
-              isFirst={!IS_IOS}
             />
             <SettingsRow
               label={screen.t('settings.appLockRecordingNotifications')}
@@ -133,13 +180,21 @@ export const NotificationsScreen = () => {
                   strokeWidth={1.8}
                 />
               }
-              value={
-                permissionGranted
-                  ? screen.t('settings.notificationsScreen.aiAlertsFollowsSystem')
-                  : undefined
+              rightSlot={
+                <NotificationSwitch
+                  value={screen.appLockRecordingNotificationsEnabled}
+                  onValueChange={screen.handleAppLockRecordingNotificationsChange}
+                  disabled={switchesDisabled}
+                  accessibilityLabel={screen.t('settings.appLockRecordingNotifications')}
+                  color={screen.color}
+                />
               }
               showChevron={false}
+              isLast
             />
+          </SettingsSection>
+
+          <SettingsSection title={screen.t('settings.notificationsScreen.remindersSectionTitle')}>
             <SettingsRow
               label={screen.t('settings.taskDeadlineNotifications')}
               subtitle={screen.t('settings.taskDeadlineNotificationsHint')}
@@ -151,20 +206,16 @@ export const NotificationsScreen = () => {
                 />
               }
               rightSlot={
-                <Switch
+                <NotificationSwitch
                   value={screen.taskDeadlineNotificationsEnabled}
                   onValueChange={screen.handleTaskDeadlineNotificationsChange}
-                  disabled={!permissionGranted}
+                  disabled={switchesDisabled}
                   accessibilityLabel={screen.t('settings.taskDeadlineNotifications')}
-                  trackColor={{
-                    false: screen.color.background.tertiary,
-                    true: screen.color.accent.primary,
-                  }}
-                  thumbColor={screen.color.icon.onAccent}
+                  color={screen.color}
                 />
               }
               showChevron={false}
-              isFirst={!IS_IOS}
+              isFirst
             />
             <SettingsRow
               label={screen.t('settings.backupReminderNotifications')}
@@ -177,16 +228,12 @@ export const NotificationsScreen = () => {
                 />
               }
               rightSlot={
-                <Switch
+                <NotificationSwitch
                   value={screen.backupReminderNotificationsEnabled}
                   onValueChange={screen.handleBackupReminderNotificationsChange}
-                  disabled={!permissionGranted}
+                  disabled={switchesDisabled}
                   accessibilityLabel={screen.t('settings.backupReminderNotifications')}
-                  trackColor={{
-                    false: screen.color.background.tertiary,
-                    true: screen.color.accent.primary,
-                  }}
-                  thumbColor={screen.color.icon.onAccent}
+                  color={screen.color}
                 />
               }
               showChevron={false}

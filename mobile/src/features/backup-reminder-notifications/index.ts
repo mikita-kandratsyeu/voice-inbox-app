@@ -15,5 +15,6 @@ export {
 export {
   disableBackupReminderNotifications,
   enableBackupReminderNotifications,
+  suspendBackupReminderNotifications,
   syncAllBackupReminderNotifications,
 } from './lib/syncBackupReminderNotifications';

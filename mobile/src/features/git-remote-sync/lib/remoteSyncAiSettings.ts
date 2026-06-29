@@ -68,6 +68,8 @@ export type RemoteSyncAiSettingsPayload = {
   backupReminderNotificationsEnabled: boolean;
   backupReminderPeriodDays: BackupReminderPeriodDays;
   aiProcessingAlertsEnabled: boolean;
+  transcriptionRecoveryNotificationsEnabled: boolean;
+  appLockRecordingNotificationsEnabled: boolean;
 };
 
 const TRANSCRIPTION_LANGUAGES = new Set<TranscriptionLanguage>([
@@ -228,6 +230,8 @@ export function buildRemoteSyncAiSettings(): RemoteSyncAiSettingsPayload {
     backupReminderNotificationsEnabled: state.backupReminderNotificationsEnabled,
     backupReminderPeriodDays: state.backupReminderPeriodDays,
     aiProcessingAlertsEnabled: state.aiProcessingAlertsEnabled,
+    transcriptionRecoveryNotificationsEnabled: state.transcriptionRecoveryNotificationsEnabled,
+    appLockRecordingNotificationsEnabled: state.appLockRecordingNotificationsEnabled,
   };
 }
 
@@ -357,6 +361,14 @@ export function parseRemoteSyncAiSettings(raw: unknown): RemoteSyncAiSettingsPay
       raw.aiProcessingAlertsEnabled,
       current.aiProcessingAlertsEnabled,
     ),
+    transcriptionRecoveryNotificationsEnabled: readBool(
+      raw.transcriptionRecoveryNotificationsEnabled,
+      current.transcriptionRecoveryNotificationsEnabled,
+    ),
+    appLockRecordingNotificationsEnabled: readBool(
+      raw.appLockRecordingNotificationsEnabled,
+      current.appLockRecordingNotificationsEnabled,
+    ),
   };
 }
 
@@ -401,6 +413,10 @@ export function applyRemoteSyncAiSettings(payload: RemoteSyncAiSettingsPayload):
   store.setBackupReminderNotificationsEnabled(payload.backupReminderNotificationsEnabled);
   store.setBackupReminderPeriodDays(payload.backupReminderPeriodDays);
   store.setAiProcessingAlertsEnabled(payload.aiProcessingAlertsEnabled);
+  store.setTranscriptionRecoveryNotificationsEnabled(
+    payload.transcriptionRecoveryNotificationsEnabled,
+  );
+  store.setAppLockRecordingNotificationsEnabled(payload.appLockRecordingNotificationsEnabled);
 
   if (payload.privateRemoteActiveProfileId) {
     store.setPrivateRemoteActiveProfile(payload.privateRemoteActiveProfileId);

@@ -2,6 +2,7 @@ import notifee, { AndroidImportance, type Event, EventType } from '@notifee/reac
 import { AppState } from 'react-native';
 
 import { useRecordStore } from '@/entities/record';
+import { useSettingsStore } from '@/entities/settings';
 import { i18n } from '@/shared/lib/i18n';
 import { isString } from '@/shared/lib/type-guards';
 
@@ -41,6 +42,10 @@ export async function showRecordingStoppedByAppLockNotification(input: {
   recordId: string;
   recordTitle: string;
 }): Promise<void> {
+  if (!useSettingsStore.getState().appLockRecordingNotificationsEnabled) {
+    return;
+  }
+
   if (shownNotificationRecordIds.has(input.recordId)) {
     return;
   }

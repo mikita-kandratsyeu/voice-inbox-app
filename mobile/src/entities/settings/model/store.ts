@@ -104,6 +104,9 @@ const KEYS = {
   BACKUP_REMINDER_NOTIFICATIONS_ENABLED: 'settings.backupReminderNotificationsEnabled',
   BACKUP_REMINDER_PERIOD_DAYS: 'settings.backupReminderPeriodDays',
   AI_PROCESSING_ALERTS_ENABLED: 'settings.aiProcessingAlertsEnabled',
+  TRANSCRIPTION_RECOVERY_NOTIFICATIONS_ENABLED:
+    'settings.transcriptionRecoveryNotificationsEnabled',
+  APP_LOCK_RECORDING_NOTIFICATIONS_ENABLED: 'settings.appLockRecordingNotificationsEnabled',
   CLOUD_AI_THIRD_PARTY_CONSENT: 'settings.cloudAiThirdPartyConsentAccepted',
   CLOUD_AI_KV_TTL_SECONDS: 'settings.cloudAiKvTtlSeconds',
   SHOW_SUMMARY_REASONING_IN_NOTES: 'settings.showSummaryReasoningInNotes',
@@ -357,6 +360,9 @@ const getStoredShakeToCancelAskAiEnabled = (): boolean => {
 };
 
 const getStoredTaskDeadlineNotificationsEnabled = (): boolean => {
+  if (!storage.contains(KEYS.TASK_DEADLINE_NOTIFICATIONS_ENABLED)) {
+    return true;
+  }
   return storage.getString(KEYS.TASK_DEADLINE_NOTIFICATIONS_ENABLED) === 'true';
 };
 
@@ -373,6 +379,20 @@ const getStoredAiProcessingAlertsEnabled = (): boolean => {
     return true;
   }
   return storage.getString(KEYS.AI_PROCESSING_ALERTS_ENABLED) === 'true';
+};
+
+const getStoredTranscriptionRecoveryNotificationsEnabled = (): boolean => {
+  if (!storage.contains(KEYS.TRANSCRIPTION_RECOVERY_NOTIFICATIONS_ENABLED)) {
+    return true;
+  }
+  return storage.getString(KEYS.TRANSCRIPTION_RECOVERY_NOTIFICATIONS_ENABLED) === 'true';
+};
+
+const getStoredAppLockRecordingNotificationsEnabled = (): boolean => {
+  if (!storage.contains(KEYS.APP_LOCK_RECORDING_NOTIFICATIONS_ENABLED)) {
+    return true;
+  }
+  return storage.getString(KEYS.APP_LOCK_RECORDING_NOTIFICATIONS_ENABLED) === 'true';
 };
 
 const getStoredSummaryStyle = (): SummaryStyle => {
@@ -607,6 +627,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   backupReminderNotificationsEnabled: getStoredBackupReminderNotificationsEnabled(),
   backupReminderPeriodDays: getStoredBackupReminderPeriodDays(),
   aiProcessingAlertsEnabled: getStoredAiProcessingAlertsEnabled(),
+  transcriptionRecoveryNotificationsEnabled: getStoredTranscriptionRecoveryNotificationsEnabled(),
+  appLockRecordingNotificationsEnabled: getStoredAppLockRecordingNotificationsEnabled(),
   cloudAiThirdPartyConsentAccepted: getStoredCloudAiThirdPartyConsentAccepted(),
   cloudAiKvTtlSeconds: getStoredCloudAiKvTtlSeconds(),
   showSummaryReasoningInNotes: getStoredShowSummaryReasoningInNotes(),
@@ -1028,6 +1050,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAiProcessingAlertsEnabled: (value: boolean) => {
     storage.set(KEYS.AI_PROCESSING_ALERTS_ENABLED, String(value));
     set({ aiProcessingAlertsEnabled: value });
+  },
+
+  setTranscriptionRecoveryNotificationsEnabled: (value: boolean) => {
+    storage.set(KEYS.TRANSCRIPTION_RECOVERY_NOTIFICATIONS_ENABLED, String(value));
+    set({ transcriptionRecoveryNotificationsEnabled: value });
+  },
+
+  setAppLockRecordingNotificationsEnabled: (value: boolean) => {
+    storage.set(KEYS.APP_LOCK_RECORDING_NOTIFICATIONS_ENABLED, String(value));
+    set({ appLockRecordingNotificationsEnabled: value });
   },
 
   setCloudAiThirdPartyConsentAccepted: (value: boolean) => {

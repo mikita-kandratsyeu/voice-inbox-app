@@ -69,6 +69,8 @@ const baseState = {
   backupReminderNotificationsEnabled: false,
   backupReminderPeriodDays: 14,
   aiProcessingAlertsEnabled: true,
+  transcriptionRecoveryNotificationsEnabled: true,
+  appLockRecordingNotificationsEnabled: true,
 } as const;
 
 describe('remoteSyncAiSettings', () => {
@@ -148,6 +150,8 @@ describe('remoteSyncAiSettings', () => {
       setBackupReminderNotificationsEnabled: jest.fn(),
       setBackupReminderPeriodDays: jest.fn(),
       setAiProcessingAlertsEnabled: jest.fn(),
+      setTranscriptionRecoveryNotificationsEnabled: jest.fn(),
+      setAppLockRecordingNotificationsEnabled: jest.fn(),
       setPrivateRemoteActiveProfile: jest.fn(),
     } as unknown as ReturnType<typeof useSettingsStore.getState>);
 
