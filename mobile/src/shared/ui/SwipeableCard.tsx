@@ -17,11 +17,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { useColors } from '@/shared/config';
 import { ANIMATION_DURATIONS, GESTURE_THRESHOLDS, SPRING_CONFIGS } from '@/shared/config';
-import {
-  useHapticsWorkletGate,
-  workletHapticLightTap,
-  workletHapticSwipeCommit,
-} from '@/shared/lib/haptics';
+import { hapticGestureSwipe } from '@/shared/lib/haptics';
 
 export const SwipeableCardContext = React.createContext({ isSwiping: false });
 
@@ -58,7 +54,6 @@ export const SwipeableCard = memo(function SwipeableCard({
   const color = useColors();
   const translateX = useSharedValue(0);
   const action = useSharedValue<SwipeAction>('none');
-  const { enabled: hapticsEnabled, fullProfile: hapticsFullProfile } = useHapticsWorkletGate();
   const [isSwiping, setIsSwiping] = useState(false);
 
   const collapseOpacity = useSharedValue(1);
@@ -104,13 +99,7 @@ export const SwipeableCard = memo(function SwipeableCard({
     },
     onDeactivate: (event: PanGestureActiveEvent) => {
       const fireSwipeHaptic = () => {
-        'worklet';
-        if (!hapticsEnabled.value) return;
-        if (hapticsFullProfile.value) {
-          workletHapticSwipeCommit();
-        } else {
-          workletHapticLightTap();
-        }
+        scheduleOnRN(hapticGestureSwipe);
       };
 
       if (event.translationX < -GESTURE_THRESHOLDS.swipe) {

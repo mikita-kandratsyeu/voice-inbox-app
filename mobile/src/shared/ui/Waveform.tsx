@@ -144,6 +144,12 @@ const WaveformBar = memo(
       frameCallback.setActive(isAnimating && liveMetering);
     }, [isAnimating, liveMetering, frameCallback]);
 
+    useEffect(() => {
+      return () => {
+        frameCallback.setActive(false);
+      };
+    }, [frameCallback]);
+
     useAnimatedReaction(
       () => {
         return { level: inputLevel.value, active: isActive.value, hasAudio: hasAudioData.value };

@@ -4,7 +4,7 @@ import { diagWarn } from '@/shared/lib/appLogger';
 
 import { afterUiReady } from './gate';
 
-/** Presets referenced by designSystem + workletPresets (PascalCase for native preload). */
+/** Presets referenced by designSystem (PascalCase for native preload). */
 const PRELOAD_PRESET_NAMES = [
   'Ping',
   'Snap',
