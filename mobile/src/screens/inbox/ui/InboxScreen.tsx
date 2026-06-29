@@ -231,7 +231,7 @@ export const InboxScreen = () => {
           bannerMaxWidth={bannerMaxWidth}
           title={t('inbox.emptyTitle')}
           description={t('inbox.emptyDescription')}
-          hint={t('inbox.emptyImportHint')}
+          hint={t(useTabletShell ? 'inbox.emptyImportHintTablet' : 'inbox.emptyImportHint')}
         />
       ) : (
         <InboxScreenLoadedBody
