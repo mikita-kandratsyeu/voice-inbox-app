@@ -20,7 +20,12 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
-import { hapticGraphGrab, hapticGraphLock, hapticLight } from '@/shared/lib/haptics';
+import {
+  hapticLight,
+  playGestureGraphGrabHaptic,
+  playGestureGraphLockHaptic,
+  useHapticsWorkletGate,
+} from '@/shared/lib/haptics';
 
 import { buildGraphNodeDotAccessibilityLabel } from '../lib/buildGraphNodeAccessibilityLabel';
 import type { GraphViewportCull } from '../lib/buildGraphRenderedEdges';
@@ -97,6 +102,7 @@ function DraggableNodeShell({
   children: (interactionPhase: SharedValue<number>) => React.ReactNode;
 }) {
   const isDraggingRef = useRef(false);
+  const { enabled: hapticsEnabled, fullProfile: hapticsFullProfile } = useHapticsWorkletGate();
   const nodeId = node.id;
   const interactionPhase = useSharedValue(GRAPH_NODE_INTERACTION_IDLE);
 
@@ -166,14 +172,6 @@ function DraggableNodeShell({
     onFocus();
   }, [onFocus]);
 
-  const handleGraphGrabHaptic = useCallback(() => {
-    hapticGraphGrab();
-  }, []);
-
-  const handleGraphLockHaptic = useCallback(() => {
-    hapticGraphLock();
-  }, []);
-
   const tapGesture = useTapGesture({
     maxDuration: GRAPH_NODE_LONG_PRESS_MS - 20,
     onDeactivate: (event) => {
@@ -193,7 +191,7 @@ function DraggableNodeShell({
     onActivate: () => {
       'worklet';
       scheduleOnRN(handleCanvasDragStart);
-      scheduleOnRN(handleGraphGrabHaptic);
+      playGestureGraphGrabHaptic(hapticsEnabled, hapticsFullProfile);
     },
     onFinalize: (event) => {
       'worklet';
@@ -250,7 +248,7 @@ function DraggableNodeShell({
       interactionPhase.value = withTiming(0, {
         duration: 160,
       });
-      scheduleOnRN(handleGraphLockHaptic);
+      playGestureGraphLockHaptic(hapticsEnabled, hapticsFullProfile);
       scheduleOnRN(handleDragEndComplete, nodeId, finalX, finalY);
       scheduleOnRN(handleFocus);
     },

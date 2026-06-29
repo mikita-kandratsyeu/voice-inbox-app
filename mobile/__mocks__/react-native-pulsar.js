@@ -33,7 +33,9 @@ module.exports = {
   Settings: {
     preloadPresets: noop,
     enableHaptics: noop,
+    enableCache: noop,
     stopHaptics: noop,
+    getHapticsSupportLevel: noop,
   },
   usePatternComposer: () => ({
     play: noop,

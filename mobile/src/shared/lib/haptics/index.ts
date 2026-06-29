@@ -1,5 +1,4 @@
 import { playDomain, playSemantic } from './designSystem';
-import { getEffectiveHapticsIntensity } from './gate';
 
 export {
   canPlayAmbientHaptic,
@@ -9,35 +8,15 @@ export {
   isFullHapticsProfile,
   supportsRichHapticEngine,
 } from './gate';
+export {
+  playGestureGraphGrabHaptic,
+  playGestureGraphLockHaptic,
+  playGestureSwipeHaptic,
+} from './gesturePresets';
 export { initPulsarHaptics } from './preload';
 export type { HapticsIntensity } from './types';
 export { DEFAULT_HAPTICS_INTENSITY, HAPTICS_INTENSITY_STORAGE_KEY } from './types';
-
-/** Gesture swipe commit — JS thread only (Pulsar is not worklet-safe). */
-export const hapticGestureSwipe = (): void => {
-  const intensity = getEffectiveHapticsIntensity();
-  if (intensity === 'off') {
-    return;
-  }
-  if (intensity === 'full') {
-    playDomain('swipeCommit');
-    return;
-  }
-  playSemantic('light');
-};
-
-/** Graph node drag grab — JS thread only. */
-export const hapticGraphGrab = (): void => {
-  playSemantic('light');
-};
-
-/** Graph node snap lock — JS thread only, full profile only. */
-export const hapticGraphLock = (): void => {
-  if (getEffectiveHapticsIntensity() !== 'full') {
-    return;
-  }
-  playDomain('pinSuccess');
-};
+export { useHapticsWorkletGate } from './useHapticsWorkletGate';
 
 export const hapticSelection = () => playSemantic('selection');
 
