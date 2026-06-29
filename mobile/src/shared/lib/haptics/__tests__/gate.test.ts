@@ -24,9 +24,9 @@ describe('haptics gate', () => {
     jest.mocked(shouldReduceMotion).mockReturnValue(false);
   });
 
-  it('defaults stored intensity to full', () => {
+  it('defaults stored intensity to subtle', () => {
     jest.mocked(storage.getString).mockReturnValue(undefined);
-    expect(getStoredHapticsIntensity()).toBe('full');
+    expect(getStoredHapticsIntensity()).toBe('subtle');
   });
 
   it('reads stored intensity', () => {
