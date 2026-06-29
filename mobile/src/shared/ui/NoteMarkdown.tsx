@@ -10,6 +10,7 @@ import {
   buildNoteMarkdownAnswerStyle,
   buildNoteMarkdownReasoningStyle,
   buildPushSheetEnrichedMarkdownStyle,
+  NOTE_MARKDOWN_MD4C_FLAGS,
 } from './enrichedMarkdownTheme';
 
 export type NoteMarkdownVariant = 'answer' | 'reasoning' | 'document' | 'digest' | 'push';
@@ -18,6 +19,8 @@ type NoteMarkdownProps = {
   color: Colors;
   children: string;
   variant?: NoteMarkdownVariant;
+  /** Tail fade-in while markdown grows (e.g. streamed LLM answers). */
+  streaming?: boolean;
 };
 
 function buildMarkdownStyle(color: Colors, variant: NoteMarkdownVariant) {
@@ -39,6 +42,7 @@ export const NoteMarkdown = React.memo(function NoteMarkdown({
   color,
   children,
   variant = 'answer',
+  streaming = false,
 }: NoteMarkdownProps) {
   const browserScheme = useAppTheme();
   const markdownStyle = useMemo(() => buildMarkdownStyle(color, variant), [color, variant]);
@@ -61,10 +65,12 @@ export const NoteMarkdown = React.memo(function NoteMarkdown({
   return (
     <EnrichedMarkdownText
       markdown={children}
-      flavor="github"
+      flavor={streaming ? 'commonmark' : 'github'}
       markdownStyle={markdownStyle}
+      md4cFlags={NOTE_MARKDOWN_MD4C_FLAGS}
       selectionColor={color.accent.primary}
       onLinkPress={handleLinkPress}
+      streamingAnimation={streaming}
       allowTrailingMargin
     />
   );

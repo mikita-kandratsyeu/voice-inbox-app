@@ -13,6 +13,7 @@ import {
 } from '@/features/note-links';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
+import { NOTE_MARKDOWN_MD4C_FLAGS } from '@/shared/ui/enrichedMarkdownTheme';
 
 import type { CalloutBlock } from '../lib/parseCallouts';
 import { extractCallouts } from '../lib/parseCallouts';
@@ -158,6 +159,7 @@ export const NoteDocumentEnhancedMarkdown = React.memo(function NoteDocumentEnha
         markdown={renderedMarkdown}
         flavor="github"
         markdownStyle={markdownStyle}
+        md4cFlags={NOTE_MARKDOWN_MD4C_FLAGS}
         selectionColor={color.accent.primary}
         onLinkPress={handleLinkPress}
         enableLinkPreview={!disableLinkPreview}
@@ -205,6 +207,7 @@ export const NoteDocumentEnhancedMarkdown = React.memo(function NoteDocumentEnha
                     marginBottom: 4,
                   },
                 }}
+                md4cFlags={NOTE_MARKDOWN_MD4C_FLAGS}
                 selectionColor={color.accent.primary}
                 onLinkPress={handleLinkPress}
                 enableLinkPreview={!disableLinkPreview}
@@ -220,6 +223,7 @@ export const NoteDocumentEnhancedMarkdown = React.memo(function NoteDocumentEnha
             markdown={segment.content}
             flavor="github"
             markdownStyle={markdownStyle}
+            md4cFlags={NOTE_MARKDOWN_MD4C_FLAGS}
             selectionColor={color.accent.primary}
             onLinkPress={handleLinkPress}
             enableLinkPreview={!disableLinkPreview}

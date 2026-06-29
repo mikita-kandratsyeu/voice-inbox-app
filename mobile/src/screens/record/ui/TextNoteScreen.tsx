@@ -88,25 +88,40 @@ export const TextNoteScreen = () => {
   const isTablet = useIsTablet();
   const noteInputRef = useRef<EnrichedMarkdownTextInputInstance>(null);
   const saveInFlightRef = useRef(false);
+  const hasNoteContentRef = useRef(false);
+  const styleStateFrameRef = useRef<number | null>(null);
   const clearPendingFollowUp = usePendingTaskFollowUpStore((s) => s.clearPending);
   const [title, setTitle] = useState('');
-  const [noteText, setNoteText] = useState('');
+  const [initialEditorMarkdown, setInitialEditorMarkdown] = useState('');
+  const [hasNoteContent, setHasNoteContent] = useState(false);
   const [noteEditorKey, setNoteEditorKey] = useState(0);
   const [markdownStyleState, setMarkdownStyleState] = useState<StyleState | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const hasUnsavedChanges = title.trim().length > 0 || noteText.trim().length > 0;
+  const hasUnsavedChanges = title.trim().length > 0 || hasNoteContent;
   const inputMarkdownStyle = useMemo(() => buildNoteDocumentEnrichedInputStyle(color), [color]);
-  const showTemplates = !noteText.trim();
+  const showTemplates = !hasNoteContent;
 
   useEffect(() => {
     const pending = peekPendingTaskFollowUp();
     if (!pending || pending.mode !== 'text') return;
+    const seed = pending.draft.seedTranscript;
     setTitle(pending.draft.suggestedTitle);
-    setNoteText(pending.draft.seedTranscript);
+    setInitialEditorMarkdown(seed);
+    const hasContent = seed.trim().length > 0;
+    hasNoteContentRef.current = hasContent;
+    setHasNoteContent(hasContent);
     setNoteEditorKey((key) => key + 1);
   }, []);
 
-  const canSave = noteText.trim().length > 0 && !isSaving;
+  useEffect(() => {
+    return () => {
+      if (styleStateFrameRef.current !== null) {
+        cancelAnimationFrame(styleStateFrameRef.current);
+      }
+    };
+  }, []);
+
+  const canSave = hasNoteContent && !isSaving;
 
   const editorMinHeight = useMemo(() => {
     const chrome =
@@ -136,6 +151,16 @@ export const TextNoteScreen = () => {
 
     return getAutoTitle();
   }, [title]);
+
+  const handleChangeText = useCallback((text: string) => {
+    const hasContent = text.trim().length > 0;
+    if (hasContent === hasNoteContentRef.current) {
+      return;
+    }
+
+    hasNoteContentRef.current = hasContent;
+    setHasNoteContent(hasContent);
+  }, []);
 
   const handleBack = useCallback(() => {
     const close = () => {
@@ -171,14 +196,24 @@ export const TextNoteScreen = () => {
       const current = (await editor.getMarkdown()).trim();
       const next = current ? `${current}\n\n${block}` : block;
       editor.setValue(next);
-      setNoteText(next);
+      if (!hasNoteContentRef.current) {
+        hasNoteContentRef.current = true;
+        setHasNoteContent(true);
+      }
       editor.focus();
     },
     [t],
   );
 
   const handleMarkdownStyleStateChange = useCallback((newState: StyleState) => {
-    setMarkdownStyleState(newState);
+    if (styleStateFrameRef.current !== null) {
+      cancelAnimationFrame(styleStateFrameRef.current);
+    }
+
+    styleStateFrameRef.current = requestAnimationFrame(() => {
+      setMarkdownStyleState(newState);
+      styleStateFrameRef.current = null;
+    });
   }, []);
 
   const handleToolbarAction = useCallback((action: EnrichedMarkdownToolbarAction) => {
@@ -205,8 +240,8 @@ export const TextNoteScreen = () => {
     if (saveInFlightRef.current) {
       return;
     }
-    const markdown = (await noteInputRef.current?.getMarkdown()) ?? noteText;
-    const transcript = markdown.trim();
+    const markdown = await noteInputRef.current?.getMarkdown();
+    const transcript = markdown?.trim() ?? '';
     if (!transcript) {
       return;
     }
@@ -272,7 +307,6 @@ export const TextNoteScreen = () => {
     isConnected,
     isProActive,
     navigation,
-    noteText,
     privateAiProvider,
     resolvedTitle,
   ]);
@@ -364,7 +398,7 @@ export const TextNoteScreen = () => {
           <EnrichedMarkdownTextInput
             key={`text-note-editor-${noteEditorKey}`}
             ref={noteInputRef}
-            defaultValue={noteText}
+            defaultValue={initialEditorMarkdown}
             editable={!isSaving}
             scrollEnabled
             multiline
@@ -374,7 +408,7 @@ export const TextNoteScreen = () => {
             selectionColor={color.accent.primary}
             cursorColor={color.accent.primary}
             markdownStyle={inputMarkdownStyle}
-            onChangeText={setNoteText}
+            onChangeText={handleChangeText}
             onChangeState={handleMarkdownStyleStateChange}
             style={{
               flex: 1,

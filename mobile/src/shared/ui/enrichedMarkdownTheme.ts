@@ -1,4 +1,13 @@
-import type { MarkdownStyle, MarkdownTextInputStyle } from 'react-native-enriched-markdown';
+import type {
+  MarkdownStyle,
+  MarkdownTextInputStyle,
+  Md4cFlags,
+} from 'react-native-enriched-markdown';
+
+/** Enables `__underline__` syntax from EnrichedMarkdownTextInput in reading mode. */
+export const NOTE_MARKDOWN_MD4C_FLAGS: Md4cFlags = {
+  underline: true,
+};
 
 import type { Colors } from '@/shared/config';
 import { withAlphaHex } from '@/shared/lib';
@@ -76,6 +85,9 @@ export function buildNoteDocumentEnrichedMarkdownStyle(color: Colors): MarkdownS
     },
     strikethrough: {
       color: color.text.secondary,
+    },
+    underline: {
+      color: color.text.primary,
     },
     link: {
       color: accent,
@@ -183,6 +195,9 @@ export function buildNoteDocumentReadingMarkdownStyle(
     },
     strikethrough: {
       color: color.text.muted,
+    },
+    underline: {
+      color: color.text.primary,
     },
     link: {
       color: accent,

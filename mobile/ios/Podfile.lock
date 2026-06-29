@@ -2931,7 +2931,7 @@ PODS:
   - RNPurchases (10.4.0):
     - PurchasesHybridCommon (= 18.15.1)
     - React-Core
-  - RNReanimated (4.4.1):
+  - RNReanimated (4.5.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2952,11 +2952,12 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNReanimated/apple (= 4.4.1)
-    - RNReanimated/common (= 4.4.1)
+    - RNReanimated/apple (= 4.5.0)
+    - RNReanimated/common (= 4.5.0)
+    - RNReanimated/view (= 4.5.0)
     - RNWorklets
     - Yoga
-  - RNReanimated/apple (4.4.1):
+  - RNReanimated/apple (4.5.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2979,7 +2980,30 @@ PODS:
     - ReactNativeDependencies
     - RNWorklets
     - Yoga
-  - RNReanimated/common (4.4.1):
+  - RNReanimated/common (4.5.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - RNWorklets
+    - Yoga
+  - RNReanimated/view (4.5.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3094,7 +3118,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNWorklets (0.9.2):
+  - RNWorklets (0.10.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3115,10 +3139,10 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNWorklets/apple (= 0.9.2)
-    - RNWorklets/common (= 0.9.2)
+    - RNWorklets/apple (= 0.10.0)
+    - RNWorklets/common (= 0.10.0)
     - Yoga
-  - RNWorklets/apple (0.9.2):
+  - RNWorklets/apple (0.10.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3140,7 +3164,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNWorklets/common (0.9.2):
+  - RNWorklets/common (0.10.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3854,12 +3878,12 @@ SPEC CHECKSUMS:
   RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
   RNPermissions: 5e62c19b0f9453e223fc2494d981b78c4e3183ff
   RNPurchases: e42a93515b5d8994b2c4954da925470b0f5a92df
-  RNReanimated: 3567ec1c7151c623ac5685cf80db16142b2d1b5d
+  RNReanimated: 628f37bacf13b1bb12fc7d1e167cd81e981d831e
   RNReminders: e7bdf59616634b7ae180b18f6bf86dba531b0007
   RNScreens: cca7e1ec9184d91c7681160df11bdb7bf1ab0235
   RNSensors: 117ba71c7eeeea0407ea0c0bb79e3495d602049b
   RNSVG: 82a575b4e2734cfbd4482afd9ee7766a29251bd5
-  RNWorklets: 3af77a2f7988ccd8439a61b66c09b68c86e6d99e
+  RNWorklets: cff473e36af76e74545a33220256799c164c8bed
   RNZipArchive: 071aee69059e0347cb7519c5354aa436b8a23e73
   SSZipArchive: c69881e8ac5521f0e622291387add5f60f30f3c4
   whisper-rn: 2e0c586294fbc0c00e5ad4bbdbb8394c2fc902d0

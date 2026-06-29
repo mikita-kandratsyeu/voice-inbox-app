@@ -16,7 +16,7 @@ export const AskAiAnswerMarkdown = ({
   variant = 'answer',
 }: AskAiAnswerMarkdownProps) => {
   return (
-    <NoteMarkdown color={color} variant={variant}>
+    <NoteMarkdown color={color} variant={variant} streaming={variant === 'answer'}>
       {children}
     </NoteMarkdown>
   );
