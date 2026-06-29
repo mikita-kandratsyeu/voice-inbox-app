@@ -1,6 +1,11 @@
 import dayjs from 'dayjs';
 
 import { i18n } from '@/shared/lib';
+import { resolveDayjsLocale } from '@/shared/lib/date';
+
+function formatAutoTitleDate(date: dayjs.Dayjs): string {
+  return date.locale(resolveDayjsLocale(i18n.language)).format('D MMMM');
+}
 
 function getPeriodForHour(hour: number): string {
   if (hour >= 5 && hour < 12) {
@@ -19,16 +24,16 @@ function getPeriodForHour(hour: number): string {
 }
 
 export const getAutoTitle = (useDate = true): string => {
-  const hour = dayjs().hour();
-  const date = dayjs().format('MMM D');
+  const now = dayjs();
+  const period = getPeriodForHour(now.hour());
 
-  return `${getPeriodForHour(hour)} ${useDate ? `· ${date}` : ''}`;
+  if (!useDate) return period;
+
+  return `${period} · ${formatAutoTitleDate(now)}`;
 };
 
 export const getAutoTitleForDate = (isoDate: string): string => {
   const d = dayjs(isoDate);
-  const hour = d.hour();
-  const date = d.format('MMM D');
 
-  return `${getPeriodForHour(hour)} · ${date}`;
+  return `${getPeriodForHour(d.hour())} · ${formatAutoTitleDate(d)}`;
 };

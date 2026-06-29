@@ -32,6 +32,7 @@ export {
   hapticWarning,
   initPulsarHaptics,
   isFullHapticsProfile,
+  supportsRichHapticEngine,
   useHapticsWorkletGate,
   workletHapticGraphGrab,
   workletHapticLightTap,

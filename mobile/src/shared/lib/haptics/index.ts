@@ -6,6 +6,7 @@ export {
   getEffectiveHapticsIntensity,
   getStoredHapticsIntensity,
   isFullHapticsProfile,
+  supportsRichHapticEngine,
 } from './gate';
 export { initPulsarHaptics } from './preload';
 export type { HapticsIntensity } from './types';

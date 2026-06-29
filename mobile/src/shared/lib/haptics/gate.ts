@@ -1,7 +1,9 @@
 import { AppState } from 'react-native';
+import { HapticSupport, Settings } from 'react-native-pulsar';
 
 import { shouldReduceMotion } from '@/shared/config/animations';
 import { storage } from '@/shared/lib/async-storage';
+import runAfterInteractions from '@/shared/lib/runAfterInteractions';
 
 import {
   DEFAULT_HAPTICS_INTENSITY,
@@ -22,7 +24,9 @@ export function getEffectiveHapticsIntensity(): HapticsIntensity {
 }
 
 export function canPlayHaptic(): boolean {
-  return getEffectiveHapticsIntensity() !== 'off' && AppState.currentState === 'active';
+  const intensity = getEffectiveHapticsIntensity();
+  const appState = AppState.currentState;
+  return intensity !== 'off' && appState === 'active';
 }
 
 /** Background-safe haptics (transcription ticks, etc.). */
@@ -32,6 +36,20 @@ export function canPlayAmbientHaptic(): boolean {
 
 export function isFullHapticsProfile(): boolean {
   return getEffectiveHapticsIntensity() === 'full';
+}
+
+/** Rich presets need CoreHaptics; system taps work on more devices and in silent mode. */
+export function supportsRichHapticEngine(): boolean {
+  try {
+    const level = Settings.getHapticsSupportLevel();
+    return level >= HapticSupport.STANDARD_SUPPORT;
+  } catch {
+    return false;
+  }
+}
+
+export function afterUiReady(run: () => void): void {
+  runAfterInteractions(run);
 }
 
 export function writeHapticsIntensity(value: HapticsIntensity): void {

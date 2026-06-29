@@ -82,6 +82,7 @@ export {
   hapticSuccess,
   hapticSuccessMajor,
   initPulsarHaptics,
+  supportsRichHapticEngine,
 } from './haptics';
 export type { SupportedLocale } from './i18n';
 export { applyAppLanguage, i18n, initI18n } from './i18n';

@@ -15,8 +15,18 @@ jest.mock('react-native-pulsar', () => ({
     System: {
       selection: jest.fn(),
       impactLight: jest.fn(),
+      impactMedium: jest.fn(),
       notificationSuccess: jest.fn(),
     },
+  },
+  Settings: {
+    getHapticsSupportLevel: jest.fn(() => 3),
+  },
+  HapticSupport: {
+    NO_SUPPORT: 0,
+    LIMITED_SUPPORT: 1,
+    STANDARD_SUPPORT: 2,
+    ADVANCED_SUPPORT: 3,
   },
 }));
 
@@ -32,9 +42,16 @@ describe('haptics designSystem', () => {
     jest.mocked(canPlayHaptic).mockReturnValue(true);
   });
 
-  it('plays rich semantic presets in full mode', () => {
+  it('keeps system selection in full mode for frequent UI taps', () => {
     playSemantic('selection');
-    expect(Presets.ping).toHaveBeenCalled();
+    expect(Presets.ping).not.toHaveBeenCalled();
+    expect(Presets.System.selection).toHaveBeenCalled();
+  });
+
+  it('plays rich semantic presets for expressive milestones in full mode', () => {
+    playSemantic('successSubtle');
+    expect(Presets.bloom).toHaveBeenCalled();
+    expect(Presets.System.notificationSuccess).not.toHaveBeenCalled();
   });
 
   it('plays system semantic presets in subtle mode', () => {
@@ -46,6 +63,7 @@ describe('haptics designSystem', () => {
   it('plays domain presets in full mode', () => {
     playDomain('recordingStart');
     expect(Presets.charge).toHaveBeenCalled();
+    expect(Presets.System.impactMedium).not.toHaveBeenCalled();
   });
 
   it('skips playback when haptics are disabled', () => {
