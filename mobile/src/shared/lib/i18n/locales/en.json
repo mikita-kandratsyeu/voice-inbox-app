@@ -125,7 +125,7 @@
     "discardConfirm": "Close",
     "templatesTitle": "Templates & tips",
     "templatesHint1": "Tap a chip to insert a starter outline—at the end if you already wrote something, or as the whole note if the field is empty.",
-    "templatesHint2": "Treat it as a draft: edit headings and lines however you like.",
+    "templatesHint2": "Templates use Markdown headings and lists — edit them however you like.",
     "templateChip": {
       "dayPlan": "Day plan",
       "gratitude": "Gratitude",
@@ -133,10 +133,10 @@
       "idea": "Idea"
     },
     "templateBody": {
-      "dayPlan": "Day plan\nTop priority today:\n\n\nMeetings & calls:\n\n\nPersonal:\n\n\nEvening recap:\n\n",
-      "gratitude": "Gratitude\nWhat I'm thankful for today:\n\n\nWhat helped me:\n\n",
-      "tasks": "Tasks\nUrgent & important:\n\n\nToday:\n\n\nNext:\n\n",
-      "idea": "Idea\nThe gist:\n\n\nWhy it matters:\n\n\nNext step:\n\n"
+      "dayPlan": "## Day plan\n\n**Top priority today:**\n\n\n**Meetings & calls:**\n\n\n**Personal:**\n\n\n**Evening recap:**\n\n",
+      "gratitude": "## Gratitude\n\n**What I'm thankful for today:**\n\n\n**What helped me:**\n\n",
+      "tasks": "## Tasks\n\n### Urgent & important\n\n- [ ] \n\n### Today\n\n- [ ] \n\n### Next\n\n- [ ] \n\n",
+      "idea": "## Idea\n\n**The gist:**\n\n\n**Why it matters:**\n\n\n**Next step:**\n\n"
     }
   },
   "inbox": {

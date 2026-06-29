@@ -38,7 +38,7 @@ import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { inlineNativeMenuSection } from '@/shared/lib';
 import { hapticSelection } from '@/shared/lib';
-import { Button, RecordVoiceIcon, TabEmptyState } from '@/shared/ui';
+import { Button, NoteMarkdown, RecordVoiceIcon, TabEmptyState } from '@/shared/ui';
 
 type TranscriptTabProps = {
   recordId: string;
@@ -178,14 +178,13 @@ export const TranscriptTab = ({
     whisperStatus === 'not_downloaded'
       ? undefined
       : getWhisperModelDisplayName(selectedWhisperModel, selectedWhisperModelFormat);
-  const originalTextParagraphs = buildReadableParagraphs(
-    stripDocumentTranscriptMarkup(
-      segments
-        .map((segment) => segment.text.trim())
-        .filter(Boolean)
-        .join('\n\n'),
-    ),
+  const originalTextBody = stripDocumentTranscriptMarkup(
+    segments
+      .map((segment) => segment.text.trim())
+      .filter(Boolean)
+      .join('\n\n'),
   );
+  const originalTextParagraphs = buildReadableParagraphs(originalTextBody);
 
   if (segments.length === 0) {
     return (
@@ -440,19 +439,25 @@ export const TranscriptTab = ({
                   borderColor: color.border.default,
                 }}
               >
-                {originalTextParagraphs.map((paragraph, idx) => (
-                  <Text
-                    key={`${idx}-${paragraph.slice(0, 18)}`}
-                    className="text-[15px] leading-7"
-                    style={{
-                      color: color.text.primary,
-                      marginBottom: idx === originalTextParagraphs.length - 1 ? 0 : 14,
-                    }}
-                    selectable
-                  >
-                    {paragraph}
-                  </Text>
-                ))}
+                {!hasAudio ? (
+                  <NoteMarkdown color={color} variant="document">
+                    {originalTextBody}
+                  </NoteMarkdown>
+                ) : (
+                  originalTextParagraphs.map((paragraph, idx) => (
+                    <Text
+                      key={`${idx}-${paragraph.slice(0, 18)}`}
+                      className="text-[15px] leading-7"
+                      style={{
+                        color: color.text.primary,
+                        marginBottom: idx === originalTextParagraphs.length - 1 ? 0 : 14,
+                      }}
+                      selectable
+                    >
+                      {paragraph}
+                    </Text>
+                  ))
+                )}
               </View>
             )}
           </Animated.View>
