@@ -1269,10 +1269,10 @@
       }
     },
     "gestures": {
-      "entryTitle": "Gestures",
-      "entrySubtitle": "Shake to start a voice note or stop a generating answer.",
-      "title": "Gestures",
-      "intro": "Turn shake gestures on or off. They work while the app is open in the foreground.",
+      "entryTitle": "Gestures & vibration",
+      "entrySubtitle": "Tap feedback strength and shake shortcuts.",
+      "title": "Gestures & vibration",
+      "intro": "Choose how strongly the app responds to taps, and turn shake shortcuts on or off. Shake works while the app is open.",
       "hapticsSectionTitle": "Vibration",
       "hapticsIntensity": {
         "title": "Tap feedback",
