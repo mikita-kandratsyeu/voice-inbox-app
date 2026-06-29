@@ -14,7 +14,7 @@ import Animated, {
 
 import { useRecordStore } from '@/entities/record';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
-import { hapticLight } from '@/shared/lib';
+import { hapticRecordTabPress } from '@/shared/lib';
 import { RecordVoiceIcon } from '@/shared/ui';
 
 import type { RootStackParamList } from '../types';
@@ -86,12 +86,12 @@ export const CenterRecordButton = ({
       return;
     }
 
-    hapticLight();
+    hapticRecordTabPress();
     navigation.navigate('RecordModal');
   };
 
   const handleLongPress = () => {
-    hapticLight();
+    hapticRecordTabPress();
     navigation.navigate('TextNoteModal');
   };
 

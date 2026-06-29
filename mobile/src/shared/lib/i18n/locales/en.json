@@ -1273,6 +1273,14 @@
       "entrySubtitle": "Shake to start a voice note or stop a generating answer.",
       "title": "Gestures",
       "intro": "Turn shake gestures on or off. They work while the app is open in the foreground.",
+      "hapticsSectionTitle": "Vibration",
+      "hapticsIntensity": {
+        "title": "Tap feedback",
+        "subtitle": "Light gives short taps. Expressive adds richer cues when you record, swipe, or finish transcription.",
+        "off": "Off",
+        "subtle": "Light",
+        "full": "Expressive"
+      },
       "sectionTitle": "Shake",
       "shakeToRecord": {
         "title": "Shake to record",

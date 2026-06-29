@@ -2,6 +2,10 @@ jest.mock('@/shared/config', () => ({
   parseAccentColorId: () => 'blue',
 }));
 
+jest.mock('@/shared/config/animations', () => ({
+  shouldReduceMotion: jest.fn(() => false),
+}));
+
 jest.mock('react-native-reanimated', () => ({
   Easing: {},
 }));

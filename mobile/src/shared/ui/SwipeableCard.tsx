@@ -17,7 +17,11 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { useColors } from '@/shared/config';
 import { ANIMATION_DURATIONS, GESTURE_THRESHOLDS, SPRING_CONFIGS } from '@/shared/config';
-import { hapticMedium } from '@/shared/lib';
+import {
+  useHapticsWorkletGate,
+  workletHapticLightTap,
+  workletHapticSwipeCommit,
+} from '@/shared/lib/haptics';
 
 export const SwipeableCardContext = React.createContext({ isSwiping: false });
 
@@ -54,6 +58,7 @@ export const SwipeableCard = memo(function SwipeableCard({
   const color = useColors();
   const translateX = useSharedValue(0);
   const action = useSharedValue<SwipeAction>('none');
+  const { enabled: hapticsEnabled, fullProfile: hapticsFullProfile } = useHapticsWorkletGate();
   const [isSwiping, setIsSwiping] = useState(false);
 
   const collapseOpacity = useSharedValue(1);
@@ -98,13 +103,23 @@ export const SwipeableCard = memo(function SwipeableCard({
       translateX.value = pinEnabled ? event.translationX : Math.min(0, event.translationX);
     },
     onDeactivate: (event: PanGestureActiveEvent) => {
+      const fireSwipeHaptic = () => {
+        'worklet';
+        if (!hapticsEnabled.value) return;
+        if (hapticsFullProfile.value) {
+          workletHapticSwipeCommit();
+        } else {
+          workletHapticLightTap();
+        }
+      };
+
       if (event.translationX < -GESTURE_THRESHOLDS.swipe) {
-        scheduleOnRN(hapticMedium);
+        fireSwipeHaptic();
         translateX.value = withTiming(-CARD_FLY_DISTANCE, { duration: 220 }, () => {
           action.value = leftAction;
         });
       } else if (pinEnabled && event.translationX > GESTURE_THRESHOLDS.swipe) {
-        scheduleOnRN(hapticMedium);
+        fireSwipeHaptic();
         translateX.value = withTiming(GESTURE_THRESHOLDS.swipeExtended, { duration: 80 }, () => {
           action.value = 'pin';
         });

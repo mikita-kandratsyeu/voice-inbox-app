@@ -11,7 +11,7 @@ import Animated, {
 
 import { DEFAULT_PIN_LENGTH } from '@/entities/app-lock';
 import type { Colors } from '@/shared/config';
-import { hapticError, hapticLight, hapticSelection, hapticSuccess } from '@/shared/lib';
+import { hapticPinError, hapticPinKey, hapticPinSuccess, hapticSelection } from '@/shared/lib';
 
 type PinInputProps = {
   bottomLeftSlot?: React.ReactNode;
@@ -136,13 +136,13 @@ export const PinInput = ({
   const { t } = useTranslation();
   const dots = Array.from({ length: pinLength }, (_, i) => i < pin.length || success);
   const keypadLocked = success || disabled;
-  const keypadTap = isLockScreen ? hapticLight : hapticSelection;
+  const keypadTap = isLockScreen ? hapticPinKey : hapticSelection;
 
   useEffect(() => {
     if (success) {
-      hapticSuccess();
+      hapticPinSuccess();
     } else if (error) {
-      hapticError();
+      hapticPinError();
     }
   }, [success, error]);
 

@@ -1,4 +1,7 @@
 import type { AccentColorId } from '@/shared/config';
+import type { HapticsIntensity } from '@/shared/lib/haptics/types';
+
+export type { HapticsIntensity };
 
 export type AppTheme = 'light' | 'dark' | 'system';
 export type AppLanguage = 'system' | 'en' | 'ru';
@@ -162,6 +165,8 @@ export type SettingsState = {
   shakeToRecordEnabled: boolean;
   /** Shake on Ask AI while generating to cancel the response. */
   shakeToCancelAskAiEnabled: boolean;
+  /** Off / subtle system haptics / rich Pulsar presets. */
+  hapticsIntensity: HapticsIntensity;
   taskDeadlineNotificationsEnabled: boolean;
   backupReminderNotificationsEnabled: boolean;
   backupReminderPeriodDays: BackupReminderPeriodDays;
@@ -217,6 +222,7 @@ export type SettingsState = {
   setAutoArchiveAfterDays: (value: AutoArchiveAfterDays) => void;
   setShakeToRecordEnabled: (value: boolean) => void;
   setShakeToCancelAskAiEnabled: (value: boolean) => void;
+  setHapticsIntensity: (value: HapticsIntensity) => void;
   setTaskDeadlineNotificationsEnabled: (value: boolean) => void;
   setBackupReminderNotificationsEnabled: (value: boolean) => void;
   setBackupReminderPeriodDays: (value: BackupReminderPeriodDays) => void;

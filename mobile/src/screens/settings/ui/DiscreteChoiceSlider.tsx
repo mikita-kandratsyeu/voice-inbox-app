@@ -1,9 +1,13 @@
 import Slider from '@react-native-community/slider';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
+import { useRealtimeComposer } from 'react-native-pulsar';
 
+import { useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
+import { shouldReduceMotion } from '@/shared/config/animations';
 import { hapticLight, IS_IOS, selectPlatform, withAlphaHex } from '@/shared/lib';
+import { Presets } from 'react-native-pulsar';
 
 const TICK_ROW_H = 20;
 const SLIDER_ROW_H = 44;
@@ -64,6 +68,8 @@ export type DiscreteChoiceSliderProps = {
   color: Colors;
   /** Inside SettingsSection card — skip outer card padding/background. */
   embedded?: boolean;
+  /** Play slider haptics even when app haptics are Off (e.g. haptics strength picker). */
+  previewHaptics?: boolean;
 };
 
 export function DiscreteChoiceSlider({
@@ -74,11 +80,14 @@ export function DiscreteChoiceSlider({
   sliderAccessibilityLabel,
   color,
   embedded = false,
+  previewHaptics = false,
 }: DiscreteChoiceSliderProps) {
   const choiceCount = choices.length;
   const maxIndex = choiceCount - 1;
   const [trackWidth, setTrackWidth] = useState(0);
   const lastHapticIndexRef = useRef(indexForValue(choices, value));
+  const hapticsIntensity = useSettingsStore((s) => s.hapticsIntensity);
+  const { set: setRealtimeHaptic, playDiscrete, stop: stopRealtimeHaptic } = useRealtimeComposer();
 
   const onTrackLayout = useCallback((e: LayoutChangeEvent) => {
     setTrackWidth(e.nativeEvent.layout.width);
@@ -89,6 +98,8 @@ export function DiscreteChoiceSlider({
   useEffect(() => {
     lastHapticIndexRef.current = index;
   }, [index]);
+
+  useEffect(() => () => stopRealtimeHaptic(), [stopRealtimeHaptic]);
 
   const sliderMargin = useMemo(
     () => sliderHorizontalMargin(trackWidth, choiceCount),
@@ -127,6 +138,29 @@ export function DiscreteChoiceSlider({
 
   const railTop = (SLIDER_ROW_H - RAIL_H) / 2;
   const dotCenterY = TICK_ROW_H / 2;
+
+  const fireSliderNotchHaptic = useCallback(() => {
+    const rich =
+      hapticsIntensity === 'full' || (previewHaptics && !shouldReduceMotion());
+    if (rich) {
+      playDiscrete(0.75, 0.45);
+      return;
+    }
+    if (hapticsIntensity !== 'off' || previewHaptics) {
+      if (previewHaptics && hapticsIntensity === 'off') {
+        try {
+          Presets.System.selection();
+        } catch {
+          // ignore preview failures
+        }
+        return;
+      }
+      hapticLight();
+    }
+  }, [hapticsIntensity, playDiscrete, previewHaptics]);
+
+  const useRichRealtime =
+    hapticsIntensity === 'full' || (previewHaptics && !shouldReduceMotion());
 
   return (
     <View style={cardStyle}>
@@ -194,11 +228,15 @@ export function DiscreteChoiceSlider({
               const clamped = Math.max(0, Math.min(maxIndex, i));
               if (clamped !== lastHapticIndexRef.current) {
                 lastHapticIndexRef.current = clamped;
-                hapticLight();
+                fireSliderNotchHaptic();
+              } else if (useRichRealtime) {
+                const dist = Math.abs(raw - clamped);
+                setRealtimeHaptic(Math.max(0.12, 1 - dist * 0.4), 0.42);
               }
               const next = choices[clamped];
               if (next !== undefined) onChange(next);
             }}
+            onSlidingComplete={() => stopRealtimeHaptic()}
             minimumTrackTintColor={color.accent.primary}
             maximumTrackTintColor={color.background.tertiary}
             thumbTintColor={color.icon.onAccent}

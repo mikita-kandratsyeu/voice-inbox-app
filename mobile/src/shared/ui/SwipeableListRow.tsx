@@ -15,7 +15,11 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { ANIMATION_DURATIONS, GESTURE_THRESHOLDS, SPRING_CONFIGS } from '@/shared/config';
-import { hapticMedium } from '@/shared/lib';
+import {
+  useHapticsWorkletGate,
+  workletHapticLightTap,
+  workletHapticSwipeCommit,
+} from '@/shared/lib/haptics';
 
 const ROW_FLY_DISTANCE = 400;
 
@@ -52,6 +56,7 @@ export const SwipeableListRow = memo(function SwipeableListRow({
 }: SwipeableListRowProps) {
   const translateX = useSharedValue(0);
   const shouldExecute = useSharedValue(false);
+  const { enabled: hapticsEnabled, fullProfile: hapticsFullProfile } = useHapticsWorkletGate();
   const [isSwiping, setIsSwiping] = useState(false);
   const collapseOpacity = useSharedValue(1);
 
@@ -87,8 +92,12 @@ export const SwipeableListRow = memo(function SwipeableListRow({
     onDeactivate: (event: PanGestureActiveEvent) => {
       const threshold = -swipeThreshold;
       if (event.translationX < threshold) {
-        if (hapticFeedback) {
-          scheduleOnRN(hapticMedium);
+        if (hapticFeedback && hapticsEnabled.value) {
+          if (hapticsFullProfile.value) {
+            workletHapticSwipeCommit();
+          } else {
+            workletHapticLightTap();
+          }
         }
         translateX.value = withTiming(-flyDistance, { duration: 220 }, (finished) => {
           if (finished) {
