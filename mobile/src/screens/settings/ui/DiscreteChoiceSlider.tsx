@@ -2,7 +2,6 @@ import Slider from '@react-native-community/slider';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import { useRealtimeComposer } from 'react-native-pulsar';
-import { Presets } from 'react-native-pulsar';
 
 import { useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
@@ -75,8 +74,10 @@ export type DiscreteChoiceSliderProps = {
   color: Colors;
   /** Inside SettingsSection card — skip outer card padding/background. */
   embedded?: boolean;
-  /** Play slider haptics even when app haptics are Off (e.g. haptics strength picker). */
-  previewHaptics?: boolean;
+  /** Preview haptics for the step being selected (bypasses stored intensity). */
+  previewHapticAtIndex?: (index: number) => void;
+  /** Pulsar realtime drag feedback only while thumb is on this step. */
+  richRealtimeAtIndex?: number;
 };
 
 export function DiscreteChoiceSlider({
@@ -87,7 +88,8 @@ export function DiscreteChoiceSlider({
   sliderAccessibilityLabel,
   color,
   embedded = false,
-  previewHaptics = false,
+  previewHapticAtIndex,
+  richRealtimeAtIndex,
 }: DiscreteChoiceSliderProps) {
   const choiceCount = choices.length;
   const maxIndex = choiceCount - 1;
@@ -147,9 +149,7 @@ export function DiscreteChoiceSlider({
   const dotCenterY = TICK_ROW_H / 2;
 
   const fireSliderNotchHaptic = useCallback(() => {
-    const rich =
-      (hapticsIntensity === 'full' || (previewHaptics && !shouldReduceMotion())) &&
-      supportsRichHapticEngine();
+    const rich = hapticsIntensity === 'full' && supportsRichHapticEngine();
     if (rich) {
       try {
         playDiscrete(0.75, 0.45);
@@ -158,22 +158,23 @@ export function DiscreteChoiceSlider({
       }
       return;
     }
-    if (hapticsIntensity !== 'off' || previewHaptics) {
-      if (previewHaptics && hapticsIntensity === 'off') {
-        try {
-          Presets.System.selection();
-        } catch {
-          // ignore preview failures
-        }
-        return;
-      }
+    if (hapticsIntensity !== 'off') {
       hapticLight();
     }
-  }, [hapticsIntensity, playDiscrete, previewHaptics]);
+  }, [hapticsIntensity, playDiscrete]);
 
-  const useRichRealtime =
-    (hapticsIntensity === 'full' || (previewHaptics && !shouldReduceMotion())) &&
-    supportsRichHapticEngine();
+  const shouldUseRichRealtime = useCallback(
+    (stepIndex: number) => {
+      if (!supportsRichHapticEngine() || shouldReduceMotion()) {
+        return false;
+      }
+      if (richRealtimeAtIndex !== undefined) {
+        return stepIndex === richRealtimeAtIndex;
+      }
+      return hapticsIntensity === 'full';
+    },
+    [hapticsIntensity, richRealtimeAtIndex],
+  );
 
   return (
     <View style={cardStyle}>
@@ -241,8 +242,12 @@ export function DiscreteChoiceSlider({
               const clamped = Math.max(0, Math.min(maxIndex, i));
               if (clamped !== lastHapticIndexRef.current) {
                 lastHapticIndexRef.current = clamped;
-                fireSliderNotchHaptic();
-              } else if (useRichRealtime) {
+                if (previewHapticAtIndex) {
+                  previewHapticAtIndex(clamped);
+                } else {
+                  fireSliderNotchHaptic();
+                }
+              } else if (shouldUseRichRealtime(clamped)) {
                 const dist = Math.abs(raw - clamped);
                 setRealtimeHaptic(Math.max(0.12, 1 - dist * 0.4), 0.42);
               }

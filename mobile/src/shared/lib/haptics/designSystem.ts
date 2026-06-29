@@ -172,6 +172,7 @@ const EXPRESSIVE_SYSTEM_DOMAIN = new Set<DomainToken>([
   'pinKey',
   'transcriptionChunk',
   'playbackMarkCrossed',
+  'recordTabPress',
 ]);
 
 export const playDomain = (token: DomainToken): void => {

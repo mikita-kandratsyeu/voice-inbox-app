@@ -66,6 +66,12 @@ describe('haptics designSystem', () => {
     expect(Presets.System.impactMedium).not.toHaveBeenCalled();
   });
 
+  it('keeps record tab press on system haptics in full mode', () => {
+    playDomain('recordTabPress');
+    expect(Presets.charge).not.toHaveBeenCalled();
+    expect(Presets.System.impactLight).toHaveBeenCalled();
+  });
+
   it('skips playback when haptics are disabled', () => {
     jest.mocked(canPlayHaptic).mockReturnValue(false);
     playSemantic('successSubtle');

@@ -100,7 +100,7 @@ export function useShakeGestures({ enabled }: UseShakeGesturesOptions): void {
       return;
     }
 
-    hapticShakeDetect();
+    hapticSelection();
     runNavigationWhenUnlocked(() => {
       navigationRef.navigate('RecordModal');
     });
