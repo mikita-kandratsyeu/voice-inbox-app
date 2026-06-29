@@ -69,19 +69,19 @@ export {
   hapticPinKey,
   hapticPinSuccess,
   hapticPlaybackMarkCrossed,
-  hapticRecordTabPress,
   hapticRecordingControl,
   hapticRecordingFinishIntent,
   hapticRecordingLimitWarning,
   hapticRecordingPause,
   hapticRecordingResume,
   hapticRecordingStart,
+  hapticRecordTabPress,
   hapticSelection,
   hapticShakeDetect,
+  type HapticsIntensity,
   hapticSuccess,
   hapticSuccessMajor,
   initPulsarHaptics,
-  type HapticsIntensity,
 } from './haptics';
 export type { SupportedLocale } from './i18n';
 export { applyAppLanguage, i18n, initI18n } from './i18n';

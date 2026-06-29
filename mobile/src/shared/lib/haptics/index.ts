@@ -1,7 +1,5 @@
 import { playDomain, playSemantic } from './designSystem';
 
-export type { HapticsIntensity } from './types';
-export { DEFAULT_HAPTICS_INTENSITY, HAPTICS_INTENSITY_STORAGE_KEY } from './types';
 export {
   canPlayAmbientHaptic,
   canPlayHaptic,
@@ -10,6 +8,8 @@ export {
   isFullHapticsProfile,
 } from './gate';
 export { initPulsarHaptics } from './preload';
+export type { HapticsIntensity } from './types';
+export { DEFAULT_HAPTICS_INTENSITY, HAPTICS_INTENSITY_STORAGE_KEY } from './types';
 export { useHapticsWorkletGate } from './useHapticsWorkletGate';
 export {
   workletHapticGraphGrab,

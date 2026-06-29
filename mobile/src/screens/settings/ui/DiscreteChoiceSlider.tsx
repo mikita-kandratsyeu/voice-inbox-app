@@ -2,12 +2,12 @@ import Slider from '@react-native-community/slider';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import { useRealtimeComposer } from 'react-native-pulsar';
+import { Presets } from 'react-native-pulsar';
 
 import { useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { shouldReduceMotion } from '@/shared/config/animations';
 import { hapticLight, IS_IOS, selectPlatform, withAlphaHex } from '@/shared/lib';
-import { Presets } from 'react-native-pulsar';
 
 const TICK_ROW_H = 20;
 const SLIDER_ROW_H = 44;
@@ -140,8 +140,7 @@ export function DiscreteChoiceSlider({
   const dotCenterY = TICK_ROW_H / 2;
 
   const fireSliderNotchHaptic = useCallback(() => {
-    const rich =
-      hapticsIntensity === 'full' || (previewHaptics && !shouldReduceMotion());
+    const rich = hapticsIntensity === 'full' || (previewHaptics && !shouldReduceMotion());
     if (rich) {
       playDiscrete(0.75, 0.45);
       return;
@@ -159,8 +158,7 @@ export function DiscreteChoiceSlider({
     }
   }, [hapticsIntensity, playDiscrete, previewHaptics]);
 
-  const useRichRealtime =
-    hapticsIntensity === 'full' || (previewHaptics && !shouldReduceMotion());
+  const useRichRealtime = hapticsIntensity === 'full' || (previewHaptics && !shouldReduceMotion());
 
   return (
     <View style={cardStyle}>

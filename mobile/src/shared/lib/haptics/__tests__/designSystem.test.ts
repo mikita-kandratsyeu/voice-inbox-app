@@ -22,8 +22,8 @@ jest.mock('react-native-pulsar', () => ({
 
 import { Presets } from 'react-native-pulsar';
 
-import { canPlayHaptic, getEffectiveHapticsIntensity } from '../gate';
 import { playDomain, playSemantic } from '../designSystem';
+import { canPlayHaptic, getEffectiveHapticsIntensity } from '../gate';
 
 describe('haptics designSystem', () => {
   beforeEach(() => {

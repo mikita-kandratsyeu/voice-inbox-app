@@ -113,8 +113,7 @@ const DOMAIN_FULL: Record<DomainToken, PlayFn> = {
   transcriptionChunk: () => Presets.pip(),
   transcriptionComplete: () => Presets.triumph(),
   transcriptionFailed: () => Presets.buzz(),
-  playbackMarkCrossed: () =>
-    IS_ANDROID ? Presets.System.Android.segmentTick() : Presets.ping(),
+  playbackMarkCrossed: () => (IS_ANDROID ? Presets.System.Android.segmentTick() : Presets.ping()),
   pinKey: () => Presets.keyboardMechanical(),
   pinSuccess: () => Presets.lock(),
   pinError: () => Presets.buzz(),

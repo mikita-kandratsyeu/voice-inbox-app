@@ -10,7 +10,11 @@ const CHUNK_HAPTIC_MIN_MS = 2500;
 
 let lastChunkHapticAt = 0;
 
-export { hapticTranscriptionProcessingStart, hapticTranscriptionComplete, hapticTranscriptionFailed };
+export {
+  hapticTranscriptionComplete,
+  hapticTranscriptionFailed,
+  hapticTranscriptionProcessingStart,
+};
 
 /** Throttled tick when a transcription chunk completes. */
 export const hapticTranscriptionChunk = (): void => {

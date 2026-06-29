@@ -4,10 +4,7 @@ import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitl
 import { parseAccentColorId } from '@/shared/config';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { storage } from '@/shared/lib/async-storage';
-import {
-  readInitialHapticsIntensity,
-  writeHapticsIntensity,
-} from '@/shared/lib/haptics/gate';
+import { readInitialHapticsIntensity, writeHapticsIntensity } from '@/shared/lib/haptics/gate';
 import type { HapticsIntensity } from '@/shared/lib/haptics/types';
 import { IS_IOS } from '@/shared/lib/platform';
 import { isNumber, isRecord, isString } from '@/shared/lib/type-guards';
