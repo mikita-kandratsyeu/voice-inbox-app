@@ -27,10 +27,10 @@ import {
 } from '@/entities/record';
 import {
   getActiveWhisperModelVariantId,
+  getWhisperModelDisplayName,
   TRANSLATE_LANGUAGES,
   useSettingsStore,
 } from '@/entities/settings';
-import { getWhisperModelDisplayName } from '@/entities/settings/model/constants';
 import { TranscriptHighlight } from '@/features/transcript-highlight';
 import { useTranscriptionBlockedForRecord } from '@/features/transcription';
 import { shouldUseIosWhisperKitEngine } from '@/features/transcription/config/transcriptionEngine';
@@ -38,6 +38,7 @@ import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { inlineNativeMenuSection } from '@/shared/lib';
 import { hapticSelection } from '@/shared/lib';
+import { getWhisperModelShortLabelKey } from '@/shared/lib/whisper';
 import { Button, NoteMarkdown, RecordVoiceIcon, TabEmptyState } from '@/shared/ui';
 
 type TranscriptTabProps = {
@@ -177,7 +178,9 @@ export const TranscriptTab = ({
   const hint =
     whisperStatus === 'not_downloaded'
       ? undefined
-      : getWhisperModelDisplayName(selectedWhisperModel, selectedWhisperModelFormat);
+      : useIosWhisperKit
+        ? t(getWhisperModelShortLabelKey(selectedWhisperModel))
+        : getWhisperModelDisplayName(selectedWhisperModel, selectedWhisperModelFormat);
   const originalTextBody = stripDocumentTranscriptMarkup(
     segments
       .map((segment) => segment.text.trim())
