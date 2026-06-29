@@ -2,8 +2,8 @@ import React, { useCallback, useMemo } from 'react';
 
 import type { HapticsIntensity } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
-import { DEFAULT_HAPTICS_INTENSITY } from '@/shared/lib/haptics/types';
 import { previewHapticsIntensity } from '@/shared/lib/haptics/previewIntensity';
+import { DEFAULT_HAPTICS_INTENSITY } from '@/shared/lib/haptics/types';
 
 import { DiscreteChoiceSlider } from './DiscreteChoiceSlider';
 
@@ -34,7 +34,8 @@ export function HapticsIntensitySlider({
   }, [value]);
 
   const intensityAtIndex = useCallback(
-    (index: number): HapticsIntensity => HAPTICS_INTENSITY_CHOICES[index] ?? DEFAULT_HAPTICS_INTENSITY,
+    (index: number): HapticsIntensity =>
+      HAPTICS_INTENSITY_CHOICES[index] ?? DEFAULT_HAPTICS_INTENSITY,
     [],
   );
 
