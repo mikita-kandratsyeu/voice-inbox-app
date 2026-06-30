@@ -21,9 +21,9 @@ import {
 } from '@/features/app-lifecycle';
 import { AppLockGate, AppSwitcherPrivacyOverlay } from '@/features/app-lock';
 import { AppRatingPromptRoot } from '@/features/app-review';
-import { GithubSyncProgressOverlay } from '@/features/github-sync/ui/GithubSyncProgressOverlay';
-import { GitlabSyncProgressOverlay } from '@/features/gitlab-sync/ui/GitlabSyncProgressOverlay';
-import { IcloudSyncProgressOverlay } from '@/features/icloud-sync/ui/IcloudSyncProgressOverlay';
+import { GithubSyncProgressOverlay } from '@/features/github-sync';
+import { GitlabSyncProgressOverlay } from '@/features/gitlab-sync';
+import { IcloudSyncProgressOverlay } from '@/features/icloud-sync';
 import { flushPendingSharedAudioImport } from '@/features/import-audio-file/lib/sharedAudioImportRegistry';
 import { OnboardingGate } from '@/features/onboarding';
 import { PlanPaywallProvider } from '@/features/plan-paywall';

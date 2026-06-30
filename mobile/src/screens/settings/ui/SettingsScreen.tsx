@@ -7,8 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { ProLimitResetSuccessSheet } from '@/features/ai-limit-reset';
-import { cancelGithubConnectSession } from '@/features/github-sync/lib/githubSyncConnectSession';
-import { cancelGitlabConnectSession } from '@/features/gitlab-sync/lib/gitlabSyncConnectSession';
+import { cancelGithubConnectSession } from '@/features/github-sync';
+import { cancelGitlabConnectSession } from '@/features/gitlab-sync';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { openPlanPaywall } from '@/features/plan-paywall';
 import { isInternalDebugBuild } from '@/shared/config/buildEnv';
