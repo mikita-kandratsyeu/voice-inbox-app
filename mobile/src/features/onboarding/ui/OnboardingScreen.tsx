@@ -69,8 +69,8 @@ import {
 } from '@/shared/lib/permissions';
 import {
   checkPushPermission,
-  enableAiProcessingAlerts,
   type PushPermissionStatus,
+  requestPushPermissionAndRegister,
 } from '@/shared/lib/push';
 import { Button, BUTTON_BORDER_RADIUS } from '@/shared/ui';
 
@@ -551,7 +551,7 @@ const PermissionsSlide = ({
     }
 
     const granted = IS_IOS
-      ? await enableAiProcessingAlerts()
+      ? await requestPushPermissionAndRegister()
       : await enableTaskDeadlineNotifications();
 
     setNotificationStatus(granted ? 'granted' : 'denied');

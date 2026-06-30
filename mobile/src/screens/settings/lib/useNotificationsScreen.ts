@@ -24,8 +24,6 @@ import { IS_IOS } from '@/shared/lib';
 import { openAppSettings } from '@/shared/lib/permissions';
 import {
   checkPushPermission,
-  disableAiProcessingAlerts,
-  enableAiProcessingAlerts,
   ensurePushRegistered,
   type PushPermissionStatus,
   requestPushPermission,
@@ -47,7 +45,7 @@ async function requestNotificationPermission(): Promise<PushPermissionStatus> {
 
 async function syncFeaturesWithNotificationPermission(status: PushPermissionStatus): Promise<void> {
   if (status === 'granted') {
-    if (IS_IOS && useSettingsStore.getState().aiProcessingAlertsEnabled) {
+    if (IS_IOS) {
       await ensurePushRegistered();
     }
     if (useSettingsStore.getState().taskDeadlineNotificationsEnabled) {
@@ -77,7 +75,6 @@ function showPermissionDeniedAlert(
 export function useNotificationsScreen() {
   const { t } = useTranslation();
   const color = useColors();
-  const aiProcessingAlertsEnabled = useSettingsStore((s) => s.aiProcessingAlertsEnabled);
   const transcriptionRecoveryNotificationsEnabled = useSettingsStore(
     (s) => s.transcriptionRecoveryNotificationsEnabled,
   );
@@ -139,39 +136,6 @@ export function useNotificationsScreen() {
     }
     return false;
   }, []);
-
-  const handleAiProcessingAlertsChange = useCallback(
-    async (value: boolean) => {
-      if (value) {
-        if (!(await ensurePermissionForToggle())) {
-          showPermissionDeniedAlert(
-            t,
-            'settings.notificationsScreen.aiAlertsDeniedTitle',
-            'settings.notificationsScreen.aiAlertsDeniedMessage',
-          );
-          return;
-        }
-
-        if (IS_IOS) {
-          const enabled = await enableAiProcessingAlerts();
-          if (!enabled) {
-            showPermissionDeniedAlert(
-              t,
-              'settings.notificationsScreen.aiAlertsDeniedTitle',
-              'settings.notificationsScreen.aiAlertsDeniedMessage',
-            );
-          }
-          return;
-        }
-
-        useSettingsStore.getState().setAiProcessingAlertsEnabled(true);
-        return;
-      }
-
-      await disableAiProcessingAlerts();
-    },
-    [ensurePermissionForToggle, t],
-  );
 
   const handleTranscriptionRecoveryNotificationsChange = useCallback(
     async (value: boolean) => {
@@ -270,7 +234,6 @@ export function useNotificationsScreen() {
     t,
     color,
     notificationPermission,
-    aiProcessingAlertsEnabled,
     transcriptionRecoveryNotificationsEnabled,
     appLockRecordingNotificationsEnabled,
     taskDeadlineNotificationsEnabled,
@@ -278,7 +241,6 @@ export function useNotificationsScreen() {
     backupReminderPeriodDays,
     backupReminderPeriodSheetVisible,
     handleNotificationPermission,
-    handleAiProcessingAlertsChange,
     handleTranscriptionRecoveryNotificationsChange,
     handleAppLockRecordingNotificationsChange,
     handleTaskDeadlineNotificationsChange,

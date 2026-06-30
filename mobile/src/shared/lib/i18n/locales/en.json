@@ -1622,7 +1622,7 @@
     "permissionMicrophone": "Microphone",
     "permissionMicrophoneDesc": "Required for voice recording.",
     "permissionNotifications": "Results ready",
-    "permissionNotificationsDesc": "When a transcript, summary, or other AI result is ready.",
+    "permissionNotificationsDesc": "When a transcript, summary, or other AI result is ready. Follows your device notification permission.",
     "permissionNotificationsDescAndroid": "Processing status stays in the app. The options below use the same notification permission.",
     "permissionGranted": "Granted",
     "permissionDenied": "Denied",
@@ -1632,7 +1632,7 @@
     "notificationsEnabledCount": "{{count}} on",
     "notificationsScreen": {
       "title": "Notifications",
-      "intro": "Allow notifications in device settings, then choose what we can alert you about. Your choices stay saved if you turn alerts off later.",
+      "intro": "Allow notifications in device settings, then choose which local alerts to enable. Cloud processing updates follow your device notification permission.",
       "notesSectionTitle": "Notes & AI",
       "remindersSectionTitle": "Reminders",
       "aiAlertsDeniedTitle": "Turn on notifications",

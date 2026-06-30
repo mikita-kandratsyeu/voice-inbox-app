@@ -1,12 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import {
-  Bell,
-  CalendarClock,
-  CloudCheck,
-  LockKeyhole,
-  RotateCcw,
-  UploadCloud,
-} from 'lucide-react-native';
+import { Bell, CalendarClock, LockKeyhole, RotateCcw, UploadCloud } from 'lucide-react-native';
 import React from 'react';
 import { ScrollView, Switch, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -123,32 +116,21 @@ export const NotificationsScreen = () => {
           ) : null}
 
           <SettingsSection title={screen.t('settings.notificationsScreen.notesSectionTitle')}>
-            <SettingsRow
-              label={screen.t('settings.permissionNotifications')}
-              subtitle={
-                IS_IOS
-                  ? screen.t('settings.permissionNotificationsDesc')
-                  : screen.t('settings.permissionNotificationsDescAndroid')
-              }
-              leftIcon={
-                <CloudCheck
-                  size={20}
-                  color={getSettingsIconColor(screen.color, 'cloudCheck')}
-                  strokeWidth={1.8}
-                />
-              }
-              rightSlot={
-                <NotificationSwitch
-                  value={screen.aiProcessingAlertsEnabled}
-                  onValueChange={screen.handleAiProcessingAlertsChange}
-                  disabled={switchesDisabled}
-                  accessibilityLabel={screen.t('settings.permissionNotifications')}
-                  color={screen.color}
-                />
-              }
-              showChevron={false}
-              isFirst
-            />
+            {IS_IOS ? (
+              <SettingsRow
+                label={screen.t('settings.permissionNotifications')}
+                subtitle={screen.t('settings.permissionNotificationsDesc')}
+                leftIcon={
+                  <Bell
+                    size={20}
+                    color={getSettingsIconColor(screen.color, 'bell')}
+                    strokeWidth={1.8}
+                  />
+                }
+                showChevron={false}
+                isFirst
+              />
+            ) : null}
             <SettingsRow
               label={screen.t('settings.transcriptionRecoveryNotifications')}
               subtitle={screen.t('settings.transcriptionRecoveryNotificationsHint')}
@@ -169,6 +151,7 @@ export const NotificationsScreen = () => {
                 />
               }
               showChevron={false}
+              isFirst={!IS_IOS}
             />
             <SettingsRow
               label={screen.t('settings.appLockRecordingNotifications')}
