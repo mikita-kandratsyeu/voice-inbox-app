@@ -22,6 +22,7 @@ export async function handleE2EDeepLink(rawUrl: string): Promise<boolean> {
         skipAppLock: action.skipAppLock,
         mockPro: action.mockPro,
         disableAds: action.disableAds,
+        prepareSkipUi: action.prepareSkipUi,
       });
       return true;
     }

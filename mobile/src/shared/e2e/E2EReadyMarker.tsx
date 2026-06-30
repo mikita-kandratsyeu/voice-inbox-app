@@ -1,12 +1,14 @@
 import React from 'react';
 import { View } from 'react-native';
 
-import { isE2EActiveSync } from './e2eStorage';
+import { useE2ERuntime } from './e2eStorage';
 import { TestIds } from './testIds';
 
 /** Invisible anchor for Maestro to detect E2E configuration applied. */
 export function E2EReadyMarker() {
-  if (!isE2EActiveSync()) {
+  const active = useE2ERuntime((s) => s.active);
+
+  if (!active) {
     return null;
   }
 

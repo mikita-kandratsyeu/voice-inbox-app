@@ -3,6 +3,19 @@ appId: com.mkandratsyeu.voiceinboxai
 - runFlow: launch-fresh.yaml
 - extendedWaitUntil:
     visible:
+      id: onboarding.next
+    timeout: 120000
+- repeat:
+    times: 3
+    commands:
+      - openLink: voiceinbox://e2e/reset?skipOnboarding=0&prepareSkipUi=1&skipAppLock=1&disableAds=1
+      - extendedWaitUntil:
+          visible:
+            id: onboarding.skip
+          timeout: 15000
+          optional: true
+- extendedWaitUntil:
+    visible:
       id: onboarding.skip
     timeout: 45000
 - tapOn:

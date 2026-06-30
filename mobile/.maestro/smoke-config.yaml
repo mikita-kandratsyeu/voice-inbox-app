@@ -1,0 +1,23 @@
+# Smoke / single-flow runs: CLI target is a leaf folder (e.g. flows/smoke).
+# Inclusion patterns are relative to that folder, so use "*" not "flows/**".
+appId: com.mkandratsyeu.voiceinboxai
+
+flows:
+  - "*"
+
+# Each smoke flow cold-starts the app — run sequentially, not in parallel.
+executionOrder:
+  continueOnFailure: false
+  flowsOrder:
+    - app-launches
+    - onboarding-skip
+    - e2e-launch
+    - tab-navigation
+    - open-recording-detail
+    - text-note-crud
+    - deeplink-tasks
+
+env:
+  E2E_RESET_URL: voiceinbox://e2e/reset?skipOnboarding=1&skipAppLock=1&disableAds=1
+  E2E_PREPARE_SKIP_URL: voiceinbox://e2e/reset?skipOnboarding=0&prepareSkipUi=1&skipAppLock=1&disableAds=1
+  E2E_SEED_NOTE_URL: voiceinbox://e2e/seed-text-note?title=E2E%20Note&body=Maestro%20seeded%20note

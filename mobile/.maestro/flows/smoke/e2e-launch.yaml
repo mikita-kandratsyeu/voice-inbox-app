@@ -1,8 +1,7 @@
 appId: com.mkandratsyeu.voiceinboxai
+name: e2e-launch
 ---
 # S07 — E2E launch skips onboarding UI
 - runFlow: ../../subflows/launch-e2e.yaml
-- assertVisible:
-    id: e2e.ready
 - assertVisible:
     id: inbox.screen

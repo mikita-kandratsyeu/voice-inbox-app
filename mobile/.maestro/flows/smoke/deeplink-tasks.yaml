@@ -1,4 +1,5 @@
 appId: com.mkandratsyeu.voiceinboxai
+name: deeplink-tasks
 ---
 # S06 — All Tasks deep link
 - runFlow: ../../subflows/launch-e2e.yaml

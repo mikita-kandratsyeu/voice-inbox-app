@@ -1,4 +1,5 @@
 appId: com.mkandratsyeu.voiceinboxai
+name: open-recording-detail
 ---
 # S05 — open recording detail from seeded note
 - runFlow: ../../subflows/launch-e2e.yaml

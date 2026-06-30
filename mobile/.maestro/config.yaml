@@ -1,6 +1,10 @@
 # Voice Inbox — Maestro E2E (iOS only, manual runs)
 appId: com.mkandratsyeu.voiceinboxai
 
+# Discover flows in subfolders (smoke/, onboarding/, …). Subflows live outside flows/.
+flows:
+  - "flows/**"
+
 env:
   E2E_RESET_URL: voiceinbox://e2e/reset?skipOnboarding=1&skipAppLock=1&disableAds=1
   E2E_SEED_NOTE_URL: voiceinbox://e2e/seed-text-note?title=E2E%20Note&body=Maestro%20seeded%20note

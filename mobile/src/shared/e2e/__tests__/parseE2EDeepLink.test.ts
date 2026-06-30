@@ -8,6 +8,7 @@ describe('tryParseE2EDeepLink', () => {
       skipAppLock: true,
       mockPro: false,
       disableAds: true,
+      prepareSkipUi: false,
     });
   });
 
@@ -20,6 +21,20 @@ describe('tryParseE2EDeepLink', () => {
       skipAppLock: true,
       mockPro: true,
       disableAds: false,
+      prepareSkipUi: false,
+    });
+  });
+
+  it('parses prepareSkipUi for onboarding skip UI test', () => {
+    expect(
+      tryParseE2EDeepLink('voiceinbox://e2e/reset?skipOnboarding=0&prepareSkipUi=1'),
+    ).toEqual({
+      type: 'reset',
+      skipOnboarding: false,
+      skipAppLock: true,
+      mockPro: false,
+      disableAds: true,
+      prepareSkipUi: true,
     });
   });
 

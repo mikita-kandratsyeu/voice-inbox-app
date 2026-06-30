@@ -7,6 +7,7 @@ export type E2EDeepLinkAction =
       disableAds: boolean;
       skipOnboarding: boolean;
       skipAppLock: boolean;
+      prepareSkipUi: boolean;
     }
   | { type: 'seed-text-note'; title?: string; body?: string; id?: string };
 
@@ -34,6 +35,7 @@ export function tryParseE2EDeepLink(rawUrl: string): E2EDeepLinkAction | null {
       skipAppLock: parseBoolParam(params.get('skipAppLock'), true),
       mockPro: parseBoolParam(params.get('mockPro'), false),
       disableAds: parseBoolParam(params.get('disableAds'), true),
+      prepareSkipUi: parseBoolParam(params.get('prepareSkipUi'), false),
     };
   }
 

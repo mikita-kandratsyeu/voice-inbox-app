@@ -2,4 +2,6 @@ appId: com.mkandratsyeu.voiceinboxai
 ---
 - launchApp:
     clearState: true
+- waitForAnimationToEnd:
+    timeout: 10000
 - runFlow: dismiss-system-alerts.yaml

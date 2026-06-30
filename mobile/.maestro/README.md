@@ -7,11 +7,13 @@ End-to-end UI tests for the React Native app using [Maestro](https://maestro.mob
 1. **Xcode** with an iOS Simulator (or physical device).
 2. **Dev build** installed: from repo root  
    `yarn workspace voice-inbox-app ios`
-3. **Maestro CLI**:
+3. **Maestro CLI** (not the Homebrew **cask** Maestro Studio):
    ```bash
-   curl -Ls "https://get.maestro.mobile.dev" | bash
+   brew tap mobile-dev-inc/tap
+   brew install mobile-dev-inc/tap/maestro
+   brew link --overwrite mobile-dev-inc/tap/maestro
    ```
-   Or: `brew tap mobile-dev-inc/tap && brew install maestro`
+   Or: `curl -Ls "https://get.maestro.mobile.dev" | bash`
 
 App bundle id: `com.mkandratsyeu.voiceinboxai`
 
@@ -20,7 +22,7 @@ App bundle id: `com.mkandratsyeu.voiceinboxai`
 From `mobile/`:
 
 ```bash
-# All flows
+# All flows (recursive under flows/)
 yarn test:e2e
 
 # Smoke only (P0)
@@ -31,6 +33,19 @@ yarn test:e2e:flow .maestro/flows/smoke/tab-navigation.yaml
 
 # Regenerate catalog flows after editing scripts/generate-maestro-flows.mjs
 yarn generate:maestro-flows
+```
+
+Maestro 2.x only runs YAML files in the **top level** of a folder unless `flows:` glob patterns are set in config:
+
+- [`.maestro/config.yaml`](config.yaml) — full suite (`flows/**`), target `.maestro`
+- [`.maestro/smoke-config.yaml`](smoke-config.yaml) — smoke or single flow (`*`), target a leaf folder or one `.yaml` file; `executionOrder` runs flows **sequentially** (each cold-starts the app)
+
+Install the **CLI** (not the Studio cask):
+
+```bash
+brew tap mobile-dev-inc/tap
+brew install mobile-dev-inc/tap/maestro
+brew link --overwrite mobile-dev-inc/tap/maestro   # if cask was installed earlier
 ```
 
 ## E2E mode (dev / internal TestFlight only)

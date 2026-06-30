@@ -17,6 +17,8 @@ export type E2EConfigParams = {
   skipAppLock?: boolean;
   mockPro?: boolean;
   disableAds?: boolean;
+  /** Re-show onboarding with the Skip button visible (returning-user path). */
+  prepareSkipUi?: boolean;
 };
 
 export async function applyE2EConfig(params: E2EConfigParams = {}): Promise<void> {
@@ -30,7 +32,10 @@ export async function applyE2EConfig(params: E2EConfigParams = {}): Promise<void
   setE2EActiveSync(true);
   setE2ESkipOnboardingSync(skipOnboarding);
 
-  if (skipOnboarding) {
+  if (params.prepareSkipUi && !skipOnboarding) {
+    setHasSeenOnboarding();
+    useOnboardingStore.setState({ hasSeenOnboarding: true, forceShow: true });
+  } else if (skipOnboarding) {
     setHasSeenOnboarding();
     setTermsAgreedAt();
     useOnboardingStore.getState().markOnboardingComplete();

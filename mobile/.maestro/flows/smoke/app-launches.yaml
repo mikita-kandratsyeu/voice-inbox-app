@@ -1,20 +1,11 @@
 appId: com.mkandratsyeu.voiceinboxai
+name: app-launches
 ---
-# S01 — cold start shows onboarding or inbox
+# S01 — cold start lands on onboarding (Skip is hidden on first launch)
 - runFlow: ../../subflows/launch-fresh.yaml
 - extendedWaitUntil:
     visible:
-      id: onboarding.skip
+      id: onboarding.next
     timeout: 45000
-    optional: true
-- extendedWaitUntil:
-    visible:
-      id: inbox.screen
-    timeout: 5000
-    optional: true
 - assertVisible:
-    id: onboarding.skip
-    optional: true
-- assertVisible:
-    id: inbox.screen
-    optional: true
+    id: onboarding.next
