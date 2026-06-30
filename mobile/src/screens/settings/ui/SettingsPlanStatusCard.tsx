@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
-  FadeIn,
   interpolateColor,
   useAnimatedStyle,
   useSharedValue,
@@ -15,6 +14,7 @@ import Animated, {
 
 import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
+import { useFadeInEntering } from '@/shared/config';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 
 type SettingsPlanStatusCardProps = {
@@ -35,6 +35,7 @@ export function SettingsPlanStatusCard({
 }: SettingsPlanStatusCardProps) {
   const isSidebar = layout === 'sidebar';
   const { t, i18n } = useTranslation();
+  const cardEntering = useFadeInEntering(160, { delay: 24 });
   const { isProActive, expiresAtMs } = useProEntitlement();
   const borderPulse = useSharedValue(0);
 
@@ -119,7 +120,7 @@ export function SettingsPlanStatusCard({
       accessibilityState={{ disabled: onPress == null }}
     >
       <Animated.View
-        entering={FadeIn.duration(160).delay(24)}
+        entering={cardEntering}
         className={
           isSidebar ? 'overflow-hidden rounded-2xl p-3.5' : 'mb-4 overflow-hidden rounded-2xl p-5'
         }

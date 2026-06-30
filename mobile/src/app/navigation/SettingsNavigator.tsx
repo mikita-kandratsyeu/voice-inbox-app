@@ -30,6 +30,7 @@ import {
 import { useColors } from '@/shared/config';
 import { SettingsSurfaceColorProvider } from '@/shared/ui/SettingsSurfaceColorContext';
 
+import { CARD_PUSH_OPTIONS, NESTED_STACK_DEFAULTS } from './screenOptions';
 import type { SettingsStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
@@ -39,122 +40,86 @@ export const SettingsNavigator = () => {
 
   return (
     <SettingsSurfaceColorProvider color={color}>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator screenOptions={NESTED_STACK_DEFAULTS}>
         <Stack.Screen name="Settings" component={SettingsScreen} />
-        <Stack.Screen
-          name="Appearance"
-          component={AppearanceScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
+        <Stack.Screen name="Appearance" component={AppearanceScreen} options={CARD_PUSH_OPTIONS} />
         <Stack.Screen
           name="AIModelPicker"
           component={AIModelPickerScreen}
-          options={{ animation: 'slide_from_right' }}
+          options={CARD_PUSH_OPTIONS}
         />
         <Stack.Screen
           name="PrivateAiMode"
           component={PrivateAiModeScreen}
-          options={{ animation: 'slide_from_right' }}
+          options={CARD_PUSH_OPTIONS}
         />
-        <Stack.Screen
-          name="AiSettings"
-          component={AiSettingsScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
+        <Stack.Screen name="AiSettings" component={AiSettingsScreen} options={CARD_PUSH_OPTIONS} />
         <Stack.Screen
           name="PrivateRemoteServer"
           component={PrivateRemoteServerScreen}
-          options={{ animation: 'slide_from_right' }}
+          options={CARD_PUSH_OPTIONS}
         />
         <Stack.Screen
           name="PrivateAiQueue"
           component={PrivateAiQueueScreen}
-          options={{ animation: 'slide_from_right' }}
+          options={CARD_PUSH_OPTIONS}
         />
         <Stack.Screen
           name="AiUsageDashboard"
           component={AiUsageDashboardScreen}
-          options={{ animation: 'slide_from_right' }}
+          options={CARD_PUSH_OPTIONS}
         />
         <Stack.Screen
           name="SiriShortcuts"
           component={SiriShortcutsScreen}
-          options={{ animation: 'slide_from_right' }}
+          options={CARD_PUSH_OPTIONS}
         />
-        <Stack.Screen
-          name="Digest"
-          component={DigestScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
+        <Stack.Screen name="Digest" component={DigestScreen} options={CARD_PUSH_OPTIONS} />
         <Stack.Screen
           name="WhisperModelPicker"
           component={WhisperModelPickerScreen}
-          options={{ animation: 'slide_from_right' }}
+          options={CARD_PUSH_OPTIONS}
         />
         <Stack.Screen
           name="StorageDetails"
           component={StorageDetailsScreen}
-          options={{ animation: 'slide_from_right' }}
+          options={CARD_PUSH_OPTIONS}
         />
-        <Stack.Screen
-          name="Trash"
-          component={TrashScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
+        <Stack.Screen name="Trash" component={TrashScreen} options={CARD_PUSH_OPTIONS} />
         <Stack.Screen
           name="AppLockSetup"
           component={AppLockSetupScreen}
-          options={{ animation: 'slide_from_right' }}
+          options={CARD_PUSH_OPTIONS}
         />
-        <Stack.Screen
-          name="AboutApp"
-          component={AboutAppScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
+        <Stack.Screen name="AboutApp" component={AboutAppScreen} options={CARD_PUSH_OPTIONS} />
         <Stack.Screen
           name="DiagnosticLogs"
           component={DiagnosticLogsScreen}
-          options={{ animation: 'slide_from_right' }}
+          options={CARD_PUSH_OPTIONS}
         />
-        <Stack.Screen
-          name="Support"
-          component={SupportScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
+        <Stack.Screen name="Support" component={SupportScreen} options={CARD_PUSH_OPTIONS} />
         <Stack.Screen
           name="Notifications"
           component={NotificationsScreen}
-          options={{ animation: 'slide_from_right' }}
+          options={CARD_PUSH_OPTIONS}
         />
         <Stack.Screen
           name="Gestures"
           component={GesturesSettingsScreen}
-          options={{ animation: 'slide_from_right' }}
+          options={CARD_PUSH_OPTIONS}
         />
         <Stack.Screen
           name="ImportRecords"
           component={ImportRecordsScreen}
-          options={{ animation: 'slide_from_right' }}
+          options={CARD_PUSH_OPTIONS}
         />
-        <Stack.Screen
-          name="GithubSync"
-          component={GithubSyncScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
-        <Stack.Screen
-          name="GitlabSync"
-          component={GitlabSyncScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
-        <Stack.Screen
-          name="IcloudSync"
-          component={IcloudSyncScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
+        <Stack.Screen name="GithubSync" component={GithubSyncScreen} options={CARD_PUSH_OPTIONS} />
+        <Stack.Screen name="GitlabSync" component={GitlabSyncScreen} options={CARD_PUSH_OPTIONS} />
+        <Stack.Screen name="IcloudSync" component={IcloudSyncScreen} options={CARD_PUSH_OPTIONS} />
         <Stack.Screen
           name="BackupRestore"
           component={BackupRestoreScreen}
-          options={{ animation: 'slide_from_right' }}
+          options={CARD_PUSH_OPTIONS}
         />
       </Stack.Navigator>
     </SettingsSurfaceColorProvider>

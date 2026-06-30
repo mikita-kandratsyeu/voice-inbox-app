@@ -8,40 +8,29 @@ import {
   InboxScreen,
 } from '@/screens/inbox';
 
+import { CARD_PUSH_OPTIONS, NESTED_STACK_DEFAULTS } from './screenOptions';
 import type { InboxStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<InboxStackParamList>();
 
 export const InboxNavigator = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={NESTED_STACK_DEFAULTS}>
       <Stack.Screen name="InboxHome" component={InboxScreen} />
       <Stack.Screen
         name="AutoOrganizeReview"
         component={AutoOrganizeReviewScreen}
-        options={{
-          presentation: 'card',
-          animation: 'slide_from_right',
-          gestureEnabled: true,
-        }}
+        options={{ presentation: 'card', ...CARD_PUSH_OPTIONS }}
       />
       <Stack.Screen
         name="AiOrganizeFoldersCleanupReview"
         component={AiOrganizeFoldersCleanupReviewScreen}
-        options={{
-          presentation: 'card',
-          animation: 'slide_from_right',
-          gestureEnabled: true,
-        }}
+        options={{ presentation: 'card', ...CARD_PUSH_OPTIONS }}
       />
       <Stack.Screen
         name="AiOrganizeArchiveReview"
         component={AiOrganizeArchiveReviewScreen}
-        options={{
-          presentation: 'card',
-          animation: 'slide_from_right',
-          gestureEnabled: true,
-        }}
+        options={{ presentation: 'card', ...CARD_PUSH_OPTIONS }}
       />
     </Stack.Navigator>
   );

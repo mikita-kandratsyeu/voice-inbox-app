@@ -21,6 +21,7 @@ import { WhisperModelPickerScreen } from '@/screens/settings';
 import { isTestflightInternalBuild } from '@/shared/config/buildEnv';
 
 import { BottomTabNavigator } from './BottomTabNavigator';
+import { CARD_PUSH_OPTIONS, MODAL_STACK_OPTIONS, ROOT_STACK_DEFAULTS } from './screenOptions';
 import type { RootStackParamList } from './types';
 
 const showDebugNavigation = __DEV__ || isTestflightInternalBuild();
@@ -40,121 +41,65 @@ const AskAIScreenKeyed = () => {
 
 export const RootNavigator = () => (
   <InboxFiltersResetProvider>
-    <Stack.Navigator>
-      <Stack.Screen name="Main" component={BottomTabNavigator} options={{ headerShown: false }} />
+    <Stack.Navigator screenOptions={ROOT_STACK_DEFAULTS}>
+      <Stack.Screen name="Main" component={BottomTabNavigator} />
       <Stack.Screen
         name="RecordModal"
         component={RecordScreenWithProvider}
         options={{
-          headerShown: false,
-          presentation: 'fullScreenModal',
-          animation: 'slide_from_bottom',
+          ...MODAL_STACK_OPTIONS,
           gestureEnabled: false,
+          fullScreenGestureEnabled: false,
         }}
       />
-      <Stack.Screen
-        name="TextNoteModal"
-        component={TextNoteScreen}
-        options={{
-          headerShown: false,
-          presentation: 'fullScreenModal',
-          animation: 'slide_from_bottom',
-          gestureEnabled: true,
-        }}
-      />
+      <Stack.Screen name="TextNoteModal" component={TextNoteScreen} options={MODAL_STACK_OPTIONS} />
       <Stack.Screen
         name="RecordingDetail"
         component={RecordingDetailScreen}
-        options={{
-          headerShown: false,
-          animation: 'slide_from_right',
-          gestureEnabled: true,
-        }}
+        options={CARD_PUSH_OPTIONS}
       />
       <Stack.Screen
         name="RecordingAskAI"
         component={AskAIScreenKeyed}
-        options={{
-          headerShown: false,
-          animation: 'slide_from_right',
-          gestureEnabled: true,
-        }}
+        options={CARD_PUSH_OPTIONS}
       />
-      <Stack.Screen
-        name="InboxAskAI"
-        component={InboxAskAIScreen}
-        options={{
-          headerShown: false,
-          animation: 'slide_from_right',
-          gestureEnabled: true,
-        }}
-      />
+      <Stack.Screen name="InboxAskAI" component={InboxAskAIScreen} options={CARD_PUSH_OPTIONS} />
       <Stack.Screen
         name="WhisperModelPickerRoot"
         component={WhisperModelPickerScreen}
-        options={{
-          headerShown: false,
-          animation: 'slide_from_right',
-          gestureEnabled: true,
-        }}
+        options={CARD_PUSH_OPTIONS}
       />
       <Stack.Screen
         name="EditTranscript"
         component={EditTranscriptScreen}
-        options={{
-          headerShown: false,
-          animation: 'slide_from_right',
-          gestureEnabled: true,
-        }}
+        options={CARD_PUSH_OPTIONS}
       />
       <Stack.Screen
         name="NoteDocument"
         component={NoteDocumentScreen}
-        options={{
-          headerShown: false,
-          presentation: 'fullScreenModal',
-          animation: 'slide_from_bottom',
-          gestureEnabled: true,
-        }}
+        options={MODAL_STACK_OPTIONS}
       />
-      <Stack.Screen
-        name="AllTasks"
-        component={AllTasksScreen}
-        options={{
-          headerShown: false,
-          animation: 'slide_from_right',
-          gestureEnabled: true,
-        }}
-      />
+      <Stack.Screen name="AllTasks" component={AllTasksScreen} options={CARD_PUSH_OPTIONS} />
       <Stack.Screen
         name="NotesGraph"
         component={NotesGraphScreen}
         options={{
-          headerShown: false,
-          animation: 'slide_from_right',
+          ...CARD_PUSH_OPTIONS,
           gestureEnabled: false,
+          fullScreenGestureEnabled: false,
         }}
       />
       <Stack.Screen
         name="InAppEventDetail"
         component={InAppEventDetailScreen}
         options={{
-          headerShown: false,
-          presentation: 'fullScreenModal',
-          animation: 'slide_from_bottom',
+          ...MODAL_STACK_OPTIONS,
           gestureEnabled: false,
+          fullScreenGestureEnabled: false,
         }}
       />
       {showDebugNavigation ? (
-        <Stack.Screen
-          name="Debug"
-          component={DebugScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-            gestureEnabled: true,
-          }}
-        />
+        <Stack.Screen name="Debug" component={DebugScreen} options={CARD_PUSH_OPTIONS} />
       ) : null}
     </Stack.Navigator>
   </InboxFiltersResetProvider>

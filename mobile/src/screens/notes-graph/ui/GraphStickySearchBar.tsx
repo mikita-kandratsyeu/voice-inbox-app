@@ -2,9 +2,10 @@ import { ChevronDown, ChevronUp, Search, X } from 'lucide-react-native';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
+import { useFadeInEntering, useFadeOutExiting } from '@/shared/config';
 import { iosHitSlopForVisualSize } from '@/shared/lib/iosTouchTarget';
 import {
   FLOATING_FROSTED_INPUT_ICON_SIZE,
@@ -49,6 +50,8 @@ export const GraphStickySearchBar = memo(function GraphStickySearchBar({
   onClose,
 }: GraphStickySearchBarProps) {
   const { t } = useTranslation();
+  const searchIconEntering = useFadeInEntering(150);
+  const searchIconExiting = useFadeOutExiting(150);
   const inputRef = useRef<TextInput>(null);
   const [focused, setFocused] = useState(false);
 
@@ -149,8 +152,8 @@ export const GraphStickySearchBar = memo(function GraphStickySearchBar({
             {query.length > 0 ? (
               isSearchPending ? (
                 <Animated.View
-                  entering={FadeIn.duration(150)}
-                  exiting={FadeOut.duration(150)}
+                  entering={searchIconEntering}
+                  exiting={searchIconExiting}
                   style={{
                     width: 16,
                     height: 16,
@@ -161,7 +164,7 @@ export const GraphStickySearchBar = memo(function GraphStickySearchBar({
                   <ActivityIndicator size="small" color={color.accent.primary} />
                 </Animated.View>
               ) : (
-                <Animated.View entering={FadeIn.duration(150)} exiting={FadeOut.duration(150)}>
+                <Animated.View entering={searchIconEntering} exiting={searchIconExiting}>
                   <TouchableOpacity
                     onPress={handleClear}
                     hitSlop={iosHitSlopForVisualSize(16, 16)}

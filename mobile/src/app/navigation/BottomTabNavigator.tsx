@@ -28,6 +28,7 @@ import {
   TAB_LABELS,
 } from './config';
 import { InboxNavigator } from './InboxNavigator';
+import { FREEZE_ON_BLUR_OPTIONS } from './screenOptions';
 import { SettingsNavigator } from './SettingsNavigator';
 import { TabletShellLayout } from './tablet';
 import { TabletTabBarBridge } from './tablet/TabletTabBarBridge';
@@ -124,6 +125,7 @@ export const BottomTabNavigator = () => {
     },
     tabBarButton: (props: BottomTabBarButtonProps) => <AnimatedTabButton {...props} />,
     lazy: true,
+    ...FREEZE_ON_BLUR_OPTIONS,
   };
 
   const bottomTouchShieldHeight = isTablet ? 0 : FLOAT_TAB_BOTTOM_GAP + insets.bottom;

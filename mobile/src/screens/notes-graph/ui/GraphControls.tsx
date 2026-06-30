@@ -1,7 +1,8 @@
 import { Info, Maximize2, Minus, Plus, RotateCcw } from 'lucide-react-native';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
+import { Pressable } from 'react-native-gesture-handler';
 
 import type { Colors } from '@/shared/config';
 import { hapticLight } from '@/shared/lib';

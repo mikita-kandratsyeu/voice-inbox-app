@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
   Easing,
-  FadeIn,
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
@@ -12,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { getAnimationDuration, useColors } from '@/shared/config';
+import { getAnimationDuration, useColors, useFadeInEntering } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 
 export type DigestMetricCardProps = {
@@ -177,6 +176,7 @@ export function DigestCollapsibleSectionCard({
 }: DigestCollapsibleSectionCardProps) {
   const { t } = useTranslation();
   const color = useColors();
+  const sectionExpandEntering = useFadeInEntering(140);
   const [expanded, setExpanded] = useState(defaultExpanded);
   const chevronRotation = useSharedValue(defaultExpanded ? 0 : -90);
 
@@ -239,7 +239,7 @@ export function DigestCollapsibleSectionCard({
       </Pressable>
       {persistentContent ? <View className="pt-2">{persistentContent}</View> : null}
       {expanded ? (
-        <Animated.View entering={FadeIn.duration(140)} className="pt-3">
+        <Animated.View entering={sectionExpandEntering} className="pt-3">
           {children}
         </Animated.View>
       ) : null}

@@ -1,7 +1,8 @@
 import type { FlashListRef } from '@shopify/flash-list';
 import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
+import { Pressable } from 'react-native-gesture-handler';
 
 import type { VoiceRecord } from '@/entities/record';
 import { RecordCard, RecordCardExpanded } from '@/entities/record';
@@ -13,6 +14,7 @@ import type { Colors } from '@/shared/config';
 import { resolveDisplayFolderColor } from '@/shared/lib';
 import { SectionHeader, SwipeableCard } from '@/shared/ui';
 
+import { prepareInboxCardLayoutAnimation } from '../lib/inboxCardLayoutTransition';
 import type { FlattenedItem } from '../lib/inboxScreenTypes';
 
 const EXPANDED_CARD_MAX_HEIGHT = 560;
@@ -207,6 +209,12 @@ function InboxScreenListItemInner({
     onLongPress: () => onRecordLongPress(item.item),
   };
 
+  const prepareArchiveListAnimation = () => {
+    dismissSwipeHint();
+    listRef.current?.prepareForLayoutAnimationRender();
+    prepareInboxCardLayoutAnimation();
+  };
+
   return (
     <View
       style={[
@@ -223,8 +231,7 @@ function InboxScreenListItemInner({
           isPinned={item.item.isPinned}
           leftAction={isArchivedView ? 'unarchive' : 'archive'}
           onLeftAction={() => {
-            dismissSwipeHint();
-            listRef.current?.prepareForLayoutAnimationRender();
+            prepareArchiveListAnimation();
             isArchivedView ? unarchiveRecord(item.item.id) : archiveRecord(item.item.id);
           }}
           onPin={isArchivedView ? undefined : () => togglePin(item.item.id)}

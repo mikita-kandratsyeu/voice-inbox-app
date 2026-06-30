@@ -14,7 +14,6 @@ import { useTranslation } from 'react-i18next';
 import { LayoutAnimation, Pressable, ScrollView, Text, View } from 'react-native';
 import Animated, {
   Easing,
-  FadeIn,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -35,7 +34,7 @@ import { TranscriptHighlight } from '@/features/transcript-highlight';
 import { useTranscriptionBlockedForRecord } from '@/features/transcription';
 import { shouldUseIosWhisperKitEngine } from '@/features/transcription/config/transcriptionEngine';
 import type { Colors } from '@/shared/config';
-import { useAppTheme } from '@/shared/config';
+import { FADE_IN_EASING_OUT_CUBIC, useAppTheme, useFadeInEntering } from '@/shared/config';
 import { inlineNativeMenuSection } from '@/shared/lib';
 import { hapticSelection } from '@/shared/lib';
 import { getWhisperModelShortLabelKey } from '@/shared/lib/whisper';
@@ -132,6 +131,7 @@ export const TranscriptTab = ({
 }: TranscriptTabProps) => {
   const { t } = useTranslation();
   const theme = useAppTheme();
+  const transcriptExpandEntering = useFadeInEntering(200, { easing: FADE_IN_EASING_OUT_CUBIC });
   const isDark = theme === 'dark';
   const [viewMode, setViewMode] = useState<'original' | 'translated'>('original');
   const [transcriptExpanded, setTranscriptExpanded] = useState(true);
@@ -400,10 +400,7 @@ export const TranscriptTab = ({
           </Animated.View>
         </Pressable>
         {transcriptExpanded ? (
-          <Animated.View
-            entering={FadeIn.duration(200).easing(Easing.out(Easing.cubic))}
-            className="pt-1"
-          >
+          <Animated.View entering={transcriptExpandEntering} className="pt-1">
             {showTranslation ? (
               <View
                 className="rounded-2xl p-4"

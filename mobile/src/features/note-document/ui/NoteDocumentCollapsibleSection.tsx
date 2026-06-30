@@ -4,13 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
   Easing,
-  FadeIn,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
+import { useFadeInEntering } from '@/shared/config';
 import { hapticSelection, isDarkSurfaceColor, withAlphaHex } from '@/shared/lib';
 
 import { resolveNoteDocumentSectionIcon } from '../lib/noteDocumentSectionIconUi';
@@ -41,6 +41,7 @@ export const NoteDocumentCollapsibleSection = React.memo(function NoteDocumentCo
   sectionId,
 }: NoteDocumentCollapsibleSectionProps) {
   const { t } = useTranslation();
+  const sectionExpandEntering = useFadeInEntering(140);
   const chevronRotation = useSharedValue(0);
   const SectionIcon = resolveSectionIcon(sectionId);
   const isReading = variant === 'reading';
@@ -135,7 +136,7 @@ export const NoteDocumentCollapsibleSection = React.memo(function NoteDocumentCo
         </Animated.View>
       </Pressable>
       {expanded ? (
-        <Animated.View entering={FadeIn.duration(140)} style={{ paddingTop: isReading ? 0 : 12 }}>
+        <Animated.View entering={sectionExpandEntering} style={{ paddingTop: isReading ? 0 : 12 }}>
           {children}
         </Animated.View>
       ) : null}

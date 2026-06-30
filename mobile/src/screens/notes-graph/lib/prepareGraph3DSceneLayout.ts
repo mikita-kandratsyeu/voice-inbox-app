@@ -4,7 +4,7 @@ import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
 import { resolveDisplayFolderColor } from '@/shared/lib';
 
-import { buildGraph3DLayout } from './buildGraph3DLayout';
+import { buildGraph3DLayout, type Graph3DLayoutResult } from './buildGraph3DLayout';
 import { getGraphEdgeStrokeStyle } from './graphEdgeStyles';
 import type { GraphEdge, GraphEdgeKind, GraphNode } from './graphTypes';
 import { resolveGraph3DNodeColor } from './resolveGraph3DNodeColor';
@@ -307,13 +307,14 @@ export function prepareGraph3DSceneLayout(
   color: Colors,
   foldersById: Map<string, Folder>,
   isProActive: boolean,
+  precomputedLayout?: Graph3DLayoutResult,
 ): Graph3DSceneLayout | null {
   if (nodes.length === 0) {
     return null;
   }
 
   const nodeIndexById = new Map<string, number>();
-  const { nodePoints, nodeKinds } = buildGraph3DLayout(nodes, edges);
+  const { nodePoints, nodeKinds } = precomputedLayout ?? buildGraph3DLayout(nodes, edges);
   const nodeColors: SkColor[] = [];
   let recordCount = 0;
   let taskCount = 0;

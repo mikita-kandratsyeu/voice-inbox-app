@@ -19,6 +19,7 @@ import type { Colors } from '@/shared/config';
 import { hapticLight } from '@/shared/lib';
 import { runAfterInteractions } from '@/shared/lib/runAfterInteractions';
 
+import { runGraph3DLayoutOnWorker } from '../lib/graph3DLayoutWorkerRuntime';
 import {
   computeFitCameraDistance,
   GRAPH_3D_DEFAULT_PITCH,
@@ -101,16 +102,38 @@ export function GraphCanvas3D({
     setIsPreparing3d(true);
 
     const task = runAfterInteractions(() => {
-      if (layoutGenerationRef.current !== generation) {
-        return;
-      }
+      void (async () => {
+        if (layoutGenerationRef.current !== generation) {
+          return;
+        }
 
-      const layout = prepareGraph3DSceneLayout(nodes, edges, color, foldersById, isProActive);
-      if (layoutGenerationRef.current !== generation) {
-        return;
-      }
+        try {
+          const layout3d = await runGraph3DLayoutOnWorker(nodes, edges);
+          if (layoutGenerationRef.current !== generation) {
+            return;
+          }
 
-      setSceneLayout(layout);
+          const layout = prepareGraph3DSceneLayout(
+            nodes,
+            edges,
+            color,
+            foldersById,
+            isProActive,
+            layout3d,
+          );
+          if (layoutGenerationRef.current !== generation) {
+            return;
+          }
+
+          setSceneLayout(layout);
+        } catch {
+          if (layoutGenerationRef.current !== generation) {
+            return;
+          }
+
+          setSceneLayout(null);
+        }
+      })();
     });
 
     return () => {

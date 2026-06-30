@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
-  FadeIn,
   interpolateColor,
   useAnimatedStyle,
   useSharedValue,
@@ -13,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
+import { useFadeInEntering } from '@/shared/config';
 import { withAlphaHex } from '@/shared/lib';
 
 const CARD_RADIUS = 14;
@@ -62,6 +62,7 @@ function PlanCardGradient({ color }: { color: Colors }) {
 
 export function TabletSidebarPlanAndUsageCard({ color, onOpenPlanPaywall }: Props) {
   const { t } = useTranslation();
+  const cardEntering = useFadeInEntering(180);
   const accent = color.accent.primary;
   const borderPulse = useSharedValue(0);
 
@@ -82,7 +83,7 @@ export function TabletSidebarPlanAndUsageCard({ color, onOpenPlanPaywall }: Prop
 
   return (
     <Animated.View
-      entering={FadeIn.duration(180)}
+      entering={cardEntering}
       style={[
         styles.card,
         {

@@ -9,7 +9,8 @@ import {
 import { Maximize2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, View } from 'react-native';
+import { Alert, View } from 'react-native';
+import { Pressable } from 'react-native-gesture-handler';
 import {
   GestureDetector,
   type PanGestureActiveEvent,

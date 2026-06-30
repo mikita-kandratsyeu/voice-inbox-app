@@ -16,6 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
+import { useIsMotionReduced } from '@/shared/config';
 import { hapticSelection, iosHitSlopForVisualSize, useIsTablet, withAlphaHex } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 
@@ -318,7 +319,10 @@ export function AllTasksCalendarPanel({
   const headerSummaryMinHeight =
     metrics.selectedDateTitleFontSize + 2 + 4 + metrics.headerSubtitleFontSize + 2;
 
+  const isMotionReduced = useIsMotionReduced();
+
   const weekRowEntering = useMemo(() => {
+    if (isMotionReduced) return undefined;
     if (weekSlideDirection === 'prev') {
       return SlideInLeft.duration(CALENDAR_WEEK_SLIDE_MS).easing(Easing.out(Easing.cubic));
     }
@@ -326,9 +330,10 @@ export function AllTasksCalendarPanel({
       return SlideInRight.duration(CALENDAR_WEEK_SLIDE_MS).easing(Easing.out(Easing.cubic));
     }
     return undefined;
-  }, [weekSlideDirection]);
+  }, [isMotionReduced, weekSlideDirection]);
 
   const weekRowExiting = useMemo(() => {
+    if (isMotionReduced) return undefined;
     if (weekSlideDirection === 'prev') {
       return SlideOutRight.duration(CALENDAR_WEEK_SLIDE_MS - 40).easing(Easing.in(Easing.cubic));
     }
@@ -336,7 +341,7 @@ export function AllTasksCalendarPanel({
       return SlideOutLeft.duration(CALENDAR_WEEK_SLIDE_MS - 40).easing(Easing.in(Easing.cubic));
     }
     return undefined;
-  }, [weekSlideDirection]);
+  }, [isMotionReduced, weekSlideDirection]);
 
   const goToToday = useCallback(() => {
     hapticSelection();

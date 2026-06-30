@@ -24,5 +24,11 @@ export {
   parseAccentColorId,
 } from './colors';
 export { FREE_WEEKLY_LIMIT, PRO_LICENSE_STATUS_CACHE_MS, PRO_WEEKLY_LIMIT } from './productLimits';
+export {
+  FADE_IN_EASING_OUT_CUBIC,
+  useFadeInEntering,
+  useFadeOutExiting,
+  useIsMotionReduced,
+} from './reanimatedMotion';
 export { getWebsiteUrl } from './runtimeConfig';
 export { useAppTheme, useColors } from './useAppTheme';

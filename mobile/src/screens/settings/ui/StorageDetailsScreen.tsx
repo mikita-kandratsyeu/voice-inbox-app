@@ -14,7 +14,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import Animated, { Easing, FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -48,7 +48,7 @@ import {
   stopLocalAiDownloadLiveActivity,
   stopWhisperDownloadLiveActivity,
 } from '@/features/model-manager/lib/downloadLiveActivity';
-import { useColors } from '@/shared/config';
+import { FADE_IN_EASING_OUT_CUBIC, useColors, useFadeInEntering } from '@/shared/config';
 import {
   clearCache,
   computeAiDataBytes,
@@ -109,8 +109,6 @@ const EMPTY_TRASH_STORAGE = {
 /** Hide breakdown ring/list rows below this size (noise vs empty). */
 const STORAGE_BREAKDOWN_MIN_BYTES = 1024;
 
-const STORAGE_BREAKDOWN_ENTER = FadeIn.duration(220).easing(Easing.out(Easing.cubic));
-
 type DownloadedModelVariant = {
   id: WhisperModelId | 'speaker-kit';
   name: string;
@@ -126,6 +124,7 @@ type DownloadedLocalLlmEntry = {
 
 export const StorageDetailsScreen = () => {
   const { t } = useTranslation();
+  const breakdownExpandEntering = useFadeInEntering(220, { easing: FADE_IN_EASING_OUT_CUBIC });
   const color = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
@@ -749,7 +748,7 @@ export const StorageDetailsScreen = () => {
                           />
                           {expanded && hasExp ? (
                             <Animated.View
-                              entering={STORAGE_BREAKDOWN_ENTER}
+                              entering={breakdownExpandEntering}
                               style={{
                                 paddingLeft: 16 + ROW_BULLET_SIZE + 12,
                                 paddingRight: 8 + ROW_TRAIL_SLOT_W,
