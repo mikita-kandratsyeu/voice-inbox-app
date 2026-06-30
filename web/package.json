@@ -11,7 +11,7 @@
     "start": "APP_ENV=production next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "type:check": "prisma generate && tsc --noEmit",
+    "type:check": "prisma generate && next typegen && tsc --noEmit",
     "test": "jest",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
