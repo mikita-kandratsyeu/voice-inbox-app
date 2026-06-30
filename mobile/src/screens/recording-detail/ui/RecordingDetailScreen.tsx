@@ -54,6 +54,7 @@ import { shouldUseNativeMeetingSpeakers } from '@/features/transcription/lib/nat
 import { useOpenNotesGraphForRecord } from '@/screens/notes-graph';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { useAppTheme, useColors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import {
   hapticError,
   hapticLight,
@@ -951,7 +952,11 @@ export const RecordingDetailScreen = () => {
     (showSharedAccessSection ? 1 : 0);
 
   return (
-    <View className="flex-1" style={{ backgroundColor: shellBackgroundColor }}>
+    <View
+      testID={TestIds.detail.screen}
+      className="flex-1"
+      style={{ backgroundColor: shellBackgroundColor }}
+    >
       <RecordingDetailHeader
         record={liveRecord}
         color={color}

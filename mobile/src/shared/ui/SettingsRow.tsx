@@ -26,6 +26,7 @@ type SettingsRowProps = {
   labelClassName?: string;
   /** Crown + Pro label beside the row title (locked Pro features for free users). */
   showProBadge?: boolean;
+  testID?: string;
 };
 
 type SettingsRowInnerProps = SettingsRowProps & {
@@ -47,6 +48,7 @@ const SettingsRowInner = ({
   dangerous = false,
   labelClassName,
   showProBadge = false,
+  testID,
   color,
 }: SettingsRowInnerProps) => {
   const isBusy = loading;
@@ -135,6 +137,7 @@ const SettingsRowInner = ({
   if (resolvedOnPress) {
     return (
       <TouchableOpacity
+        testID={testID}
         accessibilityRole="button"
         accessibilityLabel={a11yLabel}
         onPress={resolvedOnPress}

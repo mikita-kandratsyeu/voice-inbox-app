@@ -1,0 +1,20 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+- runFlow: launch-fresh.yaml
+- extendedWaitUntil:
+    visible:
+      id: onboarding.skip
+    timeout: 45000
+- tapOn:
+    id: onboarding.skip
+- extendedWaitUntil:
+    visible:
+      id: onboarding.terms.agree
+    timeout: 10000
+- tapOn:
+    id: onboarding.terms.agree
+- extendedWaitUntil:
+    visible:
+      id: inbox.screen
+    timeout: 30000
+- runFlow: dismiss-system-alerts.yaml

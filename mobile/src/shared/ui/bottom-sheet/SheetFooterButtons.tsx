@@ -44,12 +44,14 @@ export type SheetFooterButtonsProps = {
   primaryLoading?: boolean;
   labelSuffix?: string;
   primaryAccessibilityLabel?: string;
+  primaryTestID?: string;
   onPrimaryPressIn?: () => void;
   secondaryLabel?: string;
   onSecondaryPress?: () => void;
   onSecondaryPressIn?: () => void;
   secondaryDisabled?: boolean;
   secondaryAccessibilityLabel?: string;
+  secondaryTestID?: string;
   /** When there is no secondary action: `primary` (default) or `secondary` (e.g. Cancel-only). */
   singleVariant?: 'primary' | 'secondary';
   /** Full-width action below the main row or single button (e.g. delete folder). */
@@ -77,12 +79,14 @@ export function SheetFooterButtons({
   primaryLoading = false,
   labelSuffix,
   primaryAccessibilityLabel,
+  primaryTestID,
   onPrimaryPressIn,
   secondaryLabel,
   onSecondaryPress,
   onSecondaryPressIn,
   secondaryDisabled = false,
   secondaryAccessibilityLabel,
+  secondaryTestID,
   singleVariant = 'primary',
   bottomAction,
   buttonLayout = 'row',
@@ -104,6 +108,7 @@ export function SheetFooterButtons({
         buttonLayout === 'stack' ? (
           <View className="gap-3">
             <Button
+              testID={primaryTestID}
               variant="primary"
               fullWidth
               label={primaryLabel}
@@ -120,6 +125,7 @@ export function SheetFooterButtons({
               accessibilityState={{ disabled: primaryDisabled }}
             />
             <Button
+              testID={secondaryTestID}
               variant="secondary"
               fullWidth
               label={secondaryLabel}
@@ -135,6 +141,7 @@ export function SheetFooterButtons({
         ) : (
           <View className="flex-row gap-3">
             <Button
+              testID={secondaryTestID}
               variant="secondary"
               label={secondaryLabel}
               onPress={onSecondaryPress}
@@ -147,6 +154,7 @@ export function SheetFooterButtons({
               accessibilityLabel={secondaryAccessibilityLabel ?? secondaryLabel}
             />
             <Button
+              testID={primaryTestID}
               variant="primary"
               label={primaryLabel}
               labelSuffix={labelSuffix}
@@ -180,6 +188,7 @@ export function SheetFooterButtons({
         />
       ) : (
         <Button
+          testID={primaryTestID}
           variant="primary"
           fullWidth
           label={primaryLabel}

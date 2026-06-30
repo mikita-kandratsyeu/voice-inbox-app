@@ -23,6 +23,10 @@
     "prepare": "husky",
     "start": "NODE_ENV=development react-native start",
     "test": "jest",
+    "test:e2e": "maestro test .maestro/flows",
+    "test:e2e:smoke": "maestro test .maestro/flows/smoke",
+    "test:e2e:flow": "maestro test",
+    "generate:maestro-flows": "node scripts/generate-maestro-flows.mjs",
     "type:check": "tsc --noEmit",
     "validate": "lint-staged && yarn type:check && yarn test",
     "validate:push": "yarn type:check && yarn test --ci --forceExit"

@@ -44,6 +44,7 @@ import {
   useBootSplashVisible,
   useColors,
 } from '@/shared/config';
+import { E2EReadyMarker } from '@/shared/e2e';
 import { i18n, initPulsarHaptics, NetworkStatusProvider } from '@/shared/lib';
 import { logAnalyticsScreenView } from '@/shared/lib/analytics';
 import { logInfo, setupAppLogger } from '@/shared/lib/appLogger';
@@ -176,6 +177,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
                 <PushNotificationSheet />
                 <TaskDeadlineActionSheet onOpenNote={openTaskDeadlineRecord} />
                 <AppRatingPromptRoot />
+                <E2EReadyMarker />
                 <GithubSyncProgressOverlay />
                 <GitlabSyncProgressOverlay />
                 <IcloudSyncProgressOverlay />

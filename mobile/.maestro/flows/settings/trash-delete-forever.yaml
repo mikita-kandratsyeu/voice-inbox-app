@@ -1,0 +1,14 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: settings/trash-delete-forever.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- tapOn:
+    id: tab.settings
+    optional: true
+- tapOn:
+    id: settings.trash
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: trash.screen
+    timeout: 20000

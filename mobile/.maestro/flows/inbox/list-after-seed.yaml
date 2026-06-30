@@ -1,0 +1,9 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: inbox/list-after-seed.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- runFlow: ../../subflows/seed-text-note.yaml
+- extendedWaitUntil:
+    visible:
+      id: inbox.recordCard.e2e-seed-note
+    timeout: 20000

@@ -1,0 +1,8 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: deeplinks/in-app-event.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- extendedWaitUntil:
+    visible:
+      id: inbox.screen
+    timeout: 20000

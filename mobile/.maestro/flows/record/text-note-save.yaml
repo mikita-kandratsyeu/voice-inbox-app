@@ -1,0 +1,16 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: record/text-note-save.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- tapOn:
+    id: tab.record
+- tapOn:
+    id: textNote.titleInput
+    optional: true
+- tapOn:
+    id: textNote.save
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: inbox.screen
+    timeout: 20000

@@ -17,6 +17,7 @@ import {
 } from '@/features/manage-folders';
 import { MobileAdminBanner, useMobileAdminBanner } from '@/features/mobile-admin-banner';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
+import { TestIds } from '@/shared/e2e';
 import { BlockingProgressModal } from '@/shared/ui';
 
 import { useInboxScreen } from '../lib/useInboxScreen';
@@ -165,7 +166,7 @@ export const InboxScreen = () => {
   );
 
   return (
-    <View style={[screenStyle, { flex: 1 }]}>
+    <View testID={TestIds.inbox.screen} style={[screenStyle, { flex: 1 }]}>
       <InboxHeader
         color={color}
         isLoaded={isLoaded}

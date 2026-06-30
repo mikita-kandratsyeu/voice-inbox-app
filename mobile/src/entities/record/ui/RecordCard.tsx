@@ -7,6 +7,7 @@ import { Pressable } from 'react-native-gesture-handler';
 import type { VoiceRecord } from '@/entities/record';
 import { getRecordCardChromeStyle } from '@/entities/record/lib/recordCardChrome';
 import type { Colors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import { formatRelativeTime } from '@/shared/lib';
 import { SwipeableCardContext } from '@/shared/ui';
 
@@ -23,6 +24,7 @@ type RecordCardProps = {
   onLongPress?: () => void;
   a11yHint?: string | null;
   hideAccessibilitySubtree?: boolean;
+  testID?: string;
 };
 
 export const RecordCard = memo(function RecordCard({
@@ -34,6 +36,7 @@ export const RecordCard = memo(function RecordCard({
   onLongPress,
   a11yHint,
   hideAccessibilitySubtree = false,
+  testID,
 }: RecordCardProps) {
   const { i18n, t } = useTranslation();
   const { isSwiping } = useContext(SwipeableCardContext);
@@ -240,6 +243,7 @@ export const RecordCard = memo(function RecordCard({
 
   return (
     <Pressable
+      testID={testID ?? TestIds.inbox.recordCard(item.id)}
       accessibilityRole="button"
       accessibilityLabel={isUnread ? `${item.title}, ${t('inbox.recordUnreadA11y')}` : item.title}
       accessibilityHint={resolvedA11yHint}

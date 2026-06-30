@@ -57,6 +57,7 @@ import {
 import { BackupPasswordSheet } from '@/screens/settings/ui/BackupPasswordSheet';
 import type { Colors } from '@/shared/config';
 import { getWebsiteUrl, useAppTheme, useColors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import { hapticSelection, IS_ANDROID, IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import { diagWarn } from '@/shared/lib/appLogger';
@@ -178,6 +179,7 @@ const OnboardingTermsGateModal = ({
           </ScrollView>
           <View className="gap-3 px-5 pb-5 pt-2">
             <Button
+              testID={TestIds.onboarding.termsAgree}
               variant="primary"
               size="lg"
               fullWidth
@@ -189,6 +191,7 @@ const OnboardingTermsGateModal = ({
               color={c}
             />
             <Button
+              testID={TestIds.onboarding.termsNotNow}
               variant="secondary"
               size="lg"
               fullWidth
@@ -296,6 +299,7 @@ const AnimatedNextButton = ({
   iconOnAccent,
   disabled,
   loading,
+  testID,
 }: {
   label: string;
   onPress: () => void;
@@ -305,6 +309,7 @@ const AnimatedNextButton = ({
   iconOnAccent: string;
   disabled?: boolean;
   loading?: boolean;
+  testID?: string;
 }) => {
   const animatedStyle = useAnimatedStyle(() => {
     const inputRange = slideColors.map((_, i) => i * screenWidth.value);
@@ -330,6 +335,7 @@ const AnimatedNextButton = ({
       ]}
     >
       <TouchableOpacity
+        testID={testID}
         onPress={onPress}
         activeOpacity={0.85}
         disabled={disabled || loading}
@@ -1258,6 +1264,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           pointerEvents={showSkipButton ? 'auto' : 'none'}
         >
           <TouchableOpacity
+            testID={TestIds.onboarding.skip}
             onPress={requestFinishOnboardingFromSkip}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             disabled={isFinishingOnboarding}
@@ -1315,6 +1322,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           t={t}
         />
         <AnimatedNextButton
+          testID={isLastSlide ? TestIds.onboarding.getStarted : TestIds.onboarding.next}
           label={isLastSlide ? t('common.start') : t('common.next')}
           onPress={handleNext}
           scrollX={scrollX}

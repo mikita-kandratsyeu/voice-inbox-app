@@ -1,0 +1,9 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: deeplinks/e2e-reset.yaml
+- runFlow: ../../subflows/launch-fresh.yaml
+- openLink: ${E2E_RESET_URL}
+- extendedWaitUntil:
+    visible:
+      id: e2e.ready
+    timeout: 20000

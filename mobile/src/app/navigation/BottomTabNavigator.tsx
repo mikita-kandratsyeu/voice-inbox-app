@@ -17,6 +17,7 @@ import { registerSharedAudioImportHandler } from '@/features/import-audio-file/l
 import { useInboxFiltersReset } from '@/features/inbox-filters';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useColors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import { IS_ANDROID, useIsTablet } from '@/shared/lib';
 
 import {
@@ -159,6 +160,7 @@ export const BottomTabNavigator = () => {
             <TAB_ICONS.Inbox size={isTablet ? 28 : TAB_ICON_SIZE} color={c} strokeWidth={1.8} />
           ),
           tabBarAccessibilityLabel: TAB_LABELS.Inbox,
+          tabBarButtonTestID: TestIds.tab.inbox,
         }}
       />
       <Tab.Screen
@@ -196,6 +198,7 @@ export const BottomTabNavigator = () => {
           tabBarIcon: ({ color: c }) => (
             <TAB_ICONS.Settings size={isTablet ? 28 : TAB_ICON_SIZE} color={c} strokeWidth={1.8} />
           ),
+          tabBarButtonTestID: TestIds.tab.settings,
         }}
       />
     </Tab.Navigator>

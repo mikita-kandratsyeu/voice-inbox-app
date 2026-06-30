@@ -1,0 +1,14 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: settings/ai-settings-nav.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- tapOn:
+    id: tab.settings
+    optional: true
+- tapOn:
+    id: settings.aiSettings
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: settings.screen
+    timeout: 20000

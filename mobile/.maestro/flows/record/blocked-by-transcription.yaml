@@ -1,0 +1,10 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: record/blocked-by-transcription.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- tapOn:
+    id: tab.record
+- extendedWaitUntil:
+    visible:
+      id: inbox.screen
+    timeout: 20000

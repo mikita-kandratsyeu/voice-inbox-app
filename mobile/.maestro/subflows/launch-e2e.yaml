@@ -1,0 +1,14 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+- launchApp:
+    clearState: true
+- openLink: ${E2E_RESET_URL}
+- extendedWaitUntil:
+    visible:
+      id: e2e.ready
+    timeout: 45000
+- runFlow: dismiss-system-alerts.yaml
+- extendedWaitUntil:
+    visible:
+      id: inbox.screen
+    timeout: 30000

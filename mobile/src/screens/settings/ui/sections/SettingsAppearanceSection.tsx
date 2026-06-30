@@ -6,6 +6,7 @@ import React from 'react';
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { AppLanguage, AppTheme } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
 import { getSettingsIconColor } from '../../lib/settingsIconColor';
@@ -29,6 +30,7 @@ export const SettingsAppearanceSection = ({
 }: Props) => (
   <SettingsSection title={t('settings.appearance')}>
     <SettingsRow
+      testID={TestIds.settings.appearance}
       label={t('settings.appLanguage')}
       value={t(`appearance.languageOption.${appLanguage}`)}
       leftIcon={

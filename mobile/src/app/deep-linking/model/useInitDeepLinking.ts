@@ -9,6 +9,7 @@ import { dispatchSharedAudioImport } from '@/features/import-audio-file/lib/shar
 import { tryParseInAppEventDeepLink } from '@/features/in-app-event';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useRecordingDeeplink } from '@/features/recording-deeplink/model/useRecordingDeeplink';
+import { handleE2EDeepLink } from '@/shared/e2e';
 import { IS_ANDROID } from '@/shared/lib';
 import { diagWarn } from '@/shared/lib/appLogger';
 
@@ -100,8 +101,13 @@ export const useInitDeepLinking = () => {
   }, []);
 
   const routeDeepLink = useCallback(
-    (rawUrl: string) => {
+    async (rawUrl: string) => {
       try {
+        const e2eHandled = await handleE2EDeepLink(rawUrl);
+        if (e2eHandled) {
+          return;
+        }
+
         if (isAudioImportDeepLinkUrl(rawUrl)) {
           if (!getHasSeenOnboarding()) {
             return;
@@ -145,7 +151,7 @@ export const useInitDeepLinking = () => {
         return;
       }
 
-      routeDeepLink(url);
+      void routeDeepLink(url);
     });
 
     const sub = Linking.addEventListener('url', ({ url }) => {
@@ -153,7 +159,7 @@ export const useInitDeepLinking = () => {
         return;
       }
 
-      routeDeepLink(url);
+      void routeDeepLink(url);
     });
 
     return () => {

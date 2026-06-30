@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { VoiceRecord } from '@/entities/record';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import { inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
 import {
   FrostedHeaderButtonGroup,
@@ -228,6 +229,7 @@ export const RecordingDetailHeader = ({
     >
       <View className="shrink-0 flex-row items-center gap-3">
         <FrostedHeaderIconButton
+          testID={TestIds.detail.back}
           iconOnly
           variant="icon"
           size="md"

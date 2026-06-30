@@ -5,6 +5,7 @@ import React from 'react';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { Colors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
 import { getSettingsIconColor } from '../../lib/settingsIconColor';
@@ -19,6 +20,7 @@ type Props = {
 export const SettingsDeviceSection = ({ color, t, navigation, isAppLockEnabled }: Props) => (
   <SettingsSection title={t('settings.device')}>
     <SettingsRow
+      testID={TestIds.settings.appLockSetup}
       label={t('settings.appLock')}
       value={isAppLockEnabled ? t('settings.on') : t('settings.off')}
       leftIcon={
@@ -39,6 +41,7 @@ export const SettingsDeviceSection = ({ color, t, navigation, isAppLockEnabled }
       showChevron
     />
     <SettingsRow
+      testID={TestIds.settings.storageDetails}
       label={t('settings.offlineStorage')}
       leftIcon={
         <HardDrive size={20} color={getSettingsIconColor(color, 'hardDrive')} strokeWidth={1.8} />
@@ -46,6 +49,7 @@ export const SettingsDeviceSection = ({ color, t, navigation, isAppLockEnabled }
       onPress={() => navigation.navigate('StorageDetails')}
     />
     <SettingsRow
+      testID={TestIds.settings.trash}
       label={t('trash.title')}
       leftIcon={
         <Trash2 size={20} color={getSettingsIconColor(color, 'trash2')} strokeWidth={1.8} />

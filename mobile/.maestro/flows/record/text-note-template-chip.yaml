@@ -1,0 +1,14 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: record/text-note-template-chip.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- tapOn:
+    id: tab.record
+- openLink: voiceinbox://note/text
+- tapOn:
+    id: textNote.template.dayPlan
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: textNote.body
+    timeout: 20000

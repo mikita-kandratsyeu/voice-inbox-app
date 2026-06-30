@@ -9,6 +9,7 @@ import { isInboxAskAvailable } from '@/features/inbox-ask';
 import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import { inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
 import { FrostedChromeSurface, FrostedHeaderButtonGroup, HeaderIconButton } from '@/shared/ui';
 
@@ -159,6 +160,7 @@ function InboxScreenHeaderRightInner({
   const searchButton =
     recordsLength > 0 ? (
       <HeaderIconButton
+        testID={TestIds.inbox.search}
         inFrostedGroup
         iconOnly
         variant="icon"
@@ -251,6 +253,7 @@ function InboxScreenHeaderRightInner({
     <FrostedHeaderButtonGroup color={color}>
       {searchButton}
       <HeaderIconButton
+        testID={TestIds.inbox.allTasks}
         inFrostedGroup
         iconOnly
         variant="icon"
@@ -279,6 +282,7 @@ function InboxScreenHeaderRightInner({
         }}
       >
         <HeaderIconButton
+          testID={TestIds.inbox.menu}
           inFrostedGroup
           iconOnly
           variant="icon"

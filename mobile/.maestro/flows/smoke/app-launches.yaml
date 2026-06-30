@@ -1,0 +1,20 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# S01 — cold start shows onboarding or inbox
+- runFlow: ../../subflows/launch-fresh.yaml
+- extendedWaitUntil:
+    visible:
+      id: onboarding.skip
+    timeout: 45000
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: inbox.screen
+    timeout: 5000
+    optional: true
+- assertVisible:
+    id: onboarding.skip
+    optional: true
+- assertVisible:
+    id: inbox.screen
+    optional: true

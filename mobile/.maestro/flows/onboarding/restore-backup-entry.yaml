@@ -1,0 +1,11 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: onboarding/restore-backup-entry.yaml
+- runFlow: ../../subflows/launch-fresh.yaml
+- tapOn:
+    id: onboarding.next
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: onboarding.next
+    timeout: 20000

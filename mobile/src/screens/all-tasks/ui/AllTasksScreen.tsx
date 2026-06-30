@@ -28,6 +28,7 @@ import {
 } from '@/features/task-outcome';
 import { TaskEditSheet } from '@/screens/recording-detail/ui/TaskEditSheet';
 import { useColors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import {
   flashListJumpToTop,
   hapticSelection,
@@ -725,6 +726,7 @@ export const AllTasksScreen = () => {
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         />
         <HeaderIconButton
+          testID={TestIds.allTasks.create}
           inFrostedGroup
           iconOnly
           variant="icon"
@@ -826,7 +828,11 @@ export const AllTasksScreen = () => {
   const activeListData = viewMode === 'calendar' ? calendarListData : listData;
 
   return (
-    <View className="flex-1" style={{ backgroundColor: color.background.secondary }}>
+    <View
+      testID={TestIds.allTasks.screen}
+      className="flex-1"
+      style={{ backgroundColor: color.background.secondary }}
+    >
       <ScreenHeader
         title={t('allTasks.title')}
         onBack={() => navigation.goBack()}

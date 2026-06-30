@@ -1,0 +1,11 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: onboarding/skip-disabled-while-finishing.yaml
+- runFlow: ../../subflows/launch-fresh.yaml
+- tapOn:
+    id: onboarding.skip
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: inbox.screen
+    timeout: 20000

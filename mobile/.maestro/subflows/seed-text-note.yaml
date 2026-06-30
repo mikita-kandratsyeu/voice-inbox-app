@@ -1,0 +1,7 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+- openLink: ${E2E_SEED_NOTE_URL}
+- extendedWaitUntil:
+    visible:
+      id: inbox.recordCard.e2e-seed-note
+    timeout: 15000

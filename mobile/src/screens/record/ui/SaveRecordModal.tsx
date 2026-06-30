@@ -9,6 +9,7 @@ import { Keyboard, Pressable, Switch, Text, View } from 'react-native';
 import type { RecordingMark, VoiceRecord } from '@/entities/record';
 import { useProEntitlement } from '@/features/pro-license';
 import { useColors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import {
   formatTime,
   hapticLight,
@@ -173,6 +174,7 @@ export const SaveRecordModal = ({
         </Text>
 
         <BottomSheetTextInput
+          testID={TestIds.save.titleInput}
           className="rounded-xl border-2 px-4 py-3 text-[16px]"
           style={{
             borderColor: c.accent.primary,
@@ -233,6 +235,7 @@ export const SaveRecordModal = ({
               </View>
             </Pressable>
             <Switch
+              testID={TestIds.save.meetingToggle}
               value={isMeetingMode}
               onValueChange={handleToggleMeetingMode}
               accessibilityLabel={t('record.meetingMode')}
@@ -256,12 +259,15 @@ export const SaveRecordModal = ({
           color={c}
           primaryLabel={t('common.save')}
           onPrimaryPress={handleSave}
+          primaryTestID={TestIds.save.confirm}
           secondaryLabel={allowResume ? t('record.continueRecording') : undefined}
           onSecondaryPress={allowResume ? handleCancel : undefined}
+          secondaryTestID={allowResume ? TestIds.save.cancel : undefined}
           secondaryAccessibilityLabel={allowResume ? t('record.continueRecording') : undefined}
         />
         {onDiscard && (
           <Pressable
+            testID={TestIds.save.discard}
             accessibilityRole="button"
             accessibilityLabel={t('record.discardRecordingHold')}
             accessibilityHint={t('record.discardRecordingA11yHint')}

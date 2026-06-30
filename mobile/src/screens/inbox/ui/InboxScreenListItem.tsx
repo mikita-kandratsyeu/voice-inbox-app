@@ -11,6 +11,7 @@ import { BatchCheckbox } from '@/features/batch-select';
 import { InboxBannerAd } from '@/features/inbox-banner';
 import type { InboxCardLayout } from '@/features/inbox-card-layout';
 import type { Colors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import { resolveDisplayFolderColor } from '@/shared/lib';
 import { SectionHeader, SwipeableCard } from '@/shared/ui';
 
@@ -165,6 +166,7 @@ function InboxScreenListItemInner({
         onLongPress={onLongPress}
         a11yHint={a11yHint}
         hideAccessibilitySubtree={hideAccessibilitySubtree}
+        testID={TestIds.inbox.recordCard(item.item.id)}
       />
     );
   };

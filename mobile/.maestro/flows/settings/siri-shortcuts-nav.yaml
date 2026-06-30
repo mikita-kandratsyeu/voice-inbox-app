@@ -1,0 +1,14 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: settings/siri-shortcuts-nav.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- tapOn:
+    id: tab.settings
+    optional: true
+- tapOn:
+    id: settings.siriShortcuts
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: settings.screen
+    timeout: 20000

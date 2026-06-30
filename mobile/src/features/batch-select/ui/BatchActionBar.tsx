@@ -10,6 +10,7 @@ import {
   getFloatingTabBarScrollPaddingBottom,
 } from '@/app/navigation/config';
 import type { Colors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import { hapticLight, hapticMedium, useIsTablet } from '@/shared/lib';
 import { FloatingFrostedChrome, FloatingFrostedChromeDivider, HeaderIconButton } from '@/shared/ui';
 
@@ -229,6 +230,7 @@ export const BatchActionBar = ({
   if (dockToScreenBottom) {
     return (
       <View
+        testID={TestIds.inbox.batchSelect}
         style={{
           position: 'absolute',
           left: 0,
@@ -242,5 +244,5 @@ export const BatchActionBar = ({
     );
   }
 
-  return chrome;
+  return <View testID={TestIds.inbox.batchSelect}>{chrome}</View>;
 };

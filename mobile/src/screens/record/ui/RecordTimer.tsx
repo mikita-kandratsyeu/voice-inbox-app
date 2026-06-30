@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { TestIds } from '@/shared/e2e';
 import { formatTimeWithMs } from '@/shared/lib';
 
 type RecordTimerProps = {
@@ -11,7 +12,7 @@ export const RecordTimer = memo(({ elapsedMs }: RecordTimerProps) => {
   const formatted = formatTimeWithMs(elapsedMs);
 
   return (
-    <View className="flex-row items-baseline">
+    <View testID={TestIds.record.timer} className="flex-row items-baseline">
       <Text className="text-[84px] font-normal tracking-[-2px] text-white" style={styles.tabular}>
         {formatted.main}
       </Text>

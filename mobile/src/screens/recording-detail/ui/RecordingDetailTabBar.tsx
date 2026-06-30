@@ -3,10 +3,18 @@ import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
 
 import type { Tab } from '../config';
 import { getTabLabel } from '../config';
+
+const TAB_TEST_IDS: Record<Tab, string> = {
+  transcript: TestIds.detail.tab.transcript,
+  summary: TestIds.detail.tab.summary,
+  dialogue: TestIds.detail.tab.dialogue,
+  tasks: TestIds.detail.tab.tasks,
+};
 
 const DEFAULT_TABS: Tab[] = ['transcript', 'summary', 'tasks'];
 
@@ -64,6 +72,7 @@ export const RecordingDetailTabBar = ({
         return (
           <TouchableOpacity
             key={tab}
+            testID={TAB_TEST_IDS[tab]}
             accessibilityRole="button"
             accessibilityLabel={label}
             accessibilityState={{ selected: isActive }}

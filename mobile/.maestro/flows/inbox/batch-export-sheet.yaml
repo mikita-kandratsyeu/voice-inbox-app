@@ -1,0 +1,12 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: inbox/batch-export-sheet.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- runFlow: ../../subflows/seed-text-note.yaml
+- tapOn:
+    id: inbox.batchSelect
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: inbox.screen
+    timeout: 20000

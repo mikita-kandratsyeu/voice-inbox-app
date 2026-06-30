@@ -12,6 +12,7 @@ import { cancelGitlabConnectSession } from '@/features/gitlab-sync';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { openPlanPaywall } from '@/features/plan-paywall';
 import { isInternalDebugBuild } from '@/shared/config/buildEnv';
+import { TestIds } from '@/shared/e2e';
 import {
   IS_ANDROID,
   useIsTablet,
@@ -112,7 +113,10 @@ export const SettingsScreen = () => {
   const showDebugEntry = isInternalDebugBuild();
 
   return (
-    <View style={{ flex: 1, backgroundColor: settings.color.background.secondary }}>
+    <View
+      testID={TestIds.settings.screen}
+      style={{ flex: 1, backgroundColor: settings.color.background.secondary }}
+    >
       <View
         style={{
           backgroundColor: useTabletShell ? 'transparent' : settings.color.background.primary,
@@ -266,6 +270,7 @@ export const SettingsScreen = () => {
           {showDebugEntry && (
             <SettingsSection title={settings.t('settings.debugScreen.title')}>
               <SettingsRow
+                testID={TestIds.settings.debug}
                 label={settings.t('settings.debugScreen.entryRow')}
                 leftIcon={
                   <Bug

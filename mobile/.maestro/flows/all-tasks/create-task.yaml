@@ -1,0 +1,14 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: all-tasks/create-task.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- tapOn:
+    id: inbox.allTasks
+    optional: true
+- tapOn:
+    id: allTasks.create
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: allTasks.screen
+    timeout: 20000

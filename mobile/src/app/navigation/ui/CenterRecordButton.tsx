@@ -14,6 +14,7 @@ import Animated, {
 
 import { useRecordStore } from '@/entities/record';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
+import { TestIds } from '@/shared/e2e';
 import { hapticRecordTabPress } from '@/shared/lib';
 import { RecordVoiceIcon } from '@/shared/ui';
 
@@ -114,6 +115,7 @@ export const CenterRecordButton = ({
         ]}
       >
         <TouchableOpacity
+          testID={TestIds.tab.record}
           accessibilityRole="button"
           accessibilityLabel={t('tabs.record')}
           accessibilityHint={t('textNote.openCreate')}

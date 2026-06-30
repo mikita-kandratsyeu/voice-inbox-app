@@ -1,0 +1,5 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+- launchApp:
+    clearState: true
+- runFlow: dismiss-system-alerts.yaml

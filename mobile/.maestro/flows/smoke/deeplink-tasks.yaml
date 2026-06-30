@@ -1,0 +1,11 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# S06 — All Tasks deep link
+- runFlow: ../../subflows/launch-e2e.yaml
+- openLink: voiceinbox://tasks
+- extendedWaitUntil:
+    visible:
+      id: allTasks.screen
+    timeout: 15000
+- assertVisible:
+    id: allTasks.screen

@@ -1,0 +1,11 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: onboarding/full-carousel.yaml
+- runFlow: ../../subflows/launch-fresh.yaml
+- tapOn:
+    id: onboarding.next
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: inbox.screen
+    timeout: 20000

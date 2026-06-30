@@ -5,6 +5,7 @@ import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import {
   FROSTED_HEADER_ICON_RADIUS,
   FROSTED_HEADER_ICON_SIZE,
@@ -32,6 +33,7 @@ export const RecordScreenHeader = ({ state, onClose }: RecordScreenHeaderProps) 
     <View className="flex-row items-center px-5 pb-3" style={topStyle}>
       <View style={{ width: FROSTED_HEADER_ICON_SIZE }}>
         <FrostedHeaderIconButton
+          testID={TestIds.record.close}
           chromeVariant="onMedia"
           iconOnly
           size="md"

@@ -44,6 +44,7 @@ import {
   tryShowYandexInterstitial,
 } from '@/features/yandex-interstitial';
 import { useColors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import {
   hapticSelection,
   IS_IOS,
@@ -312,7 +313,10 @@ export const TextNoteScreen = () => {
   ]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: color.background.primary }}>
+    <View
+      testID={TestIds.textNote.screen}
+      style={{ flex: 1, backgroundColor: color.background.primary }}
+    >
       <View
         className="flex-row items-center justify-between"
         style={{
@@ -323,6 +327,7 @@ export const TextNoteScreen = () => {
         }}
       >
         <FrostedHeaderIconButton
+          testID={TestIds.textNote.close}
           iconOnly
           variant="icon"
           size="md"
@@ -333,6 +338,7 @@ export const TextNoteScreen = () => {
           accessibilityLabel={t('common.close')}
         />
         <FrostedHeaderIconButton
+          testID={TestIds.textNote.save}
           iconOnly
           variant="icon"
           size="md"
@@ -354,6 +360,7 @@ export const TextNoteScreen = () => {
         }}
       >
         <TextInput
+          testID={TestIds.textNote.titleInput}
           value={title}
           onChangeText={setTitle}
           placeholder={t('textNote.titlePlaceholder')}
@@ -395,34 +402,36 @@ export const TextNoteScreen = () => {
           showsVerticalScrollIndicator={false}
           bottomOffset={showTemplates ? TEMPLATES_FOOTER_HEIGHT + 12 : 20}
         >
-          <EnrichedMarkdownTextInput
-            key={`text-note-editor-${noteEditorKey}`}
-            ref={noteInputRef}
-            defaultValue={initialEditorMarkdown}
-            editable={!isSaving}
-            scrollEnabled
-            multiline
-            autoCapitalize="sentences"
-            placeholder={t('textNote.textPlaceholder')}
-            placeholderTextColor={color.text.muted}
-            selectionColor={color.accent.primary}
-            cursorColor={color.accent.primary}
-            markdownStyle={inputMarkdownStyle}
-            onChangeText={handleChangeText}
-            onChangeState={handleMarkdownStyleStateChange}
-            style={{
-              flex: 1,
-              width: '100%',
-              minHeight: editorMinHeight,
-              paddingTop: 4,
-              paddingBottom: EDITOR_PADDING_BOTTOM,
-              color: color.text.primary,
-              fontSize: NOTE_DOCUMENT_BODY_FONT_SIZE,
-              lineHeight: NOTE_DOCUMENT_BODY_LINE_HEIGHT,
-              textAlignVertical: 'top',
-              backgroundColor: 'transparent',
-            }}
-          />
+          <View testID={TestIds.textNote.body} style={{ flex: 1, minHeight: editorMinHeight }}>
+            <EnrichedMarkdownTextInput
+              key={`text-note-editor-${noteEditorKey}`}
+              ref={noteInputRef}
+              defaultValue={initialEditorMarkdown}
+              editable={!isSaving}
+              scrollEnabled
+              multiline
+              autoCapitalize="sentences"
+              placeholder={t('textNote.textPlaceholder')}
+              placeholderTextColor={color.text.muted}
+              selectionColor={color.accent.primary}
+              cursorColor={color.accent.primary}
+              markdownStyle={inputMarkdownStyle}
+              onChangeText={handleChangeText}
+              onChangeState={handleMarkdownStyleStateChange}
+              style={{
+                flex: 1,
+                width: '100%',
+                minHeight: editorMinHeight,
+                paddingTop: 4,
+                paddingBottom: EDITOR_PADDING_BOTTOM,
+                color: color.text.primary,
+                fontSize: NOTE_DOCUMENT_BODY_FONT_SIZE,
+                lineHeight: NOTE_DOCUMENT_BODY_LINE_HEIGHT,
+                textAlignVertical: 'top',
+                backgroundColor: 'transparent',
+              }}
+            />
+          </View>
         </KeyboardAwareScrollView>
       </View>
 
@@ -452,6 +461,7 @@ export const TextNoteScreen = () => {
             {TEXT_NOTE_TEMPLATE_IDS.map((id) => (
               <Pressable
                 key={id}
+                testID={TestIds.textNote.template(id)}
                 accessibilityRole="button"
                 accessibilityLabel={t(`textNote.templateChip.${id}`)}
                 disabled={isSaving}

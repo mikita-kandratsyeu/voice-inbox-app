@@ -1,0 +1,13 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: record/stop-opens-save.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- tapOn:
+    id: tab.record
+- tapOn:
+    id: record.stop
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: save.confirm
+    timeout: 20000

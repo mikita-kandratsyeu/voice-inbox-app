@@ -1,0 +1,9 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: record/deeplink-start.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- openLink: voiceinbox://record/start
+- extendedWaitUntil:
+    visible:
+      id: record.timer
+    timeout: 20000
