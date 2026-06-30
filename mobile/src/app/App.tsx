@@ -45,7 +45,7 @@ import {
   useColors,
 } from '@/shared/config';
 import { E2EReadyMarker } from '@/shared/e2e';
-import { i18n, initPulsarHaptics, NetworkStatusProvider } from '@/shared/lib';
+import { i18n, NetworkStatusProvider } from '@/shared/lib';
 import { logAnalyticsScreenView } from '@/shared/lib/analytics';
 import { logInfo, setupAppLogger } from '@/shared/lib/appLogger';
 import { CloudAiThirdPartyConsentModal } from '@/shared/lib/cloud-ai-consent';
@@ -129,7 +129,6 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
   useEffect(() => {
     setupAppLogger();
     void initReduceMotionCheck();
-    initPulsarHaptics();
 
     logInfo('App startup');
   }, []);

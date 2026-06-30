@@ -16113,6 +16113,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-nitro-haptics@npm:^0.2.3":
+  version: 0.2.3
+  resolution: "react-native-nitro-haptics@npm:0.2.3"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: "*"
+  checksum: 10c0/f132db1ac101f3552e1447a634efed993dd701c8d5b70a857a568c1f0ea863d10987c9619d27c96a528bca6a5a49a32eeb9593448447b1247d88d8350d69a57f
+  languageName: node
+  linkType: hard
+
 "react-native-nitro-modules@npm:^0.35.9":
   version: 0.35.9
   resolution: "react-native-nitro-modules@npm:0.35.9"
@@ -16147,17 +16158,6 @@ __metadata:
     react-native-windows:
       optional: true
   checksum: 10c0/9f72a2ccec761dfe1c3064a2694f5c03bd51f216d9c2bcd358aa152b7219f93561bd48271f9323e204e670f1bb7fa3e260d0715167358a0ed7360a5f278e0dce
-  languageName: node
-  linkType: hard
-
-"react-native-pulsar@npm:1.6.1":
-  version: 1.6.1
-  resolution: "react-native-pulsar@npm:1.6.1"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-    react-native-worklets: "*"
-  checksum: 10c0/44873f4e873e1c873d0dd9c961465e7299bb8bf1a48f8909e203600f73d432cd69d830443092694bc998606f4b205494a00c9e096be312a2d56d97cce87b7560
   languageName: node
   linkType: hard
 
@@ -19113,10 +19113,10 @@ __metadata:
     react-native-nitro-device-info: "npm:^1.8.0"
     react-native-nitro-fetch: "npm:^1.4.2"
     react-native-nitro-fs: "npm:^0.9.0"
+    react-native-nitro-haptics: "npm:^0.2.3"
     react-native-nitro-modules: "npm:^0.35.9"
     react-native-nitro-sound: "npm:^0.2.15"
     react-native-permissions: "npm:^5.6.0"
-    react-native-pulsar: "npm:1.6.1"
     react-native-purchases: "npm:^10.4.0"
     react-native-quick-base64: "npm:^3.0.0"
     react-native-quick-crypto: "npm:^1.1.5"

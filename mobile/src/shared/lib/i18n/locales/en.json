@@ -1270,18 +1270,10 @@
       }
     },
     "gestures": {
-      "entryTitle": "Gestures & vibration",
-      "entrySubtitle": "Tap feedback strength and shake shortcuts.",
-      "title": "Gestures & vibration",
-      "intro": "Choose how strongly the app responds to taps, and turn shake shortcuts on or off. Shake works while the app is open.",
-      "hapticsSectionTitle": "Vibration",
-      "hapticsIntensity": {
-        "title": "Tap feedback",
-        "subtitle": "Light gives short taps. Expressive adds richer cues when you record, swipe, or finish transcription.",
-        "off": "Off",
-        "subtle": "Light",
-        "full": "Expressive"
-      },
+      "entryTitle": "Gestures",
+      "entrySubtitle": "Shake to start a voice note or stop a generating answer.",
+      "title": "Gestures",
+      "intro": "Turn shake gestures on or off. They work while the app is open in the foreground.",
       "sectionTitle": "Shake",
       "shakeToRecord": {
         "title": "Shake to record",

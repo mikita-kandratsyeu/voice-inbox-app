@@ -1,19 +1,9 @@
 import Slider from '@react-native-community/slider';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
-import { useRealtimeComposer } from 'react-native-pulsar';
 
-import { useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
-import { shouldReduceMotion } from '@/shared/config/animations';
-import {
-  hapticLight,
-  hapticMedium,
-  IS_IOS,
-  selectPlatform,
-  supportsRichHapticEngine,
-  withAlphaHex,
-} from '@/shared/lib';
+import { hapticLight, IS_IOS, selectPlatform, withAlphaHex } from '@/shared/lib';
 
 const TICK_ROW_H = 20;
 const SLIDER_ROW_H = 44;
@@ -74,10 +64,6 @@ export type DiscreteChoiceSliderProps = {
   color: Colors;
   /** Inside SettingsSection card — skip outer card padding/background. */
   embedded?: boolean;
-  /** Preview haptics for the step being selected (bypasses stored intensity). */
-  previewHapticAtIndex?: (index: number) => void;
-  /** Pulsar realtime drag feedback only while thumb is on this step. */
-  richRealtimeAtIndex?: number;
 };
 
 export function DiscreteChoiceSlider({
@@ -88,15 +74,11 @@ export function DiscreteChoiceSlider({
   sliderAccessibilityLabel,
   color,
   embedded = false,
-  previewHapticAtIndex,
-  richRealtimeAtIndex,
 }: DiscreteChoiceSliderProps) {
   const choiceCount = choices.length;
   const maxIndex = choiceCount - 1;
   const [trackWidth, setTrackWidth] = useState(0);
   const lastHapticIndexRef = useRef(indexForValue(choices, value));
-  const hapticsIntensity = useSettingsStore((s) => s.hapticsIntensity);
-  const { set: setRealtimeHaptic, playDiscrete, stop: stopRealtimeHaptic } = useRealtimeComposer();
 
   const onTrackLayout = useCallback((e: LayoutChangeEvent) => {
     setTrackWidth(e.nativeEvent.layout.width);
@@ -107,8 +89,6 @@ export function DiscreteChoiceSlider({
   useEffect(() => {
     lastHapticIndexRef.current = index;
   }, [index]);
-
-  useEffect(() => () => stopRealtimeHaptic(), [stopRealtimeHaptic]);
 
   const sliderMargin = useMemo(
     () => sliderHorizontalMargin(trackWidth, choiceCount),
@@ -147,34 +127,6 @@ export function DiscreteChoiceSlider({
 
   const railTop = (SLIDER_ROW_H - RAIL_H) / 2;
   const dotCenterY = TICK_ROW_H / 2;
-
-  const fireSliderNotchHaptic = useCallback(() => {
-    const rich = hapticsIntensity === 'full' && supportsRichHapticEngine();
-    if (rich) {
-      try {
-        playDiscrete(0.75, 0.45);
-      } catch {
-        hapticMedium();
-      }
-      return;
-    }
-    if (hapticsIntensity !== 'off') {
-      hapticLight();
-    }
-  }, [hapticsIntensity, playDiscrete]);
-
-  const shouldUseRichRealtime = useCallback(
-    (stepIndex: number) => {
-      if (!supportsRichHapticEngine() || shouldReduceMotion()) {
-        return false;
-      }
-      if (richRealtimeAtIndex !== undefined) {
-        return stepIndex === richRealtimeAtIndex;
-      }
-      return hapticsIntensity === 'full';
-    },
-    [hapticsIntensity, richRealtimeAtIndex],
-  );
 
   return (
     <View style={cardStyle}>
@@ -242,19 +194,11 @@ export function DiscreteChoiceSlider({
               const clamped = Math.max(0, Math.min(maxIndex, i));
               if (clamped !== lastHapticIndexRef.current) {
                 lastHapticIndexRef.current = clamped;
-                if (previewHapticAtIndex) {
-                  previewHapticAtIndex(clamped);
-                } else {
-                  fireSliderNotchHaptic();
-                }
-              } else if (shouldUseRichRealtime(clamped)) {
-                const dist = Math.abs(raw - clamped);
-                setRealtimeHaptic(Math.max(0.12, 1 - dist * 0.4), 0.42);
+                hapticLight();
               }
               const next = choices[clamped];
               if (next !== undefined) onChange(next);
             }}
-            onSlidingComplete={() => stopRealtimeHaptic()}
             minimumTrackTintColor={color.accent.primary}
             maximumTrackTintColor={color.background.tertiary}
             thumbTintColor={color.icon.onAccent}

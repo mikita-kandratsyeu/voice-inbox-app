@@ -4,8 +4,6 @@ import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitl
 import { parseAccentColorId } from '@/shared/config';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { storage } from '@/shared/lib/async-storage';
-import { readInitialHapticsIntensity, writeHapticsIntensity } from '@/shared/lib/haptics/gate';
-import type { HapticsIntensity } from '@/shared/lib/haptics/types';
 import { IS_IOS } from '@/shared/lib/platform';
 import { isNumber, isRecord, isString } from '@/shared/lib/type-guards';
 
@@ -622,7 +620,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   autoArchiveAfterDays: getStoredAutoArchiveAfterDays(),
   shakeToRecordEnabled: getStoredShakeToRecordEnabled(),
   shakeToCancelAskAiEnabled: getStoredShakeToCancelAskAiEnabled(),
-  hapticsIntensity: readInitialHapticsIntensity(),
   taskDeadlineNotificationsEnabled: getStoredTaskDeadlineNotificationsEnabled(),
   backupReminderNotificationsEnabled: getStoredBackupReminderNotificationsEnabled(),
   backupReminderPeriodDays: getStoredBackupReminderPeriodDays(),
@@ -1025,11 +1022,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setShakeToCancelAskAiEnabled: (value: boolean) => {
     storage.set(KEYS.SHAKE_TO_CANCEL_ASK_AI_ENABLED, String(value));
     set({ shakeToCancelAskAiEnabled: value });
-  },
-
-  setHapticsIntensity: (value: HapticsIntensity) => {
-    writeHapticsIntensity(value);
-    set({ hapticsIntensity: value });
   },
 
   setTaskDeadlineNotificationsEnabled: (value: boolean) => {

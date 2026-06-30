@@ -88,7 +88,6 @@ export type {
   AutoArchiveAfterDays,
   BackupReminderPeriodDays,
   DownloadBytes,
-  HapticsIntensity,
   LocalAiModelId,
   PrivateAiProvider,
   PrivateCapabilityTier,
