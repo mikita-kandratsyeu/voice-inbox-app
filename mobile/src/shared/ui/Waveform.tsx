@@ -8,46 +8,54 @@ import Animated, {
   useAnimatedStyle,
   useFrameCallback,
   useSharedValue,
-  withDelay,
   withRepeat,
-  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 
+import { useIsMotionReduced } from '@/shared/config';
+
 const BAR_COUNT = 32;
-const BAR_MIN_HEIGHT = 6;
-const BAR_MAX_HEIGHT = 56;
-const BAR_WIDTH = 3;
-const BAR_GAP = 4;
-/** Scales raw metering into bar motion; lower = smaller waves. */
-const LIVE_INPUT_GAIN = 0.72;
+const BAR_MIN_HEIGHT = 8;
+const BAR_MAX_HEIGHT = 58;
+const BAR_WIDTH = 4;
+const BAR_GAP = 3;
+const LANE_HEIGHT = BAR_MAX_HEIGHT + 10;
+const LIVE_INPUT_GAIN = 0.78;
 
 const getBarSensitivity = (index: number) => {
   'worklet';
   const seed = Math.sin(index * 12.9898 + index * 78.233) * 43758.5453;
   const random = seed - Math.floor(seed);
-  return 0.7 + random * 0.6;
+  return 0.78 + random * 0.44;
 };
 
-const getWaveHeight = (index: number, intensity: number = 1) => {
+const getCenterEnvelope = (index: number) => {
   'worklet';
-  const center = BAR_COUNT / 2;
-  const distanceFromCenter = Math.abs(index - center);
-  const normalizedDistance = distanceFromCenter / center;
-
-  const baseHeight =
-    BAR_MIN_HEIGHT +
-    (BAR_MAX_HEIGHT - BAR_MIN_HEIGHT) * Math.exp(-2.5 * normalizedDistance * normalizedDistance);
-
-  const variation = getBarSensitivity(index);
-
-  return baseHeight * variation * intensity;
+  const center = (BAR_COUNT - 1) / 2;
+  const normalizedDistance = Math.abs(index - center) / center;
+  return Math.exp(-1.85 * normalizedDistance * normalizedDistance);
 };
 
-const getBarDelay = (index: number) => {
-  const center = BAR_COUNT / 2;
-  const distanceFromCenter = Math.abs(index - center);
-  return distanceFromCenter * 1.5;
+const getBarVisuals = (
+  index: number,
+  intensity: number,
+  perceptualLevel: number,
+  frameCounter: number,
+) => {
+  'worklet';
+  const envelope = getCenterEnvelope(index);
+  const ripple = Math.sin(frameCounter * 0.13 + index * 0.48) * 0.12 * perceptualLevel;
+  const shimmer = Math.sin(frameCounter * 0.07 - index * 0.21) * 0.04;
+  const blend = Math.min(1.28, intensity * (1 + ripple + shimmer));
+
+  return {
+    height:
+      BAR_MIN_HEIGHT +
+      (BAR_MAX_HEIGHT - BAR_MIN_HEIGHT) * envelope * getBarSensitivity(index) * blend,
+    opacity: 0.36 + envelope * 0.34 + perceptualLevel * 0.26,
+    scaleX: 1 + perceptualLevel * 0.04,
+    scaleY: 1 + perceptualLevel * 0.06,
+  };
 };
 
 const applyMeteringToBar = (
@@ -58,14 +66,15 @@ const applyMeteringToBar = (
   frameCounter: SharedValue<number>,
   height: SharedValue<number>,
   opacity: SharedValue<number>,
-  scale: SharedValue<number>,
+  scaleX: SharedValue<number>,
+  scaleY: SharedValue<number>,
   liveFrame: boolean,
 ) => {
   'worklet';
   frameCounter.value += 1;
 
-  const attack = liveFrame ? 0.48 : 0.92;
-  const decay = liveFrame ? 0.22 : 0.45;
+  const attack = liveFrame ? 0.58 : 0.9;
+  const decay = liveFrame ? 0.12 : 0.4;
   const targetLevel = currentLevel * LIVE_INPUT_GAIN * barSensitivity;
 
   if (targetLevel > smoothedLevel.value) {
@@ -74,14 +83,38 @@ const applyMeteringToBar = (
     smoothedLevel.value += (targetLevel - smoothedLevel.value) * decay;
   }
 
-  const perceptualLevel = Math.pow(smoothedLevel.value, 0.48);
-  const targetIntensity = Math.max(0.32, 0.3 + perceptualLevel * 1.05);
-  const microVariation = Math.sin(frameCounter.value * 0.12 + index) * 0.018;
-  const finalIntensity = targetIntensity * (1 + microVariation);
+  const perceptualLevel = Math.pow(smoothedLevel.value, 0.38);
+  const targetIntensity = Math.max(0.24, 0.16 + perceptualLevel * 1.2);
+  const visuals = getBarVisuals(index, targetIntensity, perceptualLevel, frameCounter.value);
 
-  height.value = getWaveHeight(index, finalIntensity);
-  opacity.value = 0.66 + perceptualLevel * 0.3;
-  scale.value = 1 + perceptualLevel * 0.055;
+  height.value = visuals.height;
+  opacity.value = visuals.opacity;
+  scaleX.value = visuals.scaleX;
+  scaleY.value = visuals.scaleY;
+};
+
+const applyIdleWaveToBar = (
+  index: number,
+  phase: number,
+  height: SharedValue<number>,
+  opacity: SharedValue<number>,
+  scaleX: SharedValue<number>,
+  scaleY: SharedValue<number>,
+) => {
+  'worklet';
+  const envelope = getCenterEnvelope(index);
+  const primary = 0.5 + 0.5 * Math.sin(phase + index * 0.36);
+  const secondary = 0.5 + 0.5 * Math.sin(phase * 0.62 - index * 0.24);
+  const blend = primary * 0.68 + secondary * 0.32;
+  const intensity = 0.3 + blend * 0.62;
+  const perceptual = blend * 0.4;
+
+  height.value =
+    BAR_MIN_HEIGHT +
+    (BAR_MAX_HEIGHT - BAR_MIN_HEIGHT) * envelope * getBarSensitivity(index) * intensity;
+  opacity.value = 0.34 + envelope * 0.28 + perceptual * 0.18;
+  scaleX.value = 1;
+  scaleY.value = 1 + blend * 0.05;
 };
 
 type WaveformProps = {
@@ -99,13 +132,25 @@ type WaveformBarProps = {
   inputLevel: SharedValue<number>;
   hasAudioData: SharedValue<boolean>;
   liveMetering: boolean;
+  idlePhase: SharedValue<number>;
+  motionReduced: boolean;
 };
 
 const WaveformBar = memo(
-  ({ index, isAnimating, color, inputLevel, hasAudioData, liveMetering }: WaveformBarProps) => {
-    const height = useSharedValue(getWaveHeight(index, 0.3));
-    const opacity = useSharedValue(0.6);
-    const scale = useSharedValue(1);
+  ({
+    index,
+    isAnimating,
+    color,
+    inputLevel,
+    hasAudioData,
+    liveMetering,
+    idlePhase,
+    motionReduced,
+  }: WaveformBarProps) => {
+    const height = useSharedValue(BAR_MIN_HEIGHT);
+    const opacity = useSharedValue(0.45);
+    const scaleX = useSharedValue(1);
+    const scaleY = useSharedValue(1);
 
     const smoothedLevel = useSharedValue(0);
     const barSensitivity = useSharedValue(getBarSensitivity(index));
@@ -135,7 +180,8 @@ const WaveformBar = memo(
         frameCounter,
         height,
         opacity,
-        scale,
+        scaleX,
+        scaleY,
         true,
       );
     });
@@ -151,11 +197,14 @@ const WaveformBar = memo(
     }, [frameCallback]);
 
     useAnimatedReaction(
-      () => {
-        return { level: inputLevel.value, active: isActive.value, hasAudio: hasAudioData.value };
-      },
+      () => ({
+        level: inputLevel.value,
+        active: isActive.value,
+        hasAudio: hasAudioData.value,
+        live: liveMeteringSV.value,
+      }),
       (current) => {
-        if (liveMeteringSV.value || !current.active || !current.hasAudio) {
+        if (current.live || !current.active || !current.hasAudio) {
           return;
         }
 
@@ -167,7 +216,8 @@ const WaveformBar = memo(
           frameCounter,
           height,
           opacity,
-          scale,
+          scaleX,
+          scaleY,
           false,
         );
       },
@@ -183,106 +233,77 @@ const WaveformBar = memo(
       ],
     );
 
+    useAnimatedReaction(
+      () => ({
+        phase: idlePhase.value,
+        active: isActive.value,
+        live: liveMeteringSV.value,
+        hasAudio: hasAudioData.value,
+      }),
+      (current) => {
+        if (!current.active || current.live || current.hasAudio) {
+          return;
+        }
+
+        applyIdleWaveToBar(index, current.phase, height, opacity, scaleX, scaleY);
+      },
+      [idlePhase, isActive, liveMeteringSV, hasAudioData, index],
+    );
+
     useEffect(() => {
       if (isAnimating && (hasAudioData.value || liveMetering)) {
         cancelAnimation(height);
         cancelAnimation(opacity);
-        cancelAnimation(scale);
+        cancelAnimation(scaleX);
+        cancelAnimation(scaleY);
         return;
       }
 
-      if (isAnimating) {
-        const delay = getBarDelay(index);
-
-        height.value = withDelay(
-          delay,
-          withRepeat(
-            withSequence(
-              withTiming(getWaveHeight(index, 1.2), {
-                duration: 350,
-                easing: Easing.out(Easing.sin),
-              }),
-              withTiming(getWaveHeight(index, 0.6), {
-                duration: 400,
-                easing: Easing.inOut(Easing.sin),
-              }),
-              withTiming(getWaveHeight(index, 0.95), {
-                duration: 380,
-                easing: Easing.inOut(Easing.sin),
-              }),
-              withTiming(getWaveHeight(index, 0.4), {
-                duration: 420,
-                easing: Easing.in(Easing.sin),
-              }),
-            ),
-            -1,
-            false,
-          ),
-        );
-
-        opacity.value = withDelay(
-          delay,
-          withRepeat(
-            withSequence(
-              withTiming(1, { duration: 350, easing: Easing.inOut(Easing.ease) }),
-              withTiming(0.7, { duration: 400, easing: Easing.inOut(Easing.ease) }),
-              withTiming(0.85, { duration: 380, easing: Easing.inOut(Easing.ease) }),
-              withTiming(0.6, { duration: 420, easing: Easing.inOut(Easing.ease) }),
-            ),
-            -1,
-            false,
-          ),
-        );
-
-        scale.value = withDelay(
-          delay,
-          withRepeat(
-            withSequence(
-              withTiming(1.06, { duration: 350, easing: Easing.out(Easing.quad) }),
-              withTiming(0.98, { duration: 400, easing: Easing.inOut(Easing.quad) }),
-              withTiming(1.03, { duration: 380, easing: Easing.inOut(Easing.quad) }),
-              withTiming(1, { duration: 420, easing: Easing.in(Easing.quad) }),
-            ),
-            -1,
-            false,
-          ),
-        );
-        return;
+      if (!isAnimating || motionReduced) {
+        smoothedLevel.value = 0;
+        height.value = withTiming(BAR_MIN_HEIGHT + 4, {
+          duration: 380,
+          easing: Easing.out(Easing.cubic),
+        });
+        opacity.value = withTiming(0.38, {
+          duration: 280,
+          easing: Easing.out(Easing.quad),
+        });
+        scaleX.value = withTiming(1, { duration: 200 });
+        scaleY.value = withTiming(1, { duration: 200 });
       }
-
-      smoothedLevel.value = 0;
-
-      height.value = withTiming(getWaveHeight(index, 0.3), {
-        duration: 400,
-        easing: Easing.out(Easing.cubic),
-      });
-      opacity.value = withTiming(0.5, {
-        duration: 300,
-        easing: Easing.out(Easing.quad),
-      });
-      scale.value = withTiming(1, {
-        duration: 200,
-      });
-    }, [isAnimating, liveMetering, hasAudioData, height, opacity, scale, index, smoothedLevel]);
+    }, [
+      hasAudioData,
+      height,
+      isAnimating,
+      liveMetering,
+      motionReduced,
+      opacity,
+      scaleX,
+      scaleY,
+      smoothedLevel,
+    ]);
 
     const animatedStyle = useAnimatedStyle(() => ({
       height: height.value,
       opacity: opacity.value,
-      transform: [{ scaleX: scale.value }],
+      transform: [{ scaleX: scaleX.value }, { scaleY: scaleY.value }],
     }));
 
     return (
-      <Animated.View
-        style={[
-          styles.bar,
-          {
-            backgroundColor: color,
-            marginHorizontal: BAR_GAP / 2,
-            width: BAR_WIDTH,
-          },
-          animatedStyle,
-        ]}
-      />
+      <View style={styles.barLane}>
+        <Animated.View
+          style={[
+            styles.bar,
+            {
+              backgroundColor: color,
+              width: BAR_WIDTH,
+              borderRadius: BAR_WIDTH / 2,
+            },
+            animatedStyle,
+          ]}
+        />
+      </View>
     );
   },
 );
@@ -295,8 +316,10 @@ export const Waveform = memo(
     inputLevel: externalInputLevel,
     liveMetering = false,
   }: WaveformProps) => {
+    const motionReduced = useIsMotionReduced();
     const internalInputLevel = useSharedValue(audioLevel ?? 0);
     const inputLevel = externalInputLevel ?? internalInputLevel;
+    const idlePhase = useSharedValue(0);
     const hasAudioData = useSharedValue(
       liveMetering || externalInputLevel !== undefined || audioLevel !== undefined,
     );
@@ -321,17 +344,35 @@ export const Waveform = memo(
       }
     }, [externalInputLevel, hasAudioData, liveMetering]);
 
+    useEffect(() => {
+      const shouldBreathe = isAnimating && !liveMetering && !hasAudioData.value && !motionReduced;
+
+      if (!shouldBreathe) {
+        cancelAnimation(idlePhase);
+        idlePhase.value = 0;
+        return;
+      }
+
+      idlePhase.value = withRepeat(
+        withTiming(Math.PI * 2, { duration: 2600, easing: Easing.linear }),
+        -1,
+        false,
+      );
+    }, [hasAudioData, idlePhase, isAnimating, liveMetering, motionReduced]);
+
     return (
       <View style={styles.container}>
-        {Array.from({ length: BAR_COUNT }).map((_, i) => (
+        {Array.from({ length: BAR_COUNT }).map((_, index) => (
           <WaveformBar
-            key={i}
-            index={i}
+            key={index}
+            index={index}
             isAnimating={isAnimating}
             color={color}
             inputLevel={inputLevel}
             hasAudioData={hasAudioData}
             liveMetering={liveMetering}
+            idlePhase={idlePhase}
+            motionReduced={motionReduced}
           />
         ))}
       </View>
@@ -344,9 +385,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: BAR_MAX_HEIGHT + 8,
+    height: LANE_HEIGHT,
+  },
+  barLane: {
+    height: LANE_HEIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: BAR_GAP / 2,
   },
   bar: {
-    borderRadius: 2,
+    minHeight: BAR_MIN_HEIGHT,
   },
 });
