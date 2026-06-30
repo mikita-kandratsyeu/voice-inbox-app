@@ -26,9 +26,7 @@ describe('tryParseE2EDeepLink', () => {
   });
 
   it('parses prepareSkipUi for onboarding skip UI test', () => {
-    expect(
-      tryParseE2EDeepLink('voiceinbox://e2e/reset?skipOnboarding=0&prepareSkipUi=1'),
-    ).toEqual({
+    expect(tryParseE2EDeepLink('voiceinbox://e2e/reset?skipOnboarding=0&prepareSkipUi=1')).toEqual({
       type: 'reset',
       skipOnboarding: false,
       skipAppLock: true,

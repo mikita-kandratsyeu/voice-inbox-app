@@ -52,10 +52,10 @@ brew link --overwrite mobile-dev-inc/tap/maestro   # if cask was installed earli
 
 Deep links (handled in app when `__DEV__` or internal build):
 
-| URL | Effect |
-|-----|--------|
-| `voiceinbox://e2e/reset?skipOnboarding=1&skipAppLock=1&disableAds=1` | Skip gates, mark onboarding done |
-| `voiceinbox://e2e/seed-text-note?title=...&body=...` | Insert text note (`e2e-seed-note` by default) |
+| URL                                                                  | Effect                                        |
+| -------------------------------------------------------------------- | --------------------------------------------- |
+| `voiceinbox://e2e/reset?skipOnboarding=1&skipAppLock=1&disableAds=1` | Skip gates, mark onboarding done              |
+| `voiceinbox://e2e/seed-text-note?title=...&body=...`                 | Insert text note (`e2e-seed-note` by default) |
 
 Subflow `launch-e2e.yaml` clears app state, opens reset link, waits for `e2e.ready` and `inbox.screen`.
 

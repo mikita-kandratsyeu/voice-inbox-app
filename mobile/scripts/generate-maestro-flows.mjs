@@ -21,12 +21,7 @@ const catalog = [
     ['onboarding.skip'],
     'inbox.screen',
   ],
-  [
-    'onboarding/restore-backup-entry.yaml',
-    'launch-fresh',
-    ['onboarding.next'],
-    'onboarding.next',
-  ],
+  ['onboarding/restore-backup-entry.yaml', 'launch-fresh', ['onboarding.next'], 'onboarding.next'],
   // Navigation P1
   [
     'navigation/back-from-detail.yaml',
@@ -34,19 +29,19 @@ const catalog = [
     ['inbox.recordCard.e2e-seed-note', 'detail.back'],
     'inbox.screen',
   ],
-  ['navigation/modal-record-dismiss.yaml', 'launch-e2e', ['tab.record', 'record.close'], 'inbox.screen'],
+  [
+    'navigation/modal-record-dismiss.yaml',
+    'launch-e2e',
+    ['tab.record', 'record.close'],
+    'inbox.screen',
+  ],
   [
     'navigation/modal-text-note-dismiss.yaml',
     'launch-e2e',
     ['tab.record', 'textNote.close'],
     'inbox.screen',
   ],
-  [
-    'navigation/floating-tab-bar-scroll.yaml',
-    'launch-e2e+seed',
-    ['inbox.screen'],
-    'inbox.screen',
-  ],
+  ['navigation/floating-tab-bar-scroll.yaml', 'launch-e2e+seed', ['inbox.screen'], 'inbox.screen'],
   ['navigation/tablet-sidebar.yaml', 'launch-e2e', ['inbox.screen'], 'inbox.screen'],
   // Record P1
   ['record/open-record-modal.yaml', 'launch-e2e', ['tab.record'], 'record.timer'],
@@ -195,15 +190,15 @@ const catalog = [
   ],
   // All tasks P2
   ['all-tasks/empty.yaml', 'launch-e2e', ['inbox.allTasks'], 'allTasks.screen'],
-  ['all-tasks/create-task.yaml', 'launch-e2e', ['inbox.allTasks', 'allTasks.create'], 'allTasks.screen'],
-  ['all-tasks/filter-by-note.yaml', 'launch-e2e+seed', ['inbox.allTasks'], 'allTasks.screen'],
-  ['all-tasks/more-filters-sheet.yaml', 'launch-e2e', ['inbox.allTasks'], 'allTasks.screen'],
   [
-    'all-tasks/open-source-note.yaml',
-    'launch-e2e+seed',
-    ['inbox.allTasks'],
+    'all-tasks/create-task.yaml',
+    'launch-e2e',
+    ['inbox.allTasks', 'allTasks.create'],
     'allTasks.screen',
   ],
+  ['all-tasks/filter-by-note.yaml', 'launch-e2e+seed', ['inbox.allTasks'], 'allTasks.screen'],
+  ['all-tasks/more-filters-sheet.yaml', 'launch-e2e', ['inbox.allTasks'], 'allTasks.screen'],
+  ['all-tasks/open-source-note.yaml', 'launch-e2e+seed', ['inbox.allTasks'], 'allTasks.screen'],
   // Notes graph P2
   ['notes-graph/open-from-menu.yaml', 'launch-e2e', ['inbox.menu'], 'notesGraph.screen'],
   ['notes-graph/filter-bar.yaml', 'launch-e2e', ['inbox.menu'], 'notesGraph.screen'],
@@ -216,7 +211,12 @@ const catalog = [
     ['tab.settings', 'settings.appearance'],
     'settings.screen',
   ],
-  ['settings/navigate-trash.yaml', 'launch-e2e', ['tab.settings', 'settings.trash'], 'trash.screen'],
+  [
+    'settings/navigate-trash.yaml',
+    'launch-e2e',
+    ['tab.settings', 'settings.trash'],
+    'trash.screen',
+  ],
   ['settings/trash-restore.yaml', 'launch-e2e', ['tab.settings', 'settings.trash'], 'trash.screen'],
   [
     'settings/trash-delete-forever.yaml',
@@ -255,7 +255,12 @@ const catalog = [
     'settings.screen',
   ],
   ['settings/about-nav.yaml', 'launch-e2e', ['tab.settings', 'settings.about'], 'settings.screen'],
-  ['settings/digest-nav.yaml', 'launch-e2e', ['tab.settings', 'settings.digest'], 'settings.screen'],
+  [
+    'settings/digest-nav.yaml',
+    'launch-e2e',
+    ['tab.settings', 'settings.digest'],
+    'settings.screen',
+  ],
   [
     'settings/siri-shortcuts-nav.yaml',
     'launch-e2e',
@@ -263,7 +268,12 @@ const catalog = [
     'settings.screen',
   ],
   // App lock P2
-  ['app-lock/enable-pin.yaml', 'launch-e2e', ['tab.settings', 'settings.appLockSetup'], 'settings.screen'],
+  [
+    'app-lock/enable-pin.yaml',
+    'launch-e2e',
+    ['tab.settings', 'settings.appLockSetup'],
+    'settings.screen',
+  ],
   ['app-lock/unlock-pin.yaml', 'launch-e2e', [], 'inbox.screen'],
   ['app-lock/wrong-pin.yaml', 'launch-e2e', [], 'inbox.screen'],
   ['app-lock/e2e-skip.yaml', 'launch-e2e', [], 'inbox.screen'],
@@ -282,11 +292,21 @@ const catalog = [
   ['inbox/ai-organize-archive-review.yaml', 'launch-e2e', ['inbox.menu'], 'inbox.screen'],
   // Modals P3
   ['modals/push-notification-sheet.yaml', 'skip-onboarding', [], 'inbox.screen'],
-  ['modals/cloud-ai-consent.yaml', 'launch-e2e+seed', ['inbox.recordCard.e2e-seed-note'], 'inbox.screen'],
+  [
+    'modals/cloud-ai-consent.yaml',
+    'launch-e2e+seed',
+    ['inbox.recordCard.e2e-seed-note'],
+    'inbox.screen',
+  ],
   ['modals/transcription-resume-prompt.yaml', 'launch-e2e', [], 'inbox.screen'],
   ['modals/rating-prompt-dismiss.yaml', 'launch-e2e', [], 'inbox.screen'],
   // Debug P3
-  ['debug/open-debug-screen.yaml', 'launch-e2e', ['tab.settings', 'settings.debug'], 'settings.screen'],
+  [
+    'debug/open-debug-screen.yaml',
+    'launch-e2e',
+    ['tab.settings', 'settings.debug'],
+    'settings.screen',
+  ],
 ];
 
 function subflowRef(name) {

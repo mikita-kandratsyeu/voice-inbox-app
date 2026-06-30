@@ -3,7 +3,7 @@
 appId: com.mkandratsyeu.voiceinboxai
 
 flows:
-  - "*"
+  - '*'
 
 # Each smoke flow cold-starts the app — run sequentially, not in parallel.
 executionOrder:

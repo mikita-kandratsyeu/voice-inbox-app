@@ -3,7 +3,7 @@ appId: com.mkandratsyeu.voiceinboxai
 
 # Discover flows in subfolders (smoke/, onboarding/, …). Subflows live outside flows/.
 flows:
-  - "flows/**"
+  - 'flows/**'
 
 env:
   E2E_RESET_URL: voiceinbox://e2e/reset?skipOnboarding=1&skipAppLock=1&disableAds=1
