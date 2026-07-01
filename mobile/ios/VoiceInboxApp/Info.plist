@@ -151,6 +151,17 @@
 				<string>public.audio</string>
 				<string>public.mp3</string>
 				<string>public.mpeg-4-audio</string>
+				<string>public.wav</string>
+				<string>com.microsoft.waveform-audio</string>
+				<string>public.aac-audio</string>
+				<string>org.xiph.flac</string>
+				<string>org.xiph.ogg-audio</string>
+				<string>public.opus</string>
+				<string>org.webmproject.webm</string>
+				<string>public.amr</string>
+				<string>public.3gpp</string>
+				<string>public.aiff-audio</string>
+				<string>com.apple.coreaudio-format</string>
 			</array>
 		</dict>
 		<dict>

@@ -70,7 +70,20 @@ const AUDIO_PICKER_TYPES = [
   'audio/x-m4a',
   'audio/wav',
   'audio/x-wav',
+  'audio/aac',
+  'audio/flac',
+  'audio/ogg',
+  'audio/opus',
+  'audio/webm',
+  'audio/amr',
+  'audio/3gpp',
+  'audio/x-caf',
+  'audio/aiff',
 ] as const;
+
+const IOS_AUDIO_PICKER_TYPES = IS_IOS
+  ? (['public.mpeg-4-audio', 'public.wav'] as const)
+  : ([] as const);
 
 const SUBTITLE_PICKER_TYPES = [
   types.plainText,
@@ -481,7 +494,12 @@ export function useImportAudioFile() {
 
     try {
       const picked = await pickSingleFileToCachesDirectory({
-        type: [...AUDIO_PICKER_TYPES, ...SUBTITLE_PICKER_TYPES, ...IOS_PICKER_FALLBACK_TYPES],
+        type: [
+          ...AUDIO_PICKER_TYPES,
+          ...IOS_AUDIO_PICKER_TYPES,
+          ...SUBTITLE_PICKER_TYPES,
+          ...IOS_PICKER_FALLBACK_TYPES,
+        ],
       });
 
       if (picked.kind === 'canceled') {
