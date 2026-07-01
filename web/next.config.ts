@@ -6,10 +6,11 @@ import { fileURLToPath } from 'node:url';
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 const webRoot = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.join(webRoot, '..');
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ['192.168.1.67', 'http://192.168.1.67:3000'],
-  transpilePackages: ['@zip.js/zip.js'],
+  transpilePackages: ['@zip.js/zip.js', '@voice-inbox/ai-job-core', '@voice-inbox/ai-worker'],
   async redirects() {
     return [
       { source: '/releases', destination: '/blog', permanent: true },
@@ -38,7 +39,7 @@ const nextConfig: NextConfig = {
     ],
   },
   turbopack: {
-    root: webRoot,
+    root: repoRoot,
   },
 };
 

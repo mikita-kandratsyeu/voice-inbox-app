@@ -93,7 +93,7 @@ const PACKAGE_LOCAL = new Set([
   'lib/prisma.ts',
 ]);
 
-const SKIP_WEB_REEXPORT = new Set(['lib/ai-job-dispatch.ts']);
+const SKIP_WEB_REEXPORT = new Set(['lib/ai-job-dispatch.ts', 'config/constants.ts']);
 
 function copyFile(rel) {
   const src = path.join(web, rel);
