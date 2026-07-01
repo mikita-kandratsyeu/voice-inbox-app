@@ -65,8 +65,9 @@ const SHARE_PDF_HTML_STYLES = `
     line-height: 1.5;
   }
   .share-note-pdf-table td:first-child {
-    width: 88px;
-    white-space: nowrap;
+    width: 120px;
+    overflow-wrap: break-word;
+    word-break: break-word;
     font-weight: 600;
     color: #111827;
     font-variant-numeric: tabular-nums;

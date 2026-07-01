@@ -3,7 +3,7 @@ export const SHARE_NOTE_SECTION_END =
   /\r?\n(?:## |<!--\s*vi:section:|(?:Создано в Voice Inbox AI|Created with Voice Inbox AI))/i;
 
 /** Fixed width for timestamp / speaker label column (px). Inline on `<col>` and `<td>`. */
-export const SHARE_NOTE_EMAIL_TABLE_FIRST_COL_PX = 100;
+export const SHARE_NOTE_EMAIL_TABLE_FIRST_COL_PX = 120;
 
 const TABLE_BLOCK_OPEN = '\n\n§§SHARE_NOTE_TABLE§§\n';
 const TABLE_BLOCK_CLOSE = '\n§§/SHARE_NOTE_TABLE§§\n\n';
@@ -42,7 +42,8 @@ export function buildTwoColumnShareNoteEmailTableHtml(
     'padding:8px 6px 8px 10px',
     'vertical-align:top',
     `width:${w}px`,
-    'white-space:nowrap',
+    'overflow-wrap:break-word',
+    'word-break:break-word',
     'font-weight:600',
     'color:#111827',
     'font-size:14px',

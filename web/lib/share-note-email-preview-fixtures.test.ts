@@ -8,6 +8,7 @@ describe('parseShareNoteEmailPreviewVariant', () => {
   it('parses known variants', () => {
     expect(parseShareNoteEmailPreviewVariant('transcript')).toBe('transcript');
     expect(parseShareNoteEmailPreviewVariant('meeting-brief')).toBe('meeting-brief');
+    expect(parseShareNoteEmailPreviewVariant('long-speaker-names')).toBe('long-speaker-names');
     expect(parseShareNoteEmailPreviewVariant('short-note')).toBe('short-note');
     expect(parseShareNoteEmailPreviewVariant('long-meeting')).toBe('long-meeting');
     expect(parseShareNoteEmailPreviewVariant('en-meeting')).toBe('en-meeting');
@@ -29,6 +30,7 @@ describe('getShareNoteEmailPreviewTitle', () => {
     expect(getShareNoteEmailPreviewTitle('long-meeting')).toContain('длинная');
     expect(getShareNoteEmailPreviewTitle('en-meeting')).toContain('onboarding');
     expect(getShareNoteEmailPreviewTitle('tasks')).toContain('задачи');
+    expect(getShareNoteEmailPreviewTitle('long-speaker-names')).toContain('Таунхолл');
   });
 });
 
@@ -70,5 +72,14 @@ describe('getShareNoteEmailPreviewMarkdown', () => {
     expect(markdown).toContain('**Итог:**');
     expect(markdown).toContain('**Отдельная заметка:**');
     expect(markdown).toContain('[[rec_presentation|');
+  });
+
+  it('includes long real speaker names for long-speaker-names variant', () => {
+    const markdown = getShareNoteEmailPreviewMarkdown('long-speaker-names');
+
+    expect(markdown).toContain('Богдан Грицовец:');
+    expect(markdown).toContain('Евгений Берлин:');
+    expect(markdown).toContain('Александр Рябов:');
+    expect(markdown).not.toContain('## Транскрипт');
   });
 });

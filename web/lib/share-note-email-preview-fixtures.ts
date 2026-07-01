@@ -4,6 +4,7 @@ export type ShareNoteEmailPreviewVariant =
   | 'speaker-turns'
   | 'transcript'
   | 'meeting-brief'
+  | 'long-speaker-names'
   | 'short-note'
   | 'long-meeting'
   | 'en-meeting'
@@ -25,6 +26,26 @@ const SPEAKER_TURNS_BODY = `Участник 1: Нужно срочно отпр
 const TRANSCRIPT_BODY = `[00:00] Добрый день, начинаем.
 [00:42] Первый пункт — отчёт по проекту.
 [01:15] Второй — планирование встречи на следующую неделю.`;
+
+const LONG_SPEAKER_NAMES_BODY = `Богдан Грицовец: Добро пожаловать на таунхолл. Кратко пройдёмся по итогам квартала и откроем блок вопросов от команд.
+
+Евгений Берлин: Почему мы выбрали именно этот подход к архитектуре: он снижает связность между сервисами и упрощает независимые релизы. На следующей неделе подготовлю схему для review.
+
+Александр Рябов: По моему опыту, важно синхронизировать команды до релиза. Предлагаю еженедельный sync по рискам и зависимостям, чтобы не ловить сюрпризы в последний день.
+
+Катерина Шалуха: Со стороны продукта вижу запрос на более предсказуемые сроки. Нужен единый календарь релизов и прозрачные критерии готовности для каждой фичи.
+
+Михаил Коваленко: Инфраструктура готова к пилоту, но стоит заранее заложить мониторинг и алерты. Могу взять на себя чеклист observability до старта беты.`;
+
+const LONG_SPEAKER_NAMES_EXTRA = `## Сводка
+
+Таунхолл по итогам квартала: архитектура, синхронизация команд, продуктовые сроки и подготовка к пилоту.
+
+## Следующие шаги
+
+- Подготовить схему архитектуры к review
+- Запустить еженедельный sync по рискам
+- Согласовать единый календарь релизов`;
 
 const MEETING_BRIEF_EXTRA = `## Сводка
 
@@ -136,6 +157,15 @@ Speaker 2: Agreed. The content is good, but the current version starts too abrup
 
 Created with Voice Inbox AI`;
 
+function longSpeakerNamesSection(): string {
+  return `${SHARE_SPEAKER_TURNS_SECTION_MARKER}
+## По участникам
+
+_${DISCLAIMER_RU}_
+
+${LONG_SPEAKER_NAMES_BODY}`;
+}
+
 function speakerTurnsSection(): string {
   return `${SHARE_SPEAKER_TURNS_SECTION_MARKER}
 ## По участникам
@@ -165,6 +195,8 @@ export function getShareNoteEmailPreviewTitle(variant: ShareNoteEmailPreviewVari
       return 'Совещание — транскрипт';
     case 'meeting-brief':
       return 'Совещание — итоги';
+    case 'long-speaker-names':
+      return 'Таунхолл — длинные имена спикеров';
     case 'speaker-turns':
     default:
       return 'Совещание — реплики по спикерам';
@@ -182,6 +214,10 @@ export function getShareNoteEmailPreviewMarkdown(variant: ShareNoteEmailPreviewV
 
   if (variant === 'en-meeting') {
     return EN_MEETING;
+  }
+
+  if (variant === 'long-speaker-names') {
+    return [LONG_SPEAKER_NAMES_EXTRA, longSpeakerNamesSection(), '', FOOTER_RU].join('\n\n');
   }
 
   const sections: string[] = [];
@@ -208,6 +244,7 @@ export function parseShareNoteEmailPreviewVariant(
   if (
     raw === 'transcript' ||
     raw === 'meeting-brief' ||
+    raw === 'long-speaker-names' ||
     raw === 'short-note' ||
     raw === 'long-meeting' ||
     raw === 'en-meeting' ||

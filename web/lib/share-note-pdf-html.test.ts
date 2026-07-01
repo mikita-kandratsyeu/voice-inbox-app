@@ -49,6 +49,18 @@ describe('buildShareNotePdfHtmlDocument', () => {
     expect(html).not.toContain('vi:section');
   });
 
+  it('renders long speaker names without nowrap in the label column', () => {
+    const html = buildShareNotePdfHtmlDocument(
+      getShareNoteEmailPreviewMarkdown('long-speaker-names'),
+      getShareNoteEmailPreviewTitle('long-speaker-names'),
+    );
+
+    expect(html).toContain('Богдан Грицовец');
+    expect(html).toContain('Евгений Берлин');
+    expect(html).toContain('overflow-wrap:break-word');
+    expect(html).not.toContain('white-space:nowrap');
+  });
+
   it('includes a muted document generation timestamp footer', () => {
     const html = buildShareNotePdfHtmlDocument(
       getShareNoteEmailPreviewMarkdown('short-note'),

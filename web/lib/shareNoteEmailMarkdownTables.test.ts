@@ -33,6 +33,8 @@ describe('buildTwoColumnShareNoteEmailTableHtml', () => {
 
     expect(html).toContain('<table role="presentation"');
     expect(html).toContain(`width:${SHARE_NOTE_EMAIL_TABLE_FIRST_COL_PX}px`);
+    expect(html).toContain('overflow-wrap:break-word');
+    expect(html).not.toContain('white-space:nowrap');
     expect(html).toContain('Участник 1');
     expect(html).toContain('&lt;script&gt;');
     expect(html).toContain('—');
