@@ -8,6 +8,8 @@ export type ServerPollHint = {
   estimatedCompletionMs?: number;
   /** Progress percentage (0-100) */
   progress?: number;
+  /** Absolute Unix ms deadline for the poll loop */
+  pollDeadlineMs?: number;
 };
 
 /**

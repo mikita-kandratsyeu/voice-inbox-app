@@ -1,3 +1,4 @@
+import { calculatePollDeadlineMs } from '@/lib/ai-job-duration';
 import type { PollingHints } from '@/types';
 import { TYPICAL_COMPLETION_MS, BASE_POLL_INTERVALS, type JobType } from './job-types';
 
@@ -20,9 +21,11 @@ export function calculatePollingHints(
   jobType: JobType,
   elapsedMs: number,
   estimatedTotalMs?: number,
+  startedAtMs?: number,
 ): PollingHints {
   const totalMs = estimatedTotalMs ?? TYPICAL_COMPLETION_MS[jobType];
   const progress = Math.min(95, Math.round((elapsedMs / totalMs) * 100));
+  const jobStartedAtMs = startedAtMs ?? Date.now() - elapsedMs;
 
   // Progress-aware polling intervals (matches mobile strategy)
   let retryAfterMs: number;
@@ -43,6 +46,7 @@ export function calculatePollingHints(
     progress,
     retryAfterMs,
     estimatedCompletionMs,
+    pollDeadlineMs: calculatePollDeadlineMs(jobStartedAtMs, jobType),
   };
 }
 
@@ -68,7 +72,7 @@ export function enrichWithPollingHints<T extends { status: 'processing' }>(
   startedAtMs: number,
 ): T & PollingHints {
   const elapsedMs = Date.now() - startedAtMs;
-  const hints = calculatePollingHints(jobType, elapsedMs);
+  const hints = calculatePollingHints(jobType, elapsedMs, undefined, startedAtMs);
 
   return {
     ...message,

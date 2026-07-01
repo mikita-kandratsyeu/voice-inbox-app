@@ -6629,6 +6629,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@voice-inbox/ai-job-core@workspace:*, @voice-inbox/ai-job-core@workspace:packages/ai-job-core":
+  version: 0.0.0-use.local
+  resolution: "@voice-inbox/ai-job-core@workspace:packages/ai-job-core"
+  dependencies:
+    "@types/jest": "npm:^29.5.14"
+    "@types/node": "npm:^26.0.0"
+    jest: "npm:^29.7.0"
+    typescript: "npm:^5.9.3"
+  languageName: unknown
+  linkType: soft
+
 "@vscode/sudo-prompt@npm:^9.0.0":
   version: 9.3.2
   resolution: "@vscode/sudo-prompt@npm:9.3.2"
@@ -19008,6 +19019,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"voice-inbox-ai-worker@workspace:workers/ai":
+  version: 0.0.0-use.local
+  resolution: "voice-inbox-ai-worker@workspace:workers/ai"
+  dependencies:
+    "@types/node": "npm:^26.0.0"
+    "@voice-inbox/ai-job-core": "workspace:*"
+    esbuild: "npm:0.28.1"
+    tsx: "npm:^4.21.0"
+    typescript: "npm:^5.9.3"
+  languageName: unknown
+  linkType: soft
+
 "voice-inbox-app@workspace:mobile":
   version: 0.0.0-use.local
   resolution: "voice-inbox-app@workspace:mobile"
@@ -19187,6 +19210,7 @@ __metadata:
     "@upstash/qstash": "npm:^2.11.1"
     "@upstash/redis": "npm:^1.38.0"
     "@vercel/analytics": "npm:^2.0.1"
+    "@voice-inbox/ai-job-core": "workspace:*"
     "@zip.js/zip.js": "npm:^2.7.62"
     bcryptjs: "npm:^3.0.3"
     dejavu-fonts-ttf: "npm:^2.37.3"

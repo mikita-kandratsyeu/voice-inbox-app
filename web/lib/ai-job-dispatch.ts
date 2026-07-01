@@ -1,10 +1,11 @@
 import { after } from 'next/server';
 
-import { AI_JOB_QSTASH_RETRIES, BASE_URL_OR_FALLBACK } from '@/config/constants';
+import { AI_JOB_QSTASH_RETRIES } from '@/config/constants';
 import { markAiJobFailed } from '@/lib/ai-job-fail';
 import { envelopeFromPayload } from '@/lib/ai-job-payload';
+import { resolveAiJobPublishPlan } from '@/lib/ai-job-publish-plan';
 import { runAiJobFromEnvelope } from '@/lib/run-ai-job-from-envelope';
-import { getAiJobWorkerUrl, getQStashClient, shouldUseQStashTransport } from '@/lib/qstash';
+import { getQStashClient, shouldUseQStashTransport } from '@/lib/qstash';
 import type { AiJobPayload } from '@/types/ai-job';
 
 export async function dispatchAiJob(
@@ -30,25 +31,67 @@ export async function dispatchAiJob(
       return;
     }
 
+    const plan = resolveAiJobPublishPlan();
+    const deduplicationId =
+      options?.deduplicationId ??
+      (envelope.operation === 'meeting_dialogue'
+        ? `${envelope.jobId}-meeting-dialogue`
+        : envelope.jobId);
+
+    if (plan.primary) {
+      try {
+        await client.publishJSON({
+          url: plan.primary.url,
+          body: envelope,
+          retries: AI_JOB_QSTASH_RETRIES,
+          timeout: plan.primary.timeoutSeconds,
+          failureCallback: plan.primary.failureCallback,
+          deduplicationId,
+        });
+        console.info(
+          '[AI job]',
+          JSON.stringify({
+            operation: envelope.operation,
+            jobId: envelope.jobId,
+            target: 'cloud_run',
+            timeoutSeconds: plan.primary.timeoutSeconds,
+            failureCallback: plan.primary.failureCallback,
+          }),
+        );
+        return;
+      } catch (err) {
+        console.error('[AI job] QStash publish to Cloud Run failed, falling back to Vercel', {
+          jobId: envelope.jobId,
+          error: err instanceof Error ? err.message : String(err),
+          primaryUrl: plan.primary.url,
+        });
+      }
+    }
+
     try {
       await client.publishJSON({
-        url: getAiJobWorkerUrl(),
+        url: plan.fallback.url,
         body: envelope,
         retries: AI_JOB_QSTASH_RETRIES,
-        timeout: '300s',
-        // QStash rejects ':' in deduplicationId; keep summarize vs meeting_dialogue distinct.
-        deduplicationId:
-          options?.deduplicationId ??
-          (envelope.operation === 'meeting_dialogue'
-            ? `${envelope.jobId}-meeting-dialogue`
-            : envelope.jobId),
+        timeout: plan.fallback.timeoutSeconds,
+        deduplicationId,
       });
+      console.info(
+        '[AI job]',
+        JSON.stringify({
+          operation: envelope.operation,
+          jobId: envelope.jobId,
+          target: 'vercel_fallback',
+          timeoutSeconds: plan.fallback.timeoutSeconds,
+          fallbackReason: plan.primary ? 'publish_fail' : 'vercel_only',
+        }),
+      );
       return;
     } catch (err) {
       console.error('[AI job] QStash publish failed, falling back to after()', {
         jobId: envelope.jobId,
         error: err instanceof Error ? err.message : String(err),
-        baseUrl: BASE_URL_OR_FALLBACK,
+        fallbackUrl: plan.fallback.url,
       });
       scheduleAfterFallback(envelope);
       return;

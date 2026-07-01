@@ -7,7 +7,7 @@ import {
   interruptibleDelay,
   isAbortLikeError,
 } from './abort';
-import { AI_POLL_TIMEOUT_MS } from './constants';
+import { AI_POLL_TIMEOUT_MS, resolvePollDeadlineMs } from './constants';
 
 export type PollGetParseOutcome<T> =
   | PollGetLoopResult<T>
@@ -46,11 +46,14 @@ function extractServerHints(data: unknown): ServerPollHint | undefined {
       ? obj.progress
       : undefined;
 
-  if (!retryAfterMs && !estimatedCompletionMs && !progress) {
+  const pollDeadlineMs =
+    typeof obj.pollDeadlineMs === 'number' && obj.pollDeadlineMs > 0 ? obj.pollDeadlineMs : undefined;
+
+  if (!retryAfterMs && !estimatedCompletionMs && !progress && !pollDeadlineMs) {
     return undefined;
   }
 
-  return { retryAfterMs, estimatedCompletionMs, progress };
+  return { retryAfterMs, estimatedCompletionMs, progress, pollDeadlineMs };
 }
 
 /**
@@ -70,6 +73,8 @@ export async function pollGetLoop<T>(
     headers?: Record<string, string>;
     /** Overrides default AI poll budget (e.g. resume after app restart). */
     timeoutMs?: number;
+    /** When server omits pollDeadlineMs, extend budget for async meeting dialogue. */
+    expectAsyncMeetingDialogue?: boolean;
     /** Job type for adaptive polling strategy */
     jobType?: PollJobType;
     /** Optional callback for progress updates */
@@ -98,13 +103,17 @@ async function pollGetLoopImpl<T>(
   options?: AiFetchOptions & {
     headers?: Record<string, string>;
     timeoutMs?: number;
+    expectAsyncMeetingDialogue?: boolean;
     jobType?: PollJobType;
     onProgress?: (progress: number) => void;
   },
 ): Promise<PollGetLoopResult<T>> {
   const headers = options?.headers ?? {};
   const signal = options?.signal;
-  const deadline = Date.now() + (options?.timeoutMs ?? AI_POLL_TIMEOUT_MS);
+  let deadline =
+    options?.timeoutMs != null
+      ? Date.now() + options.timeoutMs
+      : resolvePollDeadlineMs(undefined, options?.expectAsyncMeetingDialogue === true);
   const startTime = Date.now();
   const strategy = new AdaptivePollingStrategy();
 
@@ -180,6 +189,10 @@ async function pollGetLoopImpl<T>(
     if (parsed === 'processing') {
       // Extract server hints for adaptive interval
       const hints = extractServerHints(body.data);
+
+      if (hints?.pollDeadlineMs && hints.pollDeadlineMs > Date.now()) {
+        deadline = Math.max(deadline, hints.pollDeadlineMs);
+      }
 
       // Report progress if available
       if (hints?.progress !== undefined && options?.onProgress) {

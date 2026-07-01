@@ -1,0 +1,88 @@
+name: Deploy AI worker
+
+# GCP deploy is manual only — run from GitHub Actions → Deploy AI worker → Run workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'staging or prod'
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - prod
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  IMAGE_NAME: ai-worker
+
+jobs:
+  deploy:
+    name: Build and deploy Cloud Run
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - name: Resolve deploy target
+        id: target
+        run: echo "environment=${{ inputs.environment }}" >> "$GITHUB_OUTPUT"
+
+      - name: Authenticate to Google Cloud
+        if: ${{ secrets.GCP_PROJECT_ID != '' }}
+        uses: google-github-actions/auth@v2.1.1
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        if: ${{ secrets.GCP_PROJECT_ID != '' }}
+        uses: google-github-actions/setup-gcloud@v2.1.0
+
+      - name: Configure Docker for Artifact Registry
+        if: ${{ secrets.GCP_PROJECT_ID != '' }}
+        run: gcloud auth configure-docker "${{ secrets.GCP_REGION }}-docker.pkg.dev" --quiet
+
+      - name: Build and push image
+        if: ${{ secrets.GCP_PROJECT_ID != '' }}
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ secrets.GCP_REGION }}
+        run: |
+          IMAGE="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/voice-inbox/${IMAGE_NAME}:${GITHUB_SHA}"
+          docker build -f workers/ai/Dockerfile -t "$IMAGE" -t "${IMAGE%:*}:latest" .
+          docker push "$IMAGE"
+          docker push "${IMAGE%:*}:latest"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Deploy Cloud Run
+        if: ${{ secrets.GCP_PROJECT_ID != '' }}
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ secrets.GCP_REGION }}
+        run: |
+          SERVICE="ai-worker-${{ steps.target.outputs.environment }}"
+          MIN_INSTANCES=0
+          if [[ "${{ steps.target.outputs.environment }}" == "prod" ]]; then
+            MIN_INSTANCES=1
+          fi
+          gcloud run deploy "$SERVICE" \
+            --image="$IMAGE" \
+            --region="$GCP_REGION" \
+            --project="$GCP_PROJECT_ID" \
+            --timeout=900 \
+            --cpu=1 \
+            --memory=1Gi \
+            --min-instances="$MIN_INSTANCES" \
+            --max-instances=10 \
+            --allow-unauthenticated \
+            --port=8080 \
+            --quiet
+
+      - name: Skip deploy (GCP secrets not configured)
+        if: ${{ secrets.GCP_PROJECT_ID == '' }}
+        run: |
+          echo "GCP_PROJECT_ID secret not set — configure GCP secrets, then re-run this workflow manually."

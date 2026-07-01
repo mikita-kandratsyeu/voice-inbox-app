@@ -33,6 +33,7 @@
     "@upstash/qstash": "^2.11.1",
     "@upstash/redis": "^1.38.0",
     "@vercel/analytics": "^2.0.1",
+    "@voice-inbox/ai-job-core": "workspace:*",
     "@zip.js/zip.js": "^2.7.62",
     "bcryptjs": "^3.0.3",
     "dejavu-fonts-ttf": "^2.37.3",

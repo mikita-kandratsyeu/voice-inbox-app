@@ -47,6 +47,8 @@ export type PollingHints = {
   retryAfterMs?: number;
   /** Estimated milliseconds until completion */
   estimatedCompletionMs?: number;
+  /** Absolute Unix ms deadline for client poll loop */
+  pollDeadlineMs?: number;
 };
 
 export type Message =

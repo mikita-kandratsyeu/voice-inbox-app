@@ -1,6 +1,11 @@
 import { Receiver, Client } from '@upstash/qstash';
 
-import { AI_JOB_QSTASH_RETRIES, BASE_URL_OR_FALLBACK } from '@/config/constants';
+import { AI_JOB_QSTASH_RETRIES } from '@/config/constants';
+import {
+  getAiJobWorkerFallbackUrl,
+  getAiJobWorkerPrimaryUrl,
+  getAiJobWorkerUrl,
+} from '@/lib/ai-job-publish-plan';
 
 export function isQStashConfigured(): boolean {
   return Boolean(process.env.QSTASH_TOKEN?.trim());
@@ -31,10 +36,7 @@ function getQStashReceiver(): Receiver | null {
   });
 }
 
-export function getAiJobWorkerUrl(): string {
-  const base = BASE_URL_OR_FALLBACK.replace(/\/$/, '');
-  return `${base}/api/internal/ai/worker`;
-}
+export { getAiJobWorkerPrimaryUrl, getAiJobWorkerFallbackUrl, getAiJobWorkerUrl };
 
 export async function verifyQStashRequest(request: Request, body: string): Promise<boolean> {
   const receiver = getQStashReceiver();

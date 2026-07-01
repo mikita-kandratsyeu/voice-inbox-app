@@ -11,6 +11,7 @@ const config = {
   coverageDirectory: 'coverage',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    '^@voice-inbox/ai-job-core$': '<rootDir>/../packages/ai-job-core/src/index.ts',
   },
 };
 

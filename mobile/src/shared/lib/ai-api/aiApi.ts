@@ -673,6 +673,7 @@ export async function pollAiMessage(
       signal: options?.signal,
       headers,
       timeoutMs: options?.timeoutMs ?? aiPollTimeoutMs(expectAsyncMeetingDialogue),
+      expectAsyncMeetingDialogue,
       jobType: expectAsyncMeetingDialogue ? 'meeting_dialogue' : 'summary',
       onProgress: options?.onProgress,
     },

@@ -28,6 +28,7 @@ import {
 import { sanitizeRecordingMarksForPrompt } from '@/lib/recording-marks-prompt';
 import { setAppForeground } from '@/lib/push-tokens';
 import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
+import { enrichWithPollingHints } from '@/lib/polling-hints';
 import { getAiWeeklyLimits } from '@/lib/app-config';
 import { isProDevice } from '@/lib/pro-entitlement';
 import { createMessage, type MeetingDialogueAuxPayload } from '@/services/message.service';
@@ -237,12 +238,19 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     });
   }
 
-  const response = NextResponse.json({
-    id,
-    status: 'processing',
-    ...aiModelClientResponseFields(resolvedModel, modelMode),
-    ...(result.syncToken && { syncToken: result.syncToken }),
-  });
+  const startedAtMs = Date.now();
+  const response = NextResponse.json(
+    enrichWithPollingHints(
+      {
+        id,
+        status: 'processing' as const,
+        ...aiModelClientResponseFields(resolvedModel, modelMode),
+        ...(result.syncToken && { syncToken: result.syncToken }),
+      },
+      'summary',
+      startedAtMs,
+    ),
+  );
 
   if (result.syncToken) {
     response.headers.set(HEADER_SYNC_TOKEN, result.syncToken);

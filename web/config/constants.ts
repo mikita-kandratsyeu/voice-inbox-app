@@ -1,3 +1,8 @@
+import {
+  getJobLockTtlSeconds,
+  getOpenRouterGenerationRecoveryMaxWaitMs,
+} from '@/lib/ai-job-duration';
+
 /** Apple App Store numeric id from an App Store / iTunes URL (e.g. …/app/name/id6745410910). */
 export function extractAppleAppStoreId(storeUrl: string): string | undefined {
   const trimmed = storeUrl.trim();
@@ -96,7 +101,6 @@ export const PRO_RESET_USAGE_THRESHOLD = 0.9;
 export const REVENUECAT_AI_RESET_PRODUCT_ID =
   process.env.REVENUECAT_AI_RESET_PRODUCT_ID?.trim() ?? '';
 
-// Redis / KV — AI job payload keys (`msg:*`). Clients may request a shorter TTL (see MESSAGE_TTL_MIN_SECONDS).
 export const MESSAGE_TTL_MIN_SECONDS = 300; // 5 minutes
 export const MESSAGE_TTL_SECONDS = 3600; // default / max selectable (1 hour)
 export const MESSAGE_KEY_PREFIX = 'msg:';
@@ -106,18 +110,18 @@ export const JOB_PAYLOAD_KEY_PREFIX = 'job-payload:';
 export const MEETING_JOB_PAYLOAD_KEY_PREFIX = 'job-payload:meeting:';
 /** QStash delivery retries when publishing async AI jobs. */
 export const AI_JOB_QSTASH_RETRIES = 3;
-/** Worker exclusive lock (`job-lock:*`). Slightly above App Router `maxDuration` (300s). */
+/** Worker exclusive lock (`job-lock:*`). Slightly above worker `maxDuration`. */
 export const JOB_LOCK_KEY_PREFIX = 'job-lock:';
-export const JOB_LOCK_TTL_SECONDS = 330;
+export const JOB_LOCK_TTL_SECONDS = getJobLockTtlSeconds();
 /** OpenRouter generation id for async recovery after worker timeout (`or-gen:*`). */
 export const OPENROUTER_PENDING_GENERATION_KEY_PREFIX = 'or-gen:';
 export const OPENROUTER_PENDING_GENERATION_TTL_SECONDS = JOB_LOCK_TTL_SECONDS;
 /** Poll OpenRouter `/generation/content` when the live HTTP call fails but a generation id exists. */
 export const OPENROUTER_GENERATION_RECOVERY_POLL_INTERVAL_MS = 2_000;
 /** Poll `/generation/content` after transport failure (within one worker attempt). */
-export const OPENROUTER_GENERATION_RECOVERY_MAX_WAIT_MS = 180_000;
+export const OPENROUTER_GENERATION_RECOVERY_MAX_WAIT_MS = getOpenRouterGenerationRecoveryMaxWaitMs();
 /**
- * Above this size, meeting dialogue runs in a separate QStash job (own 300s).
+ * Above this size, meeting dialogue runs in a separate QStash job (own worker budget).
  * At or below: inline second pass in the summarize worker (faster for short meetings).
  */
 export const SUMMARIZE_MEETING_DIALOGUE_INLINE_MAX_TRANSCRIPT_CHARS = 10_000;

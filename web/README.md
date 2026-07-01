@@ -119,16 +119,18 @@ See **`.env.example`** for the full list and comments. Core groups:
 
 Mobile POST endpoints enqueue work in Redis (`msg:*`) and return immediately; the app polls GET until `done`.
 
-- **Transport:** With `QSTASH_TOKEN`, work runs via **QStash** → `POST /api/internal/ai/worker`. Otherwise Next.js **`after()`** on the same deployment (`AI_JOB_TRANSPORT=after`).
-- Set **`NEXT_PUBLIC_BASE_URL`** to a public HTTPS origin so QStash can reach the worker.
+- **Transport:** With `QSTASH_TOKEN`, work runs via **QStash**. Primary worker: **Cloud Run** when `AI_JOB_WORKER_URL` is set (900s); fallback: Vercel `POST /api/internal/ai/worker` (300s) via QStash `failureCallback` and publish-fail path. Without `AI_JOB_WORKER_URL`, QStash targets Vercel only. Without `QSTASH_TOKEN`, jobs use Next.js **`after()`** (`AI_JOB_TRANSPORT=after`).
+- Set **`NEXT_PUBLIC_BASE_URL`** to a public HTTPS origin (fallback worker URL and QStash callbacks).
+- Processing responses include **`pollDeadlineMs`** so mobile can poll up to 15 minutes (summary jobs: up to 30 minutes with async meeting dialogue).
 - On Vercel, if Deployment Protection blocks webhooks, allow QStash or exclude `/api/internal/ai/worker`.
+- **Cloud Run deploy (manual):** [workers/ai/README.md](../workers/ai/README.md) — GitHub Actions workflow *Deploy AI worker* (`workflow_dispatch` only).
 
 **OpenRouter recovery:** Streaming stores `X-Generation-Id` in Redis (`or-gen:{jobId}`). If the worker times out while OpenRouter still completes, QStash retries can resume via `GET /api/v1/generation/content` instead of duplicating the chat request.
 
 **Meeting speaker breakdown (Pro meetings):**
 
 1. **Summarize** completes first (`status: done`, summary/tasks in Redis `msg:*`).
-2. **Dialogue pass** — For long transcripts (~10k+ chars), a separate QStash job (`meeting_dialogue`, `maxDuration` 300s) writes `meetingDialogueMarkdown`; mobile polls while `meetingDialogueStatus` is `processing`. Shorter meetings may run an inline second pass inside the summarize worker.
+2. **Dialogue pass** — For long transcripts (~10k+ chars), a separate QStash job (`meeting_dialogue`, own worker budget up to 900s on Cloud Run) writes `meetingDialogueMarkdown`; mobile polls while `meetingDialogueStatus` is `processing`. Shorter meetings may run an inline second pass inside the summarize worker.
 3. **Regenerate dialogue only** — `POST /api/messages/[id]/meeting-dialogue` (`web/services/message.service.ts` → `retryMeetingDialogue`). Re-dispatches `meeting_dialogue` without re-running summarize; counts against AI rate limits. Body may include `phase1` when the original Redis entry expired but the device still has title/summary/key phrases.
 4. **Cancel** — Existing job cancel clears in-flight work; `web/lib/ai-job-cancel.ts` also clears stale cancel flags when starting a new dialogue attempt for the same `jobId`.
 

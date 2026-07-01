@@ -2,6 +2,8 @@
  * Timeout utilities for wrapping async operations with time limits.
  */
 
+import { getAiJobProcessingTimeoutMs } from '@/lib/ai-job-duration';
+
 export class TimeoutError extends Error {
   constructor(
     message: string,
@@ -64,15 +66,22 @@ export async function withTimeoutPartial<T>(
   });
 }
 
+function aiProcessingTimeoutMs(): number {
+  return getAiJobProcessingTimeoutMs();
+}
+
 /**
  * Timeout configurations for different operation types.
  *
- * Note: Vercel Fluid Functions maxDuration is 300s (5 minutes).
- * AI timeouts set to 290s to allow graceful error handling before Vercel kills the function.
+ * AI timeouts are 10s below worker `maxDuration` (Vercel 300s or Cloud Run 900s).
  */
 export const TIMEOUTS = {
-  AI_PROCESSING: 290_000, // 290 seconds (4m 50s) - for summary, meeting dialogue
-  AI_CHAT: 290_000, // 290 seconds (4m 50s) - for ask queries
+  get AI_PROCESSING() {
+    return aiProcessingTimeoutMs();
+  },
+  get AI_CHAT() {
+    return aiProcessingTimeoutMs();
+  },
   DATABASE_QUERY: 30_000, // 30 seconds
   DATABASE_TRANSACTION: 60_000, // 1 minute
   REDIS_OPERATION: 5_000, // 5 seconds

@@ -184,7 +184,12 @@ function buildLinkGroups(): LinkGroup[] {
       {
         label: 'Upstash — QStash',
         href: 'https://console.upstash.com/qstash',
-        caption: 'Async AI workers (summarize, ask, auto-organize) when QSTASH_TOKEN is set.',
+        caption: 'Async AI jobs: primary Cloud Run worker when AI_JOB_WORKER_URL is set; Vercel fallback.',
+      },
+      {
+        label: 'Google Cloud — Cloud Run',
+        href: 'https://console.cloud.google.com/run',
+        caption: 'AI worker service (ai-worker-staging / ai-worker-prod) when deployed via deploy-ai-worker workflow.',
       },
       {
         label: 'GitHub — Repository',

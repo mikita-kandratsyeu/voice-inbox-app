@@ -16,6 +16,7 @@ import {
 } from '@/lib/ai-model-display';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import { saveJobMetadata, getJobMetadata } from '@/lib/job-metadata';
+import { calculatePollDeadlineMs } from '@/lib/ai-job-duration';
 import { enrichWithPollingHints, operationToJobType } from '@/lib/polling-hints';
 import type {
   MeetingDialogueAuxPayload,
@@ -123,6 +124,15 @@ export const getMessageById = async (id: string, syncToken?: string): Promise<Me
 
   // Enrich with model label
   const enriched = enrichMessageWithModelLabel(message);
+
+  if (enriched.status === 'done' && enriched.meetingDialogueStatus === 'processing') {
+    const metadata = await getJobMetadata(id);
+    const startedAt = metadata?.startedAt ?? Date.now();
+    return sanitizeAiModelFieldsForClient({
+      ...enriched,
+      pollDeadlineMs: calculatePollDeadlineMs(startedAt, 'summary'),
+    });
+  }
 
   // Add adaptive polling hints for processing messages
   if (enriched.status === 'processing') {
