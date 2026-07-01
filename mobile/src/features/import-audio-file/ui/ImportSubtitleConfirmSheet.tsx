@@ -8,6 +8,7 @@ import { Pressable, Switch, Text, View } from 'react-native';
 import { useProEntitlement } from '@/features/pro-license';
 import { useColors } from '@/shared/config';
 import { formatTime, hapticLight, hapticSuccess } from '@/shared/lib';
+import { formatGroupedInteger } from '@/shared/lib/formatGroupedInteger';
 import { AppBottomSheetContent, AppBottomSheetModal, SheetFooterButtons } from '@/shared/ui';
 
 export type ImportFileConfirmOptions = {
@@ -17,9 +18,10 @@ export type ImportFileConfirmOptions = {
 
 type ImportSubtitleConfirmSheetProps = {
   visible: boolean;
-  kind?: 'audio' | 'subtitles';
+  kind?: 'audio' | 'document' | 'subtitles';
   defaultTitle: string;
   durationMs: number;
+  documentCharCount?: number;
   onConfirm: (options: ImportFileConfirmOptions) => void | Promise<void>;
   onCancel: () => void;
 };
@@ -29,10 +31,11 @@ export function ImportSubtitleConfirmSheet({
   kind = 'subtitles',
   defaultTitle,
   durationMs,
+  documentCharCount = 0,
   onConfirm,
   onCancel,
 }: ImportSubtitleConfirmSheetProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const c = useColors();
   const { isProActive } = useProEntitlement();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
@@ -74,6 +77,18 @@ export function ImportSubtitleConfirmSheet({
   }, []);
 
   const durationSec = Math.max(1, Math.floor(durationMs / 1000));
+  const titleKey =
+    kind === 'audio'
+      ? 'importAudio.audioImportTitle'
+      : kind === 'document'
+        ? 'importAudio.documentImportTitle'
+        : 'importAudio.subtitleImportTitle';
+  const metaKey =
+    kind === 'audio'
+      ? 'importAudio.audioImportDuration'
+      : kind === 'document'
+        ? 'importAudio.documentImportSize'
+        : 'importAudio.subtitleImportDuration';
 
   return (
     <AppBottomSheetModal
@@ -87,7 +102,7 @@ export function ImportSubtitleConfirmSheet({
     >
       <AppBottomSheetContent useTabletPadding style={{ paddingTop: 4, gap: 12 }}>
         <Text className="text-lg font-bold" style={{ color: c.text.primary }}>
-          {t(kind === 'audio' ? 'importAudio.audioImportTitle' : 'importAudio.subtitleImportTitle')}
+          {t(titleKey)}
         </Text>
 
         <BottomSheetTextInput
@@ -109,10 +124,10 @@ export function ImportSubtitleConfirmSheet({
 
         <Text className="-mt-1 text-[13px]" style={{ color: c.text.secondary }}>
           {t(
-            kind === 'audio'
-              ? 'importAudio.audioImportDuration'
-              : 'importAudio.subtitleImportDuration',
-            { time: formatTime(durationSec) },
+            metaKey,
+            kind === 'document'
+              ? { count: formatGroupedInteger(documentCharCount, i18n.language) }
+              : { time: formatTime(durationSec) },
           )}
         </Text>
 

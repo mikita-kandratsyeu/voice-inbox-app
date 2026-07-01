@@ -1,7 +1,7 @@
 import { IS_IOS } from '@/shared/lib/platform';
 
 const IMPORT_EXT =
-  /\.(m4a|mp4|mp3|wav|aac|caf|flac|ogg|opus|webm|aiff|aif|wma|3gp|amr|srt|vtt|sbv|sub|txt)(\?|$)/i;
+  /\.(m4a|mp4|mp3|wav|aac|caf|flac|ogg|opus|webm|aiff|aif|wma|3gp|amr|srt|vtt|sbv|sub|txt|md|markdown|pdf)(\?|$)/i;
 
 /** iOS handoff paths: Documents/Inbox, *-Inbox (e.g. org.telegram.Telegram-Inbox), or /Inbox/ segment. */
 const IOS_SHARED_IMPORT_PATH = /\/(Documents\/Inbox|[^/]+-Inbox|Inbox)\//i;

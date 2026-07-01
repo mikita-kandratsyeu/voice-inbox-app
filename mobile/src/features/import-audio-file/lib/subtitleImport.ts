@@ -1,6 +1,6 @@
 import type { TranscriptSegment } from '@/entities/record';
 
-const SUBTITLE_EXT_RE = /\.(srt|vtt|sbv|sub|txt)(?:[?#].*)?$/i;
+const SUBTITLE_EXT_RE = /\.(srt|vtt|sbv|sub)(?:[?#].*)?$/i;
 const MAX_SUBTITLE_FILE_CHARS = 2_000_000;
 
 export type ParsedSubtitleImport = {

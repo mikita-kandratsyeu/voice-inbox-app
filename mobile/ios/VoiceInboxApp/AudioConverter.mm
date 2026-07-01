@@ -2,6 +2,7 @@
 #import <AVFoundation/AVFoundation.h>
 #import <React/RCTBridgeModule.h>
 #import <AudioToolbox/AudioToolbox.h>
+#import <PDFKit/PDFKit.h>
 #import <math.h>
 #import <string.h>
 
@@ -576,6 +577,51 @@ RCT_EXPORT_METHOD(analyzeWavSpeech:(NSString *)inputPath
     [inFile closeFile];
     reject(@"E_VAD", exception.reason ?: @"Speech analysis failed", nil);
   }
+}
+
+RCT_EXPORT_METHOD(extractPdfText:(NSString *)inputPath
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject)
+{
+  NSString *input = nil;
+  if ([inputPath hasPrefix:@"file://"]) {
+    NSURL *u = [NSURL URLWithString:inputPath];
+    if (u.path.length) input = u.path;
+  }
+  if (!input.length) {
+    input = [inputPath hasPrefix:@"file://"] ? [inputPath substringFromIndex:7] : inputPath;
+  }
+  NSString *resolved = [NSURL fileURLWithPath:input].path;
+  if (resolved.length) input = resolved;
+
+  if (![[NSFileManager defaultManager] fileExistsAtPath:input]) {
+    reject(@"E_PDF", @"File not found", nil);
+    return;
+  }
+
+  PDFDocument *doc = [[PDFDocument alloc] initWithURL:[NSURL fileURLWithPath:input]];
+  if (!doc || doc.pageCount == 0) {
+    reject(@"E_PDF", @"Could not open PDF", nil);
+    return;
+  }
+
+  NSMutableString *text = [NSMutableString string];
+  for (NSInteger i = 0; i < doc.pageCount; i++) {
+    PDFPage *page = [doc pageAtIndex:i];
+    NSString *pageText = [page string];
+    if (pageText.length) {
+      if (text.length) [text appendString:@"\n\n"];
+      [text appendString:pageText];
+    }
+  }
+
+  NSString *trimmed = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+  if (!trimmed.length) {
+    reject(@"E_PDF_EMPTY", @"No extractable text in PDF", nil);
+    return;
+  }
+
+  resolve(trimmed);
 }
 
 @end

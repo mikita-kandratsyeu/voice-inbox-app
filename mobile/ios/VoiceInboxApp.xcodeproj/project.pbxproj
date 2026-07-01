@@ -44,6 +44,7 @@
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* BootSplash.storyboard */; };
 		A1C2E3F405060708090A0B03 /* AudioConverter.mm in Sources */ = {isa = PBXBuildFile; fileRef = A1C2E3F405060708090A0B02 /* AudioConverter.mm */; };
 		A9B8C7D6E5F4A3B2C1D0E9F8 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9B8C7D6E5F4A3B2C1D0E9F7 /* AudioToolbox.framework */; };
+		B8C9D0E1F2A3B4C5D6E7F8AA /* PDFKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B8C9D0E1F2A3B4C5D6E7F8A9 /* PDFKit.framework */; };
 		B0C1D2E3F4A5B6C7D8E9F0A1 /* AppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0C1D2E3F4A5B6C7D8E9F0A0 /* AppShortcuts.swift */; };
 		B1C2D3E4F5A6B7C8D9E0F1A2 /* AppShortcuts.strings in Resources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5A6B7C8D9E0F1A0 /* AppShortcuts.strings */; };
 		B2C3D4E5F6A7B8C9D0E1F2A3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6A7B8C9D0E1F2A0 /* Localizable.strings */; };
@@ -121,6 +122,7 @@
 		A1C2E3F405060708090A0B01 /* AudioConverter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VoiceInboxApp/AudioConverter.h; sourceTree = "<group>"; };
 		A1C2E3F405060708090A0B02 /* AudioConverter.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = VoiceInboxApp/AudioConverter.mm; sourceTree = "<group>"; };
 		A9B8C7D6E5F4A3B2C1D0E9F7 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		B8C9D0E1F2A3B4C5D6E7F8A9 /* PDFKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PDFKit.framework; path = System/Library/Frameworks/PDFKit.framework; sourceTree = SDKROOT; };
 		B0C1D2E3F4A5B6C7D8E9F0A0 /* AppShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppShortcuts.swift; path = VoiceInboxApp/AppShortcuts.swift; sourceTree = "<group>"; };
 		B1C2D3E4F5A6B7C8D9E0F1B1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = VoiceInboxApp/en.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		B1C2D3E4F5A6B7C8D9E0F1B2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = VoiceInboxApp/ru.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
@@ -187,6 +189,7 @@
 			files = (
 				2A15FAEA2F696F9E00177049 /* StoreKit.framework in Frameworks */,
 				A9B8C7D6E5F4A3B2C1D0E9F8 /* AudioToolbox.framework in Frameworks */,
+				B8C9D0E1F2A3B4C5D6E7F8AA /* PDFKit.framework in Frameworks */,
 				8B18DEC4B4FFEE082D556327 /* Pods_VoiceInboxApp.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -267,6 +270,7 @@
 				2A6F4CEC2F64113A00297CB8 /* WidgetKit.framework */,
 				2A6F4CEE2F64113B00297CB8 /* SwiftUI.framework */,
 				A9B8C7D6E5F4A3B2C1D0E9F7 /* AudioToolbox.framework */,
+				B8C9D0E1F2A3B4C5D6E7F8A9 /* PDFKit.framework */,
 				EE891B88985ED259648B1BB1 /* Pods_VoiceInboxApp.framework */,
 			);
 			name = Frameworks;

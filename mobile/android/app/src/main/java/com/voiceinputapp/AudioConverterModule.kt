@@ -7,6 +7,8 @@ import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
+import com.tom_roush.pdfbox.pdmodel.PDDocument
+import com.tom_roush.pdfbox.text.PDFTextStripper
 import java.io.File
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
@@ -606,6 +608,29 @@ class AudioConverterModule(reactContext: ReactApplicationContext) :
       output[i] = (sample0 + (sample1 - sample0) * frac).toInt().toShort()
     }
     return output
+  }
+
+  @ReactMethod
+  fun extractPdfText(inputPath: String, promise: Promise) {
+    try {
+      val input = if (inputPath.startsWith("file://")) inputPath.removePrefix("file://") else inputPath
+      val file = File(input)
+      if (!file.exists()) {
+        promise.reject("E_PDF", "File not found")
+        return
+      }
+
+      PDDocument.load(file).use { document ->
+        val text = PDFTextStripper().getText(document).trim()
+        if (text.isEmpty()) {
+          promise.reject("E_PDF_EMPTY", "No extractable text in PDF")
+        } else {
+          promise.resolve(text)
+        }
+      }
+    } catch (e: Exception) {
+      promise.reject("E_PDF", e.message ?: "Could not read PDF")
+    }
   }
 
   private fun writeWavHeader(

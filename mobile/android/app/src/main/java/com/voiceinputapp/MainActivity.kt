@@ -63,6 +63,7 @@ class MainActivity : ReactActivity() {
     val normalized = type?.lowercase() ?: return false
     return normalized.startsWith("audio/") ||
       normalized.startsWith("text/") ||
+      normalized == "application/pdf" ||
       normalized == "application/x-subrip" ||
       normalized == "application/octet-stream"
   }
@@ -78,6 +79,9 @@ class MainActivity : ReactActivity() {
       path.endsWith(".flac") ||
       path.endsWith(".caf") ||
       path.endsWith(".3gp") ||
+      path.endsWith(".md") ||
+      path.endsWith(".markdown") ||
+      path.endsWith(".pdf") ||
       path.endsWith(".srt") ||
       path.endsWith(".vtt") ||
       path.endsWith(".sbv") ||
@@ -114,6 +118,9 @@ class MainActivity : ReactActivity() {
       path.endsWith(".opus") -> ".opus"
       path.endsWith(".flac") -> ".flac"
       path.endsWith(".caf") -> ".caf"
+      path.endsWith(".md") -> ".md"
+      path.endsWith(".markdown") -> ".markdown"
+      path.endsWith(".pdf") -> ".pdf"
       path.endsWith(".3gp") || path.endsWith(".amr") -> ".m4a"
       path.endsWith(".srt") -> ".srt"
       path.endsWith(".vtt") -> ".vtt"
@@ -121,6 +128,8 @@ class MainActivity : ReactActivity() {
       path.endsWith(".sub") -> ".sub"
       path.endsWith(".txt") -> ".txt"
       mimeType?.lowercase() == "application/x-subrip" -> ".srt"
+      mimeType?.lowercase() == "application/pdf" -> ".pdf"
+      mimeType?.lowercase() == "text/markdown" || mimeType?.lowercase() == "text/x-markdown" -> ".md"
       mimeType?.lowercase() == "text/vtt" || mimeType?.lowercase() == "text/webvtt" -> ".vtt"
       mimeType?.lowercase()?.startsWith("text/") == true -> ".txt"
       else -> ".m4a"
