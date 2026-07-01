@@ -4,7 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, InteractionManager } from 'react-native';
+import { Alert } from 'react-native';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
@@ -34,8 +34,10 @@ import {
   getReadableDocumentPickerFsPath,
   NitroFS,
   pickSingleFileToCachesDirectory,
+  readTextImportFileAtPath,
 } from '@/shared/lib/fs';
 import { ensureRecordingsDir, RECORDINGS_DIR } from '@/shared/lib/recordings';
+import { runAfterInteractions } from '@/shared/lib/runAfterInteractions';
 
 import {
   isDocumentImportFileName,
@@ -48,6 +50,7 @@ import {
 import {
   isSubtitleImportFileName,
   looksLikeSubtitleContent,
+  MAX_SUBTITLE_IMPORT_CHARS,
   type ParsedSubtitleImport,
   parseSubtitleImport,
 } from '../lib/subtitleImport';
@@ -133,10 +136,6 @@ const SUBTITLE_PICKER_TYPES = [
 
 const IOS_PICKER_FALLBACK_TYPES = IS_IOS ? ([types.allFiles] as const) : [];
 
-function stripFileScheme(uri: string): string {
-  return uri.startsWith('file://') ? uri.slice(7) : uri;
-}
-
 function fallbackNameFromUri(uri: string): string {
   try {
     return decodeURIComponent(new URL(uri).pathname.split('/').pop() ?? '');
@@ -160,19 +159,14 @@ function fileNameForCopy(name: string | null): string {
 
 function waitForImportOverlayPaint(): Promise<void> {
   return new Promise((resolve) => {
-    InteractionManager.runAfterInteractions(() => {
+    runAfterInteractions(() => {
       requestAnimationFrame(() => resolve());
     });
   });
 }
 
 async function readTextFile(path: string): Promise<string> {
-  const normalized = stripFileScheme(path);
-  try {
-    return await NitroFS.readFile(normalized, 'utf8');
-  } catch {
-    return NitroFS.readFile(`file://${normalized}`, 'utf8');
-  }
+  return readTextImportFileAtPath(path);
 }
 
 async function loadImportTextSource(
@@ -196,6 +190,21 @@ function tryParseSubtitleImportFromText(
     return null;
   }
   return parseSubtitleImport(rawText);
+}
+
+function exceedsSubtitleImportCharLimit(parsed: ParsedSubtitleImport): boolean {
+  return parsed.charCount > MAX_SUBTITLE_IMPORT_CHARS;
+}
+
+function notifySubtitleImportTooLarge(t: (key: string, opts?: { max: number }) => string): void {
+  hapticError();
+  Alert.alert(
+    t('importAudio.subtitleTooLargeTitle'),
+    t('importAudio.subtitleTooLargeMessage', {
+      max: Math.round(MAX_SUBTITLE_IMPORT_CHARS / 1000),
+    }),
+    [{ text: t('common.ok') }],
+  );
 }
 
 export function useImportAudioFile() {
@@ -406,6 +415,8 @@ export function useImportAudioFile() {
           isDocumentImportFileName(fileLabel) || isDocumentImportFileName(normalizedSource);
         const isPlainTextByName =
           isPlainTextImportFileName(fileLabel) || isPlainTextImportFileName(normalizedSource);
+        const shouldTrySubtitleImport =
+          isSubtitleImportFileName(fileLabel) || isSubtitleImportFileName(normalizedSource);
 
         if (isDocumentByName || isPlainTextByName) {
           setImportPhase('parsing_document');
@@ -428,15 +439,8 @@ export function useImportAudioFile() {
 
           const subtitleParsed = tryParseSubtitleImportFromText(rawText, fileLabel);
           if (subtitleParsed) {
-            if (subtitleParsed.durationMs > maxImportMs) {
-              hapticError();
-              Alert.alert(
-                t('importAudio.maxDurationTitle'),
-                t('importAudio.maxDurationMessage', {
-                  max: Math.round(maxImportMs / (60 * 1000)),
-                }),
-                [{ text: t('common.ok') }],
-              );
+            if (exceedsSubtitleImportCharLimit(subtitleParsed)) {
+              notifySubtitleImportTooLarge(t);
               return;
             }
 
@@ -473,8 +477,6 @@ export function useImportAudioFile() {
           return;
         }
 
-        const shouldTrySubtitleImport =
-          isSubtitleImportFileName(fileLabel) || isSubtitleImportFileName(normalizedSource);
         if (shouldTrySubtitleImport) {
           setImportPhase('parsing_subtitles');
           const rawText = await readTextFile(normalizedSource);
@@ -489,15 +491,8 @@ export function useImportAudioFile() {
             return;
           }
 
-          if (parsed.durationMs > maxImportMs) {
-            hapticError();
-            Alert.alert(
-              t('importAudio.maxDurationTitle'),
-              t('importAudio.maxDurationMessage', {
-                max: Math.round(maxImportMs / (60 * 1000)),
-              }),
-              [{ text: t('common.ok') }],
-            );
+          if (exceedsSubtitleImportCharLimit(parsed)) {
+            notifySubtitleImportTooLarge(t);
             return;
           }
 
@@ -698,7 +693,11 @@ export function useImportAudioFile() {
       if (picked.kind === 'failed') {
         diagWarn('[importAudioFile] pick/copy failed', picked.message);
         hapticError();
-        Alert.alert(t('common.error'), picked.message || t('importAudio.importError'));
+        if (picked.fileAccessDenied) {
+          Alert.alert(t('importAudio.fileAccessErrorTitle'), t('importAudio.fileAccessError'));
+        } else {
+          Alert.alert(t('common.error'), picked.message || t('importAudio.importError'));
+        }
         return;
       }
 

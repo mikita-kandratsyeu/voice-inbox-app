@@ -2,11 +2,13 @@ import type { TranscriptSegment } from '@/entities/record';
 
 const SUBTITLE_EXT_RE = /\.(srt|vtt|sbv|sub)(?:[?#].*)?$/i;
 const MAX_SUBTITLE_FILE_CHARS = 2_000_000;
+export const MAX_SUBTITLE_IMPORT_CHARS = 500_000;
 
 export type ParsedSubtitleImport = {
   transcript: string;
   segments: TranscriptSegment[];
   durationMs: number;
+  charCount: number;
 };
 
 function normalizeText(raw: string): string {
@@ -167,5 +169,5 @@ export function parseSubtitleImport(raw: string): ParsedSubtitleImport | null {
     .trim();
   const durationMs = Math.max(...segments.map((segment) => segment.endMs ?? 0), 1000);
 
-  return { transcript, segments, durationMs };
+  return { transcript, segments, durationMs, charCount: transcript.length };
 }

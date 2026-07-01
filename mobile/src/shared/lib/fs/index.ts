@@ -10,4 +10,5 @@ export {
   getDocumentPickerFsPath,
   getReadableDocumentPickerFsPath,
   pickSingleFileToCachesDirectory,
+  readTextImportFileAtPath,
 } from './documentPicker';
