@@ -8,6 +8,8 @@ export type DevPreviewExample = {
   query: string;
 };
 
+export type DevPreviewContentKind = 'html' | 'pdf';
+
 export type DevPreviewEntry = {
   id: string;
   title: string;
@@ -15,6 +17,7 @@ export type DevPreviewEntry = {
   apiPath: string;
   /** Optional Next.js page with the same fixtures (dev only). */
   pagePath?: string;
+  contentKind?: DevPreviewContentKind;
   examples: DevPreviewExample[];
 };
 
@@ -24,11 +27,34 @@ export const DEV_PREVIEW_CATALOG: readonly DevPreviewEntry[] = [
     title: 'Share note email',
     description: 'Transactional email when a user shares a note by email (markdown body).',
     apiPath: '/api/dev/share-note-email-preview',
+    contentKind: 'html',
     examples: [
       { label: 'Default (speaker turns)', query: '' },
       { label: 'Transcript', query: 'variant=transcript' },
       { label: 'Meeting brief', query: 'variant=meeting-brief' },
       { label: 'Tasks (mixed status)', query: 'variant=tasks' },
+      { label: 'Short note', query: 'variant=short-note' },
+      { label: 'Long meeting', query: 'variant=long-meeting' },
+      { label: 'EN meeting', query: 'variant=en-meeting' },
+      { label: 'RU locale shell', query: 'variant=meeting-brief&locale=ru' },
+      { label: 'Custom title', query: 'variant=meeting-brief&title=Demo' },
+    ],
+  },
+  {
+    id: 'share-note-pdf',
+    title: 'Share note PDF attachment',
+    description:
+      'PDF attached when a user emails a note as PDF (same markdown fixtures as the email preview).',
+    apiPath: '/api/dev/share-note-pdf-preview',
+    contentKind: 'pdf',
+    examples: [
+      { label: 'Default (speaker turns)', query: '' },
+      { label: 'Transcript', query: 'variant=transcript' },
+      { label: 'Meeting brief', query: 'variant=meeting-brief' },
+      { label: 'Tasks (mixed status)', query: 'variant=tasks' },
+      { label: 'Short note', query: 'variant=short-note' },
+      { label: 'Long meeting', query: 'variant=long-meeting' },
+      { label: 'EN meeting', query: 'variant=en-meeting' },
       { label: 'Custom title', query: 'variant=meeting-brief&title=Demo' },
     ],
   },

@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
     'pg',
     '@prisma/adapter-pg',
     'pdfkit',
+    'puppeteer',
     'sharp',
     'firebase-admin',
   ],

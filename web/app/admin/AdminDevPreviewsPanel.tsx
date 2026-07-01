@@ -36,8 +36,8 @@ export function AdminDevPreviewsPanel({ appEnv }: { appEnv: AppEnv }) {
   return (
     <div className="space-y-6">
       <AdminAlert tone="warning">
-        Opens rendered HTML in a new tab. Endpoints return 404 in production builds — use only on
-        local dev.
+        Opens rendered HTML or PDF in a new tab. Endpoints return 404 in production builds — use
+        only on local dev. PDF previews require Puppeteer (installed with web dev dependencies).
       </AdminAlert>
 
       {DEV_PREVIEW_CATALOG.map((entry) => (
@@ -68,6 +68,8 @@ export function AdminDevPreviewsPanel({ appEnv }: { appEnv: AppEnv }) {
                 entry.pagePath != null
                   ? buildDevPreviewPageUrl(origin, entry.pagePath, ex.query)
                   : null;
+              const previewLabel =
+                entry.contentKind === 'pdf' ? 'Open PDF preview' : 'Open API preview';
 
               return (
                 <li
@@ -86,7 +88,7 @@ export function AdminDevPreviewsPanel({ appEnv }: { appEnv: AppEnv }) {
                       className={adminBtnSecondaryClass}
                     >
                       <ExternalLink className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
-                      Open API preview
+                      {previewLabel}
                     </a>
                     {pageHref != null ? (
                       <a
