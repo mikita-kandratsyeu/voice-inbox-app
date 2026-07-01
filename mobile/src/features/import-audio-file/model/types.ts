@@ -1,4 +1,5 @@
 export type ImportAudioPhase =
+  | 'preparing'
   | 'copying'
   | 'converting'
   | 'analyzing'

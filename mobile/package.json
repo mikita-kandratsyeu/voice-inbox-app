@@ -19,7 +19,7 @@
     "ios:release": "NODE_ENV=production react-native run-ios --mode Release --device --no-packager",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "postinstall": "patch-package && node ./scripts/ensure-netinfo-android-gradle.mjs",
+    "postinstall": "patch-package && node ./scripts/ensure-netinfo-android-gradle.mjs && node ./scripts/ensure-android-tessdata.mjs",
     "prepare": "husky",
     "start": "NODE_ENV=development react-native start",
     "test": "jest",
@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@callstack/liquid-glass": "^0.8.0",
+    "@dariyd/react-native-text-recognition": "^2.0.20",
     "@formatjs/intl-getcanonicallocales": "^3.2.10",
     "@formatjs/intl-locale": "^5.3.9",
     "@formatjs/intl-numberformat": "^9.3.11",

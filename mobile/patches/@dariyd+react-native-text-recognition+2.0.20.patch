@@ -1,0 +1,101 @@
+diff --git a/node_modules/@dariyd/react-native-text-recognition/ios/ReactNativeTextRecognition.mm b/node_modules/@dariyd/react-native-text-recognition/ios/ReactNativeTextRecognition.mm
+index cbe7993..ffa18ad 100644
+--- a/node_modules/@dariyd/react-native-text-recognition/ios/ReactNativeTextRecognition.mm
++++ b/node_modules/@dariyd/react-native-text-recognition/ios/ReactNativeTextRecognition.mm
+@@ -243,11 +243,50 @@ RCT_EXPORT_METHOD(getSupportedLanguages:(RCTPromiseResolveBlock)resolve
+       preprocessImages:(BOOL)preprocessImages
+ API_AVAILABLE(ios(11.0))
+ {
+-    PDFDocument *pdfDocument = [[PDFDocument alloc] initWithURL:url];
+-    if (!pdfDocument) {
++    __block NSDictionary *pdfResult = nil;
++    dispatch_sync(dispatch_get_main_queue(), ^{
++        pdfResult = [self processPDFFileOnMainThread:url
++                                             options:options
++                                            maxPages:maxPages
++                                              pdfDpi:pdfDpi
++                                           languages:languages
++                                    recognitionLevel:recognitionLevel
++                                  useFastRecognition:useFastRecognition
++                                   preprocessImages:preprocessImages];
++    });
++    if (!pdfResult) {
+         [self sendError:@"Failed to load PDF document"];
+         return;
+     }
++    dispatch_async(dispatch_get_main_queue(), ^{
++        self.callback(@[pdfResult]);
++    });
++}
++
++
++static NSString * const kVoiceInboxPdfExtractProgressNotification = @"VoiceInboxPdfExtractProgress";
++
++static void voiceInboxEmitPdfExtractProgress(NSInteger current, NSInteger total) {
++    if (total <= 0) { return; }
++    [[NSNotificationCenter defaultCenter] postNotificationName:kVoiceInboxPdfExtractProgressNotification
++                                                        object:nil
++                                                      userInfo:@{@"current": @(current), @"total": @(total)}];
++}
++
++- (NSDictionary *)processPDFFileOnMainThread:(NSURL *)url
++                                    options:(NSDictionary *)options
++                                   maxPages:(NSInteger)maxPages
++                                     pdfDpi:(NSInteger)pdfDpi
++                                  languages:(NSArray *)languages
++                           recognitionLevel:(NSString *)recognitionLevel
++                         useFastRecognition:(BOOL)useFastRecognition
++                          preprocessImages:(BOOL)preprocessImages
++API_AVAILABLE(ios(11.0))
++{
++    PDFDocument *pdfDocument = [[PDFDocument alloc] initWithURL:url];
++    if (!pdfDocument) {
++        return nil;
++    }
+ 
+     NSInteger pageCount = pdfDocument.pageCount;
+     NSInteger pagesToProcess = MIN(pageCount, maxPages);
+@@ -258,6 +297,7 @@ API_AVAILABLE(ios(11.0))
+     NSMutableString *fullText = [NSMutableString string];
+ 
+     for (NSInteger i = 0; i < pagesToProcess; i++) {
++        voiceInboxEmitPdfExtractProgress(i + 1, pagesToProcess);
+         @autoreleasepool {
+             PDFPage *pdfPage = [pdfDocument pageAtIndex:i];
+             if (!pdfPage) { continue; }
+@@ -324,11 +364,13 @@ API_AVAILABLE(ios(11.0))
+ 
+             } else {
+                 // Fallback to OCR for image-based/scanned PDFs
+-                CGSize targetSize = CGSizeMake(2000, 2800); // High-quality thumbnail
+-                UIImage *thumb = [pdfPage thumbnailOfSize:targetSize forBox:kPDFDisplayBoxMediaBox];
+-                if (!thumb) { continue; }
++                UIImage *rendered = [self imageFromPDFPage:pdfPage dpi:pdfDpi];
++                if (!rendered) { continue; }
++                if (preprocessImages) {
++                    rendered = [self preprocessImageForOCR:rendered];
++                }
+ 
+-                NSDictionary *pageResult = [self recognizeTextInImage:thumb
++                NSDictionary *pageResult = [self recognizeTextInImage:rendered
+                                                             pageNumber:i
+                                                              languages:languages
+                                                       recognitionLevel:@"line"
+@@ -345,16 +387,12 @@ API_AVAILABLE(ios(11.0))
+         }
+     }
+ 
+-    NSDictionary *result = @{
++    return @{
+         @"success": @YES,
+         @"pages": allPages,
+         @"totalPages": @(pageCount),
+         @"fullText": [fullText stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]
+     };
+-
+-    dispatch_async(dispatch_get_main_queue(), ^{
+-        self.callback(@[result]);
+-    });
+ }
+ 
+ - (UIImage *)imageFromPDFPage:(PDFPage *)pdfPage dpi:(NSInteger)dpi API_AVAILABLE(ios(11.0))

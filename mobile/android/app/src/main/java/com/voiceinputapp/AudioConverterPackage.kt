@@ -7,7 +7,7 @@ import com.facebook.react.uimanager.ViewManager
 
 class AudioConverterPackage : ReactPackage {
   override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> =
-    listOf(AudioConverterModule(reactContext))
+    listOf(AudioConverterModule(reactContext), PdfExtractProgressModule(reactContext))
 
   override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> =
     emptyList()

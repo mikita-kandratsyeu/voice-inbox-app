@@ -77,6 +77,32 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+def tessDataDir = file("src/main/assets/tessdata")
+def tessDataFiles = [
+    [name: "eng.traineddata", url: "https://github.com/tesseract-ocr/tessdata_fast/raw/main/eng.traineddata"],
+    [name: "rus.traineddata", url: "https://github.com/tesseract-ocr/tessdata_fast/raw/main/rus.traineddata"],
+]
+
+tasks.register("ensureTessData") {
+    doLast {
+        tessDataDir.mkdirs()
+        tessDataFiles.each { entry ->
+            def outFile = new File(tessDataDir, entry.name)
+            if (!outFile.exists() || outFile.length() == 0L) {
+                println("Downloading ${entry.name} for offline PDF OCR…")
+                outFile.withOutputStream { output ->
+                    new URL(entry.url).withInputStream { input -> output << input }
+                }
+                if (!outFile.exists() || outFile.length() == 0L) {
+                    throw new GradleException("Failed to download ${entry.name} for offline PDF OCR")
+                }
+            }
+        }
+    }
+}
+
+tasks.named("preBuild").configure { dependsOn("ensureTessData") }
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -116,6 +142,7 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
+    implementation("cz.adaptech.android:tesseract4android:4.5.0")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

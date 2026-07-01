@@ -7,8 +7,7 @@ import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.text.PDFTextStripper
+import com.facebook.react.bridge.ReadableMap
 import java.io.File
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
@@ -611,26 +610,32 @@ class AudioConverterModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  fun extractPdfText(inputPath: String, promise: Promise) {
-    try {
-      val input = if (inputPath.startsWith("file://")) inputPath.removePrefix("file://") else inputPath
-      val file = File(input)
-      if (!file.exists()) {
-        promise.reject("E_PDF", "File not found")
-        return
-      }
+  fun extractPdfText(options: ReadableMap, promise: Promise) {
+    Thread {
+      try {
+        val inputPath = if (options.hasKey("path")) options.getString("path") ?: "" else ""
+        val language = if (options.hasKey("language") && !options.isNull("language")) {
+          options.getString("language")
+        } else {
+          null
+        }
+        val input = if (inputPath.startsWith("file://")) inputPath.removePrefix("file://") else inputPath
+        val file = File(input)
+        if (!file.exists()) {
+          promise.reject("E_PDF", "File not found")
+          return@Thread
+        }
 
-      PDDocument.load(file).use { document ->
-        val text = PDFTextStripper().getText(document).trim()
-        if (text.isEmpty()) {
+        val text = PdfTextExtractor.extract(file, reactApplicationContext, language)
+        if (text.isBlank()) {
           promise.reject("E_PDF_EMPTY", "No extractable text in PDF")
         } else {
           promise.resolve(text)
         }
+      } catch (e: Exception) {
+        promise.reject("E_PDF", e.message ?: "Could not read PDF")
       }
-    } catch (e: Exception) {
-      promise.reject("E_PDF", e.message ?: "Could not read PDF")
-    }
+    }.start()
   }
 
   private fun writeWavHeader(

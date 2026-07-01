@@ -2200,6 +2200,27 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-text-recognition (2.0.20):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - react-native-view-shot (5.1.0):
     - hermes-engine
     - RCTRequired
@@ -3330,6 +3351,7 @@ DEPENDENCIES:
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - "react-native-skia (from `../node_modules/@shopify/react-native-skia`)"
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
+  - "react-native-text-recognition (from `../node_modules/@dariyd/react-native-text-recognition`)"
   - react-native-view-shot (from `../node_modules/react-native-view-shot`)
   - react-native-webview (from `../node_modules/react-native-webview`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -3581,6 +3603,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@shopify/react-native-skia"
   react-native-slider:
     :path: "../node_modules/@react-native-community/slider"
+  react-native-text-recognition:
+    :path: "../node_modules/@dariyd/react-native-text-recognition"
   react-native-view-shot:
     :path: "../node_modules/react-native-view-shot"
   react-native-webview:
@@ -3822,6 +3846,7 @@ SPEC CHECKSUMS:
   react-native-safe-area-context: c20a2b66c37a6fd0e6d448dbec5b6fe0cc53bb11
   react-native-skia: 59686b8bb9c11f2a118c17ec54db09e80aeec665
   react-native-slider: 04f5b66cb796c23d256c1a842fa801fe1768e2cd
+  react-native-text-recognition: 833692f991615c7c16e0dc56cfd54c65975cbb9d
   react-native-view-shot: d642ea5e117fbf4a0ea910093b9d5156d0e518d1
   react-native-webview: 78539567d6ccea9d9d017feba1eaeecf198bbc06
   React-NativeModulesApple: 8d753e37df6ccb6fee06784651ad4b25bad92e91

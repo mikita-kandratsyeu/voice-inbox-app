@@ -2661,7 +2661,8 @@
     "phaseConverting": "Converting to a supported format…",
     "phaseAnalyzing": "Reading duration — large files can take a while.",
     "phaseParsingSubtitles": "Reading subtitle timings…",
-    "phaseParsingDocument": "Reading document text…",
+    "phaseParsingDocument": "Reading document — scanned PDFs may take a while…",
+    "phaseParsingDocumentPage": "Extracting text — page {{current}} of {{total}}…",
     "maxDurationTitle": "File too long",
     "maxDurationMessage": "Recording must be no longer than {{ max }} minutes.",
     "durationUnknownTitle": "Could not read duration",
@@ -2682,7 +2683,7 @@
     "documentTooLargeTitle": "Document too large",
     "documentTooLargeMessage": "The document must be no longer than about {{ max }} thousand characters.",
     "pdfImportErrorTitle": "Could not read PDF",
-    "pdfImportError": "This PDF has no extractable text. Scanned PDFs are not supported yet — try a text-based PDF or another format."
+    "pdfImportError": "Could not extract text from this PDF. Try a clearer scan or another format."
   },
   "cloudAiConsent": {
     "title": "Cloud AI and your notes",

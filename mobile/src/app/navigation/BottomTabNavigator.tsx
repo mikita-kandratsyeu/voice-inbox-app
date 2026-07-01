@@ -54,6 +54,7 @@ export const BottomTabNavigator = () => {
     importAudioFromExternalUri,
     isImporting,
     importPhase,
+    documentImportProgress,
     subtitleImportConfirm,
   } = useImportAudioFile();
 
@@ -206,7 +207,11 @@ export const BottomTabNavigator = () => {
 
   return (
     <View className="flex-1">
-      <ImportAudioProgressOverlay visible={isImporting} phase={importPhase} />
+      <ImportAudioProgressOverlay
+        visible={isImporting}
+        phase={importPhase}
+        documentProgress={documentImportProgress}
+      />
       <ImportSubtitleConfirmSheet {...subtitleImportConfirm} />
       <ImportFileActionProvider importFile={importAudioFile}>
         {isTablet ? (

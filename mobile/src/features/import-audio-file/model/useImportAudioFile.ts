@@ -4,7 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert } from 'react-native';
+import { Alert, InteractionManager } from 'react-native';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
@@ -158,6 +158,14 @@ function fileNameForCopy(name: string | null): string {
   return `${FALLBACK_SHARED_IMPORT_NAME}.m4a`;
 }
 
+function waitForImportOverlayPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    InteractionManager.runAfterInteractions(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
+}
+
 async function readTextFile(path: string): Promise<string> {
   const normalized = stripFileScheme(path);
   try {
@@ -167,9 +175,14 @@ async function readTextFile(path: string): Promise<string> {
   }
 }
 
-async function loadImportTextSource(path: string, fileLabel: string): Promise<string | null> {
+async function loadImportTextSource(
+  path: string,
+  fileLabel: string,
+  language?: string | null,
+  onPdfProgress?: (progress: { current: number; total: number }) => void,
+): Promise<string | null> {
   if (isPdfImportFileName(fileLabel) || isPdfImportFileName(path)) {
-    return extractPdfText(path);
+    return extractPdfText(path, language, onPdfProgress);
   }
   return readTextFile(path);
 }
@@ -186,7 +199,7 @@ function tryParseSubtitleImportFromText(
 }
 
 export function useImportAudioFile() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const addRecord = useRecordStore((s) => s.addRecord);
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
@@ -207,6 +220,10 @@ export function useImportAudioFile() {
   const { startTranscription } = useTranscription();
   const [isImporting, setIsImporting] = useState(false);
   const [importPhase, setImportPhase] = useState<ImportAudioPhase | null>(null);
+  const [documentImportProgress, setDocumentImportProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
   const [pendingFileImport, setPendingFileImport] = useState<PendingFileImport | null>(null);
 
   const createSubtitleRecord = useCallback(
@@ -392,7 +409,13 @@ export function useImportAudioFile() {
 
         if (isDocumentByName || isPlainTextByName) {
           setImportPhase('parsing_document');
-          const rawText = await loadImportTextSource(normalizedSource, fileLabel);
+          setDocumentImportProgress(null);
+          const rawText = await loadImportTextSource(
+            normalizedSource,
+            fileLabel,
+            i18n.language,
+            setDocumentImportProgress,
+          );
           if (!rawText?.trim()) {
             hapticError();
             if (isPdfImportFileName(fileLabel) || isPdfImportFileName(normalizedSource)) {
@@ -592,9 +615,10 @@ export function useImportAudioFile() {
       } finally {
         setIsImporting(false);
         setImportPhase(null);
+        setDocumentImportProgress(null);
       }
     },
-    [t, maxImportMs],
+    [t, maxImportMs, i18n.language],
   );
 
   const importAudioFromExternalUri = useCallback(
@@ -638,6 +662,7 @@ export function useImportAudioFile() {
       } finally {
         setIsImporting(false);
         setImportPhase(null);
+        setDocumentImportProgress(null);
       }
     },
     [isImporting, pendingFileImport, t, runImportFromPickedCopy],
@@ -649,8 +674,13 @@ export function useImportAudioFile() {
     }
 
     hapticMedium();
+    setIsImporting(true);
+    setImportPhase('preparing');
 
+    let importPipelineStarted = false;
     try {
+      await waitForImportOverlayPaint();
+
       const picked = await pickSingleFileToCachesDirectory({
         type: [
           ...AUDIO_PICKER_TYPES,
@@ -672,6 +702,7 @@ export function useImportAudioFile() {
         return;
       }
 
+      importPipelineStarted = true;
       await runImportFromPickedCopy({
         localUri: picked.localUri,
         name: picked.name,
@@ -684,6 +715,12 @@ export function useImportAudioFile() {
       diagWarn('[importAudioFile]', err);
       hapticError();
       Alert.alert(t('common.error'), t('importAudio.importError'));
+    } finally {
+      if (!importPipelineStarted) {
+        setIsImporting(false);
+        setImportPhase(null);
+        setDocumentImportProgress(null);
+      }
     }
   }, [isImporting, pendingFileImport, t, runImportFromPickedCopy]);
 
@@ -692,6 +729,7 @@ export function useImportAudioFile() {
     importAudioFromExternalUri,
     isImporting,
     importPhase,
+    documentImportProgress,
     subtitleImportConfirm: {
       visible: pendingFileImport !== null,
       kind: pendingFileImport?.kind ?? 'subtitles',

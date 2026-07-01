@@ -3,6 +3,8 @@
 #import <React/RCTBridgeModule.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <PDFKit/PDFKit.h>
+#import <Vision/Vision.h>
+#import <UIKit/UIKit.h>
 #import <math.h>
 #import <string.h>
 
@@ -579,10 +581,47 @@ RCT_EXPORT_METHOD(analyzeWavSpeech:(NSString *)inputPath
   }
 }
 
-RCT_EXPORT_METHOD(extractPdfText:(NSString *)inputPath
-                  resolve:(RCTPromiseResolveBlock)resolve
-                  reject:(RCTPromiseRejectBlock)reject)
-{
+static const NSInteger kMaxPdfOcrPages = 100;
+static NSString * const kVoiceInboxPdfExtractProgressNotification = @"VoiceInboxPdfExtractProgress";
+
+static void emitPdfExtractProgress(NSInteger current, NSInteger total) {
+  if (total <= 0) return;
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [[NSNotificationCenter defaultCenter] postNotificationName:kVoiceInboxPdfExtractProgressNotification
+                                                        object:nil
+                                                      userInfo:@{@"current": @(current), @"total": @(total)}];
+  });
+}
+static const CGFloat kPdfOcrRenderScale = 2.0;
+static const CGFloat kMaxPdfOcrLongestSide = 2048.0;
+
+static CGFloat effectivePdfOcrScale(PDFPage *page) {
+  CGRect bounds = [page boundsForBox:kPDFDisplayBoxMediaBox];
+  CGFloat maxDim = MAX(bounds.size.width, bounds.size.height);
+  if (maxDim <= 0) return kPdfOcrRenderScale;
+  CGFloat scale = kPdfOcrRenderScale;
+  CGFloat longest = maxDim * scale;
+  if (longest > kMaxPdfOcrLongestSide) {
+    scale = kMaxPdfOcrLongestSide / maxDim;
+  }
+  return MAX(scale, 0.5);
+}
+
+static UIImage *renderPdfPageImageWithDraw(PDFPage *page, CGFloat scale) {
+  CGRect bounds = [page boundsForBox:kPDFDisplayBoxMediaBox];
+  CGSize size = CGSizeMake(MAX(bounds.size.width * scale, 1.0), MAX(bounds.size.height * scale, 1.0));
+  UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size];
+  return [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
+    [[UIColor whiteColor] setFill];
+    [ctx fillRect:CGRectMake(0, 0, size.width, size.height)];
+    CGContextRef cg = ctx.CGContext;
+    CGContextTranslateCTM(cg, 0, size.height);
+    CGContextScaleCTM(cg, scale, -scale);
+    [page drawWithBox:kPDFDisplayBoxMediaBox toContext:cg];
+  }];
+}
+
+static NSString *resolvePdfInputPath(NSString *inputPath) {
   NSString *input = nil;
   if ([inputPath hasPrefix:@"file://"]) {
     NSURL *u = [NSURL URLWithString:inputPath];
@@ -593,35 +632,278 @@ RCT_EXPORT_METHOD(extractPdfText:(NSString *)inputPath
   }
   NSString *resolved = [NSURL fileURLWithPath:input].path;
   if (resolved.length) input = resolved;
+  return input;
+}
 
-  if (![[NSFileManager defaultManager] fileExistsAtPath:input]) {
+static NSArray<NSString *> *visionLanguagesForHint(NSString *language) {
+  NSString *normalized = language.length ? [[language lowercaseString] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] : @"";
+  if ([normalized hasPrefix:@"ru"]) {
+    return @[@"ru-RU", @"en-US"];
+  }
+  return @[@"en-US", @"ru-RU"];
+}
+
+static UIImage *renderPdfPageImage(PDFPage *page, CGFloat scale) {
+  UIImage *drawn = renderPdfPageImageWithDraw(page, scale);
+  if (drawn) {
+    return drawn;
+  }
+
+  CGRect bounds = [page boundsForBox:kPDFDisplayBoxMediaBox];
+  CGSize size = CGSizeMake(MAX(bounds.size.width * scale, 1.0), MAX(bounds.size.height * scale, 1.0));
+  UIImage *thumbnail = [page thumbnailOfSize:size forBox:kPDFDisplayBoxMediaBox];
+  if (!thumbnail) {
+    return nil;
+  }
+
+  UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size];
+  return [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
+    [[UIColor whiteColor] setFill];
+    [ctx fillRect:CGRectMake(0, 0, size.width, size.height)];
+    [thumbnail drawInRect:CGRectMake(0, 0, size.width, size.height)];
+  }];
+}
+
+static UIImage *renderPdfPageImageOnMainThread(PDFPage *page) {
+  CGFloat scale = effectivePdfOcrScale(page);
+  if ([NSThread isMainThread]) {
+    return renderPdfPageImage(page, scale);
+  }
+  __block UIImage *image = nil;
+  dispatch_sync(dispatch_get_main_queue(), ^{
+    image = renderPdfPageImage(page, scale);
+  });
+  return image;
+}
+
+static NSString *pdfPagePlainText(PDFPage *page) {
+  NSString *text = [page string];
+  if (!text.length) {
+    NSAttributedString *attr = [page attributedString];
+    if (attr.string.length) {
+      text = attr.string;
+    }
+  }
+  if (!text.length) {
+    CGRect pageRect = [page boundsForBox:kPDFDisplayBoxMediaBox];
+    PDFSelection *selection = [page selectionForRect:pageRect];
+    NSString *selectionText = selection.string;
+    if (selectionText.length) {
+      text = selectionText;
+    }
+  }
+  return [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+}
+
+static NSString *visionRecognizeTextFromImage(UIImage *image, NSArray<NSString *> *languages, BOOL *visionFailed) {
+  if (visionFailed) *visionFailed = NO;
+  if (!image.CGImage) {
+    if (visionFailed) *visionFailed = YES;
+    return @"";
+  }
+
+  __block NSString *text = @"";
+  __block BOOL failed = NO;
+  dispatch_semaphore_t sem = dispatch_semaphore_create(0);
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    @autoreleasepool {
+      VNRecognizeTextRequest *request = [[VNRecognizeTextRequest alloc] init];
+      request.recognitionLevel = VNRequestTextRecognitionLevelAccurate;
+      request.usesLanguageCorrection = YES;
+      request.recognitionLanguages = languages;
+      if (@available(iOS 16.0, *)) {
+        request.automaticallyDetectsLanguage = YES;
+      }
+
+      VNImageRequestHandler *handler = [[VNImageRequestHandler alloc] initWithCGImage:image.CGImage options:@{}];
+      NSError *error = nil;
+      if (![handler performRequests:@[request] error:&error]) {
+        failed = YES;
+      } else {
+        NSMutableArray<NSString *> *lines = [NSMutableArray array];
+        for (VNRecognizedTextObservation *observation in request.results) {
+          VNRecognizedText *candidate = [[observation topCandidates:1] firstObject];
+          if (candidate.string.length) {
+            [lines addObject:candidate.string];
+          }
+        }
+        text = [lines componentsJoinedByString:@"\n"];
+      }
+    }
+    dispatch_semaphore_signal(sem);
+  });
+  dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
+  if (visionFailed) *visionFailed = failed;
+  return text;
+}
+
+static NSString *ocrPdfPageWithVision(PDFPage *page, NSArray<NSString *> *languages, BOOL *thumbnailFailed, BOOL *visionFailed) {
+  if (thumbnailFailed) *thumbnailFailed = NO;
+  if (visionFailed) *visionFailed = NO;
+
+  UIImage *image = renderPdfPageImageOnMainThread(page);
+  if (!image || !image.CGImage) {
+    if (thumbnailFailed) *thumbnailFailed = YES;
+    return @"";
+  }
+
+  return visionRecognizeTextFromImage(image, languages, visionFailed);
+}
+
+static NSString *extractPdfTextHybrid(PDFDocument *doc, NSArray<NSString *> *languages, NSMutableDictionary *stats) {
+  NSInteger pageCount = MIN(doc.pageCount, kMaxPdfOcrPages);
+  if (pageCount <= 0) return @"";
+
+  NSInteger pagesTextLayer = 0;
+  NSInteger pagesOcr = 0;
+  NSInteger pagesEmpty = 0;
+  NSInteger pagesThumbnailFailed = 0;
+  NSInteger pagesVisionFailed = 0;
+
+  NSMutableString *result = [NSMutableString string];
+  for (NSInteger i = 0; i < pageCount; i++) {
+    emitPdfExtractProgress(i + 1, pageCount);
+    PDFPage *page = [doc pageAtIndex:i];
+    NSString *pageText = pdfPagePlainText(page);
+    if (pageText.length) {
+      pagesTextLayer++;
+    } else {
+      BOOL thumbnailFailed = NO;
+      BOOL visionFailed = NO;
+      pageText = ocrPdfPageWithVision(page, languages, &thumbnailFailed, &visionFailed);
+      pageText = [pageText stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+      if (thumbnailFailed) pagesThumbnailFailed++;
+      if (visionFailed) pagesVisionFailed++;
+      if (pageText.length) {
+        pagesOcr++;
+      } else {
+        pagesEmpty++;
+      }
+    }
+    if (pageText.length) {
+      if (result.length) [result appendString:@"\n\n"];
+      [result appendString:pageText];
+    }
+  }
+
+  if (stats) {
+    stats[@"docPageCount"] = @(doc.pageCount);
+    stats[@"pageCount"] = @(pageCount);
+    stats[@"pagesTextLayer"] = @(pagesTextLayer);
+    stats[@"pagesOcr"] = @(pagesOcr);
+    stats[@"pagesEmpty"] = @(pagesEmpty);
+    stats[@"pagesThumbnailFailed"] = @(pagesThumbnailFailed);
+    stats[@"pagesVisionFailed"] = @(pagesVisionFailed);
+    stats[@"totalChars"] = @(result.length);
+  }
+
+  return [result stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+}
+
+RCT_EXPORT_METHOD(extractPdfText:(NSDictionary *)options
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject)
+{
+  NSString *inputPath = [options[@"path"] isKindOfClass:[NSString class]] ? options[@"path"] : @"";
+  NSString *language = [options[@"language"] isKindOfClass:[NSString class]] ? options[@"language"] : nil;
+  NSString *input = resolvePdfInputPath(inputPath);
+  BOOL fileExists = input.length && [[NSFileManager defaultManager] fileExistsAtPath:input];
+  if (!input.length || !fileExists) {
     reject(@"E_PDF", @"File not found", nil);
     return;
   }
 
-  PDFDocument *doc = [[PDFDocument alloc] initWithURL:[NSURL fileURLWithPath:input]];
-  if (!doc || doc.pageCount == 0) {
-    reject(@"E_PDF", @"Could not open PDF", nil);
-    return;
-  }
+  NSArray<NSString *> *languages = visionLanguagesForHint(language);
 
-  NSMutableString *text = [NSMutableString string];
-  for (NSInteger i = 0; i < doc.pageCount; i++) {
-    PDFPage *page = [doc pageAtIndex:i];
-    NSString *pageText = [page string];
-    if (pageText.length) {
-      if (text.length) [text appendString:@"\n\n"];
-      [text appendString:pageText];
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    @autoreleasepool {
+      NSError *readError = nil;
+      NSData *pdfData = [NSData dataWithContentsOfFile:input options:NSDataReadingMappedIfSafe error:&readError];
+      __block PDFDocument *doc = nil;
+      __block NSMutableDictionary *stats = [NSMutableDictionary dictionaryWithDictionary:@{
+        @"fileBytes": @(pdfData.length),
+      }];
+      __block NSString *trimmed = @"";
+      dispatch_sync(dispatch_get_main_queue(), ^{
+        if (pdfData.length) {
+          doc = [[PDFDocument alloc] initWithData:pdfData];
+        }
+        if (!doc) {
+          doc = [[PDFDocument alloc] initWithURL:[NSURL fileURLWithPath:input]];
+        }
+        if (doc && doc.pageCount > 0) {
+          trimmed = extractPdfTextHybrid(doc, languages, stats);
+        }
+      });
+      if (!doc || doc.pageCount == 0) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+          reject(@"E_PDF", @"Could not open PDF", nil);
+        });
+        return;
+      }
+
+      dispatch_async(dispatch_get_main_queue(), ^{
+        resolve(@{
+          @"apiVersion": @2,
+          @"text": trimmed ?: @"",
+          @"stats": stats ?: @{},
+        });
+      });
     }
-  }
+  });
+}
 
-  NSString *trimmed = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-  if (!trimmed.length) {
-    reject(@"E_PDF_EMPTY", @"No extractable text in PDF", nil);
+RCT_EXPORT_METHOD(extractPdfTextV2:(NSString *)inputPath
+                  language:(NSString *)language
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject)
+{
+  NSString *input = resolvePdfInputPath(inputPath);
+  BOOL fileExists = input.length && [[NSFileManager defaultManager] fileExistsAtPath:input];
+  if (!input.length || !fileExists) {
+    reject(@"E_PDF", @"File not found", nil);
     return;
   }
 
-  resolve(trimmed);
+  NSArray<NSString *> *languages = visionLanguagesForHint(language);
+
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    @autoreleasepool {
+      NSError *readError = nil;
+      NSData *pdfData = [NSData dataWithContentsOfFile:input options:NSDataReadingMappedIfSafe error:&readError];
+      __block PDFDocument *doc = nil;
+      __block NSMutableDictionary *stats = [NSMutableDictionary dictionaryWithDictionary:@{
+        @"fileBytes": @(pdfData.length),
+      }];
+      __block NSString *trimmed = @"";
+      dispatch_sync(dispatch_get_main_queue(), ^{
+        if (pdfData.length) {
+          doc = [[PDFDocument alloc] initWithData:pdfData];
+        }
+        if (!doc) {
+          doc = [[PDFDocument alloc] initWithURL:[NSURL fileURLWithPath:input]];
+        }
+        if (doc && doc.pageCount > 0) {
+          trimmed = extractPdfTextHybrid(doc, languages, stats);
+        }
+        stats[@"docPageCount"] = doc ? @(doc.pageCount) : @0;
+      });
+      if (!doc || doc.pageCount == 0) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+          reject(@"E_PDF", @"Could not open PDF", nil);
+        });
+        return;
+      }
+
+      dispatch_async(dispatch_get_main_queue(), ^{
+        resolve(@{
+          @"apiVersion": @2,
+          @"text": trimmed ?: @"",
+          @"stats": stats ?: @{},
+        });
+      });
+    }
+  });
 }
 
 @end

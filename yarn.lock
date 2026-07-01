@@ -1686,6 +1686,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@dariyd/react-native-text-recognition@npm:^2.0.20":
+  version: 2.0.20
+  resolution: "@dariyd/react-native-text-recognition@npm:2.0.20"
+  peerDependencies:
+    react: ">=18.2.0"
+    react-native: ">=0.77.3"
+  checksum: 10c0/d4dcd91fb34845918a93a201cf3e61dda1a4c03c2466816f333271348a6ce678b70458cfc336bbd84105457cc0e0023d789be96325bc88fdebfaa1d347cf3b1b
+  languageName: node
+  linkType: hard
+
 "@drizzle-team/brocli@npm:^0.10.2":
   version: 0.10.2
   resolution: "@drizzle-team/brocli@npm:0.10.2"
@@ -19505,6 +19515,7 @@ __metadata:
     "@babel/preset-env": "npm:^7.29.5"
     "@babel/runtime": "npm:^7.29.2"
     "@callstack/liquid-glass": "npm:^0.8.0"
+    "@dariyd/react-native-text-recognition": "npm:^2.0.20"
     "@eslint/js": "npm:^9.39.4"
     "@formatjs/intl-getcanonicallocales": "npm:^3.2.10"
     "@formatjs/intl-locale": "npm:^5.3.9"
