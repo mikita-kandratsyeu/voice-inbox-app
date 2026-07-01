@@ -3,7 +3,7 @@ import { NativeModules } from 'react-native';
 
 import { diagWarn } from '@/shared/lib/appLogger';
 
-import { subscribeToPdfExtractProgress, type PdfExtractProgress } from './pdfExtractProgress';
+import { type PdfExtractProgress, subscribeToPdfExtractProgress } from './pdfExtractProgress';
 import { MAX_PDF_IMPORT_PAGES } from './pdfImportLimits';
 
 const { AudioConverter } = NativeModules;

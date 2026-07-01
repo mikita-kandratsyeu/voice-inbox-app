@@ -5,7 +5,10 @@ export type PdfExtractProgress = {
   total: number;
 };
 
-function normalizeProgress(payload: { current?: number; total?: number }): PdfExtractProgress | null {
+function normalizeProgress(payload: {
+  current?: number;
+  total?: number;
+}): PdfExtractProgress | null {
   const current = payload.current;
   const total = payload.total;
   if (typeof current !== 'number' || typeof total !== 'number' || total <= 0) {
