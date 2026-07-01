@@ -9,7 +9,10 @@ export const SHARE_NOTE_SECTION_MARKER_INLINE_RE = /<!--\s*vi:section:[a-z0-9-]+
 
 /** Removes inline `vi:section` markers from a single line or table cell. */
 export function stripInlineShareNoteSectionMarkers(text: string): string {
-  return text.replace(SHARE_NOTE_SECTION_MARKER_INLINE_RE, '').replace(/\s{2,}/g, ' ').trim();
+  return text
+    .replace(SHARE_NOTE_SECTION_MARKER_INLINE_RE, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 /** Removes machine-readable section markers from user-visible share/email markdown. */
