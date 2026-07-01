@@ -243,14 +243,6 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function
     scrubHapticsRef.current = new AudioPlayerScrubHapticFeedback(sortedMarkOffsetsMs);
   }, [sortedMarkOffsetsMs]);
 
-  const seekTo = useCallback(
-    async (seekMs: number, updateUi = true) => {
-      if (updateUi) applySeekUi(seekMs);
-      await transport.seek(seekMs);
-    },
-    [applySeekUi, transport],
-  );
-
   const handlePlayPause = useCallback(() => {
     if (!audioPath) return;
 
