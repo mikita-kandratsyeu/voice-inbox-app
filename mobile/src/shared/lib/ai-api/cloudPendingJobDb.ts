@@ -9,6 +9,7 @@ export type CloudSummarizePendingJob = {
   syncToken?: string;
   expectAsyncMeetingDialogue: boolean;
   expiresAtMs: number;
+  pollExpiresAtMs?: number | null;
 };
 
 /** `rec_*-ai-<ts>` → record id */
@@ -27,6 +28,7 @@ export async function saveCloudSummarizePending(job: CloudSummarizePendingJob): 
       syncToken: job.syncToken ?? null,
       expectAsyncMeetingDialogue: job.expectAsyncMeetingDialogue ? 1 : 0,
       expiresAtMs: job.expiresAtMs,
+      pollExpiresAtMs: job.pollExpiresAtMs ?? null,
       updatedAt: dayjs().toISOString(),
     })
     .onConflictDoUpdate({
@@ -36,6 +38,7 @@ export async function saveCloudSummarizePending(job: CloudSummarizePendingJob): 
         syncToken: job.syncToken ?? null,
         expectAsyncMeetingDialogue: job.expectAsyncMeetingDialogue ? 1 : 0,
         expiresAtMs: job.expiresAtMs,
+        pollExpiresAtMs: job.pollExpiresAtMs ?? null,
         updatedAt: dayjs().toISOString(),
       },
     });
@@ -67,6 +70,7 @@ export async function getCloudSummarizePending(
     syncToken: row.syncToken ?? undefined,
     expectAsyncMeetingDialogue: row.expectAsyncMeetingDialogue === 1,
     expiresAtMs: row.expiresAtMs,
+    pollExpiresAtMs: row.pollExpiresAtMs ?? null,
   };
 }
 
@@ -86,5 +90,6 @@ export async function listCloudSummarizePendingForResume(): Promise<CloudSummari
     syncToken: row.syncToken ?? undefined,
     expectAsyncMeetingDialogue: row.expectAsyncMeetingDialogue === 1,
     expiresAtMs: row.expiresAtMs,
+    pollExpiresAtMs: row.pollExpiresAtMs ?? null,
   }));
 }

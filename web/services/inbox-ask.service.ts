@@ -4,7 +4,9 @@ import { checkAndIncrement, type AiLimitContext } from '@/lib/ai-rate-limit';
 import type { AiModelMode } from '@/lib/ai-model-router';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { getJobPayload, saveJobPayload } from '@/lib/ai-job-payload';
-import { saveJobMetadata, getJobMetadata } from '@/lib/job-metadata';
+import { scheduleAsyncJobPoll } from '@/lib/ai-job-poll-schedule';
+import { buildAsyncJobPollSchedule } from '@/lib/ai-poll-deadline';
+import { getJobMetadata } from '@/lib/job-metadata';
 import { enrichWithPollingHints, operationToJobType } from '@/lib/polling-hints';
 import {
   aiModelLedgerMetadata,
@@ -19,7 +21,7 @@ import type { InboxAskJobPayload } from '@/types/ai-job';
 import type { AskMessage, Message } from '@/types';
 
 type CreateInboxAskResult =
-  | { created: true; syncToken?: string }
+  | { created: true; syncToken?: string; pollExpiresAt: string }
   | { created: false; limitExceeded: true; usage: import('@/lib/ai-rate-limit').AiUsage }
   | { created: false };
 
@@ -92,11 +94,16 @@ export const createInboxAsk = async (
 
   const operation = jobPayload.operation;
   const jobType = operationToJobType(operation);
-  await saveJobMetadata(id, jobType, deviceId, ttl);
+  const pollSchedule = await scheduleAsyncJobPoll({
+    jobId: id,
+    jobType,
+    deviceId,
+    ttlSeconds: ttl,
+  });
 
   await dispatchAiJob(jobPayload);
 
-  return { created: true, syncToken };
+  return { created: true, syncToken, pollExpiresAt: pollSchedule.pollExpiresAt };
 };
 
 export const getInboxAskById = async (
@@ -151,7 +158,12 @@ export const getInboxAskById = async (
     const metadata = await getJobMetadata(msg.id);
     if (metadata) {
       return sanitizeAiModelFieldsForClient(
-        enrichWithPollingHints(base, metadata.jobType, metadata.startedAt) as AskMessage,
+        enrichWithPollingHints(
+          base,
+          metadata.jobType,
+          metadata.startedAt,
+          metadata.pollExpiresAtMs,
+        ) as AskMessage,
       );
     }
     return sanitizeAiModelFieldsForClient(base as AskMessage);
@@ -222,7 +234,10 @@ export async function submitInboxAskToolResult(
   id: string,
   deviceId: string,
   result: import('@/lib/inbox-ask-tools').InboxAskToolResult,
-): Promise<{ ok: true; syncToken?: string } | { ok: false; error: string; status: number }> {
+): Promise<
+  | { ok: true; syncToken?: string; pollExpiresAt: string }
+  | { ok: false; error: string; status: number }
+> {
   if (!validateInboxAskToolResult(result)) {
     return { ok: false, error: 'Invalid tool result', status: 400 };
   }
@@ -241,7 +256,12 @@ export async function submitInboxAskToolResult(
       (item) => item.toolCallId === result.toolCallId,
     );
     if (alreadyApplied) {
-      return { ok: true, syncToken: getSyncToken() };
+      const metadata = await getJobMetadata(id);
+      const pollExpiresAt =
+        metadata?.pollExpiresAtMs != null
+          ? new Date(metadata.pollExpiresAtMs).toISOString()
+          : buildAsyncJobPollSchedule({}).pollExpiresAt;
+      return { ok: true, syncToken: getSyncToken(), pollExpiresAt };
     }
     return { ok: false, error: 'No pending tool call', status: 409 };
   }
@@ -290,5 +310,12 @@ export async function submitInboxAskToolResult(
   );
   await dispatchAiJob(nextPayload, { deduplicationId: `${id}-tool-${result.toolCallId}` });
 
-  return { ok: true, syncToken: getSyncToken() };
+  const pollSchedule = await scheduleAsyncJobPoll({
+    jobId: id,
+    jobType: 'ask',
+    deviceId,
+    ttlSeconds: payload.messageTtlSeconds,
+  });
+
+  return { ok: true, syncToken: getSyncToken(), pollExpiresAt: pollSchedule.pollExpiresAt };
 }

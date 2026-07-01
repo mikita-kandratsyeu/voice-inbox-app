@@ -15,7 +15,9 @@ import {
   sanitizeAiModelFieldsForClient,
 } from '@/lib/ai-model-display';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
-import { saveJobMetadata, getJobMetadata } from '@/lib/job-metadata';
+import { getJobMetadata } from '@/lib/job-metadata';
+import { scheduleAsyncJobPoll } from '@/lib/ai-job-poll-schedule';
+import { expectsAsyncMeetingDialoguePass } from '@/lib/ai-poll-deadline';
 import { enrichWithPollingHints, operationToJobType } from '@/lib/polling-hints';
 import type {
   MeetingDialogueAuxPayload,
@@ -27,7 +29,7 @@ import type { Message } from '@/types';
 export type { MeetingDialogueAuxPayload } from '@/types/ai-job';
 
 type CreateMessageResult =
-  | { created: true; syncToken?: string }
+  | { created: true; syncToken?: string; pollExpiresAt: string }
   | { created: false; limitExceeded: true; usage: import('@/lib/ai-rate-limit').AiUsage }
   | { created: false };
 
@@ -107,11 +109,21 @@ export const createMessage = async (
   // Save job metadata for polling hints calculation
   const operation = jobPayload.operation; // 'transcript_summarize'
   const jobType = operationToJobType(operation);
-  await saveJobMetadata(id, jobType, deviceId, ttl);
+  const expectAsyncMeetingDialogue = expectsAsyncMeetingDialoguePass({
+    pseudoDiarizationEligible,
+    transcriptChars: transcript.length,
+  });
+  const pollSchedule = await scheduleAsyncJobPoll({
+    jobId: id,
+    jobType,
+    deviceId,
+    ttlSeconds: ttl,
+    expectAsyncMeetingDialogue,
+  });
 
   await dispatchAiJob(jobPayload);
 
-  return { created: true, syncToken };
+  return { created: true, syncToken, pollExpiresAt: pollSchedule.pollExpiresAt };
 };
 
 export const getMessageById = async (id: string, syncToken?: string): Promise<Message | null> => {
@@ -130,8 +142,23 @@ export const getMessageById = async (id: string, syncToken?: string): Promise<Me
 
     if (metadata) {
       return sanitizeAiModelFieldsForClient(
-        enrichWithPollingHints(enriched, metadata.jobType, metadata.startedAt),
+        enrichWithPollingHints(
+          enriched,
+          metadata.jobType,
+          metadata.startedAt,
+          metadata.pollExpiresAtMs,
+        ),
       );
+    }
+  }
+
+  if (enriched.status === 'done' && enriched.meetingDialogueStatus === 'processing') {
+    const metadata = await getJobMetadata(id);
+    if (metadata?.pollExpiresAtMs != null) {
+      return sanitizeAiModelFieldsForClient({
+        ...enriched,
+        pollExpiresAt: new Date(metadata.pollExpiresAtMs).toISOString(),
+      });
     }
   }
 
@@ -139,7 +166,7 @@ export const getMessageById = async (id: string, syncToken?: string): Promise<Me
 };
 
 type RetryMeetingDialogueResult =
-  | { ok: true; syncToken?: string }
+  | { ok: true; syncToken?: string; pollExpiresAt: string }
   | { ok: false; limitExceeded: true; usage: import('@/lib/ai-rate-limit').AiUsage }
   | { ok: false; error: string };
 
@@ -227,5 +254,13 @@ export const retryMeetingDialogue = async (params: {
 
   await dispatchMeetingDialogueJob(meetingPayload);
 
-  return { ok: true, syncToken: getSyncToken() };
+  const pollSchedule = await scheduleAsyncJobPoll({
+    jobId: params.jobId,
+    jobType: 'meeting_dialogue',
+    deviceId: params.deviceId,
+    ttlSeconds: ttl,
+    workerPasses: 1,
+  });
+
+  return { ok: true, syncToken: getSyncToken(), pollExpiresAt: pollSchedule.pollExpiresAt };
 };

@@ -173,6 +173,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const response = NextResponse.json({
     id: String(body.id),
     status: 'processing',
+    pollExpiresAt: result.pollExpiresAt,
     ...(result.syncToken && { syncToken: result.syncToken }),
   });
   if (result.syncToken) response.headers.set(HEADER_SYNC_TOKEN, result.syncToken);

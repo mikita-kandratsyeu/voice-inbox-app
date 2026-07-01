@@ -8,6 +8,8 @@ export type ServerPollHint = {
   estimatedCompletionMs?: number;
   /** Progress percentage (0-100) */
   progress?: number;
+  /** Absolute UTC poll deadline from server (ISO-8601). */
+  pollExpiresAt?: string;
 };
 
 /**

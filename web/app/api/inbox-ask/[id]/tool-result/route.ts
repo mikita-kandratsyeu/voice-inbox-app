@@ -40,6 +40,7 @@ export async function POST(request: Request, { params }: RouteContext): Promise<
   return NextResponse.json({
     id,
     status: 'processing',
+    pollExpiresAt: result.pollExpiresAt,
     ...(result.syncToken ? { syncToken: result.syncToken } : {}),
   });
 }

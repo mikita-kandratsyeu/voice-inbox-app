@@ -81,6 +81,7 @@ export const cloudAiPendingTable = sqliteTable(
     syncToken: text('syncToken'),
     expectAsyncMeetingDialogue: integer('expectAsyncMeetingDialogue').default(0).notNull(),
     expiresAtMs: integer('expiresAtMs').notNull(),
+    pollExpiresAtMs: integer('pollExpiresAtMs'),
     updatedAt: text('updatedAt').notNull(),
   },
   (t) => [index('idx_cloud_ai_pending_jobId').on(t.jobId)],

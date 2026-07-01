@@ -16,6 +16,7 @@ import {
   saveCloudSummarizePending,
 } from '@/shared/lib/ai-api';
 import { AI_REQUEST_CANCELLED, isAiGenerationCancelledError } from '@/shared/lib/ai-api/abort';
+import { parsePollExpiresAtMs } from '@/shared/lib/ai-api/pollDeadline';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 import { isNonNegativeFiniteNumber } from '@/shared/lib/type-guards';
 
@@ -152,18 +153,21 @@ export async function runCloudSummaryTasks(
   const recordId = recordIdFromSummarizeJobId(request.id);
   if (recordId) {
     const ttlSec = ctx.cloudMessageTtlSeconds;
+    const pollExpiresAtMs = parsePollExpiresAtMs(postResult.data.pollExpiresAt);
     await saveCloudSummarizePending({
       recordId,
       jobId: request.id,
       syncToken: postResult.data.syncToken,
       expectAsyncMeetingDialogue: request.expectAsyncMeetingDialogue === true,
       expiresAtMs: Date.now() + ttlSec * 1000,
+      pollExpiresAtMs,
     });
     void useRecordStore.getState().updateAiExtras(recordId, { cloudAiJobId: request.id });
   }
 
   const pollResult = await pollAiMessage(request.id, postResult.data.syncToken, {
     ...fetchOptions,
+    pollExpiresAt: postResult.data.pollExpiresAt,
     expectAsyncMeetingDialogue: request.expectAsyncMeetingDialogue,
     onSummaryReady: request.onCloudSummaryReady,
   });
@@ -237,7 +241,10 @@ export async function runCloudAsk(
     return mapPostError(postResult, ctx.aiExecutionMode, 'AI weekly limit exceeded');
   }
 
-  const pollResult = await pollAskResult(request.id, postResult.data.syncToken, fetchOptions);
+  const pollResult = await pollAskResult(request.id, postResult.data.syncToken, {
+    ...fetchOptions,
+    pollExpiresAt: postResult.data.pollExpiresAt,
+  });
   if (!pollResult.ok) {
     if (pollResult.error === AI_REQUEST_CANCELLED) {
       return cloudAskCancelledFailure(ctx.aiExecutionMode);
@@ -309,8 +316,12 @@ export async function runCloudInboxAsk(
   }
 
   let syncToken = postResult.data.syncToken;
+  let pollExpiresAt = postResult.data.pollExpiresAt;
   for (let round = 0; round < 4; round += 1) {
-    const pollResult = await pollInboxAskResult(request.id, syncToken, fetchOptions);
+    const pollResult = await pollInboxAskResult(request.id, syncToken, {
+      ...fetchOptions,
+      pollExpiresAt,
+    });
     if (!pollResult.ok) {
       if (pollResult.error === AI_REQUEST_CANCELLED) {
         return cloudAskCancelledFailure(ctx.aiExecutionMode);
@@ -352,6 +363,7 @@ export async function runCloudInboxAsk(
       return mapPostError(postToolResult, ctx.aiExecutionMode, 'AI weekly limit exceeded');
     }
     syncToken = postToolResult.data.syncToken ?? syncToken;
+    pollExpiresAt = postToolResult.data.pollExpiresAt ?? pollExpiresAt;
   }
 
   return {
@@ -413,11 +425,10 @@ export async function runCloudGeneralAsk(
     return mapPostError(postResult, ctx.aiExecutionMode, 'AI weekly limit exceeded');
   }
 
-  const pollResult = await pollGeneralAskResult(
-    request.id,
-    postResult.data.syncToken,
-    fetchOptions,
-  );
+  const pollResult = await pollGeneralAskResult(request.id, postResult.data.syncToken, {
+    ...fetchOptions,
+    pollExpiresAt: postResult.data.pollExpiresAt,
+  });
   if (!pollResult.ok) {
     if (pollResult.error === AI_REQUEST_CANCELLED) {
       return cloudAskCancelledFailure(ctx.aiExecutionMode);

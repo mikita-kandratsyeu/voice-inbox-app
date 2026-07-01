@@ -47,6 +47,8 @@ export type PollingHints = {
   retryAfterMs?: number;
   /** Estimated milliseconds until completion */
   estimatedCompletionMs?: number;
+  /** Absolute UTC deadline for client poll loops (ISO-8601). */
+  pollExpiresAt?: string;
 };
 
 export type Message =
@@ -76,6 +78,7 @@ export type Message =
       nextSteps?: string[];
       meetingDialogueMarkdown?: string;
       meetingDialogueStatus?: MeetingDialogueStatus;
+      pollExpiresAt?: string;
       reasoning?: string;
       tokenUsage?: { prompt: number; completion: number };
     }

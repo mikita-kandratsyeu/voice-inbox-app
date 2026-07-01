@@ -396,6 +396,7 @@ export function useAutoOrganizeFolders(
           postResult.data.syncToken,
           {
             isCancelled: () => cancelledRef.current,
+            pollExpiresAt: postResult.data.pollExpiresAt,
           },
         );
         if (cancelledRef.current) return;

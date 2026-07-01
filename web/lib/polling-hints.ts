@@ -1,4 +1,5 @@
 import type { PollingHints } from '@/types';
+import { formatPollExpiresAt } from '@/lib/ai-poll-deadline';
 import { TYPICAL_COMPLETION_MS, BASE_POLL_INTERVALS, type JobType } from './job-types';
 
 // Re-export JobType for convenience
@@ -66,6 +67,7 @@ export function enrichWithPollingHints<T extends { status: 'processing' }>(
   message: T,
   jobType: JobType,
   startedAtMs: number,
+  pollExpiresAtMs?: number,
 ): T & PollingHints {
   const elapsedMs = Date.now() - startedAtMs;
   const hints = calculatePollingHints(jobType, elapsedMs);
@@ -73,6 +75,7 @@ export function enrichWithPollingHints<T extends { status: 'processing' }>(
   return {
     ...message,
     ...hints,
+    ...(pollExpiresAtMs != null ? { pollExpiresAt: formatPollExpiresAt(pollExpiresAtMs) } : {}),
   };
 }
 

@@ -8,6 +8,9 @@ import {
 import { aiModelResponseFields } from '@/lib/ai-model-display';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
+import { scheduleAsyncJobPoll } from '@/lib/ai-job-poll-schedule';
+import { getJobMetadata } from '@/lib/job-metadata';
+import { enrichWithPollingHints } from '@/lib/polling-hints';
 import { isProDevice } from '@/lib/pro-entitlement';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import { redis } from '@/lib/redis';
@@ -20,7 +23,7 @@ import { MESSAGE_TTL_SECONDS, SYSTEM_MICRO_TASK_MODEL, WEEK_TTL_SECONDS } from '
 const AUTO_ORGANIZE_FREE_WEEKLY_LIMIT = 2;
 
 type CreateAutoOrganizeResult =
-  | { created: true; syncToken?: string }
+  | { created: true; syncToken?: string; pollExpiresAt: string }
   | {
       created: false;
       limitExceeded: true;
@@ -147,9 +150,15 @@ export const createAutoOrganizeRequest = async (
   };
 
   await saveJobPayload(jobPayload);
+  const pollSchedule = await scheduleAsyncJobPoll({
+    jobId: id,
+    jobType: 'auto_organize',
+    deviceId,
+    ttlSeconds: ttl,
+  });
   await dispatchAiJob(jobPayload);
 
-  return { created: true, syncToken };
+  return { created: true, syncToken, pollExpiresAt: pollSchedule.pollExpiresAt };
 };
 
 export const getAutoOrganizeById = async (
@@ -168,7 +177,18 @@ export const getAutoOrganizeById = async (
   };
 
   if (!msg?.id || !msg?.status) return null;
-  if (msg.status === 'processing') return { id: msg.id, status: 'processing' };
+  if (msg.status === 'processing') {
+    const metadata = await getJobMetadata(msg.id);
+    if (metadata) {
+      return enrichWithPollingHints(
+        { id: msg.id, status: 'processing' },
+        metadata.jobType,
+        metadata.startedAt,
+        metadata.pollExpiresAtMs,
+      );
+    }
+    return { id: msg.id, status: 'processing' };
+  }
   if (msg.status === 'error' && typeof msg.error === 'string') {
     return { id: msg.id, status: 'error', error: msg.error };
   }

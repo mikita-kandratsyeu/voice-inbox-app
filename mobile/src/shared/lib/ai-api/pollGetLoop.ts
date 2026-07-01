@@ -1,6 +1,7 @@
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { WEB_API_POLL_FETCH_TIMEOUT_MS } from '@/shared/lib/api-auth/constants';
 
+import { isRecord } from '../type-guards';
 import {
   type AiFetchOptions,
   aiRequestCancelledFailure,
@@ -8,6 +9,8 @@ import {
   isAbortLikeError,
 } from './abort';
 import { AI_POLL_TIMEOUT_MS } from './constants';
+import { extendPollDeadlineMs } from './pollDeadline';
+import { parseServerPollHints } from './serverPollHints';
 
 export type PollGetParseOutcome<T> =
   | PollGetLoopResult<T>
@@ -15,7 +18,7 @@ export type PollGetParseOutcome<T> =
   | Promise<PollGetLoopResult<T> | 'processing'>;
 import { devLog, devWarn } from '@/shared/lib/appLogger';
 
-import type { PollJobType, ServerPollHint } from './adaptivePolling';
+import type { PollJobType } from './adaptivePolling';
 import { AdaptivePollingStrategy } from './adaptivePolling';
 import { dedupedPoll } from './pollDeduplication';
 import { readResponseJson } from './responseJson';
@@ -26,32 +29,6 @@ const POLL_MAX_MS = 15_000; // Safety cap
 export type PollGetLoopResult<T> = { ok: true; result: T } | { ok: false; error: string };
 
 export const AI_POLL_TIMEOUT_ERROR = 'Timeout waiting for AI result';
-
-/**
- * Helper to extract server hints from response data for adaptive polling.
- */
-function extractServerHints(data: unknown): ServerPollHint | undefined {
-  if (!data || typeof data !== 'object') return undefined;
-
-  const obj = data as Record<string, unknown>;
-
-  const retryAfterMs =
-    typeof obj.retryAfterMs === 'number' && obj.retryAfterMs > 0 ? obj.retryAfterMs : undefined;
-  const estimatedCompletionMs =
-    typeof obj.estimatedCompletionMs === 'number' && obj.estimatedCompletionMs > 0
-      ? obj.estimatedCompletionMs
-      : undefined;
-  const progress =
-    typeof obj.progress === 'number' && obj.progress >= 0 && obj.progress <= 100
-      ? obj.progress
-      : undefined;
-
-  if (!retryAfterMs && !estimatedCompletionMs && !progress) {
-    return undefined;
-  }
-
-  return { retryAfterMs, estimatedCompletionMs, progress };
-}
 
 /**
  * Polls a GET endpoint until `parseResponse` returns done/error, or timeout.
@@ -68,7 +45,9 @@ export async function pollGetLoop<T>(
   parseResponse: (json: unknown) => PollGetParseOutcome<T>,
   options?: AiFetchOptions & {
     headers?: Record<string, string>;
-    /** Overrides default AI poll budget (e.g. resume after app restart). */
+    /** Absolute UTC poll deadline (epoch ms). Preferred over `timeoutMs`. */
+    deadlineMs?: number;
+    /** Overrides default AI poll budget when `deadlineMs` is omitted. */
     timeoutMs?: number;
     /** Job type for adaptive polling strategy */
     jobType?: PollJobType;
@@ -97,6 +76,7 @@ async function pollGetLoopImpl<T>(
   parseResponse: (json: unknown) => PollGetParseOutcome<T>,
   options?: AiFetchOptions & {
     headers?: Record<string, string>;
+    deadlineMs?: number;
     timeoutMs?: number;
     jobType?: PollJobType;
     onProgress?: (progress: number) => void;
@@ -104,7 +84,7 @@ async function pollGetLoopImpl<T>(
 ): Promise<PollGetLoopResult<T>> {
   const headers = options?.headers ?? {};
   const signal = options?.signal;
-  const deadline = Date.now() + (options?.timeoutMs ?? AI_POLL_TIMEOUT_MS);
+  let deadlineMs = options?.deadlineMs ?? Date.now() + (options?.timeoutMs ?? AI_POLL_TIMEOUT_MS);
   const startTime = Date.now();
   const strategy = new AdaptivePollingStrategy();
 
@@ -113,10 +93,10 @@ async function pollGetLoopImpl<T>(
   let skipDelay = true; // First poll immediately
 
   devLog(
-    `[Poll] Starting poll loop for ${options?.jobType ?? 'unknown'} job, timeout=${options?.timeoutMs ?? AI_POLL_TIMEOUT_MS}ms`,
+    `[Poll] Starting poll loop for ${options?.jobType ?? 'unknown'} job, deadlineMs=${deadlineMs}`,
   );
 
-  while (Date.now() < deadline) {
+  while (Date.now() < deadlineMs) {
     if (signal?.aborted) {
       return aiRequestCancelledFailure();
     }
@@ -175,11 +155,14 @@ async function pollGetLoopImpl<T>(
       continue;
     }
 
+    if (isRecord(body.data)) {
+      deadlineMs = extendPollDeadlineMs(deadlineMs, body.data.pollExpiresAt);
+    }
+
     const parsed = await Promise.resolve(parseResponse(body.data));
 
     if (parsed === 'processing') {
-      // Extract server hints for adaptive interval
-      const hints = extractServerHints(body.data);
+      const hints = parseServerPollHints(body.data);
 
       // Report progress if available
       if (hints?.progress !== undefined && options?.onProgress) {

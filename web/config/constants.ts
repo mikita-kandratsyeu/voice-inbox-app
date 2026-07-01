@@ -106,6 +106,11 @@ export const JOB_PAYLOAD_KEY_PREFIX = 'job-payload:';
 export const MEETING_JOB_PAYLOAD_KEY_PREFIX = 'job-payload:meeting:';
 /** QStash delivery retries when publishing async AI jobs. */
 export const AI_JOB_QSTASH_RETRIES = 3;
+/**
+ * Max execution time per async AI worker (App Router `maxDuration`, QStash `timeout`).
+ * Mobile clients receive `pollExpiresAt` derived from this value.
+ */
+export const AI_WORKER_MAX_DURATION_SEC = 300;
 /** Worker exclusive lock (`job-lock:*`). Slightly above App Router `maxDuration` (300s). */
 export const JOB_LOCK_KEY_PREFIX = 'job-lock:';
 export const JOB_LOCK_TTL_SECONDS = 330;

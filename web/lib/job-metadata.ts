@@ -7,8 +7,9 @@ const JOB_METADATA_PREFIX = 'job_meta:';
 type JobMetadata = {
   jobId: string;
   jobType: JobType;
-  startedAt: number; // Unix timestamp in milliseconds
+  startedAt: number;
   deviceId?: string;
+  pollExpiresAtMs?: number;
 };
 
 function getJobMetadataKey(jobId: string): string {
@@ -24,12 +25,15 @@ export async function saveJobMetadata(
   jobType: JobType,
   deviceId?: string,
   ttlSeconds: number = MESSAGE_TTL_SECONDS,
+  pollExpiresAtMs?: number,
+  startedAtMs: number = Date.now(),
 ): Promise<void> {
   const metadata: JobMetadata = {
     jobId,
     jobType,
-    startedAt: Date.now(),
+    startedAt: startedAtMs,
     deviceId,
+    ...(pollExpiresAtMs != null ? { pollExpiresAtMs } : {}),
   };
 
   await kv.set(getJobMetadataKey(jobId), JSON.stringify(metadata), {
@@ -64,3 +68,5 @@ export async function getJobMetadata(jobId: string): Promise<JobMetadata | null>
 export async function deleteJobMetadata(jobId: string): Promise<void> {
   await kv.del(getJobMetadataKey(jobId));
 }
+
+export type { JobMetadata };

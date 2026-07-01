@@ -180,6 +180,7 @@ export const POST = async (request: Request, { params }: RouteContext): Promise<
     id: jobId,
     status: 'processing',
     meetingDialogueStatus: 'processing',
+    pollExpiresAt: result.pollExpiresAt,
     model: modelParsed.model,
     ...(result.syncToken && { syncToken: result.syncToken }),
   });

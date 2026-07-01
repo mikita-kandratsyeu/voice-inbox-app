@@ -4,7 +4,8 @@ import { checkAndIncrement, type AiLimitContext } from '@/lib/ai-rate-limit';
 import type { AiModelMode } from '@/lib/ai-model-router';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
-import { saveJobMetadata, getJobMetadata } from '@/lib/job-metadata';
+import { scheduleAsyncJobPoll } from '@/lib/ai-job-poll-schedule';
+import { getJobMetadata } from '@/lib/job-metadata';
 import { enrichWithPollingHints, operationToJobType } from '@/lib/polling-hints';
 import {
   aiModelLedgerMetadata,
@@ -23,7 +24,7 @@ type AskEvidenceMessageItem = NonNullable<
 >[number];
 
 type CreateAskResult =
-  | { created: true; syncToken?: string }
+  | { created: true; syncToken?: string; pollExpiresAt: string }
   | { created: false; limitExceeded: true; usage: import('@/lib/ai-rate-limit').AiUsage }
   | { created: false };
 
@@ -105,11 +106,16 @@ export const createAsk = async (
   // Save job metadata for polling hints calculation
   const operation = jobPayload.operation; // 'transcript_ask'
   const jobType = operationToJobType(operation);
-  await saveJobMetadata(id, jobType, deviceId, ttl);
+  const pollSchedule = await scheduleAsyncJobPoll({
+    jobId: id,
+    jobType,
+    deviceId,
+    ttlSeconds: ttl,
+  });
 
   await dispatchAiJob(jobPayload);
 
-  return { created: true, syncToken };
+  return { created: true, syncToken, pollExpiresAt: pollSchedule.pollExpiresAt };
 };
 
 export const getAskById = async (id: string, syncToken?: string): Promise<AskMessage | null> => {
@@ -161,7 +167,12 @@ export const getAskById = async (id: string, syncToken?: string): Promise<AskMes
     const metadata = await getJobMetadata(msg.id);
     if (metadata) {
       return sanitizeAiModelFieldsForClient(
-        enrichWithPollingHints(base, metadata.jobType, metadata.startedAt) as AskMessage,
+        enrichWithPollingHints(
+          base,
+          metadata.jobType,
+          metadata.startedAt,
+          metadata.pollExpiresAtMs,
+        ) as AskMessage,
       );
     }
 

@@ -246,6 +246,7 @@ export async function resumeCloudSummarizeJob(pending: CloudSummarizePendingJob)
     pollResult = await resumePollAiMessage(pending.jobId, pending.syncToken, {
       expectAsyncMeetingDialogue: pending.expectAsyncMeetingDialogue,
       expiresAtMs: pending.expiresAtMs,
+      pollExpiresAtMs: pending.pollExpiresAtMs,
       onSummaryReady,
     });
   }

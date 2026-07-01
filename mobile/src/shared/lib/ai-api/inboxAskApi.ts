@@ -14,6 +14,8 @@ import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { isString } from '../type-guards';
 import { type AiFetchOptions, aiRequestCancelledFailure, isAbortLikeError } from './abort';
 import { headersForAiOperation } from './aiOperation';
+import { AI_POLL_TIMEOUT_MS } from './constants';
+import { pollLoopOptionsFromAcceptedJob } from './pollDeadline';
 import { pollGetLoop } from './pollGetLoop';
 import { readResponseJson } from './responseJson';
 
@@ -56,6 +58,7 @@ type InboxAskApiSuccessResponse = {
   status: 'processing';
   model?: string;
   syncToken?: string;
+  pollExpiresAt?: string;
 };
 
 type InboxAskApiLimitResponse = {
@@ -192,7 +195,7 @@ export async function postInboxAskQuestion(
 export async function pollInboxAskResult(
   id: string,
   syncToken?: string,
-  options?: AiFetchOptions,
+  options?: AiFetchOptions & { pollExpiresAt?: string },
 ): Promise<InboxAskMessageResult> {
   const headers: Record<string, string> = {};
   if (syncToken) {
@@ -246,7 +249,15 @@ export async function pollInboxAskResult(
 
       return 'processing';
     },
-    { ...options, headers, jobType: 'ask' },
+    {
+      ...options,
+      headers,
+      jobType: 'ask',
+      ...pollLoopOptionsFromAcceptedJob(
+        { pollExpiresAt: options?.pollExpiresAt },
+        AI_POLL_TIMEOUT_MS,
+      ),
+    },
   );
 
   if (!poll.ok) return poll;

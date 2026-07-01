@@ -6,12 +6,13 @@ import { isNumber, isString } from '@/shared/lib/type-guards';
 
 import { type AiFetchOptions, aiRequestCancelledFailure, isAbortLikeError } from './abort';
 import { headersForAiOperation } from './aiOperation';
-import { aiPollTimeoutMs, aiResumePollTimeoutMs } from './constants';
+import { aiPollTimeoutMs } from './constants';
 import {
   type ParsedMessagePollState,
   parseMessagePollState,
   type ServerMeetingDialogueStatus,
 } from './parseMessageResponse';
+import { resolvePollDeadlineMs, resolveResumePollDeadlineMs } from './pollDeadline';
 import { pollGetLoop } from './pollGetLoop';
 import { readResponseJson } from './responseJson';
 
@@ -53,6 +54,7 @@ type AiApiSuccessResponse = {
   status: 'processing';
   model?: string;
   syncToken?: string;
+  pollExpiresAt?: string;
 };
 
 type AiApiLimitResponse = {
@@ -95,8 +97,10 @@ export type AiProcessingResult = {
 };
 
 export type PollAiMessageOptions = AiFetchOptions & {
-  /** Second QStash pass for long meetings; extends poll deadline. */
+  /** Second QStash pass for long meetings; used only when server omits `pollExpiresAt`. */
   expectAsyncMeetingDialogue?: boolean;
+  /** Server-provided absolute poll deadline (ISO-8601 or epoch ms). */
+  pollExpiresAt?: string | number;
   /** Fired when summary/tasks are ready but speaker breakdown is still processing. */
   onSummaryReady?: (result: AiProcessingResult) => void | Promise<void>;
   /** Optional callback for progress updates (0-100). */
@@ -582,6 +586,7 @@ export async function fetchAiMessageOnce(
 
 export type ResumePollAiMessageOptions = Omit<PollAiMessageOptions, 'signal'> & {
   expiresAtMs: number;
+  pollExpiresAtMs?: number | null;
 };
 
 /** Poll with a shorter deadline for jobs resumed after app restart. */
@@ -614,23 +619,32 @@ export async function resumePollAiMessage(
   return pollAiMessage(id, syncToken, {
     ...options,
     expectAsyncMeetingDialogue: options.expectAsyncMeetingDialogue,
-    timeoutMs: aiResumePollTimeoutMs(
-      options.expectAsyncMeetingDialogue === true,
-      options.expiresAtMs,
-    ),
+    pollExpiresAt: options.pollExpiresAtMs ?? options.pollExpiresAt,
+    deadlineMs: resolveResumePollDeadlineMs({
+      pollExpiresAtMs: options.pollExpiresAtMs,
+      kvExpiresAtMs: options.expiresAtMs,
+      expectAsyncMeetingDialogue: options.expectAsyncMeetingDialogue === true,
+    }),
   });
 }
 
 export async function pollAiMessage(
   id: string,
   syncToken?: string,
-  options?: PollAiMessageOptions & { timeoutMs?: number },
+  options?: PollAiMessageOptions & { deadlineMs?: number; timeoutMs?: number },
 ): Promise<AiMessageResult> {
   const headers = aiMessagePollHeaders(syncToken);
 
   const url = `${getWebApiUrl()}/api/messages/${id}`;
   const expectAsyncMeetingDialogue = options?.expectAsyncMeetingDialogue === true;
   let summaryReadyDelivered = false;
+  const fallbackTimeoutMs = aiPollTimeoutMs(expectAsyncMeetingDialogue);
+  const deadlineMs =
+    options?.deadlineMs ??
+    resolvePollDeadlineMs({
+      pollExpiresAt: options?.pollExpiresAt,
+      fallbackTimeoutMs: options?.timeoutMs ?? fallbackTimeoutMs,
+    });
 
   const result = await pollGetLoop<{
     result: AiProcessingResult;
@@ -672,7 +686,7 @@ export async function pollAiMessage(
     {
       signal: options?.signal,
       headers,
-      timeoutMs: options?.timeoutMs ?? aiPollTimeoutMs(expectAsyncMeetingDialogue),
+      deadlineMs,
       jobType: expectAsyncMeetingDialogue ? 'meeting_dialogue' : 'summary',
       onProgress: options?.onProgress,
     },

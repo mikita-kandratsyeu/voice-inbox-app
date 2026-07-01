@@ -240,6 +240,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const response = NextResponse.json({
     id,
     status: 'processing',
+    pollExpiresAt: result.pollExpiresAt,
     ...aiModelClientResponseFields(resolvedModel, modelMode),
     ...(result.syncToken && { syncToken: result.syncToken }),
   });

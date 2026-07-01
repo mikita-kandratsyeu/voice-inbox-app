@@ -48,6 +48,11 @@ export type { GeneralAskApiResult, GeneralAskMessageResult } from './generalAskA
 export { pollGeneralAskResult, postGeneralAskQuestion } from './generalAskApi';
 export type { InboxAskApiResult, InboxAskMessageResult } from './inboxAskApi';
 export { pollInboxAskResult, postInboxAskQuestion, postInboxAskToolResult } from './inboxAskApi';
+export {
+  parsePollExpiresAtMs,
+  pollLoopOptionsFromAcceptedJob,
+  resolvePollDeadlineMs,
+} from './pollDeadline';
 export { AI_POLL_TIMEOUT_ERROR } from './pollGetLoop';
 export type {
   AiWeeklyLimits,

@@ -7,6 +7,8 @@ import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { isString } from '../type-guards';
 import { type AiFetchOptions, aiRequestCancelledFailure, isAbortLikeError } from './abort';
 import { headersForAiOperation } from './aiOperation';
+import { AI_POLL_TIMEOUT_MS } from './constants';
+import { pollLoopOptionsFromAcceptedJob } from './pollDeadline';
 import { pollGetLoop } from './pollGetLoop';
 import { readResponseJson } from './responseJson';
 
@@ -48,6 +50,7 @@ type GeneralAskApiSuccessResponse = {
   status: 'processing';
   model?: string;
   syncToken?: string;
+  pollExpiresAt?: string;
 };
 
 type GeneralAskApiLimitResponse = {
@@ -165,7 +168,7 @@ export async function postGeneralAskQuestion(
 export async function pollGeneralAskResult(
   id: string,
   syncToken?: string,
-  options?: AiFetchOptions,
+  options?: AiFetchOptions & { pollExpiresAt?: string },
 ): Promise<GeneralAskMessageResult> {
   const headers: Record<string, string> = {};
   if (syncToken) {
@@ -210,7 +213,15 @@ export async function pollGeneralAskResult(
 
       return 'processing';
     },
-    { ...options, headers, jobType: 'ask' },
+    {
+      ...options,
+      headers,
+      jobType: 'ask',
+      ...pollLoopOptionsFromAcceptedJob(
+        { pollExpiresAt: options?.pollExpiresAt },
+        AI_POLL_TIMEOUT_MS,
+      ),
+    },
   );
 
   if (!result.ok && result.error === 'Timeout waiting for AI result') {

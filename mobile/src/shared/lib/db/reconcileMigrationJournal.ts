@@ -75,6 +75,10 @@ export async function isMigrationReflectedInSchema(db: DB, idx: number): Promise
       return tableExists(db, 'record_published_share');
     case 25:
       return columnExists(db, 'records', 'summaryAiModelMode');
+    case 26:
+      return tableExists(db, 'inbox_ask_ai');
+    case 27:
+      return columnExists(db, 'cloud_ai_pending', 'pollExpiresAtMs');
     default:
       return false;
   }

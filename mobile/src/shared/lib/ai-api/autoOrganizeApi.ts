@@ -12,6 +12,7 @@ import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 
 import { headersForAiOperation } from './aiOperation';
 import { AI_POLL_TIMEOUT_MS } from './constants';
+import { extendPollDeadlineMs, remainingPollMs, resolvePollDeadlineMs } from './pollDeadline';
 
 type NoteForOrganize = {
   id: string;
@@ -38,7 +39,12 @@ type RequestBody = {
   messageTtlSeconds?: number;
 };
 
-type PostResponse = { id: string; status: 'processing'; syncToken?: string };
+type PostResponse = {
+  id: string;
+  status: 'processing';
+  syncToken?: string;
+  pollExpiresAt?: string;
+};
 type LimitResponse = {
   error: string;
   reason?: 'weekly_generation_limit' | 'auto_organize_free_limit';
@@ -46,7 +52,7 @@ type LimitResponse = {
 };
 
 type PollResponse =
-  | { id: string; status: 'processing' }
+  | { id: string; status: 'processing'; pollExpiresAt?: string }
   | {
       id: string;
       status: 'done';
@@ -111,15 +117,18 @@ export async function pollAutoOrganizeFolders(
   id: string,
   expected: { mode: AutoOrganizeMode; template: AutoOrganizeTemplate },
   syncToken?: string,
-  options?: { isCancelled?: () => boolean },
+  options?: { isCancelled?: () => boolean; pollExpiresAt?: string },
 ): Promise<AutoOrganizePollResult> {
   const headers: Record<string, string> = {};
   if (syncToken) headers['x-upstash-sync-token'] = syncToken;
 
   const url = `${getWebApiUrl()}/api/folders/auto-organize/${id}`;
-  const deadline = Date.now() + AI_POLL_TIMEOUT_MS;
+  let deadlineMs = resolvePollDeadlineMs({
+    pollExpiresAt: options?.pollExpiresAt,
+    fallbackTimeoutMs: AI_POLL_TIMEOUT_MS,
+  });
 
-  while (Date.now() < deadline) {
+  while (remainingPollMs(deadlineMs) > 0) {
     if (options?.isCancelled?.()) {
       return { ok: false, error: 'cancelled' };
     }
@@ -139,6 +148,9 @@ export async function pollAutoOrganizeFolders(
 
     if (!response.ok) continue;
     const msg = (await response.json()) as PollResponse;
+    if (msg.status === 'processing' && msg.pollExpiresAt) {
+      deadlineMs = extendPollDeadlineMs(deadlineMs, msg.pollExpiresAt);
+    }
     if (msg.status === 'done') {
       requestAiUsageRefresh();
       const mode = msg.mode ?? expected.mode;

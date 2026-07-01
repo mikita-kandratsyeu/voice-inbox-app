@@ -67,8 +67,8 @@ export async function withTimeoutPartial<T>(
 /**
  * Timeout configurations for different operation types.
  *
- * Note: Vercel Fluid Functions maxDuration is 300s (5 minutes).
- * AI timeouts set to 290s to allow graceful error handling before Vercel kills the function.
+ * Note: Vercel Fluid Functions maxDuration matches `AI_WORKER_MAX_DURATION_SEC` (see config/constants).
+ * AI timeouts set slightly below that to allow graceful error handling before Vercel kills the function.
  */
 export const TIMEOUTS = {
   AI_PROCESSING: 290_000, // 290 seconds (4m 50s) - for summary, meeting dialogue

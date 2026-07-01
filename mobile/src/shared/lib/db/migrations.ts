@@ -150,6 +150,8 @@ const migration0026 = `CREATE TABLE IF NOT EXISTS \`inbox_ask_ai\` (
 	\`updatedAt\` text NOT NULL
 );`;
 
+const migration0027 = `ALTER TABLE \`cloud_ai_pending\` ADD \`pollExpiresAtMs\` integer;`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -187,5 +189,6 @@ export const migrationsConfig = {
     m0024: migration0024,
     m0025: migration0025,
     m0026: migration0026,
+    m0027: migration0027,
   } as Record<string, string>,
 };
