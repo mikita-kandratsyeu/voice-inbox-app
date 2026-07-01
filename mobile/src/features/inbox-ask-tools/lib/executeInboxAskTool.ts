@@ -2,6 +2,7 @@ import { recordRepository } from '@/entities/record/model/repository';
 import type { VoiceRecord } from '@/entities/record/model/types';
 import type { InboxAskRetrievalScope } from '@/features/inbox-ask-retrieval';
 import {
+  filterInboxAskCorpusRecords,
   prepareInboxAskQueryEmbedding,
   retrieveNotesForInboxAsk,
 } from '@/features/inbox-ask-retrieval';
@@ -29,6 +30,10 @@ export type InboxAskToolExecutorContext = {
   records: VoiceRecord[];
   scope?: InboxAskRetrievalScope;
 };
+
+function getScopedRecords(context: InboxAskToolExecutorContext): VoiceRecord[] {
+  return filterInboxAskCorpusRecords(context.records, context.scope) as VoiceRecord[];
+}
 
 function readStringArg(args: Record<string, unknown>, key: string, maxChars: number): string {
   const raw = args[key];
@@ -128,7 +133,7 @@ function executeGetNoteTool(
   context: InboxAskToolExecutorContext,
 ): InboxAskToolResult {
   const recordId = readStringArg(call.arguments, 'recordId', 120);
-  const record = context.records.find((item) => item.id === recordId);
+  const record = getScopedRecords(context).find((item) => item.id === recordId);
   const includeTranscript = readBooleanArg(call.arguments, 'includeTranscriptExcerpt');
 
   return {
@@ -157,7 +162,7 @@ function executeListTasksTool(
   const recordId = readStringArg(call.arguments, 'recordId', 120);
   const limit = readPositiveIntArg(call.arguments, 'limit', MAX_TASKS, MAX_TASKS);
 
-  const tasks = context.records
+  const tasks = getScopedRecords(context)
     .filter((record) => !recordId || record.id === recordId)
     .flatMap((record) =>
       (record.tasks ?? []).map((task) => ({
@@ -192,11 +197,12 @@ function executeRelatedNotesTool(
   context: InboxAskToolExecutorContext,
 ): InboxAskToolResult {
   const recordId = readStringArg(call.arguments, 'recordId', 120);
-  const current = context.records.find((item) => item.id === recordId);
+  const scopedRecords = getScopedRecords(context);
+  const current = scopedRecords.find((item) => item.id === recordId);
   const limit = readPositiveIntArg(call.arguments, 'limit', MAX_RELATED_NOTES, MAX_RELATED_NOTES);
-  const contextSimilarity = buildSimilarityContext(context.records);
+  const contextSimilarity = buildSimilarityContext(scopedRecords);
   const related = current
-    ? rankSimilarRecords(current, context.records, contextSimilarity, limit, 0.08)
+    ? rankSimilarRecords(current, scopedRecords, contextSimilarity, limit, 0.08)
     : [];
 
   return {

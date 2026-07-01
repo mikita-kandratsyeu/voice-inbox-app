@@ -31,7 +31,9 @@ jest.mock('@/shared/lib/embeddings', () => {
 import type { VoiceRecord } from '@/entities/record';
 
 import {
+  canUseInboxAskQueryEmbedding,
   countInboxAskCorpusRecords,
+  countInboxAskSearchableRecords,
   filterInboxAskCorpusRecords,
   INBOX_ASK_RETRIEVAL_TOP_K,
   retrieveNotesForInboxAsk,
@@ -87,6 +89,12 @@ describe('filterInboxAskCorpusRecords', () => {
     expect(countInboxAskCorpusRecords([active, archived, folderA], { folderId: 'folder-a' })).toBe(
       1,
     );
+  });
+
+  it('countInboxAskSearchableRecords excludes title-only notes', () => {
+    const titleOnly = makeRecord('title-only', 'Alpha only');
+    const searchable = makeRecord('searchable', 'Beta', { summary: 'Has summary' });
+    expect(countInboxAskSearchableRecords([titleOnly, searchable])).toBe(1);
   });
 });
 
@@ -157,7 +165,7 @@ describe('retrieveNotesForInboxAsk', () => {
     expect(result.notes.every((note) => note.recordId !== 'other')).toBe(true);
   });
 
-  it('falls back to recent packable notes when nothing matches lexically', () => {
+  it('returns empty notes when nothing matches lexically', () => {
     const older = makeRecord('old', 'Alpha', {
       summary: 'Older note',
       createdAt: '2025-01-01T00:00:00.000Z',
@@ -173,10 +181,9 @@ describe('retrieveNotesForInboxAsk', () => {
       embeddingsById: new Map(),
     });
 
-    expect(result.retrievalMode).toBe('broad');
-    expect(result.candidates).toHaveLength(2);
-    expect(result.notes).toHaveLength(2);
-    expect(result.notes[0]?.recordId).toBe('new');
+    expect(result.retrievalMode).toBe('lexical');
+    expect(result.candidates).toHaveLength(0);
+    expect(result.notes).toHaveLength(0);
     expect(result.totalCorpusCount).toBe(2);
   });
 
@@ -235,5 +242,19 @@ describe('retrieveNotesForInboxAsk', () => {
     expect(result.retrievalMode).toBe('hybrid');
     expect(result.candidates[0]?.recordId).toBe('match');
     expect(result.notes[0]?.recordId).toBe('match');
+  });
+});
+
+describe('canUseInboxAskQueryEmbedding', () => {
+  it('allows a single query word with at least four characters', () => {
+    expect(canUseInboxAskQueryEmbedding('budget')).toBe(true);
+  });
+
+  it('rejects a single short query word', () => {
+    expect(canUseInboxAskQueryEmbedding('ai')).toBe(false);
+  });
+
+  it('requires at least three trimmed characters', () => {
+    expect(canUseInboxAskQueryEmbedding('ab')).toBe(false);
   });
 });

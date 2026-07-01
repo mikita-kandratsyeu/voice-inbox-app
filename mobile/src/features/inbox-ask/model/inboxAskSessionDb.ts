@@ -31,14 +31,7 @@ function enqueueSaveInboxAskSession(sessionKey: string, run: () => Promise<void>
   });
 }
 
-export function buildInboxAskSessionKey(scope?: {
-  folderId?: string | null;
-  fromIso?: string;
-  toIso?: string;
-}): string {
-  if (!scope?.folderId && !scope?.fromIso && !scope?.toIso) return 'default';
-  return [scope.folderId ?? '', scope.fromIso ?? '', scope.toIso ?? ''].join('|');
-}
+export { buildInboxAskSessionKey } from '@/features/inbox-ask/lib/buildInboxAskSessionKey';
 
 export function inboxAskCorpusFingerprint(notes: CorpusNoteForPrompt[]): string {
   if (!notes.length) return '0';

@@ -53,8 +53,7 @@ export function smartTranscriptExcerpt(
 }
 
 function textMatchesQueryTerm(text: string, term: string): boolean {
-  const lower = text.toLowerCase();
-  return lower.includes(term) || (term.length >= 4 && lower.includes(term.slice(0, 4)));
+  return text.toLowerCase().includes(term);
 }
 
 function findQueryMatchIndex(text: string, queryTerms: string[]): number {
@@ -62,10 +61,6 @@ function findQueryMatchIndex(text: string, queryTerms: string[]): number {
   for (const term of queryTerms) {
     const direct = lower.indexOf(term);
     if (direct !== -1) return direct;
-    if (term.length >= 4) {
-      const prefixed = lower.indexOf(term.slice(0, 4));
-      if (prefixed !== -1) return prefixed;
-    }
   }
   return -1;
 }

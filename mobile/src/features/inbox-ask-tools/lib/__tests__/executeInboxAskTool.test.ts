@@ -9,6 +9,15 @@ jest.mock('@/entities/record/model/repository', () => ({
 }));
 
 jest.mock('@/features/inbox-ask-retrieval', () => ({
+  filterInboxAskCorpusRecords: (
+    records: Array<{ folderId?: string | null; status?: string }>,
+    scope?: { folderId?: string | null; includeArchived?: boolean },
+  ) =>
+    records.filter((record) => {
+      if (!scope?.includeArchived && record.status === 'archived') return false;
+      if (scope?.folderId && (record.folderId ?? null) !== scope.folderId) return false;
+      return true;
+    }),
   prepareInboxAskQueryEmbedding: jest.fn(async () => undefined),
   retrieveNotesForInboxAsk: jest.fn(() => ({
     notes: [],
@@ -54,6 +63,20 @@ function call(
   };
 }
 
+const folderRecord: VoiceRecord = {
+  ...baseRecord,
+  id: 'record-folder',
+  folderId: 'folder-a',
+};
+
+const outOfScopeRecord: VoiceRecord = {
+  ...baseRecord,
+  id: 'record-other',
+  folderId: 'folder-b',
+  title: 'Other folder note',
+  tasks: [{ id: 'task-3', text: 'Follow up with design team', isDone: false }],
+};
+
 describe('executeInboxAskTool', () => {
   it('returns bounded note details without audio paths or embeddings', async () => {
     const result = await executeInboxAskTool(call('get_note', { recordId: 'record-1' }), {
@@ -92,5 +115,33 @@ describe('executeInboxAskTool', () => {
         isDone: false,
       }),
     ]);
+  });
+
+  it('scopes get_note to the active corpus folder', async () => {
+    const inScope = await executeInboxAskTool(call('get_note', { recordId: 'record-folder' }), {
+      records: [folderRecord, outOfScopeRecord],
+      scope: { folderId: 'folder-a' },
+    });
+    const outOfScope = await executeInboxAskTool(call('get_note', { recordId: 'record-other' }), {
+      records: [folderRecord, outOfScopeRecord],
+      scope: { folderId: 'folder-a' },
+    });
+
+    if (inScope.result.toolName !== 'get_note' || outOfScope.result.toolName !== 'get_note') {
+      throw new Error('unexpected tool result');
+    }
+    expect(inScope.result.note?.title).toBe('Launch plan');
+    expect(outOfScope.result.note).toBeNull();
+  });
+
+  it('scopes list_tasks to the active corpus folder', async () => {
+    const result = await executeInboxAskTool(call('list_tasks', { filter: 'open' }), {
+      records: [folderRecord, outOfScopeRecord],
+      scope: { folderId: 'folder-a' },
+    });
+
+    if (result.result.toolName !== 'list_tasks') throw new Error('unexpected tool result');
+    expect(result.result.tasks).toEqual([expect.objectContaining({ recordId: 'record-folder' })]);
+    expect(result.result.tasks.some((task) => task.recordId === 'record-other')).toBe(false);
   });
 });

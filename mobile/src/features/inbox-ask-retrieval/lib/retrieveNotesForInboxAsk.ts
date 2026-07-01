@@ -73,7 +73,7 @@ type ScoredRecord = {
   score: number;
 };
 
-export type InboxAskRetrievalMode = 'hybrid' | 'lexical' | 'broad';
+export type InboxAskRetrievalMode = 'hybrid' | 'lexical';
 
 export type InboxAskRetrievalResult = {
   candidates: CorpusNoteCandidate[];
@@ -107,9 +107,7 @@ export function getInboxAskQueryWords(query: string): string[] {
 
 function matchesQueryWords(text: string, words: string[]): boolean {
   if (words.length === 0) return false;
-  return words.every(
-    (word) => text.includes(word) || (word.length >= 4 && text.includes(word.slice(0, 4))),
-  );
+  return words.every((word) => text.includes(word));
 }
 
 function getLexicalScore(
@@ -136,7 +134,6 @@ function getLexicalScore(
   const words = getInboxAskQueryWords(query);
   for (const word of words) {
     if (searchText.includes(word)) score += 2;
-    else if (word.length >= 4 && searchText.includes(word.slice(0, 4))) score += 1;
   }
   return score;
 }
@@ -205,12 +202,11 @@ function hasInboxAskPackableContent(record: VoiceRecord | RecordListItem): boole
   return false;
 }
 
-function rankBroadFallback(records: Array<VoiceRecord | RecordListItem>): ScoredRecord[] {
-  return [...records]
-    .filter(hasInboxAskPackableContent)
-    .sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf())
-    .slice(0, INBOX_ASK_RETRIEVAL_TOP_K)
-    .map((record) => ({ record, score: 0.01 }));
+export function countInboxAskSearchableRecords(
+  records: Array<VoiceRecord | RecordListItem>,
+  scope?: InboxAskRetrievalScope,
+): number {
+  return filterInboxAskCorpusRecords(records, scope).filter(hasInboxAskPackableContent).length;
 }
 
 function rankLexicalOnly(
@@ -282,10 +278,17 @@ function rankHybrid(
     .map(({ record, score }) => ({ record, score }));
 }
 
-export async function prepareInboxAskQueryEmbedding(question: string): Promise<number[] | null> {
+export function canUseInboxAskQueryEmbedding(question: string): boolean {
   const trimmed = question.trim();
   const words = getInboxAskQueryWords(trimmed);
-  if (!isEmbeddingAvailable() || trimmed.length < 3 || words.length < 2) {
+  if (trimmed.length < 3 || words.length === 0) return false;
+  if (words.length >= 2) return true;
+  return words[0]!.length >= 4;
+}
+
+export async function prepareInboxAskQueryEmbedding(question: string): Promise<number[] | null> {
+  const trimmed = question.trim();
+  if (!isEmbeddingAvailable() || !canUseInboxAskQueryEmbedding(trimmed)) {
     return null;
   }
 
@@ -328,14 +331,6 @@ export function retrieveNotesForInboxAsk(params: {
   } else {
     retrievalMode = 'lexical';
     ranked = rankLexicalOnly(corpus, query);
-  }
-
-  if (ranked.length === 0 && corpus.length > 0) {
-    const broadRanked = rankBroadFallback(corpus);
-    if (broadRanked.length > 0) {
-      retrievalMode = 'broad';
-      ranked = broadRanked;
-    }
   }
 
   const topCandidates = ranked

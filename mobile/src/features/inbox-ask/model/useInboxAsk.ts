@@ -15,7 +15,7 @@ import {
   trimInboxPriorTurns,
 } from '@/features/inbox-ask/lib/inboxAskHistory';
 import {
-  countInboxAskCorpusRecords,
+  countInboxAskSearchableRecords,
   type InboxAskRetrievalScope,
   prepareInboxAskQueryEmbedding,
   retrieveNotesForInboxAsk,
@@ -194,18 +194,31 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
   const promotedTurnPendingRevertRef = useRef(false);
 
   const resolveCorpusTotal = useCallback(
-    () => countInboxAskCorpusRecords(records, scope),
+    () => countInboxAskSearchableRecords(records, scope),
     [records, scope],
   );
+  const sessionKeyRef = useRef(sessionKey);
 
   useEffect(() => {
     const total = resolveCorpusTotal();
     setState((prev) => {
       if (prev.isLoading) return prev;
-      if (prev.question && prev.answer) return prev;
       return { ...prev, notesTotal: total };
     });
   }, [resolveCorpusTotal]);
+
+  useEffect(() => {
+    if (sessionKeyRef.current === sessionKey) return;
+    sessionKeyRef.current = sessionKey;
+    const total = resolveCorpusTotal();
+    setState((prev) => ({
+      ...prev,
+      notesTotal: total,
+      notesUsed: 0,
+      notesDropped: 0,
+      lastUsedNotes: [],
+    }));
+  }, [sessionKey, resolveCorpusTotal]);
 
   const persistSnapshot = useCallback(
     (next: InboxAskState, corpusFp?: string) => {
@@ -242,7 +255,7 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
           isLoading: false,
           phase: 'idle',
           notesUsed: restored.notesUsed ?? s.notesUsed,
-          notesTotal: restored.notesTotal ?? s.notesTotal,
+          notesTotal: resolveCorpusTotal(),
           notesDropped: restored.notesDropped ?? s.notesDropped,
           lastUsedNotes: restored.lastUsedNotes ?? s.lastUsedNotes,
           toolSteps: [],
@@ -250,7 +263,7 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
       }
       return s;
     });
-  }, [sessionKey]);
+  }, [sessionKey, resolveCorpusTotal]);
 
   useEffect(() => {
     const epochAtStart = loadEpochRef.current;
@@ -277,10 +290,10 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
           interpretations: restored.interpretations,
           suggestedFollowUps: restored.suggestedFollowUps,
           history: restored.history,
-          notesUsed: restored.notesUsed ?? 0,
-          notesTotal: restored.notesTotal ?? resolveCorpusTotal(),
-          notesDropped: restored.notesDropped ?? 0,
-          lastUsedNotes: restored.lastUsedNotes ?? [],
+          notesUsed: 0,
+          notesTotal: resolveCorpusTotal(),
+          notesDropped: 0,
+          lastUsedNotes: [],
           toolSteps: [],
           canAskWithoutNotes:
             !isPending &&
@@ -475,7 +488,7 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
           ...prev,
           phase: 'generating',
           notesUsed: retrieval.notes.length,
-          notesTotal: retrieval.totalCorpusCount,
+          notesTotal: resolveCorpusTotal(),
           notesDropped: retrieval.droppedCount,
           lastUsedNotes,
           toolSteps: [],
@@ -649,7 +662,7 @@ export function useInboxAsk(scope?: InboxAskRetrievalScope) {
         abortHandlesRef.current.delete(INBOX_ASK_GENERATION_KEY);
       }
     },
-    [persistSnapshot, scope, sessionKey],
+    [persistSnapshot, resolveCorpusTotal, scope, sessionKey],
   );
 
   useEffect(() => {

@@ -1,5 +1,7 @@
 export {
+  canUseInboxAskQueryEmbedding,
   countInboxAskCorpusRecords,
+  countInboxAskSearchableRecords,
   filterInboxAskCorpusRecords,
   INBOX_ASK_RETRIEVAL_TOP_K,
   type InboxAskRetrievalResult,
