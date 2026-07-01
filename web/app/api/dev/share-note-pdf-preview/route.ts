@@ -2,6 +2,7 @@ import { ApiErrorCode } from '@/lib/api-error-codes';
 import { apiError, HttpStatus } from '@/lib/api';
 import { isProductionLikeAppEnv } from '@/lib/app-env';
 import { renderShareNotePdf } from '@/lib/render-share-note-pdf';
+import { parseSharePdfFooterLocale } from '@/lib/share-note-pdf-footer';
 import {
   getShareNoteEmailPreviewMarkdown,
   getShareNoteEmailPreviewTitle,
@@ -32,10 +33,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const titleParam = req.nextUrl.searchParams.get('title')?.trim();
   const title = titleParam || getShareNoteEmailPreviewTitle(variant);
   const markdown = getShareNoteEmailPreviewMarkdown(variant);
+  const locale = parseSharePdfFooterLocale(req.nextUrl.searchParams.get('locale'));
 
   let pdf: Buffer;
   try {
-    pdf = await renderShareNotePdf(markdown, title);
+    pdf = await renderShareNotePdf(markdown, title, { generatedAt: new Date(), locale });
   } catch (e) {
     console.error('[dev/share-note-pdf-preview]', e);
     return apiError('Failed to render PDF preview', HttpStatus.SERVICE_UNAVAILABLE, {

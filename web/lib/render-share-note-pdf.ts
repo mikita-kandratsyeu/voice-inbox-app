@@ -1,10 +1,15 @@
 import { buildShareNotePdfHtmlDocument } from '@/lib/share-note-pdf-html';
+import type { ShareNotePdfDocumentOptions } from '@/lib/share-note-pdf-footer';
 
 /** A4 margin in inches (28 pt ≈ 0.389 in) — matches mobile `writeShareMarkdownPdf.ts`. */
 const PDF_MARGIN_IN = 28 / 72;
 
-export async function renderShareNotePdf(markdown: string, documentTitle: string): Promise<Buffer> {
-  const html = buildShareNotePdfHtmlDocument(markdown, documentTitle);
+export async function renderShareNotePdf(
+  markdown: string,
+  documentTitle: string,
+  options?: ShareNotePdfDocumentOptions,
+): Promise<Buffer> {
+  const html = buildShareNotePdfHtmlDocument(markdown, documentTitle, options);
   const puppeteer = await import('puppeteer');
   const browser = await puppeteer.default.launch({
     headless: true,

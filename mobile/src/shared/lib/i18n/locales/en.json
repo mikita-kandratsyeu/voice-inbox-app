@@ -1073,6 +1073,7 @@
     "translationLabel": "Translation",
     "batchIndexTitle": "Contents",
     "exportedFrom": "Created with Voice Inbox AI — where voice becomes smart notes.",
+    "pdfGeneratedAt": "Document generated · {{datetime}}",
     "noAudio": "No audio recording",
     "audioNotFound": "Audio file not found",
     "emailBatchNoteSubject_one": "Voice Inbox AI — {{count}} note (note brief)",

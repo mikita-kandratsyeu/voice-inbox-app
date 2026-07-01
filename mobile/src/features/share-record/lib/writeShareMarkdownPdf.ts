@@ -12,7 +12,9 @@ export async function writeShareMarkdownPdf(
   markdown: string,
   fileNameWithoutExtension: string,
 ): Promise<string> {
-  const html = shareMarkdownToHtmlDocument(markdown, fileNameWithoutExtension);
+  const html = shareMarkdownToHtmlDocument(markdown, fileNameWithoutExtension, {
+    generatedAt: new Date(),
+  });
   const cacheDir = getCachesDirectoryPath();
 
   const result = await generatePDF({

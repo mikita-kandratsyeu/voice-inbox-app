@@ -48,4 +48,15 @@ describe('buildShareNotePdfHtmlDocument', () => {
 
     expect(html).not.toContain('vi:section');
   });
+
+  it('includes a muted document generation timestamp footer', () => {
+    const html = buildShareNotePdfHtmlDocument(
+      getShareNoteEmailPreviewMarkdown('short-note'),
+      getShareNoteEmailPreviewTitle('short-note'),
+      { generatedAt: new Date('2026-06-12T14:30:00'), locale: 'ru' },
+    );
+
+    expect(html).toContain('share-pdf-generated-at');
+    expect(html).toContain('Документ сформирован');
+  });
 });

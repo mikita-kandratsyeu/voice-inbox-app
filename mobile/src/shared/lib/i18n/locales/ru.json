@@ -1089,6 +1089,7 @@
     "translationLabel": "Перевод",
     "batchIndexTitle": "Содержание",
     "exportedFrom": "Создано в Voice Inbox AI — где голос превращается в умные заметки.",
+    "pdfGeneratedAt": "Документ сформирован · {{datetime}}",
     "noAudio": "Нет аудиозаписи",
     "audioNotFound": "Аудиофайл не найден",
     "emailBatchNoteSubject_one": "Voice Inbox AI — {{count}} заметка (краткий вид)",

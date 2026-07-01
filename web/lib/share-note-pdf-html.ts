@@ -1,5 +1,9 @@
 import { createSharePdfMarkdownIt } from '@/lib/create-share-pdf-markdown-it';
 import { prepareShareNotePdfMarkdown } from '@/lib/prepareShareNotePdfMarkdown';
+import {
+  buildSharePdfGeneratedAtFooterHtml,
+  type ShareNotePdfDocumentOptions,
+} from '@/lib/share-note-pdf-footer';
 import { splitShareNoteEmailTableBlocks } from '@/lib/shareNoteEmailMarkdownTables';
 import { SHARE_PDF_WIKI_LINK_HREF } from '@/lib/stripWikiLinksForShareDelivery';
 
@@ -132,6 +136,18 @@ const SHARE_PDF_HTML_STYLES = `
     color: #6b7280;
     font-weight: 600;
   }
+  .share-pdf-generated-at {
+    margin-top: 20pt;
+    padding-top: 10pt;
+    border-top: 1px solid #e5e7eb;
+    color: #9ca3af;
+    font-size: 9pt;
+    line-height: 1.4;
+    text-align: center;
+  }
+  .share-pdf-generated-at p {
+    margin: 0;
+  }
 `;
 
 function renderShareNotePdfBodyHtml(markdown: string): string {
@@ -158,8 +174,13 @@ function renderShareNotePdfBodyHtml(markdown: string): string {
 }
 
 /** Renders export markdown into a full HTML document for PDF generation. */
-export function buildShareNotePdfHtmlDocument(markdown: string, documentTitle: string): string {
+export function buildShareNotePdfHtmlDocument(
+  markdown: string,
+  documentTitle: string,
+  options?: ShareNotePdfDocumentOptions,
+): string {
   const bodyHtml = renderShareNotePdfBodyHtml(markdown);
+  const footerHtml = buildSharePdfGeneratedAtFooterHtml(options);
   const safeTitle = documentTitle.replace(/[<>&]/g, '');
 
   return `<!DOCTYPE html>
@@ -172,6 +193,7 @@ export function buildShareNotePdfHtmlDocument(markdown: string, documentTitle: s
 </head>
 <body>
 ${bodyHtml}
+${footerHtml}
 </body>
 </html>`;
 }
