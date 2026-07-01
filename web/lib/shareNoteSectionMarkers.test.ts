@@ -36,6 +36,12 @@ ${SHARE_SPEAKER_TURNS_SECTION_MARKER}
     ).toBe('prefix  suffix');
   });
 
+  it('removes other vi:section markers', () => {
+    expect(stripShareNoteSectionMarkers('<!-- vi:section:transcript -->\n## Транскрипт')).toBe(
+      '## Транскрипт',
+    );
+  });
+
   it('is idempotent', () => {
     const once = stripShareNoteSectionMarkers(
       `before\n${SHARE_SPEAKER_TURNS_SECTION_MARKER}\nafter`,

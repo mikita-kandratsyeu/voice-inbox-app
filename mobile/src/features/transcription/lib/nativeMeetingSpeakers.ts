@@ -34,6 +34,13 @@ export function recordHasNativeSpeakerDiarization(
   return hasNativeSpeakerSegments(record.transcriptSegments);
 }
 
+/** AI pseudo-diarization disclaimer — not shown for on-device voice speaker splits. */
+export function shouldShowMeetingDialogueAiDisclaimer(
+  record: Pick<VoiceRecord, 'transcriptSegments'>,
+): boolean {
+  return !recordHasNativeSpeakerDiarization(record);
+}
+
 export function shouldUseNativeMeetingSpeakers(
   record: Pick<VoiceRecord, 'classification' | 'transcriptSegments' | 'meetingDialogue'>,
 ): boolean {

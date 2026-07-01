@@ -1,5 +1,7 @@
 import { createSharePdfMarkdownIt } from '@/lib/create-share-pdf-markdown-it';
-import { stripShareNoteSectionMarkers } from '@/lib/shareNoteSectionMarkers';
+import { prepareShareNotePdfMarkdown } from '@/lib/prepareShareNotePdfMarkdown';
+import { splitShareNoteEmailTableBlocks } from '@/lib/shareNoteEmailMarkdownTables';
+import { SHARE_PDF_WIKI_LINK_HREF } from '@/lib/stripWikiLinksForShareDelivery';
 
 const md = createSharePdfMarkdownIt();
 
@@ -48,13 +50,37 @@ const SHARE_PDF_HTML_STYLES = `
     word-break: break-word;
   }
   th { font-weight: 600; color: #111827; }
+  .share-note-pdf-table {
+    margin: 0 0 12pt;
+  }
+  .share-note-pdf-table table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    margin: 0;
+    font-size: 10.5pt;
+    line-height: 1.5;
+  }
+  .share-note-pdf-table td:first-child {
+    width: 88px;
+    white-space: nowrap;
+    font-weight: 600;
+    color: #111827;
+    font-variant-numeric: tabular-nums;
+  }
+  .share-note-pdf-table td:last-child {
+    color: #374151;
+  }
   ul.contains-task-list { list-style: none; padding-left: 0; }
   li.task-list-item {
     list-style: none;
+    display: block;
+    margin: 0 0 8pt;
+  }
+  li.task-list-item > label {
     display: flex;
     align-items: flex-start;
     gap: 8pt;
-    margin: 0 0 6pt;
   }
   input.task-list-item-checkbox {
     margin: 2pt 0 0;
@@ -84,11 +110,56 @@ const SHARE_PDF_HTML_STYLES = `
   }
   pre code { background: transparent; padding: 0; }
   a { color: #2563eb; text-decoration: none; }
+  a.share-pdf-wiki-link,
+  a[href="${SHARE_PDF_WIKI_LINK_HREF}"] {
+    color: #2563eb;
+    font-weight: 500;
+    text-decoration: none;
+  }
+  li.task-list-item > ul {
+    list-style: none;
+    margin: 4pt 0 0;
+    padding: 4pt 0 0 10pt;
+    border-left: 2pt solid #e5e7eb;
+  }
+  li.task-list-item > ul > li {
+    margin: 0 0 4pt;
+    color: #4b5563;
+    font-size: 10pt;
+    line-height: 1.45;
+  }
+  li.task-list-item > ul > li strong {
+    color: #6b7280;
+    font-weight: 600;
+  }
 `;
+
+function renderShareNotePdfBodyHtml(markdown: string): string {
+  const prepared = prepareShareNotePdfMarkdown(markdown);
+  const segments = splitShareNoteEmailTableBlocks(prepared);
+
+  return segments
+    .map((segment) => {
+      if (segment.type === 'table') {
+        return `<div class="share-note-pdf-table">${segment.html}</div>`;
+      }
+
+      const content = segment.content.trim();
+      if (!content) {
+        return '';
+      }
+
+      return md.render(content).replace(
+        new RegExp(`<a href="${SHARE_PDF_WIKI_LINK_HREF}">`, 'g'),
+        `<a class="share-pdf-wiki-link" href="${SHARE_PDF_WIKI_LINK_HREF}">`,
+      );
+    })
+    .join('\n');
+}
 
 /** Renders export markdown into a full HTML document for PDF generation. */
 export function buildShareNotePdfHtmlDocument(markdown: string, documentTitle: string): string {
-  const bodyHtml = md.render(stripShareNoteSectionMarkers(markdown));
+  const bodyHtml = renderShareNotePdfBodyHtml(markdown);
   const safeTitle = documentTitle.replace(/[<>&]/g, '');
 
   return `<!DOCTYPE html>

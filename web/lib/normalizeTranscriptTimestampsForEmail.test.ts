@@ -84,4 +84,21 @@ describe('normalizeTranscriptTimestampLinesForEmail', () => {
     const markdown = '## Summary\n\nNo timestamps here.';
     expect(normalizeTranscriptTimestampLinesForEmail(markdown)).toBe(markdown);
   });
+
+  it('does not include section markers in transcript table cells', () => {
+    const markdown = `## Транскрипт
+
+[00:00] Start
+[01:15] End
+
+<!-- vi:section:speaker-turns -->
+## По участникам`;
+
+    const result = normalizeTranscriptTimestampLinesForEmail(markdown);
+    const tableBlock = result.match(/§§SHARE_NOTE_TABLE§§([\s\S]*?)§§\/SHARE_NOTE_TABLE§§/)?.[1];
+
+    expect(tableBlock).toBeDefined();
+    expect(tableBlock).not.toContain('vi:section');
+    expect(tableBlock).toContain('End');
+  });
 });

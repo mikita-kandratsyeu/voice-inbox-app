@@ -3,8 +3,8 @@
  * `[MM:SS]` tokens on one line. CommonMark collapses that into one HTML paragraph.
  * For email HTML only: split entries and render as a GFM table (reliable in mail clients).
  */
-import { replaceMarkdownSection, twoColumnMarkdownTable } from '@/lib/shareNoteEmailMarkdownTables';
-import { stripInlineShareNoteSectionMarkers } from '@/lib/shareNoteSectionMarkers';
+import { replaceMarkdownSection, twoColumnMarkdownTable } from './sharePdfMarkdownTables';
+import { stripInlineShareSectionMarkers } from './shareSectionMarkers';
 
 const TIMESTAMP_TOKEN = /\[\d{1,2}:\d{2}(?::\d{2})?\]/;
 const TIMESTAMP_LINE = /^\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*(.*)$/;
@@ -99,14 +99,14 @@ export function splitTranscriptTimestampEntries(text: string): TranscriptTimesta
     if (match) {
       entries.push({
         time: match[1],
-        text: stripInlineShareNoteSectionMarkers(match[2] ?? ''),
+        text: stripInlineShareSectionMarkers(match[2] ?? ''),
       });
       continue;
     }
 
     if (entries.length > 0) {
       const last = entries[entries.length - 1];
-      const continuation = stripInlineShareNoteSectionMarkers(line);
+      const continuation = stripInlineShareSectionMarkers(line);
       if (!continuation) continue;
       last.text = last.text ? `${last.text} ${continuation}` : continuation;
     }
@@ -115,7 +115,7 @@ export function splitTranscriptTimestampEntries(text: string): TranscriptTimesta
   return entries
     .map((entry) => ({
       time: entry.time,
-      text: stripInlineShareNoteSectionMarkers(entry.text),
+      text: stripInlineShareSectionMarkers(entry.text),
     }))
     .filter((entry) => entry.text.length > 0 || entry.time.length > 0);
 }
@@ -138,7 +138,7 @@ function replaceTranscriptSection(body: string): string {
   );
 }
 
-export function normalizeTranscriptTimestampLinesForEmail(markdown: string): string {
+export function normalizeTranscriptTimestampLinesForPdf(markdown: string): string {
   if (!TIMESTAMP_TOKEN.test(markdown)) {
     return markdown;
   }

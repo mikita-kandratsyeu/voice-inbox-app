@@ -1,4 +1,5 @@
 import { getRecordingMarkKindUi, type VoiceRecord } from '@/entities/record';
+import { shouldShowMeetingDialogueAiDisclaimer } from '@/features/transcription/lib/nativeMeetingSpeakers';
 import {
   type MeetingRecapSection,
   parseMeetingRecapSummary,
@@ -318,14 +319,20 @@ const pushTranscript = (lines: string[], record: VoiceRecord, ctx: ShareExportCo
   }
 };
 
-const pushMeetingDialogueSectionHeader = (lines: string[], ctx: ShareExportContext): void => {
+const pushMeetingDialogueSectionHeader = (
+  lines: string[],
+  record: VoiceRecord,
+  ctx: ShareExportContext,
+): void => {
   lines.push('');
   if (ctx.forEmail) {
     lines.push(SHARE_SPEAKER_TURNS_SECTION_MARKER);
   }
   lines.push(`## ${i18n.t('recordingDetail.meetingDialogueTitle')}`);
-  lines.push('');
-  lines.push(`_${i18n.t('recordingDetail.meetingDialogueDisclaimer')}_`);
+  if (shouldShowMeetingDialogueAiDisclaimer(record)) {
+    lines.push('');
+    lines.push(`_${i18n.t('recordingDetail.meetingDialogueDisclaimer')}_`);
+  }
   lines.push('');
 };
 
@@ -338,7 +345,7 @@ const pushMeetingDialogue = (
   if (!body) return;
 
   pushDocumentSectionMarker(lines, 'meeting-dialogue', ctx);
-  pushMeetingDialogueSectionHeader(lines, ctx);
+  pushMeetingDialogueSectionHeader(lines, record, ctx);
   lines.push(
     formatMeetingDialogueForShareMarkdown(body, ctx.forEmail, record.meetingSpeakerLabels),
   );
@@ -397,7 +404,7 @@ function buildMeetingSpeakerTurnsOnly(record: VoiceRecord, ctx: ShareExportConte
   pushRecordHeader(lines, record, ctx);
   pushEmailMeta(lines, record, ctx);
   pushTags(lines, record, ctx);
-  pushMeetingDialogueSectionHeader(lines, ctx);
+  pushMeetingDialogueSectionHeader(lines, record, ctx);
   const body = record.meetingDialogue?.trim();
   if (body) {
     lines.push(
