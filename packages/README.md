@@ -1,11 +1,10 @@
 # Shared packages
 
-TypeScript packages shared across apps.
-
 | Package | Purpose |
 |---------|---------|
-| `@voice-inbox/ai-job-core` | AI worker duration limits, QStash publish plan, job envelope parsing |
+| `@voice-inbox/ai-job-core` | Duration limits, QStash publish plan, envelope parsing |
+| `@voice-inbox/ai-worker` | Full AI job execution stack (runners, `ai.service`, Redis, push) |
 
-Apps live at the repository root (`web/`, `mobile/`, `telegram-bot/`, `workers/ai/`). Depend via `"@voice-inbox/<name>": "workspace:*"`.
+`web/lib/*` worker modules are thin re-exports from `@voice-inbox/ai-worker` (see `packages/ai-worker/scripts/sync-from-web.mjs`).
 
-Do **not** share Prisma (web) and Drizzle (mobile) schemas — only portable business logic and types.
+Cloud Run runs `packages/ai-worker/dist/server.mjs` — no `web/lib` copy in the Docker image.

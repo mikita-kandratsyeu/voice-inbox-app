@@ -57,10 +57,6 @@ export function getOpenRouterGenerationRecoveryMaxWaitMs(env?: AiJobDurationEnv)
   return getAiJobMaxDurationSeconds(env) > VERCEL_WORKER_MAX_DURATION_SECONDS ? 420_000 : 180_000;
 }
 
-export function formatQStashTimeout(seconds: number): `${number}s` {
-  return `${seconds}s`;
-}
-
 export function getPrimaryQStashTimeoutSeconds(env?: AiJobDurationEnv): number {
   return getAiJobMaxDurationSeconds(env);
 }

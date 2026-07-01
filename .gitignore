@@ -17,3 +17,6 @@ node_modules/
 # APNs keys — never commit
 **/*.p8
 .vercel
+
+# AI worker bundle (built in CI / Docker)
+packages/ai-worker/dist/

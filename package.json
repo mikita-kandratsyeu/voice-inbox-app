@@ -7,8 +7,7 @@
     "web",
     "mobile",
     "telegram-bot",
-    "packages/*",
-    "workers/*"
+    "packages/*"
   ],
   "scripts": {
     "build": "turbo run build",

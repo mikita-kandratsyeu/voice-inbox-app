@@ -123,7 +123,7 @@ Mobile POST endpoints enqueue work in Redis (`msg:*`) and return immediately; th
 - Set **`NEXT_PUBLIC_BASE_URL`** to a public HTTPS origin (fallback worker URL and QStash callbacks).
 - Processing responses include **`pollDeadlineMs`** so mobile can poll up to 15 minutes (summary jobs: up to 30 minutes with async meeting dialogue).
 - On Vercel, if Deployment Protection blocks webhooks, allow QStash or exclude `/api/internal/ai/worker`.
-- **Cloud Run deploy (manual):** [workers/ai/README.md](../workers/ai/README.md) — GitHub Actions workflow *Deploy AI worker* (`workflow_dispatch` only).
+- **Cloud Run deploy (manual):** [packages/ai-worker/README.md](../packages/ai-worker/README.md) — GitHub Actions workflow *Deploy AI worker* (`workflow_dispatch` only).
 
 **OpenRouter recovery:** Streaming stores `X-Generation-Id` in Redis (`or-gen:{jobId}`). If the worker times out while OpenRouter still completes, QStash retries can resume via `GET /api/v1/generation/content` instead of duplicating the chat request.
 

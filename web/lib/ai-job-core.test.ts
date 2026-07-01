@@ -45,6 +45,22 @@ describe('@voice-inbox/ai-job-core publish plan', () => {
     expect(plan.primary?.timeoutSeconds).toBe(900);
     expect(plan.primary?.failureCallback).toBe('https://app.example.com/api/internal/ai/worker');
   });
+
+  it('reads Cloud Run URL from process.env', () => {
+    const original = process.env;
+    process.env = {
+      ...original,
+      AI_JOB_WORKER_URL: 'https://ai-worker.run.app/worker/',
+      NEXT_PUBLIC_BASE_URL: 'https://voice.example.com',
+    };
+    try {
+      const plan = resolveAiJobPublishPlan();
+      expect(plan.primary?.url).toBe('https://ai-worker.run.app/worker');
+      expect(plan.primary?.failureCallback).toContain('/api/internal/ai/worker');
+    } finally {
+      process.env = original;
+    }
+  });
 });
 
 describe('@voice-inbox/ai-job-core envelope', () => {

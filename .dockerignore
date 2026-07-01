@@ -1,0 +1,28 @@
+# Dependencies installed at repo root
+node_modules
+.yarn/cache
+
+# Apps not needed for the worker image
+mobile
+telegram-bot
+
+# Build outputs (rebuilt in Docker)
+web/.next
+packages/ai-worker/dist
+**/.turbo
+**/coverage
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+
+# Git / local env
+.git
+.env
+.env.*
+!.env.example
+
+# Docs and IDE
+.cursor
+.github
+*.md
+!packages/ai-worker/README.md
