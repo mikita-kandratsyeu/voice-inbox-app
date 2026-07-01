@@ -72,14 +72,20 @@ import {
   taskDeadlineValidationErrorKey,
   validateTaskDeadlineFields,
 } from '@/shared/lib/validateTaskDeadlineInput';
-import { BlockingProgressModal } from '@/shared/ui';
-import { AudioPlayer, type AudioPlayerRef, usePlaybackPosition } from '@/widgets/audio-player';
+import { BlockingProgressModal, estimateFloatingDetailDockBottomClearance } from '@/shared/ui';
+import {
+  type AudioPlaybackState,
+  AudioPlayer,
+  type AudioPlayerRef,
+  usePlaybackPosition,
+} from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
 import { renameSpeakerGroup } from '../lib/meetingSpeakerLabels';
 import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { MeetingDialogueTab } from './MeetingDialogueTab';
 import { RecordingDetailCard } from './RecordingDetailCard';
+import { RecordingDetailFloatingDock } from './RecordingDetailFloatingDock';
 import { RecordingDetailHeader } from './RecordingDetailHeader';
 import { RecordingDetailTabBar } from './RecordingDetailTabBar';
 import { RecordingMarksSection } from './RecordingMarksSection';
@@ -215,13 +221,27 @@ export const RecordingDetailScreen = () => {
   const [emailSending, setEmailSending] = useState(false);
   const [renameTarget, setRenameTarget] = useState<{ id: string; title: string } | null>(null);
   const { currentPositionMs, onPositionUpdate } = usePlaybackPosition();
+  const [playbackState, setPlaybackState] = useState<AudioPlaybackState>({
+    isPlaying: false,
+    elapsedSecs: 0,
+    totalSecs: 0,
+    playbackSpeed: 1,
+  });
+  const [floatingDockShowPlayer, setFloatingDockShowPlayer] = useState(false);
 
   const scrollRef = useRef<React.ElementRef<typeof KeyboardAwareScrollView>>(null);
   const audioPlayerRef = useRef<AudioPlayerRef>(null);
+  const audioPlayerAnchorRef = useRef<View>(null);
+  const floatingDockShowPlayerRef = useRef(false);
   const cardOffsetYRef = useRef(0);
   const titleInCardRef = useRef({ y: 0, height: 0 });
   const headerTitleOpacity = useSharedValue(0);
   const HEADER_TITLE_FADE_DISTANCE = 32;
+  const headerBottomInset = insets.top + 68;
+
+  const handlePlaybackStateChange = useCallback((state: AudioPlaybackState) => {
+    setPlaybackState(state);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -633,6 +653,25 @@ export const RecordingDetailScreen = () => {
   const showMeetingModeToggle = isProActive && hasTranscript;
   const showSharedAccessSection = Boolean(published);
 
+  const updateFloatingDockVisibility = useCallback(() => {
+    if (!hasAudio) {
+      if (floatingDockShowPlayerRef.current) {
+        floatingDockShowPlayerRef.current = false;
+        setFloatingDockShowPlayer(false);
+      }
+      return;
+    }
+
+    audioPlayerAnchorRef.current?.measureInWindow((_x, y, _width, height) => {
+      const inlinePlayerVisible = y + height > headerBottomInset + 8;
+      const shouldShowPlayer = !inlinePlayerVisible;
+      if (floatingDockShowPlayerRef.current !== shouldShowPlayer) {
+        floatingDockShowPlayerRef.current = shouldShowPlayer;
+        setFloatingDockShowPlayer(shouldShowPlayer);
+      }
+    });
+  }, [hasAudio, headerBottomInset]);
+
   const applyMeetingModeOff = useCallback(() => {
     void updateAiExtras(liveRecord.id, {
       classification: null,
@@ -923,8 +962,9 @@ export const RecordingDetailScreen = () => {
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       updateHeaderTitleOpacity(event.nativeEvent.contentOffset.y);
+      updateFloatingDockVisibility();
     },
-    [updateHeaderTitleOpacity],
+    [updateFloatingDockVisibility, updateHeaderTitleOpacity],
   );
 
   const handleCardLayout = useCallback((event: { nativeEvent: { layout: { y: number } } }) => {
@@ -937,6 +977,8 @@ export const RecordingDetailScreen = () => {
 
   useEffect(() => {
     headerTitleOpacity.value = 0;
+    floatingDockShowPlayerRef.current = false;
+    setFloatingDockShowPlayer(false);
   }, [headerTitleOpacity, liveRecord.id]);
 
   const shellBackgroundColor = isPrivateMode
@@ -948,8 +990,10 @@ export const RecordingDetailScreen = () => {
   const stickyTabIndex =
     1 +
     (hasAudio && hasRecordingMarks ? 1 : 0) +
-    (showMeetingModeToggle ? 1 : 0) +
-    (showSharedAccessSection ? 1 : 0);
+    (showSharedAccessSection ? 1 : 0) +
+    (showMeetingModeToggle ? 1 : 0);
+  const scrollBottomPadding =
+    insets.bottom + 40 + (hasAudio ? estimateFloatingDetailDockBottomClearance(0, true) : 0);
 
   return (
     <View
@@ -1034,7 +1078,7 @@ export const RecordingDetailScreen = () => {
         contentContainerStyle={{
           padding: scrollPadding,
           gap: 12,
-          paddingBottom: insets.bottom + 40,
+          paddingBottom: scrollBottomPadding,
           alignItems: 'center',
         }}
         keyboardShouldPersistTaps="handled"
@@ -1055,15 +1099,22 @@ export const RecordingDetailScreen = () => {
           >
             <View className={hasAudio ? 'gap-4' : undefined}>
               {hasAudio ? (
-                <AudioPlayer
-                  ref={audioPlayerRef}
-                  duration={liveRecord.duration}
-                  color={color}
-                  audioPath={liveRecord.audioPath}
-                  playbackMarkOffsetsMs={playbackMarkOffsetsMs}
-                  onPositionChange={onPositionUpdate}
-                  embedded
-                />
+                <View
+                  ref={audioPlayerAnchorRef}
+                  collapsable={false}
+                  onLayout={updateFloatingDockVisibility}
+                >
+                  <AudioPlayer
+                    ref={audioPlayerRef}
+                    duration={liveRecord.duration}
+                    color={color}
+                    audioPath={liveRecord.audioPath}
+                    playbackMarkOffsetsMs={playbackMarkOffsetsMs}
+                    onPositionChange={onPositionUpdate}
+                    onPlaybackStateChange={handlePlaybackStateChange}
+                    embedded
+                  />
+                </View>
               ) : null}
               <View className="flex-row flex-wrap gap-2">
                 {hasAudio ? (
@@ -1129,19 +1180,25 @@ export const RecordingDetailScreen = () => {
           style={{
             width: '100%',
             maxWidth: contentMaxWidth,
-            overflow: 'hidden',
-            borderTopLeftRadius: 16,
-            borderTopRightRadius: 16,
-            backgroundColor: tabPanelBackgroundColor,
+            backgroundColor: shellBackgroundColor,
           }}
         >
-          <RecordingDetailTabBar
-            active={activeTab}
-            onSelect={onSelectTab}
-            color={color}
-            hasAudio={hasAudio}
-            tabs={detailTabs}
-          />
+          <View
+            style={{
+              overflow: 'hidden',
+              borderTopLeftRadius: 16,
+              borderTopRightRadius: 16,
+              backgroundColor: tabPanelBackgroundColor,
+            }}
+          >
+            <RecordingDetailTabBar
+              active={activeTab}
+              onSelect={onSelectTab}
+              color={color}
+              hasAudio={hasAudio}
+              tabs={detailTabs}
+            />
+          </View>
         </View>
 
         <View
@@ -1295,6 +1352,18 @@ export const RecordingDetailScreen = () => {
 
         <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
       </KeyboardAwareScrollView>
+      <RecordingDetailFloatingDock
+        visible={floatingDockShowPlayer}
+        color={color}
+        safeAreaBottom={insets.bottom}
+        contentMaxWidth={contentMaxWidth}
+        duration={liveRecord.duration}
+        playbackState={playbackState}
+        audioPlayerRef={audioPlayerRef}
+        progressValue={audioPlayerRef.current?.progressValue}
+        trackWidthValue={audioPlayerRef.current?.trackWidthValue}
+        elapsedMsValue={audioPlayerRef.current?.elapsedMsValue}
+      />
       <LinkNotePickerSheet
         visible={linkNotePickerVisible}
         records={records}

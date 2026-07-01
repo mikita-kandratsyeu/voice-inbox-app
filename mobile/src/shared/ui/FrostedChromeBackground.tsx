@@ -120,12 +120,26 @@ export function FrostedChromeBackground({
 
   if (isLiquidGlassSupported) {
     return (
-      <LiquidGlassView
-        pointerEvents="none"
-        style={shell}
-        effect="regular"
-        colorScheme={isDark ? 'dark' : 'light'}
-      />
+      <ChromeShell shell={shell}>
+        <LiquidGlassView
+          pointerEvents="none"
+          style={ABSOLUTE_FILL}
+          effect="regular"
+          colorScheme={isDark ? 'dark' : 'light'}
+        />
+        <View
+          pointerEvents="none"
+          style={[
+            ABSOLUTE_FILL,
+            {
+              backgroundColor: withAlphaHex(
+                color.background.primary,
+                isDark ? IOS_EXTRA_TINT_DARK : IOS_EXTRA_TINT_LIGHT,
+              ),
+            },
+          ]}
+        />
+      </ChromeShell>
     );
   }
 

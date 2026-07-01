@@ -1,13 +1,13 @@
 import type { ReactNode } from 'react';
-import { type StyleProp, View, type ViewStyle } from 'react-native';
+import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import {
   FLOAT_TAB_IOS_SHADOW_OFFSET_Y,
   FLOAT_TAB_IOS_SHADOW_RADIUS,
   floatingTabBarShadowOpacity,
 } from '@/app/navigation/config';
-import type { Colors } from '@/shared/config';
-import { selectPlatform } from '@/shared/lib';
+import { type Colors, useAppTheme } from '@/shared/config';
+import { selectPlatform, withAlphaHex } from '@/shared/lib';
 
 import { FrostedChromeBackground } from './FrostedChromeBackground';
 
@@ -40,6 +40,9 @@ export function FloatingFrostedChrome({
   contentStyle,
   children,
 }: FloatingFrostedChromeProps) {
+  const theme = useAppTheme();
+  const isDark = theme === 'dark';
+
   return (
     <View
       style={{
@@ -70,6 +73,8 @@ export function FloatingFrostedChrome({
           style={{
             borderRadius,
             overflow: 'hidden',
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: withAlphaHex('#ffffff', isDark ? 0.12 : 0.32),
           }}
         >
           <FrostedChromeBackground borderRadius={borderRadius} />
