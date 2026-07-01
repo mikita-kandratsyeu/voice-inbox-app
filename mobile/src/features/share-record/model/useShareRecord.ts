@@ -93,6 +93,7 @@ export const useShareRecord = () => {
           markdown: text,
           fileNameWithoutExtension: baseName,
           shareTitle: pdfFileName,
+          recordId: record.id,
         });
       } catch (err) {
         if (isUserCancelledShare(err)) {
@@ -183,7 +184,9 @@ export const useShareRecord = () => {
       try {
         const baseName = `${sanitizeTitleForFileName(record.title)}${shareTemplateFileSuffix(template)}`;
         const timestamp = Date.now();
-        pdfPath = await writeShareMarkdownPdf(markdown, `${baseName}-${timestamp}`);
+        pdfPath = await writeShareMarkdownPdf(markdown, `${baseName}-${timestamp}`, {
+          recordId: record.id,
+        });
 
         const stat = await NitroFS.stat(pdfPath);
         if (stat.size > SHARE_EMAIL_ZIP_MAX_BYTES) {

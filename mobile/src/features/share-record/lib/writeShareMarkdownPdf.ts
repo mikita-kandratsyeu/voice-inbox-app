@@ -3,6 +3,7 @@ import { generatePDF } from 'react-native-html-to-pdf';
 import { getCachesDirectoryPath } from '@/shared/lib/fs';
 
 import { shareMarkdownToHtmlDocument } from './shareMarkdownToHtml';
+import type { ShareNotePdfDocumentOptions } from './sharePdfFooter';
 
 /** A4 width/height in PDF points (72 pt per inch). */
 const PDF_A4_WIDTH_PT = 595;
@@ -11,9 +12,11 @@ const PDF_A4_HEIGHT_PT = 842;
 export async function writeShareMarkdownPdf(
   markdown: string,
   fileNameWithoutExtension: string,
+  options?: ShareNotePdfDocumentOptions,
 ): Promise<string> {
   const html = shareMarkdownToHtmlDocument(markdown, fileNameWithoutExtension, {
     generatedAt: new Date(),
+    ...options,
   });
   const cacheDir = getCachesDirectoryPath();
 

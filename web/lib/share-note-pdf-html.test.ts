@@ -53,12 +53,19 @@ describe('buildShareNotePdfHtmlDocument', () => {
     const html = buildShareNotePdfHtmlDocument(
       getShareNoteEmailPreviewMarkdown('short-note'),
       getShareNoteEmailPreviewTitle('short-note'),
-      { generatedAt: new Date('2026-06-12T14:30:00'), locale: 'ru', appVersion: '2.0.0' },
+      {
+        generatedAt: new Date('2026-06-12T14:30:00'),
+        locale: 'ru',
+        appVersion: '2.0.0',
+        recordId: 'rec_demo',
+        siteUrl: 'https://voiceinbox.ai',
+      },
     );
 
     expect(html).toContain('share-pdf-generated-at');
     expect(html).toContain('Документ сформирован');
-    expect(html).toContain('Voice Inbox AI (2.0.0)');
+    expect(html).toContain('Voice Inbox AI (2.0.0) · voiceinbox.ai');
+    expect(html).toContain('ID: rec_demo · Аудио не включено');
     expect(html).not.toContain('share-pdf-brand-badge');
   });
 });

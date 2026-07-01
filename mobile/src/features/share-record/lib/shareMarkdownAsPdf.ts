@@ -10,6 +10,7 @@ export type ShareMarkdownAsPdfInput = {
   fileNameWithoutExtension: string;
   /** Passed to `Share.share` as `title` (same as batch export file name). */
   shareTitle: string;
+  recordId?: string;
 };
 
 async function unlinkIfExists(path: string): Promise<void> {
@@ -27,7 +28,9 @@ export async function shareMarkdownAsPdf(input: ShareMarkdownAsPdfInput): Promis
   let pdfPath: string | undefined;
 
   try {
-    pdfPath = await writeShareMarkdownPdf(input.markdown, input.fileNameWithoutExtension);
+    pdfPath = await writeShareMarkdownPdf(input.markdown, input.fileNameWithoutExtension, {
+      recordId: input.recordId,
+    });
     await Share.share({
       url: pdfPath.startsWith('file://') ? pdfPath : `file://${pdfPath}`,
       title: input.shareTitle,

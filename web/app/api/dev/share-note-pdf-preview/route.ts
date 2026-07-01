@@ -37,7 +37,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   let pdf: Buffer;
   try {
-    pdf = await renderShareNotePdf(markdown, title, { generatedAt: new Date(), locale });
+    pdf = await renderShareNotePdf(markdown, title, {
+      generatedAt: new Date(),
+      locale,
+      recordId: 'rec_1782893908733_demo',
+    });
   } catch (e) {
     console.error('[dev/share-note-pdf-preview]', e);
     return apiError('Failed to render PDF preview', HttpStatus.SERVICE_UNAVAILABLE, {
