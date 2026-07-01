@@ -59,4 +59,15 @@ describe('buildShareNotePdfHtmlDocument', () => {
     expect(html).toContain('share-pdf-generated-at');
     expect(html).toContain('Документ сформирован');
   });
+
+  it('includes app icon mark in the top-right corner', () => {
+    const html = buildShareNotePdfHtmlDocument(
+      getShareNoteEmailPreviewMarkdown('short-note'),
+      getShareNoteEmailPreviewTitle('short-note'),
+    );
+
+    expect(html).toContain('share-pdf-brand-badge');
+    expect(html).toContain('share-pdf-brand-mark');
+    expect(html).not.toContain('share-pdf-brand-text');
+  });
 });

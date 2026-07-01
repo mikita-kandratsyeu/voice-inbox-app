@@ -1,7 +1,9 @@
 import { createSharePdfMarkdownIt } from '@/lib/create-share-pdf-markdown-it';
 import { prepareShareNotePdfMarkdown } from '@/lib/prepareShareNotePdfMarkdown';
 import {
+  buildSharePdfBrandBadgeHtml,
   buildSharePdfGeneratedAtFooterHtml,
+  SHARE_PDF_BRAND_BADGE_STYLES,
   type ShareNotePdfDocumentOptions,
 } from '@/lib/share-note-pdf-footer';
 import { splitShareNoteEmailTableBlocks } from '@/lib/shareNoteEmailMarkdownTables';
@@ -21,6 +23,7 @@ const SHARE_PDF_HTML_STYLES = `
     font-size: 11pt;
     line-height: 1.5;
   }
+  ${SHARE_PDF_BRAND_BADGE_STYLES}
   h1 { font-size: 20pt; margin: 0 0 12pt; line-height: 1.25; }
   h2 { font-size: 15pt; margin: 18pt 0 8pt; line-height: 1.3; }
   h3 { font-size: 12pt; margin: 14pt 0 6pt; }
@@ -165,10 +168,12 @@ function renderShareNotePdfBodyHtml(markdown: string): string {
         return '';
       }
 
-      return md.render(content).replace(
-        new RegExp(`<a href="${SHARE_PDF_WIKI_LINK_HREF}">`, 'g'),
-        `<a class="share-pdf-wiki-link" href="${SHARE_PDF_WIKI_LINK_HREF}">`,
-      );
+      return md
+        .render(content)
+        .replace(
+          new RegExp(`<a href="${SHARE_PDF_WIKI_LINK_HREF}">`, 'g'),
+          `<a class="share-pdf-wiki-link" href="${SHARE_PDF_WIKI_LINK_HREF}">`,
+        );
     })
     .join('\n');
 }
@@ -180,6 +185,7 @@ export function buildShareNotePdfHtmlDocument(
   options?: ShareNotePdfDocumentOptions,
 ): string {
   const bodyHtml = renderShareNotePdfBodyHtml(markdown);
+  const brandBadgeHtml = buildSharePdfBrandBadgeHtml(options);
   const footerHtml = buildSharePdfGeneratedAtFooterHtml(options);
   const safeTitle = documentTitle.replace(/[<>&]/g, '');
 
@@ -192,6 +198,7 @@ export function buildShareNotePdfHtmlDocument(
   <style>${SHARE_PDF_HTML_STYLES}</style>
 </head>
 <body>
+${brandBadgeHtml}
 ${bodyHtml}
 ${footerHtml}
 </body>

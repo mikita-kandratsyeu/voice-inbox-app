@@ -1,4 +1,8 @@
-import { buildSharePdfGeneratedAtFooterHtml, formatSharePdfGeneratedAtText } from './share-note-pdf-footer';
+import {
+  buildSharePdfBrandBadgeHtml,
+  buildSharePdfGeneratedAtFooterHtml,
+  formatSharePdfGeneratedAtText,
+} from './share-note-pdf-footer';
 
 describe('share-note-pdf-footer', () => {
   it('formats generation timestamp for RU locale', () => {
@@ -15,5 +19,13 @@ describe('share-note-pdf-footer', () => {
 
     expect(html).toContain('share-pdf-generated-at');
     expect(html).toContain('Document generated');
+  });
+
+  it('renders app icon mark in the top-right corner', () => {
+    const html = buildSharePdfBrandBadgeHtml();
+
+    expect(html).toContain('share-pdf-brand-badge');
+    expect(html).toContain('share-pdf-brand-mark');
+    expect(html).not.toContain('Voice Inbox');
   });
 });
