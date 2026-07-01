@@ -53,6 +53,10 @@ Then configure GitHub Actions secrets and **deploy manually** (Actions → *Depl
 - `GCP_REGION` (same as Upstash Redis region)
 - `GCP_WORKLOAD_IDENTITY_PROVIDER` + `GCP_SERVICE_ACCOUNT` (WIF), or `GCP_SA_KEY`
 
+Images are pushed to Artifact Registry repo **`voice-inbox-ai`**:
+
+`{REGION}-docker.pkg.dev/{PROJECT_ID}/voice-inbox-ai/ai-worker:{git-sha}`
+
 Choose `staging` or `prod` when running the workflow. There is no deploy on push to `main`.
 
 Set on Vercel (per environment):

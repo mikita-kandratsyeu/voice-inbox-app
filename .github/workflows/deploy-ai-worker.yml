@@ -52,7 +52,7 @@ jobs:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           GCP_REGION: ${{ secrets.GCP_REGION }}
         run: |
-          IMAGE="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/voice-inbox/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/voice-inbox-ai/${IMAGE_NAME}:${GITHUB_SHA}"
           docker build -f packages/ai-worker/Dockerfile -t "$IMAGE" -t "${IMAGE%:*}:latest" .
           docker push "$IMAGE"
           docker push "${IMAGE%:*}:latest"
