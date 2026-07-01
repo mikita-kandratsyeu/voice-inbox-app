@@ -1,9 +1,7 @@
 import { createSharePdfMarkdownIt } from './createSharePdfMarkdownIt';
 import { prepareShareMarkdownForPdf } from './prepareShareMarkdownForPdf';
 import {
-  buildSharePdfBrandBadgeHtml,
   buildSharePdfGeneratedAtFooterHtml,
-  SHARE_PDF_BRAND_BADGE_STYLES,
   type ShareNotePdfDocumentOptions,
 } from './sharePdfFooter';
 import { splitShareNoteEmailTableBlocks } from './sharePdfMarkdownTables';
@@ -22,7 +20,6 @@ const SHARE_PDF_HTML_STYLES = `
     font-size: 11pt;
     line-height: 1.5;
   }
-  ${SHARE_PDF_BRAND_BADGE_STYLES}
   h1 { font-size: 20pt; margin: 0 0 12pt; line-height: 1.25; }
   h2 { font-size: 15pt; margin: 18pt 0 8pt; line-height: 1.3; }
   h3 { font-size: 12pt; margin: 14pt 0 6pt; }
@@ -150,6 +147,9 @@ const SHARE_PDF_HTML_STYLES = `
   .share-pdf-generated-at p {
     margin: 0;
   }
+  .share-pdf-generated-at p + p {
+    margin-top: 4pt;
+  }
 `;
 
 function renderShareNotePdfBodyHtml(markdown: string): string {
@@ -184,7 +184,6 @@ export function shareMarkdownToHtmlDocument(
   options?: ShareNotePdfDocumentOptions,
 ): string {
   const bodyHtml = renderShareNotePdfBodyHtml(markdown);
-  const brandBadgeHtml = buildSharePdfBrandBadgeHtml(options);
   const footerHtml = buildSharePdfGeneratedAtFooterHtml(options);
   const safeTitle = documentTitle.replace(/[<>&]/g, '');
 
@@ -197,7 +196,6 @@ export function shareMarkdownToHtmlDocument(
   <style>${SHARE_PDF_HTML_STYLES}</style>
 </head>
 <body>
-${brandBadgeHtml}
 ${bodyHtml}
 ${footerHtml}
 </body>

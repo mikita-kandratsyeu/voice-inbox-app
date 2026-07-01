@@ -1,10 +1,13 @@
+import packageJson from '../package.json';
+
 export type SharePdfFooterLocale = 'en' | 'ru';
+
+export const SHARE_PDF_APP_DISPLAY_NAME = 'Voice Inbox AI';
 
 export type ShareNotePdfDocumentOptions = {
   generatedAt?: Date;
   locale?: SharePdfFooterLocale;
-  /** Optional raster app icon (`data:image/png;base64,...`) for the brand badge. */
-  brandIconDataUri?: string;
+  appVersion?: string;
 };
 
 function escapeHtml(value: string): string {
@@ -15,40 +18,18 @@ function escapeHtml(value: string): string {
     .replace(/"/g, '&quot;');
 }
 
-export function buildSharePdfBrandBadgeHtml(options?: ShareNotePdfDocumentOptions): string {
-  const iconInner = options?.brandIconDataUri
-    ? `<img class="share-pdf-brand-icon" src="${options.brandIconDataUri}" alt="" width="24" height="24" />`
-    : '<span class="share-pdf-brand-mark" aria-hidden="true"></span>';
+function resolveSharePdfAppVersion(override?: string): string | undefined {
+  const fromOptions = override?.trim();
+  if (fromOptions) return fromOptions;
 
-  return `<div class="share-pdf-brand-badge" aria-hidden="true">${iconInner}</div>`;
+  const fromPackage = packageJson.version?.trim();
+  return fromPackage || undefined;
 }
 
-/** App icon mark — keep in sync with mobile `sharePdfFooter.ts`. */
-export const SHARE_PDF_BRAND_BADGE_STYLES = `
-  .share-pdf-brand-badge {
-    position: fixed;
-    top: 0;
-    right: 0;
-    z-index: 2;
-    line-height: 0;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .share-pdf-brand-mark {
-    display: block;
-    width: 24pt;
-    height: 24pt;
-    border-radius: 6pt;
-    background: linear-gradient(180deg, #3b82f6 0%, #06b6d4 100%);
-    box-shadow: 0 1pt 4pt rgba(37, 99, 235, 0.18);
-  }
-  .share-pdf-brand-icon {
-    width: 24pt;
-    height: 24pt;
-    display: block;
-    border-radius: 6pt;
-  }
-`;
+export function formatSharePdfAppVersionLine(appVersion?: string): string {
+  const version = resolveSharePdfAppVersion(appVersion);
+  return version ? `${SHARE_PDF_APP_DISPLAY_NAME} (${version})` : SHARE_PDF_APP_DISPLAY_NAME;
+}
 
 export function formatSharePdfGeneratedAtText(
   generatedAt: Date,
@@ -66,8 +47,9 @@ export function formatSharePdfGeneratedAtText(
 export function buildSharePdfGeneratedAtFooterHtml(options?: ShareNotePdfDocumentOptions): string {
   const generatedAt = options?.generatedAt ?? new Date();
   const locale = options?.locale ?? 'en';
-  const label = escapeHtml(formatSharePdfGeneratedAtText(generatedAt, locale));
-  return `<footer class="share-pdf-generated-at" aria-hidden="true"><p>${label}</p></footer>`;
+  const generatedLine = escapeHtml(formatSharePdfGeneratedAtText(generatedAt, locale));
+  const appLine = escapeHtml(formatSharePdfAppVersionLine(options?.appVersion));
+  return `<footer class="share-pdf-generated-at" aria-hidden="true"><p>${generatedLine}</p><p>${appLine}</p></footer>`;
 }
 
 export function parseSharePdfFooterLocale(raw: string | null): SharePdfFooterLocale {

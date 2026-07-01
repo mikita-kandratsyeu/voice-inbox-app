@@ -1,6 +1,5 @@
 import type { ShareNotePdfDocumentOptions } from '@/lib/share-note-pdf-footer';
 import { buildShareNotePdfHtmlDocument } from '@/lib/share-note-pdf-html';
-import { loadVoucherAppIconPng } from '@/lib/voucher-app-icon-png';
 
 /** A4 margin in inches (28 pt ≈ 0.389 in) — matches mobile `writeShareMarkdownPdf.ts`. */
 const PDF_MARGIN_IN = 28 / 72;
@@ -10,18 +9,7 @@ export async function renderShareNotePdf(
   documentTitle: string,
   options?: ShareNotePdfDocumentOptions,
 ): Promise<Buffer> {
-  let brandIconDataUri: string | undefined;
-  try {
-    const png = await loadVoucherAppIconPng(64);
-    brandIconDataUri = `data:image/png;base64,${png.toString('base64')}`;
-  } catch {
-    brandIconDataUri = undefined;
-  }
-
-  const html = buildShareNotePdfHtmlDocument(markdown, documentTitle, {
-    ...options,
-    brandIconDataUri,
-  });
+  const html = buildShareNotePdfHtmlDocument(markdown, documentTitle, options);
   const puppeteer = await import('puppeteer');
   const browser = await puppeteer.default.launch({
     headless: true,

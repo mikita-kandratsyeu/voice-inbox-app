@@ -1,6 +1,6 @@
 import {
-  buildSharePdfBrandBadgeHtml,
   buildSharePdfGeneratedAtFooterHtml,
+  formatSharePdfAppVersionLine,
   formatSharePdfGeneratedAtText,
 } from './share-note-pdf-footer';
 
@@ -11,21 +11,20 @@ describe('share-note-pdf-footer', () => {
     expect(text).toContain('·');
   });
 
-  it('renders muted footer html', () => {
+  it('formats app name with version', () => {
+    expect(formatSharePdfAppVersionLine('2.0.0')).toBe('Voice Inbox AI (2.0.0)');
+    expect(formatSharePdfAppVersionLine()).toBe('Voice Inbox AI (2.0.0)');
+  });
+
+  it('renders muted footer html with generation time and app version', () => {
     const html = buildSharePdfGeneratedAtFooterHtml({
       generatedAt: new Date('2026-06-12T14:30:00'),
       locale: 'en',
+      appVersion: '2.0.0',
     });
 
     expect(html).toContain('share-pdf-generated-at');
     expect(html).toContain('Document generated');
-  });
-
-  it('renders app icon mark in the top-right corner', () => {
-    const html = buildSharePdfBrandBadgeHtml();
-
-    expect(html).toContain('share-pdf-brand-badge');
-    expect(html).toContain('share-pdf-brand-mark');
-    expect(html).not.toContain('Voice Inbox');
+    expect(html).toContain('Voice Inbox AI (2.0.0)');
   });
 });

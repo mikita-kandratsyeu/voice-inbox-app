@@ -53,21 +53,12 @@ describe('buildShareNotePdfHtmlDocument', () => {
     const html = buildShareNotePdfHtmlDocument(
       getShareNoteEmailPreviewMarkdown('short-note'),
       getShareNoteEmailPreviewTitle('short-note'),
-      { generatedAt: new Date('2026-06-12T14:30:00'), locale: 'ru' },
+      { generatedAt: new Date('2026-06-12T14:30:00'), locale: 'ru', appVersion: '2.0.0' },
     );
 
     expect(html).toContain('share-pdf-generated-at');
     expect(html).toContain('Документ сформирован');
-  });
-
-  it('includes app icon mark in the top-right corner', () => {
-    const html = buildShareNotePdfHtmlDocument(
-      getShareNoteEmailPreviewMarkdown('short-note'),
-      getShareNoteEmailPreviewTitle('short-note'),
-    );
-
-    expect(html).toContain('share-pdf-brand-badge');
-    expect(html).toContain('share-pdf-brand-mark');
-    expect(html).not.toContain('share-pdf-brand-text');
+    expect(html).toContain('Voice Inbox AI (2.0.0)');
+    expect(html).not.toContain('share-pdf-brand-badge');
   });
 });
