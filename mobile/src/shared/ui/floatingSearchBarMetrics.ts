@@ -116,6 +116,9 @@ export const FLOATING_DETAIL_TAB_BAR_HEIGHT = 32;
 /** Outer horizontal inset — wider margins make the dock pill narrower. */
 export const FLOATING_DETAIL_DOCK_HORIZONTAL_INSET = 20;
 
+/** Lift above the screen bottom edge for the floating recording detail player dock. */
+export const FLOATING_DETAIL_DOCK_BOTTOM_GAP = 12;
+
 /** Gap between the player block and the tab divider. */
 export const FLOATING_DETAIL_DOCK_PLAYER_BOTTOM_PAD = 10;
 
@@ -161,7 +164,7 @@ export function estimateFloatingDetailDockBottomClearance(
   hasAudio: boolean,
 ): number {
   return (
-    safeAreaBottom + FLOATING_SEARCH_BAR_BOTTOM_GAP + estimateFloatingDetailDockHeight(hasAudio)
+    safeAreaBottom + FLOATING_DETAIL_DOCK_BOTTOM_GAP + estimateFloatingDetailDockHeight(hasAudio)
   );
 }
 

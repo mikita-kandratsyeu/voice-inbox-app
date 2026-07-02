@@ -4,6 +4,7 @@ import type { SharedValue } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
 import {
+  FLOATING_DETAIL_DOCK_BOTTOM_GAP,
   FLOATING_DETAIL_DOCK_HORIZONTAL_INSET,
   FLOATING_DETAIL_DOCK_INNER_BOTTOM_PAD,
   FLOATING_DETAIL_DOCK_INNER_TOP_PAD,
@@ -52,7 +53,7 @@ const RecordingDetailFloatingDockInner = ({
         position: 'absolute',
         left: 0,
         right: 0,
-        bottom: 0,
+        bottom: FLOATING_DETAIL_DOCK_BOTTOM_GAP,
         zIndex: 10,
       }}
     >

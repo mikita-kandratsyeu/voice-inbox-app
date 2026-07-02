@@ -65,6 +65,7 @@ import {
   useIsTablet,
   useNetworkStatus,
   useTabletContentMaxWidth,
+  useTabletFloatingDockMaxWidth,
 } from '@/shared/lib';
 import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
 import { NitroFS } from '@/shared/lib/fs';
@@ -631,6 +632,7 @@ export const RecordingDetailScreen = () => {
 
   const scrollPadding = isTablet ? 24 : 16;
   const contentMaxWidth = useTabletContentMaxWidth('wide');
+  const floatingDockMaxWidth = useTabletFloatingDockMaxWidth();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const isPrivateCustomServer = isPrivateCustomServerMode(aiExecutionMode, privateAiProvider);
@@ -1356,7 +1358,7 @@ export const RecordingDetailScreen = () => {
         visible={floatingDockShowPlayer}
         color={color}
         safeAreaBottom={insets.bottom}
-        contentMaxWidth={contentMaxWidth}
+        contentMaxWidth={floatingDockMaxWidth}
         duration={liveRecord.duration}
         playbackState={playbackState}
         audioPlayerRef={audioPlayerRef}

@@ -125,8 +125,10 @@ export { useIsSmallScreen } from './useIsSmallScreen';
 export { useIsTablet } from './useIsTablet';
 export { useScrollToTopOnTabPress } from './useScrollToTopOnTabPress';
 export {
+  TABLET_FLOATING_DOCK_MAX_WIDTH,
   type TabletContentMaxWidthVariant,
   useTabletContentMaxWidth,
+  useTabletFloatingDockMaxWidth,
 } from './useTabletContentMaxWidth';
 export { useTabletShellLayout } from './useTabletShellLayout';
 export {
