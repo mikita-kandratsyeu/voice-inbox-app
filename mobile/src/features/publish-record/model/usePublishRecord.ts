@@ -144,7 +144,11 @@ export function usePublishRecord(record: VoiceRecord) {
       const local = await getPublishedNoteState(record.id);
       const url = local?.shareUrl?.trim();
       if (!url) return;
-      await sharePublishedNoteLink(url, title);
+      await sharePublishedNoteLink({
+        url,
+        title,
+        expiresAt: local?.expiresAt ?? null,
+      });
     },
     [record.id, refresh],
   );

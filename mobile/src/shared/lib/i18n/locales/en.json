@@ -1106,6 +1106,8 @@
     "publishCopyLink": "Copy link",
     "publishLinkCopied": "Link copied",
     "publishShareLink": "Share link",
+    "publishShareMessageIntro": "\"{{title}}\" — shared note from Voice Inbox AI",
+    "publishShareMessageExpires": "Link expires {{date}}.",
     "publishUnpublish": "Unpublish",
     "publishStaleHint": "The note changed since publishing. Update to refresh the public page.",
     "publishSuccessTitle": "Published",

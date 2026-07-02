@@ -1132,6 +1132,8 @@
     "publishCopyLink": "Скопировать ссылку",
     "publishLinkCopied": "Ссылка скопирована",
     "publishShareLink": "Поделиться ссылкой",
+    "publishShareMessageIntro": "«{{title}}» — заметка из Voice Inbox AI",
+    "publishShareMessageExpires": "Ссылка действует до {{date}}.",
     "publishUnpublish": "Снять с публикации",
     "publishStaleHint": "Заметка изменилась после публикации. Обновите ссылку.",
     "publishSuccessTitle": "Опубликовано",
