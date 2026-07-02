@@ -27,7 +27,7 @@ enum SpeakerKitEngine {
 
   static func isModelCached(cacheFolder: String) -> Bool {
     #if canImport(SpeakerKit) && canImport(WhisperKit)
-    return directorySizeBytes(at: cacheURL(from: cacheFolder)) > 0
+    return hasValidSpeakerKitArtifacts(cacheFolder: cacheFolder)
     #else
     return false
     #endif
@@ -68,6 +68,42 @@ enum SpeakerKitEngine {
     cacheFolder: String,
   ) async throws -> [DiarizationTurnPayload] {
     #if canImport(SpeakerKit) && canImport(WhisperKit)
+    do {
+      return try await performDiarize(
+        audioPath: audioPath,
+        maxSpeakers: maxSpeakers,
+        cacheFolder: cacheFolder,
+      )
+    } catch {
+      guard isSpeakerKitModelLoadError(error) else {
+        throw error
+      }
+      NSLog(
+        "[VoiceDiarization] diarize failed with model load error, purging cache and retrying once: %@",
+        error.localizedDescription,
+      )
+      try purgeSpeakerKitCache(cacheFolder: cacheFolder)
+      return try await performDiarize(
+        audioPath: audioPath,
+        maxSpeakers: maxSpeakers,
+        cacheFolder: cacheFolder,
+      )
+    }
+    #else
+    throw TranscriptionJobError.diarizationUnavailable
+    #endif
+  }
+
+  #if canImport(SpeakerKit) && canImport(WhisperKit)
+  private static let minimumPldaWeightsBytes = 512
+  private static var cachedSpeakerKit: SpeakerKit?
+  private static var cachedSpeakerKitCacheFolder: String?
+
+  private static func performDiarize(
+    audioPath: String,
+    maxSpeakers: Int?,
+    cacheFolder: String,
+  ) async throws -> [DiarizationTurnPayload] {
     let speakerKit = try await loadSpeakerKit(cacheFolder: cacheFolder)
     let audioArray = try AudioProcessor.loadAudioAsFloatArray(fromPath: audioPath)
 
@@ -88,20 +124,72 @@ enum SpeakerKitEngine {
         confidence: nil,
       )
     }
-    #else
-    throw TranscriptionJobError.diarizationUnavailable
-    #endif
   }
-
-  #if canImport(SpeakerKit) && canImport(WhisperKit)
-  private static var cachedSpeakerKit: SpeakerKit?
-  private static var cachedSpeakerKitCacheFolder: String?
 
   private static func cacheURL(from path: String) -> URL {
     if path.hasPrefix("file://") {
       return URL(string: path) ?? URL(fileURLWithPath: String(path.dropFirst(7)))
     }
     return URL(fileURLWithPath: path)
+  }
+
+  private static func speakerKitRepoRoot(cacheFolder: String) -> URL {
+    cacheURL(from: cacheFolder)
+      .appendingPathComponent("models/argmaxinc/speakerkit-coreml", isDirectory: true)
+  }
+
+  private static func findNamedModelDirectory(named name: String, under root: URL) -> URL? {
+    guard let enumerator = FileManager.default.enumerator(
+      at: root,
+      includingPropertiesForKeys: [.isDirectoryKey],
+      options: [.skipsHiddenFiles],
+    ) else {
+      return nil
+    }
+
+    for case let item as URL in enumerator {
+      if item.lastPathComponent == name {
+        return item
+      }
+    }
+    return nil
+  }
+
+  private static func hasValidSpeakerKitArtifacts(cacheFolder: String) -> Bool {
+    let repoRoot = speakerKitRepoRoot(cacheFolder: cacheFolder)
+    guard FileManager.default.fileExists(atPath: repoRoot.path) else {
+      return false
+    }
+
+    guard
+      let pldaBundle = findNamedModelDirectory(named: "PldaProjector.mlmodelc", under: repoRoot)
+    else {
+      return false
+    }
+
+    let weightsDir = pldaBundle.appendingPathComponent("weights", isDirectory: true)
+    guard FileManager.default.fileExists(atPath: weightsDir.path) else {
+      return false
+    }
+
+    let weightsBytes = directorySizeBytes(at: weightsDir)
+    if weightsBytes < minimumPldaWeightsBytes {
+      NSLog(
+        "[VoiceDiarization] SpeakerKit cache invalid: PldaProjector weights=%d bytes (min %d)",
+        weightsBytes,
+        minimumPldaWeightsBytes,
+      )
+      return false
+    }
+
+    guard
+      findNamedModelDirectory(named: "SpeakerSegmenter.mlmodelc", under: repoRoot) != nil,
+      findNamedModelDirectory(named: "SpeakerEmbedder.mlmodelc", under: repoRoot) != nil
+    else {
+      return false
+    }
+
+    return true
   }
 
   private static func directorySizeBytes(at url: URL) -> Int {
@@ -130,21 +218,59 @@ enum SpeakerKitEngine {
     return total
   }
 
-  private static func loadSpeakerKit(cacheFolder: String) async throws -> SpeakerKit {
+  private static func isSpeakerKitModelLoadError(_ error: Error) -> Bool {
+    let message = error.localizedDescription.lowercased()
+    return message.contains("compile the model")
+      || message.contains("unable to load model")
+      || message.contains("mlmodel")
+  }
+
+  private static func purgeSpeakerKitCache(cacheFolder: String) throws {
+    invalidatePipelineCache()
+    try deleteModel(cacheFolder: cacheFolder)
+  }
+
+  private static func loadSpeakerKit(cacheFolder: String, allowCacheRepair: Bool = true) async throws -> SpeakerKit {
     if let cachedSpeakerKit, cachedSpeakerKitCacheFolder == cacheFolder {
       return cachedSpeakerKit
     }
 
-    // Use downloadBase (not modelFolder) so HuggingFace models are fetched on first run.
+    if !hasValidSpeakerKitArtifacts(cacheFolder: cacheFolder), allowCacheRepair {
+      NSLog("[VoiceDiarization] SpeakerKit cache incomplete, purging before download")
+      try? purgeSpeakerKitCache(cacheFolder: cacheFolder)
+    }
+
+    do {
+      let speakerKit = try await createAndWarmSpeakerKit(cacheFolder: cacheFolder)
+      cachedSpeakerKit = speakerKit
+      cachedSpeakerKitCacheFolder = cacheFolder
+      return speakerKit
+    } catch {
+      guard allowCacheRepair, isSpeakerKitModelLoadError(error) else {
+        throw error
+      }
+      NSLog(
+        "[VoiceDiarization] SpeakerKit warm load failed, purging cache and retrying once: %@",
+        error.localizedDescription,
+      )
+      try purgeSpeakerKitCache(cacheFolder: cacheFolder)
+      let speakerKit = try await createAndWarmSpeakerKit(cacheFolder: cacheFolder)
+      cachedSpeakerKit = speakerKit
+      cachedSpeakerKitCacheFolder = cacheFolder
+      return speakerKit
+    }
+  }
+
+  private static func createAndWarmSpeakerKit(cacheFolder: String) async throws -> SpeakerKit {
     let config = PyannoteConfig(
       downloadBase: cacheFolder,
       download: true,
+      load: false,
       verbose: false,
       logLevel: .none,
     )
     let speakerKit = try await SpeakerKit(config)
-    cachedSpeakerKit = speakerKit
-    cachedSpeakerKitCacheFolder = cacheFolder
+    try await speakerKit.ensureModelsLoaded()
     return speakerKit
   }
 
