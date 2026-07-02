@@ -9,6 +9,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import type { Colors } from '@/shared/config';
+import { useMountedRef, useSafeCallback } from '@/shared/lib';
 import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
 
 const SCRUB_TOUCH_HEIGHT = IOS_MIN_TOUCH_TARGET;
@@ -47,6 +48,7 @@ export function AudioPlayerScrubber({
   onScrubChange,
   onScrubEnd,
 }: AudioPlayerScrubberProps) {
+  const mountedRef = useMountedRef();
   const isScrubbingRef = useRef(false);
   const localDisplayProgress = useSharedValue(progressFraction ?? 0);
   const localTrackWidth = useSharedValue(0);
@@ -86,6 +88,10 @@ export function AudioPlayerScrubber({
     onScrubEndRef.current?.(progress);
   }, []);
 
+  const safeNotifyScrubStart = useSafeCallback(mountedRef, notifyScrubStart);
+  const safeNotifyScrubChange = useSafeCallback(mountedRef, notifyScrubChange);
+  const safeNotifyScrubEnd = useSafeCallback(mountedRef, notifyScrubEnd);
+
   const scrubGesture = usePanGesture({
     enabled: scrubEnabled,
     activeOffsetX: [-2, 2],
@@ -94,19 +100,19 @@ export function AudioPlayerScrubber({
       'worklet';
       const progress = progressFromX(event.x, animatedTrackWidth.value);
       animatedProgress.value = progress;
-      scheduleOnRN(notifyScrubStart, progress);
+      scheduleOnRN(safeNotifyScrubStart, progress);
     },
     onUpdate: (event) => {
       'worklet';
       const progress = progressFromX(event.x, animatedTrackWidth.value);
       animatedProgress.value = progress;
-      scheduleOnRN(notifyScrubChange, progress);
+      scheduleOnRN(safeNotifyScrubChange, progress);
     },
     onFinalize: (event) => {
       'worklet';
       const progress = progressFromX(event.x, animatedTrackWidth.value);
       animatedProgress.value = progress;
-      scheduleOnRN(notifyScrubEnd, progress);
+      scheduleOnRN(safeNotifyScrubEnd, progress);
     },
   });
 

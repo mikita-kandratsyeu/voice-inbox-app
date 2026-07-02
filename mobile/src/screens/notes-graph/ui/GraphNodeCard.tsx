@@ -7,7 +7,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { resolveFolderListRowChrome } from '@/entities/folder/lib/folderListRowChrome';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { resolveDisplayFolderColor } from '@/shared/lib';
+import { resolveDisplayFolderColor, useMountedRef, useSafeCallback } from '@/shared/lib';
 
 import {
   buildGraphRecordNodeAccessibilityLabel,
@@ -23,13 +23,15 @@ import {
 import { GRAPH_NODE_INTERACTION_PRESSING } from './graphNodeInteraction';
 
 function useGraphNodeInteracting(interactionPhase: SharedValue<number>): boolean {
+  const mountedRef = useMountedRef();
   const [interacting, setInteracting] = useState(false);
+  const safeSetInteracting = useSafeCallback(mountedRef, setInteracting);
 
   useAnimatedReaction(
     () => interactionPhase.value >= GRAPH_NODE_INTERACTION_PRESSING,
     (next, prev) => {
       if (next !== prev) {
-        scheduleOnRN(setInteracting, next);
+        scheduleOnRN(safeSetInteracting, next);
       }
     },
   );

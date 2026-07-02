@@ -123,6 +123,7 @@ export { useAiModelName } from './useAiModelName';
 export { useAiTabBannerDismiss } from './useAiTabBannerDismiss';
 export { useIsSmallScreen } from './useIsSmallScreen';
 export { useIsTablet } from './useIsTablet';
+export { useMountedRef, useSafeCallback } from './useMountedRef';
 export { useScrollToTopOnTabPress } from './useScrollToTopOnTabPress';
 export {
   TABLET_FLOATING_DOCK_MAX_WIDTH,

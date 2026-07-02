@@ -20,7 +20,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
-import { hapticLight } from '@/shared/lib';
+import { hapticLight, useMountedRef, useSafeCallback } from '@/shared/lib';
 
 import { buildGraphNodeDotAccessibilityLabel } from '../lib/buildGraphNodeAccessibilityLabel';
 import type { GraphViewportCull } from '../lib/buildGraphRenderedEdges';
@@ -97,6 +97,7 @@ function DraggableNodeShell({
   children: (interactionPhase: SharedValue<number>) => React.ReactNode;
 }) {
   const isDraggingRef = useRef(false);
+  const mountedRef = useMountedRef();
   const nodeId = node.id;
   const interactionPhase = useSharedValue(GRAPH_NODE_INTERACTION_IDLE);
 
@@ -166,12 +167,19 @@ function DraggableNodeShell({
     onFocus();
   }, [onFocus]);
 
+  const safeHandleDragEndComplete = useSafeCallback(mountedRef, handleDragEndComplete);
+  const safeHandleDragCancel = useSafeCallback(mountedRef, handleDragCancel);
+  const safeHandleCanvasDragStart = useSafeCallback(mountedRef, handleCanvasDragStart);
+  const safeHandlePress = useSafeCallback(mountedRef, handlePress);
+  const safeHandleFocus = useSafeCallback(mountedRef, handleFocus);
+  const safeHapticLight = useSafeCallback(mountedRef, hapticLight);
+
   const tapGesture = useTapGesture({
     maxDuration: GRAPH_NODE_LONG_PRESS_MS - 20,
     onDeactivate: (event) => {
       'worklet';
       if (event.canceled) return;
-      scheduleOnRN(handlePress);
+      scheduleOnRN(safeHandlePress);
     },
   });
 
@@ -184,20 +192,20 @@ function DraggableNodeShell({
     },
     onActivate: () => {
       'worklet';
-      scheduleOnRN(handleCanvasDragStart);
-      scheduleOnRN(hapticLight);
+      scheduleOnRN(safeHandleCanvasDragStart);
+      scheduleOnRN(safeHapticLight);
     },
     onFinalize: (event) => {
       'worklet';
       if (interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING) {
         return;
       }
-      scheduleOnRN(handleDragCancel);
+      scheduleOnRN(safeHandleDragCancel);
       interactionPhase.value = withTiming(0, {
         duration: 160,
       });
       if (event.canceled) return;
-      scheduleOnRN(handleFocus);
+      scheduleOnRN(safeHandleFocus);
     },
   });
 
@@ -242,14 +250,14 @@ function DraggableNodeShell({
       interactionPhase.value = withTiming(0, {
         duration: 160,
       });
-      scheduleOnRN(handleDragEndComplete, nodeId, finalX, finalY);
-      scheduleOnRN(handleFocus);
+      scheduleOnRN(safeHandleDragEndComplete, nodeId, finalX, finalY);
+      scheduleOnRN(safeHandleFocus);
     },
     onFinalize: (event) => {
       'worklet';
       if (!event.canceled) return;
       if (interactionPhase.value >= GRAPH_NODE_INTERACTION_DRAGGING) {
-        scheduleOnRN(handleDragCancel);
+        scheduleOnRN(safeHandleDragCancel);
       }
       interactionPhase.value = withTiming(0, {
         duration: 160,

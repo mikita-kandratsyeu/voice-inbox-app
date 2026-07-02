@@ -12,7 +12,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { getAnimationDuration, useColors, useFadeInEntering } from '@/shared/config';
-import { hapticSelection } from '@/shared/lib';
+import { hapticSelection, useMountedRef, useSafeCallback } from '@/shared/lib';
 
 export type DigestMetricCardProps = {
   label: string;
@@ -61,12 +61,14 @@ export type AnimatedMetricCardProps = {
 };
 
 export function useAnimatedCounter(rawValue: number, animationKey: string): number {
+  const mountedRef = useMountedRef();
   const sv = useSharedValue(0);
   const [display, setDisplay] = useState(0);
 
   const updateDisplay = useCallback((value: number) => {
     setDisplay(value);
   }, []);
+  const safeUpdateDisplay = useSafeCallback(mountedRef, updateDisplay);
 
   useEffect(() => {
     sv.value = 0;
@@ -80,7 +82,7 @@ export function useAnimatedCounter(rawValue: number, animationKey: string): numb
     () => Math.round(sv.value),
     (current, previous) => {
       if (current !== previous) {
-        scheduleOnRN(updateDisplay, current);
+        scheduleOnRN(safeUpdateDisplay, current);
       }
     },
   );

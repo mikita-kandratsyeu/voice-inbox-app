@@ -39,6 +39,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import type { Folder } from '@/entities/folder';
 import { useSettingsStore } from '@/entities/settings';
 import { type Colors, DEFAULT_ACCENT_COLOR_ID } from '@/shared/config';
+import { useMountedRef, useSafeCallback } from '@/shared/lib';
 import runAfterInteractions from '@/shared/lib/runAfterInteractions';
 
 import type { GraphViewportCull } from '../lib/buildGraphRenderedEdges';
@@ -220,6 +221,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     [accentColorId, color, exportCaptureBackgroundId, isProActive],
   );
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const mountedRef = useMountedRef();
   const fullExportRef = useRef<ViewShotRef>(null);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
 
@@ -267,6 +269,20 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     },
     [onReconcilingChange],
   );
+  const safeSetReconciling = useSafeCallback(mountedRef, setReconciling);
+
+  useEffect(() => {
+    return () => {
+      if (nodeDragTimeoutRef.current) {
+        clearTimeout(nodeDragTimeoutRef.current);
+        nodeDragTimeoutRef.current = null;
+      }
+      if (reconcileTimeoutRef.current) {
+        clearTimeout(reconcileTimeoutRef.current);
+        reconcileTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   const mapBusy = mapStatusActive || isReconciling;
   const mapStatusText = mapStatusLabel ?? t('notesGraph.reconciling');
@@ -286,6 +302,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   const syncViewportState = useCallback((nextScale: number, nextX: number, nextY: number) => {
     setViewportTransform({ scale: nextScale, translateX: nextX, translateY: nextY });
   }, []);
+  const safeSyncViewportState = useSafeCallback(mountedRef, syncViewportState);
 
   const lastSyncTime = useSharedValue(0);
   const SYNC_THROTTLE_MS = 16; // ~60fps
@@ -312,7 +329,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       if (now - lastSyncTime.value < SYNC_THROTTLE_MS) return;
 
       lastSyncTime.value = now;
-      scheduleOnRN(syncViewportState, current.scale, current.translateX, current.translateY);
+      scheduleOnRN(safeSyncViewportState, current.scale, current.translateX, current.translateY);
     },
   );
 
@@ -419,7 +436,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         cancelAnimation(translateY);
         scale.value = withSpring(clamped.scale, GRAPH_VIEWPORT_SPRING, (finished) => {
           if (finished) {
-            scheduleOnRN(syncViewportState, scale.value, translateX.value, translateY.value);
+            scheduleOnRN(safeSyncViewportState, scale.value, translateX.value, translateY.value);
           }
         });
         translateX.value = withSpring(clamped.translateX, GRAPH_VIEWPORT_SPRING);
@@ -433,6 +450,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     },
     [
       clampTransform,
+      safeSyncViewportState,
       savedScale,
       savedTranslateX,
       savedTranslateY,
@@ -628,11 +646,11 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         if (__DEV__) {
           console.warn('[Graph] Reconcile timeout - forcing complete');
         }
-        setReconciling(false);
+        safeSetReconciling(false);
         reconcileTimeoutRef.current = null;
       }, 2000);
     },
-    [isNodeDragging, setReconciling],
+    [isNodeDragging, safeSetReconciling, setReconciling],
   );
 
   useEffect(() => {
@@ -697,7 +715,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       const delay = Math.max(0, GRAPH_DRAG_RECONCILE_MIN_MS - elapsed);
       timeoutId = setTimeout(() => {
         if (cancelled || token !== reconcilingTokenRef.current) return;
-        setReconciling(false);
+        safeSetReconciling(false);
       }, delay);
     });
 
@@ -706,7 +724,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       interactionHandle.cancel();
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [isReconciling, positionOverrides, setReconciling]);
+  }, [isReconciling, positionOverrides, safeSetReconciling]);
 
   const clampViewportScale = (value: number) => {
     'worklet';
@@ -750,7 +768,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     savedScale.value = scale.value;
     savedTranslateX.value = translateX.value;
     savedTranslateY.value = translateY.value;
-    scheduleOnRN(syncViewportState, scale.value, translateX.value, translateY.value);
+    scheduleOnRN(safeSyncViewportState, scale.value, translateX.value, translateY.value);
   };
 
   const applyMapPinch = (pinchScale: number, focalX: number, focalY: number) => {
@@ -930,7 +948,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
     scale.value = withTiming(clampedScale, timing, (finished) => {
       if (finished) {
-        scheduleOnRN(syncViewportState, scale.value, translateX.value, translateY.value);
+        scheduleOnRN(safeSyncViewportState, scale.value, translateX.value, translateY.value);
       }
     });
     translateX.value = withTiming(clamped.translateX, timing);

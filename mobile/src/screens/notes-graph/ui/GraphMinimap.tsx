@@ -27,7 +27,13 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import type { Colors } from '@/shared/config';
-import { hapticLight, hapticSelection, withAlphaHex } from '@/shared/lib';
+import {
+  hapticLight,
+  hapticSelection,
+  useMountedRef,
+  useSafeCallback,
+  withAlphaHex,
+} from '@/shared/lib';
 
 import { buildMinimapNodeItems } from '../lib/buildMinimapNodeItems';
 import {
@@ -286,6 +292,7 @@ export function GraphMinimap({
   onNavigate,
 }: GraphMinimapProps) {
   const { t } = useTranslation();
+  const mountedRef = useMountedRef();
   const [minimapSize, setMinimapSize] = useState<GraphMinimapSize>(() => getGraphMinimapSize());
   const [isResizing, setIsResizing] = useState(false);
   const minimapWidthSV = useSharedValue(minimapSize.width);
@@ -440,24 +447,28 @@ export function GraphMinimap({
     [persistResize],
   );
 
+  const safeHandleResizeBegin = useSafeCallback(mountedRef, handleResizeBegin);
+  const safeApplyResize = useSafeCallback(mountedRef, applyResize);
+  const safeHandleResizeEnd = useSafeCallback(mountedRef, handleResizeEnd);
+
   const resizeGesture = usePanGesture({
     onBegin: () => {
       'worklet';
       resizeStartWidthSV.value = minimapWidthSV.value;
       resizeStartHeightSV.value = minimapHeightSV.value;
-      scheduleOnRN(handleResizeBegin);
+      scheduleOnRN(safeHandleResizeBegin);
     },
     onUpdate: (event: PanGestureActiveEvent) => {
       'worklet';
       scheduleOnRN(
-        applyResize,
+        safeApplyResize,
         resizeStartWidthSV.value + event.translationX,
         resizeStartHeightSV.value + event.translationY,
       );
     },
     onDeactivate: () => {
       'worklet';
-      scheduleOnRN(handleResizeEnd, minimapWidthSV.value, minimapHeightSV.value);
+      scheduleOnRN(safeHandleResizeEnd, minimapWidthSV.value, minimapHeightSV.value);
     },
   });
 

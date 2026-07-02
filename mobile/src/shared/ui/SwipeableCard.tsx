@@ -1,5 +1,5 @@
 import { Archive, ArchiveRestore, Pin, PinOff } from 'lucide-react-native';
-import React, { memo, useState } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import {
   GestureDetector,
   type PanGestureActiveEvent,
@@ -17,7 +17,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { useColors } from '@/shared/config';
 import { ANIMATION_DURATIONS, GESTURE_THRESHOLDS, SPRING_CONFIGS } from '@/shared/config';
-import { hapticMedium } from '@/shared/lib';
+import { hapticMedium, useMountedRef, useSafeCallback } from '@/shared/lib';
 
 export const SwipeableCardContext = React.createContext({ isSwiping: false });
 
@@ -52,21 +52,27 @@ export const SwipeableCard = memo(function SwipeableCard({
   pinEnabled = true,
 }: SwipeableCardProps) {
   const color = useColors();
+  const mountedRef = useMountedRef();
   const translateX = useSharedValue(0);
   const action = useSharedValue<SwipeAction>('none');
   const [isSwiping, setIsSwiping] = useState(false);
 
   const collapseOpacity = useSharedValue(1);
+  const safeOnLeftAction = useSafeCallback(mountedRef, onLeftAction);
+  const safeOnPin = useSafeCallback(mountedRef, onPin ?? (() => undefined));
+  const safeSetIsSwiping = useSafeCallback(mountedRef, setIsSwiping);
+  const safeHapticMedium = useSafeCallback(mountedRef, hapticMedium);
 
-  const collapseAndExecute = () => {
+  const collapseAndExecute = useCallback(() => {
     collapseOpacity.value = withTiming(
       0,
       { duration: ANIMATION_DURATIONS.collapse },
       (finished) => {
-        if (finished) scheduleOnRN(onLeftAction);
+        if (finished) scheduleOnRN(safeOnLeftAction);
       },
     );
-  };
+  }, [collapseOpacity, safeOnLeftAction]);
+  const safeCollapseAndExecute = useSafeCallback(mountedRef, collapseAndExecute);
 
   useAnimatedReaction(
     () => action.value,
@@ -76,11 +82,11 @@ export const SwipeableCard = memo(function SwipeableCard({
       }
 
       if (current === 'archive' || current === 'unarchive') {
-        scheduleOnRN(collapseAndExecute);
+        scheduleOnRN(safeCollapseAndExecute);
       } else if (current === 'pin') {
         cancelAnimation(translateX);
         translateX.value = withSpring(0, SPRING_CONFIGS.bouncy, () => {
-          if (onPin) scheduleOnRN(onPin);
+          if (onPin) scheduleOnRN(safeOnPin);
         });
         action.value = 'none';
       }
@@ -92,29 +98,29 @@ export const SwipeableCard = memo(function SwipeableCard({
     failOffsetY: [-GESTURE_THRESHOLDS.failOffset, GESTURE_THRESHOLDS.failOffset],
     onActivate: () => {
       cancelAnimation(translateX);
-      scheduleOnRN(setIsSwiping, true);
+      scheduleOnRN(safeSetIsSwiping, true);
     },
     onUpdate: (event: PanGestureActiveEvent) => {
       translateX.value = pinEnabled ? event.translationX : Math.min(0, event.translationX);
     },
     onDeactivate: (event: PanGestureActiveEvent) => {
       if (event.translationX < -GESTURE_THRESHOLDS.swipe) {
-        scheduleOnRN(hapticMedium);
+        scheduleOnRN(safeHapticMedium);
         translateX.value = withTiming(-CARD_FLY_DISTANCE, { duration: 220 }, () => {
           action.value = leftAction;
         });
       } else if (pinEnabled && event.translationX > GESTURE_THRESHOLDS.swipe) {
-        scheduleOnRN(hapticMedium);
+        scheduleOnRN(safeHapticMedium);
         translateX.value = withTiming(GESTURE_THRESHOLDS.swipeExtended, { duration: 80 }, () => {
           action.value = 'pin';
         });
       } else {
         translateX.value = withSpring(0, SPRING_CONFIGS.gentle);
       }
-      scheduleOnRN(setIsSwiping, false);
+      scheduleOnRN(safeSetIsSwiping, false);
     },
     onFinalize: () => {
-      scheduleOnRN(setIsSwiping, false);
+      scheduleOnRN(safeSetIsSwiping, false);
     },
   });
 

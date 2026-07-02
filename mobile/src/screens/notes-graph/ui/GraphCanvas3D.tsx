@@ -16,7 +16,7 @@ import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 
 import type { Folder } from '@/entities/folder';
 import type { Colors } from '@/shared/config';
-import { hapticLight } from '@/shared/lib';
+import { hapticLight, useMountedRef, useSafeCallback } from '@/shared/lib';
 import { runAfterInteractions } from '@/shared/lib/runAfterInteractions';
 
 import { runGraph3DLayoutOnWorker } from '../lib/graph3DLayoutWorkerRuntime';
@@ -66,6 +66,7 @@ export function GraphCanvas3D({
   onPrepareComplete,
 }: GraphCanvas3DProps) {
   const { t } = useTranslation();
+  const mountedRef = useMountedRef();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const [sceneLayout, setSceneLayout] = useState<Graph3DSceneLayout | null>(null);
@@ -84,6 +85,7 @@ export function GraphCanvas3D({
     },
     [onPrepareComplete],
   );
+  const safeFinishPrepare3d = useSafeCallback(mountedRef, finishPrepare3d);
 
   const yawSV = useSharedValue(GRAPH_3D_DEFAULT_YAW);
   const pitchSV = useSharedValue(GRAPH_3D_DEFAULT_PITCH);
@@ -173,7 +175,7 @@ export function GraphCanvas3D({
         pitchSV.value = GRAPH_3D_DEFAULT_PITCH;
         distanceSV.value = nextFitDistance;
         cameraReadySV.value = 1;
-        scheduleOnRN(finishPrepare3d, generation);
+        scheduleOnRN(safeFinishPrepare3d, generation);
       },
       fitDistance,
       generation,
@@ -182,7 +184,7 @@ export function GraphCanvas3D({
     cameraReadySV,
     distanceSV,
     edges,
-    finishPrepare3d,
+    safeFinishPrepare3d,
     nodes,
     pitchSV,
     sceneLayout,
