@@ -48,6 +48,7 @@ import { E2EReadyMarker } from '@/shared/e2e';
 import { i18n, NetworkStatusProvider } from '@/shared/lib';
 import { logAnalyticsScreenView } from '@/shared/lib/analytics';
 import { logInfo, setupAppLogger } from '@/shared/lib/appLogger';
+import { useCrashlyticsContextSync } from '@/shared/lib/crashlytics/useCrashlyticsContextSync';
 import { CloudAiThirdPartyConsentModal } from '@/shared/lib/cloud-ai-consent';
 import {
   type PushNotificationData,
@@ -119,6 +120,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
   useAndroidLayoutAnimation();
   useYandexMobileAdsInit();
   useAppBootstrap(onPushData, { onBootstrapReady, onWebApiReady, onCriticalError });
+  useCrashlyticsContextSync();
   useAppForegroundLifecycle(webApiReady);
   usePrivateAiTaskQueueBridge();
   useResetAccentWhenNotPro({ enabled: !bootSplashVisible });

@@ -18,7 +18,7 @@ import { syncAnalyticsUserId } from '@/shared/lib/analytics';
 import { warmWebApiAuth } from '@/shared/lib/api-auth/warmWebApiAuth';
 import { initFirebaseAppCheck } from '@/shared/lib/app-check/appCheckToken';
 import { diagInfo, diagWarn } from '@/shared/lib/appLogger';
-import { syncCrashlyticsUserId } from '@/shared/lib/crashlytics';
+import { syncCrashlyticsContext, syncCrashlyticsUserId } from '@/shared/lib/crashlytics';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { prefetchMobileBannerManifest } from '@/shared/lib/mobile-banner';
 import { prefetchModelManifest } from '@/shared/lib/model-manifest';
@@ -116,10 +116,15 @@ export function useAppBootstrap(
           const revenueCatInit = (async () => {
             try {
               const deviceId = await getOrCreateDeviceId();
-              await Promise.all([syncCrashlyticsUserId(deviceId), syncAnalyticsUserId(deviceId)]);
+              await Promise.all([
+                syncCrashlyticsUserId(deviceId),
+                syncAnalyticsUserId(deviceId),
+                syncCrashlyticsContext(),
+              ]);
               if (!cancelled) {
                 await initRevenueCatWhenReady(deviceId);
               }
+              await syncCrashlyticsContext();
             } catch {
               diagWarn('[bootstrap] failed to sync analytics/crashlytics user id');
             }
