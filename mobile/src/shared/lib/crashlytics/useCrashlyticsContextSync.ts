@@ -7,9 +7,7 @@ import { syncCrashlyticsContext } from './index';
 
 export function useCrashlyticsContextSync(): void {
   useEffect(() => {
-    let prevSnapshot = JSON.stringify(
-      settingsSnapshotForCrashlytics(useSettingsStore.getState()),
-    );
+    let prevSnapshot = JSON.stringify(settingsSnapshotForCrashlytics(useSettingsStore.getState()));
 
     const unsub = useSettingsStore.subscribe((state) => {
       const nextSnapshot = JSON.stringify(settingsSnapshotForCrashlytics(state));

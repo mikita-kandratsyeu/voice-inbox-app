@@ -15,9 +15,7 @@ function boolLabel(value: boolean): string {
   return value ? 'yes' : 'no';
 }
 
-function readDeviceInfoField(
-  reader: () => string | number | boolean | undefined | null,
-): string {
+function readDeviceInfoField(reader: () => string | number | boolean | undefined | null): string {
   try {
     const value = reader();
     if (isString(value) || isNumber(value)) {
@@ -67,7 +65,8 @@ export function settingsSnapshotForCrashlytics(
     privateAiProvider: settings.privateAiProvider,
     privateCapabilityTier: settings.privateCapabilityTier,
     privateRemoteConfigured:
-      settings.privateRemoteBaseUrl.trim().length > 0 || settings.privateRemoteActiveProfileId != null,
+      settings.privateRemoteBaseUrl.trim().length > 0 ||
+      settings.privateRemoteActiveProfileId != null,
     selectedWhisperModel: settings.selectedWhisperModel,
     selectedWhisperModelFormat: settings.selectedWhisperModelFormat,
     iosWhisperKitEngineEnabled: settings.iosWhisperKitEngineEnabled,
@@ -88,7 +87,8 @@ export function buildCrashlyticsAttributes(): Record<string, string> {
   const perf = getDevicePerformanceProfile({ respectPowerMode: false });
 
   const privateRemoteConfigured =
-    settings.privateRemoteBaseUrl.trim().length > 0 || settings.privateRemoteActiveProfileId != null;
+    settings.privateRemoteBaseUrl.trim().length > 0 ||
+    settings.privateRemoteActiveProfileId != null;
 
   const attrs: Record<string, string> = {
     platform: IS_IOS ? 'ios' : IS_ANDROID ? 'android' : 'unknown',
