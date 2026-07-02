@@ -1,8 +1,7 @@
 import { Info } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
-import { Pressable } from 'react-native-gesture-handler';
+import { Pressable, Text, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
 import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
