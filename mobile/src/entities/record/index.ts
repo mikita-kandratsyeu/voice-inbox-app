@@ -1,3 +1,4 @@
+export { isRecordAiOperating, isTranscriptionOperating } from './lib/isRecordAiOperating';
 export type { RecordingMarkKindUiConfig } from './lib/recordingMarkKindUi';
 export {
   getRecordingMarkKindAccentColors,
@@ -9,7 +10,6 @@ export {
   shouldOpenSegmentTranscriptEditor,
   shouldUseTranscriptSegmentView,
 } from './lib/transcriptDisplay';
-export { isRecordAiOperating, isTranscriptionOperating } from './lib/isRecordAiOperating';
 export {
   estimatePlainTextInputHeight,
   PLAIN_TEXT_LINE_HEIGHT,

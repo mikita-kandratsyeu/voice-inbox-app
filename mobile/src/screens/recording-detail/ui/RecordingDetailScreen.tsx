@@ -19,11 +19,11 @@ import { useShallow } from 'zustand/react/shallow';
 import type { RootStackParamList } from '@/app/navigation/types';
 import { FolderPickerSheet, useFolderStore } from '@/entities/folder';
 import {
+  isTranscriptionOperating,
   type MeetingSummaryTemplate,
   type RecordingMark,
   type RecordingStatus,
   type TaskItem,
-  isTranscriptionOperating,
   useRecordStore,
 } from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
