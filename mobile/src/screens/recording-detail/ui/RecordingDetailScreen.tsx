@@ -672,7 +672,7 @@ export const RecordingDetailScreen = () => {
   const showSharedAccessSection = Boolean(published);
 
   const updateFloatingDockVisibility = useCallback(() => {
-    if (!hasAudio) {
+    if (!hasAudio || activeTab !== 'transcript') {
       if (floatingDockShowPlayerRef.current) {
         floatingDockShowPlayerRef.current = false;
         setFloatingDockShowPlayer(false);
@@ -688,7 +688,11 @@ export const RecordingDetailScreen = () => {
         setFloatingDockShowPlayer(shouldShowPlayer);
       }
     });
-  }, [hasAudio, headerBottomInset]);
+  }, [activeTab, hasAudio, headerBottomInset]);
+
+  useEffect(() => {
+    updateFloatingDockVisibility();
+  }, [updateFloatingDockVisibility]);
 
   const applyMeetingModeOff = useCallback(() => {
     void updateAiExtras(liveRecord.id, {
@@ -1011,7 +1015,11 @@ export const RecordingDetailScreen = () => {
     (showSharedAccessSection ? 1 : 0) +
     (showMeetingModeToggle ? 1 : 0);
   const scrollBottomPadding =
-    insets.bottom + 40 + (hasAudio ? estimateFloatingDetailDockBottomClearance(0, true) : 0);
+    insets.bottom +
+    40 +
+    (activeTab === 'transcript' && floatingDockShowPlayer
+      ? estimateFloatingDetailDockBottomClearance(0, true)
+      : 0);
 
   return (
     <View
