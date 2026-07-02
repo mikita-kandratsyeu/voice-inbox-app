@@ -1,4 +1,15 @@
-import { isRecordAiOperating } from '../isRecordAiOperating';
+import { isRecordAiOperating, isTranscriptionOperating } from '../isRecordAiOperating';
+
+describe('isTranscriptionOperating', () => {
+  it('returns true only for active transcription statuses', () => {
+    expect(isTranscriptionOperating('loading_model')).toBe(true);
+    expect(isTranscriptionOperating('processing')).toBe(true);
+    expect(isTranscriptionOperating('cancelling')).toBe(true);
+    expect(isTranscriptionOperating('done')).toBe(false);
+    expect(isTranscriptionOperating('paused')).toBe(false);
+    expect(isTranscriptionOperating(undefined)).toBe(false);
+  });
+});
 
 describe('isRecordAiOperating', () => {
   it('returns true for transcription, generation, translation, and ask-ai processing', () => {

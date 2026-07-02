@@ -35,6 +35,8 @@ type MeetingDialogueTabProps = {
   hasSummary?: boolean;
   /** Summary/tasks AI run in progress — block speaker breakdown actions. */
   summaryProcessing?: boolean;
+  /** Offline transcription in progress — block speaker breakdown actions. */
+  transcriptProcessing?: boolean;
   color: Colors;
   onGenerate: () => void;
   onRegenerateDialogueOnly?: () => void;
@@ -67,6 +69,7 @@ export const MeetingDialogueTab = ({
   hasTranscript,
   hasSummary = false,
   summaryProcessing = false,
+  transcriptProcessing = false,
   meetingDialogue,
   speakerLabels,
   onRenameSpeaker,
@@ -95,7 +98,7 @@ export const MeetingDialogueTab = ({
   const { isConnected } = useNetworkStatus();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
-  const blockDialogueActions = disableByNetwork || summaryProcessing;
+  const blockDialogueActions = disableByNetwork || summaryProcessing || transcriptProcessing;
 
   const [renameTarget, setRenameTarget] = useState<SpeakerRenameTarget | null>(null);
   const [speakerLabelsHidden, setSpeakerLabelsHidden] = useState(false);

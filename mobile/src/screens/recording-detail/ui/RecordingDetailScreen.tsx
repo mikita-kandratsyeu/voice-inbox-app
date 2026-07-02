@@ -23,6 +23,7 @@ import {
   type RecordingMark,
   type RecordingStatus,
   type TaskItem,
+  isTranscriptionOperating,
   useRecordStore,
 } from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
@@ -51,6 +52,7 @@ import { useTranscription } from '@/features/transcription';
 import { shouldUseIosWhisperKitEngine } from '@/features/transcription/config/transcriptionEngine';
 import { canStartOfflineTranscription } from '@/features/transcription/lib/canStartOfflineTranscription';
 import { shouldUseNativeMeetingSpeakers } from '@/features/transcription/lib/nativeMeetingSpeakers';
+import { hasActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
 import { useOpenNotesGraphForRecord } from '@/screens/notes-graph';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { useAppTheme, useColors } from '@/shared/config';
@@ -642,6 +644,20 @@ export const RecordingDetailScreen = () => {
     liveRecord.summaryStatus === 'processing' ||
     liveRecord.tasksStatus === 'processing' ||
     liveRecord.meetingDialogueStatus === 'processing';
+
+  const isTranscriptProcessing = useMemo(() => {
+    if (isTranscriptionOperating(liveRecord.aiStatus)) {
+      return true;
+    }
+
+    return (
+      hasActiveTranscriptionJob(liveRecord.id) &&
+      liveRecord.aiStatus !== 'done' &&
+      liveRecord.aiStatus !== 'error' &&
+      liveRecord.aiStatus !== 'paused' &&
+      liveRecord.aiStatus !== 'resumable'
+    );
+  }, [liveRecord.aiStatus, liveRecord.id]);
 
   const meetingDialogueTabStatus = useMemo((): RecordingStatus => {
     if (liveRecord.meetingDialogueStatus === 'processing') return 'processing';
@@ -1285,6 +1301,7 @@ export const RecordingDetailScreen = () => {
                   liveRecord.summaryStatus === 'processing' ||
                   liveRecord.tasksStatus === 'processing'
                 }
+                transcriptProcessing={isTranscriptProcessing}
                 color={color}
                 onGenerate={handleGenerateSummary}
                 onRegenerateDialogueOnly={handleRegenerateMeetingDialogueOnly}

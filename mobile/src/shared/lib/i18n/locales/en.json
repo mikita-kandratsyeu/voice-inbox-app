@@ -2467,8 +2467,8 @@
     "autoRefreshMeetingSpeakers": {
       "title": "Meeting participants",
       "label": "Update on regenerate",
-      "subtitle": "Regenerating the summary or tasks also updates the participant breakdown. Turn off to keep your current list and name edits. Use the button on the Participants tab to update participants only.",
-      "a11y": "Update participant breakdown when regenerating summary or tasks"
+      "subtitle": "Also refreshes voice-based participants when you retranscribe or regenerate the summary or tasks. Turn off to keep your current list and name edits. Use the button on the Participants tab to update text-based participants only.",
+      "a11y": "Update participant breakdown when retranscribing or regenerating summary or tasks"
     }
   },
   "privateAiQueue": {
