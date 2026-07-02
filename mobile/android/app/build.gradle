@@ -113,7 +113,7 @@ android {
         applicationId "com.voiceinputapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 357
+        versionCode 358
         versionName "2.0.0"
     }
     signingConfigs {
