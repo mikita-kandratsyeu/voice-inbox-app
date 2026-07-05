@@ -57,6 +57,7 @@ export {
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
   findCloudAiModelCatalogEntry,
   getActiveWhisperModelVariantId,
+  getClassicWhisperModels,
   getCloudModelsForPicker,
   getLocalAiModelEntry,
   getOfflineWhisperStorageLabel,

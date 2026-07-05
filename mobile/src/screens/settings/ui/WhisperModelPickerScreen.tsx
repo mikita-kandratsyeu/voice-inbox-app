@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import {
+  getClassicWhisperModels,
   getWhisperEstimatedDownloadSizeMb,
   getWhisperKitModelVariantId,
   getWhisperModelVariantId,
@@ -239,11 +240,9 @@ export const WhisperModelPickerScreen = () => {
     navigation.goBack();
   };
 
-  const classicModels = WHISPER_MODELS.filter(
-    (model) => !(whisperModelWeightsFormat === 'q5_1' && model.id === 'whisper-medium'),
-  );
-
-  const pickerModels = useIosWhisperKit ? IOS_WHISPER_KIT_MODELS : classicModels;
+  const pickerModels = useIosWhisperKit
+    ? IOS_WHISPER_KIT_MODELS
+    : getClassicWhisperModels(whisperModelWeightsFormat);
 
   const modelSectionTitle = useIosWhisperKit
     ? t('whisper.sectionRecognition')

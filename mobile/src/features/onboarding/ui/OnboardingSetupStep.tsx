@@ -6,6 +6,7 @@ import type { UserSelectableAIModelId, WhisperModelId } from '@/entities/setting
 import {
   buildAutoModelMetaChips,
   buildCloudModelMetaChips,
+  getClassicWhisperModels,
   getOnboardingCuratedCloudModels,
   getWhisperEstimatedDownloadSizeMb,
   getWhisperModelVariantId,
@@ -14,7 +15,6 @@ import {
   useSettingsStore,
   useWhisperModelCompatibility,
   WHISPER_KIT_STORAGE_FORMAT,
-  WHISPER_MODELS,
 } from '@/entities/settings';
 import { useModelManager } from '@/features/model-manager';
 import { useProEntitlement } from '@/features/pro-license';
@@ -195,7 +195,7 @@ export const OnboardingSetupStep = ({
 
   const visibleWhisperModels = useIosWhisperKit
     ? IOS_WHISPER_KIT_MODELS
-    : WHISPER_MODELS.filter((model) => model.id !== 'whisper-medium');
+    : getClassicWhisperModels('q5_1');
 
   return (
     <ScrollView

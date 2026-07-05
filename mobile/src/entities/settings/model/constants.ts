@@ -281,6 +281,14 @@ export function isWhisperKitOnlyModelId(modelId: WhisperModelId): boolean {
   return (WHISPER_KIT_ONLY_MODEL_IDS as readonly WhisperModelId[]).includes(modelId);
 }
 
+/** Standard whisper.rn catalog — excludes improved-engine-only tiers and q5_1 medium. */
+export function getClassicWhisperModels(format: WhisperModelWeightsFormat): WhisperModel[] {
+  return WHISPER_MODELS.filter(
+    (model) =>
+      !isWhisperKitOnlyModelId(model.id) && !(format === 'q5_1' && model.id === 'whisper-medium'),
+  );
+}
+
 const WHISPER_MODEL_WEIGHTS_SIZES_MB: Record<
   WhisperModelWeightsFormat,
   Record<WhisperModelId, number>
