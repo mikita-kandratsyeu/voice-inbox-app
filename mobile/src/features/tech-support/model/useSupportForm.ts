@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { readAppLogTail } from '@/shared/lib/appLogger';
 
@@ -13,7 +13,6 @@ export function useSupportForm() {
   const [message, setMessage] = useState('');
   const [appLogs, setAppLogs] = useState('');
   const [attachLogs, setAttachLogs] = useState(false);
-  const [attachLogsLoading, setAttachLogsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successId, setSuccessId] = useState<string | null>(null);
@@ -36,7 +35,12 @@ export function useSupportForm() {
     setLoading(true);
     try {
       const diagnostics = await collectSupportDiagnostics();
-      const logsToSend = attachLogs ? await readAppLogTail(30_000) : appLogs;
+      const extraDetails = appLogs.trim();
+      const autoLogs = attachLogs ? await readAppLogTail(30_000) : '';
+      const logsToSend =
+        extraDetails && autoLogs
+          ? `${extraDetails}\n\n--- app logs ---\n\n${autoLogs}`
+          : autoLogs || extraDetails;
       const result = await submitSupportIssue({
         email,
         subject,
@@ -61,32 +65,6 @@ export function useSupportForm() {
     }
   }, [appLogs, attachLogs, email, message, subject]);
 
-  useEffect(() => {
-    if (!attachLogs) {
-      return;
-    }
-
-    let canceled = false;
-    setAttachLogsLoading(true);
-
-    void (async () => {
-      try {
-        const tail = await readAppLogTail(32_000);
-        if (!canceled) {
-          setAppLogs(tail);
-        }
-      } finally {
-        if (!canceled) {
-          setAttachLogsLoading(false);
-        }
-      }
-    })();
-
-    return () => {
-      canceled = true;
-    };
-  }, [attachLogs]);
-
   return {
     email,
     setEmail,
@@ -98,7 +76,6 @@ export function useSupportForm() {
     setAppLogs,
     attachLogs,
     setAttachLogs,
-    attachLogsLoading,
     loading,
     error,
     successId,
