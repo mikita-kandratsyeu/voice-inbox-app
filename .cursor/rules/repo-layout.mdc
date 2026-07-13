@@ -13,10 +13,10 @@ One **Git repository** with **Yarn 4 workspaces** and **Turborepo** orchestratio
 | Mobile | `voice-inbox-app` | `mobile/` | React Native (CLI), Drizzle, offline-first app |
 | Telegram bot | `voice-inbox-telegram-bot` | `telegram-bot/` | Optional Grammy admin bot |
 
-**Install and quality gates from the repository root** (uses committed Yarn 4.16.0 in `.yarn/releases/`):
+**Install and quality gates from the repository root** (uses committed Yarn 4.17.0 in `.yarn/releases/`):
 
 ```bash
-node .yarn/releases/yarn-4.16.0.cjs install   # or: yarn install (if no parent Yarn project)
+node .yarn/releases/yarn-4.17.0.cjs install   # or: yarn install (if no parent Yarn project)
 yarn lint
 yarn type:check
 yarn test

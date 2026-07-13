@@ -60,7 +60,7 @@ jobs:
           key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock', '.yarnrc.yml', 'package.json', 'mobile/package.json', 'web/package.json', 'telegram-bot/package.json') }}
 
       - name: Install dependencies
-        run: node .yarn/releases/yarn-4.16.0.cjs install --immutable
+        run: node .yarn/releases/yarn-4.17.0.cjs install --immutable
 
       - name: Lint
         id: lint
@@ -150,7 +150,7 @@ jobs:
           key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock', '.yarnrc.yml', 'package.json', 'mobile/package.json', 'web/package.json', 'telegram-bot/package.json') }}
 
       - name: Install dependencies
-        run: node .yarn/releases/yarn-4.16.0.cjs install --immutable
+        run: node .yarn/releases/yarn-4.17.0.cjs install --immutable
 
       - name: Lint
         id: lint
@@ -228,7 +228,7 @@ jobs:
           key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock', '.yarnrc.yml', 'package.json', 'mobile/package.json', 'web/package.json', 'telegram-bot/package.json') }}
 
       - name: Install dependencies
-        run: node .yarn/releases/yarn-4.16.0.cjs install --immutable
+        run: node .yarn/releases/yarn-4.17.0.cjs install --immutable
 
       - name: Lint
         id: lint

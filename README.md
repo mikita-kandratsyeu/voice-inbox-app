@@ -22,7 +22,7 @@ From the **repository root**:
 ```bash
 yarn install
 # If a parent directory also has Yarn workspaces, use:
-# node .yarn/releases/yarn-4.16.0.cjs install
+# node .yarn/releases/yarn-4.17.0.cjs install
 ```
 
 | Command | Description |
