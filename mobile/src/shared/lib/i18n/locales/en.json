@@ -1586,7 +1586,7 @@
         }
       },
       "tips": {
-        "askSiri": "Ask Siri with a phrase like “Start recording in Voice Inbox AI AI” or “Show tasks in Voice Inbox AI.”",
+        "askSiri": "Ask Siri with a phrase like “Start recording in Voice Inbox AI” or “Show tasks in Voice Inbox AI.”",
         "shortcutsApp": "In the Shortcuts app, add these actions to your own workflows and launch them from widgets, Focus, or automations.",
         "homeScreen": "Long-press the app icon on the Home Screen to quickly open recording, a text note, or tasks."
       }
