@@ -10,7 +10,7 @@
     "analyze:bundle:android": "node scripts/analyze-bundle.mjs android",
     "android": "NODE_ENV=development react-native run-android",
     "android:release": "NODE_ENV=production react-native run-android --mode Release --device --no-packager",
-    "build:screenshot-import-archive": "node scripts/build-screenshot-import-archive.mjs",
+    "build:screenshot-import-archive": "node scripts/build-screenshot-import-archive.mjs && node scripts/build-screenshot-import-archive.mjs --locale ru",
     "db:generate": "drizzle-kit generate",
     "fix:app-icon": "node scripts/fix-app-icon-alpha.mjs",
     "format": "prettier --write .",
