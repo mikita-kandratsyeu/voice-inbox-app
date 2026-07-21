@@ -153,9 +153,7 @@ function parseArgs(argv) {
 
   return {
     locale,
-    output: output
-      ? resolve(output)
-      : join(ASSETS_DIR, DEFAULT_ZIP_NAMES[locale]),
+    output: output ? resolve(output) : join(ASSETS_DIR, DEFAULT_ZIP_NAMES[locale]),
   };
 }
 

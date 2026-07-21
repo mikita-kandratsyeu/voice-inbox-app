@@ -87,7 +87,12 @@
       "linkedRecordIds": ["screenshot-demo-03"],
       "recordingMarks": [
         { "id": "mark-01-a", "offsetMs": 4200, "kind": "decision", "label": "Keep one-tap record" },
-        { "id": "mark-01-b", "offsetMs": 12000, "kind": "idea", "label": "Subtle success animation" }
+        {
+          "id": "mark-01-b",
+          "offsetMs": 12000,
+          "kind": "idea",
+          "label": "Subtle success animation"
+        }
       ],
       "summaryAiModel": "google/gemini-3.1-flash-lite",
       "summaryAiModelLabel": "Gemini 3.1 Flash Lite",

@@ -86,7 +86,12 @@
       "folderId": "folder-demo-work",
       "linkedRecordIds": ["screenshot-demo-03"],
       "recordingMarks": [
-        { "id": "mark-01-a", "offsetMs": 4200, "kind": "decision", "label": "Оставить запись в один тап" },
+        {
+          "id": "mark-01-a",
+          "offsetMs": 4200,
+          "kind": "decision",
+          "label": "Оставить запись в один тап"
+        },
         { "id": "mark-01-b", "offsetMs": 12000, "kind": "idea", "label": "Мягкая анимация успеха" }
       ],
       "summaryAiModel": "google/gemini-3.1-flash-lite",
