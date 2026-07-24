@@ -1,4 +1,4 @@
-import { AlertCircle, MicOff, RotateCcw } from 'lucide-react-native';
+import { AlertCircle, Layers, MicOff, RotateCcw } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
@@ -22,6 +22,8 @@ type AiStatusPillProps = {
 
 const isAiProcessing = (s?: RecordingStatus) => s === 'processing';
 const isAiError = (s?: RecordingStatus) => s === 'error';
+
+const pillContainerStyle = { flexShrink: 1, maxWidth: '100%' as const };
 
 export const AiStatusPill = ({
   aiStatus,
@@ -64,6 +66,30 @@ export const AiStatusPill = ({
     />
   );
 
+  if (summaryStatus === 'queued' && !aiProcessing) {
+    const queuedLabel = t('aiStatus.queued');
+    return (
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel={queuedLabel}
+        hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+        className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
+        style={{ backgroundColor: color.status.processing.bg, ...pillContainerStyle }}
+        onPress={onPress}
+        activeOpacity={0.75}
+      >
+        <Layers size={11} color={color.status.processing.text} strokeWidth={2.5} />
+        <Text
+          className="text-xs font-medium"
+          style={{ color: color.status.processing.text, flexShrink: 1 }}
+          numberOfLines={1}
+        >
+          {queuedLabel}
+        </Text>
+      </TouchableOpacity>
+    );
+  }
+
   if (aiStatus === 'done' && !aiProcessing && !aiError) {
     return null;
   }
@@ -86,12 +112,16 @@ export const AiStatusPill = ({
         accessibilityLabel={label}
         hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
         className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
-        style={{ backgroundColor: color.status.processing.bg }}
+        style={{ backgroundColor: color.status.processing.bg, ...pillContainerStyle }}
         onPress={onPress}
         activeOpacity={0.75}
       >
         {processingSpinner}
-        <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
+        <Text
+          className="text-xs font-medium"
+          style={{ color: color.status.processing.text, flexShrink: 1 }}
+          numberOfLines={1}
+        >
           {label}
         </Text>
       </TouchableOpacity>
@@ -106,12 +136,16 @@ export const AiStatusPill = ({
         accessibilityLabel={label}
         hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
         className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
-        style={{ backgroundColor: color.status.processing.bg }}
+        style={{ backgroundColor: color.status.processing.bg, ...pillContainerStyle }}
         onPress={onPress}
         activeOpacity={0.75}
       >
         <RotateCcw size={11} color={color.status.processing.text} strokeWidth={2.5} />
-        <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
+        <Text
+          className="text-xs font-medium"
+          style={{ color: color.status.processing.text, flexShrink: 1 }}
+          numberOfLines={1}
+        >
           {label}
         </Text>
       </TouchableOpacity>
@@ -145,12 +179,16 @@ export const AiStatusPill = ({
         accessibilityLabel={aiLabel}
         hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
         className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
-        style={{ backgroundColor: color.status.processing.bg }}
+        style={{ backgroundColor: color.status.processing.bg, ...pillContainerStyle }}
         onPress={onPress}
         activeOpacity={0.75}
       >
         {processingSpinner}
-        <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
+        <Text
+          className="text-xs font-medium"
+          style={{ color: color.status.processing.text, flexShrink: 1 }}
+          numberOfLines={1}
+        >
           {aiLabel}
         </Text>
       </TouchableOpacity>
@@ -184,12 +222,16 @@ export const AiStatusPill = ({
         accessibilityLabel={errLabel}
         hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
         className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
-        style={{ backgroundColor: color.status.error.bg }}
+        style={{ backgroundColor: color.status.error.bg, ...pillContainerStyle }}
         onPress={onPress}
         activeOpacity={0.75}
       >
         <AlertCircle size={11} color={color.status.error.text} strokeWidth={2.5} />
-        <Text className="text-xs font-medium" style={{ color: color.status.error.text }}>
+        <Text
+          className="text-xs font-medium"
+          style={{ color: color.status.error.text, flexShrink: 1 }}
+          numberOfLines={1}
+        >
           {errLabel}
         </Text>
       </TouchableOpacity>
@@ -199,10 +241,14 @@ export const AiStatusPill = ({
   return (
     <View
       className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
-      style={{ backgroundColor: color.status.muted.bg }}
+      style={{ backgroundColor: color.status.muted.bg, ...pillContainerStyle }}
     >
       <MicOff size={11} color={color.status.muted.text} strokeWidth={2.5} />
-      <Text className="text-xs font-medium" style={{ color: color.status.muted.text }}>
+      <Text
+        className="text-xs font-medium"
+        style={{ color: color.status.muted.text, flexShrink: 1 }}
+        numberOfLines={1}
+      >
         {t('aiStatus.noTranscript')}
       </Text>
     </View>

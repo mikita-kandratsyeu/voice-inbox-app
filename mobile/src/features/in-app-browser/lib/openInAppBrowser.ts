@@ -1,5 +1,5 @@
 import { Linking } from 'react-native';
-import { isAvailable, open } from 'react-native-inappbrowser-nitro';
+import { close, isAvailable, open } from 'react-native-inappbrowser-nitro';
 
 import { useSettingsStore } from '@/entities/settings';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
@@ -24,4 +24,16 @@ export async function openInAppBrowser(url: string, scheme: ColorScheme = 'light
     colorScheme: uiStyle,
     overrideUserInterfaceStyle: uiStyle,
   });
+}
+
+/** Dismisses the in-app browser if it is open (no-op when unavailable). */
+export async function closeInAppBrowser(): Promise<void> {
+  if (!(await isAvailable())) {
+    return;
+  }
+  try {
+    await close();
+  } catch {
+    // Browser may already be closed by the user.
+  }
 }

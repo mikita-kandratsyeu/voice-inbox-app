@@ -1,3 +1,21 @@
+jest.mock('react-native-quick-crypto', () => ({
+  __esModule: true,
+  createHash: () => ({
+    update: jest.fn().mockReturnThis(),
+    digest: () => 'deadbeef',
+  }),
+}));
+
+jest.mock('../localLlmSession', () => ({
+  completeLocalChat: jest.fn(),
+}));
+
+jest.mock('@/shared/lib', () => ({
+  i18n: {
+    t: (key: string) => key,
+  },
+}));
+
 import { DEFAULT_LOCAL_AI_MODEL_ID } from '@/entities/settings/model/constants';
 
 import { completeLocalChat } from '../localLlmSession';
@@ -21,16 +39,6 @@ import {
   truncateTranscriptSmart,
 } from '../localProvider';
 import type { AiExecutionContext, AskRequest } from '../types';
-
-jest.mock('../localLlmSession', () => ({
-  completeLocalChat: jest.fn(),
-}));
-
-jest.mock('@/shared/lib', () => ({
-  i18n: {
-    t: (key: string) => key,
-  },
-}));
 
 const mockedCompleteLocalChat = jest.mocked(completeLocalChat);
 
@@ -221,6 +229,10 @@ describe('normalizeDeadline', () => {
     expect(normalizeDeadline('2024-02-29')).toBe('2024-02-29');
   });
 
+  it('accepts ISO datetime and keeps date part', () => {
+    expect(normalizeDeadline('2026-06-13T18:00:00+03:00')).toBe('2026-06-13');
+  });
+
   it('rejects invalid calendar dates', () => {
     expect(normalizeDeadline('2024-02-30')).toBe(null);
     expect(normalizeDeadline('2023-02-29')).toBe(null);
@@ -332,6 +344,21 @@ describe('sanitizeTasks', () => {
       { title: 't', priority: 'medium', deadline: null },
     ]);
   });
+
+  it('splits ISO datetime into deadline and deadlineTime', () => {
+    expect(
+      sanitizeTasks([
+        { title: 'Pick up suit', priority: 'high', deadline: '2026-06-13T18:00:00+03:00' },
+      ]),
+    ).toEqual([
+      {
+        title: 'Pick up suit',
+        priority: 'high',
+        deadline: '2026-06-13',
+        deadlineTime: expect.stringMatching(/^\d{2}:\d{2}$/),
+      },
+    ]);
+  });
 });
 
 describe('sanitizeSummaryPayload', () => {
@@ -416,6 +443,17 @@ describe('parseLocalAskResponse', () => {
       items: ['Write copy', 'Ship build'],
       evidence: [{ quote: 'We need to ship the build', source: 'transcript' }],
       suggestedFollowUps: ['Who owns the build?'],
+    });
+  });
+
+  it('reads cautious interpretations separately from grounded answer', () => {
+    expect(
+      parseLocalAskResponse(
+        '{"answer":"The note mentions a delay but no date.","interpretations":["The tone suggests schedule risk."],"evidence":[]}',
+      ),
+    ).toEqual({
+      answer: 'The note mentions a delay but no date.',
+      interpretations: ['The tone suggests schedule risk.'],
     });
   });
 

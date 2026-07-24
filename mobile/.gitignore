@@ -75,6 +75,9 @@ yarn-error.log
 .env.*
 !.env.example
 
+# Android offline PDF OCR models (downloaded at build time)
+android/app/src/main/assets/tessdata/*.traineddata
+
 # Yarn
 .yarn/*
 !.yarn/patches

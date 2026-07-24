@@ -1,11 +1,14 @@
 module.exports = function (api) {
-  api.cache(() => process.env.NODE_ENV);
-  const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
+  api.cache(() => process.env.NODE_ENV ?? '');
+  const nodeEnv = (process.env.NODE_ENV ?? 'development').trim().toLowerCase();
+  const envFile = nodeEnv === 'production' ? '.env.production' : '.env';
+  console.log(`[babel] NODE_ENV=${nodeEnv} → @env from ${envFile}`);
 
   return {
     presets: ['module:@react-native/babel-preset', 'nativewind/babel'],
     plugins: [
       '@babel/plugin-transform-export-namespace-from',
+      '@babel/plugin-transform-class-static-block',
       [
         'module:react-native-dotenv',
         {

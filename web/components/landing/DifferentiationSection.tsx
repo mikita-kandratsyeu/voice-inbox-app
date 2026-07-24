@@ -11,7 +11,7 @@ export function DifferentiationSection(): React.ReactElement {
   const t = useTranslations('differentiation');
 
   return (
-    <section className={`py-15 sm:py-20 ${marketingGutterClass}`}>
+    <section className={`pt-10 pb-15 sm:pt-12 sm:pb-20 ${marketingGutterClass}`}>
       <div className={marketingContentClass}>
         <AnimateOnScroll>
           <div className="mb-8 text-center sm:mb-11">
@@ -23,7 +23,7 @@ export function DifferentiationSection(): React.ReactElement {
 
         <div className="grid gap-4 md:grid-cols-2 md:gap-5">
           <AnimateOnScroll>
-            <article className="h-full rounded-3xl border border-black/10 bg-white/82 p-6 shadow-[0_12px_32px_rgba(15,23,42,0.07)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.1)] dark:border-white/12 dark:bg-white/5 dark:shadow-[0_16px_45px_rgba(0,0,0,0.34)] dark:hover:shadow-[0_22px_52px_rgba(0,0,0,0.4)]">
+            <article className="h-full rounded-3xl border border-black/10 bg-white/82 p-6 shadow-[0_12px_32px_rgba(15,23,42,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.1)] dark:border-white/12 dark:bg-white/5 dark:shadow-[0_16px_45px_rgba(0,0,0,0.34)] dark:hover:shadow-[0_22px_52px_rgba(0,0,0,0.4)]">
               <p className="mb-4 text-sm font-semibold tracking-wide text-black/55 dark:text-white/55">
                 {t('othersTitle')}
               </p>
@@ -45,7 +45,7 @@ export function DifferentiationSection(): React.ReactElement {
           </AnimateOnScroll>
 
           <AnimateOnScroll delay={80}>
-            <article className="h-full rounded-3xl border border-blue-500/25 bg-linear-to-b from-blue-500/12 to-indigo-500/10 p-6 shadow-[0_16px_40px_rgba(59,130,246,0.15)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_52px_rgba(59,130,246,0.24)] dark:border-blue-400/35 dark:from-blue-500/18 dark:to-indigo-500/16 dark:shadow-[0_22px_52px_rgba(30,64,175,0.3)]">
+            <article className="h-full rounded-3xl border border-blue-500/25 bg-linear-to-b from-blue-500/12 to-indigo-500/10 p-6 shadow-[0_16px_40px_rgba(59,130,246,0.15)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_52px_rgba(59,130,246,0.24)] dark:border-blue-400/35 dark:from-blue-500/18 dark:to-indigo-500/16 dark:shadow-[0_22px_52px_rgba(30,64,175,0.3)]">
               <p className="mb-4 text-sm font-semibold tracking-wide text-blue-700 dark:text-blue-300">
                 {t('oursTitle')}
               </p>

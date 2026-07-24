@@ -1,4 +1,5 @@
 import type { RecordListItem } from '@/entities/record';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 import { RECORDINGS_DIR, resolveAudioPath } from '@/shared/lib/recordings';
 import { isNumber } from '@/shared/lib/type-guards';
@@ -74,8 +75,6 @@ export async function cleanupOrphanTranscriptionTempWavs(
       await NitroFS.unlink(entry.path).catch(() => {});
     }
   } catch (err) {
-    if (__DEV__) {
-      console.warn('[transcription] temp wav cleanup failed', err);
-    }
+    diagWarn('[transcription] temp wav cleanup failed', err);
   }
 }

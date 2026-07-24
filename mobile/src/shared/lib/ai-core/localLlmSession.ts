@@ -2,74 +2,95 @@ import type { RNLlamaOAICompatibleMessage, TokenData } from 'llama.rn';
 import { initLlama, type LlamaContext } from 'llama.rn';
 
 import type { LocalAiModelId } from '@/entities/settings';
+import { getDeviceCapabilities } from '@/shared/lib/deviceCapabilities';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 
-import { IS_IOS } from '../platform';
+import { estimateKvCacheRamMb, getOptimalNCtx, type LlmTaskType } from './localLlmDynamicContext';
 import {
   getLocalLlmContextParams,
-  getLocalLlmNCtx,
   type LocalLlmCompletionIntent,
   mergeLocalLlmCompletionParams,
 } from './localLlmModelProfiles';
+import {
+  canCreateNewSession,
+  evictLruSession,
+  getSession,
+  registerSession,
+  releaseAllSessions,
+  releaseSession,
+  scheduleSessionRelease,
+} from './localLlmMultiSession';
 
-const LOCAL_LLM_N_GPU_LAYERS = IS_IOS ? 99 : 0;
-
-let context: LlamaContext | null = null;
-let loadedModelId: LocalAiModelId | null = null;
-let llmSerialQueue: Promise<unknown> = Promise.resolve();
+// Serial queue per model to prevent concurrent operations on same context
+const llmSerialQueues = new Map<LocalAiModelId, Promise<unknown>>();
 
 export type LocalLlmSessionProgressEvent =
   | { kind: 'prepare_model_start' }
-  | { kind: 'prepare_model_done' }
+  | { kind: 'prepare_model_done'; nCtx: number; estimatedRamMb: number }
   | { kind: 'completion_tick' };
 
-function enqueueLlmTask<T>(task: () => Promise<T>): Promise<T> {
-  const next = llmSerialQueue.then(() => task());
-  llmSerialQueue = next.then(
-    () => undefined,
-    () => undefined,
+function enqueueLlmTask<T>(modelId: LocalAiModelId, task: () => Promise<T>): Promise<T> {
+  const currentQueue = llmSerialQueues.get(modelId) ?? Promise.resolve();
+  const next = currentQueue.then(() => task());
+
+  llmSerialQueues.set(
+    modelId,
+    next.then(
+      () => undefined,
+      () => undefined,
+    ),
   );
+
   return next;
 }
 
-async function releaseContextLocked(): Promise<void> {
-  if (context) {
-    await context.release().catch(() => {});
-    context = null;
-    loadedModelId = null;
-  }
+async function releaseContextLocked(ctx: LlamaContext): Promise<void> {
+  await ctx.release().catch(() => {});
 }
 
-async function ensureContextLocked(modelId: LocalAiModelId): Promise<LlamaContext> {
+async function ensureContextLocked(
+  modelId: LocalAiModelId,
+  taskType: LlmTaskType,
+  transcriptLength: number,
+): Promise<LlamaContext> {
   const path = getLocalLlmModelPath(modelId);
   if (!(await NitroFS.exists(path))) {
     throw new Error('Local LLM model file missing');
   }
 
-  if (context && loadedModelId === modelId) {
-    return context;
+  // Check if model is already loaded
+  const existingCtx = getSession(modelId);
+  if (existingCtx) {
+    return existingCtx;
   }
 
-  await releaseContextLocked();
+  // Check if we can create a new session
+  if (!canCreateNewSession()) {
+    // Evict LRU session to make room
+    await evictLruSession(releaseContextLocked);
+  }
+
+  // Calculate optimal context size for this task
+  const nCtx = getOptimalNCtx(taskType, transcriptLength, modelId);
+  const capabilities = getDeviceCapabilities();
 
   try {
     const ctx = await initLlama({
       model: path,
-      n_ctx: getLocalLlmNCtx(modelId),
-      n_gpu_layers: LOCAL_LLM_N_GPU_LAYERS,
+      n_ctx: nCtx,
+      n_gpu_layers: capabilities.llmGpuLayers,
       use_mmap: true,
       use_mlock: false,
-      // On iOS the KV cache lives in Metal-managed GPU memory; q4_0 halves KV RAM
-      // vs q8_0 with negligible quality impact at these model sizes (1–2 B params).
-      // On Android (CPU path) q4_0 still saves host RAM, so it is safe cross-platform.
+      // q4_0 KV cache halves RAM usage vs q8_0 with minimal quality loss
       cache_type_k: 'q4_0',
       cache_type_v: 'q4_0',
-      ...getLocalLlmContextParams(),
-      ...(IS_IOS && LOCAL_LLM_N_GPU_LAYERS > 0 ? { flash_attn_type: 'auto' as const } : {}),
+      ...getLocalLlmContextParams(capabilities),
+      // Flash attention on iOS with Metal acceleration
+      ...(capabilities.llmGpuLayers > 0 ? { flash_attn_type: 'auto' as const } : {}),
     });
-    context = ctx;
-    loadedModelId = modelId;
+
+    registerSession(modelId, ctx);
     return ctx;
   } catch (e) {
     const hint = e instanceof Error ? e.message : String(e);
@@ -84,20 +105,30 @@ async function runCompletionLocked(
     maxTokens: number;
     temperature?: number;
     intent?: LocalLlmCompletionIntent;
+    taskType: LlmTaskType;
+    transcriptLength: number;
     onLlmSessionProgress?: (event: LocalLlmSessionProgressEvent) => void;
   },
 ): Promise<string> {
   options.onLlmSessionProgress?.({ kind: 'prepare_model_start' });
-  const ctx = await ensureContextLocked(modelId);
-  options.onLlmSessionProgress?.({ kind: 'prepare_model_done' });
+
+  const ctx = await ensureContextLocked(modelId, options.taskType, options.transcriptLength);
+
+  // Report context size for monitoring/debugging
+  const nCtx = getOptimalNCtx(options.taskType, options.transcriptLength, modelId);
+  const estimatedRamMb = estimateKvCacheRamMb(nCtx);
+  options.onLlmSessionProgress?.({ kind: 'prepare_model_done', nCtx, estimatedRamMb });
+
   const intent = options.intent ?? 'chat';
   const profile = mergeLocalLlmCompletionParams(modelId, intent);
+
   try {
     const tokenCb = options.onLlmSessionProgress
       ? (_data: TokenData) => {
           options.onLlmSessionProgress?.({ kind: 'completion_tick' });
         }
       : undefined;
+
     const result = await ctx.completion(
       {
         messages,
@@ -108,6 +139,7 @@ async function runCompletionLocked(
       },
       tokenCb,
     );
+
     return (result.text ?? result.content ?? '').trim();
   } catch (e) {
     const hint = e instanceof Error ? e.message : String(e);
@@ -122,14 +154,50 @@ export async function completeLocalChat(
     maxTokens: number;
     temperature?: number;
     intent?: LocalLlmCompletionIntent;
+    taskType: LlmTaskType;
+    transcriptLength: number;
     onLlmSessionProgress?: (event: LocalLlmSessionProgressEvent) => void;
   },
 ): Promise<string> {
-  return enqueueLlmTask(() => runCompletionLocked(modelId, messages, options));
+  const result = await enqueueLlmTask(modelId, () =>
+    runCompletionLocked(modelId, messages, options),
+  );
+
+  // Schedule delayed release after completion
+  scheduleSessionRelease(modelId, releaseContextLocked);
+
+  return result;
 }
 
+export type { LlmTaskType } from './localLlmDynamicContext';
 export type { LocalLlmCompletionIntent } from './localLlmModelProfiles';
 
-export async function releaseLocalLlmSession(): Promise<void> {
-  await enqueueLlmTask(() => releaseContextLocked());
+/**
+ * Releases local LLM session(s).
+ * @param modelId - Specific model to release, or undefined to release all
+ * @param immediate - If true, releases immediately. If false (default), schedules release after keep-alive timeout.
+ */
+export async function releaseLocalLlmSession(
+  modelId?: LocalAiModelId,
+  immediate = false,
+): Promise<void> {
+  if (modelId) {
+    if (immediate) {
+      await enqueueLlmTask(modelId, () => releaseSession(modelId, releaseContextLocked));
+    } else {
+      scheduleSessionRelease(modelId, releaseContextLocked);
+    }
+  } else {
+    // Release all sessions
+    if (immediate) {
+      await releaseAllSessions(releaseContextLocked);
+      llmSerialQueues.clear();
+    } else {
+      // Schedule release for all active sessions
+      const { models } = await import('./localLlmMultiSession').then((m) => m.getSessionStats());
+      models.forEach((id) => {
+        scheduleSessionRelease(id as LocalAiModelId, releaseContextLocked);
+      });
+    }
+  }
 }

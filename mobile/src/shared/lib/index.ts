@@ -13,6 +13,10 @@ export {
 export type { AudioChunk } from './audio';
 export { splitAudioIntoChunks } from './audio';
 export {
+  getFixedSnapSheetBottomPadding,
+  getFixedSnapSheetHeight,
+} from './bottom-sheet/fixedSnapSheetLayout';
+export {
   bottomSheetModalStackBehavior,
   useBottomSheetModalVisibility,
 } from './bottom-sheet/useBottomSheetModalVisibility';
@@ -21,7 +25,20 @@ export { formatDurationMmSs, formatTime, formatTimeWithMs } from './date';
 export type { Database } from './db/client';
 export { getDB, initDB, isDbReady, waitForDb } from './db/client';
 export type { FolderInsert, FolderRow, RecordInsert, RecordRow } from './db/schema';
-export { cloudAiPendingTable, foldersTable, recordAskAiTable, recordsTable } from './db/schema';
+export {
+  cloudAiPendingTable,
+  foldersTable,
+  inboxAskAiTable,
+  notesGraphLayoutVersionTable,
+  privateAiTaskQueueTable,
+  recordAskAiTable,
+  recordPublishedShareTable,
+  recordsTable,
+} from './db/schema';
+export type { DeviceCapabilities } from './deviceCapabilities';
+export { getDeviceCapabilities, resetDeviceCapabilitiesCache } from './deviceCapabilities';
+export type { DeviceMemoryTier } from './deviceMemoryTier';
+export { readTotalRamMb, resolveDeviceMemoryTier } from './deviceMemoryTier';
 export {
   checkEmbeddingAvailability,
   cosineSimilarity,
@@ -44,10 +61,34 @@ export {
   withAlphaHex,
 } from './folderColor';
 export { formatStorageSharePercent } from './format-storage-share-percent';
-export { hapticError, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from './haptics';
+export {
+  hapticError,
+  hapticLight,
+  hapticMedium,
+  hapticPinError,
+  hapticPinKey,
+  hapticPinSuccess,
+  hapticPlaybackMarkCrossed,
+  hapticRecordingControl,
+  hapticRecordingFinishIntent,
+  hapticRecordingLimitWarning,
+  hapticRecordingPause,
+  hapticRecordingResume,
+  hapticRecordingStart,
+  hapticRecordTabPress,
+  hapticSelection,
+  hapticShakeDetect,
+  hapticSuccess,
+  hapticSuccessMajor,
+} from './haptics';
 export type { SupportedLocale } from './i18n';
 export { applyAppLanguage, i18n, initI18n } from './i18n';
 export { IOS_MIN_TOUCH_TARGET, iosHitSlopForVisualSize } from './iosTouchTarget';
+export {
+  quantizeMultilineInputHeight,
+  useMultilineInputAutoHeight,
+} from './multilineInputAutoHeight';
+export { inlineNativeMenuSection, type NativeMenuAction } from './nativeMenuActions';
 export { NetworkStatusProvider, useNetworkStatus } from './NetworkStatusContext';
 export { parseTaskDeadline } from './parseTaskDeadline';
 export {
@@ -70,6 +111,7 @@ export {
   RECORDINGS_DIR,
   resolveAudioPath,
 } from './recordings';
+export { matchesSearchQuery, normalizeSearchQuery } from './sheetSearchQuery';
 export {
   formatLocalizedLongDateWithTime,
   formatLocalTimeOfDay,
@@ -81,10 +123,13 @@ export { useAiModelName } from './useAiModelName';
 export { useAiTabBannerDismiss } from './useAiTabBannerDismiss';
 export { useIsSmallScreen } from './useIsSmallScreen';
 export { useIsTablet } from './useIsTablet';
+export { useMountedRef, useSafeCallback } from './useMountedRef';
 export { useScrollToTopOnTabPress } from './useScrollToTopOnTabPress';
 export {
+  TABLET_FLOATING_DOCK_MAX_WIDTH,
   type TabletContentMaxWidthVariant,
   useTabletContentMaxWidth,
+  useTabletFloatingDockMaxWidth,
 } from './useTabletContentMaxWidth';
 export { useTabletShellLayout } from './useTabletShellLayout';
 export {

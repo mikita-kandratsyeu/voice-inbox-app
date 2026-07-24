@@ -1,17 +1,17 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { Eye, EyeOff } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { BACKUP_PASSWORD_MIN_LENGTH, validateBackupPassword } from '@/features/sync-data';
-import { useColors } from '@/shared/config';
+import { type Colors, useColors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib';
 import {
-  APP_BOTTOM_SHEET_BACKDROP_SNAP,
+  AppBottomSheetContent,
   AppBottomSheetModal,
   SheetFooterButtons,
-  useBottomSheetContentPadding,
+  SheetHeader,
 } from '@/shared/ui';
 
 import { BackupEncryptionWarningBanner } from './BackupEncryptionWarningBanner';
@@ -27,13 +27,77 @@ type Props = {
 };
 
 const textInputPadding = IS_IOS ? { paddingTop: 11, paddingBottom: 11 } : { paddingVertical: 12 };
+const passwordToggleHitSlop = { top: 8, bottom: 8, left: 8, right: 8 };
+
+type PasswordFieldProps = {
+  value: string;
+  onChangeText: (value: string) => void;
+  placeholder: string;
+  isVisible: boolean;
+  onToggleVisible: () => void;
+  toggleAccessibilityLabel: string;
+  editable: boolean;
+  returnKeyType: 'next' | 'done';
+  onSubmitEditing?: () => void;
+  color: Colors;
+};
+
+function BackupPasswordField({
+  value,
+  onChangeText,
+  placeholder,
+  isVisible,
+  onToggleVisible,
+  toggleAccessibilityLabel,
+  editable,
+  returnKeyType,
+  onSubmitEditing,
+  color,
+}: PasswordFieldProps) {
+  const ToggleIcon = isVisible ? EyeOff : Eye;
+
+  return (
+    <View className="relative">
+      <BottomSheetTextInput
+        value={value}
+        onChangeText={onChangeText}
+        secureTextEntry={!isVisible}
+        autoCapitalize="none"
+        autoCorrect={false}
+        editable={editable}
+        placeholder={placeholder}
+        placeholderTextColor={color.text.muted}
+        className="rounded-xl border px-3 pr-11 text-[16px] leading-[22px]"
+        style={{
+          borderColor: color.border.default,
+          color: color.text.primary,
+          backgroundColor: color.background.secondary,
+          ...textInputPadding,
+        }}
+        returnKeyType={returnKeyType}
+        onSubmitEditing={onSubmitEditing}
+      />
+      <Pressable
+        onPress={onToggleVisible}
+        disabled={!editable}
+        hitSlop={passwordToggleHitSlop}
+        accessibilityRole="button"
+        accessibilityLabel={toggleAccessibilityLabel}
+        className="absolute bottom-0 right-0 top-0 w-11 items-center justify-center"
+      >
+        <ToggleIcon size={20} color={color.text.secondary} strokeWidth={2} />
+      </Pressable>
+    </View>
+  );
+}
 
 export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSubmit }: Props) {
   const { t } = useTranslation();
   const c = useColors();
-  const contentPadding = useBottomSheetContentPadding(20);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const isExport = mode === 'export';
@@ -50,6 +114,8 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
     if (!visible) return;
     setPassword('');
     setConfirm('');
+    setPasswordVisible(false);
+    setConfirmVisible(false);
     setErrorMessage(null);
   }, [visible, mode]);
 
@@ -79,18 +145,6 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
     password.trim().length >= BACKUP_PASSWORD_MIN_LENGTH &&
     (!isExport || confirm.trim().length >= BACKUP_PASSWORD_MIN_LENGTH);
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        {...APP_BOTTOM_SHEET_BACKDROP_SNAP}
-        pressBehavior={busy ? 'none' : 'close'}
-        opacity={0.45}
-      />
-    ),
-    [busy],
-  );
-
   const primaryLabel = t(isExport ? 'settings.export' : 'settings.import');
 
   return (
@@ -98,39 +152,10 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
       visible={visible}
       onClose={handleClose}
       enablePanDownToClose={!busy}
-      backdropComponent={renderBackdrop}
+      backdropPressBehavior={busy ? 'none' : 'close'}
     >
-      <BottomSheetView
-        style={{
-          paddingHorizontal: 20,
-          paddingTop: 8,
-          ...contentPadding,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 17,
-            fontWeight: '600',
-            color: c.text.primary,
-            textAlign: 'center',
-            paddingTop: 4,
-            marginBottom: 6,
-          }}
-        >
-          {title}
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            lineHeight: 20,
-            color: c.text.secondary,
-            textAlign: 'center',
-            marginBottom: 16,
-            paddingHorizontal: 4,
-          }}
-        >
-          {subtitle}
-        </Text>
+      <AppBottomSheetContent>
+        <SheetHeader title={title} subtitle={subtitle} color={c} marginBottom={16} />
 
         {isExport ? (
           <BackupEncryptionWarningBanner style={{ marginBottom: 16 }}>
@@ -141,29 +166,26 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
         <Text className="mb-1.5 text-[13px] font-semibold" style={{ color: c.text.secondary }}>
           {t('settings.backupEncryption.passwordLabel')}
         </Text>
-        <BottomSheetTextInput
+        <BackupPasswordField
           value={password}
           onChangeText={(value) => {
             setPassword(value);
             if (errorMessage) setErrorMessage(null);
           }}
-          secureTextEntry
-          autoCapitalize="none"
-          autoCorrect={false}
-          editable={!busy}
           placeholder={t('settings.backupEncryption.passwordPlaceholder', {
             min: BACKUP_PASSWORD_MIN_LENGTH,
           })}
-          placeholderTextColor={c.text.muted}
-          className="rounded-xl border px-3 text-[16px] leading-[22px]"
-          style={{
-            borderColor: c.border.default,
-            color: c.text.primary,
-            backgroundColor: c.background.secondary,
-            ...textInputPadding,
-          }}
+          isVisible={passwordVisible}
+          onToggleVisible={() => setPasswordVisible((current) => !current)}
+          toggleAccessibilityLabel={
+            passwordVisible
+              ? t('settings.backupEncryption.hidePassword')
+              : t('settings.backupEncryption.showPassword')
+          }
+          editable={!busy}
           returnKeyType={isExport ? 'next' : 'done'}
           onSubmitEditing={isExport ? undefined : handleSubmit}
+          color={c}
         />
 
         {isExport ? (
@@ -174,29 +196,26 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
             >
               {t('settings.backupEncryption.confirmLabel')}
             </Text>
-            <BottomSheetTextInput
+            <BackupPasswordField
               value={confirm}
               onChangeText={(value) => {
                 setConfirm(value);
                 if (errorMessage) setErrorMessage(null);
               }}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!busy}
               placeholder={t('settings.backupEncryption.confirmPlaceholder', {
                 min: BACKUP_PASSWORD_MIN_LENGTH,
               })}
-              placeholderTextColor={c.text.muted}
-              className="rounded-xl border px-3 text-[16px] leading-[22px]"
-              style={{
-                borderColor: c.border.default,
-                color: c.text.primary,
-                backgroundColor: c.background.secondary,
-                ...textInputPadding,
-              }}
+              isVisible={confirmVisible}
+              onToggleVisible={() => setConfirmVisible((current) => !current)}
+              toggleAccessibilityLabel={
+                confirmVisible
+                  ? t('settings.backupEncryption.hidePassword')
+                  : t('settings.backupEncryption.showPassword')
+              }
+              editable={!busy}
               returnKeyType="done"
               onSubmitEditing={handleSubmit}
+              color={c}
             />
           </>
         ) : null}
@@ -222,7 +241,7 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
           onSecondaryPress={handleClose}
           secondaryDisabled={busy}
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

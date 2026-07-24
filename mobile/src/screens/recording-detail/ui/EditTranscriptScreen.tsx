@@ -4,17 +4,22 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Check } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TextInput, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { RootStackParamList } from '@/app/navigation/types';
-import { useRecordStore } from '@/entities/record';
+import {
+  shouldUseTranscriptSegmentView,
+  stripDocumentTranscriptMarkup,
+  useRecordStore,
+} from '@/entities/record';
 import { useEditTranscript } from '@/features/edit-transcript';
 import { useColors } from '@/shared/config';
-import { useIsTablet } from '@/shared/lib';
-import { getInputFieldInputStyle, HeaderIconButton, ScreenHeader } from '@/shared/ui';
+import { IS_IOS } from '@/shared/lib';
+import { FrostedHeaderIconButton, ScreenHeader } from '@/shared/ui';
+
+import { EditTranscriptSegmentInput } from './EditTranscriptSegmentInput';
 
 export const EditTranscriptScreen = () => {
   const { t } = useTranslation();
@@ -22,14 +27,13 @@ export const EditTranscriptScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'EditTranscript'>>();
   const insets = useSafeAreaInsets();
   const color = useColors();
-  const isTablet = useIsTablet();
 
   const { record } = route.params;
   const records = useRecordStore((s) => s.records);
   const hydrateRecordDetails = useRecordStore((s) => s.hydrateRecordDetails);
   const liveRecord = records.find((r) => r.id === record.id) ?? record;
   const hasAudio = Boolean(liveRecord.audioPath?.trim());
-  const segments = useMemo(() => {
+  const rawSegments = useMemo(() => {
     if ((liveRecord.transcriptSegments?.length ?? 0) > 0) {
       return liveRecord.transcriptSegments ?? [];
     }
@@ -46,6 +50,16 @@ export const EditTranscriptScreen = () => {
     }
     return [];
   }, [liveRecord.id, liveRecord.transcript, liveRecord.transcriptSegments, liveRecord.durationMs]);
+
+  const useSegmentView = shouldUseTranscriptSegmentView(rawSegments, hasAudio);
+
+  const segments = useMemo(() => {
+    if (useSegmentView) return rawSegments;
+    return rawSegments.map((segment) => ({
+      ...segment,
+      text: stripDocumentTranscriptMarkup(segment.text),
+    }));
+  }, [rawSegments, useSegmentView]);
 
   useEffect(() => {
     if (!liveRecord.detailsHydrated) {
@@ -82,10 +96,11 @@ export const EditTranscriptScreen = () => {
   return (
     <View style={{ flex: 1, backgroundColor: color.background.primary }}>
       <ScreenHeader
-        title={t('recordingDetail.editTranscriptTitle')}
+        title={t('recordingDetail.editTranscript')}
         onBack={handleBack}
+        dismissKeyboardOnPress
         rightSlot={
-          <HeaderIconButton
+          <FrostedHeaderIconButton
             iconOnly
             variant="icon"
             size="md"
@@ -104,43 +119,34 @@ export const EditTranscriptScreen = () => {
         contentContainerStyle={{
           paddingHorizontal: 12,
           paddingTop: 16,
-          paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
+          paddingBottom: insets.bottom + 24,
         }}
+        keyboardDismissMode={IS_IOS ? 'interactive' : 'on-drag'}
         keyboardShouldPersistTaps="handled"
+        disableScrollOnKeyboardHide
         showsVerticalScrollIndicator
         bottomOffset={16}
       >
         {editedSegments.map((seg) => (
           <View key={seg.id} className="mb-4 flex-row gap-2">
-            {hasAudio && (
+            {useSegmentView ? (
               <Text
                 className="mt-2 min-w-8 text-xs font-semibold"
                 style={{ color: color.accent.primary }}
               >
                 {seg.startTime}
               </Text>
-            )}
-            <TextInput
-              className="flex-1 rounded-xl border-2 px-3 py-2.5 text-sm"
-              style={[
-                getInputFieldInputStyle(color, true),
-                {
-                  color: color.text.primary,
-                  minHeight: 44,
-                  borderColor: color.border.default,
-                  backgroundColor: color.background.tertiary,
-                },
-              ]}
-              placeholderTextColor={color.text.secondary}
+            ) : null}
+            <EditTranscriptSegmentInput
+              color={color}
+              value={seg.text}
+              onChangeText={(text) => updateSegmentText(seg.id, text)}
+              editable={!isSaving}
               accessibilityLabel={
-                hasAudio
+                useSegmentView
                   ? `${t('recordingDetail.transcript')}, ${seg.startTime}`
                   : t('recordingDetail.text')
               }
-              value={seg.text}
-              onChangeText={(text) => updateSegmentText(seg.id, text)}
-              multiline
-              editable={!isSaving}
             />
           </View>
         ))}

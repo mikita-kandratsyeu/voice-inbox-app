@@ -19,10 +19,12 @@ import {
   markCloudSummarizeInFlight,
 } from '@/features/ai-processing/lib/cloudSummarizeInFlight';
 import { markUnreadAfterSummaryRegenerationIfNeeded } from '@/features/ai-processing/lib/markUnreadAfterSummaryRegeneration';
+import { shouldIncludeMeetingSpeakerBreakdown } from '@/features/ai-processing/lib/meetingSpeakerBreakdown';
 import { regenerateMeetingDialogue as runRegenerateMeetingDialogue } from '@/features/ai-processing/lib/regenerateMeetingDialogue';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
+import { recordHasNativeSpeakerDiarization } from '@/features/transcription/lib/nativeMeetingSpeakers';
 import type { AiProcessingResult } from '@/shared/lib/ai-api';
 import {
   AI_POLL_TIMEOUT_ERROR,
@@ -49,6 +51,7 @@ import {
   unregisterAiGeneration,
 } from '@/shared/lib/aiGenerationAbortRegistry';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
+import { diagWarn } from '@/shared/lib/appLogger';
 import {
   toUserFacingFetchErrorFromUnknown,
   toUserFacingFetchErrorMessage,
@@ -264,6 +267,7 @@ export const useAiProcessing = () => {
       await updateAiExtras(record.id, {
         summaryAiModel: null,
         summaryAiModelLabel: null,
+        summaryAiModelMode: null,
         summaryTokensPrompt: null,
         summaryTokensCompletion: null,
         summaryReasoning: null,
@@ -290,7 +294,7 @@ export const useAiProcessing = () => {
       abortHandlesRef.current.set(record.id, abortHandle);
       let cloudProgressTimer: ReturnType<typeof setInterval> | null = null;
       let cloudDisplayedPct = 5;
-      if (!isPrivateAi) {
+      if (!isPrivateAi || isPrivateRemote) {
         cloudProgressTimer = setInterval(() => {
           if (abortHandle.cancelled) return;
           cloudDisplayedPct = Math.min(92, cloudDisplayedPct + 2 + Math.floor(Math.random() * 5));
@@ -334,10 +338,20 @@ export const useAiProcessing = () => {
         const includeMeetingPreset = isProActive && recordIsMeeting;
         const meetingSummaryTemplate =
           snapshot?.meetingSummaryTemplate ?? record.meetingSummaryTemplate;
-        const shouldRefreshSpeakersOnRegen =
-          aiExecutionMode !== 'private_experimental' &&
-          (autoRefreshMeetingSpeakersOnRegen || !wasSummaryRegeneration);
-        includeMeetingSpeakerBreakdown = includeMeetingPreset && shouldRefreshSpeakersOnRegen;
+        const transcriptSegments = snapshot?.transcriptSegments ?? record.transcriptSegments;
+        includeMeetingSpeakerBreakdown =
+          includeMeetingPreset &&
+          shouldIncludeMeetingSpeakerBreakdown({
+            isProActive,
+            recordIsMeeting,
+            wasSummaryRegeneration,
+            aiExecutionMode,
+            privateAiProvider: effectivePrivateAiProvider,
+            autoRefreshMeetingSpeakersOnRegen,
+            hasNativeSpeakerDiarization: recordHasNativeSpeakerDiarization({
+              transcriptSegments,
+            }),
+          });
 
         const getLatestRecord = (id: string) =>
           useRecordStore.getState().records.find((r) => r.id === id);
@@ -348,6 +362,7 @@ export const useAiProcessing = () => {
           recordIsMeeting,
           includeMeetingSpeakerBreakdown,
           aiExecutionMode,
+          aiModelRoutingMode,
           effectiveLocalAiModelId,
           generationStartedAt,
           updateSummary,
@@ -546,6 +561,7 @@ export const useAiProcessing = () => {
                   recordIsMeeting,
                   includeMeetingSpeakerBreakdown,
                   aiExecutionMode,
+                  aiModelRoutingMode,
                   effectiveLocalAiModelId,
                   generationStartedAt,
                   updateSummary,
@@ -606,15 +622,14 @@ export const useAiProcessing = () => {
           const errorMsg = runResult.limitExceeded
             ? getAiWeeklyLimitExceededMessage()
             : toUserFacingFetchErrorMessage(runResult.error ?? '');
-          if (__DEV__)
-            console.warn('[AI] processRecord: runSummaryTasks failed', {
-              recordId: record.id,
-              error: errorMsg,
-              limitExceeded: runResult.limitExceeded,
-              provider: runResult.provider,
-              mode: runResult.mode,
-              tier: privateCapabilityTier,
-            });
+          diagWarn('[AI] processRecord: runSummaryTasks failed', {
+            recordId: record.id,
+            error: errorMsg,
+            limitExceeded: runResult.limitExceeded,
+            provider: runResult.provider,
+            mode: runResult.mode,
+            tier: privateCapabilityTier,
+          });
           if (runResult.limitExceeded) {
             alertAiLimitExceeded(errorMsg);
           }
@@ -734,11 +749,10 @@ export const useAiProcessing = () => {
           });
           return;
         }
-        if (__DEV__)
-          console.warn('[AI] processRecord: unexpected error', {
-            recordId: record.id,
-            error: err instanceof Error ? err.message : String(err),
-          });
+        diagWarn('[AI] processRecord: unexpected error', {
+          recordId: record.id,
+          error: err instanceof Error ? err.message : String(err),
+        });
         const errorMsg = toUserFacingFetchErrorFromUnknown(err);
         if (includeMeetingSpeakerBreakdown && isSummaryAlreadyApplied(record.id)) {
           applyMeetingDialogueFailure(

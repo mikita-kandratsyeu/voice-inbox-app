@@ -1,6 +1,7 @@
 import { i18n } from '@/shared/lib';
+import { ON_MEDIA_CHROME_FILL } from '@/shared/ui';
 
-export const PAUSE_BTN_BG = 'rgba(255,255,255,0.18)';
+export const PAUSE_BTN_BG = ON_MEDIA_CHROME_FILL;
 
 export type RecordingState = 'idle' | 'recording' | 'paused';
 

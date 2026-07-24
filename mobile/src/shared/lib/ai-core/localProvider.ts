@@ -21,8 +21,10 @@ import {
 } from './local-provider/localAiTranscript';
 import { localPromptFitsLlmContext } from './localLlmBudget';
 import { getLocalLlmAskTemperature, getLocalLlmSummaryTemperature } from './localLlmModelProfiles';
+import { cachePrompt, checkPromptCache } from './localLlmPromptCache';
 import {
   completeLocalChat,
+  type LlmTaskType,
   type LocalLlmCompletionIntent,
   type LocalLlmSessionProgressEvent,
 } from './localLlmSession';
@@ -59,21 +61,34 @@ export {
 async function generateWithLocalLlm(
   modelId: AiExecutionContext['selectedLocalAiModel'],
   messages: { role: 'system' | 'user'; content: string }[],
-  options?: {
+  options: {
     maxTokens?: number;
     temperature?: number;
     intent?: LocalLlmCompletionIntent;
+    taskType: LlmTaskType;
+    transcriptLength: number;
     onLlmSessionProgress?: (event: LocalLlmSessionProgressEvent) => void;
   },
 ): Promise<string> {
   const maxTokens = options?.maxTokens ?? 512;
   const combined = messages.map((m) => m.content).join('\n\n');
+
   if (!localPromptFitsLlmContext(combined, maxTokens, modelId)) {
     throw new LocalAiError(
       'transcript_too_long',
       'Local prompt too long for current model context',
     );
   }
+
+  // Cache system prompts for faster prefill on repeated tasks
+  messages.forEach((msg) => {
+    if (msg.role === 'system') {
+      const cacheHit = checkPromptCache(msg.content);
+      if (!cacheHit) {
+        cachePrompt(msg.content);
+      }
+    }
+  });
 
   return completeLocalChat(
     modelId,
@@ -82,6 +97,8 @@ async function generateWithLocalLlm(
       maxTokens,
       temperature: options?.temperature ?? 0.2,
       intent: options?.intent ?? 'chat',
+      taskType: options.taskType,
+      transcriptLength: options.transcriptLength,
       onLlmSessionProgress: options?.onLlmSessionProgress,
     },
   );
@@ -167,6 +184,8 @@ export async function runLocalSummaryTasks(
             LOCAL_GEN_SUMMARY.temperature,
           ),
           intent: 'json',
+          taskType: isMeetingPreset ? 'meeting_dialogue' : 'summary',
+          transcriptLength: candidateTranscript.length,
           onLlmSessionProgress: request.onLocalGenerationProgress
             ? progressBridge.bridge
             : undefined,
@@ -241,6 +260,8 @@ export async function runLocalAsk(
             LOCAL_GEN_ASK.temperature,
           ),
           intent: 'json',
+          taskType: 'ask',
+          transcriptLength: transcript.length,
           onLlmSessionProgress: request.onLocalGenerationProgress
             ? progressBridge.bridge
             : undefined,

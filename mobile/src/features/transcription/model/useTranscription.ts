@@ -3,32 +3,58 @@ import { AppState } from 'react-native';
 
 import type { TranscriptSegment, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { getWhisperModelVariantId, useSettingsStore } from '@/entities/settings';
-import { useAiProcessing } from '@/features/ai-processing';
-import { shouldApplyAutoAiAfterTranscription } from '@/features/app-storefront';
+import {
+  getActiveWhisperModelVariantId,
+  useSettingsStore,
+  WHISPER_KIT_STORAGE_FORMAT,
+} from '@/entities/settings';
+import { dispatchAutoAiAfterTranscription } from '@/features/ai-task-queue';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
+import { buildMeetingDialogueMarkdownFromNativeSegments } from '@/screens/recording-detail/lib/nativeMeetingDialogue';
 import { ensureRecordingsDir, i18n, RECORDINGS_DIR, useNetworkStatus } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { convertToWav } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
 
+import { shouldUseIosWhisperKitEngine } from '../config/transcriptionEngine';
+import { buildNativeTranscriptionJobId } from '../lib/buildNativeTranscriptionJobId';
+import {
+  getAdaptiveCheckpointInterval,
+  getDevicePerformanceProfile,
+} from '../lib/devicePerformanceProfile';
 import { getWhisperContext, resetWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
+import {
+  hasNativeSpeakerSegments,
+  shouldRunTranscriptionDiarization,
+} from '../lib/nativeMeetingSpeakers';
+import { invalidateNativeTranscriptionEngineCaches } from '../lib/nativeTranscription';
 import { resolveTranscriptionChunkProfile } from '../lib/resolveTranscriptionChunkProfile';
 import { transcribeAudio } from '../lib/transcribeAudio';
+import { transcribeAudioIos } from '../lib/transcribeAudioIos';
 import {
   getTranscriptionCheckpoint,
   removeTranscriptionCheckpoint,
   saveTranscriptionCheckpoint,
 } from '../lib/transcriptionCheckpoint';
+import { isTooShortForTranscription } from '../lib/transcriptionDuration';
 import {
   getTranscriptionErrorCode,
   isAbortTranscriptionError,
   shouldQueueWhisperResetForError,
 } from '../lib/transcriptionErrors';
 import {
+  hapticTranscriptionChunk,
+  hapticTranscriptionComplete,
+  hapticTranscriptionFailed,
+  hapticTranscriptionProcessingStart,
+} from '../lib/transcriptionHaptics';
+import { isSameCheckpointEngine, resolveCheckpointEngine } from '../lib/transcriptionModelEngine';
+import {
   cancelTranscriptionPausedNotification,
   showTranscriptionPausedNotification,
 } from '../lib/transcriptionPausedNotification';
+import { resolveVadPolicyForMode } from '../lib/transcriptionQualityMode';
 import { validateTranscriptionStart } from '../lib/validateTranscriptionStart';
 import { clearPendingBackgroundTranscriptionRecord } from './pendingBackgroundTranscriptionRecord';
 import { isTranscriptionBlockedForRecord } from './transcriptionConcurrency';
@@ -61,7 +87,6 @@ import {
 } from './transcriptionRuntimeRegistry';
 
 const PROGRESS_THROTTLE_MS = 500;
-const CHECKPOINT_MIN_INTERVAL_MS = 4_000;
 const DISCARD_RESET_UI_TIMEOUT_MS = 3_000;
 const pendingWhisperResetRecordIds = new Set<string>();
 
@@ -110,7 +135,16 @@ const wait = (ms: number): Promise<void> =>
     setTimeout(resolve, ms);
   });
 
-const shouldFullyResetWhisperBeforeStart = (record: VoiceRecord): boolean => {
+export type StartTranscriptionOptions = {
+  /** When true, returns before loading Whisper if the recording is below MIN_TRANSCRIBE_MS. */
+  enforceMinDuration?: boolean;
+};
+
+const shouldFullyResetWhisperContextBeforeStart = (record: VoiceRecord): boolean => {
+  if (shouldUseIosWhisperKitEngine()) {
+    return false;
+  }
+
   const runtime = getTranscriptionRuntimeSnapshot();
   return (
     pendingWhisperResetRecordIds.has(record.id) ||
@@ -122,25 +156,46 @@ const shouldFullyResetWhisperBeforeStart = (record: VoiceRecord): boolean => {
   );
 };
 
+const releaseTranscriptionStartGuards = (recordId: string): void => {
+  invalidateTranscriptionJob(recordId);
+  endTranscriptionSession(recordId);
+  unregisterActiveTranscription(recordId);
+};
+
 export const useTranscription = () => {
   const updateAiStatus = useRecordStore((s) => s.updateAiStatus);
   const updateTranscript = useRecordStore((s) => s.updateTranscript);
+  const updateAiExtras = useRecordStore((s) => s.updateAiExtras);
   const clearAudioPath = useRecordStore((s) => s.clearAudioPath);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const setWhisperModelStatus = useSettingsStore((s) => s.setWhisperModelStatus);
   const transcriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
+  const transcriptionQualityMode = useSettingsStore((s) => s.transcriptionQualityMode);
+  const autoRefreshMeetingSpeakersOnRegen = useSettingsStore(
+    (s) => s.autoRefreshMeetingSpeakersOnRegen,
+  );
+  const transcriptionCustomWords = useSettingsStore((s) => s.transcriptionCustomWords);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const { isProActive } = useProEntitlement();
   const { isConnected } = useNetworkStatus();
-  const { processRecord } = useAiProcessing();
 
   const stopRef = useRef<(() => Promise<void>) | null>(null);
   const currentRecordIdRef = useRef<string | null>(null);
 
   const startTranscription = useCallback(
-    async (record: VoiceRecord, languageOverride?: string): Promise<void> => {
+    async (
+      record: VoiceRecord,
+      languageOverride?: string,
+      options?: StartTranscriptionOptions,
+    ): Promise<void> => {
+      if (options?.enforceMinDuration && isTooShortForTranscription(record.durationMs)) {
+        return;
+      }
+
       void cancelTranscriptionPausedNotification(record.id).catch(() => {});
       const shouldResetBeforeStart =
         pendingWhisperResetRecordIds.has(record.id) ||
@@ -159,11 +214,16 @@ export const useTranscription = () => {
       }
 
       if (shouldResetBeforeStart) {
-        updateAiStatus(record.id, 'loading_model', 0, i18n.t('transcription.loadingModel'), null);
+        if (!shouldUseIosWhisperKitEngine()) {
+          updateAiStatus(record.id, 'loading_model', 0, i18n.t('transcription.loadingModel'), null);
+        }
         try {
-          const needsFullReset = shouldFullyResetWhisperBeforeStart(record);
           await resetTranscriptionRuntimeForRestart(record.id);
-          if (needsFullReset) {
+          if (shouldUseIosWhisperKitEngine()) {
+            await invalidateNativeTranscriptionEngineCaches();
+            pendingWhisperResetRecordIds.delete(record.id);
+            rememberWhisperResetResult(true);
+          } else if (shouldFullyResetWhisperContextBeforeStart(record)) {
             const reset = await resetWhisperContext();
             rememberWhisperResetResult(reset);
             if (!reset) {
@@ -172,6 +232,10 @@ export const useTranscription = () => {
                 record.aiStatus === 'paused' ||
                 record.aiStatus === 'resumable' ||
                 (record.transcriptProgress ?? 0) > 0;
+              releaseTranscriptionStartGuards(record.id);
+              if (currentRecordIdRef.current === record.id) {
+                currentRecordIdRef.current = null;
+              }
               updateAiStatus(
                 record.id,
                 canResume ? 'resumable' : 'error',
@@ -179,13 +243,20 @@ export const useTranscription = () => {
               );
               return;
             }
+            pendingWhisperResetRecordIds.delete(record.id);
           }
-          pendingWhisperResetRecordIds.delete(record.id);
         } catch (err) {
-          if (__DEV__) console.warn('[transcription] restart reset failed', err);
+          diagWarn('[transcription] restart reset failed', err);
           rememberWhisperResetResult(false);
-          pendingWhisperResetRecordIds.add(record.id);
+          if (!shouldUseIosWhisperKitEngine()) {
+            pendingWhisperResetRecordIds.add(record.id);
+          }
+          releaseTranscriptionStartGuards(record.id);
+          if (currentRecordIdRef.current === record.id) {
+            currentRecordIdRef.current = null;
+          }
           updateAiStatus(record.id, 'error', record.transcriptProgress ?? 0);
+          hapticTranscriptionFailed();
           return;
         }
       }
@@ -194,7 +265,12 @@ export const useTranscription = () => {
       const otherRecordBusy = isTranscriptionBlockedForRecord(record.id, records);
       const nativeBusyForThisRecord =
         isNativeTranscriptionRunning() && getActiveTranscriptionRecordId() === record.id;
-      const variantId = getWhisperModelVariantId(selectedWhisperModel, selectedWhisperModelFormat);
+      const useIosWhisperKitPreflight = shouldUseIosWhisperKitEngine();
+      const variantId = getActiveWhisperModelVariantId({
+        modelId: selectedWhisperModel,
+        weightsFormat: selectedWhisperModelFormat,
+        useWhisperKit: useIosWhisperKitPreflight,
+      });
       const modelStatus = whisperModelStatuses[variantId] ?? 'not_downloaded';
       const preflight = await validateTranscriptionStart({
         record,
@@ -208,22 +284,39 @@ export const useTranscription = () => {
 
       if (!preflight.ok) {
         if (preflight.reason === 'model_file_missing') {
-          setWhisperModelStatus(selectedWhisperModel, selectedWhisperModelFormat, 'not_downloaded');
+          setWhisperModelStatus(
+            selectedWhisperModel,
+            useIosWhisperKitPreflight ? WHISPER_KIT_STORAGE_FORMAT : selectedWhisperModelFormat,
+            'not_downloaded',
+          );
         }
         if (preflight.reason === 'audio_file_missing') {
           await clearAudioPath(record.id).catch(() => {});
         }
 
-        updateAiStatus(record.id, 'error');
+        releaseTranscriptionStartGuards(record.id);
+        if (currentRecordIdRef.current === record.id) {
+          currentRecordIdRef.current = null;
+        }
+
+        const nextStatus =
+          preflight.reason === 'model_not_downloaded' ||
+          preflight.reason === 'model_missing' ||
+          preflight.reason === 'transcription_busy'
+            ? 'idle'
+            : 'error';
+        updateAiStatus(record.id, nextStatus, 0);
         return;
       }
 
       const normalizedAudioPath = preflight.normalizedAudioPath;
       const audioPath = record.audioPath ?? normalizedAudioPath;
+      const hadTranscriptBefore = Boolean(record.transcript?.trim());
 
       clearTranscriptionBackgroundCancelled(record.id);
 
       const jobGen = beginTranscriptionJob(record.id);
+      const nativeJobId = buildNativeTranscriptionJobId(record.id, jobGen);
       beginTranscriptionSession(record.id);
       registerActiveTranscription(record.id, async () => {
         if (stopRef.current) {
@@ -231,18 +324,27 @@ export const useTranscription = () => {
         }
       });
 
-      updateAiStatus(record.id, 'loading_model', 0, i18n.t('transcription.loadingModel'), null);
+      const useIosWhisperKit = shouldUseIosWhisperKitEngine();
+      if (!useIosWhisperKit) {
+        updateAiStatus(record.id, 'loading_model', 0, i18n.t('transcription.loadingModel'), null);
+      }
       currentRecordIdRef.current = record.id;
 
       const language = languageOverride ?? transcriptionLanguage;
+
       let usedContext = false;
       let transcodeWavPath: string | null = null;
       let keepCheckpointSnapshot = false;
       let completedSuccessfully = false;
 
       try {
-        const context = await getWhisperContext(selectedWhisperModel, selectedWhisperModelFormat);
-        usedContext = true;
+        const checkpointEngine = resolveCheckpointEngine();
+        let context: Awaited<ReturnType<typeof getWhisperContext>> | null = null;
+
+        if (!useIosWhisperKit) {
+          context = await getWhisperContext(selectedWhisperModel, selectedWhisperModelFormat);
+          usedContext = true;
+        }
 
         if (!isActiveTranscriptionJob(record.id, jobGen)) {
           updateAiStatus(record.id, 'idle');
@@ -257,9 +359,16 @@ export const useTranscription = () => {
 
         updateAiStatus(record.id, 'processing', 0, undefined, null);
         setTranscriptionRuntimeState('transcribing', record.id);
+        hapticTranscriptionProcessingStart();
 
         const throttledProgress = createThrottledProgress(record.id, jobGen, updateAiStatus);
-        const chunkProfile = resolveTranscriptionChunkProfile();
+        const baseChunkProfile = resolveTranscriptionChunkProfile(transcriptionQualityMode);
+        const vadPolicy = resolveVadPolicyForMode(transcriptionQualityMode);
+        const performanceProfile = getDevicePerformanceProfile({ respectPowerMode: true });
+        const checkpointInterval = getAdaptiveCheckpointInterval(
+          record.durationMs ?? 0,
+          performanceProfile,
+        );
         let lastCheckpointPersistAt = 0;
         let transcribeInputPath = audioPath;
         if (!normalizedAudioPath.toLowerCase().endsWith('.wav')) {
@@ -268,9 +377,10 @@ export const useTranscription = () => {
 
           const converted = await convertToWav(normalizedAudioPath, wavOut);
           if (!converted) {
-            if (__DEV__) console.warn('[transcription] convert to wav failed', record.id);
+            diagWarn('[transcription] convert to wav failed', record.id);
             currentRecordIdRef.current = null;
             updateAiStatus(record.id, 'error');
+            hapticTranscriptionFailed();
             return;
           }
           transcodeWavPath = converted.startsWith('file://') ? converted.slice(7) : converted;
@@ -295,7 +405,11 @@ export const useTranscription = () => {
           checkpoint &&
           checkpoint.audioPath === normalizedAudioPath &&
           checkpoint.modelId === selectedWhisperModel &&
-          checkpoint.language === language;
+          checkpoint.modelFormat === selectedWhisperModelFormat &&
+          checkpoint.language === language &&
+          isSameCheckpointEngine(checkpoint.engine, checkpointEngine);
+        const chunkProfile =
+          canResumeFromCheckpoint && checkpoint ? checkpoint.chunkProfile : baseChunkProfile;
         const resume =
           canResumeFromCheckpoint && checkpoint
             ? {
@@ -310,6 +424,73 @@ export const useTranscription = () => {
           fullText: string;
           segments: TranscriptSegment[];
         }) => {
+          if (useIosWhisperKit) {
+            const iosHandle = transcribeAudioIos({
+              jobId: nativeJobId,
+              audioPath: transcribeInputPath,
+              durationMs: record.durationMs ?? 0,
+              language,
+              modelId: selectedWhisperModel,
+              diarization: shouldRunTranscriptionDiarization(record, isProActive, {
+                isRetranscribe: hadTranscriptBefore,
+                autoRefreshSpeakers: autoRefreshMeetingSpeakersOnRegen,
+              }),
+              customWords: transcriptionCustomWords,
+              chunkProfile,
+              onProgress: throttledProgress,
+              resume: resumePayload,
+              onChunkCompleted: ({
+                chunkIndex,
+                totalChunks,
+                fullText,
+                segments,
+                chunkProfile: activeChunkProfile,
+              }) => {
+                if (!isActiveTranscriptionJob(record.id, jobGen)) {
+                  return;
+                }
+                hapticTranscriptionChunk();
+
+                const snapshot = {
+                  recordId: record.id,
+                  audioPath: normalizedAudioPath,
+                  modelId: selectedWhisperModel,
+                  modelFormat: selectedWhisperModelFormat,
+                  language,
+                  chunkProfile: activeChunkProfile,
+                  totalChunks,
+                  lastCompletedChunkIndex: chunkIndex,
+                  fullText,
+                  segments,
+                  engine: checkpointEngine,
+                  nativeJobId,
+                };
+                rememberTranscriptionCheckpointSnapshot(snapshot);
+
+                const now = Date.now();
+                const shouldPersist =
+                  now - lastCheckpointPersistAt >= checkpointInterval ||
+                  chunkIndex + 1 >= totalChunks;
+                if (!shouldPersist) {
+                  return;
+                }
+
+                lastCheckpointPersistAt = now;
+                saveTranscriptionCheckpoint(snapshot).catch((err) => {
+                  diagWarn('[transcription] checkpoint save failed', err);
+                });
+              },
+            });
+            const { stop, promise } = iosHandle;
+            stopRef.current = stop;
+            registerActiveTranscription(record.id, stop);
+            return promise;
+          }
+
+          if (!context) {
+            throw new Error('whisper_context_missing');
+          }
+
           const transcribeHandle = transcribeAudio({
             context,
             recycleContext: async () => {
@@ -323,29 +504,42 @@ export const useTranscription = () => {
             audioPath: transcribeInputPath,
             durationMs: record.durationMs ?? 0,
             language,
+            customWords: transcriptionCustomWords,
+            vadPolicy,
             chunkProfile,
+            contextRecycleChunks: performanceProfile.contextRecycleChunks,
             onProgress: throttledProgress,
             resume: resumePayload,
-            onChunkCompleted: ({ chunkIndex, totalChunks, fullText, segments }) => {
+            onChunkCompleted: ({
+              chunkIndex,
+              totalChunks,
+              fullText,
+              segments,
+              chunkProfile: activeChunkProfile,
+            }) => {
               if (!isActiveTranscriptionJob(record.id, jobGen)) {
                 return;
               }
+              hapticTranscriptionChunk();
 
               const snapshot = {
                 recordId: record.id,
                 audioPath: normalizedAudioPath,
                 modelId: selectedWhisperModel,
+                modelFormat: selectedWhisperModelFormat,
                 language,
+                chunkProfile: activeChunkProfile,
                 totalChunks,
                 lastCompletedChunkIndex: chunkIndex,
                 fullText,
                 segments,
+                engine: checkpointEngine,
               };
               rememberTranscriptionCheckpointSnapshot(snapshot);
 
               const now = Date.now();
               const shouldPersist =
-                now - lastCheckpointPersistAt >= CHECKPOINT_MIN_INTERVAL_MS ||
+                now - lastCheckpointPersistAt >= checkpointInterval ||
                 chunkIndex + 1 >= totalChunks;
               if (!shouldPersist) {
                 return;
@@ -353,7 +547,7 @@ export const useTranscription = () => {
 
               lastCheckpointPersistAt = now;
               saveTranscriptionCheckpoint(snapshot).catch((err) => {
-                if (__DEV__) console.warn('[transcription] checkpoint save failed', err);
+                diagWarn('[transcription] checkpoint save failed', err);
               });
             },
           });
@@ -395,6 +589,24 @@ export const useTranscription = () => {
         }
 
         await updateTranscript(record.id, fullText, segments);
+        hapticTranscriptionComplete();
+
+        if (
+          useIosWhisperKit &&
+          record.classification === 'meeting' &&
+          hasNativeSpeakerSegments(segments)
+        ) {
+          const shouldRefreshNativeSpeakers =
+            !hadTranscriptBefore || autoRefreshMeetingSpeakersOnRegen;
+          if (shouldRefreshNativeSpeakers) {
+            const meetingDialogue = buildMeetingDialogueMarkdownFromNativeSegments(segments);
+            await updateAiExtras(record.id, {
+              meetingDialogue,
+              meetingSpeakerLabels: hadTranscriptBefore ? null : undefined,
+            });
+          }
+        }
+
         await removeTranscriptionCheckpoint(record.id).catch(() => {});
         await cancelTranscriptionPausedNotification(record.id).catch(() => {});
         clearTranscriptionCheckpointSnapshot(record.id);
@@ -405,16 +617,18 @@ export const useTranscription = () => {
         };
         generateAndSaveEmbeddingForRecord(recordWithTranscript).catch(() => {});
 
-        if (
-          shouldApplyAutoAiAfterTranscription(autoAiAfterTranscription, isProActive) &&
-          isConnected
-        ) {
-          processRecord({
+        void dispatchAutoAiAfterTranscription({
+          record: {
             ...record,
             transcript: fullText,
             transcriptSegments: segments,
-          }).catch(() => {});
-        }
+          },
+          autoAiAfterTranscription,
+          isProActive,
+          isConnected: isConnected === true,
+          aiExecutionMode,
+          privateAiProvider,
+        }).catch(() => {});
 
         completedSuccessfully = true;
       } catch (err) {
@@ -437,7 +651,7 @@ export const useTranscription = () => {
         keepCheckpointSnapshot = pausedForBackground;
 
         if (isCancelled || pausedForBackground) {
-          if (shouldQueueWhisperResetForError(err)) {
+          if (shouldQueueWhisperResetForError(err) && !shouldUseIosWhisperKitEngine()) {
             pendingWhisperResetRecordIds.add(record.id);
           }
           if (!pausedForBackground) {
@@ -451,20 +665,31 @@ export const useTranscription = () => {
           if (errorCode === 'model_load_failed' || errorCode === 'model_missing') {
             setWhisperModelStatus(
               selectedWhisperModel,
-              selectedWhisperModelFormat,
+              shouldUseIosWhisperKitEngine()
+                ? WHISPER_KIT_STORAGE_FORMAT
+                : selectedWhisperModelFormat,
               'not_downloaded',
             );
           }
           if (errorCode === 'audio_missing' || isFileNotFoundError(err)) {
             await clearAudioPath(record.id).catch(() => {});
           }
-          if (shouldQueueWhisperResetForError(err)) {
+          if (shouldQueueWhisperResetForError(err) && !shouldUseIosWhisperKitEngine()) {
             pendingWhisperResetRecordIds.add(record.id);
           }
-          if (__DEV__) console.warn('[transcription] Failed:', err);
-          updateAiStatus(record.id, 'error');
+          diagWarn('[transcription] Failed:', errorCode, err instanceof Error ? err.message : err);
+          const isModelError = errorCode === 'model_load_failed' || errorCode === 'model_missing';
+          updateAiStatus(
+            record.id,
+            shouldUseIosWhisperKitEngine() && isModelError ? 'idle' : 'error',
+            0,
+          );
+          hapticTranscriptionFailed();
         }
       } finally {
+        if (currentRecordIdRef.current === record.id) {
+          currentRecordIdRef.current = null;
+        }
         const transcodePathNorm = transcodeWavPath?.startsWith('file://')
           ? transcodeWavPath.slice(7)
           : transcodeWavPath;
@@ -500,10 +725,15 @@ export const useTranscription = () => {
       selectedWhisperModelFormat,
       whisperModelStatuses,
       transcriptionLanguage,
+      transcriptionQualityMode,
+      autoRefreshMeetingSpeakersOnRegen,
+      transcriptionCustomWords,
+      aiExecutionMode,
       autoAiAfterTranscription,
       isProActive,
       isConnected,
-      processRecord,
+      privateAiProvider,
+      updateAiExtras,
       updateAiStatus,
       updateTranscript,
       clearAudioPath,
@@ -589,11 +819,11 @@ export const useTranscription = () => {
         if (!finished) {
           pendingWhisperResetRecordIds.add(recordId);
           void resetTask.catch((err) => {
-            if (__DEV__) console.warn('[transcription] discard reset failed', err);
+            diagWarn('[transcription] discard reset failed', err);
           });
         }
       } catch (err) {
-        if (__DEV__) console.warn('[transcription] discard reset failed', err);
+        diagWarn('[transcription] discard reset failed', err);
         rememberWhisperResetResult(false);
         pendingWhisperResetRecordIds.add(recordId);
       } finally {

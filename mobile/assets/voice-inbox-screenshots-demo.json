@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "exportedAt": "2026-03-30T12:00:00.000Z",
   "folders": [
     {
@@ -17,6 +17,14 @@
       "icon": "home",
       "sortOrder": 1,
       "createdAt": "2026-03-21T11:00:00.000Z"
+    },
+    {
+      "id": "folder-demo-ideas",
+      "name": "Ideas",
+      "color": "#d97706",
+      "icon": "lightbulb",
+      "sortOrder": 2,
+      "createdAt": "2026-03-22T09:00:00.000Z"
     }
   ],
   "records": [
@@ -38,16 +46,23 @@
           "startMs": 4200,
           "endMs": 9800,
           "text": "Primary action should stay one tap."
+        },
+        {
+          "id": "seg-01-c",
+          "startTime": "0:10",
+          "startMs": 9800,
+          "endMs": 18000,
+          "text": "After stop, we auto-scroll the transcript into view and show a subtle success state."
         }
       ],
       "summary": "UX focus: single-tap record, auto-scroll to transcript after stop, light success feedback.",
-      "summaryStatus": "done",
       "tasks": [
         {
           "id": "task-01-1",
           "text": "Prototype post-stop scroll behavior",
           "isDone": false,
           "deadline": "2026-04-02",
+          "deadlineTime": "10:00",
           "priority": "high",
           "source": "ai"
         },
@@ -58,28 +73,41 @@
           "source": "manual"
         }
       ],
-      "tasksStatus": "done",
       "duration": "1:38",
       "durationMs": 98000,
       "createdAt": "2026-03-30T10:00:00.000Z",
-      "relativeTime": "",
       "status": "unread",
       "readAt": null,
-      "aiStatus": "done",
-      "transcriptProgress": 1,
       "isPinned": true,
       "tags": ["design", "ux"],
       "classification": "work",
       "keyPhrases": ["recording", "transcript", "success state"],
       "nextSteps": ["Ship scroll prototype", "Schedule design review"],
-      "folderId": "folder-demo-work"
+      "folderId": "folder-demo-work",
+      "linkedRecordIds": ["screenshot-demo-03"],
+      "recordingMarks": [
+        { "id": "mark-01-a", "offsetMs": 4200, "kind": "decision", "label": "Keep one-tap record" },
+        {
+          "id": "mark-01-b",
+          "offsetMs": 12000,
+          "kind": "idea",
+          "label": "Subtle success animation"
+        }
+      ],
+      "summaryAiModel": "google/gemini-3.1-flash-lite",
+      "summaryAiModelLabel": "Gemini 3.1 Flash Lite",
+      "summaryAiModelMode": "manual",
+      "summaryTokensPrompt": 842,
+      "summaryTokensCompletion": 196,
+      "summaryGenerationMs": 4200
     },
     {
       "id": "screenshot-demo-02",
       "title": "Groceries & weekend errands",
       "transcript": "Milk, oat yogurt, coffee beans. Pick up dry cleaning on Saturday before noon. Plants need watering Sunday morning.",
+      "translatedTranscript": "Молоко, овсяный йогурт, кофейные зёрна. Забрать химчистку в субботу до полудня. Полить растения в воскресенье утром.",
+      "translationLanguage": "ru",
       "summary": "Shopping list plus two timed errands for the weekend.",
-      "summaryStatus": "done",
       "tasks": [
         {
           "id": "task-02-1",
@@ -95,15 +123,11 @@
           "source": "ai"
         }
       ],
-      "tasksStatus": "done",
       "duration": "0:52",
       "durationMs": 52000,
       "createdAt": "2026-03-29T06:00:00.000Z",
-      "relativeTime": "",
       "status": "read",
       "readAt": "2026-03-29T12:00:00.000Z",
-      "aiStatus": "done",
-      "transcriptProgress": 1,
       "isPinned": false,
       "classification": "personal",
       "keyPhrases": ["groceries", "dry cleaning"],
@@ -114,29 +138,56 @@
       "title": "Idea: smart folder suggestions",
       "transcript": "When the model detects meeting language, suggest moving the note into Work automatically, but always let the user confirm.",
       "summary": "Optional auto-folder suggestion based on transcript tone; confirm before move.",
-      "summaryStatus": "done",
       "tasks": [],
-      "tasksStatus": "idle",
       "duration": "0:41",
       "durationMs": 41000,
       "createdAt": "2026-03-28T08:00:00.000Z",
-      "relativeTime": "",
       "status": "unread",
       "readAt": null,
-      "aiStatus": "done",
-      "transcriptProgress": 1,
       "isPinned": false,
       "classification": "idea",
       "keyPhrases": ["folders", "classification"],
       "nextSteps": ["Spike confidence threshold"],
-      "folderId": null
+      "folderId": "folder-demo-ideas",
+      "linkedRecordIds": ["screenshot-demo-01"]
     },
     {
       "id": "screenshot-demo-04",
       "title": "Team standup — API cutover",
-      "transcript": "Backend migration is on track for Tuesday. Mobile will feature-flag the new base URL. QA needs one regression pass on inbox sync.",
+      "transcript": "Alex: Backend migration is on track for Tuesday. Jordan: Mobile will feature-flag the new base URL. Alex: QA needs one regression pass on inbox sync.",
+      "transcriptSegments": [
+        {
+          "id": "seg-04-a",
+          "startTime": "0:00",
+          "startMs": 0,
+          "endMs": 5200,
+          "text": "Backend migration is on track for Tuesday.",
+          "speakerId": "speaker-1"
+        },
+        {
+          "id": "seg-04-b",
+          "startTime": "0:05",
+          "startMs": 5200,
+          "endMs": 11000,
+          "text": "Mobile will feature-flag the new base URL.",
+          "speakerId": "speaker-2"
+        },
+        {
+          "id": "seg-04-c",
+          "startTime": "0:11",
+          "startMs": 11000,
+          "endMs": 19000,
+          "text": "QA needs one regression pass on inbox sync.",
+          "speakerId": "speaker-1"
+        }
+      ],
       "summary": "Migration Tuesday; mobile behind flag; QA regression on sync.",
-      "summaryStatus": "done",
+      "meetingDialogue": "**Alex:** Backend migration is on track for Tuesday.\n\n**Jordan:** Mobile will feature-flag the new base URL.\n\n**Alex:** QA needs one regression pass on inbox sync.",
+      "meetingSpeakerLabels": {
+        "speaker-1": "Alex",
+        "speaker-2": "Jordan"
+      },
+      "meetingSummaryTemplate": "standup",
       "tasks": [
         {
           "id": "task-04-1",
@@ -145,36 +196,36 @@
           "deadline": "2026-04-01",
           "priority": "high",
           "source": "manual"
+        },
+        {
+          "id": "task-04-2",
+          "text": "Run inbox sync regression on staging",
+          "isDone": false,
+          "priority": "medium",
+          "source": "ai"
         }
       ],
-      "tasksStatus": "done",
       "duration": "2:07",
       "durationMs": 127000,
       "createdAt": "2026-03-27T09:00:00.000Z",
-      "relativeTime": "",
       "status": "read",
       "readAt": "2026-03-28T10:00:00.000Z",
-      "aiStatus": "done",
-      "transcriptProgress": 1,
       "classification": "meeting",
-      "folderId": "folder-demo-work"
+      "keyPhrases": ["migration", "feature flag", "QA"],
+      "folderId": "folder-demo-work",
+      "linkedRecordIds": ["screenshot-demo-01"]
     },
     {
       "id": "screenshot-demo-05",
       "title": "Sprint retro — Feb",
       "transcript": "Short retro notes from last sprint. Kept for history.",
       "summary": "Archived retro snapshot.",
-      "summaryStatus": "done",
       "tasks": [],
-      "tasksStatus": "done",
       "duration": "0:33",
       "durationMs": 33000,
       "createdAt": "2026-03-16T14:00:00.000Z",
-      "relativeTime": "",
       "status": "archived",
       "readAt": "2026-03-17T08:00:00.000Z",
-      "aiStatus": "done",
-      "transcriptProgress": 1,
       "classification": "work",
       "folderId": "folder-demo-work"
     },
@@ -183,7 +234,6 @@
       "title": "Podcast outline — episode 12",
       "transcript": "Cold open hook, three main beats, sponsor read at minute twelve, outro with CTA to subscribe.",
       "summary": "Structured outline with timing for mid-roll sponsor.",
-      "summaryStatus": "done",
       "tasks": [
         {
           "id": "task-06-1",
@@ -198,17 +248,54 @@
           "source": "manual"
         }
       ],
-      "tasksStatus": "done",
       "duration": "1:15",
       "durationMs": 75000,
       "createdAt": "2026-03-25T11:00:00.000Z",
-      "relativeTime": "",
       "status": "unread",
       "readAt": null,
-      "aiStatus": "done",
-      "transcriptProgress": 1,
       "classification": "other",
       "folderId": null
+    },
+    {
+      "id": "screenshot-demo-07",
+      "title": "Client call — onboarding feedback",
+      "transcript": "Customer loves the transcript speed but wants clearer task deadlines. They asked for calendar export and better meeting speaker labels.",
+      "summary": "Positive on transcription speed; requests calendar export and clearer speaker labels in meetings.",
+      "meetingDialogue": "**Customer:** Transcription is fast — that is the main win for our team.\n\n**You:** We can surface deadlines as tasks with dates.\n\n**Customer:** Calendar export would close the loop for us.",
+      "meetingSpeakerLabels": {
+        "speaker-1": "Customer",
+        "speaker-2": "You"
+      },
+      "meetingSummaryTemplate": "sales_call",
+      "tasks": [
+        {
+          "id": "task-07-1",
+          "text": "Share calendar export roadmap",
+          "isDone": false,
+          "deadline": "2026-04-05",
+          "priority": "high",
+          "source": "ai"
+        }
+      ],
+      "duration": "3:24",
+      "durationMs": 204000,
+      "createdAt": "2026-03-26T15:30:00.000Z",
+      "status": "unread",
+      "readAt": null,
+      "isPinned": true,
+      "classification": "work",
+      "tags": ["client", "feedback"],
+      "folderId": "folder-demo-work"
+    }
+  ],
+  "graphLayouts": [
+    {
+      "id": "nglv_screenshot_demo_1",
+      "layoutKey": "7:screenshot-demo-01|screenshot-demo-03|screenshot-demo-04;;;;auto;1",
+      "versionNumber": 1,
+      "createdAt": "2026-03-30T11:00:00.000Z",
+      "name": "Screenshot demo graph",
+      "payload": "{\"v\":1,\"positions\":{\"record:screenshot-demo-01\":{\"x\":0,\"y\":0},\"record:screenshot-demo-03\":{\"x\":300,\"y\":-140},\"record:screenshot-demo-04\":{\"x\":-280,\"y\":160},\"record:screenshot-demo-07\":{\"x\":120,\"y\":220}}}"
     }
   ]
 }

@@ -62,6 +62,46 @@ export const memoryStore = {
     return entry.count;
   },
 
+  incrByWithExpireOnFirst: async (
+    key: string,
+    amount: number,
+    seconds: number,
+  ): Promise<number> => {
+    cleanupExpired();
+    const entry = counterStore.get(key);
+    const now = Date.now();
+    if (!entry || entry.expiresAt <= now) {
+      counterStore.set(key, { count: amount, expiresAt: now + seconds * 1000 });
+      return amount;
+    }
+    entry.count += amount;
+    return entry.count;
+  },
+
+  incrementWithinLimit: async (
+    key: string,
+    amount: number,
+    limit: number,
+    seconds: number,
+  ): Promise<{ allowed: boolean; value: number }> => {
+    cleanupExpired();
+    const entry = counterStore.get(key);
+    const now = Date.now();
+    const current = !entry || entry.expiresAt <= now ? 0 : entry.count;
+    if (current + amount > limit) {
+      return { allowed: false, value: current };
+    }
+
+    const next = current + amount;
+    if (!entry || entry.expiresAt <= now) {
+      counterStore.set(key, { count: next, expiresAt: now + seconds * 1000 });
+    } else {
+      entry.count = next;
+    }
+
+    return { allowed: true, value: next };
+  },
+
   decr: async (key: string): Promise<number> => {
     cleanupExpired();
     const entry = counterStore.get(key);
@@ -71,6 +111,33 @@ export const memoryStore = {
     entry.count = Math.max(0, entry.count - 1);
 
     return entry.count;
+  },
+
+  decrBy: async (key: string, amount: number): Promise<number> => {
+    cleanupExpired();
+    const entry = counterStore.get(key);
+    const now = Date.now();
+
+    if (!entry || entry.expiresAt <= now) return 0;
+    entry.count = Math.max(0, entry.count - amount);
+
+    return entry.count;
+  },
+
+  decrByWithFloor: async (
+    key: string,
+    amount: number,
+  ): Promise<{ value: number; delta: number }> => {
+    cleanupExpired();
+    const entry = counterStore.get(key);
+    const now = Date.now();
+
+    if (!entry || entry.expiresAt <= now) return { value: 0, delta: 0 };
+
+    const previous = entry.count;
+    entry.count = Math.max(0, entry.count - amount);
+
+    return { value: entry.count, delta: previous - entry.count };
   },
 
   expire: async (key: string, seconds: number): Promise<void> => {

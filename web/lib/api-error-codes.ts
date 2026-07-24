@@ -19,6 +19,8 @@ export const ApiErrorCode = {
   /** Generic rate limit (e.g. pro license redeem). */
   RateLimit: 'rate_limit',
   SupportRateLimited: 'support_rate_limited',
+  PublishRateLimited: 'publish_rate_limited',
+  ShareEmailRateLimited: 'share_email_rate_limited',
   DuplicateId: 'duplicate_id',
   NotFound: 'not_found',
   ServiceUnavailable: 'service_unavailable',
@@ -40,6 +42,12 @@ export const ApiErrorCode = {
   IapActive: 'iap_active',
   BonusNoUsage: 'bonus_no_usage',
   BonusCooldown: 'bonus_cooldown',
+  ProRequired: 'pro_required',
+  ProResetLimitNotExhausted: 'pro_reset_limit_not_exhausted',
+  ProResetInvalidProduct: 'pro_reset_invalid_product',
+  ProResetPurchaseNotFound: 'pro_reset_purchase_not_found',
+  ProResetTransactionUsed: 'pro_reset_transaction_used',
+  ProResetNotConfigured: 'pro_reset_not_configured',
 } as const;
 
 export type ApiErrorCodeValue = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];

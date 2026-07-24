@@ -1,0 +1,13 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: record/discard-recording.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- tapOn:
+    id: tab.record
+- tapOn:
+    id: record.stop
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: save.discard
+    timeout: 20000

@@ -9,13 +9,19 @@ import {
   marketingInsetClass,
 } from '@/components/landing/marketing-layout';
 import { utilitiesShellClass, utilitiesShellDividerClass } from '@/components/ui/utilities-shell';
-import { APP_STORE_URL } from '@/config/constants';
+import { GO_STORE_REDIRECT_PATH } from '@/config/constants';
 
-export function Header(): React.ReactElement {
+type HeaderProps = {
+  hideOnMobile?: boolean;
+};
+
+export function Header({ hideOnMobile = false }: HeaderProps): React.ReactElement {
   const t = useTranslations('header');
 
   return (
-    <header className={`sticky top-3 z-50 ${marketingGutterClass}`}>
+    <header
+      className={`sticky top-3 z-50 ${marketingGutterClass} ${hideOnMobile ? 'hidden sm:block' : ''}`}
+    >
       <div
         className={`${marketingContainerClass} flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white/75 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:gap-4 sm:py-2.5 dark:border-white/12 dark:bg-black/55 dark:shadow-[0_14px_36px_rgba(0,0,0,0.35)] ${marketingInsetClass}`}
       >
@@ -39,7 +45,7 @@ export function Header(): React.ReactElement {
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
           <a
-            href={APP_STORE_URL}
+            href={GO_STORE_REDIRECT_PATH}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={t('installApp')}

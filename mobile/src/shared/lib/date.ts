@@ -2,14 +2,26 @@ import 'dayjs/locale/ru';
 
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
+import isoWeek from 'dayjs/plugin/isoWeek';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
 dayjs.extend(duration);
+dayjs.extend(isoWeek);
 dayjs.extend(relativeTime);
 
 export const resolveDayjsLocale = (locale: string | null | undefined): 'en' | 'ru' => {
   return locale?.toLowerCase().startsWith('ru') ? 'ru' : 'en';
 };
+
+export const RU_WEEKDAY_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] as const;
+export const EN_WEEKDAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
+
+export function formatWeekdayShort(date: dayjs.Dayjs, locale: string | null | undefined): string {
+  const resolved = resolveDayjsLocale(locale);
+  const index = date.isoWeekday() - 1;
+  const labels = resolved === 'ru' ? RU_WEEKDAY_SHORT : EN_WEEKDAY_SHORT;
+  return labels[index] ?? date.format('dd');
+}
 
 export const formatRelativeTime = (isoDate: string, locale = 'en'): string => {
   const dayjsLocale = resolveDayjsLocale(locale);
@@ -29,6 +41,18 @@ export const formatRelativeTime = (isoDate: string, locale = 'en'): string => {
 };
 
 const SHORT_DATE_SHOW_YEAR_SAME_YEAR_AFTER_DAYS = 90;
+
+/** Local date + time for share-link expiry (no timezone suffix — users expect device local time). */
+export const formatShareExpiresAt = (isoDate: string, locale = 'en'): string => {
+  const dayjsLocale = resolveDayjsLocale(locale);
+  const date = dayjs(isoDate).locale(dayjsLocale);
+
+  if (!date.isValid()) {
+    return isoDate;
+  }
+
+  return date.format('D MMM YYYY, HH:mm');
+};
 
 export const formatShortDate = (isoDate: string, locale = 'en'): string => {
   const dayjsLocale = resolveDayjsLocale(locale);

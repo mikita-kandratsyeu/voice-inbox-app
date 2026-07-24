@@ -13,6 +13,10 @@ type RecordAiOperatingFields = Pick<
 const isAiOperatingStatus = (status?: RecordingStatus): boolean =>
   status === 'loading_model' || status === 'processing' || status === 'cancelling';
 
+export function isTranscriptionOperating(aiStatus?: RecordingStatus): boolean {
+  return isAiOperatingStatus(aiStatus);
+}
+
 export function isRecordAiOperating(record: RecordAiOperatingFields): boolean {
   return (
     isAiOperatingStatus(record.aiStatus) ||

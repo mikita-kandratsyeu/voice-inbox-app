@@ -1,3 +1,4 @@
+import { diagWarn } from '@/shared/lib/appLogger';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
 export type StorageStats = {
@@ -109,7 +110,7 @@ const getCacheSizeBytes = async (audioPaths: string[]): Promise<number> => {
       return await getDirectorySizeBytes(dir, excludeSet);
     }
   } catch (err) {
-    if (__DEV__) console.warn('[storage] Failed to get cache size:', dir, err);
+    diagWarn('[storage] Failed to get cache size:', dir, err);
   }
   return 0;
 };
@@ -129,7 +130,7 @@ export const clearCache = async (audioPaths: string[]): Promise<number> => {
     const { deletedBytes } = await clearDirectoryContents(dir, keepSet);
     totalDeleted += deletedBytes;
   } catch (err) {
-    if (__DEV__) console.warn('[storage] Failed to clear cache dir:', dir, err);
+    diagWarn('[storage] Failed to clear cache dir:', dir, err);
   }
 
   return totalDeleted;

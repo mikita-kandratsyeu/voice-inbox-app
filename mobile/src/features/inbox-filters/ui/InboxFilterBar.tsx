@@ -1,14 +1,18 @@
 import { MenuView } from '@react-native-menu/menu';
-import { Archive, ArrowDownUp, Filter, LayoutList, Pin } from 'lucide-react-native';
-import React from 'react';
+import {
+  Archive,
+  ArrowDownUp,
+  Filter,
+  Inbox,
+  LayoutTemplate,
+  List,
+  Pin,
+} from 'lucide-react-native';
+import React, { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type LayoutChangeEvent, TouchableOpacity, View, type ViewStyle } from 'react-native';
 
-import {
-  FLOAT_TAB_IOS_SHADOW_OFFSET_Y,
-  FLOAT_TAB_IOS_SHADOW_RADIUS,
-  floatingTabBarShadowOpacity,
-} from '@/app/navigation/config';
+import type { InboxCardLayout } from '@/features/inbox-card-layout';
 import type {
   InboxFilterStatus,
   InboxMenuFilterStatus,
@@ -17,13 +21,14 @@ import type {
 } from '@/features/inbox-filters';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { hapticSelection, selectPlatform } from '@/shared/lib';
+import { hapticSelection } from '@/shared/lib';
 import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
-import { FrostedChromeBackground } from '@/shared/ui';
+import { FrostedChromeSurface } from '@/shared/ui';
 
 const PRIMARY_FILTERS: PrimaryFilterStatus[] = ['all', 'pinned', 'archived'];
 
 const FILTER_CHROME_RADIUS = 12;
+export const INBOX_FILTER_CHROME_RADIUS = FILTER_CHROME_RADIUS;
 const FILTER_FLOAT_TOP_PAD = 10;
 const FILTER_FLOAT_BOTTOM_PAD = 10;
 const FILTER_ROW_INNER_HEIGHT = 4 * 2 + IOS_MIN_TOUCH_TARGET;
@@ -40,37 +45,9 @@ function FrostedFilterSurface({
   style?: ViewStyle;
 }) {
   return (
-    <View
-      style={[
-        {
-          borderRadius: FILTER_CHROME_RADIUS,
-          backgroundColor: 'transparent',
-          ...selectPlatform({
-            ios: {
-              shadowColor: color.shadow.color,
-              shadowOffset: { width: 0, height: FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
-              shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
-              shadowRadius: FLOAT_TAB_IOS_SHADOW_RADIUS,
-            },
-            android: {
-              elevation: 8,
-            },
-            default: {},
-          }),
-        },
-        style,
-      ]}
-    >
-      <View
-        style={{
-          borderRadius: FILTER_CHROME_RADIUS,
-          overflow: 'hidden',
-        }}
-      >
-        <FrostedChromeBackground borderRadius={FILTER_CHROME_RADIUS} />
-        {children}
-      </View>
-    </View>
+    <FrostedChromeSurface color={color} borderRadius={FILTER_CHROME_RADIUS} style={style}>
+      {children}
+    </FrostedChromeSurface>
   );
 }
 
@@ -80,6 +57,7 @@ const MENU_FILTERS: InboxMenuFilterStatus[] = [
   'withoutSummary',
   'withoutTasks',
   'withTasks',
+  'withPublicLink',
   'meetingMode',
   'processingError',
 ];
@@ -92,8 +70,8 @@ const SORT_OPTIONS: InboxSortOption[] = [
   'titleAsc',
 ];
 
-const FILTER_ICONS: Record<PrimaryFilterStatus, typeof LayoutList> = {
-  all: LayoutList,
+const FILTER_ICONS: Record<PrimaryFilterStatus, typeof Inbox> = {
+  all: Inbox,
   pinned: Pin,
   archived: Archive,
 };
@@ -105,36 +83,65 @@ type InboxFilterBarProps = {
   onFilterChange: (status: InboxFilterStatus) => void;
   onMenuFilterChange: (status: InboxMenuFilterStatus | null) => void;
   onSortChange: (option: InboxSortOption) => void;
+  cardLayout: InboxCardLayout;
+  onCardLayoutChange: (layout: InboxCardLayout) => void;
   color: Colors;
   onLayout?: (event: LayoutChangeEvent) => void;
   /** Tablet sidebar already exposes All / Pinned / Archive. */
   hidePrimaryFilters?: boolean;
 };
 
-export const InboxFilterBar = ({
+export const InboxFilterBar = memo(function InboxFilterBar({
   filterStatus,
   menuFilterStatus,
   sortOption,
   onFilterChange,
   onMenuFilterChange,
   onSortChange,
+  cardLayout,
+  onCardLayoutChange,
   color,
   onLayout,
   hidePrimaryFilters = false,
-}: InboxFilterBarProps) => {
+}: InboxFilterBarProps) {
   const { t } = useTranslation();
   const theme = useAppTheme();
   const isDark = theme === 'dark';
   const hasMenuFilterActive = menuFilterStatus != null;
 
-  const buttonStyle = {
-    minHeight: IOS_MIN_TOUCH_TARGET,
-    minWidth: IOS_MIN_TOUCH_TARGET,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-  };
+  const buttonStyle = useMemo(
+    () => ({
+      minHeight: IOS_MIN_TOUCH_TARGET,
+      minWidth: IOS_MIN_TOUCH_TARGET,
+      paddingVertical: 10,
+      borderRadius: 8,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+    }),
+    [],
+  );
+
+  const menuActions = useMemo(
+    () =>
+      MENU_FILTERS.map((opt) => ({
+        id: opt,
+        title: t(`inbox.filters.${opt}`),
+        titleColor: color.text.primary,
+        state: menuFilterStatus === opt ? ('on' as const) : ('off' as const),
+      })),
+    [menuFilterStatus, t, color.text.primary],
+  );
+
+  const sortActions = useMemo(
+    () =>
+      SORT_OPTIONS.map((opt) => ({
+        id: opt,
+        title: t(`inbox.sort.${opt}`),
+        titleColor: color.text.primary,
+        state: sortOption === opt ? ('on' as const) : ('off' as const),
+      })),
+    [sortOption, t, color.text.primary],
+  );
 
   return (
     <View
@@ -181,7 +188,7 @@ export const InboxFilterBar = ({
         </FrostedFilterSurface>
       ) : null}
       <FrostedFilterSurface color={color}>
-        <View style={{ padding: 4 }}>
+        <View className="flex-row" style={{ padding: 4, gap: 4 }}>
           <MenuView
             key={`filter-menu-${theme}`}
             themeVariant={isDark ? 'dark' : 'light'}
@@ -192,12 +199,7 @@ export const InboxFilterBar = ({
                 onMenuFilterChange(menuFilterStatus === opt ? null : opt);
               }
             }}
-            actions={MENU_FILTERS.map((opt) => ({
-              id: opt,
-              title: t(`inbox.filters.${opt}`),
-              titleColor: color.text.primary,
-              state: menuFilterStatus === opt ? 'on' : 'off',
-            }))}
+            actions={menuActions}
           >
             <TouchableOpacity
               accessibilityRole="button"
@@ -218,10 +220,6 @@ export const InboxFilterBar = ({
               />
             </TouchableOpacity>
           </MenuView>
-        </View>
-      </FrostedFilterSurface>
-      <FrostedFilterSurface color={color}>
-        <View style={{ padding: 4 }}>
           <MenuView
             key={`sort-menu-${theme}`}
             themeVariant={isDark ? 'dark' : 'light'}
@@ -232,12 +230,7 @@ export const InboxFilterBar = ({
                 onSortChange(opt);
               }
             }}
-            actions={SORT_OPTIONS.map((opt) => ({
-              id: opt,
-              title: t(`inbox.sort.${opt}`),
-              titleColor: color.text.primary,
-              state: sortOption === opt ? 'on' : 'off',
-            }))}
+            actions={sortActions}
           >
             <TouchableOpacity
               accessibilityRole="button"
@@ -260,6 +253,41 @@ export const InboxFilterBar = ({
           </MenuView>
         </View>
       </FrostedFilterSurface>
+      <FrostedFilterSurface color={color}>
+        <View style={{ padding: 4 }}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityState={{ selected: cardLayout === 'expanded' }}
+            activeOpacity={0.7}
+            onPress={() => {
+              hapticSelection();
+              onCardLayoutChange(cardLayout === 'compact' ? 'expanded' : 'compact');
+            }}
+            style={[
+              buttonStyle,
+              {
+                paddingHorizontal: 8,
+                backgroundColor: cardLayout === 'expanded' ? color.accent.primary : 'transparent',
+              },
+            ]}
+            accessibilityLabel={
+              cardLayout === 'expanded'
+                ? t('inbox.cardLayout.expandedA11y')
+                : t('inbox.cardLayout.compactA11y')
+            }
+          >
+            {cardLayout === 'expanded' ? (
+              <LayoutTemplate
+                size={18}
+                color={cardLayout === 'expanded' ? color.icon.onAccent : color.text.secondary}
+                strokeWidth={2}
+              />
+            ) : (
+              <List size={18} color={color.text.secondary} strokeWidth={2} />
+            )}
+          </TouchableOpacity>
+        </View>
+      </FrostedFilterSurface>
     </View>
   );
-};
+});

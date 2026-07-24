@@ -3,30 +3,16 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
-import dayjs from 'dayjs';
-import { Plus, X } from 'lucide-react-native';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { CalendarDays, Plus, X } from 'lucide-react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  Switch,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Alert, Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { RootStackParamList } from '@/app/navigation/types';
-import {
-  FolderChipBar,
-  FolderFormModal,
-  FolderReorderSheet,
-  useFolderStore,
-} from '@/entities/folder';
+import { useFolderStore } from '@/entities/folder';
 import { type TaskItem, useRecordStore } from '@/entities/record';
 import { areFoldersEnabledInAiMode, useSettingsStore } from '@/entities/settings';
 import { useAddToCalendar } from '@/features/add-to-calendar';
@@ -35,105 +21,55 @@ import { useAdsAllowed } from '@/features/app-storefront';
 import { DeferredInboxBannerAd, InboxBannerAd } from '@/features/inbox-banner';
 import { useManageFolders } from '@/features/manage-folders';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
+import {
+  normalizeOutcomeText,
+  TaskOutcomeSheet,
+  useTaskCompletionFlow,
+} from '@/features/task-outcome';
 import { TaskEditSheet } from '@/screens/recording-detail/ui/TaskEditSheet';
 import { useColors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import {
   flashListJumpToTop,
   hapticSelection,
   useIsTablet,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
-import { parseTaskDeadline } from '@/shared/lib/parseTaskDeadline';
-import { EmptyState, HeaderIconButton, ScreenHeader, SectionHeader } from '@/shared/ui';
+import {
+  taskDeadlineValidationErrorKey,
+  validateTaskDeadlineFields,
+} from '@/shared/lib/validateTaskDeadlineInput';
+import {
+  EmptyState,
+  FrostedHeaderButtonGroup,
+  HeaderIconButton,
+  ScreenHeader,
+  SectionHeader,
+} from '@/shared/ui';
 
+import { sortTaskRows } from '../lib/applyAllTasksQuickFilter';
+import { buildAllTasksRows } from '../lib/buildAllTasksRows';
+import {
+  buildTaskCountsByDeadlineDay,
+  filterTasksByCalendarDate,
+} from '../lib/filterTasksByCalendarDate';
+import {
+  getAllTasksListBucket,
+  TASK_DEADLINE_BUCKET_ORDER,
+} from '../lib/groupTasksByDeadlineBucket';
 import {
   type AllTasksFlattenedItem,
   type AllTasksListItem,
   injectAllTasksListBannerCard,
 } from '../lib/injectAllTasksListBannerCard';
-import type { TaskDeadlineBucket, TaskWithRecord } from '../types';
+import type { AllTasksQuickFilter, TaskDeadlineBucket, TaskWithRecord } from '../types';
+import { AllTasksCalendarPanel } from './AllTasksCalendarPanel';
+import { AllTasksFiltersPanel } from './AllTasksFiltersPanel';
 import { AllTasksNotePickerSheet } from './AllTasksNotePickerSheet';
 import { AllTasksTaskRow } from './AllTasksTaskRow';
 
-const TASK_DEADLINE_BUCKETS: TaskDeadlineBucket[] = [
-  'overdue',
-  'today',
-  'upcoming',
-  'noDate',
-  'done',
-];
-
-const PRIORITY_RANK: Record<NonNullable<TaskItem['priority']>, number> = {
-  high: 0,
-  medium: 1,
-  low: 2,
-};
-
 type Section = { id: TaskDeadlineBucket; title: string; data: TaskWithRecord[] };
-
-const getDeadlineBucket = (task: TaskItem): TaskDeadlineBucket => {
-  if (task.isDone) return 'done';
-  const deadline = parseTaskDeadline(task.deadline);
-  if (!deadline) return 'noDate';
-  const day = dayjs(deadline);
-  if (day.isBefore(dayjs(), 'day')) return 'overdue';
-  if (day.isSame(dayjs(), 'day')) return 'today';
-  return 'upcoming';
-};
-
-const getTaskDeadlineSortTime = (task: TaskItem): number => {
-  const deadline = parseTaskDeadline(task.deadline);
-  if (!deadline) return Number.POSITIVE_INFINITY;
-
-  const match = /^(\d{2}):(\d{2})$/.exec(task.deadlineTime ?? '');
-  if (!match) return deadline.getTime();
-
-  return new Date(
-    deadline.getFullYear(),
-    deadline.getMonth(),
-    deadline.getDate(),
-    Number(match[1]),
-    Number(match[2]),
-  ).getTime();
-};
-
-const sortTaskRows = (a: TaskWithRecord, b: TaskWithRecord): number => {
-  const deadlineA = getTaskDeadlineSortTime(a.task);
-  const deadlineB = getTaskDeadlineSortTime(b.task);
-  if (deadlineA !== deadlineB) return deadlineA - deadlineB;
-
-  const priorityA = a.task.priority ? PRIORITY_RANK[a.task.priority] : PRIORITY_RANK.medium;
-  const priorityB = b.task.priority ? PRIORITY_RANK[b.task.priority] : PRIORITY_RANK.medium;
-  if (priorityA !== priorityB) return priorityA - priorityB;
-
-  return dayjs(b.recordCreatedAt).valueOf() - dayjs(a.recordCreatedAt).valueOf();
-};
-
-const isValidDeadlineInput = (value: string): boolean => {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  return dayjs(value).isValid() && dayjs(value).format('YYYY-MM-DD') === value;
-};
-
-const isPastDeadlineInput = (value: string): boolean => dayjs(value).isBefore(dayjs(), 'day');
-
-const isValidDeadlineTimeInput = (value: string): boolean =>
-  /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
-
-const isPastDeadlineDateTimeInput = (deadline: string, deadlineTime: string): boolean => {
-  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(deadline);
-  const timeMatch = /^(\d{2}):(\d{2})$/.exec(deadlineTime);
-  if (!dateMatch || !timeMatch) return false;
-
-  const value = new Date(
-    Number(dateMatch[1]),
-    Number(dateMatch[2]) - 1,
-    Number(dateMatch[3]),
-    Number(timeMatch[1]),
-    Number(timeMatch[2]),
-  );
-
-  return value.getTime() <= Date.now();
-};
+type AllTasksViewMode = 'list' | 'calendar';
 
 export const AllTasksScreen = () => {
   const { t } = useTranslation();
@@ -143,28 +79,61 @@ export const AllTasksScreen = () => {
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
   const { width: windowWidth } = useWindowDimensions();
-  const [openOnly, setOpenOnly] = useState(true);
+  const [quickFilter, setQuickFilter] = useState<AllTasksQuickFilter>('all');
   const [recentlyCompleted, setRecentlyCompleted] = useState<Set<string>>(new Set());
   const timeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
-  const [editTaskTarget, setEditTaskTarget] = useState<{
+  type EditTaskTarget = {
     recordId: string;
     taskId: string;
     text: string;
     deadline?: string | null;
     deadlineTime?: string | null;
     priority?: TaskItem['priority'];
-  } | null>(null);
+  };
+
+  const [editTaskTarget, setEditTaskTarget] = useState<EditTaskTarget | null>(null);
+  type EditOutcomeTarget = {
+    recordId: string;
+    taskId: string;
+    outcomeText: string;
+  };
+  const [editOutcomeTarget, setEditOutcomeTarget] = useState<EditOutcomeTarget | null>(null);
+
+  const openEditTaskSheet = useCallback((target: EditTaskTarget) => {
+    setEditTaskTarget((current) => {
+      if (current === null) {
+        return target;
+      }
+      requestAnimationFrame(() => {
+        setEditTaskTarget(target);
+      });
+      return null;
+    });
+  }, []);
+
+  const openEditOutcomeSheet = useCallback((target: EditOutcomeTarget) => {
+    setEditOutcomeTarget((current) => {
+      if (current === null) {
+        return target;
+      }
+      requestAnimationFrame(() => {
+        setEditOutcomeTarget(target);
+      });
+      return null;
+    });
+  }, []);
+
   const [notePickerVisible, setNotePickerVisible] = useState(false);
   const [createTaskRecordId, setCreateTaskRecordId] = useState<string | null>(null);
   const [createTaskFromPicker, setCreateTaskFromPicker] = useState(false);
+  const [viewMode, setViewMode] = useState<AllTasksViewMode>('list');
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => new Date());
 
   const listRef = useRef<FlashListRef<AllTasksListItem>>(null);
-  const folderChipScrollRef = useRef<ScrollView>(null);
 
-  const { records, toggleTask, updateTasks } = useRecordStore(
+  const { records, updateTasks } = useRecordStore(
     useShallow((s) => ({
       records: s.records,
-      toggleTask: s.toggleTask,
       updateTasks: s.updateTasks,
     })),
   );
@@ -173,11 +142,10 @@ export const AllTasksScreen = () => {
   const { addTaskToCalendar } = useAddToCalendar();
   const { addTaskToReminder } = useAddToReminder();
 
-  const { activeFolderId, setActiveFolder, reorderFolders } = useFolderStore(
+  const { activeFolderId, setActiveFolder } = useFolderStore(
     useShallow((s) => ({
       activeFolderId: s.activeFolderId,
       setActiveFolder: s.setActiveFolder,
-      reorderFolders: s.reorderFolders,
     })),
   );
 
@@ -185,7 +153,6 @@ export const AllTasksScreen = () => {
     (id: string | null) => {
       setActiveFolder(id);
       if (id === null) {
-        folderChipScrollRef.current?.scrollTo({ x: 0, y: 0, animated: false });
         flashListJumpToTop(listRef.current ?? undefined);
       }
     },
@@ -197,28 +164,7 @@ export const AllTasksScreen = () => {
   const foldersEnabled = areFoldersEnabledInAiMode(aiExecutionMode, privateAiProvider);
   const effectiveActiveFolderId = foldersEnabled ? activeFolderId : null;
 
-  const {
-    folders,
-    modalVisible: folderModalVisible,
-    editingFolder,
-    openCreateModal: openCreateFolderModal,
-    openEditModal: openEditFolderModal,
-    closeModal: closeFolderModal,
-    handleSave: handleFolderSave,
-    handleDelete: handleFolderDelete,
-  } = useManageFolders();
-
-  const [folderReorderVisible, setFolderReorderVisible] = useState(false);
-
-  const handleFoldersReorder = useCallback(
-    (orderedIds: string[]) => {
-      void reorderFolders(orderedIds);
-    },
-    [reorderFolders],
-  );
-
-  const openFolderReorderSheet = useCallback(() => setFolderReorderVisible(true), []);
-  const closeFolderReorderSheet = useCallback(() => setFolderReorderVisible(false), []);
+  const { folders } = useManageFolders();
 
   const clearNoteFilter = useCallback(() => {
     navigation.setParams({ recordId: undefined });
@@ -241,54 +187,128 @@ export const AllTasksScreen = () => {
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const { adsAllowed } = useAdsAllowed();
   const filterPadH = isTablet ? 20 : 16;
-  const filterPadV = isTablet ? 14 : 10;
+
+  const showTaskUpdateError = useCallback(() => {
+    Alert.alert(t('common.error'), t('allTasks.taskUpdateError'));
+  }, [t]);
+
+  const clearRecentlyCompleted = useCallback((taskId: string) => {
+    if (timeoutsRef.current[taskId]) {
+      clearTimeout(timeoutsRef.current[taskId]);
+      delete timeoutsRef.current[taskId];
+    }
+
+    setRecentlyCompleted((prev) => {
+      const next = new Set(prev);
+      next.delete(taskId);
+      return next;
+    });
+  }, []);
+
+  const markRecentlyCompleted = useCallback(
+    (taskId: string) => {
+      if (quickFilter === 'done') return;
+
+      setRecentlyCompleted((prev) => {
+        const next = new Set(prev);
+        next.add(taskId);
+        return next;
+      });
+
+      timeoutsRef.current[taskId] = setTimeout(() => {
+        clearRecentlyCompleted(taskId);
+      }, 500);
+    },
+    [clearRecentlyCompleted, quickFilter],
+  );
+
+  const {
+    outcomeTarget,
+    linkedNoteContext,
+    requestTaskToggle,
+    closeOutcomeSheet,
+    completeWithOutcome,
+    completeAndSkip,
+    startVoiceFollowUp,
+    startTextFollowUp,
+  } = useTaskCompletionFlow({
+    navigation,
+    onUpdateError: showTaskUpdateError,
+    onTaskCompleted: markRecentlyCompleted,
+  });
+
+  const getFollowUpRecordTitle = useCallback(
+    (recordId: string) => records.find((record) => record.id === recordId)?.title ?? null,
+    [records],
+  );
+
+  const openFollowUpNote = useCallback(
+    (recordId: string) => {
+      const record = records.find((item) => item.id === recordId);
+      if (!record) return;
+      navigation.push('RecordingDetail', { record });
+    },
+    [navigation, records],
+  );
+
+  useEffect(() => {
+    return () => {
+      for (const timeoutId of Object.values(timeoutsRef.current)) {
+        clearTimeout(timeoutId);
+      }
+      timeoutsRef.current = {};
+    };
+  }, []);
+
+  const taskRows = useMemo(
+    () =>
+      buildAllTasksRows(records, {
+        effectiveActiveFolderId,
+        recordFilterId,
+        quickFilter,
+        recentlyCompleted,
+      }),
+    [records, quickFilter, recentlyCompleted, effectiveActiveFolderId, recordFilterId],
+  );
 
   const sectionList = useMemo(() => {
-    let pool = [...records]
-      .filter((r) => r.status !== 'archived')
-      .filter((r) => (r.tasks?.length ?? 0) > 0);
-
-    if (effectiveActiveFolderId) {
-      pool = pool.filter((r) => r.folderId === effectiveActiveFolderId);
-    }
-    if (recordFilterId) {
-      pool = pool.filter((r) => r.id === recordFilterId);
-    }
-
-    const sorted = pool.sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf());
-
-    const rows: TaskWithRecord[] = [];
-    for (const r of sorted) {
-      for (const task of r.tasks ?? []) {
-        rows.push({
-          recordId: r.id,
-          recordTitle: r.title,
-          recordCreatedAt: r.createdAt,
-          task,
-        });
-      }
-    }
-
-    const filtered = openOnly
-      ? rows.filter((row) => !row.task.isDone || recentlyCompleted.has(row.task.id))
-      : rows;
-
     const byBucket = new Map<TaskDeadlineBucket, TaskWithRecord[]>();
-    for (const row of filtered) {
-      const key = getDeadlineBucket(row.task);
+    for (const row of taskRows) {
+      const key = getAllTasksListBucket(row.task);
       const list = byBucket.get(key) ?? [];
       list.push(row);
       byBucket.set(key, list);
     }
 
-    const sections: Section[] = TASK_DEADLINE_BUCKETS.map((key) => ({
+    const sections: Section[] = TASK_DEADLINE_BUCKET_ORDER.map((key) => ({
       id: key,
       title: t(`allTasks.sections.${key}`),
       data: [...(byBucket.get(key) ?? [])].sort(sortTaskRows),
     })).filter((section) => section.data.length > 0);
 
     return sections;
-  }, [records, openOnly, t, recentlyCompleted, effectiveActiveFolderId, recordFilterId]);
+  }, [taskRows, t]);
+
+  const calendarTaskCountsByDay = useMemo(() => buildTaskCountsByDeadlineDay(taskRows), [taskRows]);
+
+  const calendarDayRows = useMemo(() => {
+    const filtered = filterTasksByCalendarDate(taskRows, selectedCalendarDate);
+    return [...filtered].sort(sortTaskRows);
+  }, [taskRows, selectedCalendarDate]);
+
+  const calendarListData = useMemo((): AllTasksListItem[] => {
+    return calendarDayRows.map((row) => ({ type: 'task', row }));
+  }, [calendarDayRows]);
+
+  useEffect(() => {
+    if (viewMode === 'calendar' && quickFilter === 'today') {
+      setSelectedCalendarDate(new Date());
+    }
+  }, [quickFilter, viewMode]);
+
+  useEffect(() => {
+    flashListJumpToTop(listRef.current ?? undefined);
+  }, [viewMode, selectedCalendarDate]);
 
   const flattenedList = useMemo((): AllTasksFlattenedItem[] => {
     const out: AllTasksFlattenedItem[] = [];
@@ -324,37 +344,17 @@ export const AllTasksScreen = () => {
 
   const onToggle = useCallback(
     (recordId: string, taskId: string, currentlyDone: boolean) => {
-      toggleTask(recordId, taskId).catch(() => {});
+      const record = records.find((item) => item.id === recordId);
+      const task = record?.tasks?.find((item) => item.id === taskId);
+      if (!record || !task) return;
 
-      if (!currentlyDone && openOnly) {
-        setRecentlyCompleted((prev) => {
-          const next = new Set(prev);
-          next.add(taskId);
-          return next;
-        });
-
-        timeoutsRef.current[taskId] = setTimeout(() => {
-          setRecentlyCompleted((prev) => {
-            const next = new Set(prev);
-            next.delete(taskId);
-            return next;
-          });
-          delete timeoutsRef.current[taskId];
-        }, 500);
-      } else if (currentlyDone && openOnly) {
-        if (timeoutsRef.current[taskId]) {
-          clearTimeout(timeoutsRef.current[taskId]);
-          delete timeoutsRef.current[taskId];
-
-          setRecentlyCompleted((prev) => {
-            const next = new Set(prev);
-            next.delete(taskId);
-            return next;
-          });
-        }
+      if (currentlyDone) {
+        clearRecentlyCompleted(taskId);
       }
+
+      requestTaskToggle(recordId, task);
     },
-    [toggleTask, openOnly],
+    [clearRecentlyCompleted, records, requestTaskToggle],
   );
 
   const openCreateTask = useCallback(() => {
@@ -417,24 +417,9 @@ export const AllTasksScreen = () => {
 
       const nextDeadline = nextValue.deadline?.trim() ?? '';
       const nextDeadlineTime = nextValue.deadlineTime?.trim() ?? '';
-      if (nextDeadline.length > 0 && !isValidDeadlineInput(nextDeadline)) {
-        Alert.alert(t('common.error'), t('tasks.deadlineInvalid'));
-        return false;
-      }
-      if (nextDeadlineTime.length > 0 && !isValidDeadlineTimeInput(nextDeadlineTime)) {
-        Alert.alert(t('common.error'), t('tasks.deadlineInvalid'));
-        return false;
-      }
-      if (nextDeadline.length > 0 && isPastDeadlineInput(nextDeadline)) {
-        Alert.alert(t('common.error'), t('tasks.deadlinePastInvalid'));
-        return false;
-      }
-      if (
-        nextDeadline.length > 0 &&
-        nextDeadlineTime.length > 0 &&
-        isPastDeadlineDateTimeInput(nextDeadline, nextDeadlineTime)
-      ) {
-        Alert.alert(t('common.error'), t('tasks.deadlineTimePastInvalid'));
+      const deadlineError = validateTaskDeadlineFields(nextDeadline, nextDeadlineTime);
+      if (deadlineError) {
+        Alert.alert(t('common.error'), t(taskDeadlineValidationErrorKey(deadlineError)));
         return false;
       }
 
@@ -452,10 +437,12 @@ export const AllTasksScreen = () => {
           priority: nextValue.priority ?? 'medium',
         },
       ];
-      updateTasks(recordId, next).catch(() => {});
+      void updateTasks(recordId, next).catch(() => {
+        showTaskUpdateError();
+      });
       return true;
     },
-    [records, t, updateTasks],
+    [records, showTaskUpdateError, t, updateTasks],
   );
 
   const onEditTask = useCallback(
@@ -488,24 +475,9 @@ export const AllTasksScreen = () => {
 
       const nextDeadline = nextValue.deadline?.trim() ?? '';
       const nextDeadlineTime = nextValue.deadlineTime?.trim() ?? '';
-      if (nextDeadline.length > 0 && !isValidDeadlineInput(nextDeadline)) {
-        Alert.alert(t('common.error'), t('tasks.deadlineInvalid'));
-        return false;
-      }
-      if (nextDeadlineTime.length > 0 && !isValidDeadlineTimeInput(nextDeadlineTime)) {
-        Alert.alert(t('common.error'), t('tasks.deadlineInvalid'));
-        return false;
-      }
-      if (nextDeadline.length > 0 && isPastDeadlineInput(nextDeadline)) {
-        Alert.alert(t('common.error'), t('tasks.deadlinePastInvalid'));
-        return false;
-      }
-      if (
-        nextDeadline.length > 0 &&
-        nextDeadlineTime.length > 0 &&
-        isPastDeadlineDateTimeInput(nextDeadline, nextDeadlineTime)
-      ) {
-        Alert.alert(t('common.error'), t('tasks.deadlineTimePastInvalid'));
+      const deadlineError = validateTaskDeadlineFields(nextDeadline, nextDeadlineTime);
+      if (deadlineError) {
+        Alert.alert(t('common.error'), t(taskDeadlineValidationErrorKey(deadlineError)));
         return false;
       }
 
@@ -521,11 +493,54 @@ export const AllTasksScreen = () => {
             }
           : x,
       );
-      updateTasks(recordId, next).catch(() => {});
+      void updateTasks(recordId, next).catch(() => {
+        showTaskUpdateError();
+      });
 
       return true;
     },
-    [records, t, updateTasks],
+    [records, showTaskUpdateError, t, updateTasks],
+  );
+
+  const onEditTaskOutcome = useCallback(
+    (recordId: string, taskId: string, outcomeText: string): boolean => {
+      const record = records.find((r) => r.id === recordId);
+      if (!record) return false;
+
+      const prev = record.tasks ?? [];
+      const next = prev.map((x) =>
+        x.id === taskId ? { ...x, outcomeText: normalizeOutcomeText(outcomeText) } : x,
+      );
+      void updateTasks(recordId, next).catch(() => {
+        showTaskUpdateError();
+      });
+
+      return true;
+    },
+    [records, showTaskUpdateError, updateTasks],
+  );
+
+  const onQuickSchedule = useCallback(
+    (recordId: string, taskId: string, deadline: string) => {
+      const record = records.find((r) => r.id === recordId);
+      if (!record) return;
+
+      const prev = record.tasks ?? [];
+      const next = prev.map((x) =>
+        x.id === taskId
+          ? {
+              ...x,
+              deadline,
+              deadlineTime: x.deadlineTime ?? null,
+            }
+          : x,
+      );
+
+      void updateTasks(recordId, next).catch(() => {
+        showTaskUpdateError();
+      });
+    },
+    [records, showTaskUpdateError, updateTasks],
   );
 
   const onDeleteTask = useCallback(
@@ -535,9 +550,31 @@ export const AllTasksScreen = () => {
 
       const prev = record.tasks ?? [];
       const next = prev.filter((x) => x.id !== taskId);
-      updateTasks(recordId, next).catch(() => {});
+      void updateTasks(recordId, next).catch(() => {
+        showTaskUpdateError();
+      });
     },
-    [records, updateTasks],
+    [records, showTaskUpdateError, updateTasks],
+  );
+
+  const onTogglePin = useCallback(
+    (recordId: string, taskId: string, currentlyPinned: boolean) => {
+      const record = records.find((r) => r.id === recordId);
+      if (!record) return;
+
+      const prev = record.tasks ?? [];
+      const next = prev.map((x) => (x.id === taskId ? { ...x, isPinned: !currentlyPinned } : x));
+      void updateTasks(recordId, next)
+        .then(() => {
+          if (!currentlyPinned && viewMode === 'list') {
+            flashListJumpToTop(listRef.current ?? undefined);
+          }
+        })
+        .catch(() => {
+          showTaskUpdateError();
+        });
+    },
+    [records, showTaskUpdateError, updateTasks, viewMode],
   );
 
   const showPermissionAlert = useCallback(
@@ -571,6 +608,12 @@ export const AllTasksScreen = () => {
     [addTaskToCalendar, showPermissionAlert, t],
   );
 
+  const editTaskRecord = useMemo(
+    () =>
+      editTaskTarget ? records.find((record) => record.id === editTaskTarget.recordId) : undefined,
+    [editTaskTarget, records],
+  );
+
   const editTaskSheet = useMemo(
     () => (
       <TaskEditSheet
@@ -579,7 +622,7 @@ export const AllTasksScreen = () => {
         initialDeadline={editTaskTarget?.deadline}
         initialDeadlineTime={editTaskTarget?.deadlineTime}
         initialPriority={editTaskTarget?.priority}
-        showMetadataFields
+        showMetadataFields={editTaskRecord?.status !== 'archived'}
         onClose={() => setEditTaskTarget(null)}
         onSave={(value) => {
           if (!editTaskTarget) return false;
@@ -587,7 +630,26 @@ export const AllTasksScreen = () => {
         }}
       />
     ),
-    [editTaskTarget, onEditTask],
+    [editTaskRecord?.status, editTaskTarget, onEditTask],
+  );
+
+  const editOutcomeSheet = useMemo(
+    () => (
+      <TaskEditSheet
+        visible={editOutcomeTarget !== null}
+        initialText={editOutcomeTarget?.outcomeText ?? ''}
+        sheetTitleKey="taskOutcome.editOutcomeSheetTitle"
+        placeholderKey="taskOutcome.outcomePlaceholder"
+        textMaxChars={2000}
+        allowEmptySave
+        onClose={() => setEditOutcomeTarget(null)}
+        onSave={({ text }) => {
+          if (!editOutcomeTarget) return false;
+          return onEditTaskOutcome(editOutcomeTarget.recordId, editOutcomeTarget.taskId, text);
+        }}
+      />
+    ),
+    [editOutcomeTarget, onEditTaskOutcome],
   );
 
   const createTaskLinkedNoteContext = useMemo(() => {
@@ -630,20 +692,54 @@ export const AllTasksScreen = () => {
     ],
   );
 
+  const toggleViewMode = useCallback(() => {
+    hapticSelection();
+    setViewMode((prev) => {
+      if (prev === 'list') {
+        setSelectedCalendarDate(new Date());
+        return 'calendar';
+      }
+      return 'list';
+    });
+  }, []);
+
   const headerRightSlot = useMemo(
     () => (
-      <HeaderIconButton
-        iconOnly
-        variant="icon"
-        size="md"
-        icon={<Plus size={22} color={color.text.primary} strokeWidth={2.2} />}
-        color={color}
-        onPress={openCreateTask}
-        accessibilityLabel={t('allTasks.createTaskA11y')}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      />
+      <FrostedHeaderButtonGroup color={color}>
+        <HeaderIconButton
+          inFrostedGroup
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={
+            <CalendarDays
+              size={20}
+              color={viewMode === 'calendar' ? color.accent.primary : color.text.primary}
+              strokeWidth={2.2}
+            />
+          }
+          color={color}
+          onPress={toggleViewMode}
+          accessibilityLabel={
+            viewMode === 'calendar' ? t('allTasks.listViewA11y') : t('allTasks.calendarViewA11y')
+          }
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        />
+        <HeaderIconButton
+          testID={TestIds.allTasks.create}
+          inFrostedGroup
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={<Plus size={22} color={color.text.primary} strokeWidth={2.2} />}
+          color={color}
+          onPress={openCreateTask}
+          accessibilityLabel={t('allTasks.createTaskA11y')}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        />
+      </FrostedHeaderButtonGroup>
     ),
-    [color, openCreateTask, t],
+    [color, openCreateTask, t, toggleViewMode, viewMode],
   );
 
   const renderListItem = useCallback(
@@ -661,9 +757,11 @@ export const AllTasksScreen = () => {
           compactHorizontalMargin={isTablet}
           openNoteLabel={t('allTasks.openNote')}
           onToggle={onToggle}
+          getFollowUpRecordTitle={getFollowUpRecordTitle}
+          onOpenFollowUp={openFollowUpNote}
           onOpenNote={openNote}
           onEditTask={(recordId, taskId, text) => {
-            setEditTaskTarget({
+            openEditTaskSheet({
               recordId,
               taskId,
               text,
@@ -672,8 +770,13 @@ export const AllTasksScreen = () => {
               priority: item.row.task.priority,
             });
           }}
+          onEditTaskOutcome={(recordId, taskId, outcomeText) => {
+            openEditOutcomeSheet({ recordId, taskId, outcomeText });
+          }}
+          onQuickSchedule={onQuickSchedule}
           onAddToReminder={onAddTaskToReminder}
           onAddToCalendar={onAddTaskToCalendar}
+          onTogglePin={onTogglePin}
           onDeleteTask={(recordId, taskId) => {
             Alert.alert(t('tasks.deleteTask'), t('tasks.deleteTaskConfirm'), [
               { text: t('common.cancel'), style: 'cancel' },
@@ -691,11 +794,17 @@ export const AllTasksScreen = () => {
       bannerMaxWidth,
       color,
       onToggle,
+      getFollowUpRecordTitle,
+      openFollowUpNote,
       openNote,
+      openEditTaskSheet,
+      openEditOutcomeSheet,
       onAddTaskToReminder,
       onAddTaskToCalendar,
       t,
       onDeleteTask,
+      onTogglePin,
+      onQuickSchedule,
       isTablet,
     ],
   );
@@ -712,72 +821,32 @@ export const AllTasksScreen = () => {
 
   const getItemType = useCallback((item: AllTasksListItem) => item.type, []);
 
-  const empty = sectionList.length === 0 || sectionList.every((s) => s.data.length === 0);
+  const listEmpty =
+    sectionList.length === 0 || sectionList.every((section) => section.data.length === 0);
+  const calendarEmpty = calendarDayRows.length === 0;
+  const empty = viewMode === 'calendar' ? calendarEmpty : listEmpty;
+  const activeListData = viewMode === 'calendar' ? calendarListData : listData;
 
   return (
-    <View className="flex-1" style={{ backgroundColor: color.background.secondary }}>
+    <View
+      testID={TestIds.allTasks.screen}
+      className="flex-1"
+      style={{ backgroundColor: color.background.secondary }}
+    >
       <ScreenHeader
         title={t('allTasks.title')}
         onBack={() => navigation.goBack()}
         rightSlot={headerRightSlot}
       />
-      <View
-        style={{
-          backgroundColor: color.background.primary,
-          borderBottomWidth: 1,
-          borderBottomColor: color.border.default,
-        }}
-      >
-        <View
-          style={{
-            alignSelf: 'center',
-            width: '100%',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingHorizontal: filterPadH,
-            paddingVertical: filterPadV,
-            gap: isTablet ? 14 : 12,
-          }}
-        >
-          <Text
-            style={{
-              color: color.text.primary,
-              fontSize: isTablet ? 16 : 14,
-              fontWeight: isTablet ? '500' : '400',
-              flex: isTablet ? 0 : 1,
-              flexShrink: 1,
-            }}
-            numberOfLines={1}
-          >
-            {t('allTasks.openOnly')}
-          </Text>
-          <Switch
-            value={openOnly}
-            onValueChange={(v) => {
-              hapticSelection();
-              setOpenOnly(v);
-            }}
-            accessibilityLabel={t('allTasks.openOnly')}
-            trackColor={{ false: color.background.tertiary, true: color.accent.primary }}
-            thumbColor={color.icon.onAccent}
-            style={isTablet ? { transform: [{ scale: 1.12 }] } : undefined}
-          />
-        </View>
-      </View>
-
-      {foldersEnabled && (
-        <FolderChipBar
-          folders={folders}
-          activeFolderId={effectiveActiveFolderId}
-          color={color}
-          onSelect={handleFolderSelect}
-          onCreatePress={openCreateFolderModal}
-          onEditPress={openEditFolderModal}
-          onReorderPress={openFolderReorderSheet}
-          scrollRef={folderChipScrollRef}
-        />
-      )}
+      <AllTasksFiltersPanel
+        color={color}
+        activeFilter={quickFilter}
+        foldersEnabled={foldersEnabled}
+        folders={folders}
+        activeFolderId={effectiveActiveFolderId}
+        onFilterSelect={setQuickFilter}
+        onFolderSelect={handleFolderSelect}
+      />
 
       {recordFilterId ? (
         <View
@@ -800,7 +869,7 @@ export const AllTasksScreen = () => {
             }}
           >
             <View
-              className="min-w-0 flex-1 flex-row items-center rounded-xl px-3 py-2"
+              className="min-w-0 flex-1 flex-row items-center rounded-xl px-3 py-4"
               style={{ backgroundColor: color.background.tertiary }}
             >
               <Text
@@ -837,6 +906,18 @@ export const AllTasksScreen = () => {
         </View>
       ) : null}
 
+      {viewMode === 'calendar' ? (
+        <AllTasksCalendarPanel
+          color={color}
+          selectedDate={selectedCalendarDate}
+          tasksCount={calendarDayRows.length}
+          taskCountsByDay={calendarTaskCountsByDay}
+          onDateChange={setSelectedCalendarDate}
+          compactHorizontalMargin={isTablet}
+          maxWidth={contentMaxWidth}
+        />
+      ) : null}
+
       {empty ? (
         <View
           className="flex-1"
@@ -849,7 +930,13 @@ export const AllTasksScreen = () => {
         >
           <View className="flex-1 justify-center px-6">
             <EmptyState
-              title={openOnly ? t('allTasks.emptyFiltered') : t('allTasks.emptyTitle')}
+              title={
+                viewMode === 'calendar'
+                  ? t('allTasks.emptyCalendarDate')
+                  : quickFilter !== 'all'
+                    ? t('allTasks.emptyQuickFilter')
+                    : t('allTasks.emptyFiltered')
+              }
               description={t('allTasks.emptyDescription')}
             />
           </View>
@@ -858,7 +945,7 @@ export const AllTasksScreen = () => {
       ) : (
         <FlashList<AllTasksListItem>
           ref={listRef}
-          data={listData}
+          data={activeListData}
           renderItem={renderListItem}
           keyExtractor={keyExtractor}
           getItemType={getItemType}
@@ -878,23 +965,6 @@ export const AllTasksScreen = () => {
           maintainVisibleContentPosition={{ disabled: true }}
         />
       )}
-      {foldersEnabled && (
-        <FolderReorderSheet
-          visible={folderReorderVisible}
-          folders={folders}
-          onClose={closeFolderReorderSheet}
-          onReorder={handleFoldersReorder}
-        />
-      )}
-      {foldersEnabled && (
-        <FolderFormModal
-          visible={folderModalVisible}
-          folder={editingFolder}
-          onSave={handleFolderSave}
-          onDelete={editingFolder ? () => handleFolderDelete(editingFolder.id) : undefined}
-          onClose={closeFolderModal}
-        />
-      )}
       <AllTasksNotePickerSheet
         visible={notePickerVisible}
         records={eligibleNotesForCreate}
@@ -907,7 +977,18 @@ export const AllTasksScreen = () => {
         }}
       />
       {editTaskSheet}
+      {editOutcomeSheet}
       {createTaskSheet}
+      <TaskOutcomeSheet
+        visible={outcomeTarget !== null}
+        task={outcomeTarget?.task ?? null}
+        linkedNoteContext={linkedNoteContext}
+        onClose={closeOutcomeSheet}
+        onComplete={completeWithOutcome}
+        onSkip={completeAndSkip}
+        onVoiceFollowUp={startVoiceFollowUp}
+        onTextFollowUp={startTextFollowUp}
+      />
     </View>
   );
 };

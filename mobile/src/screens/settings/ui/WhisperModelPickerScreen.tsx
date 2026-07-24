@@ -1,13 +1,14 @@
-import { useNavigation } from '@react-navigation/native';
-import { SlidersHorizontal } from 'lucide-react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Alert, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import {
+  getClassicWhisperModels,
   getWhisperEstimatedDownloadSizeMb,
+  getWhisperKitModelVariantId,
   getWhisperModelVariantId,
   useRecommendedWhisperModelId,
   useSettingsStore,
@@ -17,15 +18,29 @@ import {
   type WhisperModelVariantId,
 } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
-import { getWhisperVariantDisplaySizeBytes, useModelManager } from '@/features/model-manager';
+import {
+  getWhisperKitModelStorageBytes,
+  getWhisperVariantDisplaySizeBytes,
+  isWhisperModelSelectable,
+  useModelManager,
+} from '@/features/model-manager';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { IS_IOS } from '@/shared/lib/platform';
-import { formatFileSize, isWhisperCoreMlEncoderInstalled } from '@/shared/lib/whisper';
-import { ScreenHeader } from '@/shared/ui';
+import {
+  formatFileSize,
+  getWhisperModelShortLabelKey,
+  isWhisperCoreMlEncoderInstalled,
+} from '@/shared/lib/whisper';
+import { getWhisperKitEstimatedDownloadMb } from '@/shared/lib/whisper/whisperKitModelPath';
+import { ScreenHeader, SettingsSection } from '@/shared/ui';
 
+import { IOS_WHISPER_KIT_MODELS } from '../lib/iosWhisperKitModels';
 import { WhisperDefaultLanguageSection } from './WhisperDefaultLanguageSection';
+import { WhisperEngineModeSection } from './WhisperEngineModeSection';
 import { WhisperModelCard } from './WhisperModelCard';
+import { WhisperQualityModeSection } from './WhisperQualityModeSection';
+import { WhisperWeightsFormatSection } from './WhisperWeightsFormatSection';
 
 export const WhisperModelPickerScreen = () => {
   const { t } = useTranslation();
@@ -45,12 +60,29 @@ export const WhisperModelPickerScreen = () => {
   const whisperDownloadPhase = useSettingsStore((s) => s.whisperDownloadPhase);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelWeightsFormat = useSettingsStore((s) => s.whisperModelWeightsFormat);
+  const iosWhisperKitEngineEnabled = useSettingsStore((s) => s.iosWhisperKitEngineEnabled);
   const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
-  const setWhisperModelWeightsFormat = useSettingsStore((s) => s.setWhisperModelWeightsFormat);
 
   const compatibility = useWhisperModelCompatibility();
   const recommendedModelId = useRecommendedWhisperModelId();
-  const { startDownload, cancelDownload, removeModel } = useModelManager();
+  const {
+    startDownload,
+    cancelDownload,
+    removeModel,
+    syncWhisperKitDownloadedStatuses,
+    syncDownloadedStatusesForFormat,
+  } = useModelManager();
+
+  const useIosWhisperKit = IS_IOS && iosWhisperKitEngineEnabled;
+  const showIosEnginePicker = IS_IOS;
+
+  const resolveModelVariantId = useCallback(
+    (modelId: WhisperModelId): WhisperModelVariantId =>
+      useIosWhisperKit
+        ? getWhisperKitModelVariantId(modelId)
+        : getWhisperModelVariantId(modelId, whisperModelWeightsFormat),
+    [useIosWhisperKit, whisperModelWeightsFormat],
+  );
 
   const [realSizes, setRealSizes] = useState<Partial<Record<WhisperModelVariantId, string>>>({});
   const [coreMlEncoderActive, setCoreMlEncoderActive] = useState<
@@ -62,13 +94,39 @@ export const WhisperModelPickerScreen = () => {
     (status) => status === 'downloading',
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      if (useIosWhisperKit) {
+        void syncWhisperKitDownloadedStatuses();
+      } else {
+        void syncDownloadedStatusesForFormat(whisperModelWeightsFormat);
+      }
+    }, [
+      syncDownloadedStatusesForFormat,
+      syncWhisperKitDownloadedStatuses,
+      useIosWhisperKit,
+      whisperModelWeightsFormat,
+    ]),
+  );
+
   const refreshRealSizes = useCallback(async () => {
     const requestId = ++refreshRequestIdRef.current;
+    const models = useIosWhisperKit ? IOS_WHISPER_KIT_MODELS : WHISPER_MODELS;
+
     const entries = await Promise.all(
-      WHISPER_MODELS.map(async (m) => {
-        const variantId = getWhisperModelVariantId(m.id, whisperModelWeightsFormat);
+      models.map(async (m) => {
+        const variantId = resolveModelVariantId(m.id);
         const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
         const downloaded = status === 'downloaded';
+
+        if (useIosWhisperKit) {
+          const bytes = downloaded ? await getWhisperKitModelStorageBytes(m.id) : 0;
+          if (bytes <= 0) {
+            return [variantId, null] as const;
+          }
+          return [variantId, formatFileSize(bytes)] as const;
+        }
+
         const bytes = await getWhisperVariantDisplaySizeBytes(m.id, whisperModelWeightsFormat, {
           downloaded,
         });
@@ -89,10 +147,10 @@ export const WhisperModelPickerScreen = () => {
       }
       return next;
     });
-  }, [whisperModelStatuses, whisperModelWeightsFormat]);
+  }, [resolveModelVariantId, useIosWhisperKit, whisperModelStatuses, whisperModelWeightsFormat]);
 
   const refreshCoreMlEncoderPresence = useCallback(async () => {
-    if (!IS_IOS) {
+    if (!IS_IOS || useIosWhisperKit) {
       setCoreMlEncoderActive({});
       return;
     }
@@ -110,8 +168,7 @@ export const WhisperModelPickerScreen = () => {
     }
 
     setCoreMlEncoderActive(Object.fromEntries(entries) as Record<WhisperModelId, boolean>);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [whisperModelStatuses, whisperModelWeightsFormat]);
+  }, [useIosWhisperKit]);
 
   useEffect(() => {
     refreshRealSizes();
@@ -122,10 +179,12 @@ export const WhisperModelPickerScreen = () => {
   }, [refreshCoreMlEncoderPresence]);
 
   const handleDownload = async (id: WhisperModelId) => {
-    const coreMlInstalled = IS_IOS ? coreMlEncoderActive[id] === true : false;
-    const sizeMb = getWhisperEstimatedDownloadSizeMb(id, whisperModelWeightsFormat, {
-      coreMlAlreadyInstalled: coreMlInstalled,
-    });
+    const sizeMb = useIosWhisperKit
+      ? getWhisperKitEstimatedDownloadMb(id)
+      : getWhisperEstimatedDownloadSizeMb(id, whisperModelWeightsFormat, {
+          coreMlAlreadyInstalled: IS_IOS ? coreMlEncoderActive[id] === true : false,
+        });
+
     Alert.alert(t('whisper.downloadModel'), t('whisper.downloadConfirm', { size: sizeMb }), [
       { text: t('common.cancel'), style: 'cancel' },
       {
@@ -141,9 +200,15 @@ export const WhisperModelPickerScreen = () => {
 
   const handleDelete = (id: WhisperModelId) => {
     const model = WHISPER_MODELS.find((m) => m.id === id);
+    const displayName = model
+      ? useIosWhisperKit
+        ? t(getWhisperModelShortLabelKey(model.id))
+        : model.name
+      : id;
+
     Alert.alert(
       t('whisper.deleteModel'),
-      t('whisper.deleteConfirmWithName', { name: model?.name ?? '' }),
+      t('whisper.deleteConfirmWithName', { name: displayName }),
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -153,6 +218,9 @@ export const WhisperModelPickerScreen = () => {
             await removeModel(id);
             await refreshRealSizes();
             await refreshCoreMlEncoderPresence();
+            if (useIosWhisperKit) {
+              await syncWhisperKitDownloadedStatuses();
+            }
           },
         },
       ],
@@ -160,10 +228,10 @@ export const WhisperModelPickerScreen = () => {
   };
 
   const handleSelect = (id: WhisperModelId) => {
-    const variantId = getWhisperModelVariantId(id, whisperModelWeightsFormat);
+    const variantId = resolveModelVariantId(id);
     const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
     if (status === 'downloading') return;
-    if (status !== 'downloaded') {
+    if (!isWhisperModelSelectable(status)) {
       const model = WHISPER_MODELS.find((m) => m.id === id);
       if (model) void handleDownload(id);
       return;
@@ -171,6 +239,14 @@ export const WhisperModelPickerScreen = () => {
     setWhisperModel(id);
     navigation.goBack();
   };
+
+  const pickerModels = useIosWhisperKit
+    ? IOS_WHISPER_KIT_MODELS
+    : getClassicWhisperModels(whisperModelWeightsFormat);
+
+  const modelSectionTitle = useIosWhisperKit
+    ? t('whisper.sectionRecognition')
+    : t('whisper.sectionModel');
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -186,110 +262,70 @@ export const WhisperModelPickerScreen = () => {
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 16,
-            paddingTop: 12,
+            paddingTop: 8,
             paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
           }}
           showsVerticalScrollIndicator={false}
         >
-          <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-            {t('whisper.modelDescription')}
+          <Text className="mb-6 px-1 text-[14px] leading-5" style={{ color: color.text.secondary }}>
+            {useIosWhisperKit
+              ? t('whisper.modelDescriptionIosShort')
+              : t('whisper.modelDescriptionShort')}
           </Text>
-          <WhisperDefaultLanguageSection color={color} />
-          <View
-            className="mb-6 gap-2 rounded-2xl p-4"
-            style={{ backgroundColor: color.background.card }}
-          >
-            <View className="flex-row items-center gap-2">
-              <SlidersHorizontal size={18} color={color.icon.muted} strokeWidth={2} />
-              <Text className="text-sm font-medium" style={{ color: color.text.primary }}>
-                {t('whisper.weightsFormatTitle')}
-              </Text>
-            </View>
-            <View
-              className="flex-row rounded-xl p-1"
-              style={{ backgroundColor: color.background.tertiary }}
-            >
-              {(['q5_1', 'full'] as const).map((format) => {
-                const selected = whisperModelWeightsFormat === format;
 
-                return (
-                  <TouchableOpacity
-                    key={format}
-                    onPress={() => {
-                      if (selected) {
-                        return;
-                      }
+          <SettingsSection title={t('whisper.sectionGeneral')}>
+            <WhisperDefaultLanguageSection color={color} embedded />
+            <WhisperQualityModeSection color={color} embedded />
+          </SettingsSection>
 
-                      if (hasActiveWhisperDownload) {
-                        Alert.alert(
-                          t('whisper.weightsFormatChangeBlockedTitle'),
-                          t('whisper.weightsFormatChangeBlockedBody'),
-                        );
-                        return;
-                      }
+          {showIosEnginePicker ? (
+            <SettingsSection title={t('whisper.sectionEngine')}>
+              <WhisperEngineModeSection
+                color={color}
+                embedded
+                hasActiveWhisperDownload={hasActiveWhisperDownload}
+              />
+            </SettingsSection>
+          ) : null}
 
-                      setWhisperModelWeightsFormat(format);
-                    }}
-                    activeOpacity={0.8}
-                    className="flex-1 items-center justify-center rounded-lg px-3 py-3"
-                    style={{
-                      minHeight: 44,
-                      backgroundColor: selected ? color.background.card : 'transparent',
-                      borderWidth: selected ? 1 : 0,
-                      borderColor: selected ? color.accent.primary : 'transparent',
-                      opacity: hasActiveWhisperDownload && !selected ? 0.6 : 1,
-                    }}
-                    accessibilityRole="button"
-                    accessibilityState={{
-                      selected,
-                    }}
-                  >
-                    <Text
-                      className="text-center text-[16px] font-medium"
-                      style={{ color: selected ? color.accent.primary : color.text.secondary }}
-                    >
-                      {format === 'q5_1'
-                        ? t('whisper.weightsFormatQ5')
-                        : t('whisper.weightsFormatFull')}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-            <Text className="text-xs" style={{ color: color.text.muted }}>
-              {whisperModelWeightsFormat === 'q5_1'
-                ? t('whisper.weightsFormatQ5Hint')
-                : t('whisper.weightsFormatFullHint')}
-            </Text>
-          </View>
-          <View className="overflow-hidden rounded-2xl">
-            {WHISPER_MODELS.map((model, index) => {
-              const variantId = getWhisperModelVariantId(model.id, whisperModelWeightsFormat);
+          <SettingsSection title={modelSectionTitle}>
+            {!useIosWhisperKit ? (
+              <WhisperWeightsFormatSection
+                color={color}
+                embedded
+                hasActiveWhisperDownload={hasActiveWhisperDownload}
+              />
+            ) : null}
+
+            {pickerModels.map((model, index) => {
+              const variantId = resolveModelVariantId(model.id);
               const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
               const displaySize =
                 realSizes[variantId] ??
                 formatFileSize(
-                  getWhisperEstimatedDownloadSizeMb(model.id, whisperModelWeightsFormat, {
-                    coreMlAlreadyInstalled: coreMlEncoderActive[model.id] === true,
-                  }) *
+                  (useIosWhisperKit
+                    ? getWhisperKitEstimatedDownloadMb(model.id)
+                    : getWhisperEstimatedDownloadSizeMb(model.id, whisperModelWeightsFormat, {
+                        coreMlAlreadyInstalled: coreMlEncoderActive[model.id] === true,
+                      })) *
                     1024 *
                     1024,
                 );
-
-              if (whisperModelWeightsFormat === 'q5_1' && model.id === 'whisper-medium') {
-                return null;
-              }
 
               return (
                 <WhisperModelCard
                   key={model.id}
                   model={model}
                   index={index}
-                  total={WHISPER_MODELS.length}
+                  total={pickerModels.length}
                   status={status}
+                  iosWhisperKitManaged={useIosWhisperKit}
+                  embedded
                   isSelected={
-                    model.id === selectedWhisperModel &&
-                    selectedWhisperModelFormat === whisperModelWeightsFormat
+                    useIosWhisperKit
+                      ? selectedWhisperModel === model.id
+                      : model.id === selectedWhisperModel &&
+                        selectedWhisperModelFormat === whisperModelWeightsFormat
                   }
                   displaySize={displaySize}
                   recommendedModelId={recommendedModelId}
@@ -305,7 +341,14 @@ export const WhisperModelPickerScreen = () => {
                 />
               );
             })}
-          </View>
+          </SettingsSection>
+
+          {useIosWhisperKit ? (
+            <Text className="-mt-4 mb-7 px-1 text-xs leading-4" style={{ color: color.text.muted }}>
+              {t('whisper.iosModelQualityHint')}
+            </Text>
+          ) : null}
+
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>

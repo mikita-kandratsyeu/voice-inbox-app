@@ -29,7 +29,7 @@ export function HowItWorks(): React.ReactElement {
         <div className="grid gap-4 md:grid-cols-3 md:gap-5">
           {STEPS.map(({ id }, index) => (
             <AnimateOnScroll key={id} delay={index * 100} className="h-full">
-              <div className="relative h-full rounded-3xl border border-black/10 bg-white/82 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(15,23,42,0.1)] dark:border-white/12 dark:bg-white/5 dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_18px_46px_rgba(0,0,0,0.36)]">
+              <div className="relative h-full rounded-3xl border border-black/10 bg-white/82 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(15,23,42,0.1)] dark:border-white/12 dark:bg-white/5 dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_18px_46px_rgba(0,0,0,0.36)]">
                 <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-indigo-500 text-lg font-semibold text-white shadow-[0_8px_20px_rgba(59,130,246,0.35)]">
                   {index + 1}
                 </div>

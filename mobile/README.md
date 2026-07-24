@@ -8,23 +8,25 @@ Repository overview: [../README.md](../README.md).
 
 ## Getting started
 
+Install dependencies from the **repository root** (`yarn install` — see [../README.md](../README.md#monorepo-setup)).
+
 ```bash
-cd mobile
-yarn install
-cp .env.example .env
+cp mobile/.env.example mobile/.env
 ```
 
 - **iOS:** Xcode, CocoaPods (`pod install` in `ios/` when needed). `GoogleService-Info.plist` is in the project.
 - **Android:** Add `android/app/google-services.json` from Firebase (required for Google Services / Crashlytics Gradle plugins).
-- **Env:** `WEB_API_URL` / `WEB_API_SECRET` for Smart mode; Yandex ad unit IDs optional; RevenueCat keys when subscriptions are enabled.
+- **Env:** `WEB_API_URL` for cloud AI; Firebase App Check for API auth (`FIREBASE_APP_CHECK_DEBUG_TOKEN` in debug); Yandex ad unit IDs optional; RevenueCat keys when subscriptions are enabled; `GITHUB_OAUTH_CLIENT_ID` optional embedded default for Pro GitHub sync (release: override via Firebase Remote Config — see below).
 
 ```bash
-yarn start
-yarn ios       # APP_ENV=development
-yarn android
+yarn workspace voice-inbox-app start
+yarn workspace voice-inbox-app ios       # NODE_ENV=development
+yarn workspace voice-inbox-app android
 ```
 
-Release builds: `yarn ios:release` / `yarn android:release` (`APP_ENV=production`).
+From `mobile/` you can still run `yarn start`, `yarn ios`, etc. after a root install.
+
+Release builds: `yarn ios:release` / `yarn android:release` (`NODE_ENV=production`). Babel reads **`mobile/.env.production`** (not `.env`) when `NODE_ENV=production` for embedded `@env` defaults. **`GITHUB_OAUTH_CLIENT_ID`** for GitHub sync is typically set in **Firebase Remote Config** (key `GITHUB_OAUTH_CLIENT_ID`); optional fallback in `.env` / `.env.production` for dev or first launch before fetch.
 
 ---
 
@@ -40,12 +42,12 @@ Release builds: `yarn ios:release` / `yarn android:release` (`APP_ENV=production
 
 Shown on the recording detail screen when the note is classified as a **meeting** (Smart or Private AI).
 
-| Capability | Smart (cloud) | Private |
-| ---------- | ------------- | ------- |
-| Speaker-turn markdown | Second job after summarize (`meeting_dialogue` on web) or inline for shorter notes | On-device batch in the same flow as summary/tasks |
-| **Speaker roster** | Rename display names; stored in `meetingSpeakerLabels` (SQLite) | Same |
-| **Regenerate dialogue only** | `POST /api/messages/:jobId/meeting-dialogue` — needs existing `cloudAiJobId` | N/A |
-| Cancel in-flight dialogue | Shared AI cancel + `meeting_dialogue` worker checks cancel flag | Local abort handle |
+| Capability                   | Smart (cloud)                                                                      | Private                                           |
+| ---------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Speaker-turn markdown        | Second job after summarize (`meeting_dialogue` on web) or inline for shorter notes | On-device batch in the same flow as summary/tasks |
+| **Speaker roster**           | Rename display names; stored in `meetingSpeakerLabels` (SQLite)                    | Same                                              |
+| **Regenerate dialogue only** | `POST /api/messages/:jobId/meeting-dialogue` — needs existing `cloudAiJobId`       | N/A                                               |
+| Cancel in-flight dialogue    | Shared AI cancel + `meeting_dialogue` worker checks cancel flag                    | Local abort handle                                |
 
 **UI:** `src/screens/recording-detail/` (`MeetingDialogueTab`, `MeetingDialogueSpeakerRoster`, `parseMeetingDialogue`, `meetingSpeakerLabels`).
 
@@ -54,6 +56,7 @@ Shown on the recording detail screen when the note is classified as a **meeting*
 **Settings → AI:** _Refresh speaker list when regenerating_ (`autoRefreshMeetingSpeakersOnRegen`, default **off**). When **off**, regenerating summary/tasks skips a new meeting-dialogue pass so renamed speakers stay as-is. When **on**, a full regen may replace dialogue and clear `meetingSpeakerLabels`. Dialogue-only regen prunes labels to speakers still present in the new markdown.
 
 **Backup ZIP (v3):** `meetingDialogue` and `meetingSpeakerLabels` are included in `metadata.json` records (full `VoiceRecord` export).
+
 - **Inbox** — Pins, folders, tags, archive/trash, text notes, batch actions.
 - **Search** — Lexical scoring; **hybrid** ranking with local embeddings when stored (`src/features/search-records/`, `src/shared/lib/embeddings/`).
 - **Themes** — System / light / dark (NativeWind + shared tokens).
@@ -66,6 +69,8 @@ Banner (note detail), **rewarded** (bonus AI quota in Settings), and **interstit
 
 Push: `@react-native-firebase/messaging`. Crashlytics, Analytics, Remote Config, App Check ship in release builds with Firebase config files.
 
+**Remote Config (release):** after `initRuntimeConfig()` on cold start, parameters such as `WEB_API_URL`, `PREVIEW_WEB_API_URL`, `WEBSITE_URL`, `PREVIEW_WEBSITE_URL`, `WEB_API_TARGET` (`production` \| `preview` — switches API and website together), RevenueCat keys, Yandex ad unit IDs, and **`GITHUB_OAUTH_CLIENT_ID`** override embedded `@env` defaults when non-empty. In `__DEV__`, only embedded `.env` is used (no RC fetch).
+
 **Crashlytics in debug:** set `CRASHLYTICS_DEBUG=1` in `.env` and keep `mobile/firebase.json` (`crashlytics_debug_enabled`). Restart Metro with a clean cache and rebuild native.
 
 **Test crash (iOS):** Settings → Debug → Test Crashlytics (`__DEV__` only). Do not keep the Xcode debugger attached when forcing a crash. Relaunch the app after crash so the report uploads. See [Firebase: test Crashlytics on iOS](https://firebase.google.com/docs/crashlytics/ios/test-implementation).
@@ -74,10 +79,10 @@ Push: `@react-native-firebase/messaging`. Crashlytics, Analytics, Remote Config,
 
 `whisper.rn` downloads **GGML** weights from Hugging Face.
 
-| Platform | Behavior |
-| -------- | -------- |
-| **iOS** | After each `.bin`, fetches matching `ggml-*-encoder.mlmodelc.zip` for Core ML on the Neural Engine when available |
-| **Android** | `.bin` only (default GPU/CPU backend) |
+| Platform    | Behavior                                                                                                          |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- |
+| **iOS**     | After each `.bin`, fetches matching `ggml-*-encoder.mlmodelc.zip` for Core ML on the Neural Engine when available |
+| **Android** | `.bin` only (default GPU/CPU backend)                                                                             |
 
 **Init & lifecycle**
 
@@ -95,6 +100,7 @@ Cold start: `src/features/app-lifecycle/model/useAppBootstrap.ts` — Firebase A
 ### Import & export
 
 - **Full backup (ZIP)** — `metadata.json` v**3**, `audio/`, folders + records (`src/features/sync-data/`). Restore via document picker / import review screen. Records include AI fields (`meetingDialogue`, `meetingSpeakerLabels`, etc.).
+- **GitHub sync (Pro)** — Settings → Backup & restore. Optional push of **markdown + metadata** (folders, graph layout) to **your** GitHub repository; **no audio**. Manual sync; each push creates a Git commit; browse history and restore a version from GitHub. OAuth **Device Flow** (`scope: repo`); access token in Keychain; requests go **directly to GitHub** (not through Voice Inbox servers). Default branch `voice-inbox`, files under `voice-inbox/` (`manifest.json`, `notes/{id}.md`). Public **Client ID** via embedded `GITHUB_OAUTH_CLIENT_ID` and/or **Firebase Remote Config** (`GITHUB_OAUTH_CLIENT_ID`); GitHub OAuth App must have Device Flow enabled; no client secret in the app. `src/features/github-sync/`.
 - **Import audio** — Document picker → copy, optional WAV conversion, duration limits, optional transcription (`src/features/import-audio-file/`).
 - **Per-note share** — Markdown briefs, plain share, email helpers (`src/features/share-record/`).
 - **Batch export** — Inbox multi-select: Markdown or ZIP (`src/features/batch-select/`).
@@ -109,18 +115,18 @@ Cold start: `src/features/app-lifecycle/model/useAppBootstrap.ts` — Firebase A
 
 ## Tech stack
 
-| Area | Choice |
-| ---- | ------ |
-| Framework | React Native 0.84 (CLI), TypeScript |
-| UI | React 19, NativeWind v4, `@gorhom/bottom-sheet`, FlashList |
-| Navigation | React Navigation (stack + tabs + modals) |
-| State | Zustand per domain (`entities/*/model`, `features/*/model`) |
-| DB | Drizzle + `@op-engineering/op-sqlite` — `src/shared/lib/db/schema.ts`, migrations in `drizzle/` |
-| Prefs | `react-native-mmkv` |
-| Audio / STT | `react-native-nitro-sound`, `whisper.rn` |
-| On-device LLM | `llama.rn`, optional `@react-native-ai/apple` |
-| i18n | `i18next` |
-| Validation | `zod` |
+| Area          | Choice                                                                                          |
+| ------------- | ----------------------------------------------------------------------------------------------- |
+| Framework     | React Native 0.84 (CLI), TypeScript                                                             |
+| UI            | React 19, NativeWind v4, `@gorhom/bottom-sheet`, FlashList                                      |
+| Navigation    | React Navigation (stack + tabs + modals)                                                        |
+| State         | Zustand per domain (`entities/*/model`, `features/*/model`)                                     |
+| DB            | Drizzle + `@op-engineering/op-sqlite` — `src/shared/lib/db/schema.ts`, migrations in `drizzle/` |
+| Prefs         | `react-native-mmkv`                                                                             |
+| Audio / STT   | `react-native-nitro-sound`, `whisper.rn`                                                        |
+| On-device LLM | `llama.rn`, optional `@react-native-ai/apple`                                                   |
+| i18n          | `i18next`                                                                                       |
+| Validation    | `zod`                                                                                           |
 
 **Path aliases:** `@/`, `@entities/`, `@features/`, `@screens/`, `@shared/`, `@widgets/`, `@app/` (see `tsconfig.json`).
 
@@ -143,20 +149,24 @@ patches/         patch-package overrides
 
 ---
 
-## Scripts (from `mobile/`)
+## Scripts
 
-| Script | Description |
-| ------ | ----------- |
-| `yarn start` | Metro (`APP_ENV=development`) |
-| `yarn ios` / `yarn android` | Dev run on device/simulator |
-| `yarn ios:release` / `yarn android:release` | Release mode on device |
-| `yarn type:check` | `tsc --noEmit` |
-| `yarn lint` / `yarn lint:fix` | ESLint |
-| `yarn test` | Jest |
-| `yarn validate` | lint-staged + types + tests (pre-commit) |
-| `yarn validate:push` | types + tests CI-style |
-| `yarn db:generate` | Drizzle SQL from `schema.ts` |
-| `yarn analyze:bundle` | Bundle size report (optional platform arg) |
+Run from repo root with `yarn workspace voice-inbox-app <script>`, or `cd mobile` and use `yarn <script>`.
+
+| Script                            | Description                                |
+| --------------------------------- | ------------------------------------------ |
+| `start`                           | Metro (`NODE_ENV=development`)             |
+| `ios` / `android`                 | Dev run on device/simulator                |
+| `ios:release` / `android:release` | Release mode on device                     |
+| `type:check`                      | `tsc --noEmit`                             |
+| `lint` / `lint:fix`               | ESLint                                     |
+| `test`                            | Jest                                       |
+| `validate`                        | lint-staged + types + tests (pre-commit)   |
+| `validate:push`                   | types + tests CI-style                     |
+| `db:generate`                     | Drizzle SQL from `schema.ts`               |
+| `analyze:bundle`                  | Bundle size report (optional platform arg) |
+
+Monorepo quality gates: `yarn turbo run lint type:check test --filter=voice-inbox-app`.
 
 `postinstall` runs `patch-package` and Android NetInfo Gradle fix.
 

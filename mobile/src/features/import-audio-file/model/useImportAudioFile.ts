@@ -10,31 +10,47 @@ import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
-import { useAiProcessing } from '@/features/ai-processing';
+import { dispatchAutoAiAfterTranscription } from '@/features/ai-task-queue';
 import {
   getMaxRecordingMsForTier,
-  shouldApplyAutoAiAfterTranscription,
   shouldApplyAutoTranscribeOnSave,
 } from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
-import { isTranscriptionBlockedForRecord, useTranscription } from '@/features/transcription';
+import {
+  notifyAutoTranscriptionTooShort,
+  tryScheduleAutoTranscription,
+  useTranscription,
+} from '@/features/transcription';
 import { generateRecordId } from '@/screens/record/lib/generateRecordId';
 import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
 import { hapticError, hapticMedium, IS_IOS, useNetworkStatus } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { convertToWav, getAudioDurationMs } from '@/shared/lib/audio';
 import { formatTime } from '@/shared/lib/date';
+import { extractPdfText } from '@/shared/lib/document';
 import {
   copyExternalUriToCachesForImport,
   getReadableDocumentPickerFsPath,
   NitroFS,
   pickSingleFileToCachesDirectory,
+  readTextImportFileAtPath,
 } from '@/shared/lib/fs';
 import { ensureRecordingsDir, RECORDINGS_DIR } from '@/shared/lib/recordings';
+import { runAfterInteractions } from '@/shared/lib/runAfterInteractions';
 
+import {
+  isDocumentImportFileName,
+  isPdfImportFileName,
+  isPlainTextImportFileName,
+  MAX_DOCUMENT_IMPORT_CHARS,
+  type ParsedDocumentImport,
+  parseDocumentImport,
+} from '../lib/documentImport';
 import {
   isSubtitleImportFileName,
   looksLikeSubtitleContent,
+  MAX_SUBTITLE_IMPORT_CHARS,
   type ParsedSubtitleImport,
   parseSubtitleImport,
 } from '../lib/subtitleImport';
@@ -49,12 +65,18 @@ type PendingSubtitleImport = {
   defaultTitle: string;
 };
 
+type PendingDocumentImport = {
+  kind: 'document';
+  parsed: ParsedDocumentImport;
+  defaultTitle: string;
+};
+
 type PendingAudioImport = {
   kind: 'audio';
   record: VoiceRecord;
 };
 
-type PendingFileImport = PendingAudioImport | PendingSubtitleImport;
+type PendingFileImport = PendingAudioImport | PendingDocumentImport | PendingSubtitleImport;
 
 const FALLBACK_SHARED_IMPORT_NAME = 'shared-import';
 const AUDIO_PICKER_TYPES = [
@@ -66,7 +88,33 @@ const AUDIO_PICKER_TYPES = [
   'audio/x-m4a',
   'audio/wav',
   'audio/x-wav',
+  'audio/aac',
+  'audio/flac',
+  'audio/ogg',
+  'audio/opus',
+  'audio/webm',
+  'audio/amr',
+  'audio/3gpp',
+  'audio/x-caf',
+  'audio/aiff',
 ] as const;
+
+const IOS_AUDIO_PICKER_TYPES = IS_IOS
+  ? (['public.mpeg-4-audio', 'public.wav'] as const)
+  : ([] as const);
+
+const DOCUMENT_PICKER_TYPES = [
+  'text/markdown',
+  'text/x-markdown',
+  'application/pdf',
+  'public.markdown',
+  'public.plain-text',
+  'com.adobe.pdf',
+] as const;
+
+const IOS_DOCUMENT_PICKER_TYPES = IS_IOS
+  ? (['net.daringfireball.markdown', 'public.pdf'] as const)
+  : ([] as const);
 
 const SUBTITLE_PICKER_TYPES = [
   types.plainText,
@@ -87,10 +135,6 @@ const SUBTITLE_PICKER_TYPES = [
 ] as const;
 
 const IOS_PICKER_FALLBACK_TYPES = IS_IOS ? ([types.allFiles] as const) : [];
-
-function stripFileScheme(uri: string): string {
-  return uri.startsWith('file://') ? uri.slice(7) : uri;
-}
 
 function fallbackNameFromUri(uri: string): string {
   try {
@@ -113,17 +157,58 @@ function fileNameForCopy(name: string | null): string {
   return `${FALLBACK_SHARED_IMPORT_NAME}.m4a`;
 }
 
+function waitForImportOverlayPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    runAfterInteractions(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
+}
+
 async function readTextFile(path: string): Promise<string> {
-  const normalized = stripFileScheme(path);
-  try {
-    return await NitroFS.readFile(normalized, 'utf8');
-  } catch {
-    return NitroFS.readFile(`file://${normalized}`, 'utf8');
+  return readTextImportFileAtPath(path);
+}
+
+async function loadImportTextSource(
+  path: string,
+  fileLabel: string,
+  language?: string | null,
+  onPdfProgress?: (progress: { current: number; total: number }) => void,
+): Promise<string | null> {
+  if (isPdfImportFileName(fileLabel) || isPdfImportFileName(path)) {
+    return extractPdfText(path, language, onPdfProgress);
   }
+  return readTextFile(path);
+}
+
+function tryParseSubtitleImportFromText(
+  rawText: string,
+  fileLabel: string,
+): ParsedSubtitleImport | null {
+  const contentLooksSubtitle = looksLikeSubtitleContent(rawText);
+  if (!contentLooksSubtitle && !isSubtitleImportFileName(fileLabel)) {
+    return null;
+  }
+  return parseSubtitleImport(rawText);
+}
+
+function exceedsSubtitleImportCharLimit(parsed: ParsedSubtitleImport): boolean {
+  return parsed.charCount > MAX_SUBTITLE_IMPORT_CHARS;
+}
+
+function notifySubtitleImportTooLarge(t: (key: string, opts?: { max: number }) => string): void {
+  hapticError();
+  Alert.alert(
+    t('importAudio.subtitleTooLargeTitle'),
+    t('importAudio.subtitleTooLargeMessage', {
+      max: Math.round(MAX_SUBTITLE_IMPORT_CHARS / 1000),
+    }),
+    [{ text: t('common.ok') }],
+  );
 }
 
 export function useImportAudioFile() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const addRecord = useRecordStore((s) => s.addRecord);
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
@@ -136,11 +221,18 @@ export function useImportAudioFile() {
     () => getMaxRecordingMsForTier(isProActive, aiExecutionMode, privateAiProvider),
     [isProActive, aiExecutionMode, privateAiProvider],
   );
-  const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(autoTranscribeOnSave, isProActive);
+  const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(
+    autoTranscribeOnSave,
+    isProActive,
+    aiExecutionMode,
+  );
   const { startTranscription } = useTranscription();
-  const { processRecord } = useAiProcessing();
   const [isImporting, setIsImporting] = useState(false);
   const [importPhase, setImportPhase] = useState<ImportAudioPhase | null>(null);
+  const [documentImportProgress, setDocumentImportProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
   const [pendingFileImport, setPendingFileImport] = useState<PendingFileImport | null>(null);
 
   const createSubtitleRecord = useCallback(
@@ -168,16 +260,71 @@ export function useImportAudioFile() {
       await addRecord(record);
       generateAndSaveEmbeddingForRecord(record).catch(() => {});
 
-      if (
-        shouldApplyAutoAiAfterTranscription(autoAiAfterTranscription, isProActive) &&
-        isConnected
-      ) {
-        processRecord(record).catch(() => {});
-      }
+      void dispatchAutoAiAfterTranscription({
+        record,
+        autoAiAfterTranscription,
+        isProActive,
+        isConnected: isConnected === true,
+        aiExecutionMode,
+        privateAiProvider,
+      }).catch(() => {});
 
       navigation.navigate('RecordingDetail', { record });
     },
-    [addRecord, autoAiAfterTranscription, isConnected, isProActive, navigation, processRecord],
+    [
+      addRecord,
+      aiExecutionMode,
+      autoAiAfterTranscription,
+      isConnected,
+      isProActive,
+      navigation,
+      privateAiProvider,
+    ],
+  );
+
+  const createDocumentRecord = useCallback(
+    async (parsed: ParsedDocumentImport, options: ImportFileConfirmOptions) => {
+      const record: VoiceRecord = {
+        id: generateRecordId(),
+        title: options.title,
+        transcript: parsed.transcript,
+        transcriptSegments: [],
+        summary: '',
+        tasks: [],
+        duration: '00:00',
+        durationMs: 0,
+        createdAt: dayjs().toISOString(),
+        status: 'unread',
+        aiStatus: 'done',
+        transcriptProgress: 100,
+        isPinned: false,
+        tags: [],
+        classification: options.isMeetingMode ? 'meeting' : undefined,
+      };
+
+      await addRecord(record);
+      generateAndSaveEmbeddingForRecord(record).catch(() => {});
+
+      void dispatchAutoAiAfterTranscription({
+        record,
+        autoAiAfterTranscription,
+        isProActive,
+        isConnected: isConnected === true,
+        aiExecutionMode,
+        privateAiProvider,
+      }).catch(() => {});
+
+      navigation.navigate('RecordingDetail', { record });
+    },
+    [
+      addRecord,
+      aiExecutionMode,
+      autoAiAfterTranscription,
+      isConnected,
+      isProActive,
+      navigation,
+      privateAiProvider,
+    ],
   );
 
   const confirmFileImport = useCallback(
@@ -192,6 +339,11 @@ export function useImportAudioFile() {
         return;
       }
 
+      if (pending.kind === 'document') {
+        await createDocumentRecord(pending.parsed, options);
+        return;
+      }
+
       const record: VoiceRecord = {
         ...pending.record,
         title: options.title,
@@ -201,9 +353,14 @@ export function useImportAudioFile() {
       await addRecord(record);
 
       if (applyAutoTranscribe) {
-        const records = useRecordStore.getState().records;
-        if (!isTranscriptionBlockedForRecord(record.id, records)) {
-          startTranscription(record);
+        const scheduleResult = tryScheduleAutoTranscription(
+          record,
+          useRecordStore.getState().records,
+          (nextRecord) => startTranscription(nextRecord, undefined, { enforceMinDuration: true }),
+          record,
+        );
+        if (scheduleResult === 'too_short') {
+          notifyAutoTranscriptionTooShort();
         }
       }
 
@@ -212,6 +369,7 @@ export function useImportAudioFile() {
     [
       addRecord,
       applyAutoTranscribe,
+      createDocumentRecord,
       createSubtitleRecord,
       navigation,
       pendingFileImport,
@@ -225,9 +383,7 @@ export function useImportAudioFile() {
 
     if (pending?.kind === 'audio' && pending.record.audioPath) {
       NitroFS.unlink(pending.record.audioPath).catch(() => {
-        if (__DEV__) {
-          console.warn('[importAudioFile] Could not delete canceled import file');
-        }
+        diagWarn('[importAudioFile] Could not delete canceled import file');
       });
     }
   }, [pendingFileImport]);
@@ -245,28 +401,86 @@ export function useImportAudioFile() {
         };
         const sourcePath = await getReadableDocumentPickerFsPath(fileRef);
         if (!sourcePath) {
-          if (__DEV__) {
-            console.warn('[importAudioFile] path is not readable', {
-              uri: fileRef.uri,
-              fileUri: fileRef.fileUri,
-              fileCopyUri: fileRef.fileCopyUri,
-            });
-          }
+          diagWarn('[importAudioFile] path is not readable', {
+            uri: fileRef.uri,
+            fileUri: fileRef.fileUri,
+            fileCopyUri: fileRef.fileCopyUri,
+          });
           return;
         }
 
         const normalizedSource = sourcePath;
-
+        const fileLabel = picked.name ?? normalizedSource;
+        const isDocumentByName =
+          isDocumentImportFileName(fileLabel) || isDocumentImportFileName(normalizedSource);
+        const isPlainTextByName =
+          isPlainTextImportFileName(fileLabel) || isPlainTextImportFileName(normalizedSource);
         const shouldTrySubtitleImport =
-          isSubtitleImportFileName(picked.name) || isSubtitleImportFileName(normalizedSource);
+          isSubtitleImportFileName(fileLabel) || isSubtitleImportFileName(normalizedSource);
+
+        if (isDocumentByName || isPlainTextByName) {
+          setImportPhase('parsing_document');
+          setDocumentImportProgress(null);
+          const rawText = await loadImportTextSource(
+            normalizedSource,
+            fileLabel,
+            i18n.language,
+            setDocumentImportProgress,
+          );
+          if (!rawText?.trim()) {
+            hapticError();
+            if (isPdfImportFileName(fileLabel) || isPdfImportFileName(normalizedSource)) {
+              Alert.alert(t('importAudio.pdfImportErrorTitle'), t('importAudio.pdfImportError'));
+            } else {
+              Alert.alert(t('common.error'), t('importAudio.documentImportError'));
+            }
+            return;
+          }
+
+          const subtitleParsed = tryParseSubtitleImportFromText(rawText, fileLabel);
+          if (subtitleParsed) {
+            if (exceedsSubtitleImportCharLimit(subtitleParsed)) {
+              notifySubtitleImportTooLarge(t);
+              return;
+            }
+
+            setPendingFileImport({
+              kind: 'subtitles',
+              parsed: subtitleParsed,
+              defaultTitle: titleFromFileName(picked.name),
+            });
+            return;
+          }
+
+          const documentParsed = parseDocumentImport(rawText);
+          if (!documentParsed) {
+            hapticError();
+            if (rawText.trim().length > MAX_DOCUMENT_IMPORT_CHARS) {
+              Alert.alert(
+                t('importAudio.documentTooLargeTitle'),
+                t('importAudio.documentTooLargeMessage', {
+                  max: Math.round(MAX_DOCUMENT_IMPORT_CHARS / 1000),
+                }),
+                [{ text: t('common.ok') }],
+              );
+            } else {
+              Alert.alert(t('common.error'), t('importAudio.documentImportError'));
+            }
+            return;
+          }
+
+          setPendingFileImport({
+            kind: 'document',
+            parsed: documentParsed,
+            defaultTitle: titleFromFileName(picked.name),
+          });
+          return;
+        }
+
         if (shouldTrySubtitleImport) {
           setImportPhase('parsing_subtitles');
           const rawText = await readTextFile(normalizedSource);
-          const contentLooksSubtitle = looksLikeSubtitleContent(rawText);
-          const parsed =
-            contentLooksSubtitle || isSubtitleImportFileName(picked.name)
-              ? parseSubtitleImport(rawText)
-              : null;
+          const parsed = tryParseSubtitleImportFromText(rawText, fileLabel);
 
           if (!parsed) {
             hapticError();
@@ -277,15 +491,8 @@ export function useImportAudioFile() {
             return;
           }
 
-          if (parsed.durationMs > maxImportMs) {
-            hapticError();
-            Alert.alert(
-              t('importAudio.maxDurationTitle'),
-              t('importAudio.maxDurationMessage', {
-                max: Math.round(maxImportMs / (60 * 1000)),
-              }),
-              [{ text: t('common.ok') }],
-            );
+          if (exceedsSubtitleImportCharLimit(parsed)) {
+            notifySubtitleImportTooLarge(t);
             return;
           }
 
@@ -321,18 +528,14 @@ export function useImportAudioFile() {
             try {
               if (destPath !== normalizedSource) await NitroFS.unlink(destPath);
             } catch {
-              if (__DEV__) {
-                console.warn('[importAudioFile] Could not delete original file');
-              }
+              diagWarn('[importAudioFile] Could not delete original file');
             }
             return;
           }
           try {
             if (destPath !== normalizedSource) await NitroFS.unlink(destPath);
           } catch {
-            if (__DEV__) {
-              console.warn('[importAudioFile] Could not delete original file');
-            }
+            diagWarn('[importAudioFile] Could not delete original file');
           }
           destPath = converted;
         }
@@ -342,9 +545,7 @@ export function useImportAudioFile() {
         try {
           durationMs = await getAudioDurationMs(destPath);
         } catch {
-          if (__DEV__) {
-            console.warn('[importAudioFile] getAudioDurationMs failed');
-          }
+          diagWarn('[importAudioFile] getAudioDurationMs failed');
         }
         if (durationMs == null || durationMs <= 0) {
           hapticError();
@@ -357,9 +558,7 @@ export function useImportAudioFile() {
           try {
             await NitroFS.unlink(destPath);
           } catch {
-            if (__DEV__) {
-              console.warn('[importAudioFile] Could not delete file after unknown duration');
-            }
+            diagWarn('[importAudioFile] Could not delete file after unknown duration');
           }
           return;
         }
@@ -376,9 +575,7 @@ export function useImportAudioFile() {
           try {
             await NitroFS.unlink(destPath);
           } catch {
-            if (__DEV__) {
-              console.warn('[importAudioFile] Could not delete original file');
-            }
+            diagWarn('[importAudioFile] Could not delete original file');
           }
           return;
         }
@@ -406,18 +603,17 @@ export function useImportAudioFile() {
       } catch (err: unknown) {
         const code = (err as { code?: string })?.code;
         if (code !== 'OPERATION_CANCELED') {
-          if (__DEV__) {
-            console.warn('[importAudioFile] pipeline', err);
-          }
+          diagWarn('[importAudioFile] pipeline', err);
           hapticError();
           Alert.alert(t('common.error'), t('importAudio.importError'));
         }
       } finally {
         setIsImporting(false);
         setImportPhase(null);
+        setDocumentImportProgress(null);
       }
     },
-    [t, maxImportMs],
+    [t, maxImportMs, i18n.language],
   );
 
   const importAudioFromExternalUri = useCallback(
@@ -437,9 +633,7 @@ export function useImportAudioFile() {
           fileNameForCopy(fallbackName),
         );
         if (copyResult.kind === 'failed') {
-          if (__DEV__) {
-            console.warn('[importAudioFile] keepLocalCopy failed', copyResult.message);
-          }
+          diagWarn('[importAudioFile] keepLocalCopy failed', copyResult.message);
           hapticError();
           Alert.alert(t('common.error'), t('importAudio.importError'));
           return;
@@ -457,14 +651,13 @@ export function useImportAudioFile() {
         if (code === 'OPERATION_CANCELED') {
           return;
         }
-        if (__DEV__) {
-          console.warn('[importAudioFile] external uri', err);
-        }
+        diagWarn('[importAudioFile] external uri', err);
         hapticError();
         Alert.alert(t('common.error'), t('importAudio.importError'));
       } finally {
         setIsImporting(false);
         setImportPhase(null);
+        setDocumentImportProgress(null);
       }
     },
     [isImporting, pendingFileImport, t, runImportFromPickedCopy],
@@ -476,24 +669,39 @@ export function useImportAudioFile() {
     }
 
     hapticMedium();
+    setIsImporting(true);
+    setImportPhase('preparing');
 
+    let importPipelineStarted = false;
     try {
+      await waitForImportOverlayPaint();
+
       const picked = await pickSingleFileToCachesDirectory({
-        type: [...AUDIO_PICKER_TYPES, ...SUBTITLE_PICKER_TYPES, ...IOS_PICKER_FALLBACK_TYPES],
+        type: [
+          ...AUDIO_PICKER_TYPES,
+          ...IOS_AUDIO_PICKER_TYPES,
+          ...DOCUMENT_PICKER_TYPES,
+          ...IOS_DOCUMENT_PICKER_TYPES,
+          ...SUBTITLE_PICKER_TYPES,
+          ...IOS_PICKER_FALLBACK_TYPES,
+        ],
       });
 
       if (picked.kind === 'canceled') {
         return;
       }
       if (picked.kind === 'failed') {
-        if (__DEV__) {
-          console.warn('[importAudioFile] pick/copy failed', picked.message);
-        }
+        diagWarn('[importAudioFile] pick/copy failed', picked.message);
         hapticError();
-        Alert.alert(t('common.error'), picked.message || t('importAudio.importError'));
+        if (picked.fileAccessDenied) {
+          Alert.alert(t('importAudio.fileAccessErrorTitle'), t('importAudio.fileAccessError'));
+        } else {
+          Alert.alert(t('common.error'), picked.message || t('importAudio.importError'));
+        }
         return;
       }
 
+      importPipelineStarted = true;
       await runImportFromPickedCopy({
         localUri: picked.localUri,
         name: picked.name,
@@ -503,11 +711,15 @@ export function useImportAudioFile() {
       if (code === 'OPERATION_CANCELED') {
         return;
       }
-      if (__DEV__) {
-        console.warn('[importAudioFile]', err);
-      }
+      diagWarn('[importAudioFile]', err);
       hapticError();
       Alert.alert(t('common.error'), t('importAudio.importError'));
+    } finally {
+      if (!importPipelineStarted) {
+        setIsImporting(false);
+        setImportPhase(null);
+        setDocumentImportProgress(null);
+      }
     }
   }, [isImporting, pendingFileImport, t, runImportFromPickedCopy]);
 
@@ -516,6 +728,7 @@ export function useImportAudioFile() {
     importAudioFromExternalUri,
     isImporting,
     importPhase,
+    documentImportProgress,
     subtitleImportConfirm: {
       visible: pendingFileImport !== null,
       kind: pendingFileImport?.kind ?? 'subtitles',
@@ -526,7 +739,11 @@ export function useImportAudioFile() {
       durationMs:
         pendingFileImport?.kind === 'audio'
           ? (pendingFileImport.record.durationMs ?? 1000)
-          : (pendingFileImport?.parsed.durationMs ?? 1000),
+          : pendingFileImport?.kind === 'subtitles'
+            ? (pendingFileImport.parsed.durationMs ?? 1000)
+            : 0,
+      documentCharCount:
+        pendingFileImport?.kind === 'document' ? pendingFileImport.parsed.charCount : 0,
       onConfirm: confirmFileImport,
       onCancel: cancelFileImport,
     },

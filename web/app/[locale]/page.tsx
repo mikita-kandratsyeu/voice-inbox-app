@@ -10,9 +10,15 @@ import { Footer } from '@/components/landing/Footer';
 import { Header } from '@/components/landing/Header';
 import { Hero } from '@/components/landing/Hero';
 import { MarketingPageShell } from '@/components/landing/MarketingPageShell';
+import { MobileStickyCTA } from '@/components/landing/MobileStickyCTA';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { PrivateModeSection } from '@/components/landing/PrivateModeSection';
+import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
 import { UseCasesSection } from '@/components/landing/UseCasesSection';
+import { getLandingSocialProof } from '@/lib/landing-social-proof';
+
+// Next.js segment config must be a build-time literal (not an imported binding).
+export const revalidate = 300; // LANDING_SOCIAL_PROOF_REVALIDATE_SECONDS
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -50,21 +56,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function LandingPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const socialProof = await getLandingSocialProof();
 
   return (
     <MarketingPageShell>
-      <Header />
+      <Header hideOnMobile />
       <main className="flex-1">
-        <Hero />
+        <Hero socialProof={socialProof} />
         <DifferentiationSection />
         <PrivateModeSection />
         <HowItWorks />
         <Features />
         <UseCasesSection />
+        <TestimonialsSection config={socialProof} />
         <FAQSection />
         <CTASection />
       </main>
-      <Footer />
+      <Footer mobileStickyCtaClearance />
+      <MobileStickyCTA socialProof={socialProof} />
     </MarketingPageShell>
   );
 }

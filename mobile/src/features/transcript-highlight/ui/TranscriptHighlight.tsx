@@ -49,15 +49,30 @@ export const TranscriptHighlight = ({
     [segments, currentPositionMs],
   );
 
+  const speakerLabelById = useMemo(() => {
+    const labels = new Map<string, string>();
+    let counter = 1;
+    for (const segment of segments) {
+      if (!segment.speakerId || labels.has(segment.speakerId)) {
+        continue;
+      }
+      labels.set(segment.speakerId, `Speaker ${counter}`);
+      counter += 1;
+    }
+    return labels;
+  }, [segments]);
+
   return (
     <View style={{ gap: 12 }}>
-      {segments.map((seg) => {
+      {segments.map((seg, segmentIndex) => {
+        const segmentKey = `${seg.id}-${seg.startMs ?? segmentIndex}`;
         const isActiveSegment = active?.segmentId === seg.id;
         const hasTokens = seg.tokens && seg.tokens.length > 0;
+        const speakerLabel = seg.speakerId ? speakerLabelById.get(seg.speakerId) : undefined;
 
         return (
           <View
-            key={seg.id}
+            key={segmentKey}
             style={{
               flexDirection: 'row',
               alignItems: 'flex-start',
@@ -87,13 +102,26 @@ export const TranscriptHighlight = ({
             </Text>
 
             <View style={{ flex: 1 }}>
+              {speakerLabel ? (
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: '600',
+                    color: color.text.secondary,
+                    marginBottom: 4,
+                  }}
+                >
+                  {speakerLabel}
+                  {seg.isOverlapping ? ' · overlap' : ''}
+                </Text>
+              ) : null}
               {hasTokens ? (
                 <Text style={{ fontSize: 14, lineHeight: 24, flexWrap: 'wrap' }}>
                   {seg.tokens!.map((tok, idx) => {
                     const isActiveWord = isActiveSegment && active?.activeWordIdx === idx;
                     return (
                       <Text
-                        key={idx}
+                        key={`${segmentKey}-tok-${idx}`}
                         style={{
                           color: isActiveWord ? color.accent.primary : color.text.primary,
                           backgroundColor: isActiveWord

@@ -22,6 +22,8 @@ type RecordingDetailCardProps = {
   folderPlacement: RecordingDetailFolderPlacement;
   hideFolderPlacement?: boolean;
   surfaceBackgroundColor?: string;
+  onTitleLayout?: (layout: { y: number; height: number }) => void;
+  children?: React.ReactNode;
 };
 
 export const RecordingDetailCard = ({
@@ -30,6 +32,8 @@ export const RecordingDetailCard = ({
   folderPlacement,
   hideFolderPlacement = false,
   surfaceBackgroundColor,
+  onTitleLayout,
+  children,
 }: RecordingDetailCardProps) => {
   const { t, i18n } = useTranslation();
   const normalizeLabel = (s: string): string =>
@@ -85,7 +89,13 @@ export const RecordingDetailCard = ({
       accessibilityRole="summary"
       accessibilityLabel={accessibilityLabel}
     >
-      <View className="flex-row items-center gap-2 flex-wrap">
+      <View
+        className="flex-row items-center gap-2 flex-wrap"
+        onLayout={(event) => {
+          const { y, height } = event.nativeEvent.layout;
+          onTitleLayout?.({ y, height });
+        }}
+      >
         <Text
           className="flex-1 text-xl font-bold tracking-tight min-w-0"
           style={{ color: color.text.primary }}
@@ -120,7 +130,6 @@ export const RecordingDetailCard = ({
           </View>
         )}
       </View>
-
       {!hideFolderPlacement && (
         <View
           style={{
@@ -207,7 +216,6 @@ export const RecordingDetailCard = ({
           ) : null}
         </View>
       )}
-
       {record.tags && record.tags.length > 0 && (
         <View className="flex-row flex-wrap gap-2">
           {record.tags.map((tag) => (
@@ -220,6 +228,7 @@ export const RecordingDetailCard = ({
           {formatRelativeTime(record.createdAt, i18n.language)}
         </Text>
       )}
+      {children ? <View className="mt-4">{children}</View> : null}
     </View>
   );
 };

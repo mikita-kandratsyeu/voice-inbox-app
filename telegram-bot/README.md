@@ -12,13 +12,18 @@ Repository overview: [../README.md](../README.md). Web admin setup: [../web/READ
 
 ## Environment variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `TELEGRAM_BOT_TOKEN` | yes | Bot token from [@BotFather](https://t.me/BotFather) |
-| `DATABASE_URL` | yes | Postgres (`AdminUser.telegramUserId` lookup) |
-| `WEB_ADMIN_URL` | yes* | Site origin, e.g. `https://voice-inbox.example` |
-| `TELEGRAM_BOT_API_SECRET` | yes* | Shared secret — same as web `TELEGRAM_BOT_API_SECRET` |
-| `TELEGRAM_BOT_USER_AGENT` | no | Product token in `User-Agent` (default `VoiceInbox-Bot`). Vercel Firewall: bypass when User-Agent **contains** this string (like mobile `MOBILE_USER_AGENT`). |
+| Variable                             | Required | Description                                                                                                                                                   |
+| ------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TELEGRAM_BOT_TOKEN`                 | yes      | Bot token from [@BotFather](https://t.me/BotFather)                                                                                                           |
+| `DATABASE_URL`                       | yes      | Postgres (`AdminUser.telegramUserId` lookup)                                                                                                                  |
+| `WEB_ADMIN_URL`                      | yes\*    | Site origin, e.g. `https://voice-inbox.example`                                                                                                               |
+| `TELEGRAM_BOT_API_SECRET`            | yes\*    | Shared secret — same as web `TELEGRAM_BOT_API_SECRET`                                                                                                         |
+| `TELEGRAM_BOT_USER_AGENT`            | no       | Product token in `User-Agent` (default `VoiceInbox-Bot`). Vercel Firewall: bypass when User-Agent **contains** this string (like mobile `MOBILE_USER_AGENT`). |
+| `TELEGRAM_BOT_SUPPORT_ALERTS`        | no       | Set to `false` to disable proactive new-ticket polling (default: enabled)                                                                                     |
+| `TELEGRAM_BOT_WEBHOOK_URL`           | no       | If set, runs webhook mode instead of long polling                                                                                                             |
+| `TELEGRAM_BOT_WEBHOOK_SECRET`        | no       | Optional secret token for webhook requests                                                                                                                    |
+| `TELEGRAM_BOT_WEBHOOK_PATH`          | no       | Local webhook path (default `/telegram-webhook`)                                                                                                              |
+| `PORT` / `TELEGRAM_BOT_WEBHOOK_PORT` | no       | HTTP port for webhook server (default `3001`)                                                                                                                 |
 
 \*Required for API-backed actions (overview, support, keys, push, etc.). Without them the bot shows link/setup screens only.
 
@@ -40,12 +45,12 @@ Secrets (keys, passwords) are never shown in full; API keys use masked prefixes 
 
 ## Setup
 
+Install dependencies from the **repository root** (`yarn install` — see [../README.md](../README.md#monorepo-setup)).
+
 ```bash
-cd telegram-bot
-yarn install
-cp .env.example .env
-# Configure .env; ensure web schema is applied (yarn db:push in web/)
-yarn dev
+cp telegram-bot/.env.example telegram-bot/.env
+# Configure .env; ensure web schema is applied (yarn workspace voice-inbox-web db:push)
+yarn dev:telegram-bot
 ```
 
 Link your Telegram account:
@@ -55,38 +60,43 @@ Link your Telegram account:
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `/start`, `/menu` | Main menu (permission-filtered when linked) |
-| `/help` | Command list |
-| `/whoami` | Telegram id, linked login, permissions |
-| `/status` | Quick overview (Postgres, Redis, Vercel, devices) |
-| `/cancel` | Cancel an in-progress flow |
-| `/ping` | Database latency |
+| Command           | Description                                       |
+| ----------------- | ------------------------------------------------- |
+| `/start`, `/menu` | Main menu (permission-filtered when linked)       |
+| `/help`           | Command list                                      |
+| `/whoami`         | Telegram id, linked login, permissions            |
+| `/status`         | Quick overview (Postgres, Redis, Vercel, devices) |
+| `/cancel`         | Cancel an in-progress flow                        |
+| `/ping`           | Database latency                                  |
 
 ## Sections (inline menu)
 
-| Section | Permission | Features |
-|---------|------------|----------|
-| Overview | overview | Health, Vercel deploys, GitHub commits, push device count |
-| Config | config | App config summary, link to Pro keys |
-| Support | support | Ticket lists, detail, close/reopen with confirmation |
-| Pro Keys | config | List, generate, view masked key metadata |
-| Releases | releases | List by locale, publish/unpublish |
-| Push | messaging | Broadcast types, history |
-| Operations | operations | Support stats, API errors, audit log, console links |
-| Budget | budget | Totals, recent expenses, quick add |
-| Security | security | Access policy, admin list |
-| My Account | — | Profile, reset session |
+| Section    | Permission    | Features                                                     |
+| ---------- | ------------- | ------------------------------------------------------------ |
+| Overview   | overview      | Health, Vercel deploys, GitHub commits, push device count    |
+| Config     | config        | AI limits, mobile banner (toggle), model manifest, landing   |
+| Support    | support       | Tickets, search, AI draft, email/push reply, Pro key, alerts |
+| Pro Keys   | config        | List, generate, delete unused, reset redeemed                |
+| Releases   | releases      | List by locale, publish/unpublish (with confirm)             |
+| Events     | in_app_events | In-app event pages, publish/unpublish (with confirm)         |
+| Push       | messaging     | Single device, broadcast (with confirm), history             |
+| Operations | operations    | Support stats, API errors, audit log (cursor pages), links   |
+| Budget     | budget        | Totals, custom expense flow, quick add, delete (confirm)     |
+| Security   | security      | Access policy, admin list                                    |
+| My Account | —             | Profile, ticket alerts toggle, password, reset session       |
 
 ## Scripts
 
-| Script | Description |
-| ------ | ----------- |
-| `yarn dev` | Long polling (development) |
-| `yarn start` | Production |
-| `yarn type:check` | TypeScript |
-| `yarn test` | Unit tests (format helpers) |
+Run from repo root with `yarn workspace voice-inbox-telegram-bot <script>`, or `cd telegram-bot` and use `yarn <script>`.
+
+| Script       | Description                                        |
+| ------------ | -------------------------------------------------- |
+| `dev`        | Long polling (`yarn dev:telegram-bot` from root)   |
+| `start`      | Production (long polling or webhook if configured) |
+| `type:check` | TypeScript                                         |
+| `test`       | Unit tests (format helpers)                        |
+
+Monorepo quality gates: `yarn turbo run lint type:check test --filter=voice-inbox-telegram-bot`.
 
 ## Project layout
 
@@ -94,8 +104,9 @@ Link your Telegram account:
 src/
   auth/          Admin profile from DB (telegramUserId)
   api/           HTTP client for web admin API
+  alerts/        Opt-in support ticket notifications
   modules/       overview, support, pro-keys, …
-  session/       In-memory flows and list indices
+  session/       Flows, cursor pagination, TTL sessions
   ui/            HTML formatting, keyboards, replies
   router.ts      Commands & callback routing
   index.ts       Entrypoint

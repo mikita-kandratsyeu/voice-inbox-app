@@ -23,7 +23,7 @@ export const TabletShellLayout = ({ children, importAudioFile }: TabletShellLayo
           flex: 1,
           flexDirection: 'row',
           overflow: 'hidden',
-          backgroundColor: theme.panel,
+          backgroundColor: theme.content,
         }}
       >
         <TabletSidebar />

@@ -14,7 +14,12 @@ When editing legal pages (`privacy.*.md`, `terms.*.md`), keep statements aligned
   - `mobile/src/shared/lib/crashlytics.ts`
   - `mobile/src/features/app-storefront/` and `mobile/src/features/yandex-interstitial/`
   - `mobile/src/features/entitlements/` and `web/app/api/pro-license/**`
+  - `mobile/src/features/ai-limit-reset/`, `web/lib/ai-pro-reset.ts`, `web/app/api/ai-usage/pro-reset/`
+  - `web/lib/ai-usage-ledger.ts` and `web/app/api/ai-usage/**`
   - `web/services/ai.service.ts`, `web/services/translate.service.ts`, `web/services/ask.service.ts`
   - `web/config/constants.ts` (TTL/rate-limit values)
+  - `mobile/src/features/github-sync/` (optional Pro GitHub note sync — OAuth Device Flow, Keychain, direct GitHub API)
+  - `mobile/src/features/gitlab-sync/` (optional Pro GitLab note sync on gitlab.com — OAuth Device Flow, separate Keychain, direct GitLab API)
+  - `web/app/api/share/publish/route.ts`, `web/lib/shared-note-public.ts`, `web/lib/published-note-store.ts` (optional Pro public note links — delete snapshot on unpublish or expiry)
 - If behavior changes materially, update the **Last updated** date in legal docs.
 - Avoid promising stricter guarantees than the code currently enforces.

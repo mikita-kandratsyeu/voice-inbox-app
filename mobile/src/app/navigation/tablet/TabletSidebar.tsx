@@ -1,20 +1,21 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import { areFoldersEnabledInAiMode, useSettingsStore } from '@/entities/settings';
-import { getMonetizationMode } from '@/features/app-storefront';
 import { openPlanPaywall } from '@/features/plan-paywall';
 import { useProEntitlement } from '@/features/pro-license';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
+import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { useColors } from '@/shared/config';
-import { hapticSelection } from '@/shared/lib';
+import { hapticSelection, selectPlatform } from '@/shared/lib';
+import { FrostedChromeBackground } from '@/shared/ui';
 
 import type { RootStackParamList } from '../types';
 import {
@@ -22,9 +23,20 @@ import {
   requestTabletOpenCreateFolder,
 } from './tabletInboxNavBridge';
 import { useTabletInboxSidebarStore } from './tabletInboxSidebarStore';
-import { useTabletShellImportAudio } from './TabletShellContext';
 import { TabletSidebarBody } from './TabletSidebarBody';
-import { TABLET_SIDEBAR_PAD, TABLET_SIDEBAR_WIDTH } from './tabletSidebarMetrics';
+import {
+  getTabletSidebarSlotWidth,
+  TABLET_SIDEBAR_ANDROID_ELEVATION,
+  TABLET_SIDEBAR_FLOAT_GAP,
+  TABLET_SIDEBAR_FLOAT_MARGIN_BOTTOM,
+  TABLET_SIDEBAR_FLOAT_MARGIN_LEFT,
+  TABLET_SIDEBAR_FLOAT_MARGIN_TOP,
+  TABLET_SIDEBAR_FLOAT_RADIUS,
+  TABLET_SIDEBAR_IOS_SHADOW_OFFSET_Y,
+  TABLET_SIDEBAR_IOS_SHADOW_RADIUS,
+  TABLET_SIDEBAR_PAD,
+  tabletSidebarShadowOpacity,
+} from './tabletSidebarMetrics';
 import { getTabletSidebarTheme } from './tabletSidebarTheme';
 import {
   isOnSettingsRootScreen,
@@ -42,9 +54,7 @@ export const TabletSidebar = () => {
   const insets = useSafeAreaInsets();
   const rootNavigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const currentTab = useTabletTabNavigationStore((s) => s.activeTab);
-  const importAudioFile = useTabletShellImportAudio();
   const { isProActive } = useProEntitlement();
-  const monetizationMode = getMonetizationMode();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const foldersEnabled = areFoldersEnabledInAiMode(aiExecutionMode, privateAiProvider);
@@ -54,9 +64,11 @@ export const TabletSidebar = () => {
     pinned: pinnedCount,
     archived: archivedCount,
     openTasks: openTasksCount,
+    notesGraphNodes: notesGraphNodeCount,
     folderCounts,
   } = useTabletSidebarNavCounts();
   const aiProcessing = useTabletSidebarAiProcessing();
+  const [notesGraphProSheetVisible, setNotesGraphProSheetVisible] = useState(false);
 
   const activeTranscriptionRecord = useRecordStore((s) =>
     s.records.find((r) => r.aiStatus === 'loading_model' || r.aiStatus === 'processing'),
@@ -109,6 +121,25 @@ export const TabletSidebar = () => {
     rootNavigation.navigate('AllTasks');
   }, [currentTab, rootNavigation]);
 
+  const openNotesGraph = useCallback(() => {
+    if (!isProActive) {
+      hapticSelection();
+      setNotesGraphProSheetVisible(true);
+      return;
+    }
+    rootNavigation.navigate('NotesGraph');
+    hapticSelection();
+  }, [isProActive, rootNavigation]);
+
+  const handleCloseNotesGraphProSheet = useCallback(() => {
+    setNotesGraphProSheetVisible(false);
+  }, []);
+
+  const handleNotesGraphProUpgrade = useCallback(() => {
+    setNotesGraphProSheetVisible(false);
+    openPlanPaywall();
+  }, []);
+
   const openCreateFolder = useCallback(() => {
     if (currentTab !== 'Inbox') {
       navigateMainTab('Inbox');
@@ -139,10 +170,6 @@ export const TabletSidebar = () => {
     rootNavigation.navigate('RecordModal');
   }, [activeTranscriptionRecord, rootNavigation, t]);
 
-  const handleImportAudio = useCallback(() => {
-    void importAudioFile();
-  }, [importAudioFile]);
-
   const handleTextNote = useCallback(() => {
     hapticSelection();
     rootNavigation.navigate('TextNoteModal');
@@ -155,57 +182,87 @@ export const TabletSidebar = () => {
   return (
     <View
       style={{
-        width: TABLET_SIDEBAR_WIDTH,
+        width: getTabletSidebarSlotWidth(),
         flexShrink: 0,
-        alignSelf: 'stretch',
-        overflow: 'hidden',
-        backgroundColor: theme.panel,
+        paddingLeft: TABLET_SIDEBAR_FLOAT_MARGIN_LEFT,
+        paddingRight: TABLET_SIDEBAR_FLOAT_GAP,
+        paddingTop: insets.top + TABLET_SIDEBAR_FLOAT_MARGIN_TOP,
+        paddingBottom: Math.max(insets.bottom, 8) + TABLET_SIDEBAR_FLOAT_MARGIN_BOTTOM,
       }}
     >
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          right: 0,
-          top: 0,
-          bottom: 0,
-          width: 1,
-          backgroundColor: theme.border,
-          zIndex: 2,
-        }}
-      />
-      <TabletSidebarBody
-        color={color}
-        theme={theme}
-        insets={insets}
-        t={t}
-        isSettingsTab={isSettingsTab}
-        navDimmed={navDimmed}
-        isProActive={isProActive}
-        monetizationMode={monetizationMode}
-        folders={folders}
-        folderCounts={folderCounts}
-        foldersEnabled={foldersEnabled}
-        currentTab={currentTab}
-        inboxSelection={inboxSelection}
-        inboxCount={inboxCount}
-        hasUnread={unreadCount > 0}
-        pinnedCount={pinnedCount}
-        archivedCount={archivedCount}
-        openTasksCount={openTasksCount}
-        aiProcessing={aiProcessing}
-        inboxActive={inboxActive}
-        pinnedActive={pinnedActive}
-        archivedActive={archivedActive}
-        horizontalPad={TABLET_SIDEBAR_PAD}
-        onOpenSettings={openSettings}
-        onOpenPlanPaywall={openPlanPaywall}
-        onRecord={handleNewRecording}
-        onRecordLongPress={handleImportAudio}
-        onTextNote={handleTextNote}
-        navigateToInbox={navigateToInbox}
-        openAllTasks={openAllTasks}
-        openCreateFolder={openCreateFolder}
+      <View style={{ flex: 1 }}>
+        <View
+          style={{
+            flex: 1,
+            borderRadius: TABLET_SIDEBAR_FLOAT_RADIUS,
+            backgroundColor: 'transparent',
+            ...selectPlatform({
+              ios: {
+                shadowColor: color.shadow.color,
+                shadowOffset: { width: 0, height: TABLET_SIDEBAR_IOS_SHADOW_OFFSET_Y },
+                shadowOpacity: tabletSidebarShadowOpacity(color.shadow.opacity),
+                shadowRadius: TABLET_SIDEBAR_IOS_SHADOW_RADIUS,
+              },
+              android: {
+                elevation: TABLET_SIDEBAR_ANDROID_ELEVATION,
+              },
+              default: {},
+            }),
+          }}
+        >
+          <View
+            style={{
+              flex: 1,
+              borderRadius: TABLET_SIDEBAR_FLOAT_RADIUS,
+              overflow: 'hidden',
+              backgroundColor: 'transparent',
+              borderWidth: 1,
+              borderColor: theme.border,
+            }}
+          >
+            <View pointerEvents="none" style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]}>
+              <FrostedChromeBackground borderRadius={TABLET_SIDEBAR_FLOAT_RADIUS} />
+            </View>
+            <TabletSidebarBody
+              color={color}
+              theme={theme}
+              t={t}
+              isSettingsTab={isSettingsTab}
+              navDimmed={navDimmed}
+              isProActive={isProActive}
+              folders={folders}
+              folderCounts={folderCounts}
+              foldersEnabled={foldersEnabled}
+              currentTab={currentTab}
+              inboxSelection={inboxSelection}
+              inboxCount={inboxCount}
+              hasUnread={unreadCount > 0}
+              pinnedCount={pinnedCount}
+              archivedCount={archivedCount}
+              openTasksCount={openTasksCount}
+              notesGraphNodeCount={notesGraphNodeCount}
+              aiProcessing={aiProcessing}
+              inboxActive={inboxActive}
+              pinnedActive={pinnedActive}
+              archivedActive={archivedActive}
+              horizontalPad={TABLET_SIDEBAR_PAD}
+              onOpenSettings={openSettings}
+              onOpenPlanPaywall={openPlanPaywall}
+              onRecord={handleNewRecording}
+              onTextNote={handleTextNote}
+              navigateToInbox={navigateToInbox}
+              openAllTasks={openAllTasks}
+              openNotesGraph={openNotesGraph}
+              openCreateFolder={openCreateFolder}
+            />
+          </View>
+        </View>
+      </View>
+      <AutomationComingSoonSheet
+        visible={notesGraphProSheetVisible}
+        feature="notesGraph"
+        onClose={handleCloseNotesGraphProSheet}
+        onUpgradePress={handleNotesGraphProUpgrade}
       />
     </View>
   );

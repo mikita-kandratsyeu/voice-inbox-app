@@ -1,5 +1,7 @@
 import { NativeModules } from 'react-native';
 
+import { diagWarn } from '@/shared/lib/appLogger';
+
 type StorefrontNative = {
   getCountryCode: () => Promise<string | null | undefined>;
   showManageSubscriptions?: () => Promise<boolean>;
@@ -26,9 +28,7 @@ export const getStorefrontCountryCode = async (): Promise<string | null> => {
 
     return code ?? null;
   } catch (e) {
-    if (__DEV__) {
-      console.warn('[getStorefrontCountryCode] Failed to get country code', e);
-    }
+    diagWarn('[getStorefrontCountryCode] Failed to get country code', e);
     return null;
   }
 };

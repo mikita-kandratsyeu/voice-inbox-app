@@ -1,10 +1,18 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
-import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
+import type {
+  AskAnswerKind,
+  AskEvidence,
+  AskLinkedNoteForPrompt,
+} from '@/shared/lib/ai-core/types';
+import { requestAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 
 import { isString } from '../type-guards';
 import { type AiFetchOptions, aiRequestCancelledFailure, isAbortLikeError } from './abort';
 import { headersForAiOperation } from './aiOperation';
+import { AI_POLL_TIMEOUT_MS } from './constants';
+import { pollLoopOptionsFromAcceptedJob } from './pollDeadline';
 import { pollGetLoop } from './pollGetLoop';
 import { readResponseJson } from './responseJson';
 
@@ -22,6 +30,7 @@ type AskApiRequestBody = {
   tasks?: { text: string }[];
   priorTurns?: { question: string; answer: string }[];
   recordingMarks?: { offsetMs: number; label: string }[];
+  linkedNotes?: AskLinkedNoteForPrompt[];
   /** Server clamps to 300–3600; omit for API default (1 hour). */
   messageTtlSeconds?: number;
 };
@@ -51,6 +60,7 @@ type AskApiSuccessResponse = {
   status: 'processing';
   model?: string;
   syncToken?: string;
+  pollExpiresAt?: string;
 };
 
 type AskApiLimitResponse = {
@@ -75,6 +85,7 @@ export type AskMessageResult =
         answerKind?: AskAnswerKind;
         items?: string[];
         suggestedFollowUps?: string[];
+        interpretations?: string[];
         evidence?: AskEvidence[];
         model?: string;
       };
@@ -90,6 +101,7 @@ type AskResponse =
       answerKind?: AskAnswerKind;
       items?: string[];
       suggestedFollowUps?: string[];
+      interpretations?: string[];
       evidence?: AskEvidence[];
       model?: string;
     }
@@ -132,7 +144,7 @@ export async function postAskQuestion(
       return aiRequestCancelledFailure();
     }
     const errorMsg = err instanceof Error ? err.message : 'Network error';
-    if (__DEV__) console.warn('[AI] postAskQuestion: fetch failed', { error: errorMsg, url });
+    diagWarn('[AI] postAskQuestion: fetch failed', { error: errorMsg, url });
     return { ok: false, error: errorMsg };
   }
 
@@ -142,14 +154,13 @@ export async function postAskQuestion(
       return { ok: false, error: limitBody.error };
     }
     const json = limitBody.data as AskApiLimitResponse;
-    if (__DEV__) console.warn('[AI] postAskQuestion: limit exceeded', json.usage);
+    diagWarn('[AI] postAskQuestion: limit exceeded', json.usage);
     return { ok: false, limitExceeded: true, usage: json.usage };
   }
 
   if (!response.ok) {
     const text = await response.text();
-    if (__DEV__)
-      console.warn('[AI] postAskQuestion: HTTP error', { status: response.status, body: text });
+    devWarn('[AI] postAskQuestion: HTTP error', { status: response.status, body: text });
     return { ok: false, error: text || `HTTP ${response.status}` };
   }
 
@@ -159,6 +170,7 @@ export async function postAskQuestion(
   }
 
   const data = successBody.data as AskApiSuccessResponse;
+  requestAiUsageRefresh();
 
   return { ok: true, data };
 }
@@ -166,7 +178,7 @@ export async function postAskQuestion(
 export async function pollAskResult(
   id: string,
   syncToken?: string,
-  options?: AiFetchOptions,
+  options?: AiFetchOptions & { pollExpiresAt?: string },
 ): Promise<AskMessageResult> {
   const headers: Record<string, string> = {};
   if (syncToken) {
@@ -180,6 +192,7 @@ export async function pollAskResult(
     answerKind?: AskAnswerKind;
     items?: string[];
     suggestedFollowUps?: string[];
+    interpretations?: string[];
     evidence?: AskEvidence[];
     model?: string;
   }>(
@@ -196,6 +209,7 @@ export async function pollAskResult(
             ...(msg.suggestedFollowUps?.length
               ? { suggestedFollowUps: msg.suggestedFollowUps }
               : {}),
+            ...(msg.interpretations?.length ? { interpretations: msg.interpretations } : {}),
             ...(msg.evidence?.length ? { evidence: msg.evidence } : {}),
             ...(isString(msg.model) && msg.model.trim() ? { model: msg.model.trim() } : {}),
           },
@@ -203,18 +217,28 @@ export async function pollAskResult(
       }
 
       if (msg.status === 'error') {
-        if (__DEV__) console.warn('[AI] pollAskResult: server error', { id, error: msg.error });
+        diagWarn('[AI] pollAskResult: server error', { id, error: msg.error });
         return { ok: false, error: msg.error };
       }
 
       return 'processing';
     },
-    { ...options, headers },
+    {
+      ...options,
+      headers,
+      jobType: 'ask',
+      ...pollLoopOptionsFromAcceptedJob(
+        { pollExpiresAt: options?.pollExpiresAt },
+        AI_POLL_TIMEOUT_MS,
+      ),
+    },
   );
 
-  if (!result.ok && result.error === 'Timeout waiting for AI result' && __DEV__) {
-    console.warn('[AI] pollAskResult: timeout', { id });
+  if (!result.ok && result.error === 'Timeout waiting for AI result') {
+    diagWarn('[AI] pollAskResult: timeout', { id });
   }
+
+  requestAiUsageRefresh();
 
   return result;
 }

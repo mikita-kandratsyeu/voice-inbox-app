@@ -19,6 +19,7 @@ continues.
     expect(parsed).not.toBeNull();
     expect(parsed?.transcript).toBe('Hello there.\nSecond line continues.');
     expect(parsed?.durationMs).toBe(5250);
+    expect(parsed?.charCount).toBe(parsed?.transcript.length);
     expect(parsed?.segments).toEqual([
       {
         id: 'subtitle-1',

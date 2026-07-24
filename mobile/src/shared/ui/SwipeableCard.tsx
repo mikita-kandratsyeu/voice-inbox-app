@@ -1,8 +1,12 @@
 import { Archive, ArchiveRestore, Pin, PinOff } from 'lucide-react-native';
-import React, { memo, useState } from 'react';
-import type { PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import React, { memo, useCallback, useState } from 'react';
+import {
+  GestureDetector,
+  type PanGestureActiveEvent,
+  usePanGesture,
+} from 'react-native-gesture-handler';
 import Animated, {
+  cancelAnimation,
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
@@ -12,14 +16,13 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { useColors } from '@/shared/config';
-import { hapticMedium } from '@/shared/lib';
+import { ANIMATION_DURATIONS, GESTURE_THRESHOLDS, SPRING_CONFIGS } from '@/shared/config';
+import { hapticMedium, useMountedRef, useSafeCallback } from '@/shared/lib';
 
 export const SwipeableCardContext = React.createContext({ isSwiping: false });
 
-const SWIPE_THRESHOLD = 80;
 const CARD_FLY_DISTANCE = 400;
-const COLLAPSE_DURATION = 280;
-const MAX_HEIGHT = 300;
+const DEFAULT_MAX_HEIGHT = 300;
 const MARGIN_BOTTOM = 16;
 
 type LeftSwipeAction = 'archive' | 'unarchive';
@@ -30,7 +33,12 @@ type SwipeableCardProps = {
   isPinned?: boolean;
   leftAction: LeftSwipeAction;
   onLeftAction: () => void;
-  onPin: () => void;
+  onPin?: () => void;
+  maxHeight?: number;
+  /** When false, right-swipe pin is disabled (e.g. archived inbox). Default true. */
+  pinEnabled?: boolean;
+  /** Parent supplies list margins — skip outer spacing (inbox layout toggle shell). */
+  embedded?: boolean;
 };
 
 export const SwipeableCard = memo(function SwipeableCard({
@@ -39,19 +47,32 @@ export const SwipeableCard = memo(function SwipeableCard({
   leftAction,
   onLeftAction,
   onPin,
+  maxHeight = DEFAULT_MAX_HEIGHT,
+  embedded = false,
+  pinEnabled = true,
 }: SwipeableCardProps) {
   const color = useColors();
+  const mountedRef = useMountedRef();
   const translateX = useSharedValue(0);
   const action = useSharedValue<SwipeAction>('none');
   const [isSwiping, setIsSwiping] = useState(false);
 
   const collapseOpacity = useSharedValue(1);
+  const safeOnLeftAction = useSafeCallback(mountedRef, onLeftAction);
+  const safeOnPin = useSafeCallback(mountedRef, onPin ?? (() => undefined));
+  const safeSetIsSwiping = useSafeCallback(mountedRef, setIsSwiping);
+  const safeHapticMedium = useSafeCallback(mountedRef, hapticMedium);
 
-  const collapseAndExecute = () => {
-    collapseOpacity.value = withTiming(0, { duration: COLLAPSE_DURATION }, (finished) => {
-      if (finished) scheduleOnRN(onLeftAction);
-    });
-  };
+  const collapseAndExecute = useCallback(() => {
+    collapseOpacity.value = withTiming(
+      0,
+      { duration: ANIMATION_DURATIONS.collapse },
+      (finished) => {
+        if (finished) scheduleOnRN(safeOnLeftAction);
+      },
+    );
+  }, [collapseOpacity, safeOnLeftAction]);
+  const safeCollapseAndExecute = useSafeCallback(mountedRef, collapseAndExecute);
 
   useAnimatedReaction(
     () => action.value,
@@ -61,57 +82,60 @@ export const SwipeableCard = memo(function SwipeableCard({
       }
 
       if (current === 'archive' || current === 'unarchive') {
-        scheduleOnRN(collapseAndExecute);
+        scheduleOnRN(safeCollapseAndExecute);
       } else if (current === 'pin') {
-        translateX.value = withSpring(0, { damping: 14, stiffness: 300, mass: 0.6 }, () => {
-          scheduleOnRN(onPin);
+        cancelAnimation(translateX);
+        translateX.value = withSpring(0, SPRING_CONFIGS.bouncy, () => {
+          if (onPin) scheduleOnRN(safeOnPin);
         });
         action.value = 'none';
       }
     },
   );
 
-  const pan = Gesture.Pan()
-    .activeOffsetX([-10, 10])
-    .failOffsetY([-15, 15])
-    .onStart(() => {
-      scheduleOnRN(setIsSwiping, true);
-    })
-    .onUpdate((e: PanGestureHandlerEventPayload) => {
-      translateX.value = e.translationX;
-    })
-    .onEnd((e: PanGestureHandlerEventPayload) => {
-      if (e.translationX < -SWIPE_THRESHOLD) {
-        scheduleOnRN(hapticMedium);
+  const pan = usePanGesture({
+    activeOffsetX: [-GESTURE_THRESHOLDS.activeOffset, GESTURE_THRESHOLDS.activeOffset],
+    failOffsetY: [-GESTURE_THRESHOLDS.failOffset, GESTURE_THRESHOLDS.failOffset],
+    onActivate: () => {
+      cancelAnimation(translateX);
+      scheduleOnRN(safeSetIsSwiping, true);
+    },
+    onUpdate: (event: PanGestureActiveEvent) => {
+      translateX.value = pinEnabled ? event.translationX : Math.min(0, event.translationX);
+    },
+    onDeactivate: (event: PanGestureActiveEvent) => {
+      if (event.translationX < -GESTURE_THRESHOLDS.swipe) {
+        scheduleOnRN(safeHapticMedium);
         translateX.value = withTiming(-CARD_FLY_DISTANCE, { duration: 220 }, () => {
           action.value = leftAction;
         });
-      } else if (e.translationX > SWIPE_THRESHOLD) {
-        scheduleOnRN(hapticMedium);
-        translateX.value = withTiming(SWIPE_THRESHOLD * 1.3, { duration: 80 }, () => {
+      } else if (pinEnabled && event.translationX > GESTURE_THRESHOLDS.swipe) {
+        scheduleOnRN(safeHapticMedium);
+        translateX.value = withTiming(GESTURE_THRESHOLDS.swipeExtended, { duration: 80 }, () => {
           action.value = 'pin';
         });
       } else {
-        translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+        translateX.value = withSpring(0, SPRING_CONFIGS.gentle);
       }
-      scheduleOnRN(setIsSwiping, false);
-    })
-    .onFinalize(() => {
-      scheduleOnRN(setIsSwiping, false);
-    });
+      scheduleOnRN(safeSetIsSwiping, false);
+    },
+    onFinalize: () => {
+      scheduleOnRN(safeSetIsSwiping, false);
+    },
+  });
 
   const cardStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
   }));
 
   const leftReveal = useAnimatedStyle(() => {
-    const progress = Math.min(Math.max(-translateX.value / SWIPE_THRESHOLD, 0), 1);
+    const progress = Math.min(Math.max(-translateX.value / GESTURE_THRESHOLDS.swipe, 0), 1);
 
     return { opacity: progress };
   });
 
   const pinReveal = useAnimatedStyle(() => {
-    const progress = Math.min(Math.max(translateX.value / SWIPE_THRESHOLD, 0), 1);
+    const progress = Math.min(Math.max(translateX.value / GESTURE_THRESHOLDS.swipe, 0), 1);
 
     return { opacity: progress };
   });
@@ -122,10 +146,11 @@ export const SwipeableCard = memo(function SwipeableCard({
   const LeftIcon = leftAction === 'archive' ? Archive : ArchiveRestore;
 
   const containerStyle = useAnimatedStyle(() => ({
-    maxHeight: MAX_HEIGHT,
-    marginHorizontal: 16,
-    marginBottom: MARGIN_BOTTOM,
+    maxHeight: embedded ? undefined : maxHeight,
+    marginHorizontal: embedded ? 0 : 16,
+    marginBottom: embedded ? 0 : MARGIN_BOTTOM,
     opacity: collapseOpacity.value,
+    width: embedded ? '100%' : undefined,
   }));
 
   return (
@@ -150,31 +175,36 @@ export const SwipeableCard = memo(function SwipeableCard({
         >
           <LeftIcon size={22} color={color.icon.onAccent} strokeWidth={2} />
         </Animated.View>
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              left: 0,
-              width: '100%',
-              alignItems: 'flex-start',
-              justifyContent: 'center',
-              borderRadius: 16,
-              paddingLeft: 24,
-              backgroundColor: pinBgColor,
-            },
-            pinReveal,
-          ]}
-        >
-          {isPinned ? (
-            <PinOff size={22} color={color.icon.onAccent} strokeWidth={2} />
-          ) : (
-            <Pin size={22} color={color.icon.onAccent} strokeWidth={2} />
-          )}
-        </Animated.View>
+        {pinEnabled ? (
+          <Animated.View
+            style={[
+              {
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: 0,
+                width: '100%',
+                alignItems: 'flex-start',
+                justifyContent: 'center',
+                borderRadius: 16,
+                paddingLeft: 24,
+                backgroundColor: pinBgColor,
+              },
+              pinReveal,
+            ]}
+            pointerEvents="none"
+          >
+            {isPinned ? (
+              <PinOff size={22} color={color.icon.onAccent} strokeWidth={2} />
+            ) : (
+              <Pin size={22} color={color.icon.onAccent} strokeWidth={2} />
+            )}
+          </Animated.View>
+        ) : null}
         <GestureDetector gesture={pan}>
-          <Animated.View style={cardStyle}>{children}</Animated.View>
+          <Animated.View style={[cardStyle, embedded && { width: '100%' }]}>
+            {children}
+          </Animated.View>
         </GestureDetector>
       </Animated.View>
     </SwipeableCardContext.Provider>

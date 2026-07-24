@@ -17,8 +17,11 @@ export type AppBottomSheetModalProps = {
   children: React.ReactNode;
   /** @default true */
   presentOnVisible?: boolean;
+  /** Bumped while `visible` stays true to force another `present()` (e.g. header re-tap). */
+  presentRequestKey?: number;
   surface?: AppBottomSheetChromeOptions['surface'];
   backdrop?: AppBottomSheetBackdropPreset;
+  backdropPressBehavior?: AppBottomSheetChromeOptions['backdropPressBehavior'];
   keyboardBlurBehavior?: AppBottomSheetChromeOptions['keyboardBlurBehavior'];
   /** Custom backdrop; overrides `backdrop` preset. */
   backdropComponent?: React.FC<BottomSheetBackdropProps>;
@@ -39,8 +42,10 @@ export const AppBottomSheetModal = forwardRef<BottomSheetModal, AppBottomSheetMo
       onClose,
       children,
       presentOnVisible = true,
+      presentRequestKey = 0,
       surface,
       backdrop,
+      backdropPressBehavior,
       keyboardBlurBehavior,
       backdropComponent: backdropComponentOverride,
       snapPoints,
@@ -63,13 +68,10 @@ export const AppBottomSheetModal = forwardRef<BottomSheetModal, AppBottomSheetMo
     const useTabletDetached =
       isTablet && tabletMaxWidth != null && Number.isFinite(tabletMaxWidth) && tabletMaxWidth > 0;
 
-    const handleDismiss = useBottomSheetModalVisibility(modalRef, visible, onClose, {
-      presentOnVisible,
-    });
-
     const chrome = useAppBottomSheetChrome({
       surface,
       backdrop,
+      backdropPressBehavior,
       keyboardBlurBehavior,
       snapPoints: snapPoints as (string | number)[] | undefined,
       enablePanDownToClose,
@@ -79,6 +81,12 @@ export const AppBottomSheetModal = forwardRef<BottomSheetModal, AppBottomSheetMo
       backgroundStyle: backgroundStyle as AppBottomSheetChromeOptions['backgroundStyle'],
       handleIndicatorStyle:
         handleIndicatorStyle as AppBottomSheetChromeOptions['handleIndicatorStyle'],
+    });
+
+    const { handleDismiss, sheetKey } = useBottomSheetModalVisibility(modalRef, visible, onClose, {
+      presentOnVisible,
+      presentRequestKey,
+      enableDynamicSizing: chrome.enableDynamicSizing,
     });
 
     const Backdrop = backdropComponentOverride ?? chrome.backdropComponent;
@@ -108,6 +116,7 @@ export const AppBottomSheetModal = forwardRef<BottomSheetModal, AppBottomSheetMo
 
     return (
       <BottomSheetModal
+        key={sheetKey}
         ref={modalRef}
         stackBehavior={chrome.stackBehavior}
         enableDynamicSizing={chrome.enableDynamicSizing}

@@ -1,8 +1,8 @@
 import type { TFunction } from 'i18next';
-import { Fingerprint, Lock, ScanFace } from 'lucide-react-native';
+import { Fingerprint, ScanFace } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -222,12 +222,15 @@ export const LockScreen = () => {
       accessibilityLabel={t('appLock.a11y.screenLabel')}
     >
       <View
-        className="mb-5 h-[72px] w-[72px] items-center justify-center rounded-2xl"
-        style={{ backgroundColor: color.background.tertiary }}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
+        className="mb-5 h-20 w-20 overflow-hidden rounded-[22px]"
+        accessibilityRole="image"
+        accessibilityLabel={t('common.notchBrandMark')}
       >
-        <Lock size={34} color={color.text.secondary} strokeWidth={1.75} />
+        <Image
+          source={require('@/shared/assets/app-icon.png')}
+          className="h-full w-full"
+          resizeMode="cover"
+        />
       </View>
 
       <Text

@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import type { Colors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import { EmptyState } from '@/shared/ui';
 
 type InboxScreenEmptyLibraryProps = {
@@ -33,7 +34,7 @@ function InboxScreenEmptyLibraryInner({
         paddingBottom: getFloatingTabBarScrollPaddingBottom(insetsBottom, isTablet),
       }}
     >
-      <View style={{ flex: 1, justifyContent: 'center' }}>
+      <View testID={TestIds.inbox.emptyState} style={{ flex: 1, justifyContent: 'center' }}>
         <EmptyState title={title} description={description} hint={hint} />
       </View>
       <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />

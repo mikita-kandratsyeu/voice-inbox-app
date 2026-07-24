@@ -1,13 +1,17 @@
 import { MenuView } from '@react-native-menu/menu';
 import type { TFunction } from 'i18next';
-import { FolderPlus, MoreVertical, Search, SquarePen } from 'lucide-react-native';
+import { FolderTree, ListTodo, MoreVertical, Search } from 'lucide-react-native';
 import React, { memo, useMemo } from 'react';
-import { View } from 'react-native';
 
+import { useSettingsStore } from '@/entities/settings';
 import type { BatchSelectState } from '@/features/batch-select';
+import { isInboxAskAvailable } from '@/features/inbox-ask';
+import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { HeaderIconButton } from '@/shared/ui';
+import { TestIds } from '@/shared/e2e';
+import { inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
+import { FrostedChromeSurface, FrostedHeaderButtonGroup, HeaderIconButton } from '@/shared/ui';
 
 type InboxScreenHeaderRightProps = {
   color: Colors;
@@ -22,15 +26,14 @@ type InboxScreenHeaderRightProps = {
   isAutoOrganizing: boolean;
   onSearchHeaderPress: () => void;
   onSelectAll: () => void;
-  onAutoOrganize: () => void;
+  onOpenAiOrganizeSheet: () => void;
   onEnterBatchMode: () => void;
   onOpenAllTasks: () => void;
-  onCreateTextNote: () => void;
+  onOpenNotesGraph: () => void;
+  onOpenInboxAsk: () => void;
   onImportFile: () => void;
   /** Tablet sidebar: no overflow menu; actions as header icons. */
   useTabletShell?: boolean;
-  /** Tablet sidebar already exposes text note compose. */
-  hideCreateTextNote?: boolean;
   t: TFunction;
 };
 
@@ -49,80 +52,116 @@ function InboxScreenHeaderRightInner({
   isAutoOrganizing,
   onSearchHeaderPress,
   onSelectAll,
-  onAutoOrganize,
+  onOpenAiOrganizeSheet,
   onEnterBatchMode,
   onOpenAllTasks,
-  onCreateTextNote,
+  onOpenNotesGraph,
+  onOpenInboxAsk,
   onImportFile,
   useTabletShell = false,
-  hideCreateTextNote = false,
   t,
 }: InboxScreenHeaderRightProps) {
   const theme = useAppTheme();
   const isDark = theme === 'dark';
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
+  const { isProActive } = useProEntitlement();
+  const inboxAskEnabled = isInboxAskAvailable(aiExecutionMode, privateAiProvider, isProActive);
+
+  const organizeDisabled = isAutoOrganizing;
 
   const moreMenuActions = useMemo(() => {
-    const items: Array<{
-      id: string;
-      title: string;
-      titleColor: string;
-      image?: string;
-      imageColor?: string;
-      attributes?: { disabled?: boolean };
-    }> = [];
+    const titleColor = color.text.primary;
+    const actions: NativeMenuAction[] = [];
 
-    if (!useTabletShell) {
-      items.push({
-        id: 'allTasks',
-        title: t('allTasks.title'),
-        titleColor: color.text.primary,
-        image: 'checklist',
-        imageColor: color.text.primary,
-      });
+    if (inboxAskEnabled) {
+      const inboxAskAction: NativeMenuAction = {
+        id: 'inboxAsk',
+        title: t('inbox.menuAskInboxAi'),
+        titleColor,
+        image: 'sparkles',
+        imageColor: titleColor,
+      };
+
+      actions.push(inlineNativeMenuSection('inboxAskSection', titleColor, [inboxAskAction]));
     }
 
+    const navigationItems: NativeMenuAction[] = [];
+
     if (foldersEnabled && !useTabletShell) {
-      items.push({
+      navigationItems.push({
         id: 'autoOrganize',
         title: t('inbox.menuAutoOrganize'),
-        titleColor: color.text.primary,
+        titleColor,
         image: 'folder.badge.plus',
-        imageColor: color.text.primary,
+        imageColor: titleColor,
         attributes: isAutoOrganizing ? { disabled: true } : undefined,
       });
     }
-    items.push({
-      id: 'selectNotes',
-      title: t('inbox.menuSelectNotes'),
-      titleColor: color.text.primary,
-      image: 'checkmark.circle',
-      imageColor: color.text.primary,
-    });
-    items.push({
+
+    if (!useTabletShell) {
+      navigationItems.push({
+        id: 'notesGraph',
+        title: t('notesGraph.title'),
+        titleColor,
+        image: 'point.3.connected.trianglepath.dotted',
+        imageColor: titleColor,
+      });
+    }
+
+    navigationItems.push({
       id: 'importFile',
       title: t('inbox.menuImportFile'),
-      titleColor: color.text.primary,
+      titleColor,
       image: 'doc.badge.plus',
-      imageColor: color.text.primary,
+      imageColor: titleColor,
     });
-    return items;
-  }, [color.text.primary, foldersEnabled, isAutoOrganizing, t, useTabletShell]);
+
+    if (navigationItems.length > 0) {
+      if (!useTabletShell) {
+        actions.push(inlineNativeMenuSection('navigationSection', titleColor, navigationItems));
+      } else {
+        actions.push(...navigationItems);
+      }
+    }
+
+    const selectNotesAction: NativeMenuAction = {
+      id: 'selectNotes',
+      title: t('inbox.menuSelectNotes'),
+      titleColor,
+      image: 'checkmark.circle',
+      imageColor: titleColor,
+    };
+
+    if (!useTabletShell) {
+      actions.push(inlineNativeMenuSection('selectNotesSection', titleColor, [selectNotesAction]));
+    } else {
+      actions.push(selectNotesAction);
+    }
+
+    return actions;
+  }, [color.text.primary, foldersEnabled, inboxAskEnabled, isAutoOrganizing, t, useTabletShell]);
 
   if (!isLoaded) return null;
 
   if (batchSelect.isSelectMode) {
     return (
-      <HeaderIconButton
-        label={allSelected ? t('batch.deselectAll') : t('batch.selectAll')}
-        color={color}
-        onPress={onSelectAll}
-      />
+      <FrostedChromeSurface color={color} borderRadius={9999} shadow="subtle">
+        <HeaderIconButton
+          label={allSelected ? t('batch.deselectAll') : t('batch.selectAll')}
+          color={color}
+          onPress={onSelectAll}
+          containerStyle={{ backgroundColor: 'transparent' }}
+        />
+      </FrostedChromeSurface>
     );
   }
 
   const searchButton =
     recordsLength > 0 ? (
       <HeaderIconButton
+        testID={TestIds.inbox.search}
+        inFrostedGroup
         iconOnly
         variant="icon"
         size="md"
@@ -150,33 +189,37 @@ function InboxScreenHeaderRightInner({
       />
     ) : null;
 
+  const tabletOrganizeButton =
+    useTabletShell && foldersEnabled ? (
+      <HeaderIconButton
+        inFrostedGroup
+        iconOnly
+        variant="icon"
+        size="md"
+        color={color}
+        disabled={organizeDisabled}
+        icon={
+          <FolderTree
+            size={20}
+            color={organizeDisabled ? color.text.muted : color.text.primary}
+            strokeWidth={2.2}
+          />
+        }
+        accessibilityLabel={t('inbox.menuAutoOrganize')}
+        accessibilityState={{ disabled: organizeDisabled }}
+        onPress={() => {
+          if (organizeDisabled) return;
+          onOpenAiOrganizeSheet();
+        }}
+        hitSlop={HEADER_ICON_HIT_SLOP}
+      />
+    ) : null;
+
   if (useTabletShell) {
     return (
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+      <FrostedHeaderButtonGroup color={color}>
         {searchButton}
-        {foldersEnabled ? (
-          <HeaderIconButton
-            iconOnly
-            variant="icon"
-            size="md"
-            color={color}
-            disabled={isAutoOrganizing}
-            icon={
-              <FolderPlus
-                size={20}
-                color={isAutoOrganizing ? color.text.muted : color.text.primary}
-                strokeWidth={2.2}
-              />
-            }
-            accessibilityLabel={t('inbox.menuAutoOrganize')}
-            accessibilityState={{ disabled: isAutoOrganizing }}
-            onPress={() => {
-              if (isAutoOrganizing) return;
-              onAutoOrganize();
-            }}
-            hitSlop={HEADER_ICON_HIT_SLOP}
-          />
-        ) : null}
+        {tabletOrganizeButton}
         <MenuView
           key={`inbox-tablet-more-${theme}`}
           title=""
@@ -186,10 +229,12 @@ function InboxScreenHeaderRightInner({
           onPressAction={({ nativeEvent }) => {
             const id = nativeEvent.event;
             if (id === 'selectNotes') onEnterBatchMode();
+            if (id === 'inboxAsk') onOpenInboxAsk();
             if (id === 'importFile') onImportFile();
           }}
         >
           <HeaderIconButton
+            inFrostedGroup
             iconOnly
             variant="icon"
             size="md"
@@ -200,25 +245,25 @@ function InboxScreenHeaderRightInner({
             hitSlop={HEADER_ICON_HIT_SLOP}
           />
         </MenuView>
-      </View>
+      </FrostedHeaderButtonGroup>
     );
   }
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+    <FrostedHeaderButtonGroup color={color}>
       {searchButton}
-      {!hideCreateTextNote ? (
-        <HeaderIconButton
-          iconOnly
-          variant="icon"
-          size="md"
-          icon={<SquarePen size={20} color={color.text.primary} strokeWidth={2.2} />}
-          color={color}
-          onPress={onCreateTextNote}
-          accessibilityLabel={t('textNote.openCreate')}
-          hitSlop={HEADER_ICON_HIT_SLOP}
-        />
-      ) : null}
+      <HeaderIconButton
+        testID={TestIds.inbox.allTasks}
+        inFrostedGroup
+        iconOnly
+        variant="icon"
+        size="md"
+        icon={<ListTodo size={20} color={color.text.primary} strokeWidth={2.2} />}
+        color={color}
+        onPress={onOpenAllTasks}
+        accessibilityLabel={t('allTasks.title')}
+        hitSlop={HEADER_ICON_HIT_SLOP}
+      />
       <MenuView
         key={`inbox-more-${theme}`}
         title=""
@@ -227,13 +272,18 @@ function InboxScreenHeaderRightInner({
         actions={moreMenuActions}
         onPressAction={({ nativeEvent }) => {
           const id = nativeEvent.event;
+          if (id === 'inboxAsk') onOpenInboxAsk();
           if (id === 'importFile') onImportFile();
-          if (id === 'allTasks') onOpenAllTasks();
-          if (id === 'autoOrganize' && !isAutoOrganizing && foldersEnabled) onAutoOrganize();
+          if (id === 'notesGraph') onOpenNotesGraph();
+          if (id === 'autoOrganize' && !isAutoOrganizing && foldersEnabled) {
+            onOpenAiOrganizeSheet();
+          }
           if (id === 'selectNotes') onEnterBatchMode();
         }}
       >
         <HeaderIconButton
+          testID={TestIds.inbox.menu}
+          inFrostedGroup
           iconOnly
           variant="icon"
           size="md"
@@ -244,7 +294,7 @@ function InboxScreenHeaderRightInner({
           hitSlop={HEADER_ICON_HIT_SLOP}
         />
       </MenuView>
-    </View>
+    </FrostedHeaderButtonGroup>
   );
 }
 

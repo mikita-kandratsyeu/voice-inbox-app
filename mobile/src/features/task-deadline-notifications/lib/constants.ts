@@ -3,6 +3,8 @@ export const TASK_DEADLINE_NOTIFICATION_CHANNEL_ID = 'task-deadline-reminders-v2
 
 export const TASK_DEADLINE_NOTIFICATION_TYPE = 'task_deadline';
 
+export const TASK_DEADLINE_PRESS_OPEN = 'open';
+
 /** iOS allows 64 pending trigger notifications; keep headroom for other features. */
 export const MAX_TASK_DEADLINE_NOTIFICATIONS = 50;
 

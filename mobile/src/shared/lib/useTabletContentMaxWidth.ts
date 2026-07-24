@@ -1,6 +1,6 @@
 import { useWindowDimensions } from 'react-native';
 
-import { TABLET_SIDEBAR_WIDTH } from '@/app/navigation/tablet/tabletSidebarMetrics';
+import { getTabletSidebarSlotWidth } from '@/app/navigation/tablet/tabletSidebarMetrics';
 
 import { useTabletShellLayout } from './useTabletShellLayout';
 
@@ -11,6 +11,9 @@ const TABLET_FORM_MAX_WIDTH = 720;
 const TABLET_WIDE_MAX_WIDTH = 1280;
 const TABLET_FORM_HORIZONTAL_INSET = 32;
 const TABLET_WIDE_HORIZONTAL_INSET = 24;
+/** Compact cap for floating bottom docks (e.g. recording detail audio player) on tablet. */
+export const TABLET_FLOATING_DOCK_MAX_WIDTH = 640;
+const TABLET_FLOATING_DOCK_HORIZONTAL_INSET = 32;
 
 export type TabletContentMaxWidthVariant = 'form' | 'wide';
 
@@ -24,7 +27,7 @@ export function useTabletContentMaxWidth(
     return undefined;
   }
 
-  const layoutWidth = inTabletShell ? width - TABLET_SIDEBAR_WIDTH : width;
+  const layoutWidth = inTabletShell ? width - getTabletSidebarSlotWidth() : width;
 
   if (inTabletShell) {
     return layoutWidth;
@@ -35,4 +38,20 @@ export function useTabletContentMaxWidth(
   }
 
   return Math.min(TABLET_FORM_MAX_WIDTH, Math.floor(layoutWidth - TABLET_FORM_HORIZONTAL_INSET));
+}
+
+export function useTabletFloatingDockMaxWidth(): number | undefined {
+  const { width } = useWindowDimensions();
+  const inTabletShell = useTabletShellLayout();
+
+  if (width < TABLET_MIN_WIDTH) {
+    return undefined;
+  }
+
+  const layoutWidth = inTabletShell ? width - getTabletSidebarSlotWidth() : width;
+
+  return Math.min(
+    TABLET_FLOATING_DOCK_MAX_WIDTH,
+    Math.floor(layoutWidth - TABLET_FLOATING_DOCK_HORIZONTAL_INSET),
+  );
 }

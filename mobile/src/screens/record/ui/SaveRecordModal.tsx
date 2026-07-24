@@ -1,14 +1,15 @@
-import type { BottomSheetBackdropProps, BottomSheetModal } from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import dayjs from 'dayjs';
 import { UsersRound } from 'lucide-react-native';
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, Switch, Text, View } from 'react-native';
 
 import type { RecordingMark, VoiceRecord } from '@/entities/record';
 import { useProEntitlement } from '@/features/pro-license';
 import { useColors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import {
   formatTime,
   hapticLight,
@@ -16,12 +17,7 @@ import {
   iosHitSlopForVisualSize,
   IS_IOS,
 } from '@/shared/lib';
-import {
-  APP_BOTTOM_SHEET_BACKDROP_SNAP,
-  AppBottomSheetModal,
-  SheetFooterButtons,
-  useBottomSheetContentPadding,
-} from '@/shared/ui';
+import { AppBottomSheetContent, AppBottomSheetModal, SheetFooterButtons } from '@/shared/ui';
 
 import { generateRecordId } from '../lib/generateRecordId';
 import { getAutoTitle } from '../lib/getAutoTitle';
@@ -64,7 +60,6 @@ export const SaveRecordModal = ({
   const { t } = useTranslation();
   const c = useColors();
   const { isProActive } = useProEntitlement();
-  const contentPadding = useBottomSheetContentPadding(24);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [isMeetingMode, setIsMeetingMode] = useState(false);
 
@@ -72,22 +67,8 @@ export const SaveRecordModal = ({
   const dismissReasonRef = useRef<DismissReason>('none');
   const autoTitleRef = useRef<string>('');
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        {...APP_BOTTOM_SHEET_BACKDROP_SNAP}
-        pressBehavior="none"
-        opacity={0.35}
-      />
-    ),
-    [],
-  );
-
-  useLayoutEffect(() => {
-    if (visible) {
-      setKeyboardVisible(true);
-    } else {
+  useEffect(() => {
+    if (!visible) {
       setKeyboardVisible(false);
     }
   }, [visible]);
@@ -176,16 +157,15 @@ export const SaveRecordModal = ({
       onClose={handleDismiss}
       surface="card"
       enablePanDownToClose={false}
-      backdropComponent={renderBackdrop}
+      backdrop="subtle"
+      backdropPressBehavior="none"
       handleIndicatorStyle={{ backgroundColor: c.text.muted }}
     >
-      <BottomSheetView
+      <AppBottomSheetContent
+        useTabletPadding
         style={{
-          paddingHorizontal: 24,
           paddingTop: 4,
-          ...(keyboardVisible
-            ? { paddingBottom: SAVE_SHEET_KEYBOARD_BOTTOM_PADDING }
-            : contentPadding),
+          ...(keyboardVisible ? { paddingBottom: SAVE_SHEET_KEYBOARD_BOTTOM_PADDING } : {}),
           gap: 12,
         }}
       >
@@ -194,6 +174,7 @@ export const SaveRecordModal = ({
         </Text>
 
         <BottomSheetTextInput
+          testID={TestIds.save.titleInput}
           className="rounded-xl border-2 px-4 py-3 text-[16px]"
           style={{
             borderColor: c.accent.primary,
@@ -254,6 +235,7 @@ export const SaveRecordModal = ({
               </View>
             </Pressable>
             <Switch
+              testID={TestIds.save.meetingToggle}
               value={isMeetingMode}
               onValueChange={handleToggleMeetingMode}
               accessibilityLabel={t('record.meetingMode')}
@@ -277,12 +259,15 @@ export const SaveRecordModal = ({
           color={c}
           primaryLabel={t('common.save')}
           onPrimaryPress={handleSave}
+          primaryTestID={TestIds.save.confirm}
           secondaryLabel={allowResume ? t('record.continueRecording') : undefined}
           onSecondaryPress={allowResume ? handleCancel : undefined}
+          secondaryTestID={allowResume ? TestIds.save.cancel : undefined}
           secondaryAccessibilityLabel={allowResume ? t('record.continueRecording') : undefined}
         />
         {onDiscard && (
           <Pressable
+            testID={TestIds.save.discard}
             accessibilityRole="button"
             accessibilityLabel={t('record.discardRecordingHold')}
             accessibilityHint={t('record.discardRecordingA11yHint')}
@@ -296,7 +281,7 @@ export const SaveRecordModal = ({
             </Text>
           </Pressable>
         )}
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 };

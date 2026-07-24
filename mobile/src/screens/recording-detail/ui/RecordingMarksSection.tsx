@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { Alert, LayoutAnimation, Pressable, Text, View } from 'react-native';
 import Animated, {
   Easing,
-  FadeIn,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -17,7 +16,7 @@ import {
   type RecordingMark,
 } from '@/entities/record';
 import type { Colors } from '@/shared/config';
-import { useAppTheme } from '@/shared/config';
+import { FADE_IN_EASING_OUT_CUBIC, useAppTheme, useFadeInEntering } from '@/shared/config';
 import {
   folderChipActiveForeground,
   formatTime,
@@ -52,6 +51,7 @@ export const RecordingMarksSection = ({
 }: RecordingMarksSectionProps) => {
   const { t } = useTranslation();
   const theme = useAppTheme();
+  const marksExpandEntering = useFadeInEntering(200, { easing: FADE_IN_EASING_OUT_CUBIC });
   const isDark = theme === 'dark';
   const surfaceDark = isDarkSurfaceColor(color);
   const [editMark, setEditMark] = useState<RecordingMark | null>(null);
@@ -156,10 +156,7 @@ export const RecordingMarksSection = ({
           </Animated.View>
         </Pressable>
         {marksExpanded ? (
-          <Animated.View
-            entering={FadeIn.duration(200).easing(Easing.out(Easing.cubic))}
-            className="gap-2.5"
-          >
+          <Animated.View entering={marksExpandEntering} className="gap-2.5">
             {sorted.map((mark) => {
               const timeStr = formatTime(Math.floor(mark.offsetMs / 1000));
               const { Icon: MarkIcon, untitledKey } = getRecordingMarkKindUi(mark.kind);

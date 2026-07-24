@@ -11,6 +11,7 @@ import {
   recordAskAiTable,
   recordsTable,
 } from '@/shared/lib';
+import { devWarn } from '@/shared/lib/appLogger';
 import type { RecordForStats } from '@/shared/lib/async-storage/storage';
 import { isString } from '@/shared/lib/type-guards';
 
@@ -28,11 +29,36 @@ import type {
   VoiceRecord,
 } from './types';
 
+function parseSummaryAiModelMode(
+  raw: string | null | undefined,
+): VoiceRecord['summaryAiModelMode'] {
+  const value = raw?.trim();
+  return value === 'auto' || value === 'manual' ? value : undefined;
+}
+
 function parseMeetingSpeakerLabelsJson(raw: string | null | undefined) {
   try {
     return sanitizeMeetingSpeakerLabels(JSON.parse(raw ?? 'null') as unknown);
   } catch {
     return undefined;
+  }
+}
+
+function parseLinkedRecordIds(raw: string | null | undefined): string[] {
+  try {
+    const v = JSON.parse(raw ?? '[]') as unknown;
+    if (!Array.isArray(v)) return [];
+    const out: string[] = [];
+    for (const item of v) {
+      if (!isString(item)) continue;
+      const trimmed = item.trim();
+      if (!trimmed || out.includes(trimmed)) continue;
+      out.push(trimmed);
+      if (out.length >= 200) break;
+    }
+    return out;
+  } catch {
+    return [];
   }
 }
 
@@ -70,9 +96,7 @@ function sanitizeMeetingSummaryTemplate(
 }
 
 const logDb = (op: string, details?: Record<string, unknown>) => {
-  if (__DEV__) {
-    console.warn(`[db] ${op}`, details ?? '');
-  }
+  devWarn(`[db] ${op}`, details ?? '');
 };
 
 function tasksJsonAllComplete(tasksJson: string | null | undefined): boolean {
@@ -111,6 +135,7 @@ type RecordListQueryRow = {
   summaryReasoning: string | null;
   summaryAiModel: string | null;
   summaryAiModelLabel: string | null;
+  summaryAiModelMode: string | null;
   summaryTokensPrompt: number | null;
   summaryTokensCompletion: number | null;
   summaryGenerationMs: number | null;
@@ -119,6 +144,7 @@ type RecordListQueryRow = {
   audioPath: string | null;
   folderId: string | null;
   recordingMarks: string | null;
+  linkedRecordIds: string | null;
 };
 
 type RecordRowRaw = RecordListQueryRow & {
@@ -159,6 +185,7 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     summaryAiModelLabel: row.summaryAiModelLabel?.trim()
       ? row.summaryAiModelLabel.trim()
       : undefined,
+    summaryAiModelMode: parseSummaryAiModelMode(row.summaryAiModelMode),
     summaryTokensPrompt:
       row.summaryTokensPrompt != null && row.summaryTokensPrompt >= 0
         ? row.summaryTokensPrompt
@@ -179,6 +206,10 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     audioPath: audioPathFromDbValue(row.audioPath),
     embedding: row.embedding ? (JSON.parse(row.embedding) as number[]) : undefined,
     folderId: row.folderId ?? null,
+    linkedRecordIds: (() => {
+      const ids = parseLinkedRecordIds(row.linkedRecordIds);
+      return ids.length > 0 ? ids : undefined;
+    })(),
     summaryStatus: summary ? ('done' as RecordingStatus) : undefined,
     tasksStatus: tasks.length > 0 ? ('done' as RecordingStatus) : undefined,
   };
@@ -209,6 +240,7 @@ const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
     keyPhrases: JSON.parse(row.keyPhrases ?? '[]') as string[],
     nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
     meetingDialogue: row.meetingDialogue?.trim() ? row.meetingDialogue.trim() : undefined,
+    meetingDialogueStatus: row.meetingDialogue?.trim() ? ('done' as const) : undefined,
     meetingSpeakerLabels: parseMeetingSpeakerLabelsJson(row.meetingSpeakerLabels),
     meetingSummaryTemplate: sanitizeMeetingSummaryTemplate(row.meetingSummaryTemplate),
     cloudAiJobId: row.cloudAiJobId?.trim() ? row.cloudAiJobId.trim() : undefined,
@@ -217,6 +249,7 @@ const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
     summaryAiModelLabel: row.summaryAiModelLabel?.trim()
       ? row.summaryAiModelLabel.trim()
       : undefined,
+    summaryAiModelMode: parseSummaryAiModelMode(row.summaryAiModelMode),
     summaryTokensPrompt:
       row.summaryTokensPrompt != null && row.summaryTokensPrompt >= 0
         ? row.summaryTokensPrompt
@@ -236,6 +269,10 @@ const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
       : ('idle' as RecordingStatus),
     audioPath: audioPathFromDbValue(row.audioPath),
     folderId: row.folderId ?? null,
+    linkedRecordIds: (() => {
+      const ids = parseLinkedRecordIds(row.linkedRecordIds);
+      return ids.length > 0 ? ids : undefined;
+    })(),
     detailsHydrated: false,
     summaryStatus: summary ? ('done' as RecordingStatus) : undefined,
     tasksStatus: tasks.length > 0 ? ('done' as RecordingStatus) : undefined,
@@ -269,6 +306,7 @@ const recordListColumns = {
   summaryReasoning: recordsTable.summaryReasoning,
   summaryAiModel: recordsTable.summaryAiModel,
   summaryAiModelLabel: recordsTable.summaryAiModelLabel,
+  summaryAiModelMode: recordsTable.summaryAiModelMode,
   summaryTokensPrompt: recordsTable.summaryTokensPrompt,
   summaryTokensCompletion: recordsTable.summaryTokensCompletion,
   summaryGenerationMs: recordsTable.summaryGenerationMs,
@@ -276,6 +314,7 @@ const recordListColumns = {
   translationLanguage: recordsTable.translationLanguage,
   audioPath: recordsTable.audioPath,
   folderId: recordsTable.folderId,
+  linkedRecordIds: recordsTable.linkedRecordIds,
 } as const;
 
 const activeRecordsClause = isNull(recordsTable.deletedAt);
@@ -371,6 +410,30 @@ export const recordRepository = {
     };
   },
 
+  getEmbeddingsForActiveRecords: async (): Promise<Map<string, number[]>> => {
+    logDb('getEmbeddingsForActiveRecords');
+    const db = getDB();
+    const rows = await db
+      .select({ id: recordsTable.id, embedding: recordsTable.embedding })
+      .from(recordsTable)
+      .where(and(activeRecordsClause, isNotNull(recordsTable.embedding)));
+
+    const out = new Map<string, number[]>();
+    for (const row of rows) {
+      if (!row.embedding) continue;
+      try {
+        const parsed = JSON.parse(row.embedding) as number[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          out.set(row.id, parsed);
+        }
+      } catch {
+        continue;
+      }
+    }
+    logDb('getEmbeddingsForActiveRecords', { count: out.size });
+    return out;
+  },
+
   insert: async (record: VoiceRecord): Promise<void> => {
     logDb('insert', { id: record.id, title: record.title });
     const db = getDB();
@@ -401,6 +464,7 @@ export const recordRepository = {
         meetingSpeakerLabels: record.meetingSpeakerLabels
           ? JSON.stringify(record.meetingSpeakerLabels)
           : null,
+        meetingSummaryTemplate: record.meetingSummaryTemplate ?? null,
         cloudAiJobId: record.cloudAiJobId?.trim() ? record.cloudAiJobId.trim() : null,
         summaryReasoning: record.summaryReasoning?.trim() ? record.summaryReasoning.trim() : null,
         summaryAiModel: record.summaryAiModel?.trim() ? record.summaryAiModel.trim() : null,
@@ -415,6 +479,7 @@ export const recordRepository = {
         audioPath: audioPathToDbValue(record.audioPath),
         embedding: record.embedding ? JSON.stringify(record.embedding) : null,
         folderId: record.folderId ?? null,
+        linkedRecordIds: JSON.stringify(record.linkedRecordIds ?? []),
         deletedAt: null,
         purgeAt: null,
       })
@@ -544,6 +609,38 @@ export const recordRepository = {
       .where(eq(recordsTable.id, id));
   },
 
+  updateLinkedRecordIds: async (id: string, linkedRecordIds: string[]): Promise<void> => {
+    logDb('updateLinkedRecordIds', { id, count: linkedRecordIds.length });
+    const db = getDB();
+    await db
+      .update(recordsTable)
+      .set({ linkedRecordIds: JSON.stringify(linkedRecordIds) })
+      .where(eq(recordsTable.id, id));
+  },
+
+  pruneLinkedRecordReferences: async (deletedId: string): Promise<string[]> => {
+    logDb('pruneLinkedRecordReferences', { deletedId });
+    const db = getDB();
+    const rows = await db
+      .select({ id: recordsTable.id, linkedRecordIds: recordsTable.linkedRecordIds })
+      .from(recordsTable)
+      .where(activeRecordsClause);
+    const updatedIds: string[] = [];
+
+    for (const row of rows) {
+      const ids = parseLinkedRecordIds(row.linkedRecordIds);
+      if (!ids.includes(deletedId)) continue;
+      const next = ids.filter((linkedId) => linkedId !== deletedId);
+      await db
+        .update(recordsTable)
+        .set({ linkedRecordIds: JSON.stringify(next) })
+        .where(eq(recordsTable.id, row.id));
+      updatedIds.push(row.id);
+    }
+
+    return updatedIds;
+  },
+
   updateRecordingMarks: async (id: string, marks: RecordingMark[]): Promise<void> => {
     logDb('updateRecordingMarks', { id, count: marks.length });
     const sanitized = marks.slice(0, 400).map((m, i) => {
@@ -572,6 +669,7 @@ export const recordRepository = {
       summaryReasoning?: string | null;
       summaryAiModel?: string | null;
       summaryAiModelLabel?: string | null;
+      summaryAiModelMode?: 'manual' | 'auto' | null;
       summaryTokensPrompt?: number | null;
       summaryTokensCompletion?: number | null;
       summaryGenerationMs?: number | null;
@@ -616,6 +714,12 @@ export const recordRepository = {
       updates.summaryAiModelLabel = data.summaryAiModelLabel?.trim()
         ? data.summaryAiModelLabel.trim()
         : null;
+    }
+    if (data.summaryAiModelMode !== undefined) {
+      updates.summaryAiModelMode =
+        data.summaryAiModelMode === 'auto' || data.summaryAiModelMode === 'manual'
+          ? data.summaryAiModelMode
+          : null;
     }
     if (data.summaryTokensPrompt !== undefined) {
       updates.summaryTokensPrompt = data.summaryTokensPrompt;

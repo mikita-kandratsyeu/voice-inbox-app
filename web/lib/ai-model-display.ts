@@ -1,3 +1,4 @@
+import type { AiModelMode } from '@/lib/ai-model-router';
 import {
   AI_MODEL_DEEPSEEK_V4_FLASH,
   AI_MODEL_DEEPSEEK_V4_PRO,
@@ -41,6 +42,43 @@ export function getAiModelDisplayLabel(modelId: string): string {
 export function aiModelResponseFields(modelId: string): { model: string; modelLabel: string } {
   const model = normalizeIncomingAiModel(modelId.trim());
   return { model, modelLabel: getAiModelDisplayLabel(model) };
+}
+
+/** Ledger / usage history metadata: resolved model + optional routing mode at request time. */
+export function aiModelLedgerMetadata(
+  modelId: string,
+  modelMode?: AiModelMode,
+): { model: string; modelLabel: string; modelMode?: AiModelMode } {
+  return {
+    ...aiModelResponseFields(modelId),
+    ...(modelMode ? { modelMode } : {}),
+  };
+}
+
+/** Mobile/API payloads: hide resolved model when routing mode is auto. */
+export function aiModelClientResponseFields(
+  modelId: string,
+  modelMode?: AiModelMode,
+): { model?: string; modelLabel?: string; modelMode?: AiModelMode } {
+  if (modelMode === 'auto') {
+    return { modelMode: 'auto' };
+  }
+  return {
+    ...aiModelResponseFields(modelId),
+    ...(modelMode === 'manual' ? { modelMode: 'manual' } : {}),
+  };
+}
+
+export function sanitizeAiModelFieldsForClient<
+  T extends { model?: string; modelLabel?: string; modelMode?: AiModelMode },
+>(value: T): T {
+  if (value.modelMode !== 'auto') {
+    return value;
+  }
+  const next = { ...value, modelMode: 'auto' as const };
+  delete next.model;
+  delete next.modelLabel;
+  return next;
 }
 
 /** Backfill `modelLabel` for KV entries written before labels were stored. */

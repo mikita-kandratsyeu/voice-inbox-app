@@ -23,7 +23,12 @@ import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { recordRepository } from '@/entities/record/model/repository';
 import { useAdsAllowed } from '@/features/app-storefront';
+import { applyRemoteSyncAuxiliaryData } from '@/features/git-remote-sync/lib/applyRemoteSyncAuxiliaryData';
+import { finalizeGithubSyncRestore } from '@/features/github-sync';
+import { finalizeGitlabSyncRestore } from '@/features/gitlab-sync';
+import { finalizeIcloudSyncRestore } from '@/features/icloud-sync';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
+import { importNotesGraphLayoutVersionsFromBackup } from '@/features/sync-data';
 import { tryShowYandexInterstitial } from '@/features/yandex-interstitial';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
@@ -33,7 +38,8 @@ import {
   useIsTablet,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
-import { BlockingProgressModal, HeaderIconButton, ScreenHeader } from '@/shared/ui';
+import { diagWarn } from '@/shared/lib/appLogger';
+import { BlockingProgressModal, FrostedHeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 type ImportRecordsRouteProp = RouteProp<SettingsStackParamList, 'ImportRecords'>;
 
@@ -222,7 +228,16 @@ export const ImportRecordsScreen = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute<ImportRecordsRouteProp>();
-  const { records: fileRecords, folders: archiveFolders = [], legacyFolders = [] } = route.params;
+  const {
+    records: fileRecords,
+    folders: archiveFolders = [],
+    legacyFolders = [],
+    graphLayouts = [],
+    remoteSyncAuxiliary,
+    githubRestore,
+    gitlabRestore,
+    icloudRestore,
+  } = route.params;
 
   const existingRecords = useRecordStore((s) => s.records);
   const addRecord = useRecordStore((s) => s.addRecord);
@@ -375,9 +390,10 @@ export const ImportRecordsScreen = () => {
         try {
           await restoreFolder(folder);
         } catch {
-          if (__DEV__) {
-            console.warn('[ImportRecordsScreen] failed to restore folder', folder);
-          }
+          diagWarn('[ImportRecordsScreen] failed to restore folder', {
+            folderId: folder.id,
+            folderName: folder.name,
+          });
         }
       }
       if (legacyFolders.length > 0 || foldersToRestore.length > 0) {
@@ -410,6 +426,48 @@ export const ImportRecordsScreen = () => {
         setImportProgress({ current: i + 1, total: toProcess.length });
       }
       await loadRecords();
+      if (graphLayouts.length > 0) {
+        await importNotesGraphLayoutVersionsFromBackup(graphLayouts);
+      }
+      if (githubRestore) {
+        const folderStore = useFolderStore.getState();
+        if (!folderStore.isLoaded) {
+          await folderStore.load();
+        }
+        await finalizeGithubSyncRestore({
+          commitSha: githubRestore.commitSha,
+          exportedAt: githubRestore.exportedAt,
+          records: useRecordStore.getState().records,
+          folders: useFolderStore.getState().folders,
+        });
+      }
+      if (gitlabRestore) {
+        const folderStore = useFolderStore.getState();
+        if (!folderStore.isLoaded) {
+          await folderStore.load();
+        }
+        await finalizeGitlabSyncRestore({
+          commitSha: gitlabRestore.commitSha,
+          exportedAt: gitlabRestore.exportedAt,
+          records: useRecordStore.getState().records,
+          folders: useFolderStore.getState().folders,
+        });
+      }
+      if (icloudRestore) {
+        const folderStore = useFolderStore.getState();
+        if (!folderStore.isLoaded) {
+          await folderStore.load();
+        }
+        await finalizeIcloudSyncRestore({
+          versionId: icloudRestore.versionId,
+          exportedAt: icloudRestore.exportedAt,
+          records: useRecordStore.getState().records,
+          folders: useFolderStore.getState().folders,
+        });
+      }
+      if (remoteSyncAuxiliary) {
+        applyRemoteSyncAuxiliaryData(remoteSyncAuxiliary);
+      }
       navigation.goBack();
       await tryShowYandexInterstitial({ adsAllowed, trigger: 'after_import' });
       Alert.alert(t('common.done'), t('importExport.importSuccess', { count: toProcess.length }));
@@ -433,6 +491,11 @@ export const ImportRecordsScreen = () => {
     selectedIds,
     t,
     trashIdsForReplace,
+    githubRestore,
+    gitlabRestore,
+    icloudRestore,
+    graphLayouts,
+    remoteSyncAuxiliary,
   ]);
 
   const handleImportPress = useCallback(() => {
@@ -470,7 +533,7 @@ export const ImportRecordsScreen = () => {
         rightSlot={
           dbRecordIds !== null &&
           (importable.length > 0 || duplicatesTrash.length > 0 || archiveFolders.length > 0) ? (
-            <HeaderIconButton
+            <FrostedHeaderIconButton
               iconOnly
               variant="icon"
               size="md"
@@ -478,6 +541,8 @@ export const ImportRecordsScreen = () => {
               color={color}
               onPress={handleImportPress}
               disabled={selectedTotalCount === 0 || isImporting}
+              accessibilityLabel={t('importExport.importConfirmA11y')}
+              accessibilityState={{ disabled: selectedTotalCount === 0 || isImporting }}
             />
           ) : null
         }
@@ -596,6 +661,9 @@ export const ImportRecordsScreen = () => {
                   <TouchableOpacity
                     onPress={selectAll}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('importExport.selectAll')}
+                    accessibilityState={{ selected: allImportableSelected }}
                     style={{
                       flex: 1,
                       paddingVertical: 10,
@@ -619,6 +687,9 @@ export const ImportRecordsScreen = () => {
                   <TouchableOpacity
                     onPress={deselectAll}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('importExport.deselectAll')}
+                    accessibilityState={{ selected: selectedRecordCount === 0 }}
                     style={{
                       flex: 1,
                       paddingVertical: 10,

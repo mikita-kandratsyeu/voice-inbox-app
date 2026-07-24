@@ -1,23 +1,11 @@
 import { types } from '@react-native-documents/picker';
-import dayjs from 'dayjs';
 import { isPasswordProtected, unzip, unzipWithPassword } from 'react-native-zip-archive';
-import { z } from 'zod';
 
 import type { Folder } from '@/entities/folder';
-import { DEFAULT_FOLDER_ICON_KEY } from '@/entities/folder/lib/folderLucideIcons';
-import type { RecordClassification, RecordingMark, VoiceRecord } from '@/entities/record';
-import { sanitizeRecordingMark } from '@/entities/record';
-import { sanitizeMeetingSpeakerLabels } from '@/screens/recording-detail/lib/meetingSpeakerLabels';
-import {
-  DEFAULT_FOLDER_BRAND_HEX,
-  ensureRecordingsDir,
-  i18n,
-  isArray,
-  isNumber,
-  isString,
-  isStringArrayItem,
-  RECORDINGS_DIR,
-} from '@/shared/lib';
+import type { VoiceRecord } from '@/entities/record';
+import type { RemoteSyncAuxiliaryData } from '@/features/git-remote-sync/lib/applyRemoteSyncAuxiliaryData';
+import { ensureRecordingsDir, i18n, RECORDINGS_DIR } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 import {
   getCachesDirectoryPath,
   getReadableDocumentPickerFsPath,
@@ -25,104 +13,20 @@ import {
   pickSingleFileToCachesDirectory,
 } from '@/shared/lib/fs';
 
+import { readBackupAuxiliarySettings } from './backupAuxiliarySettings';
+import {
+  type BackupExportPayload,
+  type BackupGraphLayoutVersion,
+  buildLegacyBackupFolders,
+  normalizeBackupFolders,
+  normalizeBackupGraphLayouts,
+  normalizeImportedVoiceRecord,
+  parseBackupMetadataPayload,
+} from './backupMetadata';
+
 const METADATA_FILENAME = 'metadata.json';
 
-const MAX_STRING_LENGTH = 100_000;
-const MAX_ARRAY_LENGTH = 10_000;
-const MAX_RECORDS_COUNT = 50_000;
-const MAX_FOLDERS_COUNT = 1_000;
-
-const safeString = z.string().max(MAX_STRING_LENGTH);
-const safeOptionalString = safeString.optional().nullable();
-
-const RecordClassificationSchema = z.enum(['personal', 'work', 'meeting', 'idea', 'other']);
-
-const VoiceRecordSchema = z.looseObject({
-  id: safeString,
-  createdAt: safeString,
-  updatedAt: safeOptionalString,
-  title: safeOptionalString,
-  transcript: safeOptionalString,
-  translatedTranscript: safeOptionalString,
-  translationLanguage: safeOptionalString,
-  summary: safeOptionalString,
-  classification: RecordClassificationSchema.optional().nullable(),
-  keyPhrases: z.array(safeString).max(MAX_ARRAY_LENGTH).optional().nullable(),
-  nextSteps: z.array(safeString).max(MAX_ARRAY_LENGTH).optional().nullable(),
-  meetingDialogue: safeOptionalString,
-  meetingSpeakerLabels: z.record(z.string(), z.string()).optional().nullable(),
-  folderId: safeOptionalString,
-  audioPath: safeOptionalString,
-  duration: z
-    .union([z.string().max(MAX_STRING_LENGTH), z.number()])
-    .optional()
-    .nullable(),
-  isRead: z.boolean().optional().nullable(),
-  isPinned: z.boolean().optional().nullable(),
-  language: safeOptionalString,
-  audioSize: z.nullish(z.number().min(0)),
-  recordingMarks: z
-    .array(
-      z.object({
-        id: safeString,
-        offsetMs: z.number().finite(),
-        kind: z.enum(['moment', 'important', 'task', 'quote']).optional(),
-        label: safeString.optional(),
-      }),
-    )
-    .max(500)
-    .optional()
-    .nullable(),
-});
-
-function normalizeRecordingMarks(raw: unknown): RecordingMark[] | undefined {
-  if (!Array.isArray(raw) || raw.length === 0) {
-    return undefined;
-  }
-  const out: RecordingMark[] = [];
-  for (let i = 0; i < raw.length; i++) {
-    const mark = sanitizeRecordingMark(raw[i], i);
-    if (mark) out.push(mark);
-  }
-  return out.length > 0 ? out : undefined;
-}
-
-const FolderSchema = z.looseObject({
-  id: safeString,
-  name: safeString,
-  color: safeOptionalString,
-  icon: safeOptionalString,
-  sortOrder: z.nullish(z.number()),
-  createdAt: safeOptionalString,
-});
-
-const BasePayloadSchema = z.object({
-  exportedAt: safeString,
-});
-
-const ExportPayloadV1Schema = BasePayloadSchema.extend({
-  version: z.literal(1),
-  records: z.array(VoiceRecordSchema).max(MAX_RECORDS_COUNT),
-});
-
-const ExportPayloadV2Schema = BasePayloadSchema.extend({
-  version: z.literal(2),
-  records: z.array(VoiceRecordSchema).max(MAX_RECORDS_COUNT),
-});
-
-const ExportPayloadV3Schema = BasePayloadSchema.extend({
-  version: z.literal(3),
-  folders: z.array(FolderSchema).max(MAX_FOLDERS_COUNT).optional(),
-  records: z.array(VoiceRecordSchema).max(MAX_RECORDS_COUNT),
-});
-
-const ExportPayloadSchema = z.discriminatedUnion('version', [
-  ExportPayloadV1Schema,
-  ExportPayloadV2Schema,
-  ExportPayloadV3Schema,
-]);
-
-type ExportPayload = z.infer<typeof ExportPayloadSchema>;
+type ExportPayload = BackupExportPayload;
 
 /** Machine-readable import error for UI branching (not shown to users). */
 export const IMPORT_ERROR_WRONG_BACKUP_PASSWORD = '__wrong_backup_password__' as const;
@@ -140,119 +44,21 @@ export type ImportResult =
       folders: Folder[];
       legacyFolders: Folder[];
       exportedAt: string;
+      graphLayouts: BackupGraphLayoutVersion[];
+      remoteSyncAuxiliary?: RemoteSyncAuxiliaryData;
     }
   | { success: false; error: 'cancelled' | string }
   | { success: false; needsPassword: true; zipFsPath: string };
 
-const VALID_CLASSIFICATIONS: RecordClassification[] = [
-  'personal',
-  'work',
-  'meeting',
-  'idea',
-  'other',
-];
-
-function parseExportPayload(raw: unknown): ExportPayload | null {
-  const result = ExportPayloadSchema.safeParse(raw);
-  return result.success ? result.data : null;
-}
-
-function normalizeDurationField(value: unknown): string {
-  if (value === null || value === undefined) {
-    return '0:00';
-  }
-
-  if (isString(value)) {
-    return value;
-  }
-
-  if (isNumber(value) && Number.isFinite(value)) {
-    const totalSec = Math.max(0, Math.floor(value));
-    const m = Math.floor(totalSec / 60);
-    const s = totalSec % 60;
-
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  }
-
-  return '0:00';
-}
-
-const MAX_MEETING_DIALOGUE_IMPORT_CHARS = 12_000;
-
-function normalizeMeetingDialogueImport(raw: unknown): string | undefined {
-  if (!isString(raw)) return undefined;
-  const t = raw.trim();
-  if (!t) return undefined;
-  return t.length > MAX_MEETING_DIALOGUE_IMPORT_CHARS
-    ? t.slice(0, MAX_MEETING_DIALOGUE_IMPORT_CHARS)
-    : t;
-}
-
-function normalizeRecord(raw: z.infer<typeof VoiceRecordSchema>): VoiceRecord {
-  const base = raw as Partial<VoiceRecord>;
-
-  const classification: VoiceRecord['classification'] =
-    isString(base.classification) &&
-    VALID_CLASSIFICATIONS.includes(base.classification as RecordClassification)
-      ? (base.classification as RecordClassification)
-      : undefined;
-
-  const keyPhrases: string[] = isArray(base.keyPhrases)
-    ? base.keyPhrases.filter(isStringArrayItem)
-    : [];
-
-  const nextSteps: string[] = isArray(base.nextSteps)
-    ? base.nextSteps.filter(isStringArrayItem)
-    : [];
-
-  return {
-    ...base,
-    duration: normalizeDurationField(base.duration),
-    classification: classification ?? base.classification,
-    keyPhrases: keyPhrases.length > 0 ? keyPhrases : (base.keyPhrases ?? []),
-    nextSteps: nextSteps.length > 0 ? nextSteps : (base.nextSteps ?? []),
-    meetingDialogue: normalizeMeetingDialogueImport(base.meetingDialogue),
-    meetingSpeakerLabels: sanitizeMeetingSpeakerLabels(base.meetingSpeakerLabels),
-    translatedTranscript: isString(base.translatedTranscript)
-      ? base.translatedTranscript
-      : undefined,
-    translationLanguage: isString(base.translationLanguage) ? base.translationLanguage : undefined,
-    recordingMarks: normalizeRecordingMarks(base.recordingMarks),
-  } as VoiceRecord;
-}
-
-function normalizeFolders(raw: readonly z.infer<typeof FolderSchema>[] | undefined): Folder[] {
-  if (!Array.isArray(raw)) {
+function extractGraphLayouts(payload: ExportPayload): BackupGraphLayoutVersion[] {
+  if (payload.version !== 4) {
     return [];
   }
-
-  return raw
-    .filter((f) => isString(f.id) && isString(f.name))
-    .map((f) => ({
-      id: f.id,
-      name: f.name,
-      color: isString(f.color) ? f.color : DEFAULT_FOLDER_BRAND_HEX,
-      icon: isString(f.icon) ? f.icon : DEFAULT_FOLDER_ICON_KEY,
-      sortOrder: isNumber(f.sortOrder) && Number.isFinite(f.sortOrder) ? f.sortOrder : 0,
-      createdAt: isString(f.createdAt) ? f.createdAt : dayjs().toISOString(),
-    }));
+  return normalizeBackupGraphLayouts(payload.graphLayouts);
 }
 
-function buildLegacyFolders(records: readonly z.infer<typeof VoiceRecordSchema>[]): Folder[] {
-  const legacyFolderIds = Array.from(
-    new Set(
-      records.map((r) => r.folderId).filter((v): v is string => isString(v) && v.trim().length > 0),
-    ),
-  );
-
-  return legacyFolderIds.map((folderId, index) => ({
-    id: folderId,
-    name: `Imported folder ${index + 1}`,
-    color: DEFAULT_FOLDER_BRAND_HEX,
-    icon: DEFAULT_FOLDER_ICON_KEY,
-    sortOrder: index,
-    createdAt: dayjs().toISOString(),
-  }));
+function parseExportPayload(raw: unknown): ExportPayload | null {
+  return parseBackupMetadataPayload(raw);
 }
 
 function isRelativeAudioPath(path: string): boolean {
@@ -293,9 +99,7 @@ async function unlinkIfExists(path: string): Promise<void> {
       await NitroFS.unlink(path);
     }
   } catch {
-    if (__DEV__) {
-      console.warn('[unlinkIfExists] failed to unlink', path);
-    }
+    diagWarn('[unlinkIfExists] failed to unlink', { path });
   }
 }
 
@@ -470,11 +274,11 @@ async function importFromZip(fileUri: string, password?: string): Promise<Import
     const records: VoiceRecord[] = [];
 
     for (const r of payload.records) {
-      const record = normalizeRecord(r) as VoiceRecord & { audioPath?: string };
+      const record = normalizeImportedVoiceRecord(r) as VoiceRecord & { audioPath?: string };
       const relativePath = record.audioPath;
 
       if (
-        (payload.version === 2 || payload.version === 3) &&
+        (payload.version === 2 || payload.version === 3 || payload.version === 4) &&
         relativePath &&
         isRelativeAudioPath(relativePath)
       ) {
@@ -491,12 +295,22 @@ async function importFromZip(fileUri: string, password?: string): Promise<Import
       records.push(record as VoiceRecord);
     }
 
+    const remoteSyncAuxiliary = await readBackupAuxiliarySettings(extractDir);
+
     return {
       success: true,
       records,
-      folders: payload.version === 3 ? normalizeFolders(payload.folders) : [],
-      legacyFolders: payload.version !== 3 ? buildLegacyFolders(payload.records) : [],
+      folders:
+        payload.version === 3 || payload.version === 4
+          ? normalizeBackupFolders(payload.folders)
+          : [],
+      legacyFolders:
+        payload.version !== 3 && payload.version !== 4
+          ? buildLegacyBackupFolders(payload.records)
+          : [],
       exportedAt: payload.exportedAt,
+      graphLayouts: extractGraphLayouts(payload),
+      remoteSyncAuxiliary,
     };
   } finally {
     await removeDirRecursive(extractDir).catch(() => {});
@@ -536,9 +350,7 @@ export const importData = async (options?: ImportDataOptions): Promise<ImportRes
         return { success: false, error: 'cancelled' };
       }
       if (picked.kind === 'failed') {
-        if (__DEV__) {
-          console.warn('[importData] pick/copy failed', picked.message);
-        }
+        diagWarn('[importData] pick/copy failed', picked.message);
         return { success: false, error: i18n.t('importExport.fileNotSelected') };
       }
 
@@ -554,13 +366,11 @@ export const importData = async (options?: ImportDataOptions): Promise<ImportRes
       fileName = fileLike.name ?? '';
 
       if (!uri || !fsPath) {
-        if (__DEV__) {
-          console.warn('[importData] picker path is not readable', {
-            uri: fileLike.uri,
-            fileUri: fileLike.fileUri,
-            fileCopyUri: fileLike.fileCopyUri,
-          });
-        }
+        diagWarn('[importData] picker path is not readable', {
+          uri: fileLike.uri,
+          fileUri: fileLike.fileUri,
+          fileCopyUri: fileLike.fileCopyUri,
+        });
         return { success: false, error: i18n.t('importExport.fileNotSelected') };
       }
     }
@@ -591,7 +401,7 @@ export const importData = async (options?: ImportDataOptions): Promise<ImportRes
     }
 
     const records = payload.records.map((r) => {
-      const record = normalizeRecord(r) as VoiceRecord;
+      const record = normalizeImportedVoiceRecord(r) as VoiceRecord;
       delete (record as { audioPath?: string }).audioPath;
       return record;
     });
@@ -599,9 +409,16 @@ export const importData = async (options?: ImportDataOptions): Promise<ImportRes
     return {
       success: true,
       records,
-      folders: payload.version === 3 ? normalizeFolders(payload.folders) : [],
-      legacyFolders: payload.version !== 3 ? buildLegacyFolders(payload.records) : [],
+      folders:
+        payload.version === 3 || payload.version === 4
+          ? normalizeBackupFolders(payload.folders)
+          : [],
+      legacyFolders:
+        payload.version !== 3 && payload.version !== 4
+          ? buildLegacyBackupFolders(payload.records)
+          : [],
       exportedAt: payload.exportedAt,
+      graphLayouts: extractGraphLayouts(payload),
     };
   } catch (err: unknown) {
     const code = (err as { code?: string })?.code;

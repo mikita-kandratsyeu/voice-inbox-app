@@ -1,5 +1,6 @@
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
+import { diagWarn } from '@/shared/lib/appLogger';
 import { IS_ANDROID } from '@/shared/lib/platform';
 
 export function getDeviceModelLabel(): string {
@@ -14,9 +15,7 @@ export function getDeviceModelLabel(): string {
     if (model) return model;
     if (brand) return brand;
   } catch {
-    if (__DEV__) {
-      console.warn('[getDeviceModelLabel] Failed to get device model');
-    }
+    diagWarn('[getDeviceModelLabel] Failed to get device model');
   }
 
   return '';

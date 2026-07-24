@@ -1,6 +1,8 @@
 import type { MeetingSummaryTemplate } from '@/entities/record';
 import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
 
+import { buildAskInterpretationUserHintBlock } from '../askInterpretationHint';
+import { buildLinkedNotesPromptBlock } from '../linkedNotesForPrompt';
 import {
   buildRecordingMarksPromptBlock,
   type RecordingMarkForPrompt,
@@ -83,15 +85,19 @@ export const LOCAL_MEETING_DIALOGUE_OUTPUT_LANGUAGE_HINT: Record<AiOutputLanguag
 };
 
 const LOCAL_SUMMARY_SYSTEM_BASE = [
-  'From the transcript, output one JSON object only: raw JSON, no markdown, no code fences, no commentary.',
-  'UTF-8, double-quoted keys; arrays [] when empty. Plain text in strings. Follow the user message for language, summary length, and task strictness.',
-  'Stay faithful; do not invent people, dates, or commitments.',
-  'Fields: summary, suggestedTitle, tasks[], tags[], classification, keyPhrases[], nextSteps[].',
-  'tasks[] items: {title, priority, deadline}. priority: high|medium|low. deadline: YYYY-MM-DD or null — use Reference date only for relative phrases; if unsure, null.',
-  'classification: personal|work|meeting|idea|other (dominant theme).',
-  'suggestedTitle: ~3–8 words, specific; generic title only if content is empty or unusable.',
-  'tags: 2–5 lowercase topics; not note/voice/recording/заметка. keyPhrases: 3–8 short entities (not sentences). nextSteps: 0–3 follow-ups; do not copy task titles or lines listed under existing saved tasks.',
-  'Weak/empty transcript: empty arrays where listed, classification other, minimal generic suggestedTitle in output language.',
+  'You are an expert structured data extractor for voice note transcripts. Your task is to analyze spoken content and extract structured information with high accuracy.',
+  'Output format: raw JSON, no markdown, no code fences, no commentary. UTF-8, double-quoted keys; arrays [] when empty.',
+  'CRITICAL: Be faithful to the transcript. NEVER invent people, dates, numbers, or commitments not stated in the source.',
+  'Required fields: summary, suggestedTitle, tasks[], tags[], classification, keyPhrases[], nextSteps[].',
+  'tasks[] structure: {title, priority, deadline}. priority: high (urgent/blocking), medium (important), low (optional/future). deadline: YYYY-MM-DD or ISO datetime YYYY-MM-DDTHH:mm:ss when time stated, or null. Use Reference date ONLY for relative phrases like "tomorrow" or "next Monday". If date unclear, use null.',
+  'Task titles MUST start with action verbs and be specific (3-7 words). GOOD: "Send quarterly report to John". BAD: "Do that thing".',
+  'classification: personal|work|meeting|idea|other (choose dominant theme).',
+  'suggestedTitle: 3-8 words, SPECIFIC. AVOID generic titles like "Voice note" or "Meeting" unless transcript is too short/unclear. Make it scannable.',
+  'tags: 2-5 lowercase specific topics (single words or 2-word phrases). NEVER use meta tags like "note", "voice", "recording", "заметка". Focus on WHAT (subject), not HOW (medium).',
+  'keyPhrases: 3-8 short entities or key terms (1-5 words each), not full sentences. Names, projects, dates, places, concepts.',
+  'nextSteps: 0-3 high-level PREPARATORY follow-ups that SUPPORT tasks, not duplicate them. Think "what to do before/around the main tasks". If no meaningful preparatory actions, use [].',
+  'Weak/empty transcript: empty arrays where appropriate, classification "other", minimal generic suggestedTitle in output language.',
+  'Follow user message instructions for: language, summary length, task strictness, and any special preset (e.g., meeting format).',
 ].join(' ');
 
 export function buildLocalSummarySystemPrompt(
@@ -198,6 +204,10 @@ export function buildLocalAskUserContent(request: AskRequest, transcript: string
     blocks.push(buildRecordingMarksPromptBlock(request.recordingMarks));
   }
 
+  if (request.linkedNotes?.length) {
+    blocks.push(buildLinkedNotesPromptBlock(request.linkedNotes));
+  }
+
   const priorTurns = sanitizeAskPriorTurnsForLocal(request.priorTurns);
   if (priorTurns.length > 0) {
     const lines = priorTurns.map((t, i) => `Turn ${i + 1}\nQ: ${t.question}\nA: ${t.answer}`);
@@ -205,22 +215,27 @@ export function buildLocalAskUserContent(request: AskRequest, transcript: string
   }
 
   blocks.push(`Question:\n${request.question.trim()}`);
+  const interpretationHint = buildAskInterpretationUserHintBlock(request.question);
+  if (interpretationHint) {
+    blocks.push(interpretationHint.trim());
+  }
 
   return blocks.join('\n\n');
 }
 
 export function buildLocalAskSystemPrompt(): string {
   return [
-    'Use ONLY the provided blocks (Transcript; optional Summary, Tasks, Recording pins, Prior conversation; and the current Question).',
-    'Prior conversation is earlier Q&A about the same transcript; use it for follow-ups and continuity.',
-    'Answer concisely in the SAME language as the current Question.',
-    'If the context does not support an answer, say so in one short sentence. Do not invent facts.',
-    'Classify the answer as answerKind: plain, list, tasks, or decisions. Use list for enumerations, tasks for action items, decisions for agreements/decisions, otherwise plain.',
-    'For list/tasks/decisions, include items: an array of concise strings that mirror the answer. For plain, omit items unless a short list is clearly helpful.',
-    'Include evidence: 0-5 short verbatim quotes from Transcript or Recording pins that support the answer. Do not invent quotes. If no direct support exists, use [].',
-    'Evidence items: {quote, source, offsetMs, label}. source is transcript, recording_mark, summary, tasks, or prior_conversation. offsetMs only when supported by a recording pin.',
-    'Include suggestedFollowUps: 1-3 concise follow-up questions the user may naturally ask next, based on this answer and the same recording. Avoid duplicates of the current question.',
-    'No markdown. Return exactly one JSON object with answer plus optional answerKind, items, evidence, suggestedFollowUps.',
-    'The answer value must be plain text only (no nested JSON, no code fences).',
+    'You are an AI assistant that answers questions about voice notes with precision and transparency.',
+    'Context sources: Transcript (primary), optional Summary, Tasks, Recording pins (timestamped bookmarks), Linked notes (related recordings), Prior conversation (earlier Q&A about same recording).',
+    'CRITICAL: Answer ONLY using information present or directly inferable from the provided context. NEVER invent facts (names, dates, numbers, events, quotes).',
+    'Answer concisely in the SAME language as the Question. Be DIRECT: answer immediately without preamble. No markdown in answer field.',
+    'If context lacks information to answer, state this clearly and briefly.',
+    'Interpretations field (0-3 items): Use for CAUTIOUS inferences beyond literal transcript content. Include when question asks about: risks, implications, gaps, contradictions, priorities, conclusions, opinions, meaning, "what suggests", "why might", "consequences". Mark as inferences, NOT facts. Base on CLEAR context clues only. Keep modest and plausible.',
+    'When interpretations should be []: purely factual questions like "summarize", "list tasks", "what was said about X", "when is deadline", or when answer is complete with just facts.',
+    'answerKind classification: "plain" (prose/general), "list" (enumerated points), "tasks" (action items), "decisions" (choices/agreements).',
+    'items field (for list/tasks/decisions): array of short structured strings (1-2 sentences max) mirroring factual answer. Omit for plain or when not adding value.',
+    'evidence field (0-5 quotes): SHORT verbatim quotes (prefer 10-30 words, max 60) from context that DIRECTLY support factual answer. Must be actually verbatim, clearly relevant. Include source (transcript|recording_mark|summary|tasks|linked_note|prior_conversation), offsetMs when available (especially transcript), label for recording pins. NEVER invent quotes.',
+    'suggestedFollowUps (1-3 questions): Natural next questions about THIS recording (under 15 words each), exploring different aspects. Base on info present in note, not speculation. Avoid duplicating current question.',
+    'Output: exactly one JSON object with required "answer" field (plain text string), plus optional answerKind, items, evidence, interpretations, suggestedFollowUps. No extra keys, no markdown in answer.',
   ].join(' ');
 }

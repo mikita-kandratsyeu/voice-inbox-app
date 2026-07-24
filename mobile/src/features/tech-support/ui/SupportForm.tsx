@@ -24,7 +24,6 @@ export function SupportForm({ color, ...form }: Props) {
     setAppLogs,
     attachLogs,
     setAttachLogs,
-    attachLogsLoading,
     loading,
     error,
     successId,
@@ -138,11 +137,6 @@ export function SupportForm({ color, ...form }: Props) {
             disabled={loading}
           />
         </View>
-        {attachLogsLoading ? (
-          <Text className="mb-3 text-[12px]" style={{ color: color.text.secondary }}>
-            {t('support.attachLogsLoading')}
-          </Text>
-        ) : null}
         <Text className="mb-1.5 text-[13px] font-medium" style={{ color: color.text.secondary }}>
           {t('support.logsLabel')}
         </Text>

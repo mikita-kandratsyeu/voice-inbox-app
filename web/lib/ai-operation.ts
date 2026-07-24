@@ -7,6 +7,8 @@ import { HEADER_AI_OPERATION } from '@/config/constants';
 export const AI_OPERATIONS = [
   'transcript_summarize',
   'transcript_ask',
+  'inbox_ask',
+  'general_ask',
   'digest',
   'translate',
   'folder_auto_organize',
@@ -25,6 +27,8 @@ const MEETING_DIALOGUE_RETRY_PATH_RE = /^\/api\/messages\/[^/]+\/meeting-dialogu
 const PATH_DEFAULT: Record<string, AiOperation> = {
   '/api/messages': 'transcript_summarize',
   '/api/ask': 'transcript_ask',
+  '/api/inbox-ask': 'inbox_ask',
+  '/api/general-ask': 'general_ask',
   '/api/digest': 'digest',
   '/api/translate': 'translate',
   '/api/folders/auto-organize': 'folder_auto_organize',
@@ -33,6 +37,8 @@ const PATH_DEFAULT: Record<string, AiOperation> = {
 const ALLOWED_BY_PATH: Record<string, ReadonlySet<AiOperation>> = {
   '/api/messages': new Set(['transcript_summarize']),
   '/api/ask': new Set(['transcript_ask']),
+  '/api/inbox-ask': new Set(['inbox_ask']),
+  '/api/general-ask': new Set(['general_ask']),
   '/api/digest': new Set(['digest']),
   '/api/translate': new Set(['translate']),
   '/api/folders/auto-organize': new Set(['folder_auto_organize']),

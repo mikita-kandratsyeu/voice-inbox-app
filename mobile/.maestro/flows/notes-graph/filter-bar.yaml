@@ -1,0 +1,11 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: notes-graph/filter-bar.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- tapOn:
+    id: inbox.menu
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: notesGraph.screen
+    timeout: 20000

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Text, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
+import { IS_IOS } from '@/shared/lib';
 
 /** Matches RN Modal default fade duration so content isn’t cleared mid-animation. */
 const MODAL_FADE_OUT_MS = 320;
@@ -62,8 +63,17 @@ export const BlockingProgressModal = ({
 
   const showCounter = snap.total > 0 && snap.progressLabel != null;
 
+  // Show immediately when visible flips on; keep mounted through fade-out (presentationVisible).
+  const modalVisible = visible || presentationVisible;
+
   return (
-    <Modal visible={presentationVisible} transparent animationType="fade" statusBarTranslucent>
+    <Modal
+      visible={modalVisible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      {...(IS_IOS ? ({ presentationStyle: 'overFullScreen' } as const) : {})}
+    >
       <View
         className="flex-1 items-center justify-center px-6"
         style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}

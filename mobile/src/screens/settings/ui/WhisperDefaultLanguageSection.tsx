@@ -1,6 +1,6 @@
 import { MenuView } from '@react-native-menu/menu';
 import { ChevronDown, Languages } from 'lucide-react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 
@@ -8,13 +8,17 @@ import type { TranscriptionLanguage } from '@/entities/settings';
 import { TRANSCRIPTION_LANGUAGES, useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { hapticSelection } from '@/shared/lib';
+import { hapticSelection, inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
 
 type WhisperDefaultLanguageSectionProps = {
   color: Colors;
+  embedded?: boolean;
 };
 
-export const WhisperDefaultLanguageSection = ({ color }: WhisperDefaultLanguageSectionProps) => {
+export const WhisperDefaultLanguageSection = ({
+  color,
+  embedded = false,
+}: WhisperDefaultLanguageSectionProps) => {
   const { t } = useTranslation();
   const theme = useAppTheme();
   const isDark = theme === 'dark';
@@ -23,15 +27,40 @@ export const WhisperDefaultLanguageSection = ({ color }: WhisperDefaultLanguageS
   const setTranscriptionLanguage = useSettingsStore((s) => s.setTranscriptionLanguage);
 
   const label = t(`recordingDetail.language.${transcriptionLanguage}`);
+  const titleColor = color.text.primary;
 
-  return (
-    <View className="mb-6 gap-2 rounded-2xl p-4" style={{ backgroundColor: color.background.card }}>
-      <View className="flex-row items-center gap-2">
-        <Languages size={18} color={color.icon.muted} strokeWidth={2} />
-        <Text className="text-sm font-medium" style={{ color: color.text.primary }}>
-          {t('whisper.defaultLanguageTitle')}
-        </Text>
-      </View>
+  const menuActions = useMemo<NativeMenuAction[]>(
+    () => [
+      {
+        id: 'auto' as const,
+        title: t('recordingDetail.language.auto'),
+        titleColor,
+        state: transcriptionLanguage === 'auto' ? 'on' : 'off',
+      },
+      inlineNativeMenuSection(
+        'specificLanguagesSection',
+        titleColor,
+        TRANSCRIPTION_LANGUAGES.filter((lang) => lang !== 'auto').map((lang) => ({
+          id: lang,
+          title: t(`recordingDetail.language.${lang}`),
+          titleColor,
+          state: lang === transcriptionLanguage ? 'on' : 'off',
+        })),
+      ),
+    ],
+    [t, titleColor, transcriptionLanguage],
+  );
+
+  const content = (
+    <>
+      {!embedded ? (
+        <View className="flex-row items-center gap-2">
+          <Languages size={18} color={color.icon.muted} strokeWidth={2} />
+          <Text className="text-sm font-medium" style={{ color: color.text.primary }}>
+            {t('whisper.defaultLanguageTitle')}
+          </Text>
+        </View>
+      ) : null}
       <MenuView
         key={theme}
         themeVariant={isDark ? 'dark' : 'light'}
@@ -42,12 +71,7 @@ export const WhisperDefaultLanguageSection = ({ color }: WhisperDefaultLanguageS
             setTranscriptionLanguage(lang);
           }
         }}
-        actions={TRANSCRIPTION_LANGUAGES.map((lang) => ({
-          id: lang,
-          title: t(`recordingDetail.language.${lang}`),
-          titleColor: color.text.primary,
-          state: lang === transcriptionLanguage ? 'on' : 'off',
-        }))}
+        actions={menuActions}
       >
         <TouchableOpacity
           accessibilityRole="button"
@@ -63,9 +87,23 @@ export const WhisperDefaultLanguageSection = ({ color }: WhisperDefaultLanguageS
           <ChevronDown size={18} color={color.text.secondary} strokeWidth={2} />
         </TouchableOpacity>
       </MenuView>
-      <Text className="text-xs" style={{ color: color.text.muted }}>
+      <Text className="mt-2.5 text-xs leading-4" style={{ color: color.text.muted }}>
         {t('whisper.defaultLanguageHint')}
       </Text>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <View className="border-b px-4 py-3.5" style={{ borderBottomColor: color.border.default }}>
+        {content}
+      </View>
+    );
+  }
+
+  return (
+    <View className="mb-6 gap-2 rounded-2xl p-4" style={{ backgroundColor: color.background.card }}>
+      {content}
     </View>
   );
 };

@@ -15,7 +15,10 @@ export function Features(): React.ReactElement {
   const t = useTranslations();
 
   return (
-    <section className={`py-15 sm:py-20 ${marketingGutterClass}`}>
+    <section
+      className={`scroll-mt-24 py-15 sm:scroll-mt-28 sm:py-20 ${marketingGutterClass}`}
+      id="features"
+    >
       <div className={marketingContentClass}>
         <AnimateOnScroll>
           <div className="mb-10 text-center sm:mb-12">
@@ -31,7 +34,7 @@ export function Features(): React.ReactElement {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
           {FEATURES.map(({ id, icon: Icon }, index) => (
             <AnimateOnScroll key={id} delay={index * 80} className="h-full">
-              <div className="group flex h-full min-h-[230px] flex-col rounded-3xl border border-black/10 bg-white/82 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(15,23,42,0.1)] dark:border-white/12 dark:bg-white/5 dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_18px_48px_rgba(0,0,0,0.38)]">
+              <div className="group flex h-full min-h-[230px] flex-col rounded-3xl border border-black/10 bg-white/82 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(15,23,42,0.1)] dark:border-white/12 dark:bg-white/5 dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_18px_48px_rgba(0,0,0,0.38)]">
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-blue-600 shadow-lg transition-transform duration-200 group-hover:scale-105">
                   <Icon className="h-5 w-5 text-white" aria-hidden />
                 </div>

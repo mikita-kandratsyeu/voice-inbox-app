@@ -15,6 +15,7 @@ import {
   adminInputClass,
   adminSelectClass,
 } from './admin-ui';
+import { fromDatetimeLocalValue, toDatetimeLocalValue } from './adminDatetimeLocal';
 
 type ReleaseItem = {
   id: string;
@@ -35,20 +36,6 @@ const LOCALE_FILTERS = [
   { id: 'en', label: 'English' },
   { id: 'ru', label: 'Russian' },
 ] as const;
-
-function toDatetimeLocalValue(iso: string | null): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function fromDatetimeLocalValue(v: string): string | null {
-  if (!v.trim()) return null;
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
-}
 
 const emptyForm = {
   locale: 'en' as 'en' | 'ru',

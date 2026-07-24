@@ -1,6 +1,7 @@
 import type { Prisma } from '@/generated/prisma/client';
 
 import { addCalendarMonthsUtc, addUtcDays } from '@/lib/pro-license-expiry-math';
+import { invalidateProEntitlementCache } from '@/lib/pro-entitlement';
 import { prisma } from '@/lib/prisma';
 
 import { hashLicenseKey, normalizeLicenseKeyInput } from './pro-license-crypto';
@@ -116,6 +117,8 @@ export async function redeemProLicenseKey(
         status: 403,
       };
     }
+
+    invalidateProEntitlementCache(deviceId);
 
     const expiresAt = result.expiresAt.toISOString();
     return { ok: true, expiresAt, weeklyLimitPro, isVoucher: result.isVoucher };

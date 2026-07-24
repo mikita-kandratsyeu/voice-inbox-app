@@ -30,7 +30,7 @@ export function UseCasesSection(): React.ReactElement {
         <div className="grid gap-4 md:grid-cols-3 md:gap-5">
           {USE_CASES.map(({ id, icon: Icon }, index) => (
             <AnimateOnScroll key={id} delay={index * 80}>
-              <article className="h-full rounded-3xl border border-black/10 bg-white/82 p-6 shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_38px_rgba(15,23,42,0.11)] dark:border-white/12 dark:bg-white/5 dark:shadow-[0_14px_40px_rgba(0,0,0,0.32)] dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.38)]">
+              <article className="h-full rounded-3xl border border-black/10 bg-white/82 p-6 shadow-[0_10px_28px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_38px_rgba(15,23,42,0.11)] dark:border-white/12 dark:bg-white/5 dark:shadow-[0_14px_40px_rgba(0,0,0,0.32)] dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.38)]">
                 <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:bg-blue-500/16 dark:text-blue-300">
                   <Icon className="h-5 w-5" aria-hidden />
                 </div>

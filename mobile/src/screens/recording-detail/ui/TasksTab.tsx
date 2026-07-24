@@ -4,7 +4,7 @@ import {
   Bell,
   CheckCircle2,
   Circle,
-  ListChecks,
+  ListTodo,
   MoreHorizontal,
   Plus,
   RefreshCw,
@@ -18,9 +18,15 @@ import type { RecordingStatus, TaskItem } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { useAddToCalendar } from '@/features/add-to-calendar';
 import { useAddToReminder } from '@/features/add-to-reminder';
+import { TaskOutcomePreview } from '@/features/task-outcome';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
+import {
+  inlineNativeMenuSection,
+  useAiModelName,
+  useAiTabBannerDismiss,
+  useNetworkStatus,
+} from '@/shared/lib';
 import {
   AiTabErrorBanner,
   AiTabHintIcon,
@@ -35,6 +41,15 @@ import { PrivateModeTranscriptLimitNotice } from './PrivateModeTranscriptLimitNo
 import { TaskEditSheet } from './TaskEditSheet';
 import { TaskReextractHintSheet } from './TaskReextractHintSheet';
 
+const TASK_CARD_RADIUS = 16;
+
+type TaskEditValue = {
+  text: string;
+  deadline?: string | null;
+  deadlineTime?: string | null;
+  priority?: TaskItem['priority'];
+};
+
 type TasksTabProps = {
   tasks: TaskItem[];
   nextSteps?: string[];
@@ -43,12 +58,15 @@ type TasksTabProps = {
   hasTranscript?: boolean;
   recordTitle: string;
   color: Colors;
-  onToggle: (id: string) => void;
+  onTaskPress: (task: TaskItem) => void;
+  getFollowUpRecordTitle?: (recordId: string) => string | null;
+  onOpenFollowUp?: (recordId: string) => void;
   onExtract: (options?: { taskExtractionHint?: string }) => void;
   onAddManualTask: (text: string) => void;
   onPromoteNextStepToTask: (step: string, stepIndex: number) => void;
   onDeleteTask: (taskId: string) => void;
-  onEditTask: (taskId: string, text: string) => boolean;
+  onEditTask: (taskId: string, value: TaskEditValue) => boolean;
+  onEditTaskOutcome: (taskId: string, outcomeText: string) => boolean;
   onDismissError?: () => void;
   showPrivateModeCta?: boolean;
   onSwitchToSmartMode?: () => void;
@@ -61,6 +79,7 @@ type TasksTabProps = {
   privateAiBatchStartedAt?: number;
   transcriptCharCount?: number;
   cloudMeetingDialogueExtra?: boolean;
+  isArchived?: boolean;
 };
 
 const ManualTaskAddRow = ({
@@ -136,12 +155,15 @@ export const TasksTab = ({
   hasTranscript = true,
   recordTitle,
   color,
-  onToggle,
+  onTaskPress,
+  getFollowUpRecordTitle,
+  onOpenFollowUp,
   onExtract,
   onAddManualTask,
   onPromoteNextStepToTask,
   onDeleteTask,
   onEditTask,
+  onEditTaskOutcome,
   onDismissError,
   onCancelProcessing,
   privateAiBatchPhase,
@@ -154,6 +176,7 @@ export const TasksTab = ({
   onSwitchToSmartMode: _onSwitchToSmartMode,
   isPrivateMode = false,
   isPrivateCustomServer = false,
+  isArchived = false,
 }: TasksTabProps) => {
   const theme = useAppTheme();
   const isDark = theme === 'dark';
@@ -169,7 +192,14 @@ export const TasksTab = ({
   const { addTaskToReminder } = useAddToReminder();
 
   const [reextractSheetOpen, setReextractSheetOpen] = useState(false);
-  const [editTaskTarget, setEditTaskTarget] = useState<{ id: string; text: string } | null>(null);
+  const [editTaskTarget, setEditTaskTarget] = useState<Pick<
+    TaskItem,
+    'id' | 'text' | 'deadline' | 'deadlineTime' | 'priority'
+  > | null>(null);
+  const [editOutcomeTarget, setEditOutcomeTarget] = useState<Pick<
+    TaskItem,
+    'id' | 'outcomeText'
+  > | null>(null);
 
   const reextractSheet = useMemo(
     () => (
@@ -189,14 +219,37 @@ export const TasksTab = ({
       <TaskEditSheet
         visible={editTaskTarget !== null}
         initialText={editTaskTarget?.text ?? ''}
+        initialDeadline={editTaskTarget?.deadline}
+        initialDeadlineTime={editTaskTarget?.deadlineTime}
+        initialPriority={editTaskTarget?.priority}
+        showMetadataFields={!isArchived}
         onClose={() => setEditTaskTarget(null)}
-        onSave={({ text }) => {
+        onSave={(value) => {
           if (!editTaskTarget) return false;
-          return onEditTask(editTaskTarget.id, text);
+          return onEditTask(editTaskTarget.id, value);
         }}
       />
     ),
-    [editTaskTarget, onEditTask],
+    [editTaskTarget, isArchived, onEditTask],
+  );
+
+  const editOutcomeSheet = useMemo(
+    () => (
+      <TaskEditSheet
+        visible={editOutcomeTarget !== null}
+        initialText={editOutcomeTarget?.outcomeText ?? ''}
+        sheetTitleKey="taskOutcome.editOutcomeSheetTitle"
+        placeholderKey="taskOutcome.outcomePlaceholder"
+        textMaxChars={2000}
+        allowEmptySave
+        onClose={() => setEditOutcomeTarget(null)}
+        onSave={({ text }) => {
+          if (!editOutcomeTarget) return false;
+          return onEditTaskOutcome(editOutcomeTarget.id, text);
+        }}
+      />
+    ),
+    [editOutcomeTarget, onEditTaskOutcome],
   );
 
   const showPermissionAlert = (_: string) => {
@@ -224,6 +277,7 @@ export const TasksTab = ({
         />
         {reextractSheet}
         {editTaskSheet}
+        {editOutcomeSheet}
       </>
     );
   }
@@ -252,6 +306,7 @@ export const TasksTab = ({
         </View>
         {reextractSheet}
         {editTaskSheet}
+        {editOutcomeSheet}
       </>
     );
   }
@@ -261,7 +316,7 @@ export const TasksTab = ({
       <>
         <View>
           <TabEmptyState
-            icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
+            icon={<ListTodo size={28} color={color.icon.muted} strokeWidth={1.8} />}
             title={t('recordingDetail.noTranscriptForAi')}
             description={t('recordingDetail.noTranscriptForAiDesc')}
             hideButton
@@ -276,6 +331,7 @@ export const TasksTab = ({
         </View>
         {reextractSheet}
         {editTaskSheet}
+        {editOutcomeSheet}
       </>
     );
   }
@@ -289,11 +345,11 @@ export const TasksTab = ({
             transcriptCharCount={transcriptCharCount}
           />
           <TabEmptyState
-            icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
+            icon={<ListTodo size={28} color={color.icon.muted} strokeWidth={1.8} />}
             title={t('recordingDetail.tasksNotExtracted')}
             description={t('recordingDetail.tasksNotExtractedDesc')}
             buttonLabel={t('recordingDetail.extractTasks')}
-            buttonIcon={<ListChecks size={18} color="#fff" strokeWidth={2} />}
+            buttonIcon={<ListTodo size={18} color="#fff" strokeWidth={2} />}
             hint={modelHint}
             hintIcon={modelHint ? <AiTabHintIcon /> : undefined}
             disabled={disableByNetwork}
@@ -309,13 +365,22 @@ export const TasksTab = ({
         </View>
         {reextractSheet}
         {editTaskSheet}
+        {editOutcomeSheet}
       </>
     );
   }
 
+  const taskCardShadowStyle = {
+    shadowColor: color.shadow.color,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: color.shadow.opacity,
+    shadowRadius: 4,
+    elevation: 2,
+  };
+
   return (
     <>
-      <View className="gap-3.5 p-4">
+      <View className="gap-3 p-4">
         {showBanner && (
           <AiTabErrorBanner
             message={t('recordingDetail.tasksErrorBanner')}
@@ -323,111 +388,177 @@ export const TasksTab = ({
           />
         )}
         {tasks.map((task) => {
+          const titleColor = color.text.primary;
           const menuActions = [
-            {
-              id: 'addToCalendar',
-              title: t('tasks.addToCalendar'),
-              image: 'calendar',
-              imageColor: color.text.primary,
-              titleColor: color.text.primary,
-            },
-            {
-              id: 'addToReminder',
-              title: t('tasks.addToReminder'),
-              image: 'bell',
-              imageColor: color.text.primary,
-              titleColor: color.text.primary,
-            },
             {
               id: 'editTask',
               title: t('tasks.editTask'),
               image: 'pencil',
-              imageColor: color.text.primary,
-              titleColor: color.text.primary,
+              imageColor: titleColor,
+              titleColor,
             },
-            {
-              id: 'deleteTask',
-              title: t('tasks.deleteTask'),
-              image: 'trash',
-              imageColor: color.accent.delete,
-              titleColor: color.accent.delete,
-              attributes: { destructive: true },
-            },
+            ...(task.isDone
+              ? [
+                  {
+                    id: 'editTaskOutcome',
+                    title: t('tasks.editTaskOutcome'),
+                    image: 'text.alignleft',
+                    imageColor: titleColor,
+                    titleColor,
+                  },
+                ]
+              : []),
+            inlineNativeMenuSection('integrationsSection', titleColor, [
+              {
+                id: 'addToCalendar',
+                title: t('tasks.addToCalendar'),
+                image: 'calendar',
+                imageColor: titleColor,
+                titleColor,
+              },
+              {
+                id: 'addToReminder',
+                title: t('tasks.addToReminder'),
+                image: 'bell',
+                imageColor: titleColor,
+                titleColor,
+              },
+            ]),
+            inlineNativeMenuSection('deleteSection', titleColor, [
+              {
+                id: 'deleteTask',
+                title: t('tasks.deleteTask'),
+                image: 'trash',
+                imageColor: color.accent.delete,
+                titleColor: color.accent.delete,
+                attributes: { destructive: true },
+              },
+            ]),
           ];
 
           return (
-            <View key={task.id} className="flex-row items-center gap-2 py-1">
-              <Pressable
-                className="min-w-0 flex-1 flex-row items-center gap-4 py-0.5"
-                onPress={() => onToggle(task.id)}
-                style={{ minWidth: 0 }}
-                accessibilityRole="checkbox"
-                accessibilityLabel={task.text}
-                accessibilityState={{ checked: task.isDone }}
+            <View
+              key={task.id}
+              style={[
+                taskCardShadowStyle,
+                { borderRadius: TASK_CARD_RADIUS, backgroundColor: color.background.card },
+              ]}
+            >
+              <View
+                className="flex-row items-center"
+                style={{ borderRadius: TASK_CARD_RADIUS, overflow: 'hidden' }}
               >
-                {task.isDone ? (
-                  <CheckCircle2 size={20} color={color.accent.success} strokeWidth={2} />
-                ) : (
-                  <Circle size={20} color={color.icon.muted} strokeWidth={2} />
-                )}
-                <Text
-                  className="min-w-0 flex-1 text-sm leading-5"
-                  style={{
-                    color: task.isDone ? color.text.secondary : color.text.primary,
-                    textDecorationLine: task.isDone ? 'line-through' : undefined,
-                  }}
+                <Pressable
+                  className="items-center justify-center px-3.5 py-3.5"
+                  onPress={() => onTaskPress(task)}
+                  accessibilityRole="checkbox"
+                  accessibilityLabel={task.text}
+                  accessibilityState={{ checked: task.isDone }}
+                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                 >
-                  {task.text}
-                </Text>
-              </Pressable>
-              <View style={{ flexShrink: 0 }}>
-                <MenuView
-                  key={`task-menu-${task.id}-${theme}`}
-                  title=""
-                  themeVariant={isDark ? 'dark' : 'light'}
-                  shouldOpenOnLongPress={false}
-                  onPressAction={async ({ nativeEvent }) => {
-                    if (nativeEvent.event === 'editTask') {
-                      setEditTaskTarget({ id: task.id, text: task.text });
-                    }
-                    if (nativeEvent.event === 'addToCalendar') {
-                      await addTaskToCalendar(
-                        task,
-                        recordTitle,
-                        () => Alert.alert(t('tasks.addedToCalendar')),
-                        showPermissionAlert,
-                      );
-                    }
-                    if (nativeEvent.event === 'addToReminder') {
-                      await addTaskToReminder(
-                        task,
-                        recordTitle,
-                        () => Alert.alert(t('tasks.addedToReminders')),
-                        showPermissionAlert,
-                      );
-                    }
-                    if (nativeEvent.event === 'deleteTask') {
-                      Alert.alert(t('tasks.deleteTask'), t('tasks.deleteTaskConfirm'), [
-                        { text: t('common.cancel'), style: 'cancel' },
-                        {
-                          text: t('tasks.deleteTask'),
-                          style: 'destructive',
-                          onPress: () => onDeleteTask(task.id),
-                        },
-                      ]);
-                    }
-                  }}
-                  actions={menuActions}
-                >
+                  {task.isDone ? (
+                    <CheckCircle2 size={22} color={color.accent.success} strokeWidth={2} />
+                  ) : (
+                    <Circle size={22} color={color.icon.muted} strokeWidth={2} />
+                  )}
+                </Pressable>
+
+                <View className="min-w-0 flex-1 flex-col py-3 pr-1">
                   <Pressable
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    style={{ padding: 4 }}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('tasks.taskMenu')}
+                    onPress={() => onTaskPress(task)}
+                    accessibilityRole="checkbox"
+                    accessibilityLabel={task.text}
+                    accessibilityState={{ checked: task.isDone }}
                   >
-                    <MoreHorizontal size={18} color={color.icon.muted} strokeWidth={2} />
+                    <Text
+                      className="text-[15px] leading-5"
+                      style={{
+                        color: task.isDone ? color.text.secondary : color.text.primary,
+                        textDecorationLine: task.isDone ? 'line-through' : undefined,
+                      }}
+                      numberOfLines={4}
+                    >
+                      {task.text}
+                    </Text>
                   </Pressable>
-                </MenuView>
+                  <TaskOutcomePreview
+                    task={task}
+                    color={color}
+                    indent={false}
+                    followUpTitle={
+                      task.outcomeRecordId && getFollowUpRecordTitle
+                        ? getFollowUpRecordTitle(task.outcomeRecordId)
+                        : null
+                    }
+                    onOpenFollowUp={
+                      task.outcomeRecordId && onOpenFollowUp
+                        ? () => onOpenFollowUp(task.outcomeRecordId!)
+                        : undefined
+                    }
+                  />
+                </View>
+
+                <View className="justify-center px-1 pr-1.5" style={{ zIndex: 10 }}>
+                  <MenuView
+                    key={`task-menu-${task.id}-${theme}`}
+                    title=""
+                    themeVariant={isDark ? 'dark' : 'light'}
+                    shouldOpenOnLongPress={false}
+                    onPressAction={async ({ nativeEvent }) => {
+                      if (nativeEvent.event === 'editTask') {
+                        setEditTaskTarget({
+                          id: task.id,
+                          text: task.text,
+                          deadline: task.deadline,
+                          deadlineTime: task.deadlineTime,
+                          priority: task.priority,
+                        });
+                      }
+                      if (nativeEvent.event === 'editTaskOutcome') {
+                        setEditOutcomeTarget({
+                          id: task.id,
+                          outcomeText: task.outcomeText ?? '',
+                        });
+                      }
+                      if (nativeEvent.event === 'addToCalendar') {
+                        await addTaskToCalendar(
+                          task,
+                          recordTitle,
+                          () => Alert.alert(t('tasks.addedToCalendar')),
+                          showPermissionAlert,
+                        );
+                      }
+                      if (nativeEvent.event === 'addToReminder') {
+                        await addTaskToReminder(
+                          task,
+                          recordTitle,
+                          () => Alert.alert(t('tasks.addedToReminders')),
+                          showPermissionAlert,
+                        );
+                      }
+                      if (nativeEvent.event === 'deleteTask') {
+                        Alert.alert(t('tasks.deleteTask'), t('tasks.deleteTaskConfirm'), [
+                          { text: t('common.cancel'), style: 'cancel' },
+                          {
+                            text: t('tasks.deleteTask'),
+                            style: 'destructive',
+                            onPress: () => onDeleteTask(task.id),
+                          },
+                        ]);
+                      }
+                    }}
+                    actions={menuActions}
+                  >
+                    <Pressable
+                      hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+                      style={{ padding: 8 }}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('tasks.taskMenu')}
+                    >
+                      <MoreHorizontal size={20} color={color.icon.muted} strokeWidth={2} />
+                    </Pressable>
+                  </MenuView>
+                </View>
               </View>
             </View>
           );
@@ -518,6 +649,7 @@ export const TasksTab = ({
       </View>
       {reextractSheet}
       {editTaskSheet}
+      {editOutcomeSheet}
     </>
   );
 };

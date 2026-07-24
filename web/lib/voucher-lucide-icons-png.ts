@@ -16,7 +16,7 @@ const iconCache = new Map<string, Buffer>();
 const ICON_RASTER_SCALE = 4;
 
 /** Bump when perk SVG paths change (invalidates in-process cache). */
-const PERK_ICON_CACHE_VERSION = 'v4';
+const PERK_ICON_CACHE_VERSION = 'v5';
 
 function lucideSvg(paths: string, stroke: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" shape-rendering="geometricPrecision">${paths}</svg>`;
@@ -26,7 +26,7 @@ function lucideSvg(paths: string, stroke: string): string {
 export const VOUCHER_PERK_ICON_DISPLAY_PT: Record<VoucherSidebarPerkIcon, number> = {
   zap: 10,
   brain: 10,
-  shield: 10,
+  cloud: 10,
 };
 
 async function rasterLucideIcon(cacheKey: string, svg: string, displayPx: number): Promise<Buffer> {
@@ -75,8 +75,8 @@ const LUCIDE_PERK_SVGS: Record<VoucherSidebarPerkIcon, string> = {
     '<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',
     VOUCHER_ICON_STROKE.amber,
   ),
-  shield: lucideSvg(
-    '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  cloud: lucideSvg(
+    '<path d="M12 13v8"/><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="m8 17 4-4 4 4"/>',
     VOUCHER_ICON_STROKE.brand,
   ),
   brain: lucideSvg(
@@ -85,7 +85,7 @@ const LUCIDE_PERK_SVGS: Record<VoucherSidebarPerkIcon, string> = {
   ),
 };
 
-/** Lucide perk icons for voucher sidebar (zap / brain / shield-check). */
+/** Lucide perk icons for voucher sidebar (zap / brain / cloud-upload). */
 export function loadVoucherPerkIconPng(
   kind: VoucherSidebarPerkIcon,
   displayPx: number = VOUCHER_PERK_ICON_DISPLAY_PT[kind],

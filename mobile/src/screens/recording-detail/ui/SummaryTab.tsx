@@ -4,24 +4,21 @@ import {
   ClipboardList,
   FileText,
   HelpCircle,
-  ListChecks,
+  ListTodo,
   RefreshCw,
   Share,
   UsersRound,
 } from 'lucide-react-native';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { RecordingStatus } from '@/entities/record';
-import {
-  isPrivateCustomServerMode,
-  resolveAiModelDisplayLabel,
-  useSettingsStore,
-} from '@/entities/settings';
+import { isPrivateCustomServerMode, useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
+import { resolveAiModelRoutingDisplayLabel } from '@/shared/lib/aiModelRoutingDisplay';
 import type { SummaryTokenUsage } from '@/shared/lib/summaryMetaSubtitle';
 import { AiTabErrorBanner, AiTabHintIcon, Button, TabEmptyState } from '@/shared/ui';
 
@@ -62,6 +59,7 @@ type SummaryTabProps = {
   summaryReasoning?: string;
   summaryAiModel?: string;
   summaryAiModelLabel?: string;
+  summaryAiModelMode?: 'manual' | 'auto';
   summaryTokenUsage?: SummaryTokenUsage;
   summaryGenerationMs?: number;
 };
@@ -69,9 +67,11 @@ type SummaryTabProps = {
 function MeetingRecapSectionBlock({
   section,
   color,
+  title,
 }: {
   section: MeetingRecapSection;
   color: Colors;
+  title: string;
 }) {
   const bodyItems = useMemo(() => splitMeetingRecapBody(section.body), [section.body]);
   const iconColor =
@@ -88,7 +88,7 @@ function MeetingRecapSectionBlock({
     ) : section.kind === 'openQuestions' ? (
       <HelpCircle size={18} color={iconColor} strokeWidth={2} />
     ) : section.kind === 'nextSteps' ? (
-      <ListChecks size={18} color={iconColor} strokeWidth={2} />
+      <ListTodo size={18} color={iconColor} strokeWidth={2} />
     ) : (
       <FileText size={18} color={iconColor} strokeWidth={2} />
     );
@@ -104,7 +104,7 @@ function MeetingRecapSectionBlock({
       <View className="flex-row items-center gap-2">
         {icon}
         <Text className="text-[13px] font-semibold" style={{ color: color.text.primary }}>
-          {section.title}
+          {title}
         </Text>
       </View>
       <View className="gap-2">
@@ -162,6 +162,7 @@ export const SummaryTab = ({
   summaryReasoning,
   summaryAiModel,
   summaryAiModelLabel,
+  summaryAiModelMode,
   summaryTokenUsage,
   summaryGenerationMs,
 }: SummaryTabProps) => {
@@ -195,8 +196,13 @@ export const SummaryTab = ({
   );
 
   const summaryModelLabel = useMemo(
-    () => resolveAiModelDisplayLabel(summaryAiModel, summaryAiModelLabel),
-    [summaryAiModel, summaryAiModelLabel],
+    () =>
+      resolveAiModelRoutingDisplayLabel(t, {
+        modelMode: summaryAiModelMode,
+        model: summaryAiModel,
+        modelLabel: summaryAiModelLabel,
+      }),
+    [summaryAiModel, summaryAiModelLabel, summaryAiModelMode, t],
   );
 
   const isSmartMode = aiExecutionMode === 'smart_hybrid';
@@ -217,6 +223,12 @@ export const SummaryTab = ({
           )
         : [],
     [isMeeting, summary],
+  );
+
+  const resolveMeetingSectionTitle = useCallback(
+    (section: MeetingRecapSection) =>
+      section.title === 'Brief' ? t('recordingDetail.summary') : section.title,
+    [t],
   );
 
   const errMessage = useMemo(() => {
@@ -323,6 +335,7 @@ export const SummaryTab = ({
             <MeetingRecapSectionBlock
               key={`${section.kind}:${section.title}`}
               section={section}
+              title={resolveMeetingSectionTitle(section)}
               color={color}
             />
           ))}

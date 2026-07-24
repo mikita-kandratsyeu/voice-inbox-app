@@ -4,9 +4,11 @@ import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitl
 import { parseAccentColorId } from '@/shared/config';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { storage } from '@/shared/lib/async-storage';
+import { IS_IOS } from '@/shared/lib/platform';
 import { isNumber, isRecord, isString } from '@/shared/lib/type-guards';
 
 import { CLOUD_AI_KV_TTL_DEFAULT_SECONDS, snapCloudAiKvTtlToChoice } from '../lib/cloudAiKvTtl';
+import { parseStoredPrivateRemoteQueueConcurrency } from '../lib/privateRemoteQueueConcurrency';
 import {
   getPrivateRemoteSecrets,
   removePrivateRemoteProfileApiKey,
@@ -16,12 +18,14 @@ import {
   setPrivateRemoteProfileApiKey,
 } from '../lib/privateRemoteSecrets';
 import { RECOMMENDED_AI_MODEL_ID } from '../lib/recommendAiModel';
+import { getRecommendedWhisperModelId } from '../lib/recommendWhisperModel';
 import { resolveEffectivePrivateAiProvider } from '../lib/resolveEffectivePrivateAiProvider';
 import {
   ALL_SELECTABLE_CLOUD_AI_MODEL_IDS,
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
   getWhisperModelVariantId,
+  isWhisperKitOnlyModelId,
   LOCAL_AI_MODELS,
 } from './constants';
 import type {
@@ -31,19 +35,23 @@ import type {
   AppLanguage,
   AppTheme,
   AutoArchiveAfterDays,
+  BackupReminderPeriodDays,
   LocalAiModelId,
   PrivateCapabilityTier,
   PrivateLocalLlmBudget,
   PrivateRemoteOutputBudget,
   PrivateRemoteProfile,
+  PrivateRemoteQueueConcurrency,
   SettingsState,
   SummaryStyle,
   TaskStrictness,
   TranscriptionLanguage,
+  TranscriptionQualityMode,
   UserSelectableAIModelId,
   WhisperDownloadPhase,
   WhisperModelId,
   WhisperModelStatus,
+  WhisperModelStorageFormat,
   WhisperModelVariantId,
   WhisperModelWeightsFormat,
 } from './types';
@@ -62,6 +70,10 @@ const KEYS = {
   WHISPER_SELECTED_MODEL_FORMAT: 'settings.whisperSelectedModelFormat',
   WHISPER_STATUSES: 'settings.whisperStatuses',
   TRANSCRIPTION_LANGUAGE: 'settings.transcriptionLanguage',
+  TRANSCRIPTION_QUALITY_MODE: 'settings.transcriptionQualityMode',
+  TRANSCRIPTION_DIARIZATION_ENABLED: 'settings.transcriptionDiarizationEnabled',
+  IOS_WHISPERKIT_ENGINE_ENABLED: 'settings.iosWhisperKitEngineEnabled',
+  TRANSCRIPTION_CUSTOM_WORDS: 'settings.transcriptionCustomWords',
   SUMMARY_STYLE: 'settings.summaryStyle',
   TASK_STRICTNESS: 'settings.taskStrictness',
   AI_OUTPUT_LANGUAGE: 'settings.aiOutputLanguage',
@@ -69,6 +81,7 @@ const KEYS = {
   PRIVATE_LOCAL_LLM_BUDGET: 'settings.privateLocalLlmBudget',
   PRIVATE_REMOTE_OUTPUT_BUDGET: 'settings.privateRemoteOutputBudget',
   PRIVATE_REMOTE_PREFER_JSON_OBJECT: 'settings.privateRemotePreferJsonObject',
+  PRIVATE_REMOTE_QUEUE_CONCURRENCY: 'settings.privateRemoteQueueConcurrency',
   PRIVATE_CAPABILITY_TIER: 'settings.privateCapabilityTier',
   PRIVATE_AI_PROVIDER: 'settings.privateAiProvider',
   PRIVATE_REMOTE_BASE_URL: 'settings.privateRemoteBaseUrl',
@@ -83,8 +96,15 @@ const KEYS = {
   AUTO_AI_AFTER_TRANSCRIPTION: 'settings.autoAiAfterTranscription',
   AUTO_ARCHIVE_ENABLED: 'settings.autoArchiveEnabled',
   AUTO_ARCHIVE_AFTER_DAYS: 'settings.autoArchiveAfterDays',
+  SHAKE_TO_RECORD_ENABLED: 'settings.shakeToRecordEnabled',
+  SHAKE_TO_CANCEL_ASK_AI_ENABLED: 'settings.shakeToCancelAskAiEnabled',
   TASK_DEADLINE_NOTIFICATIONS_ENABLED: 'settings.taskDeadlineNotificationsEnabled',
+  BACKUP_REMINDER_NOTIFICATIONS_ENABLED: 'settings.backupReminderNotificationsEnabled',
+  BACKUP_REMINDER_PERIOD_DAYS: 'settings.backupReminderPeriodDays',
   AI_PROCESSING_ALERTS_ENABLED: 'settings.aiProcessingAlertsEnabled',
+  TRANSCRIPTION_RECOVERY_NOTIFICATIONS_ENABLED:
+    'settings.transcriptionRecoveryNotificationsEnabled',
+  APP_LOCK_RECORDING_NOTIFICATIONS_ENABLED: 'settings.appLockRecordingNotificationsEnabled',
   CLOUD_AI_THIRD_PARTY_CONSENT: 'settings.cloudAiThirdPartyConsentAccepted',
   CLOUD_AI_KV_TTL_SECONDS: 'settings.cloudAiKvTtlSeconds',
   SHOW_SUMMARY_REASONING_IN_NOTES: 'settings.showSummaryReasoningInNotes',
@@ -93,6 +113,7 @@ const KEYS = {
   PRIVATE_PREVIOUS_AUTO_TRANSCRIBE: 'settings.private.previousAutoTranscribeOnSave',
   PRIVATE_PREVIOUS_AUTO_AI: 'settings.private.previousAutoAiAfterTranscription',
   PRIVATE_PREVIOUS_AUTO_ARCHIVE: 'settings.private.previousAutoArchiveEnabled',
+  PRIVATE_AUTO_AI_AFTER_TRANSCRIPTION: 'settings.private.autoAiAfterTranscription',
   LOCAL_LLM_STATUSES: 'settings.localLlmStatuses',
 } as const;
 
@@ -241,13 +262,58 @@ const getStoredTranscriptionLanguage = (): TranscriptionLanguage => {
   return (val as TranscriptionLanguage) ?? 'auto';
 };
 
+const getStoredTranscriptionQualityMode = (): TranscriptionQualityMode => {
+  const val = storage.getString(KEYS.TRANSCRIPTION_QUALITY_MODE);
+  if (val === 'fast' || val === 'balanced' || val === 'quality') {
+    return val;
+  }
+  return 'balanced';
+};
+
+const getStoredTranscriptionDiarizationEnabled = (): boolean =>
+  storage.getString(KEYS.TRANSCRIPTION_DIARIZATION_ENABLED) === 'true';
+
+const getStoredIosWhisperKitEngineEnabled = (): boolean => {
+  const val = storage.getString(KEYS.IOS_WHISPERKIT_ENGINE_ENABLED);
+  if (val == null) {
+    return IS_IOS;
+  }
+  return val === 'true';
+};
+
+const getStoredTranscriptionCustomWords = (): string[] => {
+  try {
+    const raw = storage.getString(KEYS.TRANSCRIPTION_CUSTOM_WORDS);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item): item is string => typeof item === 'string' && item.trim().length > 0,
+    );
+  } catch {
+    return [];
+  }
+};
+
 const getStoredAutoTranscribeOnSave = (): boolean => {
   const val = storage.getString(KEYS.AUTO_TRANSCRIBE_ON_SAVE);
 
   return val === 'true';
 };
 
+const getStoredPrivateAutoAiAfterTranscription = (): boolean => {
+  return storage.getString(KEYS.PRIVATE_AUTO_AI_AFTER_TRANSCRIPTION) === 'true';
+};
+
 const getStoredAutoAiAfterTranscription = (): boolean => {
+  const mode = storage.getString(KEYS.AI_EXECUTION_MODE);
+  if (mode === 'private_experimental') {
+    const privateVal = storage.getString(KEYS.PRIVATE_AUTO_AI_AFTER_TRANSCRIPTION);
+    if (privateVal != null) {
+      return privateVal === 'true';
+    }
+  }
+
   const val = storage.getString(KEYS.AUTO_AI_AFTER_TRANSCRIPTION);
 
   return val === 'true';
@@ -259,6 +325,12 @@ const parseAutoArchiveAfterDays = (raw: string | undefined): AutoArchiveAfterDay
   return 14;
 };
 
+const parseBackupReminderPeriodDays = (raw: string | undefined): BackupReminderPeriodDays => {
+  const n = raw ? Number(raw) : NaN;
+  if (n === 7 || n === 14 || n === 30) return n;
+  return 14;
+};
+
 const getStoredAutoArchiveEnabled = (): boolean => {
   return storage.getString(KEYS.AUTO_ARCHIVE_ENABLED) === 'true';
 };
@@ -267,8 +339,37 @@ const getStoredAutoArchiveAfterDays = (): AutoArchiveAfterDays => {
   return parseAutoArchiveAfterDays(storage.getString(KEYS.AUTO_ARCHIVE_AFTER_DAYS));
 };
 
+const getStoredShakeToRecordEnabled = (): boolean => {
+  const val = storage.getString(KEYS.SHAKE_TO_RECORD_ENABLED);
+  if (val == null) {
+    return true;
+  }
+
+  return val === 'true';
+};
+
+const getStoredShakeToCancelAskAiEnabled = (): boolean => {
+  const val = storage.getString(KEYS.SHAKE_TO_CANCEL_ASK_AI_ENABLED);
+  if (val == null) {
+    return true;
+  }
+
+  return val === 'true';
+};
+
 const getStoredTaskDeadlineNotificationsEnabled = (): boolean => {
+  if (!storage.contains(KEYS.TASK_DEADLINE_NOTIFICATIONS_ENABLED)) {
+    return true;
+  }
   return storage.getString(KEYS.TASK_DEADLINE_NOTIFICATIONS_ENABLED) === 'true';
+};
+
+const getStoredBackupReminderNotificationsEnabled = (): boolean => {
+  return storage.getString(KEYS.BACKUP_REMINDER_NOTIFICATIONS_ENABLED) === 'true';
+};
+
+const getStoredBackupReminderPeriodDays = (): BackupReminderPeriodDays => {
+  return parseBackupReminderPeriodDays(storage.getString(KEYS.BACKUP_REMINDER_PERIOD_DAYS));
 };
 
 const getStoredAiProcessingAlertsEnabled = (): boolean => {
@@ -276,6 +377,20 @@ const getStoredAiProcessingAlertsEnabled = (): boolean => {
     return true;
   }
   return storage.getString(KEYS.AI_PROCESSING_ALERTS_ENABLED) === 'true';
+};
+
+const getStoredTranscriptionRecoveryNotificationsEnabled = (): boolean => {
+  if (!storage.contains(KEYS.TRANSCRIPTION_RECOVERY_NOTIFICATIONS_ENABLED)) {
+    return true;
+  }
+  return storage.getString(KEYS.TRANSCRIPTION_RECOVERY_NOTIFICATIONS_ENABLED) === 'true';
+};
+
+const getStoredAppLockRecordingNotificationsEnabled = (): boolean => {
+  if (!storage.contains(KEYS.APP_LOCK_RECORDING_NOTIFICATIONS_ENABLED)) {
+    return true;
+  }
+  return storage.getString(KEYS.APP_LOCK_RECORDING_NOTIFICATIONS_ENABLED) === 'true';
 };
 
 const getStoredSummaryStyle = (): SummaryStyle => {
@@ -347,6 +462,11 @@ const getStoredPrivateRemotePreferJsonObject = (): boolean => {
   if (val === 'false') return false;
   return true;
 };
+
+const getStoredPrivateRemoteQueueConcurrency = (): PrivateRemoteQueueConcurrency =>
+  parseStoredPrivateRemoteQueueConcurrency(
+    storage.getString(KEYS.PRIVATE_REMOTE_QUEUE_CONCURRENCY),
+  );
 
 const getStoredCloudAiThirdPartyConsentAccepted = (): boolean => {
   return storage.getString(KEYS.CLOUD_AI_THIRD_PARTY_CONSENT) === 'true';
@@ -465,6 +585,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   selectedWhisperModelFormat: getStoredSelectedWhisperModelFormat(),
   whisperModelWeightsFormat: getStoredWhisperModelWeightsFormat(),
   transcriptionLanguage: getStoredTranscriptionLanguage(),
+  transcriptionQualityMode: getStoredTranscriptionQualityMode(),
+  transcriptionDiarizationEnabled: getStoredTranscriptionDiarizationEnabled(),
+  iosWhisperKitEngineEnabled: getStoredIosWhisperKitEngineEnabled(),
+  transcriptionCustomWords: getStoredTranscriptionCustomWords(),
   summaryStyle: getStoredSummaryStyle(),
   taskStrictness: getStoredTaskStrictness(),
   aiOutputLanguage: getStoredAiOutputLanguage(),
@@ -472,6 +596,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   privateLocalLlmBudget: getStoredPrivateLocalLlmBudget(),
   privateRemoteOutputBudget: getStoredPrivateRemoteOutputBudget(),
   privateRemotePreferJsonObject: getStoredPrivateRemotePreferJsonObject(),
+  privateRemoteQueueConcurrency: getStoredPrivateRemoteQueueConcurrency(),
   privateCapabilityTier: getStoredPrivateCapabilityTier(),
   privateAiProvider: getStoredPrivateAiProvider(),
   privateRemoteBaseUrl: getStoredPrivateRemoteBaseUrl(),
@@ -490,10 +615,17 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   })(),
   autoTranscribeOnSave: getStoredAutoTranscribeOnSave(),
   autoAiAfterTranscription: getStoredAutoAiAfterTranscription(),
+  privateAutoAiAfterTranscription: getStoredPrivateAutoAiAfterTranscription(),
   autoArchiveEnabled: getStoredAutoArchiveEnabled(),
   autoArchiveAfterDays: getStoredAutoArchiveAfterDays(),
+  shakeToRecordEnabled: getStoredShakeToRecordEnabled(),
+  shakeToCancelAskAiEnabled: getStoredShakeToCancelAskAiEnabled(),
   taskDeadlineNotificationsEnabled: getStoredTaskDeadlineNotificationsEnabled(),
+  backupReminderNotificationsEnabled: getStoredBackupReminderNotificationsEnabled(),
+  backupReminderPeriodDays: getStoredBackupReminderPeriodDays(),
   aiProcessingAlertsEnabled: getStoredAiProcessingAlertsEnabled(),
+  transcriptionRecoveryNotificationsEnabled: getStoredTranscriptionRecoveryNotificationsEnabled(),
+  appLockRecordingNotificationsEnabled: getStoredAppLockRecordingNotificationsEnabled(),
   cloudAiThirdPartyConsentAccepted: getStoredCloudAiThirdPartyConsentAccepted(),
   cloudAiKvTtlSeconds: getStoredCloudAiKvTtlSeconds(),
   showSummaryReasoningInNotes: getStoredShowSummaryReasoningInNotes(),
@@ -565,6 +697,32 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ transcriptionLanguage: lang });
   },
 
+  setTranscriptionQualityMode: (mode: TranscriptionQualityMode) => {
+    storage.set(KEYS.TRANSCRIPTION_QUALITY_MODE, mode);
+    set({ transcriptionQualityMode: mode });
+  },
+
+  setTranscriptionDiarizationEnabled: (value: boolean) => {
+    storage.set(KEYS.TRANSCRIPTION_DIARIZATION_ENABLED, value ? 'true' : 'false');
+    set({ transcriptionDiarizationEnabled: value });
+  },
+
+  setIosWhisperKitEngineEnabled: (value: boolean) => {
+    storage.set(KEYS.IOS_WHISPERKIT_ENGINE_ENABLED, value ? 'true' : 'false');
+    const state = get();
+    const patch: Partial<SettingsState> = { iosWhisperKitEngineEnabled: value };
+    if (!value && isWhisperKitOnlyModelId(state.selectedWhisperModel)) {
+      patch.selectedWhisperModel = getRecommendedWhisperModelId(state.whisperModelWeightsFormat);
+    }
+    set(patch);
+  },
+
+  setTranscriptionCustomWords: (words: string[]) => {
+    const cleaned = words.map((word) => word.trim()).filter((word) => word.length > 0);
+    storage.set(KEYS.TRANSCRIPTION_CUSTOM_WORDS, JSON.stringify(cleaned));
+    set({ transcriptionCustomWords: cleaned });
+  },
+
   setSummaryStyle: (value: SummaryStyle) => {
     storage.set(KEYS.SUMMARY_STYLE, value);
     set({ summaryStyle: value });
@@ -595,6 +753,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ privateRemotePreferJsonObject: value });
   },
 
+  setPrivateRemoteQueueConcurrency: (value: PrivateRemoteQueueConcurrency) => {
+    storage.set(KEYS.PRIVATE_REMOTE_QUEUE_CONCURRENCY, String(value));
+    set({ privateRemoteQueueConcurrency: value });
+  },
+
   setAiExecutionMode: (value: AiExecutionMode) => {
     const currentState = get();
     const wasPrivate = currentState.aiExecutionMode === 'private_experimental';
@@ -611,14 +774,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       storage.set(KEYS.PRIVATE_PREVIOUS_AUTO_AI, String(currentState.autoAiAfterTranscription));
       storage.set(KEYS.PRIVATE_PREVIOUS_AUTO_ARCHIVE, String(currentState.autoArchiveEnabled));
 
-      // Private mode uses isolated defaults and disables cloud-like automations.
-      storage.set(KEYS.AUTO_TRANSCRIBE_ON_SAVE, 'false');
-      storage.set(KEYS.AUTO_AI_AFTER_TRANSCRIPTION, 'false');
+      const privateAutoAiRaw = storage.getString(KEYS.PRIVATE_AUTO_AI_AFTER_TRANSCRIPTION);
+      const restoredPrivateAutoAi = privateAutoAiRaw == null ? false : privateAutoAiRaw === 'true';
+
+      // Private mode keeps local auto-transcribe; auto-archive stays off until smart mode.
+      storage.set(KEYS.AUTO_AI_AFTER_TRANSCRIPTION, String(restoredPrivateAutoAi));
       storage.set(KEYS.AUTO_ARCHIVE_ENABLED, 'false');
       set({
         aiExecutionMode: value,
-        autoTranscribeOnSave: false,
-        autoAiAfterTranscription: false,
+        autoAiAfterTranscription: restoredPrivateAutoAi,
+        privateAutoAiAfterTranscription: restoredPrivateAutoAi,
         autoArchiveEnabled: false,
       });
       storage.set(KEYS.AI_EXECUTION_MODE, value);
@@ -627,6 +792,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
     if (wasPrivate && value !== 'private_experimental') {
       void releaseLocalLlmSession();
+      const privateAutoAi = currentState.autoAiAfterTranscription;
+      storage.set(KEYS.PRIVATE_AUTO_AI_AFTER_TRANSCRIPTION, String(privateAutoAi));
       const prevTheme = storage.getString(KEYS.PRIVATE_PREVIOUS_THEME) as AppTheme | undefined;
       const prevAutoTranscribe = storage.getString(KEYS.PRIVATE_PREVIOUS_AUTO_TRANSCRIBE);
       const prevAutoAi = storage.getString(KEYS.PRIVATE_PREVIOUS_AUTO_AI);
@@ -658,6 +825,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         ...(restoredTheme ? { appTheme: prevTheme } : {}),
         autoTranscribeOnSave: restoredAutoTranscribe,
         autoAiAfterTranscription: restoredAutoAi,
+        privateAutoAiAfterTranscription: privateAutoAi,
         autoArchiveEnabled: restoredAutoArchive,
       });
       storage.set(KEYS.AI_EXECUTION_MODE, value);
@@ -823,7 +991,17 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setAutoAiAfterTranscription: (value: boolean) => {
     storage.set(KEYS.AUTO_AI_AFTER_TRANSCRIPTION, String(value));
+    if (get().aiExecutionMode === 'private_experimental') {
+      storage.set(KEYS.PRIVATE_AUTO_AI_AFTER_TRANSCRIPTION, String(value));
+      set({ autoAiAfterTranscription: value, privateAutoAiAfterTranscription: value });
+      return;
+    }
     set({ autoAiAfterTranscription: value });
+  },
+
+  setPrivateAutoAiAfterTranscription: (value: boolean) => {
+    storage.set(KEYS.PRIVATE_AUTO_AI_AFTER_TRANSCRIPTION, String(value));
+    set({ privateAutoAiAfterTranscription: value });
   },
 
   setAutoArchiveEnabled: (value: boolean) => {
@@ -836,14 +1014,44 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ autoArchiveAfterDays: value });
   },
 
+  setShakeToRecordEnabled: (value: boolean) => {
+    storage.set(KEYS.SHAKE_TO_RECORD_ENABLED, String(value));
+    set({ shakeToRecordEnabled: value });
+  },
+
+  setShakeToCancelAskAiEnabled: (value: boolean) => {
+    storage.set(KEYS.SHAKE_TO_CANCEL_ASK_AI_ENABLED, String(value));
+    set({ shakeToCancelAskAiEnabled: value });
+  },
+
   setTaskDeadlineNotificationsEnabled: (value: boolean) => {
     storage.set(KEYS.TASK_DEADLINE_NOTIFICATIONS_ENABLED, String(value));
     set({ taskDeadlineNotificationsEnabled: value });
   },
 
+  setBackupReminderNotificationsEnabled: (value: boolean) => {
+    storage.set(KEYS.BACKUP_REMINDER_NOTIFICATIONS_ENABLED, String(value));
+    set({ backupReminderNotificationsEnabled: value });
+  },
+
+  setBackupReminderPeriodDays: (value: BackupReminderPeriodDays) => {
+    storage.set(KEYS.BACKUP_REMINDER_PERIOD_DAYS, String(value));
+    set({ backupReminderPeriodDays: value });
+  },
+
   setAiProcessingAlertsEnabled: (value: boolean) => {
     storage.set(KEYS.AI_PROCESSING_ALERTS_ENABLED, String(value));
     set({ aiProcessingAlertsEnabled: value });
+  },
+
+  setTranscriptionRecoveryNotificationsEnabled: (value: boolean) => {
+    storage.set(KEYS.TRANSCRIPTION_RECOVERY_NOTIFICATIONS_ENABLED, String(value));
+    set({ transcriptionRecoveryNotificationsEnabled: value });
+  },
+
+  setAppLockRecordingNotificationsEnabled: (value: boolean) => {
+    storage.set(KEYS.APP_LOCK_RECORDING_NOTIFICATIONS_ENABLED, String(value));
+    set({ appLockRecordingNotificationsEnabled: value });
   },
 
   setCloudAiThirdPartyConsentAccepted: (value: boolean) => {
@@ -873,7 +1081,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setWhisperModelStatus: (
     id: WhisperModelId,
-    format: WhisperModelWeightsFormat,
+    format: WhisperModelStorageFormat,
     status: WhisperModelStatus,
   ) => {
     const current = get().whisperModelStatuses;
@@ -893,7 +1101,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setDownloadProgress: (
     id: WhisperModelId,
-    format: WhisperModelWeightsFormat,
+    format: WhisperModelStorageFormat,
     progress: number,
     bytesWritten?: number,
     contentLength?: number,
@@ -924,7 +1132,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     });
   },
 
-  removeWhisperModelStatus: (id: WhisperModelId, format: WhisperModelWeightsFormat) => {
+  removeWhisperModelStatus: (id: WhisperModelId, format: WhisperModelStorageFormat) => {
     const key = getWhisperModelVariantId(id, format);
     const currentStatuses = get().whisperModelStatuses;
     const currentProgress = get().whisperDownloadProgress;

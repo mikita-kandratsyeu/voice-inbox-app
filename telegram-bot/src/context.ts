@@ -18,10 +18,7 @@ export type HandlerCtx = Context & {
   adminApi: AdminApiClient | null;
 };
 
-export async function resolveHandlerCtx(
-  ctx: Context,
-  app: AppContext,
-): Promise<HandlerCtx | null> {
+export async function resolveHandlerCtx(ctx: Context, app: AppContext): Promise<HandlerCtx | null> {
   const telegramUserId = userIdFromCtx(ctx);
   if (!telegramUserId) return null;
   const profile = await loadAdminProfile(app.pool, telegramUserId);

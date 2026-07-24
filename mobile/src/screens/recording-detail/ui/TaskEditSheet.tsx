@@ -1,5 +1,5 @@
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
 import { Calendar, ChevronRight, Clock } from 'lucide-react-native';
@@ -16,11 +16,13 @@ import {
   parseTaskDeadlineTime,
 } from '@/shared/lib/taskDeadlineTimeDisplay';
 import {
+  AppBottomSheetContent,
   AppBottomSheetModal,
   type LinkedNoteContext,
   LinkedNoteContextBanner,
   SheetFooterButtons,
-  useBottomSheetContentPadding,
+  SheetHeader,
+  SystemInlineDatePicker,
 } from '@/shared/ui';
 
 const TASK_TEXT_MAX_CHARS = 500;
@@ -49,6 +51,8 @@ type TaskEditSheetProps = {
   }) => boolean;
   sheetTitleKey?: string;
   placeholderKey?: string;
+  textMaxChars?: number;
+  allowEmptySave?: boolean;
   /** Secondary action in the footer row (left of Save). */
   onBack?: () => void;
   /** i18n key for the secondary footer label when `onBack` is set. @default common.goBack */
@@ -58,7 +62,6 @@ type TaskEditSheetProps = {
 };
 
 const PRIORITIES: NonNullable<TaskItem['priority']>[] = ['low', 'medium', 'high'];
-const IOS_INLINE_DATE_PICKER_HEIGHT = 370;
 
 const formatTaskDeadline = (date: Date): string => {
   const year = date.getFullYear();
@@ -166,6 +169,8 @@ export function TaskEditSheet({
   onSave,
   sheetTitleKey = 'tasks.editTaskSheetTitle',
   placeholderKey = 'recordingDetail.addTaskPlaceholder',
+  textMaxChars = TASK_TEXT_MAX_CHARS,
+  allowEmptySave = false,
   onBack,
   footerSecondaryLabelKey = 'common.goBack',
   linkedNoteContext,
@@ -173,7 +178,6 @@ export function TaskEditSheet({
   const { t, i18n } = useTranslation();
   const color = useColors();
   const theme = useAppTheme();
-  const contentPadding = useBottomSheetContentPadding(24);
   const isTablet = useIsTablet();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [draft, setDraft] = useState('');
@@ -229,6 +233,21 @@ export function TaskEditSheet({
     setTimePickerOpen(false);
   }, [visible, initialText, initialDeadline, initialDeadlineTime, initialPriority]);
 
+  useEffect(() => {
+    if (!datePickerOpen || deadlineDraft.length > 0) return;
+    setDeadlineDraft(formatTaskDeadline(new Date()));
+  }, [datePickerOpen, deadlineDraft]);
+
+  const toggleTimePicker = useCallback(() => {
+    if (!deadlineDraft) return;
+    const opening = !timePickerOpen;
+    if (opening && deadlineTimeDraft.trim().length === 0) {
+      setDeadlineTimeDraft(formatTaskDeadlineTime(getTimePickerValue('', deadlineDraft)));
+    }
+    setTimePickerOpen(opening);
+    setDatePickerOpen(false);
+  }, [deadlineDraft, deadlineTimeDraft, timePickerOpen]);
+
   const handleFooterSecondary = useCallback(() => {
     setDatePickerOpen(false);
     setTimePickerOpen(false);
@@ -241,7 +260,7 @@ export function TaskEditSheet({
 
   const handleSave = useCallback(() => {
     const trimmed = draft.split('\0').join('').trim();
-    if (!trimmed) return;
+    if (!trimmed && !allowEmptySave) return;
     const deadline = deadlineDraft.split('\0').join('').trim();
     const deadlineTime = deadlineTimeDraft.split('\0').join('').trim();
     if (
@@ -254,7 +273,7 @@ export function TaskEditSheet({
     ) {
       bottomSheetRef.current?.dismiss();
     }
-  }, [deadlineDraft, deadlineTimeDraft, draft, onSave, priorityDraft]);
+  }, [allowEmptySave, deadlineDraft, deadlineTimeDraft, draft, onSave, priorityDraft]);
 
   return (
     <AppBottomSheetModal
@@ -264,34 +283,23 @@ export function TaskEditSheet({
       enablePanDownToClose={!datePickerOpen && !timePickerOpen}
       enableContentPanningGesture={!datePickerOpen && !timePickerOpen}
     >
-      <BottomSheetScrollView
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        automaticallyAdjustKeyboardInsets={false}
-        contentContainerStyle={{
-          paddingHorizontal: isTablet ? 24 : 20,
-          width: '100%',
-          ...contentPadding,
-        }}
+      <AppBottomSheetContent
+        scrollable
+        useTabletPadding
+        bottomPadding={24}
+        style={{ width: '100%' }}
       >
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 17,
-            fontWeight: '600',
-            marginBottom: linkedNoteContext ? 12 : 20,
-            paddingTop: 4,
-            textAlign: 'center',
-          }}
-        >
-          {t(sheetTitleKey)}
-        </Text>
+        <SheetHeader
+          title={t(sheetTitleKey)}
+          color={color}
+          marginBottom={linkedNoteContext ? 12 : 20}
+        />
         {linkedNoteContext ? (
           <LinkedNoteContextBanner context={linkedNoteContext} color={color} />
         ) : null}
         <BottomSheetTextInput
           value={draft}
-          onChangeText={(text) => setDraft(text.split('\0').join('').slice(0, TASK_TEXT_MAX_CHARS))}
+          onChangeText={(text) => setDraft(text.split('\0').join('').slice(0, textMaxChars))}
           multiline
           textAlignVertical="top"
           placeholder={t(placeholderKey)}
@@ -309,7 +317,7 @@ export function TaskEditSheet({
         <Text className="mt-2 text-center text-[12px]" style={{ color: color.text.secondary }}>
           {t('recordingDetail.tasksReextractCharCount', {
             current: draft.length,
-            max: TASK_TEXT_MAX_CHARS,
+            max: textMaxChars,
           })}
         </Text>
         {showMetadataFields && (
@@ -440,11 +448,7 @@ export function TaskEditSheet({
                     )}
                     {!isTablet && (
                       <Pressable
-                        onPress={() => {
-                          if (!deadlineDraft) return;
-                          setTimePickerOpen((prev) => !prev);
-                          setDatePickerOpen(false);
-                        }}
+                        onPress={toggleTimePicker}
                         disabled={!deadlineDraft}
                         accessibilityRole="button"
                         accessibilityLabel={`${t('tasks.deadlineTimeLabel')}, ${deadlineTimeLabelText || t('tasks.noDeadlineTime')}`}
@@ -518,11 +522,7 @@ export function TaskEditSheet({
                       }}
                     >
                       <Pressable
-                        onPress={() => {
-                          if (!deadlineDraft) return;
-                          setTimePickerOpen((prev) => !prev);
-                          setDatePickerOpen(false);
-                        }}
+                        onPress={toggleTimePicker}
                         disabled={!deadlineDraft}
                         accessibilityRole="button"
                         accessibilityLabel={`${t('tasks.deadlineTimeLabel')}, ${deadlineTimeLabelText || t('tasks.noDeadlineTime')}`}
@@ -598,39 +598,17 @@ export function TaskEditSheet({
                 )}
               </View>
               {datePickerOpen && (
-                <View
-                  className="mt-3 items-center overflow-hidden rounded-2xl"
-                  style={{
-                    alignSelf: 'center',
-                    backgroundColor: color.background.tertiary,
-                    width: '100%',
-                  }}
-                >
-                  <DateTimePicker
+                <View className="mt-3">
+                  <SystemInlineDatePicker
                     value={datePickerValue}
-                    mode="date"
-                    display={IS_IOS ? 'inline' : 'default'}
-                    accentColor={color.accent.primary}
-                    themeVariant={theme}
                     minimumDate={new Date()}
-                    style={
-                      IS_IOS
-                        ? {
-                            alignSelf: 'center',
-                            height: IOS_INLINE_DATE_PICKER_HEIGHT,
-                            width: '100%',
-                          }
-                        : undefined
-                    }
-                    onValueChange={(_, selectedDate) => {
-                      if (selectedDate) {
-                        setDeadlineDraft(formatTaskDeadline(selectedDate));
-                      }
+                    accessibilityLabel={t('tasks.deadlineDatePickerA11y')}
+                    onChange={(selectedDate) => {
+                      setDeadlineDraft(formatTaskDeadline(selectedDate));
                       if (!IS_IOS) {
                         setDatePickerOpen(false);
                       }
                     }}
-                    onDismiss={() => setDatePickerOpen(false)}
                   />
                 </View>
               )}
@@ -718,7 +696,7 @@ export function TaskEditSheet({
           secondaryLabel={t(onBack ? footerSecondaryLabelKey : 'common.cancel')}
           onSecondaryPress={handleFooterSecondary}
         />
-      </BottomSheetScrollView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

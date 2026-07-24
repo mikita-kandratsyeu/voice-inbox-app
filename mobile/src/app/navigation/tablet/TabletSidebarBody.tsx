@@ -1,13 +1,13 @@
 import type { TFunction } from 'i18next';
-import { Archive, Inbox, ListChecks, Pin } from 'lucide-react-native';
+import { Archive, Inbox, ListTodo, Pin } from 'lucide-react-native';
 import React from 'react';
 import { View } from 'react-native';
-import type { EdgeInsets } from 'react-native-safe-area-context';
 
 import type { Folder } from '@/entities/folder';
-import type { MonetizationMode } from '@/features/app-storefront';
+import { NotesGraphIcon } from '@/screens/notes-graph/ui/NotesGraphIcon';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
+import { ProCrownBadge } from '@/shared/ui';
 
 import type { TabletInboxSidebarTarget } from './tabletInboxNavBridge';
 import { requestTabletOpenEditFolder } from './tabletInboxNavBridge';
@@ -29,12 +29,10 @@ export type TabletSidebarBodyProps = {
   horizontalPad: number;
   color: Colors;
   theme: TabletSidebarTheme;
-  insets: EdgeInsets;
   t: TFunction;
   isSettingsTab: boolean;
   navDimmed: boolean;
   isProActive: boolean;
-  monetizationMode: MonetizationMode;
   folders: Folder[];
   folderCounts: TabletSidebarNavCounts['folderCounts'];
   foldersEnabled: boolean;
@@ -45,6 +43,7 @@ export type TabletSidebarBodyProps = {
   pinnedCount: number;
   archivedCount: number;
   openTasksCount: number;
+  notesGraphNodeCount: number;
   aiProcessing: TabletSidebarAiProcessing;
   inboxActive: boolean;
   pinnedActive: boolean;
@@ -52,10 +51,10 @@ export type TabletSidebarBodyProps = {
   onOpenSettings: () => void;
   onOpenPlanPaywall: () => void;
   onRecord: () => void;
-  onRecordLongPress: () => void;
   onTextNote: () => void;
   navigateToInbox: (target: TabletInboxSidebarTarget) => void;
   openAllTasks: () => void;
+  openNotesGraph: () => void;
   openCreateFolder: () => void;
 };
 
@@ -63,12 +62,10 @@ export function TabletSidebarBody({
   horizontalPad,
   color,
   theme,
-  insets,
   t,
   isSettingsTab,
   navDimmed,
   isProActive,
-  monetizationMode,
   folders,
   folderCounts,
   foldersEnabled,
@@ -79,6 +76,7 @@ export function TabletSidebarBody({
   pinnedCount,
   archivedCount,
   openTasksCount,
+  notesGraphNodeCount,
   aiProcessing,
   inboxActive,
   pinnedActive,
@@ -86,16 +84,17 @@ export function TabletSidebarBody({
   onOpenSettings,
   onOpenPlanPaywall,
   onRecord,
-  onRecordLongPress,
   onTextNote,
   navigateToInbox,
   openAllTasks,
+  openNotesGraph,
   openCreateFolder,
 }: TabletSidebarBodyProps) {
   const inboxIconColor = color.accent.primary;
   const pinnedIconColor = color.accent.unpin;
   const archiveIconColor = color.accent.success;
   const allTasksIconColor = color.accent.primary;
+  const notesGraphIconColor = color.accent.primary;
   const mutedIcon = color.text.secondary;
 
   const aiProcessingHint = t('tablet.sidebar.aiProcessingHint');
@@ -127,7 +126,7 @@ export function TabletSidebarBody({
     />
   );
 
-  const secondaryNav = (
+  const inboxFiltersNav = (
     <>
       <TabletSidebarNavItem
         label={t('inbox.filters.pinned')}
@@ -171,6 +170,11 @@ export function TabletSidebarBody({
           </TabletSidebarNavIcon>
         }
       />
+    </>
+  );
+
+  const overviewNav = (
+    <>
       <TabletSidebarNavItem
         label={t('allTasks.title')}
         isActive={false}
@@ -185,7 +189,26 @@ export function TabletSidebarBody({
             activeColor={allTasksIconColor}
             inactiveColor={mutedIcon}
           >
-            <ListChecks />
+            <ListTodo />
+          </TabletSidebarNavIcon>
+        }
+      />
+      <TabletSidebarNavItem
+        label={t('notesGraph.title')}
+        isActive={false}
+        color={color}
+        theme={theme}
+        appearance="secondary"
+        badgeCount={isProActive ? notesGraphNodeCount : 0}
+        onPress={openNotesGraph}
+        trailingAccessory={!isProActive ? <ProCrownBadge /> : undefined}
+        icon={
+          <TabletSidebarNavIcon
+            isActive={false}
+            activeColor={notesGraphIconColor}
+            inactiveColor={mutedIcon}
+          >
+            <NotesGraphIcon />
           </TabletSidebarNavIcon>
         }
       />
@@ -221,7 +244,7 @@ export function TabletSidebarBody({
     <View style={{ flex: 1 }}>
       <View
         style={{
-          paddingTop: insets.top + 8,
+          paddingTop: horizontalPad,
           paddingHorizontal: horizontalPad,
           paddingBottom: 14,
           gap: 14,
@@ -229,12 +252,7 @@ export function TabletSidebarBody({
           borderBottomColor: theme.border,
         }}
       >
-        <TabletSidebarComposeRow
-          color={color}
-          onRecord={onRecord}
-          onRecordLongPress={onRecordLongPress}
-          onTextNote={onTextNote}
-        />
+        <TabletSidebarComposeRow color={color} onRecord={onRecord} onTextNote={onTextNote} />
       </View>
 
       <View style={{ flex: 1, minHeight: 0, paddingHorizontal: horizontalPad }}>
@@ -247,7 +265,7 @@ export function TabletSidebarBody({
           }}
         >
           {inboxNav}
-          {secondaryNav}
+          {inboxFiltersNav}
         </View>
 
         {!foldersEnabled ? (
@@ -274,19 +292,16 @@ export function TabletSidebarBody({
         style={{
           paddingHorizontal: horizontalPad,
           paddingTop: 12,
-          paddingBottom: Math.max(insets.bottom, 14),
+          paddingBottom: 14,
           gap: 14,
           borderTopWidth: 1,
           borderTopColor: theme.border,
-          backgroundColor: theme.panel,
         }}
       >
+        <View style={{ gap: 8, opacity: navDimmed ? 0.62 : 1 }}>{overviewNav}</View>
+
         {!isProActive ? (
-          <TabletSidebarPlanAndUsageCard
-            color={color}
-            monetizationMode={monetizationMode}
-            onOpenPlanPaywall={onOpenPlanPaywall}
-          />
+          <TabletSidebarPlanAndUsageCard color={color} onOpenPlanPaywall={onOpenPlanPaywall} />
         ) : null}
 
         <TabletSidebarFooter

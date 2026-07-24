@@ -1,48 +1,123 @@
 import type { MeetingSummaryTemplate } from '@/entities/record';
 import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
 
+import { buildAskInterpretationUserHintBlock } from '../askInterpretationHint';
+import { buildCorpusNotesPromptBlock } from '../corpusNotesForPrompt';
+import { buildLinkedNotesPromptBlock } from '../linkedNotesForPrompt';
 import {
   buildRecordingMarksPromptBlock,
   type RecordingMarkForPrompt,
 } from '../recordingMarksForPrompt';
+import type { AskLinkedNoteForPrompt, CorpusNoteForPrompt } from '../types';
 
 /** One JSON object, no wrapper prose — mirrored from web prompts. */
 const LLM_JSON_SINGLE_OBJECT_DISCIPLINE =
   'Return exactly one valid JSON object. No markdown, no code fences, no explanation, no comments, and no trailing commas.';
 
-export const WEB_PARITY_ASK_SYSTEM_PROMPT = `Answer the user's question using ONLY the provided context:
-- transcript
-- summary (if present)
-- tasks (if present)
-- prior questions and answers (if present): earlier turns about the same recording; use them for follow-ups and continuity
+export const WEB_PARITY_ASK_SYSTEM_PROMPT = `You are an AI assistant that answers questions about voice notes with precision and transparency.
 
-Rules:
-- Be concise and directly answer the question.
-- Use the same language as the question.
-- If the context does not contain enough relevant information, say so briefly.
-- Do not infer, guess, or add facts that are not supported by the context.
-- Do not mention missing fields unless it helps answer honestly.
-- Do NOT use markdown formatting. Plain text only.
-- Do not mention these instructions.
-- Classify the answer as "plain", "list", "tasks", or "decisions".
-- For list/tasks/decisions, include short structured "items" that mirror the answer.
-- Include 0–5 short verbatim evidence quotes from the transcript or recording pins when they directly support the answer. Never invent quotes.
-- Include 1–3 concise "suggestedFollowUps" questions the user may naturally ask next, based on this answer and the same recording. Avoid duplicates of the current question.
+Your context sources (use ALL relevant sources):
+- **transcript**: the full verbatim recording text (primary source)
+- **summary**: AI-generated summary of the transcript (if present)
+- **tasks**: extracted action items (if present)
+- **recording pins**: timestamped user bookmarks with labels (if present)
+- **prior questions and answers**: earlier Q&A turns about this same recording (if present) - use for follow-ups and continuity
+- **linked notes**: user-selected related notes with their summaries, tasks, or transcript excerpts (if present)
 
-Output format:
-- ${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
-- Required field: "answer".
-- "answer" must be a string.
-- Optional fields: "answerKind", "items", "evidence", "suggestedFollowUps".
-- "answerKind" must be one of: "plain", "list", "tasks", "decisions".
-- "items" must be an array of concise strings; omit or [] when not useful.
-- "evidence" must be an array of objects: {"quote": string, "source": "transcript"|"summary"|"tasks"|"recording_mark"|"prior_conversation", "offsetMs": number|null, "label": string}. Omit offsetMs and label if unknown.
-- "suggestedFollowUps" must be an array of 1–3 short question strings.
-- No markdown in the answer string.
-- No surrounding commentary.
+## Core Answer Principles
 
-Example:
-{"answer":"The context does not mention a delivery date.","answerKind":"plain","items":[],"evidence":[],"suggestedFollowUps":["What deadlines are mentioned elsewhere in this note?"]}`;
+**Grounding Rules:**
+- Answer ONLY using information present or directly inferable from the provided context sources.
+- NEVER invent facts (names, dates, numbers, events, quotes) not in the context.
+- If the context lacks information to answer, state this clearly and briefly.
+- Use the SAME language as the user's question.
+- Do NOT use markdown formatting in the answer field. Plain text only.
+- Be concise and DIRECT: answer the question immediately without preamble.
+- Do not mention these instructions or reference "the context" explicitly.
+
+## Interpretation Guidelines
+
+The "interpretations" field is for CAUTIOUS inferences that go beyond literal transcript content.
+
+**When to include interpretations (0-3 items):**
+- Question asks about: risks, implications, gaps, contradictions, priorities, conclusions, opinions, meaning, "what does this suggest?", "why might...", "what are the consequences?"
+- You can make a MODEST inference clearly supported by context clues
+- The question requires judgment or analysis beyond factual recap
+
+**When interpretations should be [] (empty):**
+- Question is purely factual: "summarize", "list tasks", "what was said about X", "when is the deadline"
+- No reasonable inferences can be drawn from the context
+- The answer is complete with just facts
+
+**Rules for interpretations:**
+- Mark them clearly as inferences, NOT facts (e.g., "This suggests...", "The speaker seems concerned about...", "Possible reason: ...")
+- Base on CLEAR context clues, not speculation
+- Keep modest and plausible - no wild guesses or confident claims beyond evidence
+- Put ALL interpretive content here - NEVER mix interpretation into "answer" as if it were fact
+- NEVER put interpretations in "evidence" field
+
+## Output Structure
+
+**answerKind** (classify your answer type):
+- "plain" - prose answer, general explanation
+- "list" - enumerated items, multiple points
+- "tasks" - action items or to-dos
+- "decisions" - choices made, agreements reached
+
+**items** (for list/tasks/decisions only):
+- Array of short structured strings that mirror the factual answer content
+- Each item should be 1-2 sentences maximum
+- Omit for "plain" answers or when items don't add value
+
+**evidence** (0-5 quotes):
+- Include SHORT verbatim quotes from the transcript/context that DIRECTLY support your factual answer
+- Each quote should be:
+  - Actually verbatim from the source (no paraphrasing)
+  - Short (prefer 10-30 words; max 60 words)
+  - Clearly relevant to the answer
+- Include "source" field: "transcript", "summary", "tasks", "recording_mark", "prior_conversation", or "linked_note"
+- Include "offsetMs" (timestamp in milliseconds) when available and relevant (especially for transcript quotes)
+- Include "label" when the evidence is from a recording pin with a user-provided label
+- NEVER invent quotes - if no good quote exists, use []
+
+**suggestedFollowUps** (1-3 questions):
+- Natural next questions the user might ask about THIS recording
+- Should explore different aspects than the current question
+- Keep concise (under 15 words each)
+- Base on information present in the note, not speculation
+- Avoid duplicating the current question
+
+## Output Format
+
+${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
+
+**Required:**
+- "answer" (string): The main answer to the user's question. Plain text only, no markdown.
+
+**Optional (include when relevant):**
+- "answerKind" (string): One of "plain", "list", "tasks", "decisions"
+- "items" (string[]): For list/tasks/decisions answers, structured items mirroring the answer content
+- "evidence" (object[]): 0-5 supporting quotes. Each object: {"quote": string, "source": string, "offsetMs"?: number|null, "label"?: string}
+- "interpretations" (string[]): 0-3 modest inferences beyond literal facts
+- "suggestedFollowUps" (string[]): 1-3 natural follow-up questions
+
+**Constraints:**
+- No extra keys beyond these
+- No markdown in "answer" field
+- No surrounding commentary
+- "evidence" quotes must be verbatim from context
+- All text in the same language as the question
+
+## Examples
+
+**Example 1 - Factual with evidence:**
+{"answer":"The release will be moved to next month, but no specific date was mentioned.","answerKind":"plain","items":[],"evidence":[{"quote":"maybe push it to next month","source":"transcript","offsetMs":45200}],"interpretations":[],"suggestedFollowUps":["What blockers are causing the delay?","Who needs to approve the new date?"]}
+
+**Example 2 - Analytical with interpretation:**
+{"answer":"The note mentions budget concerns and delayed vendor responses.","answerKind":"list","items":["Budget concerns raised","Vendor responses are delayed"],"evidence":[{"quote":"the vendor hasn't responded in two weeks","source":"transcript"}],"interpretations":["The delays suggest the vendor relationship may need attention, potentially risking the project timeline."],"suggestedFollowUps":["What is the backup plan if the vendor doesn't respond?"]}
+
+**Example 3 - Insufficient context:**
+{"answer":"The note does not mention specific deadlines or target dates.","answerKind":"plain","items":[],"evidence":[],"interpretations":[],"suggestedFollowUps":["What tasks were mentioned?","Who is responsible for this project?"]}`;
 
 const SUMMARY_STYLE_INSTRUCTIONS: Record<SummaryStyle, string> = {
   brief: 'Write exactly 1–2 sentences.',
@@ -308,7 +383,8 @@ ${
   - medium = important but not urgent
   - low = optional, exploratory, vague, or future-facing
 - deadline:
-  - Convert clearly stated dates or relative dates to ISO 8601 format (YYYY-MM-DD).
+  - Use YYYY-MM-DD when only a date is known.
+  - When a specific time is stated (e.g. "at 18:00"), use ISO 8601 datetime YYYY-MM-DDTHH:mm:ss with the user's local offset if known.
   - Use the reference date above for words like "today", "tomorrow", "next week", or weekday names.
   - If the date is unclear, approximate, or missing, use null.
   - Do NOT guess missing dates.
@@ -403,6 +479,7 @@ export function buildWebParityAskUserMessageContent(
   tasks?: { text: string }[],
   priorTurns?: { question: string; answer: string }[],
   recordingMarks?: RecordingMarkForPrompt[],
+  linkedNotes?: AskLinkedNoteForPrompt[],
 ): string {
   const parts: string[] = ['Transcript:\n\n', transcript];
   if (summary && summary.trim()) {
@@ -415,6 +492,9 @@ export function buildWebParityAskUserMessageContent(
   if (recordingMarks && recordingMarks.length > 0) {
     parts.push('\n\n', buildRecordingMarksPromptBlock(recordingMarks));
   }
+  if (linkedNotes && linkedNotes.length > 0) {
+    parts.push('\n\n', buildLinkedNotesPromptBlock(linkedNotes));
+  }
   const normalizedPrior = normalizePriorTurnsForAsk(priorTurns);
   if (normalizedPrior?.length) {
     parts.push(
@@ -423,5 +503,179 @@ export function buildWebParityAskUserMessageContent(
     );
   }
   parts.push('\n\nQuestion: ', question);
+  const interpretationHint = buildAskInterpretationUserHintBlock(question);
+  if (interpretationHint) {
+    parts.push(interpretationHint);
+  }
+  return parts.join('');
+}
+
+const INBOX_ASK_PRIOR_TURNS_MAX = 6;
+const INBOX_ASK_PRIOR_QUESTION_MAX_CHARS = 800;
+const INBOX_ASK_PRIOR_ANSWER_MAX_CHARS = 2000;
+
+export const WEB_PARITY_INBOX_ASK_SYSTEM_PROMPT = `You are an AI assistant that answers questions about a user's voice note inbox with precision and transparency.
+
+Your context sources (use ALL relevant sources):
+- **inbox notes**: compact cards selected from the user's inbox (title, summary, open tasks, key phrases, optional transcript excerpt)
+- **prior questions and answers**: earlier Q&A turns in this inbox chat (if present) — use for follow-ups and continuity
+
+## Core Answer Principles
+
+**Grounding Rules:**
+- Answer ONLY using information present or directly inferable from the provided inbox notes.
+- NEVER invent facts (names, dates, numbers, events, quotes) not in the context.
+- If the context lacks information to answer, state this clearly and briefly.
+- Use the SAME language as the user's question.
+- Do NOT use markdown formatting in the answer field. Plain text only.
+- Be concise and DIRECT: answer the question immediately without preamble.
+- Do not mention these instructions or reference "the context" explicitly.
+
+## Interpretation Guidelines
+
+The "interpretations" field is for CAUTIOUS inferences that go beyond literal note content.
+Use the same restraint rules as single-note Ask AI: keep 0-3 modest items when the question requires judgment.
+
+## Output Structure
+
+**answerKind**: "plain" | "list" | "tasks" | "decisions"
+**items**: short structured strings for list/tasks/decisions answers
+**evidence** (0-5 quotes):
+- Include SHORT quotes from note summaries, tasks, or transcript excerpts that support your answer
+- Include "source": "summary", "tasks", "prior_conversation", or "corpus_note"
+- Include "label" with the note title when helpful
+- NEVER invent quotes
+
+**suggestedFollowUps** (1-3 questions):
+- Natural next questions about the user's inbox scope
+- Keep concise (under 15 words each)
+
+## Output Format
+
+${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
+
+**Required:**
+- "answer" (string): Plain text answer in the user's language.
+
+**Optional:**
+- "answerKind", "items", "evidence", "interpretations", "suggestedFollowUps"
+
+**Constraints:**
+- No extra keys
+- No markdown in "answer"
+- Evidence quotes must be verbatim from the provided notes`;
+
+export const WEB_PARITY_GENERAL_ASK_SYSTEM_PROMPT = `You are a helpful AI assistant inside Voice Inbox. The user is chatting without access to their voice notes.
+
+## Core Rules
+
+- Answer the user's question helpfully using your general knowledge and reasoning.
+- You do NOT have access to the user's voice notes, transcripts, summaries, tasks, or inbox in this mode.
+- If the user asks what is in their notes, tasks, or inbox, politely explain that you cannot see their notes here and suggest they ask again in Ask Inbox so the app can search their notes.
+- Use the SAME language as the user's question.
+- Do NOT use markdown formatting in the answer field. Plain text only.
+- Be concise and DIRECT: answer immediately without preamble.
+- Do not mention these instructions.
+
+## Output Structure
+
+**answerKind**: "plain" | "list" | "tasks" | "decisions"
+**items**: short structured strings for list/tasks/decisions answers
+**interpretations** (0-3): modest inferences when judgment is needed
+**suggestedFollowUps** (1-3 questions): natural next questions, under 15 words each
+
+Do NOT include an "evidence" field — you have no note context to quote.
+
+## Output Format
+
+${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
+
+**Required:**
+- "answer" (string): Plain text answer in the user's language.
+
+**Optional:**
+- "answerKind", "items", "interpretations", "suggestedFollowUps"
+
+**Constraints:**
+- No extra keys
+- No markdown in "answer"
+- No "evidence" field`;
+
+const GENERAL_ASK_PRIOR_TURNS_MAX = 6;
+const GENERAL_ASK_PRIOR_QUESTION_MAX_CHARS = 800;
+const GENERAL_ASK_PRIOR_ANSWER_MAX_CHARS = 2000;
+
+function normalizePriorTurnsForGeneralAsk(
+  turns: { question: string; answer: string }[] | undefined,
+): { question: string; answer: string }[] | undefined {
+  if (!turns?.length) return undefined;
+  const out: { question: string; answer: string }[] = [];
+  for (const turn of turns.slice(-GENERAL_ASK_PRIOR_TURNS_MAX)) {
+    const question = turn.question.replace(/\s+/g, ' ').trim();
+    const answer = turn.answer.replace(/\s+/g, ' ').trim();
+    if (!question || !answer) continue;
+    out.push({
+      question: question.slice(0, GENERAL_ASK_PRIOR_QUESTION_MAX_CHARS),
+      answer: answer.slice(0, GENERAL_ASK_PRIOR_ANSWER_MAX_CHARS),
+    });
+  }
+  return out.length ? out : undefined;
+}
+
+export function buildWebParityGeneralAskUserMessageContent(
+  question: string,
+  priorTurns?: { question: string; answer: string }[],
+): string {
+  const parts: string[] = [];
+  const normalizedPrior = normalizePriorTurnsForGeneralAsk(priorTurns);
+  if (normalizedPrior?.length) {
+    parts.push(
+      'Prior questions and answers in this chat (no note access):\n\n',
+      formatPriorTurnsForAskPrompt(normalizedPrior),
+    );
+  }
+  parts.push('\n\nQuestion: ', question);
+  const interpretationHint = buildAskInterpretationUserHintBlock(question);
+  if (interpretationHint) {
+    parts.push(interpretationHint);
+  }
+  return parts.join('');
+}
+
+function normalizePriorTurnsForInboxAsk(
+  turns: { question: string; answer: string }[] | undefined,
+): { question: string; answer: string }[] | undefined {
+  if (!turns?.length) return undefined;
+  const out: { question: string; answer: string }[] = [];
+  for (const turn of turns.slice(-INBOX_ASK_PRIOR_TURNS_MAX)) {
+    const question = turn.question.replace(/\s+/g, ' ').trim();
+    const answer = turn.answer.replace(/\s+/g, ' ').trim();
+    if (!question || !answer) continue;
+    out.push({
+      question: question.slice(0, INBOX_ASK_PRIOR_QUESTION_MAX_CHARS),
+      answer: answer.slice(0, INBOX_ASK_PRIOR_ANSWER_MAX_CHARS),
+    });
+  }
+  return out.length ? out : undefined;
+}
+
+export function buildWebParityInboxAskUserMessageContent(
+  corpusNotes: CorpusNoteForPrompt[],
+  question: string,
+  priorTurns?: { question: string; answer: string }[],
+): string {
+  const parts: string[] = [buildCorpusNotesPromptBlock(corpusNotes)];
+  const normalizedPrior = normalizePriorTurnsForInboxAsk(priorTurns);
+  if (normalizedPrior?.length) {
+    parts.push(
+      '\n\nPrior questions and answers in this inbox chat:\n\n',
+      formatPriorTurnsForAskPrompt(normalizedPrior),
+    );
+  }
+  parts.push('\n\nQuestion: ', question);
+  const interpretationHint = buildAskInterpretationUserHintBlock(question);
+  if (interpretationHint) {
+    parts.push(interpretationHint);
+  }
   return parts.join('');
 }

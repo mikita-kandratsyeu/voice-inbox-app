@@ -7,6 +7,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { ANIMATION_DURATIONS } from '@/shared/config';
+
 type SkeletonPulseProps = {
   children: React.ReactNode;
 };
@@ -16,7 +18,10 @@ export const SkeletonPulse = ({ children }: SkeletonPulseProps) => {
 
   useEffect(() => {
     opacity.value = withRepeat(
-      withSequence(withTiming(0.35, { duration: 800 }), withTiming(1, { duration: 800 })),
+      withSequence(
+        withTiming(0.35, { duration: ANIMATION_DURATIONS.skeletonPulse }),
+        withTiming(1, { duration: ANIMATION_DURATIONS.skeletonPulse }),
+      ),
       -1,
     );
   }, [opacity]);

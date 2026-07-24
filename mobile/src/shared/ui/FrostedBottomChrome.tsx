@@ -16,6 +16,7 @@ type FrostedBottomChromeProps = {
   insetsBottom: number;
   contentStyle?: StyleProp<ViewStyle>;
   children: ReactNode;
+  showShadow?: boolean;
 };
 
 export const FrostedBottomChrome = ({
@@ -23,16 +24,21 @@ export const FrostedBottomChrome = ({
   insetsBottom,
   contentStyle,
   children,
+  showShadow = true,
 }: FrostedBottomChromeProps) => {
   return (
     <View
       style={{
         backgroundColor: 'transparent',
-        shadowColor: color.shadow.color,
-        shadowOffset: { width: 0, height: -FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
-        shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
-        shadowRadius: FLOAT_TAB_IOS_SHADOW_RADIUS,
-        elevation: 8,
+        ...(showShadow
+          ? {
+              shadowColor: color.shadow.color,
+              shadowOffset: { width: 0, height: -FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
+              shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
+              shadowRadius: FLOAT_TAB_IOS_SHADOW_RADIUS,
+              elevation: 8,
+            }
+          : null),
       }}
     >
       <View

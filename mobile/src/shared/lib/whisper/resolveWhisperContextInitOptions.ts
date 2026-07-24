@@ -1,6 +1,7 @@
 import { type ContextOptions, isUseCoreML } from 'whisper.rn';
 
 import type { WhisperModelId } from '@/entities/settings';
+import { devWarn } from '@/shared/lib/appLogger';
 import { IS_IOS } from '@/shared/lib/platform';
 
 import { isWhisperCoreMlEncoderInstalled } from './isWhisperCoreMlEncoderInstalled';
@@ -23,8 +24,8 @@ export async function resolveWhisperContextInitOptions(
   }
 
   const encoderReady = await isWhisperCoreMlEncoderInstalled(modelId);
-  if (__DEV__ && !encoderReady) {
-    console.warn(
+  if (!encoderReady) {
+    devWarn(
       `[whisper] Core ML encoder bundle missing for ${modelId} — re-download the model; native may fall back to CPU`,
     );
   }

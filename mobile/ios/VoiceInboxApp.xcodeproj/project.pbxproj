@@ -19,6 +19,8 @@
 		2A15FB092F6AC17400177049 /* RecordingLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A15FB082F6AC17400177049 /* RecordingLiveActivityManager.swift */; };
 		2A15FB0B2F6AC1A800177049 /* RecordingActivityModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A15FB0A2F6AC1A800177049 /* RecordingActivityModule.m */; };
 		2A15FB0D2F6AC21900177049 /* RecordingActivityModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A15FB0C2F6AC21900177049 /* RecordingActivityModule.swift */; };
+		2A15FB132F6AD10000177049 /* AudioRouteModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A15FB112F6AD10000177049 /* AudioRouteModule.swift */; };
+		2A15FB142F6AD10000177049 /* AudioRouteModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A15FB122F6AD10000177049 /* AudioRouteModule.m */; };
 		2AADFDD52F6B33C90005C039 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A6F4CEC2F64113A00297CB8 /* WidgetKit.framework */; };
 		2AADFDD62F6B33C90005C039 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A6F4CEE2F64113B00297CB8 /* SwiftUI.framework */; };
 		2AADFDE32F6B33CA0005C039 /* DownloadWidgetExtensionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2AADFDD42F6B33C80005C039 /* DownloadWidgetExtensionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -32,14 +34,26 @@
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		8B18DEC4B4FFEE082D556327 /* Pods_VoiceInboxApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EE891B88985ED259648B1BB1 /* Pods_VoiceInboxApp.framework */; };
+		A1B2C3D4E5F607180001 /* VoiceInboxTranscriptionModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607181001 /* VoiceInboxTranscriptionModule.swift */; };
+		A1B2C3D4E5F607180002 /* VoiceInboxTranscriptionModule.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607182001 /* VoiceInboxTranscriptionModule.m */; };
+		A1B2C3D4E5F607180003 /* AudioNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607183001 /* AudioNormalizer.swift */; };
+		A1B2C3D4E5F607180004 /* TranscriptionJobCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607184001 /* TranscriptionJobCoordinator.swift */; };
+		A1B2C3D4E5F607180005 /* TranscriptionTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607185001 /* TranscriptionTypes.swift */; };
+		A1B2C3D4E5F607180006 /* WhisperKitEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607186001 /* WhisperKitEngine.swift */; };
+		A1B2C3D4E5F607180007 /* SpeakerKitEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607187001 /* SpeakerKitEngine.swift */; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* BootSplash.storyboard */; };
 		A1C2E3F405060708090A0B03 /* AudioConverter.mm in Sources */ = {isa = PBXBuildFile; fileRef = A1C2E3F405060708090A0B02 /* AudioConverter.mm */; };
 		A9B8C7D6E5F4A3B2C1D0E9F8 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9B8C7D6E5F4A3B2C1D0E9F7 /* AudioToolbox.framework */; };
 		B0C1D2E3F4A5B6C7D8E9F0A1 /* AppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0C1D2E3F4A5B6C7D8E9F0A0 /* AppShortcuts.swift */; };
 		B1C2D3E4F5A6B7C8D9E0F1A2 /* AppShortcuts.strings in Resources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5A6B7C8D9E0F1A0 /* AppShortcuts.strings */; };
 		B2C3D4E5F6A7B8C9D0E1F2A3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6A7B8C9D0E1F2A0 /* Localizable.strings */; };
+		B8C9D0E1F2A3B4C5D6E7F8AA /* PDFKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B8C9D0E1F2A3B4C5D6E7F8A9 /* PDFKit.framework */; };
 		C4D5E6F7A8B9C0D1E2F3A4 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = C4D5E6F7A8B9C0D1E2F3A0 /* InfoPlist.strings */; };
+		C82FCB939EF44005A45A954A /* PdfExtractProgressModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EDD768603734F7690DD3BBD /* PdfExtractProgressModule.swift */; };
+		C9D0E1F2A3B4C5D6E7F8A9B0 /* Vision.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9D0E1F2A3B4C5D6E7F8A9AF /* Vision.framework */; };
+		D4E5F6A7B8C9D0E1F2A3B4C1 /* VoiceInboxAppIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E5F6A7B8C9D0E1F2A3B4C0 /* VoiceInboxAppIntents.swift */; };
 		F1A2B3C4D5E6F7A8B9C0D1E2 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6F7A8B9C0D1E3 /* GoogleService-Info.plist */; };
+		F982AFB926B944F5B8EF8EFB /* PdfExtractProgressModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 96B6863E3F344683ABBCD4FF /* PdfExtractProgressModule.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -88,6 +102,8 @@
 		2A15FB082F6AC17400177049 /* RecordingLiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingLiveActivityManager.swift; sourceTree = "<group>"; };
 		2A15FB0A2F6AC1A800177049 /* RecordingActivityModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RecordingActivityModule.m; sourceTree = "<group>"; };
 		2A15FB0C2F6AC21900177049 /* RecordingActivityModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingActivityModule.swift; sourceTree = "<group>"; };
+		2A15FB112F6AD10000177049 /* AudioRouteModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRouteModule.swift; sourceTree = "<group>"; };
+		2A15FB122F6AD10000177049 /* AudioRouteModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AudioRouteModule.m; sourceTree = "<group>"; };
 		2A6F4CEC2F64113A00297CB8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		2A6F4CEE2F64113B00297CB8 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		2AADFDD42F6B33C80005C039 /* DownloadWidgetExtensionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DownloadWidgetExtensionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -95,9 +111,18 @@
 		2AADFDEC2F6BC2D10005C039 /* DownloadLiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadLiveActivityManager.swift; sourceTree = "<group>"; };
 		2AADFDEF2F6BC3800005C039 /* DownloadActivityModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadActivityModule.swift; sourceTree = "<group>"; };
 		2AADFDF22F6BC3B50005C039 /* DownloadActivityModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DownloadActivityModule.m; sourceTree = "<group>"; };
+		6EDD768603734F7690DD3BBD /* PdfExtractProgressModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PdfExtractProgressModule.swift; sourceTree = "<group>"; };
 		7139F58ACA70C5D9B80D95EB /* Pods-VoiceInboxApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VoiceInboxApp.release.xcconfig"; path = "Target Support Files/Pods-VoiceInboxApp/Pods-VoiceInboxApp.release.xcconfig"; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = VoiceInboxApp/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = VoiceInboxApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		96B6863E3F344683ABBCD4FF /* PdfExtractProgressModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PdfExtractProgressModule.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F607181001 /* VoiceInboxTranscriptionModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInboxTranscriptionModule.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F607182001 /* VoiceInboxTranscriptionModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VoiceInboxTranscriptionModule.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F607183001 /* AudioNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioNormalizer.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F607184001 /* TranscriptionJobCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionJobCoordinator.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F607185001 /* TranscriptionTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionTypes.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F607186001 /* WhisperKitEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhisperKitEngine.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F607187001 /* SpeakerKitEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerKitEngine.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6A7B8C9D0E1F3 /* BootSplash.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = BootSplash.storyboard; path = VoiceInboxApp/BootSplash.storyboard; sourceTree = "<group>"; };
 		A1C2E3F405060708090A0B01 /* AudioConverter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VoiceInboxApp/AudioConverter.h; sourceTree = "<group>"; };
 		A1C2E3F405060708090A0B02 /* AudioConverter.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = VoiceInboxApp/AudioConverter.mm; sourceTree = "<group>"; };
@@ -107,8 +132,11 @@
 		B1C2D3E4F5A6B7C8D9E0F1B2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = VoiceInboxApp/ru.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		B2C3D4E5F6A7B8C9D0E1F2B1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = VoiceInboxApp/en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B2C3D4E5F6A7B8C9D0E1F2B2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = VoiceInboxApp/ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		B8C9D0E1F2A3B4C5D6E7F8A9 /* PDFKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PDFKit.framework; path = System/Library/Frameworks/PDFKit.framework; sourceTree = SDKROOT; };
 		C4D5E6F7A8B9C0D1E2F3B1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = VoiceInboxApp/en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		C4D5E6F7A8B9C0D1E2F3B2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = VoiceInboxApp/ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		C9D0E1F2A3B4C5D6E7F8A9AF /* Vision.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Vision.framework; path = System/Library/Frameworks/Vision.framework; sourceTree = SDKROOT; };
+		D4E5F6A7B8C9D0E1F2A3B4C0 /* VoiceInboxAppIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInboxAppIntents.swift; sourceTree = "<group>"; };
 		E1F2A3B4C5D6E7F8A9B0C1D2 /* VoiceInboxApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "VoiceInboxApp-Bridging-Header.h"; path = "VoiceInboxApp/VoiceInboxApp-Bridging-Header.h"; sourceTree = "<group>"; };
 		E2F3B4C5D6E7F8A9B0C1D2E3 /* VoiceInboxApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = VoiceInboxApp.entitlements; path = VoiceInboxApp/VoiceInboxApp.entitlements; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -167,6 +195,8 @@
 			files = (
 				2A15FAEA2F696F9E00177049 /* StoreKit.framework in Frameworks */,
 				A9B8C7D6E5F4A3B2C1D0E9F8 /* AudioToolbox.framework in Frameworks */,
+				B8C9D0E1F2A3B4C5D6E7F8AA /* PDFKit.framework in Frameworks */,
+				C9D0E1F2A3B4C5D6E7F8A9B0 /* Vision.framework in Frameworks */,
 				8B18DEC4B4FFEE082D556327 /* Pods_VoiceInboxApp.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -195,27 +225,13 @@
 		13B07FAE1A68108700A75B9A /* VoiceInboxApp */ = {
 			isa = PBXGroup;
 			children = (
-				2AADFDE82F6BC2880005C039 /* DownloadLiveActivity */,
-				2A15FB102F6ACC1400177049 /* StoreFront */,
-				2A15FB0E2F6ACA8100177049 /* LiveActivity */,
-				2A15FAEB2F69713C00177049 /* StorefrontModuleBridge.m */,
-				A1C2E3F405060708090A0B01 /* AudioConverter.h */,
-				A1C2E3F405060708090A0B02 /* AudioConverter.mm */,
-				13B07FB51A68108700A75B9A /* Images.xcassets */,
-				761780EC2CA45674006654EE /* AppDelegate.swift */,
-				B0C1D2E3F4A5B6C7D8E9F0A0 /* AppShortcuts.swift */,
-				B1C2D3E4F5A6B7C8D9E0F1A0 /* AppShortcuts.strings */,
-				B2C3D4E5F6A7B8C9D0E1F2A0 /* Localizable.strings */,
-				C4D5E6F7A8B9C0D1E2F3A0 /* InfoPlist.strings */,
-				A1B2C3D4E5F6A7B8C9D0E1F3 /* BootSplash.storyboard */,
-				13B07FB61A68108700A75B9A /* Info.plist */,
-				F1A2B3C4D5E6F7A8B9C0D1E3 /* GoogleService-Info.plist */,
-				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
-				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
-				E1F2A3B4C5D6E7F8A9B0C1D2 /* VoiceInboxApp-Bridging-Header.h */,
-				E2F3B4C5D6E7F8A9B0C1D2E3 /* VoiceInboxApp.entitlements */,
-				2A15FB0A2F6AC1A800177049 /* RecordingActivityModule.m */,
-				2AADFDF22F6BC3B50005C039 /* DownloadActivityModule.m */,
+				A1B2C3D4E5F6A7B8C9D0E1F4 /* App */,
+				A2B3C4D5E6F7A8B9C0D1E5F6 /* Shortcuts */,
+				A3B4C5D6E7F8A9B0C1D2E6F7 /* Localization */,
+				A4B5C6D7E8F9A0B1C2D3E7F8 /* Resources */,
+				A5B6C7D8E9F0A1B2C3D4E8F9 /* Audio */,
+				A8B9C0D1E2F3A4B5C6D7E0F2 /* Transcription */,
+				A6B7C8D9E0F1A2B3C4D5E9FA /* NativeModules */,
 			);
 			name = VoiceInboxApp;
 			sourceTree = "<group>";
@@ -226,6 +242,11 @@
 				2A15FB052F6ABEC800177049 /* RecordingAttributes.swift */,
 				2A15FB082F6AC17400177049 /* RecordingLiveActivityManager.swift */,
 				2A15FB0C2F6AC21900177049 /* RecordingActivityModule.swift */,
+				2A15FB0A2F6AC1A800177049 /* RecordingActivityModule.m */,
+				2A15FB112F6AD10000177049 /* AudioRouteModule.swift */,
+				2A15FB122F6AD10000177049 /* AudioRouteModule.m */,
+				6EDD768603734F7690DD3BBD /* PdfExtractProgressModule.swift */,
+				96B6863E3F344683ABBCD4FF /* PdfExtractProgressModule.m */,
 			);
 			path = LiveActivity;
 			sourceTree = "<group>";
@@ -234,6 +255,7 @@
 			isa = PBXGroup;
 			children = (
 				2A15FAE72F696ECD00177049 /* StorefrontModule.swift */,
+				2A15FAEB2F69713C00177049 /* StorefrontModuleBridge.m */,
 			);
 			path = StoreFront;
 			sourceTree = "<group>";
@@ -244,6 +266,7 @@
 				2AADFDE92F6BC2A50005C039 /* DownloadLiveActivityAttributes.swift */,
 				2AADFDEC2F6BC2D10005C039 /* DownloadLiveActivityManager.swift */,
 				2AADFDEF2F6BC3800005C039 /* DownloadActivityModule.swift */,
+				2AADFDF22F6BC3B50005C039 /* DownloadActivityModule.m */,
 			);
 			path = DownloadLiveActivity;
 			sourceTree = "<group>";
@@ -256,6 +279,8 @@
 				2A6F4CEC2F64113A00297CB8 /* WidgetKit.framework */,
 				2A6F4CEE2F64113B00297CB8 /* SwiftUI.framework */,
 				A9B8C7D6E5F4A3B2C1D0E9F7 /* AudioToolbox.framework */,
+				B8C9D0E1F2A3B4C5D6E7F8A9 /* PDFKit.framework */,
+				C9D0E1F2A3B4C5D6E7F8A9AF /* Vision.framework */,
 				EE891B88985ED259648B1BB1 /* Pods_VoiceInboxApp.framework */,
 			);
 			name = Frameworks;
@@ -272,9 +297,9 @@
 			isa = PBXGroup;
 			children = (
 				13B07FAE1A68108700A75B9A /* VoiceInboxApp */,
+				A7B8C9D0E1F2A3B4C5D6E0F1A2 /* Extensions */,
+				F8A9B0C1D2E3F4A5B6C7D8E9 /* Shared */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
-				2A15FAF42F6ABCF900177049 /* RecordingWidget */,
-				2AADFDD72F6B33C90005C039 /* DownloadWidgetExtension */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
@@ -294,6 +319,89 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		A1B2C3D4E5F6A7B8C9D0E1F4 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				761780EC2CA45674006654EE /* AppDelegate.swift */,
+			);
+			name = App;
+			sourceTree = "<group>";
+		};
+		A2B3C4D5E6F7A8B9C0D1E5F6 /* Shortcuts */ = {
+			isa = PBXGroup;
+			children = (
+				B0C1D2E3F4A5B6C7D8E9F0A0 /* AppShortcuts.swift */,
+				B1C2D3E4F5A6B7C8D9E0F1A0 /* AppShortcuts.strings */,
+			);
+			name = Shortcuts;
+			sourceTree = "<group>";
+		};
+		A3B4C5D6E7F8A9B0C1D2E6F7 /* Localization */ = {
+			isa = PBXGroup;
+			children = (
+				B2C3D4E5F6A7B8C9D0E1F2A0 /* Localizable.strings */,
+				C4D5E6F7A8B9C0D1E2F3A0 /* InfoPlist.strings */,
+			);
+			name = Localization;
+			sourceTree = "<group>";
+		};
+		A4B5C6D7E8F9A0B1C2D3E7F8 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				13B07FB51A68108700A75B9A /* Images.xcassets */,
+				A1B2C3D4E5F6A7B8C9D0E1F3 /* BootSplash.storyboard */,
+				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
+				13B07FB61A68108700A75B9A /* Info.plist */,
+				F1A2B3C4D5E6F7A8B9C0D1E3 /* GoogleService-Info.plist */,
+				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				E1F2A3B4C5D6E7F8A9B0C1D2 /* VoiceInboxApp-Bridging-Header.h */,
+				E2F3B4C5D6E7F8A9B0C1D2E3 /* VoiceInboxApp.entitlements */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		A5B6C7D8E9F0A1B2C3D4E8F9 /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+				A1C2E3F405060708090A0B01 /* AudioConverter.h */,
+				A1C2E3F405060708090A0B02 /* AudioConverter.mm */,
+			);
+			name = Audio;
+			sourceTree = "<group>";
+		};
+		A6B7C8D9E0F1A2B3C4D5E9FA /* NativeModules */ = {
+			isa = PBXGroup;
+			children = (
+				2A15FB0E2F6ACA8100177049 /* LiveActivity */,
+				2AADFDE82F6BC2880005C039 /* DownloadLiveActivity */,
+				2A15FB102F6ACC1400177049 /* StoreFront */,
+			);
+			name = NativeModules;
+			sourceTree = "<group>";
+		};
+		A7B8C9D0E1F2A3B4C5D6E0F1A2 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				2A15FAF42F6ABCF900177049 /* RecordingWidget */,
+				2AADFDD72F6B33C90005C039 /* DownloadWidgetExtension */,
+			);
+			name = Extensions;
+			sourceTree = "<group>";
+		};
+		A8B9C0D1E2F3A4B5C6D7E0F2 /* Transcription */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F607181001 /* VoiceInboxTranscriptionModule.swift */,
+				A1B2C3D4E5F607182001 /* VoiceInboxTranscriptionModule.m */,
+				A1B2C3D4E5F607183001 /* AudioNormalizer.swift */,
+				A1B2C3D4E5F607184001 /* TranscriptionJobCoordinator.swift */,
+				A1B2C3D4E5F607185001 /* TranscriptionTypes.swift */,
+				A1B2C3D4E5F607186001 /* WhisperKitEngine.swift */,
+				A1B2C3D4E5F607187001 /* SpeakerKitEngine.swift */,
+			);
+			path = VoiceInboxApp/Transcription;
+			sourceTree = "<group>";
+		};
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
@@ -301,6 +409,14 @@
 				7139F58ACA70C5D9B80D95EB /* Pods-VoiceInboxApp.release.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		F8A9B0C1D2E3F4A5B6C7D8E9 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				D4E5F6A7B8C9D0E1F2A3B4C0 /* VoiceInboxAppIntents.swift */,
+			);
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -329,6 +445,10 @@
 				2AADFDE22F6B33CA0005C039 /* PBXTargetDependency */,
 			);
 			name = VoiceInboxApp;
+			packageProductDependencies = (
+				E7A1B2C3D4E5F60718293A4C /* WhisperKit */,
+				E7A1B2C3D4E5F60718293A4D /* SpeakerKit */,
+			);
 			productName = VoiceInboxApp;
 			productReference = 13B07F961A680F5B00A75B9A /* VoiceInboxApp.app */;
 			productType = "com.apple.product-type.application";
@@ -381,7 +501,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 2630;
-				LastUpgradeCheck = 2640;
+				LastUpgradeCheck = 2650;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1120;
@@ -404,6 +524,9 @@
 				ru,
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
+			packageReferences = (
+				E7A1B2C3D4E5F60718293A4B /* XCRemoteSwiftPackageReference "argmax-oss-swift" */,
+			);
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -462,7 +585,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\n\nif [ \"${CONFIGURATION}\" == \"Release\" ]; then\n  export APP_ENV=production\nelse\n  export APP_ENV=development\nfi\n\nif [ \"${CONFIGURATION}\" == \"Debug\" ]; then\n  export SKIP_BUNDLING=true\nfi\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"\\\"$WITH_ENVIRONMENT\\\" \\\"$REACT_NATIVE_XCODE\\\"\"\n";
+			shellScript = "set -e\n\nif [ \"${CONFIGURATION}\" == \"Release\" ]; then\n  export NODE_ENV=production\nelse\n  export NODE_ENV=development\nfi\n\nif [ \"${NODE_ENV}\" = \"production\" ]; then\n  echo \">>> [VoiceInbox] CONFIGURATION=${CONFIGURATION} NODE_ENV=${NODE_ENV} (@env: .env.production)\"\nelse\n  echo \">>> [VoiceInbox] CONFIGURATION=${CONFIGURATION} NODE_ENV=${NODE_ENV} (@env: .env)\"\nfi\n\nif [ \"${CONFIGURATION}\" == \"Debug\" ]; then\n  export SKIP_BUNDLING=true\nfi\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"\\\"$WITH_ENVIRONMENT\\\" \\\"$REACT_NATIVE_XCODE\\\"\"\n";
 		};
 		2AB3179A2F647219005128A8 /* Run Script */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -575,6 +698,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				2A15FB0D2F6AC21900177049 /* RecordingActivityModule.swift in Sources */,
+				2A15FB132F6AD10000177049 /* AudioRouteModule.swift in Sources */,
+				2A15FB142F6AD10000177049 /* AudioRouteModule.m in Sources */,
+				C82FCB939EF44005A45A954A /* PdfExtractProgressModule.swift in Sources */,
+				F982AFB926B944F5B8EF8EFB /* PdfExtractProgressModule.m in Sources */,
 				2AADFDF02F6BC3800005C039 /* DownloadActivityModule.swift in Sources */,
 				2AADFDF32F6BC3B50005C039 /* DownloadActivityModule.m in Sources */,
 				2A15FAEC2F69713C00177049 /* StorefrontModuleBridge.m in Sources */,
@@ -587,6 +714,14 @@
 				2AADFDED2F6BC2D10005C039 /* DownloadLiveActivityManager.swift in Sources */,
 				A1C2E3F405060708090A0B03 /* AudioConverter.mm in Sources */,
 				B0C1D2E3F4A5B6C7D8E9F0A1 /* AppShortcuts.swift in Sources */,
+				D4E5F6A7B8C9D0E1F2A3B4C1 /* VoiceInboxAppIntents.swift in Sources */,
+				A1B2C3D4E5F607180001 /* VoiceInboxTranscriptionModule.swift in Sources */,
+				A1B2C3D4E5F607180002 /* VoiceInboxTranscriptionModule.m in Sources */,
+				A1B2C3D4E5F607180003 /* AudioNormalizer.swift in Sources */,
+				A1B2C3D4E5F607180004 /* TranscriptionJobCoordinator.swift in Sources */,
+				A1B2C3D4E5F607180005 /* TranscriptionTypes.swift in Sources */,
+				A1B2C3D4E5F607180006 /* WhisperKitEngine.swift in Sources */,
+				A1B2C3D4E5F607180007 /* SpeakerKitEngine.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -663,7 +798,7 @@
 				CODE_SIGN_ENTITLEMENTS = VoiceInboxApp/VoiceInboxApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 243;
+				CURRENT_PROJECT_VERSION = 362;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = VoiceInboxApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox AI";
@@ -673,7 +808,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 2.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -704,7 +839,7 @@
 				CODE_SIGN_ENTITLEMENTS = VoiceInboxApp/VoiceInboxApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 243;
+				CURRENT_PROJECT_VERSION = 362;
 				INFOPLIST_FILE = VoiceInboxApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox AI";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
@@ -713,7 +848,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 2.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -744,15 +879,16 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = RecordingWidget/RecordingWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 243;
+				CURRENT_PROJECT_VERSION = 362;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RecordingWidget/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = RecordingWidget;
+				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox AI";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -761,7 +897,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 2.0.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mkandratsyeu.voiceinboxai.RecordingWidget;
@@ -789,16 +925,17 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = RecordingWidget/RecordingWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 243;
+				CURRENT_PROJECT_VERSION = 362;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RecordingWidget/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = RecordingWidget;
+				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox AI";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -807,7 +944,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 2.0.0;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mkandratsyeu.voiceinboxai.RecordingWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -834,13 +971,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 243;
+				CURRENT_PROJECT_VERSION = 362;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DownloadWidgetExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = DownloadWidgetExtension;
+				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox AI";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -849,7 +986,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 2.0.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mkandratsyeu.voiceinboxai.DownloadWidgetExtension;
@@ -880,13 +1017,13 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 243;
+				CURRENT_PROJECT_VERSION = 362;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DownloadWidgetExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = DownloadWidgetExtension;
+				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox AI";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -895,7 +1032,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 2.0.0;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mkandratsyeu.voiceinboxai.DownloadWidgetExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -973,6 +1110,8 @@
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-NativeModulesApple/React_NativeModulesApple.framework/Headers",
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers/react/renderer/graphics/platform/ios",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-featureflags/React_featureflags.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-renderercss/React_renderercss.framework/Headers",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -999,6 +1138,7 @@
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 					"-DRCT_REMOVE_LEGACY_ARCH=1",
 				);
+				PODFILE_DIR = "$(SRCROOT)";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1065,6 +1205,8 @@
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-NativeModulesApple/React_NativeModulesApple.framework/Headers",
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers/react/renderer/graphics/platform/ios",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-featureflags/React_featureflags.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-renderercss/React_renderercss.framework/Headers",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1090,6 +1232,7 @@
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 					"-DRCT_REMOVE_LEGACY_ARCH=1",
 				);
+				PODFILE_DIR = "$(SRCROOT)";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1140,6 +1283,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E7A1B2C3D4E5F60718293A4B /* XCRemoteSwiftPackageReference "argmax-oss-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/argmaxinc/argmax-oss-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E7A1B2C3D4E5F60718293A4C /* WhisperKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E7A1B2C3D4E5F60718293A4B /* XCRemoteSwiftPackageReference "argmax-oss-swift" */;
+			productName = WhisperKit;
+		};
+		E7A1B2C3D4E5F60718293A4D /* SpeakerKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E7A1B2C3D4E5F60718293A4B /* XCRemoteSwiftPackageReference "argmax-oss-swift" */;
+			productName = SpeakerKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
 }

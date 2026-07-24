@@ -8,6 +8,7 @@ export type InboxMenuFilterStatus =
   | 'withoutSummary'
   | 'withoutTasks'
   | 'withTasks'
+  | 'withPublicLink'
   | 'meetingMode'
   | 'processingError';
 

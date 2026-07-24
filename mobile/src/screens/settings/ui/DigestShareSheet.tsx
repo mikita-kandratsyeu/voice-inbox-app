@@ -1,50 +1,19 @@
-import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
-import { FileText, Mail } from 'lucide-react-native';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { BarChart2, FileText, Mail } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Keyboard, Text, TouchableOpacity, View } from 'react-native';
 
 import { getLastShareRecipientEmail } from '@/features/share-record';
 import type { ShareRecordExportFormat } from '@/features/share-record/model/shareRecordExportFormat';
-import { type Colors, useColors } from '@/shared/config';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
-
-function ShareExportFormatChip({
-  format,
-  selectedFormat,
-  label,
-  onSelect,
-  color,
-}: {
-  format: ShareRecordExportFormat;
-  selectedFormat: ShareRecordExportFormat;
-  label: string;
-  onSelect: (format: ShareRecordExportFormat) => void;
-  color: Colors;
-}) {
-  const selected = selectedFormat === format;
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      accessibilityLabel={label}
-      onPress={() => onSelect(format)}
-      className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
-      style={{
-        borderColor: selected ? color.accent.primary : color.border.default,
-        backgroundColor: color.background.tertiary,
-      }}
-    >
-      <Text
-        className="text-center text-[15px] font-semibold leading-5"
-        style={{ color: selected ? color.accent.primary : color.text.primary }}
-        numberOfLines={2}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
+import { useColors } from '@/shared/config';
+import {
+  AppBottomSheetContent,
+  AppBottomSheetModal,
+  SheetFooterButtons,
+  SheetHeader,
+  SheetSelectionChip,
+} from '@/shared/ui';
 
 function shareExportFormatHintKey(format: ShareRecordExportFormat): string {
   return format === 'pdf'
@@ -53,53 +22,71 @@ function shareExportFormatHintKey(format: ShareRecordExportFormat): string {
 }
 
 function shareEmailLimitReminderKey(format: ShareRecordExportFormat): string {
-  return format === 'pdf' ? 'batch.emailPdfLimitReminder' : 'batch.emailLimitReminder';
+  return format === 'pdf'
+    ? 'settings.digest.emailPdfLimitReminder'
+    : 'settings.digest.emailLimitReminder';
 }
+
+export type DigestShareKind = 'aiDigest' | 'analytics';
 
 type DigestShareSheetProps = {
   visible: boolean;
   isSendingEmail?: boolean;
+  canShareAiDigest?: boolean;
+  canShareAnalytics?: boolean;
   onClose: () => void;
-  onShare: (format: ShareRecordExportFormat) => Promise<void> | void;
-  onEmail: (email: string, format: ShareRecordExportFormat) => void;
+  onShare: (format: ShareRecordExportFormat, kind: DigestShareKind) => Promise<void> | void;
+  onEmail: (email: string, format: ShareRecordExportFormat, kind: DigestShareKind) => void;
 };
 
 export const DigestShareSheet = ({
   visible,
   isSendingEmail = false,
+  canShareAiDigest = false,
+  canShareAnalytics = true,
   onClose,
   onShare,
   onEmail,
 }: DigestShareSheetProps) => {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(24);
-  const listContentPadding = useBottomSheetContentPadding(20);
   const [emailVisible, setEmailVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [exportFormat, setExportFormat] = useState<ShareRecordExportFormat>('markdown');
-  const [isSharing, setIsSharing] = useState(false);
+  const [sharingKind, setSharingKind] = useState<DigestShareKind | null>(null);
+  const [emailKind, setEmailKind] = useState<DigestShareKind>('analytics');
   const trimmedEmail = email.trim();
   const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail), [trimmedEmail]);
+  const isSharing = sharingKind !== null;
+  const showEmailKindPicker = canShareAnalytics && canShareAiDigest;
+
+  const defaultEmailKind = useMemo((): DigestShareKind => {
+    if (canShareAnalytics) return 'analytics';
+    return 'aiDigest';
+  }, [canShareAnalytics]);
 
   useEffect(() => {
     if (visible) return;
     setEmailVisible(false);
     setEmail('');
     setExportFormat('markdown');
-    setIsSharing(false);
+    setSharingKind(null);
+    setEmailKind('analytics');
   }, [visible]);
 
-  const handleShare = useCallback(async () => {
-    if (isSharing) return;
-    setIsSharing(true);
-    try {
-      await onShare(exportFormat);
-      onClose();
-    } finally {
-      setIsSharing(false);
-    }
-  }, [exportFormat, isSharing, onClose, onShare]);
+  const handleShare = useCallback(
+    async (kind: DigestShareKind) => {
+      if (isSharing) return;
+      setSharingKind(kind);
+      try {
+        await onShare(exportFormat, kind);
+        onClose();
+      } finally {
+        setSharingKind(null);
+      }
+    },
+    [exportFormat, isSharing, onClose, onShare],
+  );
 
   const handleSelectExportFormat = useCallback(
     (format: ShareRecordExportFormat) => {
@@ -107,6 +94,14 @@ export const DigestShareSheet = ({
       setExportFormat(format);
     },
     [isSharing],
+  );
+
+  const handleSelectEmailKind = useCallback(
+    (kind: DigestShareKind) => {
+      if (isSharing || isSendingEmail) return;
+      setEmailKind(kind);
+    },
+    [isSendingEmail, isSharing],
   );
 
   const handleClose = useCallback(() => {
@@ -121,14 +116,61 @@ export const DigestShareSheet = ({
   }, []);
 
   const handleOpenEmail = useCallback(() => {
+    if (isSharing) return;
+    setEmailKind(defaultEmailKind);
     setEmail(getLastShareRecipientEmail() ?? '');
     setEmailVisible(true);
-  }, []);
+  }, [defaultEmailKind, isSharing]);
 
   const handleSendEmail = useCallback(() => {
     if (!emailValid || isSendingEmail || isSharing) return;
-    onEmail(trimmedEmail, exportFormat);
-  }, [emailValid, exportFormat, isSendingEmail, isSharing, onEmail, trimmedEmail]);
+    onEmail(trimmedEmail, exportFormat, emailKind);
+  }, [emailKind, emailValid, exportFormat, isSendingEmail, isSharing, onEmail, trimmedEmail]);
+
+  const emailKindDescriptionKey =
+    emailKind === 'analytics'
+      ? 'settings.digest.shareAnalyticsDescription'
+      : 'settings.digest.shareRecapDescription';
+
+  const shareRowStyle = {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: color.background.tertiary,
+    gap: 10,
+  };
+
+  const renderShareRow = (
+    kind: DigestShareKind,
+    icon: React.ReactNode,
+    title: string,
+    description: string,
+    accessibilityLabel: string,
+  ) => {
+    const loading = sharingKind === kind;
+    const disabled = isSharing && !loading;
+
+    return (
+      <TouchableOpacity
+        onPress={() => void handleShare(kind)}
+        disabled={disabled || loading}
+        activeOpacity={disabled || loading ? 1 : 0.7}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        style={shareRowStyle}
+      >
+        {loading ? <ActivityIndicator size="small" color={color.accent.primary} /> : icon}
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 16, color: color.text.primary, fontWeight: '500' }}>
+            {loading ? t('settings.digest.exportPreparing') : title}
+          </Text>
+          <Text style={{ fontSize: 13, color: color.text.muted, marginTop: 2 }}>{description}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const formatSection = (
     <>
@@ -136,19 +178,21 @@ export const DigestShareSheet = ({
         {t('batch.exportPackagingLabel')}
       </Text>
       <View className="flex-row gap-3">
-        <ShareExportFormatChip
-          format="markdown"
-          selectedFormat={exportFormat}
+        <SheetSelectionChip
+          value="markdown"
+          selectedValue={exportFormat}
           label={t('batch.exportPackagingSingle')}
           onSelect={handleSelectExportFormat}
           color={color}
+          disabled={isSharing || isSendingEmail}
         />
-        <ShareExportFormatChip
-          format="pdf"
-          selectedFormat={exportFormat}
+        <SheetSelectionChip
+          value="pdf"
+          selectedValue={exportFormat}
           label={t('batch.exportPackagingPdf')}
           onSelect={handleSelectExportFormat}
           color={color}
+          disabled={isSharing || isSendingEmail}
         />
       </View>
       <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
@@ -157,40 +201,53 @@ export const DigestShareSheet = ({
     </>
   );
 
+  const emailKindSection = showEmailKindPicker ? (
+    <>
+      <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+        {t('settings.digest.emailContentLabel')}
+      </Text>
+      <View className="flex-row gap-3">
+        <SheetSelectionChip
+          value="analytics"
+          selectedValue={emailKind}
+          label={t('settings.digest.shareAnalytics')}
+          onSelect={handleSelectEmailKind}
+          color={color}
+          disabled={isSharing || isSendingEmail}
+        />
+        <SheetSelectionChip
+          value="aiDigest"
+          selectedValue={emailKind}
+          label={t('settings.digest.shareRecap')}
+          onSelect={handleSelectEmailKind}
+          color={color}
+          disabled={isSharing || isSendingEmail}
+        />
+      </View>
+      <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
+        {t(emailKindDescriptionKey)}
+      </Text>
+    </>
+  ) : null;
+
   return (
     <AppBottomSheetModal visible={visible} onClose={handleClose}>
       {emailVisible ? (
-        <BottomSheetScrollView
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingHorizontal: 20,
-            paddingTop: 4,
-            ...contentPadding,
-            gap: 12,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 17,
-              fontWeight: '600',
-              color: color.text.primary,
-              textAlign: 'center',
-              marginBottom: 8,
-            }}
-          >
-            {t('share.emailNote')}
-          </Text>
-          <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
-            {t('settings.digest.emailDescription')}
-          </Text>
+        <AppBottomSheetContent scrollable style={{ paddingTop: 4, gap: 12 }}>
+          <SheetHeader
+            title={t('share.emailNote')}
+            subtitle={t('settings.digest.emailSheetDescription')}
+            color={color}
+            marginBottom={8}
+          />
 
           {formatSection}
 
           <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
             {t(shareEmailLimitReminderKey(exportFormat))}
           </Text>
+
+          {emailKindSection}
 
           <BottomSheetTextInput
             className="rounded-xl border-2 px-4 py-3 text-[16px]"
@@ -227,60 +284,32 @@ export const DigestShareSheet = ({
             onSecondaryPressIn={handleCancelEmail}
             secondaryDisabled={isSendingEmail || isSharing}
           />
-        </BottomSheetScrollView>
+        </AppBottomSheetContent>
       ) : (
-        <BottomSheetView
-          style={{
-            paddingHorizontal: 20,
-            paddingTop: 4,
-            gap: 10,
-            ...listContentPadding,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 17,
-              fontWeight: '600',
-              color: color.text.primary,
-              textAlign: 'center',
-              marginBottom: 8,
-            }}
-          >
-            {t('share.shareAsTitle')}
-          </Text>
+        <AppBottomSheetContent bottomPadding={20} style={{ paddingTop: 4, gap: 10 }}>
+          <SheetHeader title={t('share.shareAsTitle')} color={color} marginBottom={8} />
 
           {formatSection}
 
-          <TouchableOpacity
-            onPress={handleShare}
-            disabled={isSharing}
-            activeOpacity={isSharing ? 1 : 0.7}
-            accessibilityRole="button"
-            accessibilityLabel={t('settings.digest.shareRecap')}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingVertical: 14,
-              paddingHorizontal: 14,
-              borderRadius: 12,
-              backgroundColor: color.background.tertiary,
-              gap: 10,
-            }}
-          >
-            {isSharing ? (
-              <ActivityIndicator size="small" color={color.accent.primary} />
-            ) : (
-              <FileText size={20} color={color.text.primary} strokeWidth={2.1} />
-            )}
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 16, color: color.text.primary, fontWeight: '500' }}>
-                {isSharing ? t('settings.digest.exportPreparing') : t('settings.digest.shareRecap')}
-              </Text>
-              <Text style={{ fontSize: 13, color: color.text.muted, marginTop: 2 }}>
-                {t('settings.digest.shareRecapDescription')}
-              </Text>
-            </View>
-          </TouchableOpacity>
+          {canShareAnalytics
+            ? renderShareRow(
+                'analytics',
+                <BarChart2 size={20} color={color.text.primary} strokeWidth={2.1} />,
+                t('settings.digest.shareAnalytics'),
+                t('settings.digest.shareAnalyticsDescription'),
+                t('settings.digest.shareAnalytics'),
+              )
+            : null}
+
+          {canShareAiDigest
+            ? renderShareRow(
+                'aiDigest',
+                <FileText size={20} color={color.text.primary} strokeWidth={2.1} />,
+                t('settings.digest.shareRecap'),
+                t('settings.digest.shareRecapDescription'),
+                t('settings.digest.shareRecap'),
+              )
+            : null}
 
           <TouchableOpacity
             onPress={handleOpenEmail}
@@ -288,15 +317,7 @@ export const DigestShareSheet = ({
             activeOpacity={isSharing ? 1 : 0.7}
             accessibilityRole="button"
             accessibilityLabel={t('share.emailNote')}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingVertical: 14,
-              paddingHorizontal: 14,
-              borderRadius: 12,
-              backgroundColor: color.background.tertiary,
-              gap: 10,
-            }}
+            style={shareRowStyle}
           >
             <Mail size={20} color={color.text.primary} strokeWidth={2.1} />
             <View style={{ flex: 1 }}>
@@ -304,11 +325,11 @@ export const DigestShareSheet = ({
                 {t('share.emailNote')}
               </Text>
               <Text style={{ fontSize: 13, color: color.text.muted, marginTop: 2 }}>
-                {t('settings.digest.emailDescription')}
+                {t('settings.digest.emailSheetDescription')}
               </Text>
             </View>
           </TouchableOpacity>
-        </BottomSheetView>
+        </AppBottomSheetContent>
       )}
     </AppBottomSheetModal>
   );

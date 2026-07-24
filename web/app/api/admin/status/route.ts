@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { BASE_URL_OR_FALLBACK } from '@/config/constants';
+import { getAppEnv } from '@/lib/app-env';
 import { getAllDeviceIdsWithPushTokens } from '@/lib/push-tokens';
 import { prisma } from '@/lib/prisma';
 import { getQStashStatus } from '@/lib/qstash';
@@ -143,7 +144,7 @@ export async function GET(): Promise<NextResponse> {
     database,
     app: {
       baseUrl: BASE_URL_OR_FALLBACK,
-      env: process.env.NODE_ENV,
+      env: getAppEnv(),
       devicesWithPush: deviceIds.length,
     },
   });

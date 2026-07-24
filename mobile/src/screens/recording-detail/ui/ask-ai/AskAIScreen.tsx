@@ -2,7 +2,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ArrowRight, Trash2 } from 'lucide-react-native';
+import { Trash2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Share, ToastAndroid, View } from 'react-native';
@@ -14,17 +14,21 @@ import type { RootStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { type AskAIHistoryItem, useAskAI } from '@/features/ask-ai';
+import { AskAIComposer } from '@/features/ask-chat/ui';
+import { useAskAiShakeBridge } from '@/features/shake-to-record';
 import { useColors } from '@/shared/config';
 import {
   hapticSuccess,
   IS_ANDROID,
-  useIsTablet,
   useNetworkStatus,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
-import { Button, HeaderIconButton, ScreenHeader } from '@/shared/ui';
+import {
+  estimateAskAiComposerBottomClearance,
+  FrostedHeaderIconButton,
+  ScreenHeader,
+} from '@/shared/ui';
 
-import { AskAIComposer } from './AskAIComposer';
 import { AskMainContent } from './AskMainContent';
 
 export const AskAIScreen = () => {
@@ -34,7 +38,6 @@ export const AskAIScreen = () => {
   const insets = useSafeAreaInsets();
   const color = useColors();
   const contentMaxWidth = useTabletContentMaxWidth('wide');
-  const isTablet = useIsTablet();
 
   const { record: routeRecord } = route.params;
   const hydrateRecordDetails = useRecordStore((s) => s.hydrateRecordDetails);
@@ -43,6 +46,7 @@ export const AskAIScreen = () => {
   );
 
   const [questionInput, setQuestionInput] = useState('');
+  const [isScreenFocused, setIsScreenFocused] = useState(false);
   const {
     askQuestion,
     cancelAsk,
@@ -56,6 +60,7 @@ export const AskAIScreen = () => {
     answerKind,
     items,
     evidence,
+    interpretations,
     suggestedFollowUps,
     history,
     privateAskProgress,
@@ -95,12 +100,20 @@ export const AskAIScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setIsScreenFocused(true);
       void syncAskSessionFromDb();
       return () => {
+        setIsScreenFocused(false);
         KeyboardController.dismiss({ animated: false });
       };
     }, [syncAskSessionFromDb]),
   );
+
+  useAskAiShakeBridge({
+    isFocused: isScreenFocused,
+    isLoading,
+    onCancel: cancelAsk,
+  });
 
   const handleBack = useCallback(() => {
     KeyboardController.dismiss({ animated: false });
@@ -184,7 +197,7 @@ export const AskAIScreen = () => {
   const clearHistoryHeaderButton = useMemo(
     () =>
       canClearAskHistory ? (
-        <HeaderIconButton
+        <FrostedHeaderIconButton
           iconOnly
           variant="icon"
           size="md"
@@ -200,8 +213,10 @@ export const AskAIScreen = () => {
   );
 
   const shouldShowInputRow = hasTranscript && !isRestoringSession && !isLoading;
-  /** Fill scroll height for empty / error states that vertically center content. */
-  const scrollContentFlexGrow = !hasTranscript || Boolean(error && !answer && hasTranscript);
+  const showStandaloneAskError =
+    Boolean(error && !answer && hasTranscript) && history.length === 0 && !question?.trim();
+  /** Fill scroll height for empty / standalone error states that vertically center content. */
+  const scrollContentFlexGrow = !hasTranscript || showStandaloneAskError;
   const scrollContentCentered = scrollContentFlexGrow;
   const canSend =
     Boolean(questionInput.trim()) &&
@@ -209,26 +224,7 @@ export const AskAIScreen = () => {
     !isRestoringSession &&
     !isLoading &&
     !disableByNetwork;
-
-  const sendButton = useMemo(
-    () => (
-      <View style={{ flexShrink: 0 }}>
-        <Button
-          variant="primary"
-          size="md"
-          icon={<ArrowRight size={18} color="#fff" strokeWidth={2.5} />}
-          iconOnly
-          color={color}
-          containerStyle={{ backgroundColor: color.accent.primary }}
-          onPress={handleAsk}
-          disabled={!canSend}
-          accessibilityLabel={t('recordingDetail.askSend')}
-          accessibilityState={{ disabled: !canSend }}
-        />
-      </View>
-    ),
-    [color, handleAsk, canSend, t],
-  );
+  const composerBottomInset = estimateAskAiComposerBottomClearance(insets.bottom);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -238,7 +234,7 @@ export const AskAIScreen = () => {
         rightSlot={clearHistoryHeaderButton}
         dismissKeyboardOnPress
       />
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, position: 'relative' }}>
         <View
           style={{
             flex: 1,
@@ -256,7 +252,7 @@ export const AskAIScreen = () => {
             contentContainerStyle={{
               paddingHorizontal: 16,
               paddingTop: 12,
-              paddingBottom: 16,
+              paddingBottom: shouldShowInputRow ? composerBottomInset + 16 : 16,
               ...(scrollContentFlexGrow ? { flexGrow: 1 } : {}),
               ...(scrollContentCentered ? { justifyContent: 'center' as const } : {}),
             }}
@@ -273,6 +269,7 @@ export const AskAIScreen = () => {
               answerKind={answerKind}
               items={items}
               evidence={evidence}
+              interpretations={interpretations}
               suggestedFollowUps={suggestedFollowUps}
               history={history}
               privateAskProgress={privateAskProgress}
@@ -291,14 +288,13 @@ export const AskAIScreen = () => {
         {shouldShowInputRow ? (
           <AskAIComposer
             color={color}
-            insetsBottom={insets.bottom}
-            isTablet={isTablet}
+            safeAreaBottom={insets.bottom}
+            contentMaxWidth={contentMaxWidth}
             questionInput={questionInput}
             onChangeQuestion={setQuestionInput}
             onSubmit={handleAsk}
             canSend={canSend}
             disableByNetwork={disableByNetwork}
-            sendButton={sendButton}
           />
         ) : null}
       </View>

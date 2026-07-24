@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { Linking } from 'react-native';
 
+import { runNavigationWhenUnlocked } from '@/app/navigation/deferredNavigation';
 import { navigationRef } from '@/app/navigation/navigationRef';
 import { useDownloadingDeeplink } from '@/features/downloading-deeplink';
 import { isAudioImportDeepLinkUrl } from '@/features/import-audio-file/lib/isAudioDeepLink';
@@ -8,42 +9,32 @@ import { dispatchSharedAudioImport } from '@/features/import-audio-file/lib/shar
 import { tryParseInAppEventDeepLink } from '@/features/in-app-event';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useRecordingDeeplink } from '@/features/recording-deeplink/model/useRecordingDeeplink';
+import { handleE2EDeepLink } from '@/shared/e2e';
 import { IS_ANDROID } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
 
 const START_RECORDING_URL = 'voiceinbox://record/start';
 const TEXT_NOTE_URL = 'voiceinbox://note/text';
 const ALL_TASKS_URL = 'voiceinbox://tasks';
 
-const pendingRecordModalOpenRef = { current: false };
-const pendingTextNoteModalOpenRef = { current: false };
-const pendingAllTasksOpenRef = { current: false };
-const pendingInAppEventIdRef = { current: null as string | null };
+/**
+ * Parses `voiceinbox://tasks` without `URL` host checks — Hermes can mis-parse
+ * custom schemes with a host-only authority (empty hostname, pathname `/`).
+ */
+const tryParseAllTasksDeepLink = (rawUrl: string): { recordId?: string } | null => {
+  const trimmed = rawUrl.trim();
+  const [pathPart, queryPart] = trimmed.split('?', 2);
+  const path = pathPart.replace(/\/+$/, '');
 
-export const flushPendingRecordModalNavigation = () => {
-  if (!navigationRef.isReady()) {
-    return;
+  if (path !== ALL_TASKS_URL && path !== 'voiceinbox:/tasks') {
+    return null;
   }
 
-  if (pendingRecordModalOpenRef.current) {
-    pendingRecordModalOpenRef.current = false;
-    navigationRef.navigate('RecordModal');
-  }
+  const recordId = queryPart
+    ? new URLSearchParams(queryPart.split('#')[0]).get('recordId')?.trim() || undefined
+    : undefined;
 
-  if (pendingTextNoteModalOpenRef.current) {
-    pendingTextNoteModalOpenRef.current = false;
-    navigationRef.navigate('TextNoteModal');
-  }
-
-  if (pendingAllTasksOpenRef.current) {
-    pendingAllTasksOpenRef.current = false;
-    navigationRef.navigate('AllTasks');
-  }
-
-  if (pendingInAppEventIdRef.current) {
-    const eventId = pendingInAppEventIdRef.current;
-    pendingInAppEventIdRef.current = null;
-    navigationRef.navigate('InAppEventDetail', { eventId });
-  }
+  return { recordId };
 };
 
 export const useInitDeepLinking = () => {
@@ -58,11 +49,9 @@ export const useInitDeepLinking = () => {
       return true;
     }
 
-    if (navigationRef.isReady()) {
+    runNavigationWhenUnlocked(() => {
       navigationRef.navigate('RecordModal');
-    } else {
-      pendingRecordModalOpenRef.current = true;
-    }
+    });
     return true;
   }, []);
 
@@ -74,27 +63,26 @@ export const useInitDeepLinking = () => {
       return true;
     }
 
-    if (navigationRef.isReady()) {
+    runNavigationWhenUnlocked(() => {
       navigationRef.navigate('TextNoteModal');
-    } else {
-      pendingTextNoteModalOpenRef.current = true;
-    }
+    });
     return true;
   }, []);
 
   const handleAllTasksDeepLink = useCallback((rawUrl: string) => {
-    const normalized = rawUrl.replace(/\/+$/, '');
-    if (normalized !== ALL_TASKS_URL) return false;
+    const parsed = tryParseAllTasksDeepLink(rawUrl);
+    if (!parsed) {
+      return false;
+    }
+    const { recordId } = parsed;
 
     if (!getHasSeenOnboarding()) {
       return true;
     }
 
-    if (navigationRef.isReady()) {
-      navigationRef.navigate('AllTasks');
-    } else {
-      pendingAllTasksOpenRef.current = true;
-    }
+    runNavigationWhenUnlocked(() => {
+      navigationRef.navigate('AllTasks', recordId ? { recordId } : undefined);
+    });
     return true;
   }, []);
 
@@ -106,17 +94,20 @@ export const useInitDeepLinking = () => {
       return true;
     }
 
-    if (navigationRef.isReady()) {
+    runNavigationWhenUnlocked(() => {
       navigationRef.navigate('InAppEventDetail', { eventId });
-    } else {
-      pendingInAppEventIdRef.current = eventId;
-    }
+    });
     return true;
   }, []);
 
   const routeDeepLink = useCallback(
-    (rawUrl: string) => {
+    async (rawUrl: string) => {
       try {
+        const e2eHandled = await handleE2EDeepLink(rawUrl);
+        if (e2eHandled) {
+          return;
+        }
+
         if (isAudioImportDeepLinkUrl(rawUrl)) {
           if (!getHasSeenOnboarding()) {
             return;
@@ -139,7 +130,7 @@ export const useInitDeepLinking = () => {
         handleRecordingDeeplink(url);
         handleDownloadingDeeplink(url);
       } catch (e) {
-        if (__DEV__) console.warn('[deeplink] invalid url', rawUrl, e);
+        diagWarn('[deeplink] invalid url', { url: rawUrl }, e);
       }
     },
     [
@@ -160,7 +151,7 @@ export const useInitDeepLinking = () => {
         return;
       }
 
-      routeDeepLink(url);
+      void routeDeepLink(url);
     });
 
     const sub = Linking.addEventListener('url', ({ url }) => {
@@ -168,7 +159,7 @@ export const useInitDeepLinking = () => {
         return;
       }
 
-      routeDeepLink(url);
+      void routeDeepLink(url);
     });
 
     return () => {

@@ -36,7 +36,7 @@ export function FAQSection(): React.ReactElement {
             {FAQ_ITEMS.map((key, index) => (
               <AnimateOnScroll key={key} delay={index * 70}>
                 <details
-                  className="group rounded-2xl border border-black/10 bg-white/85 shadow-[0_8px_26px_rgba(15,23,42,0.05)] backdrop-blur-sm transition-all duration-300 hover:shadow-[0_14px_34px_rgba(15,23,42,0.09)] dark:border-white/12 dark:bg-white/5 dark:shadow-[0_10px_30px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_16px_38px_rgba(0,0,0,0.36)]"
+                  className="group rounded-2xl border border-black/10 bg-white/85 shadow-[0_8px_26px_rgba(15,23,42,0.05)] transition-all duration-300 hover:shadow-[0_14px_34px_rgba(15,23,42,0.09)] dark:border-white/12 dark:bg-white/5 dark:shadow-[0_10px_30px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_16px_38px_rgba(0,0,0,0.36)]"
                   open={index === 0}
                 >
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left sm:px-6 sm:py-5">

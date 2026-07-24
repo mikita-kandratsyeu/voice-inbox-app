@@ -1,0 +1,301 @@
+{
+  "version": 4,
+  "exportedAt": "2026-03-30T12:00:00.000Z",
+  "folders": [
+    {
+      "id": "folder-demo-work",
+      "name": "Работа",
+      "color": "#6366f1",
+      "icon": "briefcase",
+      "sortOrder": 0,
+      "createdAt": "2026-03-20T10:00:00.000Z"
+    },
+    {
+      "id": "folder-demo-home",
+      "name": "Личное",
+      "color": "#059669",
+      "icon": "home",
+      "sortOrder": 1,
+      "createdAt": "2026-03-21T11:00:00.000Z"
+    },
+    {
+      "id": "folder-demo-ideas",
+      "name": "Идеи",
+      "color": "#d97706",
+      "icon": "lightbulb",
+      "sortOrder": 2,
+      "createdAt": "2026-03-22T09:00:00.000Z"
+    }
+  ],
+  "records": [
+    {
+      "id": "screenshot-demo-01",
+      "title": "Ревью дизайна — экран записи",
+      "transcript": "Пройдёмся по экрану записи. Основное действие — один тап. После стопа автоматически прокручиваем к расшифровке и показываем лёгкий success-state.",
+      "transcriptSegments": [
+        {
+          "id": "seg-01-a",
+          "startTime": "0:00",
+          "startMs": 0,
+          "endMs": 4200,
+          "text": "Пройдёмся по экрану записи."
+        },
+        {
+          "id": "seg-01-b",
+          "startTime": "0:04",
+          "startMs": 4200,
+          "endMs": 9800,
+          "text": "Основное действие — один тап."
+        },
+        {
+          "id": "seg-01-c",
+          "startTime": "0:10",
+          "startMs": 9800,
+          "endMs": 18000,
+          "text": "После стопа автоматически прокручиваем к расшифровке и показываем лёгкий success-state."
+        }
+      ],
+      "summary": "Фокус UX: запись в один тап, автоскролл к расшифровке после стопа, мягкая анимация успеха.",
+      "tasks": [
+        {
+          "id": "task-01-1",
+          "text": "Прототип скролла после стопа",
+          "isDone": false,
+          "deadline": "2026-04-02",
+          "deadlineTime": "10:00",
+          "priority": "high",
+          "source": "ai"
+        },
+        {
+          "id": "task-01-2",
+          "text": "Согласовать с дизайном",
+          "isDone": true,
+          "source": "manual"
+        }
+      ],
+      "duration": "1:38",
+      "durationMs": 98000,
+      "createdAt": "2026-03-30T10:00:00.000Z",
+      "status": "unread",
+      "readAt": null,
+      "isPinned": true,
+      "tags": ["дизайн", "ux"],
+      "classification": "work",
+      "keyPhrases": ["запись", "расшифровка", "анимация"],
+      "nextSteps": ["Собрать прототип скролла", "Назначить ревью"],
+      "folderId": "folder-demo-work",
+      "linkedRecordIds": ["screenshot-demo-03"],
+      "recordingMarks": [
+        {
+          "id": "mark-01-a",
+          "offsetMs": 4200,
+          "kind": "decision",
+          "label": "Оставить запись в один тап"
+        },
+        { "id": "mark-01-b", "offsetMs": 12000, "kind": "idea", "label": "Мягкая анимация успеха" }
+      ],
+      "summaryAiModel": "google/gemini-3.1-flash-lite",
+      "summaryAiModelLabel": "Gemini 3.1 Flash Lite",
+      "summaryAiModelMode": "manual",
+      "summaryTokensPrompt": 842,
+      "summaryTokensCompletion": 196,
+      "summaryGenerationMs": 4200
+    },
+    {
+      "id": "screenshot-demo-02",
+      "title": "Покупки и дела на выходные",
+      "transcript": "Молоко, овсяный йогурт, кофейные зёрна. Забрать химчистку в субботу до полудня. Полить растения в воскресенье утром.",
+      "translatedTranscript": "Milk, oat yogurt, coffee beans. Pick up dry cleaning on Saturday before noon. Water plants Sunday morning.",
+      "translationLanguage": "en",
+      "summary": "Список покупок и два дела с привязкой ко времени.",
+      "tasks": [
+        {
+          "id": "task-02-1",
+          "text": "Химчистка — до 12:00 в субботу",
+          "isDone": false,
+          "priority": "medium",
+          "source": "manual"
+        },
+        {
+          "id": "task-02-2",
+          "text": "Полить растения — воскресенье утром",
+          "isDone": false,
+          "source": "ai"
+        }
+      ],
+      "duration": "0:52",
+      "durationMs": 52000,
+      "createdAt": "2026-03-29T06:00:00.000Z",
+      "status": "read",
+      "readAt": "2026-03-29T12:00:00.000Z",
+      "isPinned": false,
+      "classification": "personal",
+      "keyPhrases": ["покупки", "химчистка"],
+      "folderId": "folder-demo-home"
+    },
+    {
+      "id": "screenshot-demo-03",
+      "title": "Идея: умные подсказки папок",
+      "transcript": "Если модель видит язык встречи, предлагать перенести заметку в «Работа», но всегда с подтверждением пользователя.",
+      "summary": "Опциональная подсказка папки по тону расшифровки; перенос только после подтверждения.",
+      "tasks": [],
+      "duration": "0:41",
+      "durationMs": 41000,
+      "createdAt": "2026-03-28T08:00:00.000Z",
+      "status": "unread",
+      "readAt": null,
+      "isPinned": false,
+      "classification": "idea",
+      "keyPhrases": ["папки", "классификация"],
+      "nextSteps": ["Проверить порог уверенности"],
+      "folderId": "folder-demo-ideas",
+      "linkedRecordIds": ["screenshot-demo-01"]
+    },
+    {
+      "id": "screenshot-demo-04",
+      "title": "Стендап — миграция API",
+      "transcript": "Алекс: Бэкенд-миграция идёт по плану, вторник. Марина: Мобилка включит новый base URL за флагом. Алекс: QA — один регресс по синку инбокса.",
+      "transcriptSegments": [
+        {
+          "id": "seg-04-a",
+          "startTime": "0:00",
+          "startMs": 0,
+          "endMs": 5200,
+          "text": "Бэкенд-миграция идёт по плану, вторник.",
+          "speakerId": "speaker-1"
+        },
+        {
+          "id": "seg-04-b",
+          "startTime": "0:05",
+          "startMs": 5200,
+          "endMs": 11000,
+          "text": "Мобилка включит новый base URL за флагом.",
+          "speakerId": "speaker-2"
+        },
+        {
+          "id": "seg-04-c",
+          "startTime": "0:11",
+          "startMs": 11000,
+          "endMs": 19000,
+          "text": "QA — один регресс по синку инбокса.",
+          "speakerId": "speaker-1"
+        }
+      ],
+      "summary": "Миграция во вторник; мобилка за флагом; регресс синка для QA.",
+      "meetingDialogue": "**Алекс:** Бэкенд-миграция идёт по плану, вторник.\n\n**Марина:** Мобилка включит новый base URL за флагом.\n\n**Алекс:** QA — один регресс по синку инбокса.",
+      "meetingSpeakerLabels": {
+        "speaker-1": "Алекс",
+        "speaker-2": "Марина"
+      },
+      "meetingSummaryTemplate": "standup",
+      "tasks": [
+        {
+          "id": "task-04-1",
+          "text": "Включить флаг после smoke-тестов",
+          "isDone": false,
+          "deadline": "2026-04-01",
+          "priority": "high",
+          "source": "manual"
+        },
+        {
+          "id": "task-04-2",
+          "text": "Регресс синка инбокса на staging",
+          "isDone": false,
+          "priority": "medium",
+          "source": "ai"
+        }
+      ],
+      "duration": "2:07",
+      "durationMs": 127000,
+      "createdAt": "2026-03-27T09:00:00.000Z",
+      "status": "read",
+      "readAt": "2026-03-28T10:00:00.000Z",
+      "classification": "meeting",
+      "keyPhrases": ["миграция", "флаг", "QA"],
+      "folderId": "folder-demo-work",
+      "linkedRecordIds": ["screenshot-demo-01"]
+    },
+    {
+      "id": "screenshot-demo-05",
+      "title": "Ретро спринта — февраль",
+      "transcript": "Короткие заметки с ретро прошлого спринта. Оставлено для истории.",
+      "summary": "Архивный снимок ретро.",
+      "tasks": [],
+      "duration": "0:33",
+      "durationMs": 33000,
+      "createdAt": "2026-03-16T14:00:00.000Z",
+      "status": "archived",
+      "readAt": "2026-03-17T08:00:00.000Z",
+      "classification": "work",
+      "folderId": "folder-demo-work"
+    },
+    {
+      "id": "screenshot-demo-06",
+      "title": "План подкаста — выпуск 12",
+      "transcript": "Хук в начале, три основных блока, реклама на двенадцатой минуте, аутро с призывом подписаться.",
+      "summary": "Структура выпуска с таймингом для рекламной вставки.",
+      "tasks": [
+        {
+          "id": "task-06-1",
+          "text": "Записать хук",
+          "isDone": false,
+          "source": "ai"
+        },
+        {
+          "id": "task-06-2",
+          "text": "Черновик текста спонсора",
+          "isDone": true,
+          "source": "manual"
+        }
+      ],
+      "duration": "1:15",
+      "durationMs": 75000,
+      "createdAt": "2026-03-25T11:00:00.000Z",
+      "status": "unread",
+      "readAt": null,
+      "classification": "other",
+      "folderId": null
+    },
+    {
+      "id": "screenshot-demo-07",
+      "title": "Звонок с клиентом — онбординг",
+      "transcript": "Клиенту нравится скорость расшифровки, но хочется понятнее дедлайны в задачах. Просят экспорт в календарь и лучшие подписи спикеров на встречах.",
+      "summary": "Хвалят скорость расшифровки; просят экспорт в календарь и понятнее спикеров на встречах.",
+      "meetingDialogue": "**Клиент:** Расшифровка быстрая — для команды это главный плюс.\n\n**Вы:** Дедлайны можем выводить как задачи с датами.\n\n**Клиент:** Экспорт в календарь закрыл бы цикл для нас.",
+      "meetingSpeakerLabels": {
+        "speaker-1": "Клиент",
+        "speaker-2": "Вы"
+      },
+      "meetingSummaryTemplate": "sales_call",
+      "tasks": [
+        {
+          "id": "task-07-1",
+          "text": "Отправить роадмап экспорта в календарь",
+          "isDone": false,
+          "deadline": "2026-04-05",
+          "priority": "high",
+          "source": "ai"
+        }
+      ],
+      "duration": "3:24",
+      "durationMs": 204000,
+      "createdAt": "2026-03-26T15:30:00.000Z",
+      "status": "unread",
+      "readAt": null,
+      "isPinned": true,
+      "classification": "work",
+      "tags": ["клиент", "фидбек"],
+      "folderId": "folder-demo-work"
+    }
+  ],
+  "graphLayouts": [
+    {
+      "id": "nglv_screenshot_demo_1",
+      "layoutKey": "7:screenshot-demo-01|screenshot-demo-03|screenshot-demo-04;;;;auto;1",
+      "versionNumber": 1,
+      "createdAt": "2026-03-30T11:00:00.000Z",
+      "name": "Демо-граф для скринов",
+      "payload": "{\"v\":1,\"positions\":{\"record:screenshot-demo-01\":{\"x\":0,\"y\":0},\"record:screenshot-demo-03\":{\"x\":300,\"y\":-140},\"record:screenshot-demo-04\":{\"x\":-280,\"y\":160},\"record:screenshot-demo-07\":{\"x\":120,\"y\":220}}}"
+    }
+  ]
+}

@@ -14,9 +14,11 @@ import {
   RetryErrorState,
   SettingsRow,
   SheetFooterButtons,
+  SheetHeader,
   useBottomSheetContentPadding,
 } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../../lib/settingsIconColor';
 import { PrivateRemoteSheetPickerRow } from './PrivateRemoteSheetPickerRow';
 
 type PrivateRemoteModelsPickerProps = {
@@ -39,6 +41,7 @@ export function PrivateRemoteModelsPicker({
   const { t } = useTranslation();
   const contentPadding = useBottomSheetContentPadding(24);
   const [sheetVisible, setSheetVisible] = useState(false);
+  const [presentRequestKey, setPresentRequestKey] = useState(0);
   const [models, setModels] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +102,12 @@ export function PrivateRemoteModelsPicker({
 
   const openSheet = useCallback(() => {
     hapticSelection();
-    setSheetVisible(true);
+    setPresentRequestKey((key) => key + 1);
+    setSheetVisible((current) => {
+      if (!current) return true;
+      requestAnimationFrame(() => setSheetVisible(true));
+      return false;
+    });
   }, []);
 
   const closeSheet = useCallback(() => setSheetVisible(false), []);
@@ -201,14 +209,18 @@ export function PrivateRemoteModelsPicker({
           label={trimmedSelected || t('aiSettings.privateProvider.modelList.pickFromServer')}
           subtitle={triggerSubtitle}
           onPress={openSheet}
-          leftIcon={<Box size={20} color={color.accent.primary} strokeWidth={2} />}
+          leftIcon={<Box size={20} color={getSettingsIconColor(color, 'box')} strokeWidth={2} />}
           showChevron
           isFirst
           isLast
         />
       </View>
 
-      <AppBottomSheetModal visible={sheetVisible} onClose={closeSheet}>
+      <AppBottomSheetModal
+        visible={sheetVisible}
+        presentRequestKey={presentRequestKey}
+        onClose={closeSheet}
+      >
         <BottomSheetScrollView
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
@@ -220,22 +232,14 @@ export function PrivateRemoteModelsPicker({
             gap: 12,
           }}
         >
-          <Text
-            style={{
-              fontSize: 17,
-              fontWeight: '600',
-              color: color.text.primary,
-              textAlign: 'center',
-              marginBottom: 4,
-            }}
-          >
-            {t('aiSettings.privateProvider.modelList.sheetTitle')}
-          </Text>
+          <SheetHeader
+            title={t('aiSettings.privateProvider.modelList.sheetTitle')}
+            subtitle={t('aiSettings.privateProvider.modelList.sheetSubtitle')}
+            color={color}
+            marginBottom={16}
+          />
 
-          <Text
-            className="mb-1.5 text-[13px] font-semibold"
-            style={{ color: color.text.secondary }}
-          >
+          <Text className="mb-2 text-[13px] font-semibold" style={{ color: color.text.secondary }}>
             {t('aiSettings.privateProvider.modelList.manualInput')}
           </Text>
           <BottomSheetTextInput

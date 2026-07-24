@@ -1,15 +1,32 @@
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import React, { useCallback, useMemo } from 'react';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { FlashList } from '@shopify/flash-list';
+import { Search, X } from 'lucide-react-native';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { useProEntitlement } from '@/features/pro-license';
 import { useAppTheme, useColors } from '@/shared/config';
-import { resolveFolderListTintHex } from '@/shared/lib';
-import { AppBottomSheetModal, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  IS_IOS,
+  matchesSearchQuery,
+  normalizeSearchQuery,
+  resolveFolderListTintHex,
+} from '@/shared/lib';
+import {
+  AppBottomSheetContent,
+  AppBottomSheetModal,
+  getInputFieldInputStyle,
+  SheetHeader,
+} from '@/shared/ui';
 
 import type { Folder } from '../model/types';
 import { FolderPickerRow } from './FolderPickerRow';
+
+const FOLDER_PICKER_LIST_MAX_HEIGHT = 420;
+const FOLDER_PICKER_ROW_HEIGHT = 72;
+
+type FolderPickerListItem = { kind: 'inbox' } | { kind: 'folder'; folder: Folder };
 
 type FolderPickerSheetProps = {
   visible: boolean;
@@ -17,6 +34,8 @@ type FolderPickerSheetProps = {
   subtitle?: string;
   folders: Folder[];
   currentFolderId?: string | null;
+  inboxLabel?: string;
+  inboxSubtitle?: string;
   onClose: () => void;
   onSelect: (folderId: string | null) => void;
 };
@@ -27,6 +46,8 @@ export const FolderPickerSheet = ({
   subtitle,
   folders,
   currentFolderId,
+  inboxLabel,
+  inboxSubtitle,
   onClose,
   onSelect,
 }: FolderPickerSheetProps) => {
@@ -35,7 +56,8 @@ export const FolderPickerSheet = ({
   const color = useColors();
   const scheme = useAppTheme();
   const { isProActive } = useProEntitlement();
-  const contentPadding = useBottomSheetContentPadding(20);
+  const [query, setQuery] = useState('');
+  const [focused, setFocused] = useState(false);
 
   const sortedFolders = useMemo(
     () =>
@@ -43,94 +65,191 @@ export const FolderPickerSheet = ({
     [folders],
   );
 
+  const resolvedInboxLabel = inboxLabel ?? t('folders.pickerInboxOnly');
+  const resolvedInboxSubtitle = inboxSubtitle ?? t('tabs.inbox');
+  const normalizedQuery = useMemo(() => normalizeSearchQuery(query), [query]);
+
+  const showInboxRow = useMemo(
+    () =>
+      !normalizedQuery ||
+      matchesSearchQuery(resolvedInboxLabel, normalizedQuery) ||
+      matchesSearchQuery(resolvedInboxSubtitle, normalizedQuery),
+    [normalizedQuery, resolvedInboxLabel, resolvedInboxSubtitle],
+  );
+
+  const filteredFolders = useMemo(
+    () => sortedFolders.filter((folder) => matchesSearchQuery(folder.name, normalizedQuery)),
+    [normalizedQuery, sortedFolders],
+  );
+
+  const listItems = useMemo(() => {
+    const items: FolderPickerListItem[] = [];
+    if (showInboxRow) items.push({ kind: 'inbox' });
+    for (const folder of filteredFolders) {
+      items.push({ kind: 'folder', folder });
+    }
+    return items;
+  }, [filteredFolders, showInboxRow]);
+
+  const handleClose = useCallback(() => {
+    setQuery('');
+    setFocused(false);
+    onClose();
+  }, [onClose]);
+
   const pickInbox = useCallback(() => {
     onSelect(null);
-    onClose();
-  }, [onSelect, onClose]);
+    handleClose();
+  }, [handleClose, onSelect]);
 
   const pickFolder = useCallback(
     (folderId: string) => {
       onSelect(folderId);
-      onClose();
+      handleClose();
     },
-    [onSelect, onClose],
+    [handleClose, onSelect],
   );
 
-  const rowCount = 1 + sortedFolders.length;
+  const renderItem = useCallback(
+    ({ item, index }: { item: FolderPickerListItem; index: number }) => {
+      const isLast = index === listItems.length - 1;
 
-  return (
-    <AppBottomSheetModal visible={visible} onClose={onClose}>
-      <BottomSheetScrollView
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: 20,
-          ...contentPadding,
-        }}
-      >
-        <Text
-          style={{
-            color: color.text.primary,
-            fontSize: 17,
-            fontWeight: '600',
-            marginBottom: subtitle ? 4 : 16,
-            marginTop: 4,
-            textAlign: 'center',
-          }}
-        >
-          {title}
-        </Text>
-        {subtitle ? (
-          <Text
-            style={{
-              color: color.text.secondary,
-              fontSize: 14,
-              lineHeight: 20,
-              marginBottom: 16,
-              textAlign: 'center',
-            }}
-          >
-            {subtitle}
-          </Text>
-        ) : null}
-        <View
-          style={{
-            backgroundColor: color.background.card,
-            borderColor: color.border.default,
-            borderRadius: 12,
-            borderWidth: 1,
-            overflow: 'hidden',
-          }}
-        >
+      if (item.kind === 'inbox') {
+        return (
           <FolderPickerRow
-            label={t('folders.pickerInboxOnly')}
-            subtitle={t('tabs.inbox')}
+            label={resolvedInboxLabel}
+            subtitle={resolvedInboxSubtitle}
             color={color}
             inbox
             selected={showChecks && currentFolderId == null}
             showSelectionCheck={showChecks}
-            isLast={rowCount === 1}
+            isLast={isLast}
             onPress={pickInbox}
           />
-          {sortedFolders.map((folder, index) => {
-            const tintHex = resolveFolderListTintHex(folder.color, isProActive, scheme);
-            const selected = showChecks && currentFolderId === folder.id;
-            return (
-              <FolderPickerRow
-                key={folder.id}
-                label={folder.name}
-                color={color}
-                iconId={folder.icon}
-                tintHex={tintHex}
-                selected={selected}
-                showSelectionCheck={showChecks}
-                isLast={index === sortedFolders.length - 1}
-                onPress={() => pickFolder(folder.id)}
-              />
-            );
-          })}
+        );
+      }
+
+      const tintHex = resolveFolderListTintHex(item.folder.color, isProActive, scheme);
+      const selected = showChecks && currentFolderId === item.folder.id;
+
+      return (
+        <FolderPickerRow
+          label={item.folder.name}
+          color={color}
+          iconId={item.folder.icon}
+          tintHex={tintHex}
+          selected={selected}
+          showSelectionCheck={showChecks}
+          isLast={isLast}
+          onPress={() => pickFolder(item.folder.id)}
+        />
+      );
+    },
+    [
+      color,
+      currentFolderId,
+      isProActive,
+      listItems.length,
+      pickFolder,
+      pickInbox,
+      resolvedInboxLabel,
+      resolvedInboxSubtitle,
+      scheme,
+      showChecks,
+    ],
+  );
+
+  const keyExtractor = useCallback(
+    (item: FolderPickerListItem) => (item.kind === 'inbox' ? 'inbox' : item.folder.id),
+    [],
+  );
+
+  const listHeight = useMemo(
+    () => Math.min(listItems.length * FOLDER_PICKER_ROW_HEIGHT, FOLDER_PICKER_LIST_MAX_HEIGHT),
+    [listItems.length],
+  );
+
+  return (
+    <AppBottomSheetModal visible={visible} onClose={handleClose}>
+      <AppBottomSheetContent bottomPadding={12}>
+        <SheetHeader title={title} subtitle={subtitle} color={color} marginBottom={10} />
+
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            backgroundColor: color.background.tertiary,
+            borderRadius: 12,
+            paddingHorizontal: 12,
+            paddingVertical: IS_IOS ? 10 : 8,
+            borderWidth: 1,
+            borderColor: focused ? color.accent.primary : color.border.default,
+            marginBottom: 10,
+          }}
+        >
+          <Search
+            size={16}
+            color={focused || query ? color.accent.primary : color.icon.muted}
+            strokeWidth={2}
+          />
+          <BottomSheetTextInput
+            style={[getInputFieldInputStyle(color), { flex: 1 }]}
+            placeholder={t('folders.pickerSearchPlaceholder')}
+            placeholderTextColor={color.text.secondary}
+            value={query}
+            onChangeText={setQuery}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            returnKeyType="search"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {query.length > 0 ? (
+            <Pressable
+              onPress={() => setQuery('')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.clear')}
+            >
+              <X size={16} color={color.text.secondary} strokeWidth={2.2} />
+            </Pressable>
+          ) : null}
         </View>
-      </BottomSheetScrollView>
+
+        {listItems.length === 0 ? (
+          <Text
+            style={{
+              color: color.text.secondary,
+              fontSize: 15,
+              lineHeight: 22,
+              paddingVertical: 24,
+              textAlign: 'center',
+            }}
+          >
+            {t('folders.pickerSearchEmpty')}
+          </Text>
+        ) : (
+          <View
+            style={{
+              backgroundColor: color.background.card,
+              borderColor: color.border.default,
+              borderRadius: 12,
+              borderWidth: 1,
+              overflow: 'hidden',
+              height: listHeight,
+            }}
+          >
+            <FlashList
+              data={listItems}
+              renderItem={renderItem}
+              keyExtractor={keyExtractor}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        )}
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 };

@@ -15,10 +15,14 @@ export type FlowStep = {
   data: Record<string, string | number | boolean | null>;
 };
 
+import type { CursorPage } from './pagination.js';
+
 export type UserSession = {
   flow?: FlowStep;
   listIds?: string[];
   listMeta?: Record<string, string>;
+  pagination?: Record<string, CursorPage>;
+  supportAlerts?: boolean;
   pendingConfirm?: {
     action: string;
     title: string;

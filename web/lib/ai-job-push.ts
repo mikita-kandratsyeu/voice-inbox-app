@@ -1,4 +1,5 @@
 import { PUSH_DEBOUNCE_MS } from '@/config/constants';
+import { isDevelopmentAppEnv } from '@/lib/app-env';
 import { isAiJobCancelled } from '@/lib/ai-job-cancel';
 import { sendPushNotification } from '@/lib/push';
 import {
@@ -16,7 +17,7 @@ export async function notifyAiJobComplete(params: {
   const { deviceId, recordId, logLabel } = params;
 
   if (await isAiJobCancelled(recordId)) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (isDevelopmentAppEnv()) {
       console.log(`[Push] ${logLabel}: skip (job cancelled)`, { deviceId, recordId });
     }
     return;
@@ -24,7 +25,7 @@ export async function notifyAiJobComplete(params: {
 
   const isLeader = await registerAiCompletion(deviceId);
   if (!isLeader) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (isDevelopmentAppEnv()) {
       console.log(`[Push] ${logLabel}: queued (leader will send)`, { deviceId });
     }
     return;
@@ -36,7 +37,7 @@ export async function notifyAiJobComplete(params: {
   const count = await collectPendingAndUnlock(deviceId);
   if (count === 0) return;
   if (inForeground) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (isDevelopmentAppEnv()) {
       console.log(`[Push] ${logLabel}: skip (app in foreground after debounce)`, { deviceId });
     }
     return;
@@ -49,6 +50,7 @@ export async function notifyAiJobComplete(params: {
       { type: 'ai_complete', recordId },
       data.locale,
       count,
+      deviceId,
     );
     console.log(`[Push] ${logLabel}:`, sent ? 'sent' : 'failed', { deviceId, count });
   } else {

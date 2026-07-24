@@ -1,9 +1,16 @@
 import { InlineKeyboard } from 'grammy';
 
+import { hasPermission } from '../auth/permissions.js';
 import type { HandlerCtx } from '../context.js';
 import { apiConfigured } from '../context.js';
-import { clearFlow, clearSession, getFlow, setFlow } from '../session/store.js';
-import { hasPermission } from '../auth/permissions.js';
+import {
+  clearFlow,
+  clearSession,
+  getFlow,
+  isSupportAlertsEnabled,
+  setFlow,
+  setSupportAlertsEnabled,
+} from '../session/store.js';
 import { escapeHtml } from '../ui/format.js';
 import type { ScreenReply } from '../ui/reply.js';
 import { screenTitle } from '../ui/reply.js';
@@ -41,9 +48,19 @@ export function accountScreen(h: HandlerCtx): ScreenReply {
   if (h.profile && (h.profile.isSuperadmin || hasPermission(h.profile, 'security'))) {
     kb.text('🔐 Change password', 'ac:pw').row();
   }
+  if (h.profile && (h.profile.isSuperadmin || hasPermission(h.profile, 'support'))) {
+    const alertsOn = isSupportAlertsEnabled(h.telegramUserId);
+    kb.text(alertsOn ? '🔕 Ticket alerts off' : '🔔 Ticket alerts on', 'ac:al').row();
+  }
   kb.text('🔄 Reset bot session', 'ac:rs').row().text('◀️ Menu', 'm');
 
   return { text: lines.join('\n'), keyboard: kb };
+}
+
+export function toggleSupportAlerts(h: HandlerCtx): ScreenReply {
+  const enabled = !isSupportAlertsEnabled(h.telegramUserId);
+  setSupportAlertsEnabled(h.telegramUserId, enabled);
+  return accountScreen(h);
 }
 
 export function resetBotSession(telegramUserId: string): void {

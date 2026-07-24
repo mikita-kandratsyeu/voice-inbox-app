@@ -1,12 +1,16 @@
+import type { AppLockGracePeriodMs } from './constants';
+
 export type AppLockState = {
   isEnabled: boolean;
   useBiometrics: boolean;
   isLocked: boolean;
   pinLength: number;
+  lockGracePeriodMs: AppLockGracePeriodMs;
   biometryType: BiometryType | null;
   setEnabled: (enabled: boolean) => Promise<void>;
   setUseBiometrics: (use: boolean) => Promise<void>;
   setPinLength: (length: number) => void;
+  setLockGracePeriodMs: (value: AppLockGracePeriodMs) => void;
   setLocked: (locked: boolean) => void;
   setPin: (pin: string) => Promise<boolean>;
   verifyPin: (pin: string) => Promise<boolean>;

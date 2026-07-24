@@ -10,6 +10,7 @@ import {
   PUSH_TOKEN_KEY_PREFIX,
   PUSH_TOKEN_TTL_SECONDS,
 } from '@/config/constants';
+import { isDevelopmentAppEnv } from '@/lib/app-env';
 import { sendPushNotification } from '@/lib/push';
 import { listKeysByPrefix, redis } from '@/lib/redis';
 
@@ -115,7 +116,7 @@ export async function savePushToken(
   };
   await redis.set(key, JSON.stringify(data), { ex: PUSH_TOKEN_TTL_SECONDS });
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (isDevelopmentAppEnv()) {
     console.log('[Push] savePushToken', {
       deviceId,
       key,
@@ -196,7 +197,7 @@ export async function getPushTokenWithLocale(deviceId: string): Promise<{
   const key = getPushTokenKey(deviceId);
   const value = await redis.get(key);
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (isDevelopmentAppEnv()) {
     console.log('[Push] getPushTokenWithLocale', {
       deviceId,
       key,
@@ -252,13 +253,23 @@ export async function getPushTokenWithLocale(deviceId: string): Promise<{
     : null;
 }
 
+/**
+ * Remove push token for a device (e.g., when FCM returns invalid token error).
+ * This prevents repeated failed send attempts.
+ */
+export async function cleanupInvalidPushToken(deviceId: string): Promise<void> {
+  const key = getPushTokenKey(deviceId);
+  await redis.del(key);
+  console.log('[Push] cleaned up invalid token', { deviceId, key });
+}
+
 export async function sendLimitExceededPush(deviceId: string): Promise<void> {
   const debounceKey = `${LIMIT_PUSH_DEBOUNCE_KEY_PREFIX}${deviceId}`;
   const acquired = await redis.setIfNotExists(debounceKey, '1', {
     ex: LIMIT_PUSH_DEBOUNCE_SECONDS,
   });
   if (!acquired) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (isDevelopmentAppEnv()) {
       console.log('[Push] limit exceeded: skip (debounced)', { deviceId });
     }
     return;
@@ -266,12 +277,18 @@ export async function sendLimitExceededPush(deviceId: string): Promise<void> {
 
   const data = await getPushTokenWithLocale(deviceId);
   if (!data) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (isDevelopmentAppEnv()) {
       console.log('[Push] limit exceeded: no token', { deviceId });
     }
     return;
   }
 
-  const sent = await sendPushNotification(data.token, { type: 'limit_exceeded' }, data.locale);
+  const sent = await sendPushNotification(
+    data.token,
+    { type: 'limit_exceeded' },
+    data.locale,
+    undefined,
+    deviceId,
+  );
   console.log('[Push] limit exceeded:', sent ? 'sent' : 'failed', { deviceId });
 }

@@ -4,6 +4,8 @@ import { join } from 'node:path';
 
 import 'dotenv/config';
 
+import { getDirectDatabaseUrl } from '../lib/direct-database-url';
+
 function pgBin(name: string): string {
   try {
     return execFileSync('which', [name], { encoding: 'utf8' }).trim();
@@ -16,10 +18,7 @@ function pgBin(name: string): string {
   }
 }
 
-const url = process.env.DATABASE_URL?.trim();
-if (!url) {
-  throw new Error('DATABASE_URL is not set (see web/.env)');
-}
+const url = getDirectDatabaseUrl();
 
 const backupsDir = join(process.cwd(), 'backups');
 if (!existsSync(backupsDir)) {

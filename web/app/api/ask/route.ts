@@ -11,8 +11,10 @@ import { HEADER_SYNC_TOKEN } from '@/config/constants';
 import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { logAiRequest } from '@/lib/ai-operation';
 import { estimateAskRoutingChars, parseAskPriorTurns } from '@/lib/ask-user-message';
+import { parseAskLinkedNotes } from '@/lib/linked-notes-prompt';
 import { sanitizeRecordingMarksForPrompt } from '@/lib/recording-marks-prompt';
-import { aiModelResponseFields } from '@/lib/ai-model-display';
+import { aiModelClientResponseFields } from '@/lib/ai-model-display';
+import { withDeduplication, getAskDeduplicationKey } from '@/lib/request-deduplication';
 import {
   estimateSummaryTasksRoutingChars,
   resolveAutoAiModel,
@@ -40,6 +42,7 @@ type CreateAskBody = {
   tasks?: unknown;
   priorTurns?: unknown;
   recordingMarks?: unknown;
+  linkedNotes?: unknown;
   messageTtlSeconds?: unknown;
 };
 
@@ -83,6 +86,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     tasks,
     priorTurns: rawPrior,
     recordingMarks: rawRecordingMarks,
+    linkedNotes: rawLinkedNotes,
     messageTtlSeconds: rawMessageTtl,
   } = body as {
     id: string;
@@ -95,6 +99,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     tasks?: { text: string }[];
     priorTurns?: unknown;
     recordingMarks?: unknown;
+    linkedNotes?: unknown;
     messageTtlSeconds?: unknown;
   };
 
@@ -115,6 +120,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const priorTurnsList = parseAskPriorTurns(rawPrior);
   const recordingMarksList = sanitizeRecordingMarksForPrompt(rawRecordingMarks);
+  const linkedNotesList = parseAskLinkedNotes(rawLinkedNotes);
 
   const routingChars =
     routingTaskType === 'summary_tasks'
@@ -126,6 +132,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
           tasksList,
           priorTurnsList,
           recordingMarksList,
+          linkedNotesList,
         );
   let resolvedModel =
     modelMode === 'auto'
@@ -159,19 +166,26 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   logAiRequest(aiOperation, { path: pathname, messageId: id });
 
-  const result = await createAsk(
-    id,
-    transcript,
-    question,
-    resolvedModel,
-    deviceIdTrimmed,
-    summaryStr,
-    tasksList,
-    priorTurnsList,
-    req.headers.get('user-agent'),
-    messageTtlSeconds,
-    recordingMarksList,
-    aiLimitContext,
+  const result = await withDeduplication(
+    getAskDeduplicationKey(deviceIdTrimmed, id, question),
+    () =>
+      createAsk(
+        id,
+        transcript,
+        question,
+        resolvedModel,
+        deviceIdTrimmed,
+        summaryStr,
+        tasksList,
+        priorTurnsList,
+        req.headers.get('user-agent'),
+        messageTtlSeconds,
+        recordingMarksList,
+        linkedNotesList,
+        aiLimitContext,
+        modelMode,
+      ),
+    60000,
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
@@ -188,7 +202,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const response = NextResponse.json({
     id,
     status: 'processing',
-    ...aiModelResponseFields(resolvedModel),
+    pollExpiresAt: result.pollExpiresAt,
+    ...aiModelClientResponseFields(resolvedModel, modelMode),
     ...(result.syncToken && { syncToken: result.syncToken }),
   });
 

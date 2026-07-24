@@ -1,8 +1,3 @@
-import { FIREBASE_APP_CHECK_DEBUG_TOKEN } from '@env';
-import { getApp } from '@react-native-firebase/app';
-import { initializeAppCheck } from '@react-native-firebase/app-check';
-// @ts-ignore
-import ReactNativeFirebaseAppCheckProvider from '@react-native-firebase/app-check/dist/module/ReactNativeFirebaseAppCheckProvider';
 import { getInitialNotification, getMessaging } from '@react-native-firebase/messaging';
 import { useEffect } from 'react';
 
@@ -11,15 +6,21 @@ import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import { syncPrivateCapabilityTier } from '@/entities/settings';
 import { runAutoArchiveReadNotesIfEligible } from '@/features/auto-archive/model/runAutoArchiveReadNotesIfEligible';
+import { syncAllBackupReminderNotifications } from '@/features/backup-reminder-notifications';
 import { initRevenueCatWhenReady } from '@/features/entitlements';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { syncAllTaskDeadlineNotifications } from '@/features/task-deadline-notifications';
 import { cleanupOrphanTranscriptionTempWavs } from '@/features/transcription/lib/transcriptionTempAudioCleanup';
 import { initRuntimeConfig } from '@/shared/config/runtimeConfig';
-import { initDB, isString } from '@/shared/lib';
+import { getWebApiEnvironmentStatus } from '@/shared/config/webApiEnvironment';
+import { initDB } from '@/shared/lib';
 import { syncAnalyticsUserId } from '@/shared/lib/analytics';
-import { syncCrashlyticsUserId } from '@/shared/lib/crashlytics';
+import { warmWebApiAuth } from '@/shared/lib/api-auth/warmWebApiAuth';
+import { initFirebaseAppCheck } from '@/shared/lib/app-check/appCheckToken';
+import { diagInfo, diagWarn } from '@/shared/lib/appLogger';
+import { syncCrashlyticsContext, syncCrashlyticsUserId } from '@/shared/lib/crashlytics';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
+import { prefetchMobileBannerManifest } from '@/shared/lib/mobile-banner';
 import { prefetchModelManifest } from '@/shared/lib/model-manifest';
 import { ensurePushRegistered, type PushNotificationData } from '@/shared/lib/push';
 
@@ -29,6 +30,7 @@ export type BootstrapCriticalError = 'db_init_failed';
 
 type UseAppBootstrapOptions = {
   onBootstrapReady?: () => void;
+  onWebApiReady?: () => void;
   onCriticalError?: (kind: BootstrapCriticalError) => void;
 };
 
@@ -36,11 +38,10 @@ export function useAppBootstrap(
   onInitialPushData: OnInitialPushData,
   options?: UseAppBootstrapOptions,
 ): void {
-  const { onBootstrapReady, onCriticalError } = options ?? {};
+  const { onBootstrapReady, onWebApiReady, onCriticalError } = options ?? {};
 
   useEffect(() => {
     let cancelled = false;
-    let deferredInitTimer: ReturnType<typeof setTimeout> | null = null;
 
     const notifyReady = () => {
       if (!cancelled) {
@@ -48,40 +49,26 @@ export function useAppBootstrap(
       }
     };
 
-    const appCheckDebugToken =
-      isString(FIREBASE_APP_CHECK_DEBUG_TOKEN) && FIREBASE_APP_CHECK_DEBUG_TOKEN.length > 0
-        ? FIREBASE_APP_CHECK_DEBUG_TOKEN
-        : undefined;
-
-    const rnfbProvider = new ReactNativeFirebaseAppCheckProvider();
-    rnfbProvider.configure({
-      android: {
-        provider: __DEV__ ? 'debug' : 'playIntegrity',
-        ...(appCheckDebugToken != null ? { debugToken: appCheckDebugToken } : {}),
-      },
-      apple: {
-        provider: __DEV__ ? 'debug' : 'appAttestWithDeviceCheckFallback',
-        ...(appCheckDebugToken != null ? { debugToken: appCheckDebugToken } : {}),
-      },
-    });
-
-    void initializeAppCheck(getApp(), {
-      provider: rnfbProvider,
-      isTokenAutoRefreshEnabled: true,
-    }).catch((err) => {
-      if (__DEV__) {
-        console.warn('[bootstrap] App Check init failed', err);
+    const notifyWebApiReady = () => {
+      if (!cancelled) {
+        onWebApiReady?.();
       }
-    });
+    };
 
     const dbInit = initDB();
 
-    initRuntimeConfig()
-      .catch(() => {
-        if (__DEV__) console.warn('[bootstrap] failed to initialize remote config');
-      })
+    Promise.all([
+      initRuntimeConfig().catch(() => {
+        diagWarn('[bootstrap] failed to initialize remote config');
+      }),
+      initFirebaseAppCheck().catch((err) => {
+        diagWarn('[bootstrap] App Check init failed', err);
+      }),
+    ])
       .then(() => {
-        prefetchModelManifest();
+        diagInfo('[bootstrap] web API', {
+          environment: getWebApiEnvironmentStatus(),
+        });
         return dbInit;
       })
       .then(async () => {
@@ -94,7 +81,7 @@ export function useAppBootstrap(
             await useRecordStore.getState().load();
           }
         } catch {
-          if (__DEV__) console.warn('[bootstrap] trash purge failed');
+          diagWarn('[bootstrap] trash purge failed');
         }
 
         try {
@@ -106,13 +93,19 @@ export function useAppBootstrap(
             await useRecordStore.getState().load();
           }
         } catch {
-          if (__DEV__) console.warn('[bootstrap] auto-archive failed');
+          diagWarn('[bootstrap] auto-archive failed');
         }
 
         try {
           await syncAllTaskDeadlineNotifications();
         } catch {
-          if (__DEV__) console.warn('[bootstrap] task deadline notification sync failed');
+          diagWarn('[bootstrap] task deadline notification sync failed');
+        }
+
+        try {
+          await syncAllBackupReminderNotifications();
+        } catch {
+          diagWarn('[bootstrap] backup reminder notification sync failed');
         }
 
         void cleanupOrphanTranscriptionTempWavs(useRecordStore.getState().records);
@@ -120,40 +113,59 @@ export function useAppBootstrap(
         notifyReady();
 
         void (async () => {
+          const revenueCatInit = (async () => {
+            try {
+              const deviceId = await getOrCreateDeviceId();
+              await Promise.all([
+                syncCrashlyticsUserId(deviceId),
+                syncAnalyticsUserId(deviceId),
+                syncCrashlyticsContext(),
+              ]);
+              if (!cancelled) {
+                await initRevenueCatWhenReady(deviceId);
+              }
+              await syncCrashlyticsContext();
+            } catch {
+              diagWarn('[bootstrap] failed to sync analytics/crashlytics user id');
+            }
+          })();
+
+          const warmed = await warmWebApiAuth();
+          if (!warmed) {
+            diagWarn('[bootstrap] Web API auth warm-up failed');
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          notifyWebApiReady();
+          prefetchModelManifest();
+          prefetchMobileBannerManifest();
+
+          await revenueCatInit;
+
           try {
-            const deviceId = await getOrCreateDeviceId();
-            await Promise.all([syncCrashlyticsUserId(deviceId), syncAnalyticsUserId(deviceId)]);
-            void initRevenueCatWhenReady(deviceId);
+            const initial = await getInitialNotification(getMessaging());
+            if (!cancelled && initial?.data) {
+              onInitialPushData(initial.data as unknown as PushNotificationData);
+            }
           } catch {
-            if (__DEV__) console.warn('[bootstrap] failed to sync analytics/crashlytics user id');
+            diagWarn('[bootstrap] failed to read initial push notification');
+          }
+
+          if (!cancelled && getHasSeenOnboarding()) {
+            ensurePushRegistered().catch(() => {});
           }
         })();
 
         void checkAndFlagLegacyPinHash();
-
-        deferredInitTimer = setTimeout(() => {
-          void (async () => {
-            try {
-              const initial = await getInitialNotification(getMessaging());
-              if (!cancelled && initial?.data) {
-                onInitialPushData(initial.data as unknown as PushNotificationData);
-              }
-            } catch {
-              if (__DEV__) console.warn('[bootstrap] failed to read initial push notification');
-            }
-
-            if (getHasSeenOnboarding()) {
-              ensurePushRegistered().catch(() => {});
-            }
-          })();
-        }, 0);
       })
       .catch((err) => {
-        if (__DEV__) {
-          console.warn('[bootstrap] critical failure', err);
-        }
+        diagWarn('[bootstrap] critical failure', err);
 
         notifyReady();
+        notifyWebApiReady();
 
         if (!cancelled) {
           onCriticalError?.('db_init_failed');
@@ -162,9 +174,6 @@ export function useAppBootstrap(
 
     return () => {
       cancelled = true;
-      if (deferredInitTimer) {
-        clearTimeout(deferredInitTimer);
-      }
     };
-  }, [onBootstrapReady, onCriticalError, onInitialPushData]);
+  }, [onBootstrapReady, onCriticalError, onInitialPushData, onWebApiReady]);
 }

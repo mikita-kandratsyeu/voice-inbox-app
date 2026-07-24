@@ -6,6 +6,8 @@ export type PrivateRemoteStructuredSchemaKind =
   | 'meeting_dialogue'
   | 'ask'
   | 'auto_organize'
+  | 'auto_organize_consolidate'
+  | 'auto_organize_archive'
   | 'digest'
   | 'generic';
 
@@ -114,6 +116,27 @@ const SCHEMAS: Record<
       type: 'object',
       properties: {
         answer: { type: 'string' },
+        answerKind: {
+          type: 'string',
+          enum: ['plain', 'list', 'tasks', 'decisions'],
+        },
+        items: { type: 'array', items: { type: 'string' } },
+        evidence: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              quote: { type: 'string' },
+              source: { type: 'string' },
+              offsetMs: { type: 'number' },
+              label: { type: 'string' },
+            },
+            required: ['quote'],
+            additionalProperties: true,
+          },
+        },
+        interpretations: { type: 'array', items: { type: 'string' } },
+        suggestedFollowUps: { type: 'array', items: { type: 'string' } },
       },
       required: ['answer'],
       additionalProperties: true,
@@ -128,6 +151,53 @@ const SCHEMAS: Record<
         assignments: { type: 'array', items: AUTO_ORGANIZE_ASSIGNMENT_SCHEMA },
       },
       required: ['folders', 'assignments'],
+      additionalProperties: true,
+    },
+  },
+  auto_organize_consolidate: {
+    name: 'voice_inbox_auto_organize_consolidate',
+    schema: {
+      type: 'object',
+      properties: {
+        merges: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              sourceFolderNames: { type: 'array', items: { type: 'string' } },
+              targetFolderName: { type: 'string' },
+              targetIcon: { type: 'string' },
+              targetColor: { type: 'string' },
+            },
+            required: ['sourceFolderNames', 'targetFolderName', 'targetIcon', 'targetColor'],
+            additionalProperties: true,
+          },
+        },
+        deleteEmptyFolderNames: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['merges', 'deleteEmptyFolderNames'],
+      additionalProperties: true,
+    },
+  },
+  auto_organize_archive: {
+    name: 'voice_inbox_auto_organize_archive',
+    schema: {
+      type: 'object',
+      properties: {
+        archiveSuggestions: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              recordId: { type: 'string' },
+              reason: { type: 'string' },
+            },
+            required: ['recordId', 'reason'],
+            additionalProperties: true,
+          },
+        },
+      },
+      required: ['archiveSuggestions'],
       additionalProperties: true,
     },
   },
@@ -153,6 +223,14 @@ const SCHEMAS: Record<
     },
   },
 };
+
+export function resolveAutoOrganizeSchemaKind(
+  mode: 'full' | 'assign_existing' | 'consolidate_folders' | 'suggest_archive',
+): PrivateRemoteStructuredSchemaKind {
+  if (mode === 'suggest_archive') return 'auto_organize_archive';
+  if (mode === 'consolidate_folders') return 'auto_organize_consolidate';
+  return 'auto_organize';
+}
 
 export function buildPrivateRemoteJsonSchemaResponseFormat(
   kind: PrivateRemoteStructuredSchemaKind,

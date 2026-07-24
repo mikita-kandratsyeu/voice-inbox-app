@@ -5,7 +5,7 @@ import type {
   PurchasesPackage,
   PurchasesStoreProduct,
 } from 'react-native-purchases';
-import Purchases, { PURCHASES_ERROR_CODE } from 'react-native-purchases';
+import Purchases, { PRODUCT_CATEGORY, PURCHASES_ERROR_CODE } from 'react-native-purchases';
 
 import {
   clearProRcEntitlementSync,
@@ -14,18 +14,23 @@ import {
 } from '@/features/pro-license/lib/proEntitlementStorage';
 import { syncProLicenseFromServer } from '@/features/pro-license/lib/syncProLicenseFromServer';
 import {
+  getRevenueCatAiResetProductId,
   getRevenueCatApiKeyAndroid,
   getRevenueCatApiKeyIos,
   getRevenueCatEntitlementId,
   getRevenueCatPackageTypePreferred,
-  getSubscriptionsPubliclyAvailable,
 } from '@/shared/config/runtimeConfig';
 import { isRecord, isString } from '@/shared/lib';
 import {
   invalidateProLicenseStatusCache,
   syncProLicenseRevenueCatOnServer,
 } from '@/shared/lib/ai-api/proLicenseApi';
-import { i18n } from '@/shared/lib/i18n';
+import { diagWarn } from '@/shared/lib/appLogger';
+import {
+  resolveDerivedIapPriceString,
+  resolveIapPriceString,
+  resolveScaledIapPriceString,
+} from '@/shared/lib/intl/formatIapCurrency';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 
 function trimEnv(v: string | undefined): string {
@@ -49,7 +54,7 @@ export function getRevenueCatApiKeyForPlatform(): string | null {
 }
 
 export function getRevenueCatIntegrationEnabled(): boolean {
-  return getSubscriptionsPubliclyAvailable() && getRevenueCatApiKeyForPlatform() != null;
+  return getRevenueCatApiKeyForPlatform() != null;
 }
 
 function isPurchasesError(e: unknown): e is { code: PURCHASES_ERROR_CODE; message: string } {
@@ -58,17 +63,36 @@ function isPurchasesError(e: unknown): e is { code: PURCHASES_ERROR_CODE; messag
 
 function logPurchasesFailure(context: string, e: unknown): void {
   if (isPurchasesError(e)) {
-    console.warn(`[RevenueCat] ${context}`, e.code, e.message);
+    diagWarn(`[RevenueCat] ${context}`, e.code, e.message);
     return;
   }
 
   const msg = e instanceof Error ? e.message : String(e);
-  console.warn(`[RevenueCat] ${context}`, msg);
+  diagWarn(`[RevenueCat] ${context}`, msg);
 }
 
 let sessionConfigured = false;
 let boundAppUserId: string | null = null;
 let listenerRegistered = false;
+let initPromise: Promise<void> | null = null;
+
+export async function waitForRevenueCatReady(): Promise<boolean> {
+  if (!getRevenueCatIntegrationEnabled()) {
+    return false;
+  }
+  if (sessionConfigured) {
+    return true;
+  }
+  if (!initPromise) {
+    return false;
+  }
+  try {
+    await initPromise;
+  } catch {
+    return false;
+  }
+  return sessionConfigured;
+}
 
 function applyCustomerInfoToProStorage(info: CustomerInfo): void {
   const entitlementId = getEntitlementId();
@@ -114,6 +138,9 @@ export async function refreshProEntitlementFromRevenueCatOnly(): Promise<void> {
   if (!getRevenueCatIntegrationEnabled()) {
     return;
   }
+  if (!(await waitForRevenueCatReady())) {
+    return;
+  }
   try {
     const info = await Purchases.getCustomerInfo();
     applyCustomerInfoToProStorage(info);
@@ -153,30 +180,6 @@ export type IapBillingOptions = {
   savePercentVsMonthly: number | null;
 };
 
-function intlLocaleForIapPrices(): string {
-  const raw = (i18n.language ?? 'en').toLowerCase();
-
-  if (raw.startsWith('ru')) return 'ru-RU';
-
-  return 'en-US';
-}
-
-function formatIapCurrencyAmount(amount: number, currencyCode: string): string | null {
-  const code = (currencyCode ?? '').trim().toUpperCase();
-  if (!code || !Number.isFinite(amount)) {
-    return null;
-  }
-  try {
-    return new Intl.NumberFormat(intlLocaleForIapPrices(), {
-      style: 'currency',
-      currency: code,
-      currencyDisplay: 'narrowSymbol',
-    }).format(amount);
-  } catch {
-    return null;
-  }
-}
-
 function introFreeFromIntro(
   intro: PurchasesIntroPrice | null | undefined,
 ): IapIntroFreePeriod | null {
@@ -202,9 +205,12 @@ function billingRowFromProduct(
     return null;
   }
 
-  const rawMain = product.priceString?.trim();
-  const formattedMain = formatIapCurrencyAmount(product.price, product.currencyCode);
-  const priceString = formattedMain ?? rawMain;
+  const priceString = resolveIapPriceString(
+    product.priceString,
+    product.price,
+    product.currencyCode,
+    product.pricePerMonthString,
+  );
 
   if (!priceString) {
     return null;
@@ -222,9 +228,12 @@ function billingRowFromProduct(
           ? product.price / 12
           : null;
     if (perMonthNum != null) {
-      const formatted = formatIapCurrencyAmount(perMonthNum, product.currencyCode);
-      const rawPer = product.pricePerMonthString?.trim();
-      pricePerMonthString = formatted ?? (rawPer && rawPer.length > 0 ? rawPer : null);
+      pricePerMonthString = resolveDerivedIapPriceString(
+        priceString,
+        perMonthNum,
+        product.pricePerMonthString,
+        product.currencyCode,
+      );
     }
   }
 
@@ -280,6 +289,27 @@ function pickPackageFromOffering(offering: PurchasesOffering | null): PurchasesP
   );
 }
 
+async function configureRevenueCatSession(apiKey: string, trimmedDeviceId: string): Promise<void> {
+  if (!sessionConfigured) {
+    Purchases.configure({ apiKey, appUserID: trimmedDeviceId });
+    sessionConfigured = true;
+    boundAppUserId = trimmedDeviceId;
+  } else if (boundAppUserId !== trimmedDeviceId) {
+    await Purchases.logIn(trimmedDeviceId);
+    boundAppUserId = trimmedDeviceId;
+  }
+
+  if (!listenerRegistered) {
+    Purchases.addCustomerInfoUpdateListener((info) => {
+      void onCustomerInfoUpdated(info);
+    });
+    listenerRegistered = true;
+  }
+
+  const info = await Purchases.getCustomerInfo();
+  await onCustomerInfoUpdated(info, { forceRevenueCatServerSync: true });
+}
+
 export async function initRevenueCatWhenReady(deviceId: string): Promise<void> {
   if (!getRevenueCatIntegrationEnabled()) {
     return;
@@ -290,26 +320,32 @@ export async function initRevenueCatWhenReady(deviceId: string): Promise<void> {
     return;
   }
 
+  if (sessionConfigured && boundAppUserId === trimmed) {
+    return;
+  }
+
+  if (initPromise) {
+    try {
+      await initPromise;
+    } catch (e) {
+      logPurchasesFailure('init', e);
+    }
+
+    if (boundAppUserId !== trimmed) {
+      try {
+        await configureRevenueCatSession(apiKey, trimmed);
+      } catch (e) {
+        logPurchasesFailure('init', e);
+      }
+    }
+    return;
+  }
+
+  initPromise = configureRevenueCatSession(apiKey, trimmed);
   try {
-    if (!sessionConfigured) {
-      Purchases.configure({ apiKey, appUserID: trimmed });
-      sessionConfigured = true;
-      boundAppUserId = trimmed;
-    } else if (boundAppUserId !== trimmed) {
-      await Purchases.logIn(trimmed);
-      boundAppUserId = trimmed;
-    }
-
-    if (!listenerRegistered) {
-      Purchases.addCustomerInfoUpdateListener((info) => {
-        void onCustomerInfoUpdated(info);
-      });
-      listenerRegistered = true;
-    }
-
-    const info = await Purchases.getCustomerInfo();
-    await onCustomerInfoUpdated(info, { forceRevenueCatServerSync: true });
+    await initPromise;
   } catch (e) {
+    initPromise = null;
     logPurchasesFailure('init', e);
   }
 }
@@ -320,26 +356,26 @@ export type RestoreProPurchasesResult =
   | { ok: true; entitlementActive: boolean }
   | { ok: false; message: string };
 
+const emptyIapBillingOptions: IapBillingOptions = {
+  monthly: null,
+  annual: null,
+  annualComparedToMonthlyYearPriceString: null,
+  savePercentVsMonthly: null,
+};
+
 export async function getProBillingPriceOptions(): Promise<IapBillingOptions> {
   if (!getRevenueCatIntegrationEnabled()) {
-    return {
-      monthly: null,
-      annual: null,
-      annualComparedToMonthlyYearPriceString: null,
-      savePercentVsMonthly: null,
-    };
+    return emptyIapBillingOptions;
+  }
+  if (!(await waitForRevenueCatReady())) {
+    return emptyIapBillingOptions;
   }
   try {
     const offerings = await Purchases.getOfferings();
     const o = offerings.current;
 
     if (!o) {
-      return {
-        monthly: null,
-        annual: null,
-        annualComparedToMonthlyYearPriceString: null,
-        savePercentVsMonthly: null,
-      };
+      return emptyIapBillingOptions;
     }
 
     const monthly = billingRowFromProduct(o.monthly?.product, 'monthly');
@@ -356,9 +392,12 @@ export async function getProBillingPriceOptions(): Promise<IapBillingOptions> {
       const yearAtMonthlyRate = mp * 12;
 
       if (ap < yearAtMonthlyRate) {
-        annualComparedToMonthlyYearPriceString = formatIapCurrencyAmount(
+        annualComparedToMonthlyYearPriceString = resolveScaledIapPriceString(
+          o.monthly?.product?.priceString,
           yearAtMonthlyRate,
           monthlyCurrency,
+          o.annual?.product?.priceString,
+          o.annual?.product?.pricePerMonthString ?? o.monthly?.product?.pricePerMonthString,
         );
         const pct = Math.round((1 - ap / yearAtMonthlyRate) * 100);
         savePercentVsMonthly = pct >= 1 ? pct : null;
@@ -368,12 +407,7 @@ export async function getProBillingPriceOptions(): Promise<IapBillingOptions> {
     return { monthly, annual, annualComparedToMonthlyYearPriceString, savePercentVsMonthly };
   } catch (e) {
     logPurchasesFailure('getProBillingPriceOptions', e);
-    return {
-      monthly: null,
-      annual: null,
-      annualComparedToMonthlyYearPriceString: null,
-      savePercentVsMonthly: null,
-    };
+    return emptyIapBillingOptions;
   }
 }
 
@@ -381,6 +415,9 @@ export async function purchaseProPackageForPeriod(
   period: IapBillingPeriod,
 ): Promise<PurchaseProResult> {
   if (!getRevenueCatIntegrationEnabled()) {
+    return { ok: false, cancelled: false, message: 'iap_unavailable' };
+  }
+  if (!(await waitForRevenueCatReady())) {
     return { ok: false, cancelled: false, message: 'iap_unavailable' };
   }
   try {
@@ -409,6 +446,9 @@ export async function purchaseProPackageForPeriod(
 
 export async function purchaseDefaultProPackage(): Promise<PurchaseProResult> {
   if (!getRevenueCatIntegrationEnabled()) {
+    return { ok: false, cancelled: false, message: 'iap_unavailable' };
+  }
+  if (!(await waitForRevenueCatReady())) {
     return { ok: false, cancelled: false, message: 'iap_unavailable' };
   }
 
@@ -440,6 +480,9 @@ export async function restoreProPurchases(): Promise<RestoreProPurchasesResult> 
   if (!getRevenueCatIntegrationEnabled()) {
     return { ok: false, message: 'iap_unavailable' };
   }
+  if (!(await waitForRevenueCatReady())) {
+    return { ok: false, message: 'iap_unavailable' };
+  }
 
   try {
     const customerInfo = await Purchases.restorePurchases();
@@ -451,5 +494,120 @@ export async function restoreProPurchases(): Promise<RestoreProPurchasesResult> 
     logPurchasesFailure('restoreProPurchases', e);
 
     return { ok: false, message: msg };
+  }
+}
+
+export type AiLimitResetProduct = {
+  productIdentifier: string;
+  priceString: string;
+  title: string | null;
+};
+
+export type PurchaseAiLimitResetResult =
+  | {
+      ok: true;
+      productIdentifier: string;
+      transactionId: string;
+    }
+  | { ok: false; cancelled: boolean; message: string };
+
+function getAiResetProductId(): string | null {
+  const id = trimEnv(getRevenueCatAiResetProductId());
+  return id.length > 0 ? id : null;
+}
+
+function readPurchaseTransactionId(result: {
+  productIdentifier?: string;
+  transaction?: unknown;
+}): string | null {
+  if (isRecord(result.transaction)) {
+    const txId = result.transaction.transactionIdentifier;
+    if (isString(txId) && txId.trim()) {
+      return txId.trim();
+    }
+  }
+  return null;
+}
+
+export async function getAiLimitResetProduct(): Promise<AiLimitResetProduct | null> {
+  if (!getRevenueCatIntegrationEnabled()) {
+    return null;
+  }
+  if (!(await waitForRevenueCatReady())) {
+    return null;
+  }
+
+  const productId = getAiResetProductId();
+  if (!productId) {
+    return null;
+  }
+
+  try {
+    const products = await Purchases.getProducts([productId], PRODUCT_CATEGORY.NON_SUBSCRIPTION);
+    const product = products[0];
+    if (!product) {
+      return null;
+    }
+
+    const priceString = resolveIapPriceString(
+      product.priceString,
+      product.price,
+      product.currencyCode,
+    );
+    if (!priceString) {
+      return null;
+    }
+
+    return {
+      productIdentifier: product.identifier,
+      priceString,
+      title: product.title,
+    };
+  } catch (e) {
+    logPurchasesFailure('getAiLimitResetProduct', e);
+    return null;
+  }
+}
+
+export async function purchaseAiLimitReset(): Promise<PurchaseAiLimitResetResult> {
+  if (!getRevenueCatIntegrationEnabled()) {
+    return { ok: false, cancelled: false, message: 'iap_unavailable' };
+  }
+  if (!(await waitForRevenueCatReady())) {
+    return { ok: false, cancelled: false, message: 'iap_unavailable' };
+  }
+
+  const productId = getAiResetProductId();
+  if (!productId) {
+    return { ok: false, cancelled: false, message: 'reset_product_not_configured' };
+  }
+
+  try {
+    const products = await Purchases.getProducts([productId], PRODUCT_CATEGORY.NON_SUBSCRIPTION);
+    const product = products[0];
+    if (!product) {
+      return { ok: false, cancelled: false, message: 'no_product' };
+    }
+
+    const result = await Purchases.purchaseStoreProduct(product);
+    const transactionId = readPurchaseTransactionId(result);
+    if (!transactionId) {
+      return { ok: false, cancelled: false, message: 'missing_transaction_id' };
+    }
+
+    return {
+      ok: true,
+      productIdentifier: result.productIdentifier ?? product.identifier,
+      transactionId,
+    };
+  } catch (e) {
+    if (isPurchasesError(e) && e.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
+      return { ok: false, cancelled: true, message: 'cancelled' };
+    }
+
+    const msg = isPurchasesError(e) ? e.message : 'unknown';
+    logPurchasesFailure('purchaseAiLimitReset', e);
+
+    return { ok: false, cancelled: false, message: msg };
   }
 }

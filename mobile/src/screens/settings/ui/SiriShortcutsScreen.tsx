@@ -1,15 +1,18 @@
 import { CheckSquare, Command, Mic, Smartphone, SquarePen } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { useSettingsStackBack } from '@/app/navigation/useSettingsStackBack';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { SCREEN_PADDING, ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
+
+import { getSettingsIconColor } from '../lib';
 
 type ShortcutRow = {
   key: string;
@@ -93,13 +96,15 @@ export const SiriShortcutsScreen = () => {
   const color = useColors();
   const insets = useSafeAreaInsets();
   const contentMaxWidth = useTabletContentMaxWidth();
+  const { width: windowWidth } = useWindowDimensions();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const isTablet = useIsTablet();
 
   const shortcuts = useMemo<ShortcutRow[]>(
     () => [
       {
         key: 'startRecording',
-        icon: <Mic size={20} color={color.accent.primary} strokeWidth={1.8} />,
+        icon: <Mic size={20} color={getSettingsIconColor(color, 'mic')} strokeWidth={1.8} />,
         title: t('settings.siriShortcuts.shortcuts.startRecording.title'),
         subtitle: t('settings.siriShortcuts.shortcuts.startRecording.subtitle'),
         value: t('settings.siriShortcuts.shortcuts.startRecording.value'),
@@ -159,6 +164,7 @@ export const SiriShortcutsScreen = () => {
           </SettingsSection>
 
           <TipsCard color={color} />
+          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
     </View>

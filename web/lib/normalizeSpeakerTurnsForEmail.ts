@@ -4,7 +4,12 @@
  *
  * Label prefixes mirror `mobile/src/screens/recording-detail/lib/parseMeetingDialogue.ts`.
  */
-import { replaceMarkdownSection, twoColumnMarkdownTable } from '@/lib/shareNoteEmailMarkdownTables';
+import { SHARE_SPEAKER_TURNS_SECTION_MARKER_RE } from '@/lib/shareNoteSectionMarkers';
+import {
+  replaceMarkdownSection,
+  replaceMarkdownSectionByMarker,
+  twoColumnMarkdownTable,
+} from '@/lib/shareNoteEmailMarkdownTables';
 
 const KNOWN_SPEAKER_LABEL_HEAD =
   '(?:Speaker|Участник|Участница|Спикер|Собеседник|Собеседница|Participant|Person|User|Interviewer|Interviewee|Host|Guest|Customer|Client|Moderator|Модератор|Интервьюер|Ведущий|Клиент|Гость|Пользователь)(?:\\s*(?:#|№)?\\s*\\d+)?';
@@ -45,7 +50,9 @@ const BOLD_SPEAKER_HEADING = new RegExp(
   SPEAKER_LINE_FLAGS,
 );
 
-const SPEAKER_SECTION_HEADING = /^## (?:Реплики по спикерам|Speaker turns)\r?\n/im;
+/** Legacy exports before stable section markers (mobile i18n + old preview fixtures). */
+const SPEAKER_SECTION_HEADING =
+  /^## (?:По участникам|Participants|Реплики по спикерам|Speaker turns)\r?\n/im;
 
 export type SpeakerTurnEntry = {
   speaker: string;
@@ -244,6 +251,15 @@ function replaceSpeakerSection(body: string): string {
 }
 
 export function normalizeSpeakerTurnsForEmail(markdown: string): string {
+  const byMarker = replaceMarkdownSectionByMarker(
+    markdown,
+    SHARE_SPEAKER_TURNS_SECTION_MARKER_RE,
+    replaceSpeakerSection,
+  );
+  if (byMarker != null) {
+    return byMarker;
+  }
+
   if (!SPEAKER_SECTION_HEADING.test(markdown)) {
     return markdown;
   }

@@ -4,6 +4,7 @@ import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { isAutomationUiLockedForPublicStore } from '@/features/app-storefront';
 import { useProEntitlement } from '@/features/pro-license';
+import { diagWarn } from '@/shared/lib/appLogger';
 
 import { runAutoArchiveReadNotesIfEligible } from './runAutoArchiveReadNotesIfEligible';
 
@@ -28,9 +29,7 @@ export function useAutoArchiveReadNotes() {
           await load();
         }
       } catch (err) {
-        if (__DEV__) {
-          console.warn('[useAutoArchiveReadNotes]', err);
-        }
+        diagWarn('[useAutoArchiveReadNotes]', err);
       }
     })();
   }, [

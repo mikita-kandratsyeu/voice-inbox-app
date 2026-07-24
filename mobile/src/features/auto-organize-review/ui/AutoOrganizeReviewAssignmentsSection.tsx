@@ -52,6 +52,8 @@ export const AutoOrganizeReviewAssignmentsSection = ({
           >
             <Pressable
               onPress={() => onOpenPicker(a.recordId)}
+              accessibilityRole="button"
+              accessibilityLabel={`${getRecordTitle(a.recordId) || unknownNoteLabel}, ${getMoveToLabel(getDestinationLabel(a.destination))}`}
               style={{ paddingHorizontal: 14, paddingVertical: 12 }}
             >
               <Text style={{ fontSize: 15, fontWeight: '600', color: color.text.primary }}>

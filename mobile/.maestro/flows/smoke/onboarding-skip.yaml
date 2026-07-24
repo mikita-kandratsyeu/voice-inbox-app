@@ -1,0 +1,7 @@
+appId: com.mkandratsyeu.voiceinboxai
+name: onboarding-skip
+---
+# S02 — skip onboarding via UI
+- runFlow: ../../subflows/skip-onboarding-ui.yaml
+- assertVisible:
+    id: inbox.screen

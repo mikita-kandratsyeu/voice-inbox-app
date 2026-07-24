@@ -21,6 +21,7 @@ export type LocalAiModelId =
 export type AIModelId = UserSelectableAIModelId;
 
 export type TranscriptionLanguage = 'auto' | 'ru' | 'en' | 'de' | 'fr' | 'es' | 'zh' | 'ja';
+export type TranscriptionQualityMode = 'fast' | 'balanced' | 'quality';
 export type SummaryStyle = 'brief' | 'standard' | 'detailed';
 export type TaskStrictness = 'strict' | 'balanced' | 'soft';
 export type AiOutputLanguage = 'same' | 'ru' | 'en';
@@ -28,6 +29,8 @@ export type AiExecutionMode = 'smart_hybrid' | 'private_experimental';
 export type PrivateLocalLlmBudget = 'efficient' | 'balanced' | 'expanded';
 /** Custom OpenAI-compatible server output length (null max_tokens when unlimited). */
 export type PrivateRemoteOutputBudget = PrivateLocalLlmBudget | 'unlimited';
+/** How many queued summaries may run at once against the private AI server. */
+export type PrivateRemoteQueueConcurrency = 1 | 2 | 3 | 4 | 5;
 export type PrivateCapabilityTier = 'full' | 'limited' | 'unavailable';
 export type PrivateAiProvider = 'local' | 'custom_openai';
 export type PrivateRemoteConfig = {
@@ -41,13 +44,21 @@ export type PrivateRemoteProfile = PrivateRemoteConfig & {
   updatedAt: number;
 };
 
-export type WhisperModelId = 'whisper-tiny' | 'whisper-base' | 'whisper-small' | 'whisper-medium';
+export type WhisperModelId =
+  | 'whisper-tiny'
+  | 'whisper-base'
+  | 'whisper-small'
+  | 'whisper-medium'
+  | 'whisper-large-v3-turbo';
 export type WhisperModelWeightsFormat = 'q5_1' | 'full';
-export type WhisperModelVariantId = `${WhisperModelId}:${WhisperModelWeightsFormat}`;
+/** GGML weights format or WhisperKit Core ML bundle (iOS). */
+export type WhisperModelStorageFormat = WhisperModelWeightsFormat | 'whisperkit';
+export type WhisperModelVariantId = `${WhisperModelId}:${WhisperModelStorageFormat}`;
 
 export type WhisperModelStatus = 'not_downloaded' | 'downloading' | 'downloaded' | 'error';
 
 export type AutoArchiveAfterDays = 1 | 7 | 14 | 30;
+export type BackupReminderPeriodDays = 7 | 14 | 30;
 
 export type AIModel = {
   id: AIModelId;
@@ -96,7 +107,12 @@ export type DownloadBytes = {
   total: number;
 };
 
-export type WhisperDownloadPhase = 'weights' | 'coreml';
+export type WhisperDownloadPhase =
+  | 'weights'
+  | 'coreml'
+  | 'whisperkit'
+  | 'whisperkit_prepare'
+  | 'speakerkit';
 
 export type SettingsState = {
   appTheme: AppTheme;
@@ -109,6 +125,13 @@ export type SettingsState = {
   selectedWhisperModelFormat: WhisperModelWeightsFormat;
   whisperModelWeightsFormat: WhisperModelWeightsFormat;
   transcriptionLanguage: TranscriptionLanguage;
+  transcriptionQualityMode: TranscriptionQualityMode;
+  /** iOS-only rollout flag for WhisperKit transcription engine. */
+  iosWhisperKitEngineEnabled: boolean;
+  /** iOS-only: enable on-device diarization during transcription (WhisperKit path). */
+  transcriptionDiarizationEnabled: boolean;
+  /** Names, brands, and terms passed to Whisper as initial prompt hints. */
+  transcriptionCustomWords: string[];
   summaryStyle: SummaryStyle;
   taskStrictness: TaskStrictness;
   aiOutputLanguage: AiOutputLanguage;
@@ -117,6 +140,8 @@ export type SettingsState = {
   privateRemoteOutputBudget: PrivateRemoteOutputBudget;
   /** Request `response_format: json_object` on custom server when supported. */
   privateRemotePreferJsonObject: boolean;
+  /** Parallel drain limit for the private AI task queue. */
+  privateRemoteQueueConcurrency: PrivateRemoteQueueConcurrency;
   privateCapabilityTier: PrivateCapabilityTier;
   privateAiProvider: PrivateAiProvider;
   privateRemoteBaseUrl: string;
@@ -129,10 +154,20 @@ export type SettingsState = {
   privateRemoteActiveProfileId: string | null;
   autoTranscribeOnSave: boolean;
   autoAiAfterTranscription: boolean;
+  /** Private custom-server auto-summary preference (independent of smart mode). */
+  privateAutoAiAfterTranscription: boolean;
   autoArchiveEnabled: boolean;
   autoArchiveAfterDays: AutoArchiveAfterDays;
+  /** Shake phone to open the recording screen from anywhere in the app. */
+  shakeToRecordEnabled: boolean;
+  /** Shake on Ask AI while generating to cancel the response. */
+  shakeToCancelAskAiEnabled: boolean;
   taskDeadlineNotificationsEnabled: boolean;
+  backupReminderNotificationsEnabled: boolean;
+  backupReminderPeriodDays: BackupReminderPeriodDays;
   aiProcessingAlertsEnabled: boolean;
+  transcriptionRecoveryNotificationsEnabled: boolean;
+  appLockRecordingNotificationsEnabled: boolean;
   cloudAiThirdPartyConsentAccepted: boolean;
   cloudAiKvTtlSeconds: number;
   /** Smart mode: show optional reasoning block on the summary tab. */
@@ -156,6 +191,10 @@ export type SettingsState = {
   setWhisperModel: (id: WhisperModelId) => void;
   setWhisperModelWeightsFormat: (value: WhisperModelWeightsFormat) => void;
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => void;
+  setTranscriptionQualityMode: (mode: TranscriptionQualityMode) => void;
+  setIosWhisperKitEngineEnabled: (value: boolean) => void;
+  setTranscriptionDiarizationEnabled: (value: boolean) => void;
+  setTranscriptionCustomWords: (words: string[]) => void;
   setSummaryStyle: (value: SummaryStyle) => void;
   setTaskStrictness: (value: TaskStrictness) => void;
   setAiOutputLanguage: (value: AiOutputLanguage) => void;
@@ -163,6 +202,7 @@ export type SettingsState = {
   setPrivateLocalLlmBudget: (value: PrivateLocalLlmBudget) => void;
   setPrivateRemoteOutputBudget: (value: PrivateRemoteOutputBudget) => void;
   setPrivateRemotePreferJsonObject: (value: boolean) => void;
+  setPrivateRemoteQueueConcurrency: (value: PrivateRemoteQueueConcurrency) => void;
   setPrivateCapabilityTier: (value: PrivateCapabilityTier) => void;
   setPrivateAiProvider: (value: PrivateAiProvider) => void;
   setPrivateRemoteBaseUrl: (value: string) => void;
@@ -174,17 +214,24 @@ export type SettingsState = {
   removePrivateRemoteProfile: (id: string) => void;
   setAutoTranscribeOnSave: (value: boolean) => void;
   setAutoAiAfterTranscription: (value: boolean) => void;
+  setPrivateAutoAiAfterTranscription: (value: boolean) => void;
   setAutoArchiveEnabled: (value: boolean) => void;
   setAutoArchiveAfterDays: (value: AutoArchiveAfterDays) => void;
+  setShakeToRecordEnabled: (value: boolean) => void;
+  setShakeToCancelAskAiEnabled: (value: boolean) => void;
   setTaskDeadlineNotificationsEnabled: (value: boolean) => void;
+  setBackupReminderNotificationsEnabled: (value: boolean) => void;
+  setBackupReminderPeriodDays: (value: BackupReminderPeriodDays) => void;
   setAiProcessingAlertsEnabled: (value: boolean) => void;
+  setTranscriptionRecoveryNotificationsEnabled: (value: boolean) => void;
+  setAppLockRecordingNotificationsEnabled: (value: boolean) => void;
   setCloudAiThirdPartyConsentAccepted: (value: boolean) => void;
   setCloudAiKvTtlSeconds: (value: number) => void;
   setShowSummaryReasoningInNotes: (value: boolean) => void;
   setAutoRefreshMeetingSpeakersOnRegen: (value: boolean) => void;
   setWhisperModelStatus: (
     id: WhisperModelId,
-    format: WhisperModelWeightsFormat,
+    format: WhisperModelStorageFormat,
     status: WhisperModelStatus,
   ) => void;
   setWhisperModelStatuses: (
@@ -192,13 +239,13 @@ export type SettingsState = {
   ) => void;
   setDownloadProgress: (
     id: WhisperModelId,
-    format: WhisperModelWeightsFormat,
+    format: WhisperModelStorageFormat,
     progress: number,
     bytesWritten?: number,
     contentLength?: number,
     phase?: WhisperDownloadPhase,
   ) => void;
-  removeWhisperModelStatus: (id: WhisperModelId, format: WhisperModelWeightsFormat) => void;
+  removeWhisperModelStatus: (id: WhisperModelId, format: WhisperModelStorageFormat) => void;
   setLocalLlmModelStatus: (id: LocalAiModelId, status: WhisperModelStatus) => void;
   setLocalLlmModelStatuses: (statuses: Partial<Record<LocalAiModelId, WhisperModelStatus>>) => void;
   setLocalLlmDownloadProgress: (

@@ -36,6 +36,15 @@ export const PRIVATE_REMOTE_COMPLETION_TIMEOUT_MS = 10 * 60 * 1000;
 /** Health check and model list. */
 export const PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS = 45 * 1000;
 
+/** Manual "Test AI server" should fail quickly enough to keep settings responsive. */
+export const PRIVATE_REMOTE_HEALTH_CHECK_TIMEOUT_MS = 8 * 1000;
+
+/** LAN discovery probe per host/port. */
+export const PRIVATE_REMOTE_LAN_PROBE_TIMEOUT_MS = 2_000;
+
+/** Parallel probes while scanning a /24 subnet. */
+export const PRIVATE_REMOTE_LAN_SCAN_CONCURRENCY = 32;
+
 export function resolvePrivateRemoteSummaryMaxTokens(
   budget: PrivateRemoteOutputBudget,
 ): number | null {
@@ -57,4 +66,15 @@ export function resolvePrivateRemoteMeetingDialogueMaxTokens(
 
 export function resolvePrivateRemoteJsonRepairMaxTokens(): number {
   return REMOTE_JSON_REPAIR_MAX_TOKENS;
+}
+
+/** Auto-organize JSON grows with note count; local servers need a higher floor than summaries. */
+export function resolvePrivateRemoteAutoOrganizeMaxTokens(
+  budget: PrivateRemoteOutputBudget,
+  noteCount: number,
+): number | null {
+  const budgetCap = resolvePrivateRemoteSummaryMaxTokens(budget);
+  const noteScaled = Math.min(16_384, 640 + Math.max(0, noteCount) * 56);
+  if (budgetCap === null) return noteScaled;
+  return Math.max(budgetCap, noteScaled);
 }

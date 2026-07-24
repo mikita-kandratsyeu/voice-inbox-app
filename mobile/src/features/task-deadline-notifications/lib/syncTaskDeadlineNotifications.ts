@@ -2,6 +2,7 @@ import notifee, { TriggerType } from '@notifee/react-native';
 
 import type { TaskItem } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import { diagWarn } from '@/shared/lib/appLogger';
 
 import { buildTaskDeadlineNotificationCopy } from './buildTaskDeadlineNotificationCopy';
 import { collectSchedulableTaskDeadlines } from './collectSchedulableTaskDeadlines';
@@ -11,12 +12,14 @@ import {
   MAX_TASK_DEADLINE_NOTIFICATIONS,
   TASK_DEADLINE_NOTIFICATION_CHANNEL_ID,
   TASK_DEADLINE_NOTIFICATION_TYPE,
+  TASK_DEADLINE_PRESS_OPEN,
 } from './constants';
 import { ensureTaskDeadlineNotificationChannel } from './ensureTaskDeadlineNotificationChannel';
 import {
   checkTaskNotificationPermission,
   requestTaskNotificationPermission,
 } from './requestTaskNotificationPermission';
+import { pruneExpiredTaskDeadlineSnoozes } from './taskDeadlineSnoozeStorage';
 
 const SYNC_DEBOUNCE_MS = 500;
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
@@ -50,7 +53,7 @@ async function scheduleTaskDeadlineNotification(input: {
       },
       android: {
         channelId: TASK_DEADLINE_NOTIFICATION_CHANNEL_ID,
-        pressAction: { id: 'default' },
+        pressAction: { id: TASK_DEADLINE_PRESS_OPEN },
         sound: 'default',
       },
       ios: {
@@ -82,7 +85,8 @@ export async function syncAllTaskDeadlineNotifications(): Promise<void> {
 
   const { useRecordStore } = await import('@/entities/record');
   const records = useRecordStore.getState().records;
-  const schedulable = collectSchedulableTaskDeadlines(records).slice(
+  const snoozeByTaskId = pruneExpiredTaskDeadlineSnoozes();
+  const schedulable = collectSchedulableTaskDeadlines(records, Date.now(), snoozeByTaskId).slice(
     0,
     MAX_TASK_DEADLINE_NOTIFICATIONS,
   );
@@ -105,9 +109,7 @@ export function scheduleTaskDeadlineNotificationSync(): void {
   syncTimer = setTimeout(() => {
     syncTimer = null;
     void syncAllTaskDeadlineNotifications().catch((err) => {
-      if (__DEV__) {
-        console.warn('[task-deadline-notifications] sync failed', err);
-      }
+      diagWarn('[task-deadline-notifications] sync failed', err);
     });
   }, SYNC_DEBOUNCE_MS);
 }
@@ -128,6 +130,13 @@ export async function enableTaskDeadlineNotifications(): Promise<boolean> {
 
 export async function disableTaskDeadlineNotifications(): Promise<void> {
   useSettingsStore.getState().setTaskDeadlineNotificationsEnabled(false);
+  const { clearAllTaskDeadlineSnoozes } = await import('./taskDeadlineSnoozeStorage');
+  clearAllTaskDeadlineSnoozes();
+  await cancelAllTaskDeadlineNotifications();
+}
+
+/** Cancel scheduled reminders without changing the stored preference. */
+export async function suspendTaskDeadlineNotifications(): Promise<void> {
   await cancelAllTaskDeadlineNotifications();
 }
 

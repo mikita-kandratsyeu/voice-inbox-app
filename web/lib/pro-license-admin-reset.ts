@@ -1,5 +1,6 @@
 import type { Prisma } from '@/generated/prisma/client';
 
+import { invalidateProEntitlementCache } from '@/lib/pro-entitlement';
 import { prisma } from '@/lib/prisma';
 
 function subtractCalendarMonthsUtc(base: Date, months: number): Date {
@@ -88,6 +89,10 @@ export async function resetConsumedProLicenseKey(
     }
     if (outcome.type === 'not_redeemed') {
       return { ok: false, error: 'Key is not redeemed', status: 400 };
+    }
+
+    if (outcome.previousDeviceId) {
+      invalidateProEntitlementCache(outcome.previousDeviceId);
     }
 
     return {

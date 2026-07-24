@@ -3,7 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, AppState, StatusBar, Text, View } from 'react-native';
+import { Alert, AppState, StatusBar, View } from 'react-native';
 import KeepAwake from 'react-native-keep-awake';
 
 import type { RootStackParamList } from '@/app/navigation/types';
@@ -11,6 +11,7 @@ import { useAppLockStore } from '@/entities/app-lock';
 import type { RecordingMark, RecordingMarkKind, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import { showRecordingStoppedByAppLockNotification } from '@/features/app-lock';
 import {
   computeAdsAllowedForInterstitial,
   getMaxRecordingMsForTier,
@@ -18,7 +19,17 @@ import {
 } from '@/features/app-storefront';
 import { useProEntitlement } from '@/features/pro-license';
 import { useRecordingDeeplinkStore } from '@/features/recording-deeplink/model/store';
-import { useTranscription } from '@/features/transcription';
+import {
+  completePendingTaskFollowUp,
+  peekPendingTaskFollowUp,
+  prepareRecordForTaskFollowUp,
+  usePendingTaskFollowUpStore,
+} from '@/features/task-outcome';
+import {
+  notifyAutoTranscriptionTooShort,
+  tryScheduleAutoTranscription,
+  useTranscription,
+} from '@/features/transcription';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
 import {
   runAfterNavigationTransition,
@@ -32,10 +43,12 @@ import { Waveform } from '@/shared/ui';
 import { generateRecordId } from '../lib/generateRecordId';
 import { generateRecordingMarkId } from '../lib/generateRecordingMarkId';
 import { getAutoTitle } from '../lib/getAutoTitle';
+import { useRecordingAudioRouteHint } from '../lib/useRecordingAudioRouteHint';
 import { useRecording } from '../model/useRecording';
 import { AddRecordingMarkSheet } from './AddRecordingMarkSheet';
 import { RecordDurationLimit } from './RecordDurationLimit';
 import { RecordLimitBar } from './RecordLimitBar';
+import { RecordOfflineStatusCard } from './RecordOfflineStatusCard';
 import { RecordScreenControls } from './RecordScreenControls';
 import { RecordScreenHeader } from './RecordScreenHeader';
 import { RecordTimer } from './RecordTimer';
@@ -63,12 +76,14 @@ export const RecordScreen = () => {
     () => getMaxRecordingMsForTier(isProActive, aiExecutionMode, privateAiProvider),
     [isProActive, aiExecutionMode, privateAiProvider],
   );
-  const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(autoTranscribeOnSave, isProActive);
+  const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(
+    autoTranscribeOnSave,
+    isProActive,
+    aiExecutionMode,
+  );
   const { startTranscription } = useTranscription();
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [saveModalReason, setSaveModalReason] = useState<
-    'user' | 'limit' | 'routeChange' | 'deeplink'
-  >('user');
+  const [saveModalReason, setSaveModalReason] = useState<'user' | 'limit' | 'deeplink'>('user');
   const requestShowSaveModal = useRecordingDeeplinkStore((s) => s.requestShowSaveModal);
   const setRequestShowSaveModal = useRecordingDeeplinkStore((s) => s.setRequestShowSaveModal);
   const pauseResumeRequestTick = useRecordingDeeplinkStore((s) => s.pauseResumeRequestTick);
@@ -76,24 +91,30 @@ export const RecordScreen = () => {
   const [title, setTitle] = useState('');
   const [recordingMarks, setRecordingMarks] = useState<RecordingMark[]>([]);
   const [markSheetVisible, setMarkSheetVisible] = useState(false);
-  const markSheetVisibleRef = useRef(false);
   const [markSheetOpenId, setMarkSheetOpenId] = useState(0);
   const [markSnapshotOffsetMs, setMarkSnapshotOffsetMs] = useState(0);
+  const [followUpContextHint, setFollowUpContextHint] = useState<string | null>(null);
+  const clearPendingFollowUp = usePendingTaskFollowUpStore((s) => s.clearPending);
   const [appState, setAppState] = useState(AppState.currentState);
-
-  useEffect(() => {
-    markSheetVisibleRef.current = markSheetVisible;
-  }, [markSheetVisible]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', setAppState);
     return () => sub.remove();
   }, []);
 
+  useEffect(() => {
+    if (!showSaveModal) return;
+    const pending = peekPendingTaskFollowUp();
+    if (!pending || pending.mode !== 'voice') return;
+    setTitle(pending.draft.suggestedTitle);
+    setFollowUpContextHint(t('taskOutcome.followUpRecordHint'));
+  }, [showSaveModal, t]);
+
   const {
     state,
     elapsed,
     elapsedMs,
+    audioLevelShared,
     audioPathRef,
     startRecording,
     pauseRecording,
@@ -102,18 +123,11 @@ export const RecordScreen = () => {
     discardRecording,
   } = useRecording({
     maxRecordingMs,
-    routeChangeSuppressedRef: markSheetVisibleRef,
     onLimitReached: () => {
       void logAnalyticsEvent('recording_limit_hit');
       setMarkSheetVisible(false);
       setTitle('');
       setSaveModalReason('limit');
-      setShowSaveModal(true);
-    },
-    onAudioRouteChange: () => {
-      setMarkSheetVisible(false);
-      setTitle('');
-      setSaveModalReason('routeChange');
       setShowSaveModal(true);
     },
     onRecordingStoppedByAppLock: (path, elapsed, elapsedMs) => {
@@ -143,9 +157,22 @@ export const RecordScreen = () => {
 
         useRecordStore.getState().addRecord(record);
 
+        void showRecordingStoppedByAppLockNotification({
+          recordId,
+          recordTitle: autoTitle,
+        });
+
         const persist = useSettingsStore.getState().autoTranscribeOnSave;
-        if (shouldApplyAutoTranscribeOnSave(persist, isProActive)) {
-          startTranscription(record);
+        if (shouldApplyAutoTranscribeOnSave(persist, isProActive, aiExecutionMode)) {
+          const scheduleResult = tryScheduleAutoTranscription(
+            record,
+            useRecordStore.getState().records,
+            (nextRecord) => startTranscription(nextRecord, undefined, { enforceMinDuration: true }),
+            record,
+          );
+          if (scheduleResult === 'too_short') {
+            notifyAutoTranscriptionTooShort();
+          }
         }
       };
 
@@ -182,6 +209,7 @@ export const RecordScreen = () => {
   const elapsedMsRef = useRef(elapsedMs);
   elapsedMsRef.current = elapsedMs;
 
+  const routeChangeHintVisible = useRecordingAudioRouteHint(state === 'recording');
   const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
 
   useFocusEffect(
@@ -229,6 +257,8 @@ export const RecordScreen = () => {
       return;
     }
     navigation.goBack();
+    clearPendingFollowUp();
+    setFollowUpContextHint(null);
   };
 
   const handlePauseResume = () => {
@@ -311,10 +341,30 @@ export const RecordScreen = () => {
         audioPath = resolvedPath;
       }
     }
-    const recordWithPath: VoiceRecord = { ...record, audioPath };
-    addRecord(recordWithPath);
+
+    const pendingFollowUp = peekPendingTaskFollowUp();
+    const recordWithPath = prepareRecordForTaskFollowUp(
+      { ...record, audioPath },
+      pendingFollowUp?.mode === 'voice' ? pendingFollowUp : null,
+    );
+
+    await addRecord(recordWithPath);
+    await completePendingTaskFollowUp(
+      recordWithPath.id,
+      pendingFollowUp?.mode === 'voice' ? pendingFollowUp : null,
+    );
+    setFollowUpContextHint(null);
+
     if (applyAutoTranscribe) {
-      startTranscription(recordWithPath);
+      const scheduleResult = tryScheduleAutoTranscription(
+        recordWithPath,
+        useRecordStore.getState().records,
+        (nextRecord) => startTranscription(nextRecord, undefined, { enforceMinDuration: true }),
+        recordWithPath,
+      );
+      if (scheduleResult === 'too_short') {
+        notifyAutoTranscriptionTooShort();
+      }
     }
   };
 
@@ -330,6 +380,8 @@ export const RecordScreen = () => {
   const handleSaveModalDiscard = async () => {
     await discardRecording();
     setShowSaveModal(false);
+    clearPendingFollowUp();
+    setFollowUpContextHint(null);
     navigation.goBack();
   };
 
@@ -345,16 +397,44 @@ export const RecordScreen = () => {
           <RecordLimitBar elapsedMs={elapsedMs} maxRecordingMs={maxRecordingMs} />
         </View>
         <View className="w-full px-2">
-          <Waveform
-            isAnimating={state === 'recording' && appState === 'active'}
-            color="rgba(255,255,255,0.58)"
-          />
+          <View
+            style={{
+              shadowColor: '#ffffff',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: state === 'recording' ? 0.3 : 0,
+              shadowRadius: 12,
+            }}
+          >
+            <Waveform
+              isAnimating={state === 'recording' && appState === 'active'}
+              color="rgba(255,255,255,0.65)"
+              inputLevel={audioLevelShared}
+              liveMetering={state === 'recording'}
+            />
+          </View>
         </View>
-        <View className="items-center gap-1" style={{ opacity: state === 'paused' ? 0 : 1 }}>
-          <Text className="text-[16px] font-medium text-white/90">{t('record.offlineHint')}</Text>
-          <Text className="text-[13px] text-center" style={{ color: 'rgba(255,255,255,0.7)' }}>
-            {isAppLockEnabled ? t('record.appLockHint') : t('record.noAppLockHint')}
-          </Text>
+        <View
+          className="w-full items-center px-2"
+          style={isProActive ? { paddingBottom: 32 } : undefined}
+        >
+          <RecordOfflineStatusCard
+            title={
+              routeChangeHintVisible ? t('record.routeChangeHintTitle') : t('record.offlineHint')
+            }
+            subtitle={
+              routeChangeHintVisible
+                ? t('record.routeChangeHintSubtitle')
+                : isAppLockEnabled
+                  ? t('record.appLockHint')
+                  : t('record.noAppLockHint')
+            }
+            marksHint={
+              isProActive && recordingMarks.length > 0 && !routeChangeHintVisible
+                ? t('record.saveModalMarksHint', { count: recordingMarks.length })
+                : null
+            }
+            hidden={state === 'paused'}
+          />
         </View>
       </View>
       <RecordScreenControls
@@ -387,7 +467,10 @@ export const RecordScreen = () => {
           onSaveComplete={handleSaveComplete}
           onDiscard={handleSaveModalDiscard}
           allowResume={saveModalReason === 'user'}
-          contextHint={saveModalReason === 'limit' ? t('record.saveAfterLimitHint') : null}
+          contextHint={
+            followUpContextHint ??
+            (saveModalReason === 'limit' ? t('record.saveAfterLimitHint') : null)
+          }
         />
       ) : null}
     </View>

@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 
+import { diagWarn } from '@/shared/lib/appLogger';
+
 import { useRecordingDeeplinkStore } from './store';
 
 export const useRecordingDeeplink = () => {
@@ -15,9 +17,7 @@ export const useRecordingDeeplink = () => {
       try {
         requestPauseResumeToggle();
       } catch (e) {
-        if (__DEV__) {
-          console.warn('[useRecordingDeeplink] failed to handle deeplink', e);
-        }
+        diagWarn('[useRecordingDeeplink] failed to handle deeplink', e);
       }
     },
     [requestPauseResumeToggle],

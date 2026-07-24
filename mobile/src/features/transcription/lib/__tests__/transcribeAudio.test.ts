@@ -18,6 +18,10 @@ jest.mock('@/shared/lib/fs', () => ({
   },
 }));
 
+jest.mock('@/shared/lib/appLogger', () => ({
+  diagWarn: jest.fn(),
+}));
+
 jest.mock('../whisperAppState', () => ({
   canRunWhisperGpuWork: jest.fn(),
 }));
@@ -27,20 +31,32 @@ jest.mock('../whisperNativeLifecycle', () => ({
   endWhisperNativeWork: jest.fn(),
 }));
 
+jest.mock('../audioVad', () => ({
+  analyzeWavSpeech: jest.fn().mockResolvedValue(null),
+}));
+
 import { AppState } from 'react-native';
 import type { WhisperContext } from 'whisper.rn';
 
 import { createWavChunk } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
 
+import { analyzeWavSpeech } from '../audioVad';
 import { transcribeAudio } from '../transcribeAudio';
 import { canRunWhisperGpuWork } from '../whisperAppState';
 
 const mockAddAppStateListener = jest.mocked(AppState.addEventListener);
 const mockCreateWavChunk = jest.mocked(createWavChunk);
 const mockUnlink = jest.mocked(NitroFS.unlink);
+const mockAnalyzeWavSpeech = jest.mocked(analyzeWavSpeech);
 const mockCanRunWhisperGpuWork = jest.mocked(canRunWhisperGpuWork);
 let mockAppStateRemove: jest.Mock;
+
+const baseTranscribeOptions = {
+  maxLen: 80,
+  temperature: 0,
+  temperatureInc: 0,
+};
 
 type Deferred<T> = {
   promise: Promise<T>;
@@ -82,6 +98,7 @@ describe('transcribeAudio', () => {
     mockCreateWavChunk.mockImplementation((_input: string, output: string) =>
       Promise.resolve(output),
     );
+    mockAnalyzeWavSpeech.mockResolvedValue(null);
     mockUnlink.mockResolvedValue(true);
   });
 
@@ -117,8 +134,10 @@ describe('transcribeAudio', () => {
       language: 'en',
     }).promise;
 
-    expect(transcribe).toHaveBeenCalledWith('/tmp/audio.wav', { language: 'en' });
-    expect(mockCreateWavChunk).not.toHaveBeenCalled();
+    expect(transcribe).toHaveBeenCalledWith('/tmp/audio.wav', {
+      ...baseTranscribeOptions,
+      language: 'en',
+    });
     expect(result).toEqual({
       fullText: 'hello',
       segments: [
@@ -135,7 +154,7 @@ describe('transcribeAudio', () => {
     expect(mockAppStateRemove).toHaveBeenCalled();
   });
 
-  it('creates one temporary WAV per long chunk, transcribes chunk files, offsets timestamps, and cleans up', async () => {
+  it('creates temporary WAV windows for long audio and offsets timestamps', async () => {
     const onProgress = jest.fn();
     const onChunkCompleted = jest.fn();
     const transcribe = jest.fn((path: string, _options: { prompt?: string }) => ({
@@ -159,21 +178,38 @@ describe('transcribeAudio', () => {
       }).promise,
     );
 
-    expect(mockCreateWavChunk).toHaveBeenCalledTimes(4);
     expect(mockCreateWavChunk.mock.calls.map((call) => call.slice(0, 4))).toEqual([
       ['/tmp/audio.wav', '/tmp/audio.wav.chunk-0.wav', 0, 20000],
       ['/tmp/audio.wav', '/tmp/audio.wav.chunk-1.wav', 15000, 20000],
       ['/tmp/audio.wav', '/tmp/audio.wav.chunk-2.wav', 30000, 20000],
       ['/tmp/audio.wav', '/tmp/audio.wav.chunk-3.wav', 45000, 5000],
     ]);
+    expect(transcribe).toHaveBeenCalledTimes(4);
     expect(transcribe.mock.calls.map((call) => call[0])).toEqual([
       '/tmp/audio.wav.chunk-0.wav',
       '/tmp/audio.wav.chunk-1.wav',
       '/tmp/audio.wav.chunk-2.wav',
       '/tmp/audio.wav.chunk-3.wav',
     ]);
-    expect(transcribe.mock.calls.every(([, options]) => !('offset' in options))).toBe(true);
-    expect(transcribe.mock.calls.every(([, options]) => !('duration' in options))).toBe(true);
+    expect(transcribe.mock.calls.map(([, options]) => options)).toEqual([
+      { ...baseTranscribeOptions, language: 'ru', prompt: undefined },
+      {
+        ...baseTranscribeOptions,
+        language: 'ru',
+        prompt: 'seg:/tmp/audio.wav.chunk-0.wav',
+      },
+      {
+        ...baseTranscribeOptions,
+        language: 'ru',
+        prompt: 'seg:/tmp/audio.wav.chunk-0.wav seg:/tmp/audio.wav.chunk-1.wav',
+      },
+      {
+        ...baseTranscribeOptions,
+        language: 'ru',
+        prompt:
+          'seg:/tmp/audio.wav.chunk-0.wav seg:/tmp/audio.wav.chunk-1.wav seg:/tmp/audio.wav.chunk-2.wav',
+      },
+    ]);
     expect(mockUnlink.mock.calls.map((call) => call[0])).toEqual([
       '/tmp/audio.wav.chunk-0.wav',
       '/tmp/audio.wav.chunk-1.wav',
@@ -181,6 +217,12 @@ describe('transcribeAudio', () => {
       '/tmp/audio.wav.chunk-3.wav',
     ]);
     expect(result.segments.map((segment) => segment.startMs)).toEqual([100, 15100, 30100, 45100]);
+    expect(result.segments.map((segment) => segment.startTime)).toEqual([
+      '00:00',
+      '00:15',
+      '00:30',
+      '00:45',
+    ]);
     expect(onProgress.mock.calls).toEqual([
       [1, 4],
       [2, 4],
@@ -188,6 +230,205 @@ describe('transcribeAudio', () => {
       [4, 4],
     ]);
     expect(onChunkCompleted).toHaveBeenCalledTimes(4);
+  });
+
+  it('drops fully overlapped segments when merging long transcription chunks', async () => {
+    const transcribe = jest.fn((path: string, _options: { prompt?: string }) => {
+      const isSecondChunk = path.includes('.chunk-1.wav');
+      return {
+        stop: jest.fn().mockResolvedValue(undefined),
+        promise: Promise.resolve(
+          isSecondChunk
+            ? {
+                result: 'duplicate second',
+                segments: [
+                  { text: 'duplicate', t0: 0, t1: 500 },
+                  { text: 'second', t0: 600, t1: 1000 },
+                ],
+              }
+            : {
+                result: 'first',
+                segments: [{ text: 'first', t0: 0, t1: 2000 }],
+              },
+        ),
+      };
+    });
+    const context = { transcribe } as unknown as WhisperContext;
+
+    const result = await runTimersUntilSettled(
+      transcribeAudio({
+        context,
+        audioPath: '/tmp/audio.wav',
+        durationMs: 30_000,
+        chunkProfile: { chunkDurationSec: 20, chunkOverlapSec: 5 },
+      }).promise,
+    );
+
+    expect(result.fullText).toBe('first second');
+    expect(result.segments.map((segment) => segment.text)).toEqual(['first', 'second']);
+    expect(result.segments.map((segment) => segment.id)).toEqual(['0', '1']);
+  });
+
+  it('deduplicates overlapped text when merging long transcription chunks', async () => {
+    const transcribe = jest.fn((path: string) => {
+      const isSecondChunk = path.includes('.chunk-1.wav');
+      return {
+        stop: jest.fn().mockResolvedValue(undefined),
+        promise: Promise.resolve(
+          isSecondChunk
+            ? {
+                result: 'world again tomorrow',
+                segments: [{ text: 'world again tomorrow', t0: 0, t1: 1000 }],
+              }
+            : {
+                result: 'hello world again',
+                segments: [{ text: 'hello world again', t0: 0, t1: 2000 }],
+              },
+        ),
+      };
+    });
+    const context = { transcribe } as unknown as WhisperContext;
+
+    const result = await runTimersUntilSettled(
+      transcribeAudio({
+        context,
+        audioPath: '/tmp/audio.wav',
+        durationMs: 30_000,
+        chunkProfile: { chunkDurationSec: 20, chunkOverlapSec: 5 },
+      }).promise,
+    );
+
+    expect(result.fullText).toBe('hello world again tomorrow');
+  });
+
+  it('passes custom vocabulary in the whisper prompt', async () => {
+    const transcribe = jest.fn(() => ({
+      stop: jest.fn().mockResolvedValue(undefined),
+      promise: Promise.resolve({
+        result: 'hello',
+        segments: [{ text: 'hello', t0: 0, t1: 100 }],
+      }),
+    }));
+    const context = { transcribe } as unknown as WhisperContext;
+
+    await transcribeAudio({
+      context,
+      audioPath: '/tmp/audio.wav',
+      durationMs: 10_000,
+      customWords: ['OpenAI', 'ChargeBee'],
+    }).promise;
+
+    expect(transcribe).toHaveBeenCalledWith('/tmp/audio.wav', {
+      ...baseTranscribeOptions,
+      language: 'auto',
+      prompt: 'OpenAI, ChargeBee',
+    });
+  });
+
+  it('filters obvious repeated-token hallucinations and does not use them as prompt', async () => {
+    const transcribe = jest.fn((path: string, _options: { prompt?: string }) => {
+      const firstChunk = path.includes('.chunk-0.wav');
+      return {
+        stop: jest.fn().mockResolvedValue(undefined),
+        promise: Promise.resolve(
+          firstChunk
+            ? {
+                result: 'але але але але але але',
+                segments: [{ text: 'але але але але але але', t0: 0, t1: 1000 }],
+              }
+            : {
+                result: 'normal speech',
+                segments: [{ text: 'normal speech', t0: 0, t1: 1000 }],
+              },
+        ),
+      };
+    });
+    const context = { transcribe } as unknown as WhisperContext;
+
+    const result = await runTimersUntilSettled(
+      transcribeAudio({
+        context,
+        audioPath: '/tmp/audio.wav',
+        durationMs: 30_000,
+        chunkProfile: { chunkDurationSec: 20, chunkOverlapSec: 5 },
+      }).promise,
+    );
+
+    expect(transcribe.mock.calls[1]?.[1]?.prompt).toBeUndefined();
+    expect(result.fullText).toBe('normal speech');
+    expect(result.segments.map((segment) => segment.text)).toEqual(['normal speech']);
+  });
+
+  it('ignores suspiciously tiny VAD trims for long chunks', async () => {
+    mockAnalyzeWavSpeech.mockResolvedValue({
+      hasSpeech: true,
+      trimStartMs: 10_000,
+      trimDurationMs: 1_000,
+    });
+    const transcribe = jest.fn(() => ({
+      stop: jest.fn().mockResolvedValue(undefined),
+      promise: Promise.resolve({
+        result: 'long chunk speech',
+        segments: [{ text: 'long chunk speech', t0: 0, t1: 100 }],
+      }),
+    }));
+    const context = { transcribe } as unknown as WhisperContext;
+
+    const result = await runTimersUntilSettled(
+      transcribeAudio({
+        context,
+        audioPath: '/tmp/audio.wav',
+        durationMs: 20_000,
+      }).promise,
+    );
+
+    expect(mockCreateWavChunk).not.toHaveBeenCalledWith(
+      '/tmp/audio.wav',
+      '/tmp/audio.wav.vad-trim.wav',
+      10_000,
+      1_000,
+    );
+    expect(transcribe).toHaveBeenCalledWith('/tmp/audio.wav', {
+      ...baseTranscribeOptions,
+      language: 'auto',
+    });
+    expect(result.fullText).toBe('long chunk speech');
+  });
+
+  it('skips VAD trim when policy is skipSilentOnly', async () => {
+    mockAnalyzeWavSpeech.mockResolvedValue({
+      hasSpeech: true,
+      trimStartMs: 2_000,
+      trimDurationMs: 15_000,
+    });
+    const transcribe = jest.fn(() => ({
+      stop: jest.fn().mockResolvedValue(undefined),
+      promise: Promise.resolve({
+        result: 'speech without trim',
+        segments: [{ text: 'speech without trim', t0: 0, t1: 100 }],
+      }),
+    }));
+    const context = { transcribe } as unknown as WhisperContext;
+
+    await runTimersUntilSettled(
+      transcribeAudio({
+        context,
+        audioPath: '/tmp/audio.wav',
+        durationMs: 20_000,
+        vadPolicy: 'skipSilentOnly',
+      }).promise,
+    );
+
+    expect(mockCreateWavChunk).not.toHaveBeenCalledWith(
+      '/tmp/audio.wav',
+      '/tmp/audio.wav.vad-trim.wav',
+      expect.any(Number),
+      expect.any(Number),
+    );
+    expect(transcribe).toHaveBeenCalledWith('/tmp/audio.wav', {
+      ...baseTranscribeOptions,
+      language: 'auto',
+    });
   });
 
   it('resumes long transcription from checkpoint state', async () => {
@@ -217,7 +458,7 @@ describe('transcribeAudio', () => {
       }).promise,
     );
 
-    expect(mockCreateWavChunk.mock.calls.map((call) => call[1])).toEqual([
+    expect(transcribe.mock.calls.map((call) => call[0])).toEqual([
       '/tmp/audio.wav.chunk-2.wav',
       '/tmp/audio.wav.chunk-3.wav',
     ]);
@@ -227,10 +468,10 @@ describe('transcribeAudio', () => {
   });
 
   it('recycles Whisper context every twelve completed chunks during long transcription', async () => {
-    const transcribe = jest.fn((path: string) => ({
+    const transcribe = jest.fn(() => ({
       stop: jest.fn().mockResolvedValue(undefined),
       promise: Promise.resolve({
-        result: path,
+        result: 'chunk',
         segments: [],
       }),
     }));

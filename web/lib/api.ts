@@ -11,6 +11,12 @@ import {
   RATE_LIMIT_DEVICE_KEY_PREFIX,
   RATE_LIMIT_DEVICE_MAX_REQUESTS,
   RATE_LIMIT_DEVICE_WINDOW_SECONDS,
+  PUBLISH_RATE_LIMIT_KEY_PREFIX,
+  PUBLISH_RATE_LIMIT_MAX_REQUESTS,
+  PUBLISH_RATE_LIMIT_WINDOW_SECONDS,
+  SHARE_EMAIL_RATE_LIMIT_KEY_PREFIX,
+  SHARE_EMAIL_RATE_LIMIT_MAX_REQUESTS,
+  SHARE_EMAIL_RATE_LIMIT_WINDOW_SECONDS,
   SUPPORT_RATE_LIMIT_KEY_PREFIX,
   SUPPORT_RATE_LIMIT_MAX_REQUESTS,
   SUPPORT_RATE_LIMIT_WINDOW_SECONDS,
@@ -149,12 +155,56 @@ export async function checkSupportRateLimit(deviceId: string): Promise<NextRespo
   if (count > SUPPORT_RATE_LIMIT_MAX_REQUESTS) {
     return NextResponse.json(
       {
-        error: 'Too many support requests. Try again later.',
+        error: 'Too many requests. Please try again later.',
         code: ApiErrorCode.SupportRateLimited,
       },
       {
         status: HttpStatus.TOO_MANY_REQUESTS,
         headers: { 'Retry-After': String(SUPPORT_RATE_LIMIT_WINDOW_SECONDS) },
+      },
+    );
+  }
+  return null;
+}
+
+export async function checkPublishRateLimit(deviceId: string): Promise<NextResponse | null> {
+  const window = Math.floor(Date.now() / 1000 / PUBLISH_RATE_LIMIT_WINDOW_SECONDS);
+  const key = `${PUBLISH_RATE_LIMIT_KEY_PREFIX}${deviceId}:${window}`;
+  const count = await redis.incr(key);
+  if (count === 1) {
+    await redis.expire(key, PUBLISH_RATE_LIMIT_WINDOW_SECONDS);
+  }
+  if (count > PUBLISH_RATE_LIMIT_MAX_REQUESTS) {
+    return NextResponse.json(
+      {
+        error: 'Too many publish requests. Try again later.',
+        code: ApiErrorCode.PublishRateLimited,
+      },
+      {
+        status: HttpStatus.TOO_MANY_REQUESTS,
+        headers: { 'Retry-After': String(PUBLISH_RATE_LIMIT_WINDOW_SECONDS) },
+      },
+    );
+  }
+  return null;
+}
+
+export async function checkShareEmailRateLimit(deviceId: string): Promise<NextResponse | null> {
+  const window = Math.floor(Date.now() / 1000 / SHARE_EMAIL_RATE_LIMIT_WINDOW_SECONDS);
+  const key = `${SHARE_EMAIL_RATE_LIMIT_KEY_PREFIX}${deviceId}:${window}`;
+  const count = await redis.incr(key);
+  if (count === 1) {
+    await redis.expire(key, SHARE_EMAIL_RATE_LIMIT_WINDOW_SECONDS);
+  }
+  if (count > SHARE_EMAIL_RATE_LIMIT_MAX_REQUESTS) {
+    return NextResponse.json(
+      {
+        error: 'Too many share email requests. Try again later.',
+        code: ApiErrorCode.ShareEmailRateLimited,
+      },
+      {
+        status: HttpStatus.TOO_MANY_REQUESTS,
+        headers: { 'Retry-After': String(SHARE_EMAIL_RATE_LIMIT_WINDOW_SECONDS) },
       },
     );
   }
@@ -221,28 +271,6 @@ export async function parseJsonBody<T>(request: Request): Promise<T | null> {
   }
 }
 
-export function getAppSecret(): string | null {
-  const secret = process.env.APP_SECRET?.trim();
-  return secret || null;
-}
-
-export function requireAppSecretForToken(request: Request): NextResponse | null {
-  const secret = request.headers.get('x-app-secret')?.trim();
-  if (!secret) {
-    return apiError('Unauthorized', HttpStatus.UNAUTHORIZED, { code: ApiErrorCode.Unauthorized });
-  }
-  const accepted = getAppSecret();
-  if (!accepted) {
-    return apiError('Server misconfiguration', HttpStatus.UNAUTHORIZED, {
-      code: ApiErrorCode.Unauthorized,
-    });
-  }
-  if (secret !== accepted) {
-    return apiError('Unauthorized', HttpStatus.UNAUTHORIZED, { code: ApiErrorCode.Unauthorized });
-  }
-  return null;
-}
-
 export async function requireAppAuth(): Promise<NextResponse | null> {
   const headersList = await headers();
   const authHeader = headersList.get('authorization')?.trim();
@@ -264,37 +292,4 @@ export async function requireAppAuth(): Promise<NextResponse | null> {
   }
 
   return null;
-}
-
-export type AssertMobileDeviceResult =
-  | { ok: true; deviceId: string }
-  | { ok: false; response: NextResponse };
-
-/** App JWT + mobile UA + `x-device-id` + device rate limit (shared by several mobile API handlers). */
-export async function assertMobileAuthenticatedDevice(
-  request: Request,
-  pathname: string,
-): Promise<AssertMobileDeviceResult> {
-  const authError = await requireAppAuth();
-  if (authError) {
-    return { ok: false, response: authError };
-  }
-  const uaError = await requireMobileUserAgent();
-  if (uaError) {
-    return { ok: false, response: uaError };
-  }
-  const deviceId = request.headers.get(HEADER_DEVICE_ID);
-  const deviceIdError = validateDeviceId(deviceId);
-  if (deviceIdError) {
-    return {
-      ok: false,
-      response: apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname }),
-    };
-  }
-  const deviceIdTrimmed = deviceId!.trim();
-  const rateLimitError = await checkDeviceRateLimit(deviceIdTrimmed, { pathname });
-  if (rateLimitError) {
-    return { ok: false, response: rateLimitError };
-  }
-  return { ok: true, deviceId: deviceIdTrimmed };
 }

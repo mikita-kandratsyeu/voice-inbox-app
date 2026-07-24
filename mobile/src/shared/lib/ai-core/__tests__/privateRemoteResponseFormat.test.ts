@@ -1,4 +1,7 @@
-import { buildPrivateRemoteJsonSchemaResponseFormat } from '../private-remote/privateRemoteResponseFormat';
+import {
+  buildPrivateRemoteJsonSchemaResponseFormat,
+  resolveAutoOrganizeSchemaKind,
+} from '../private-remote/privateRemoteResponseFormat';
 
 function collectTypeFields(value: unknown, path = '$'): string[] {
   if (!value || typeof value !== 'object') return [];
@@ -39,6 +42,35 @@ describe('buildPrivateRemoteJsonSchemaResponseFormat', () => {
   it('digest schema uses only string JSON Schema type fields', () => {
     const format = buildPrivateRemoteJsonSchemaResponseFormat('digest');
     const schema = (format.json_schema as { schema: unknown }).schema;
+    expect(collectTypeFields(schema)).toEqual([]);
+  });
+
+  it('archive organize schema requires archiveSuggestions only', () => {
+    const kind = resolveAutoOrganizeSchemaKind('suggest_archive');
+    expect(kind).toBe('auto_organize_archive');
+    const format = buildPrivateRemoteJsonSchemaResponseFormat(kind);
+    const schema = (format.json_schema as { schema: Record<string, unknown> }).schema;
+    expect((schema.required as string[]) ?? []).toEqual(['archiveSuggestions']);
+    expect(schema.properties).toHaveProperty('archiveSuggestions');
+    expect(schema.properties).not.toHaveProperty('folders');
+  });
+
+  it('consolidate organize schema requires merges and deleteEmptyFolderNames', () => {
+    const kind = resolveAutoOrganizeSchemaKind('consolidate_folders');
+    expect(kind).toBe('auto_organize_consolidate');
+    const format = buildPrivateRemoteJsonSchemaResponseFormat(kind);
+    const schema = (format.json_schema as { schema: Record<string, unknown> }).schema;
+    expect((schema.required as string[]) ?? []).toEqual(['merges', 'deleteEmptyFolderNames']);
+  });
+
+  it('ask schema exposes interpretations for private remote structured output', () => {
+    const format = buildPrivateRemoteJsonSchemaResponseFormat('ask');
+    const schema = (format.json_schema as { schema: Record<string, unknown> }).schema;
+    const properties = schema.properties as Record<string, unknown>;
+    expect(properties).toHaveProperty('answer');
+    expect(properties).toHaveProperty('interpretations');
+    expect(properties).toHaveProperty('evidence');
+    expect(properties).toHaveProperty('suggestedFollowUps');
     expect(collectTypeFields(schema)).toEqual([]);
   });
 });

@@ -1,10 +1,14 @@
-/** Local-only HTML previews (`/api/dev/*`). Disabled when `NODE_ENV === 'production'`. */
+import { type AppEnv, isDevelopmentAppEnv } from '@/lib/app-env';
+
+/** Local-only HTML previews (`/api/dev/*`). Disabled unless `APP_ENV=development`. */
 
 export type DevPreviewExample = {
   label: string;
   /** Query string without leading `?`, or empty for default. */
   query: string;
 };
+
+export type DevPreviewContentKind = 'html' | 'pdf';
 
 export type DevPreviewEntry = {
   id: string;
@@ -13,6 +17,7 @@ export type DevPreviewEntry = {
   apiPath: string;
   /** Optional Next.js page with the same fixtures (dev only). */
   pagePath?: string;
+  contentKind?: DevPreviewContentKind;
   examples: DevPreviewExample[];
 };
 
@@ -22,10 +27,36 @@ export const DEV_PREVIEW_CATALOG: readonly DevPreviewEntry[] = [
     title: 'Share note email',
     description: 'Transactional email when a user shares a note by email (markdown body).',
     apiPath: '/api/dev/share-note-email-preview',
+    contentKind: 'html',
     examples: [
       { label: 'Default (speaker turns)', query: '' },
       { label: 'Transcript', query: 'variant=transcript' },
       { label: 'Meeting brief', query: 'variant=meeting-brief' },
+      { label: 'Long speaker names', query: 'variant=long-speaker-names' },
+      { label: 'Tasks (mixed status)', query: 'variant=tasks' },
+      { label: 'Short note', query: 'variant=short-note' },
+      { label: 'Long meeting', query: 'variant=long-meeting' },
+      { label: 'EN meeting', query: 'variant=en-meeting' },
+      { label: 'RU locale shell', query: 'variant=meeting-brief&locale=ru' },
+      { label: 'Custom title', query: 'variant=meeting-brief&title=Demo' },
+    ],
+  },
+  {
+    id: 'share-note-pdf',
+    title: 'Share note PDF attachment',
+    description:
+      'PDF attached when a user emails a note as PDF (same markdown fixtures as the email preview).',
+    apiPath: '/api/dev/share-note-pdf-preview',
+    contentKind: 'pdf',
+    examples: [
+      { label: 'Default (speaker turns)', query: '' },
+      { label: 'Transcript', query: 'variant=transcript' },
+      { label: 'Meeting brief', query: 'variant=meeting-brief' },
+      { label: 'Long speaker names', query: 'variant=long-speaker-names' },
+      { label: 'Tasks (mixed status)', query: 'variant=tasks' },
+      { label: 'Short note', query: 'variant=short-note' },
+      { label: 'Long meeting', query: 'variant=long-meeting' },
+      { label: 'EN meeting', query: 'variant=en-meeting' },
       { label: 'Custom title', query: 'variant=meeting-brief&title=Demo' },
     ],
   },
@@ -62,8 +93,13 @@ export const DEV_PREVIEW_CATALOG: readonly DevPreviewEntry[] = [
   },
 ] as const;
 
+export function isDevPreviewCatalogEnabledForAppEnv(appEnv: AppEnv): boolean {
+  return appEnv === 'development';
+}
+
+/** Server-only; client components should use `isDevPreviewCatalogEnabledForAppEnv(appEnv)`. */
 export function isDevPreviewCatalogEnabled(): boolean {
-  return process.env.NODE_ENV !== 'production';
+  return isDevelopmentAppEnv();
 }
 
 export function buildDevPreviewUrl(origin: string, apiPath: string, query = ''): string {

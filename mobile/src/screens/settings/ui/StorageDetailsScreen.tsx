@@ -14,7 +14,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import Animated, { Easing, FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -24,27 +24,31 @@ import { useRecordStore } from '@/entities/record';
 import { recordRepository } from '@/entities/record/model/repository';
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
 import {
+  getOfflineWhisperStorageLabel,
   getRecommendedWhisperModelId,
   LOCAL_AI_MODELS,
   useSettingsStore,
+  WHISPER_KIT_STORAGE_FORMAT,
   WHISPER_MODELS,
 } from '@/entities/settings';
-import { getWhisperModelDisplayName } from '@/entities/settings/model/constants';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import {
   applySharedCoreMlToWhisperVariantBytes,
   cancelLocalLlmModelDownload,
   cancelWhisperModelDownload,
+  deleteAllArgmaxTranscriptionModels,
   deleteLocalLlmModel,
   deleteWhisperModel,
   getLocalLlmModelFileSizeBytes,
   getModelFileSizeBytes,
+  getSpeakerKitStorageBytesOnDisk,
+  listDownloadedWhisperKitModels,
 } from '@/features/model-manager';
 import {
   stopLocalAiDownloadLiveActivity,
   stopWhisperDownloadLiveActivity,
 } from '@/features/model-manager/lib/downloadLiveActivity';
-import { useColors } from '@/shared/config';
+import { FADE_IN_EASING_OUT_CUBIC, useColors, useFadeInEntering } from '@/shared/config';
 import {
   clearCache,
   computeAiDataBytes,
@@ -58,9 +62,10 @@ import {
   useTabletContentMaxWidth,
 } from '@/shared/lib';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
-import { IS_ANDROID } from '@/shared/lib/platform';
+import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 import runAfterInteractions from '@/shared/lib/runAfterInteractions';
 import { formatFileSize, getWhisperModelPath } from '@/shared/lib/whisper';
 import {
@@ -104,12 +109,10 @@ const EMPTY_TRASH_STORAGE = {
 /** Hide breakdown ring/list rows below this size (noise vs empty). */
 const STORAGE_BREAKDOWN_MIN_BYTES = 1024;
 
-const STORAGE_BREAKDOWN_ENTER = FadeIn.duration(220).easing(Easing.out(Easing.cubic));
-
 type DownloadedModelVariant = {
-  id: WhisperModelId;
+  id: WhisperModelId | 'speaker-kit';
   name: string;
-  format: WhisperModelWeightsFormat;
+  format: WhisperModelWeightsFormat | 'whisperkit' | 'speakerkit';
   bytes: number;
 };
 
@@ -121,6 +124,7 @@ type DownloadedLocalLlmEntry = {
 
 export const StorageDetailsScreen = () => {
   const { t } = useTranslation();
+  const breakdownExpandEntering = useFadeInEntering(220, { easing: FADE_IN_EASING_OUT_CUBIC });
   const color = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
@@ -160,9 +164,43 @@ export const StorageDetailsScreen = () => {
         }),
       ),
     );
-    const whisperEntries = await applySharedCoreMlToWhisperVariantBytes(
-      whisperEntriesRaw.filter((x): x is DownloadedModelVariant => x != null),
+    const ggmlEntries = await applySharedCoreMlToWhisperVariantBytes(
+      whisperEntriesRaw.filter(
+        (
+          entry,
+        ): entry is {
+          id: WhisperModelId;
+          name: string;
+          format: WhisperModelWeightsFormat;
+          bytes: number;
+        } => entry != null,
+      ),
     );
+    const whisperEntries: DownloadedModelVariant[] = [...ggmlEntries];
+
+    if (IS_IOS) {
+      const kitModels = await listDownloadedWhisperKitModels();
+      for (const { id, bytes } of kitModels) {
+        const model = WHISPER_MODELS.find((entry) => entry.id === id);
+        whisperEntries.push({
+          id,
+          name: model?.name ?? id,
+          format: 'whisperkit',
+          bytes,
+        });
+      }
+
+      const speakerKitBytes = await getSpeakerKitStorageBytesOnDisk();
+      if (speakerKitBytes > 0) {
+        whisperEntries.push({
+          id: 'speaker-kit',
+          name: 'SpeakerKit',
+          format: 'speakerkit',
+          bytes: speakerKitBytes,
+        });
+      }
+    }
+
     const localEntries = await Promise.all(
       LOCAL_AI_MODELS.map(async (m) => {
         const path = getLocalLlmModelPath(m.id);
@@ -222,7 +260,7 @@ export const StorageDetailsScreen = () => {
           recordsWithAudio: trashedPayloads.filter((t) => Boolean(t.audioPath)).length,
         });
       } catch (err) {
-        if (__DEV__) console.warn('[StorageDetails] Failed to load stats:', err);
+        diagWarn('[StorageDetails] Failed to load stats:', err);
         setTrashStorage(EMPTY_TRASH_STORAGE);
       } finally {
         setIsLoading(false);
@@ -407,7 +445,7 @@ export const StorageDetailsScreen = () => {
                 : t('storage.cacheCleared', { freed: freedKb });
             Alert.alert(t('common.done'), msg);
           } catch (err) {
-            if (__DEV__) console.warn('[StorageDetails] Failed to clear cache:', err);
+            diagWarn('[StorageDetails] Failed to clear cache:', err);
             Alert.alert(t('common.error'), t('storage.cacheClearError'));
           } finally {
             setIsClearing(false);
@@ -452,7 +490,12 @@ export const StorageDetailsScreen = () => {
               await deleteWhisperModel(model.id, fmt);
               useSettingsStore.getState().removeWhisperModelStatus(model.id, fmt);
             }
+            useSettingsStore
+              .getState()
+              .removeWhisperModelStatus(model.id, WHISPER_KIT_STORAGE_FORMAT);
           }
+
+          await deleteAllArgmaxTranscriptionModels();
 
           const fmt = useSettingsStore.getState().whisperModelWeightsFormat;
           useSettingsStore.getState().setWhisperModel(getRecommendedWhisperModelId(fmt));
@@ -504,7 +547,7 @@ export const StorageDetailsScreen = () => {
           navigation.goBack();
         }
       } catch (err) {
-        if (__DEV__) console.warn('[StorageDetails] Selective delete failed:', err);
+        diagWarn('[StorageDetails] Selective delete failed:', err);
         Alert.alert(t('common.error'), t('storage.deleteAllError'));
       } finally {
         setIsDeletingAll(false);
@@ -705,7 +748,7 @@ export const StorageDetailsScreen = () => {
                           />
                           {expanded && hasExp ? (
                             <Animated.View
-                              entering={STORAGE_BREAKDOWN_ENTER}
+                              entering={breakdownExpandEntering}
                               style={{
                                 paddingLeft: 16 + ROW_BULLET_SIZE + 12,
                                 paddingRight: 8 + ROW_TRAIL_SLOT_W,
@@ -975,7 +1018,7 @@ export const StorageDetailsScreen = () => {
                                           }}
                                           numberOfLines={2}
                                         >
-                                          {getWhisperModelDisplayName(model.id, model.format)}
+                                          {getOfflineWhisperStorageLabel(model.id, model.format, t)}
                                         </Text>
                                         <Text
                                           style={{
@@ -1112,7 +1155,8 @@ export const StorageDetailsScreen = () => {
             <SettingsRow
               label={t('storage.deleteAllData')}
               leftIcon={<Trash2 size={20} color={color.accent.delete} strokeWidth={1.8} />}
-              onPress={isDeletingAll ? undefined : handleOpenDeleteStorageSheet}
+              loading={isDeletingAll}
+              onPress={handleOpenDeleteStorageSheet}
               dangerous
               isFirst
               isLast

@@ -3,13 +3,15 @@ import { Image } from 'react-native';
 import BootSplash, { type Manifest } from 'react-native-bootsplash';
 import Animated, {
   Easing,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import bootsplashManifest from '@/shared/assets/bootsplash/manifest.json';
+import { ANIMATION_DURATIONS, SCALE_VALUES, TIMING_CONFIGS } from '@/shared/config';
+import { useMountedRef, useSafeCallback } from '@/shared/lib';
 
 const LOGO_CORNER_RADIUS = 22;
 
@@ -21,27 +23,26 @@ type Props = {
 };
 
 export function AnimatedBootSplash({ ready, onAnimationEnd }: Props) {
-  const logoScale = useSharedValue(1);
+  const mountedRef = useMountedRef();
+  const safeOnAnimationEnd = useSafeCallback(mountedRef, onAnimationEnd);
+  const logoScale = useSharedValue(SCALE_VALUES.normal);
   const containerOpacity = useSharedValue(1);
 
   const handleAnimate = useCallback(() => {
-    logoScale.value = withTiming(1.07, {
-      duration: 420,
-      easing: Easing.out(Easing.cubic),
-    });
+    logoScale.value = withTiming(SCALE_VALUES.bootSplashEnd, TIMING_CONFIGS.bootSplash);
     containerOpacity.value = withTiming(
       0,
       {
-        duration: 480,
+        duration: ANIMATION_DURATIONS.fadeOut,
         easing: Easing.out(Easing.quad),
       },
       (finished) => {
         if (finished) {
-          runOnJS(onAnimationEnd)();
+          scheduleOnRN(safeOnAnimationEnd);
         }
       },
     );
-  }, [containerOpacity, logoScale, onAnimationEnd]);
+  }, [containerOpacity, logoScale, safeOnAnimationEnd]);
 
   const { container, logo } = BootSplash.useHideAnimation({
     manifest,

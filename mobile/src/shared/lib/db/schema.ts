@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const foldersTable = sqliteTable('folders', {
   id: text('id').primaryKey(),
@@ -39,6 +39,7 @@ export const recordsTable = sqliteTable(
     summaryReasoning: text('summaryReasoning'),
     summaryAiModel: text('summaryAiModel'),
     summaryAiModelLabel: text('summaryAiModelLabel'),
+    summaryAiModelMode: text('summaryAiModelMode'),
     summaryTokensPrompt: integer('summaryTokensPrompt'),
     summaryTokensCompletion: integer('summaryTokensCompletion'),
     summaryGenerationMs: integer('summaryGenerationMs'),
@@ -47,6 +48,7 @@ export const recordsTable = sqliteTable(
     audioPath: text('audioPath'),
     embedding: text('embedding'),
     folderId: text('folderId'),
+    linkedRecordIds: text('linkedRecordIds').default('[]'),
     deletedAt: text('deletedAt'),
     purgeAt: text('purgeAt'),
   },
@@ -64,6 +66,12 @@ export const recordAskAiTable = sqliteTable('record_ask_ai', {
   updatedAt: text('updatedAt').notNull(),
 });
 
+export const inboxAskAiTable = sqliteTable('inbox_ask_ai', {
+  sessionKey: text('sessionKey').primaryKey(),
+  payload: text('payload').notNull(),
+  updatedAt: text('updatedAt').notNull(),
+});
+
 /** Cloud summarize job to resume after app kill (one row per record). */
 export const cloudAiPendingTable = sqliteTable(
   'cloud_ai_pending',
@@ -73,9 +81,64 @@ export const cloudAiPendingTable = sqliteTable(
     syncToken: text('syncToken'),
     expectAsyncMeetingDialogue: integer('expectAsyncMeetingDialogue').default(0).notNull(),
     expiresAtMs: integer('expiresAtMs').notNull(),
+    pollExpiresAtMs: integer('pollExpiresAtMs'),
     updatedAt: text('updatedAt').notNull(),
   },
   (t) => [index('idx_cloud_ai_pending_jobId').on(t.jobId)],
+);
+
+/** Deferred private-server AI work (summarize after transcription, etc.). */
+export const privateAiTaskQueueTable = sqliteTable(
+  'private_ai_task_queue',
+  {
+    id: text('id').primaryKey(),
+    recordId: text('recordId').notNull(),
+    taskType: text('taskType').notNull(),
+    source: text('source').notNull(),
+    attemptCount: integer('attemptCount').default(0).notNull(),
+    lastError: text('lastError'),
+    createdAt: text('createdAt').notNull(),
+    updatedAt: text('updatedAt').notNull(),
+  },
+  (t) => [
+    index('idx_private_ai_task_queue_recordId').on(t.recordId),
+    uniqueIndex('idx_private_ai_task_queue_record_task').on(t.recordId, t.taskType),
+  ],
+);
+
+export const recordPublishedShareTable = sqliteTable(
+  'record_published_share',
+  {
+    recordId: text('recordId').primaryKey(),
+    shareToken: text('shareToken').notNull(),
+    shareUrl: text('shareUrl').notNull(),
+    template: text('template').notNull(),
+    contentHash: text('contentHash').notNull(),
+    publishedAt: text('publishedAt').notNull(),
+    expiresAt: text('expiresAt'),
+    updatedAt: text('updatedAt').notNull(),
+  },
+  (t) => [
+    uniqueIndex('idx_record_published_share_token').on(t.shareToken),
+    index('idx_record_published_share_expires').on(t.expiresAt),
+  ],
+);
+
+/** Versioned note-map node positions (per filter layout key). */
+export const notesGraphLayoutVersionTable = sqliteTable(
+  'notes_graph_layout_version',
+  {
+    id: text('id').primaryKey(),
+    layoutKey: text('layoutKey').notNull(),
+    versionNumber: integer('versionNumber').notNull(),
+    payload: text('payload').notNull(),
+    createdAt: text('createdAt').notNull(),
+    name: text('name'),
+  },
+  (t) => [
+    index('idx_notes_graph_layout_key').on(t.layoutKey),
+    index('idx_notes_graph_layout_created').on(t.createdAt),
+  ],
 );
 
 export type RecordRow = typeof recordsTable.$inferSelect;
@@ -83,4 +146,8 @@ export type RecordInsert = typeof recordsTable.$inferInsert;
 export type FolderRow = typeof foldersTable.$inferSelect;
 export type FolderInsert = typeof foldersTable.$inferInsert;
 export type RecordAskAiRow = typeof recordAskAiTable.$inferSelect;
+export type InboxAskAiRow = typeof inboxAskAiTable.$inferSelect;
 export type CloudAiPendingRow = typeof cloudAiPendingTable.$inferSelect;
+export type PrivateAiTaskQueueRow = typeof privateAiTaskQueueTable.$inferSelect;
+export type RecordPublishedShareRow = typeof recordPublishedShareTable.$inferSelect;
+export type NotesGraphLayoutVersionRow = typeof notesGraphLayoutVersionTable.$inferSelect;

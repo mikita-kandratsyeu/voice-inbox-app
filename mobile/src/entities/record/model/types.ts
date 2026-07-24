@@ -17,6 +17,7 @@ export type RecordingStatus =
   | 'idle'
   | 'loading_model'
   | 'processing'
+  | 'queued'
   | 'paused'
   | 'resumable'
   | 'cancelling'
@@ -39,6 +40,17 @@ export type TranscriptSegment = {
   endMs?: number;
   text: string;
   tokens?: WordToken[];
+  /** On-device diarization speaker id (not a real person identity). */
+  speakerId?: string;
+  /** Detected language code for this segment, when available. */
+  language?: string;
+  /** True when overlapping speech was detected during diarization. */
+  isOverlapping?: boolean;
+};
+
+export type TranscriptSpeaker = {
+  id: string;
+  label: string;
 };
 
 export type TaskSource = 'manual' | 'ai';
@@ -51,6 +63,14 @@ export type TaskItem = {
   deadlineTime?: string | null;
   priority?: 'high' | 'medium' | 'low';
   source?: TaskSource;
+  /** ISO timestamp when the task was marked done. */
+  completedAt?: string | null;
+  /** Short free-text outcome captured on completion. */
+  outcomeText?: string | null;
+  /** Follow-up note linked as the task result artifact. */
+  outcomeRecordId?: string | null;
+  /** Pinned in the All tasks screen. */
+  isPinned?: boolean;
 };
 
 export const RECORDING_MARK_KINDS = [
@@ -83,6 +103,8 @@ export type VoiceRecord = {
   title: string;
   transcript: string;
   transcriptSegments?: TranscriptSegment[];
+  /** Display labels for on-device diarized speakers (speakerId → label). */
+  transcriptSpeakerLabels?: Record<string, string>;
   summary?: string;
   summaryStatus?: RecordingStatus;
   summaryError?: string;
@@ -126,6 +148,8 @@ export type VoiceRecord = {
   summaryAiModel?: string;
   /** Server-provided display name for {@link summaryAiModel}. */
   summaryAiModelLabel?: string;
+  /** Cloud routing mode used for the last summary (`auto` hides resolved model in UI). */
+  summaryAiModelMode?: 'manual' | 'auto';
   summaryTokensPrompt?: number;
   summaryTokensCompletion?: number;
   /** Wall-clock ms for the last summary+tasks generation. */
@@ -136,6 +160,11 @@ export type VoiceRecord = {
   audioPath?: string;
   embedding?: number[];
   folderId?: string | null;
+  /** Explicit links to other notes (outgoing). */
+  linkedRecordIds?: string[];
+  /** Local publish metadata (public share link exists). */
+  isPublicPublished?: boolean;
+  publicShareExpiresAt?: string | null;
   detailsHydrated?: boolean;
 };
 

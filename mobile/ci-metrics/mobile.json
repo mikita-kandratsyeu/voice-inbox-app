@@ -1,0 +1,38 @@
+{
+  "app": "mobile",
+  "steps": {
+    "lint": "success",
+    "typecheck": "success",
+    "test": "success",
+    "format": "success"
+  },
+  "coverage": {
+    "lines": {
+      "pct": 16.01,
+      "covered": 4636,
+      "total": 28942
+    },
+    "statements": {
+      "pct": 15.76,
+      "covered": 4932,
+      "total": 31285
+    },
+    "functions": {
+      "pct": 12.98,
+      "covered": 876,
+      "total": 6746
+    },
+    "branches": {
+      "pct": 12.68,
+      "covered": 2634,
+      "total": 20772
+    }
+  },
+  "tests": {
+    "total": 731,
+    "passed": 731,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 0
+  }
+}

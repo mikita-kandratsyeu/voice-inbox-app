@@ -7,6 +7,7 @@ import {
   resolveEffectivePrivateAiProvider,
   useSettingsStore,
 } from '@/entities/settings';
+import { buildAskLinkedNotesForPrompt } from '@/features/note-links';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import {
   type AiAbortHandle,
@@ -30,6 +31,7 @@ import {
   unregisterAiGeneration,
 } from '@/shared/lib/aiGenerationAbortRegistry';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
+import { diagWarn } from '@/shared/lib/appLogger';
 
 import {
   askAiTranscriptFingerprint,
@@ -44,6 +46,7 @@ export type AskAIHistoryItem = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  interpretations?: string[];
   suggestedFollowUps?: string[];
 };
 
@@ -56,6 +59,7 @@ export type AskAIState = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  interpretations?: string[];
   suggestedFollowUps?: string[];
   history: AskAIHistoryItem[];
   privateAskProgress: number;
@@ -71,6 +75,7 @@ const INITIAL_ASK_AI_STATE: AskAIState = {
   answerKind: undefined,
   items: undefined,
   evidence: undefined,
+  interpretations: undefined,
   suggestedFollowUps: undefined,
   history: [],
   privateAskProgress: 0,
@@ -101,6 +106,7 @@ function applyAskCancelState(s: AskAIState, revertPromotedTurn: boolean): AskAIS
       answerKind: restored.answerKind,
       items: restored.items,
       evidence: restored.evidence,
+      interpretations: restored.interpretations,
       suggestedFollowUps: restored.suggestedFollowUps,
       error: null,
       ...idleFields,
@@ -114,6 +120,7 @@ function applyAskCancelState(s: AskAIState, revertPromotedTurn: boolean): AskAIS
     answerKind: undefined,
     items: undefined,
     evidence: undefined,
+    interpretations: undefined,
     suggestedFollowUps: undefined,
     error: null,
     ...idleFields,
@@ -218,6 +225,7 @@ export const useAskAI = (
           answerKind: restored.answerKind,
           items: restored.items,
           evidence: restored.evidence,
+          interpretations: restored.interpretations,
           suggestedFollowUps: restored.suggestedFollowUps,
           error: restored.error,
           isLoading: false,
@@ -267,6 +275,7 @@ export const useAskAI = (
                 ...(s.answerKind ? { answerKind: s.answerKind } : {}),
                 ...(s.items?.length ? { items: s.items } : {}),
                 ...(s.evidence?.length ? { evidence: s.evidence } : {}),
+                ...(s.interpretations?.length ? { interpretations: s.interpretations } : {}),
                 ...(s.suggestedFollowUps?.length
                   ? { suggestedFollowUps: s.suggestedFollowUps }
                   : {}),
@@ -283,6 +292,7 @@ export const useAskAI = (
           answerKind: undefined,
           items: undefined,
           evidence: undefined,
+          interpretations: undefined,
           suggestedFollowUps: undefined,
           privateAskProgress: aiExecutionMode === 'private_experimental' ? 0 : s.privateAskProgress,
           privateAskPhase:
@@ -299,6 +309,7 @@ export const useAskAI = (
             answerKind: next.answerKind,
             items: next.items,
             evidence: next.evidence,
+            interpretations: next.interpretations,
             suggestedFollowUps: next.suggestedFollowUps,
             error: next.error,
             isLoading: true,
@@ -387,6 +398,7 @@ export const useAskAI = (
               answerKind: next.answerKind,
               items: next.items,
               evidence: next.evidence,
+              interpretations: next.interpretations,
               suggestedFollowUps: next.suggestedFollowUps,
               error: next.error,
               isLoading: next.isLoading,
@@ -405,6 +417,7 @@ export const useAskAI = (
             | 'answerKind'
             | 'items'
             | 'evidence'
+            | 'interpretations'
             | 'suggestedFollowUps'
             | 'error'
             | 'isLoading'
@@ -420,6 +433,8 @@ export const useAskAI = (
             answerKind: patch.answerKind !== undefined ? patch.answerKind : s.answerKind,
             items: patch.items !== undefined ? patch.items : s.items,
             evidence: patch.evidence !== undefined ? patch.evidence : s.evidence,
+            interpretations:
+              patch.interpretations !== undefined ? patch.interpretations : s.interpretations,
             suggestedFollowUps:
               patch.suggestedFollowUps !== undefined
                 ? patch.suggestedFollowUps
@@ -438,6 +453,7 @@ export const useAskAI = (
               answerKind: next.answerKind,
               items: next.items,
               evidence: next.evidence,
+              interpretations: next.interpretations,
               suggestedFollowUps: next.suggestedFollowUps,
               error: next.error,
               isLoading: next.isLoading,
@@ -452,6 +468,10 @@ export const useAskAI = (
 
       try {
         const recordingMarks = sanitizeRecordingMarksForPrompt(record.recordingMarks);
+        const linkedNotes = buildAskLinkedNotesForPrompt(
+          record,
+          new Map(useRecordStore.getState().records.map((item) => [item.id, item])),
+        );
 
         const runResult = await AIOrchestrator.runAsk(
           {
@@ -462,6 +482,7 @@ export const useAskAI = (
             summary: record.summary ?? undefined,
             tasks: record.tasks?.map((t) => ({ text: t.text })) ?? undefined,
             ...(recordingMarks?.length ? { recordingMarks } : {}),
+            ...(linkedNotes?.length ? { linkedNotes } : {}),
             onLocalGenerationProgress,
             abortSignal: abortHandle.signal,
           },
@@ -509,15 +530,14 @@ export const useAskAI = (
           const errorMsg = runResult.limitExceeded
             ? getAiWeeklyLimitExceededMessage()
             : runResult.error;
-          if (__DEV__)
-            console.warn('[AI] askQuestion: runAsk failed', {
-              recordId: record.id,
-              error: errorMsg,
-              limitExceeded: runResult.limitExceeded,
-              provider: runResult.provider,
-              mode: runResult.mode,
-              tier: privateCapabilityTier,
-            });
+          diagWarn('[AI] askQuestion: runAsk failed', {
+            recordId: record.id,
+            error: errorMsg,
+            limitExceeded: runResult.limitExceeded,
+            provider: runResult.provider,
+            mode: runResult.mode,
+            tier: privateCapabilityTier,
+          });
           if (runResult.limitExceeded) {
             alertAiLimitExceeded(errorMsg);
           }
@@ -539,6 +559,7 @@ export const useAskAI = (
           answerKind: runResult.result.answerKind,
           items: runResult.result.items,
           evidence: runResult.result.evidence,
+          interpretations: runResult.result.interpretations,
           suggestedFollowUps: runResult.result.suggestedFollowUps,
         });
         void logAnalyticsEvent('ai_action_success', {
@@ -557,11 +578,10 @@ export const useAskAI = (
           });
           return;
         }
-        if (__DEV__)
-          console.warn('[AI] askQuestion: unexpected error', {
-            recordId: record.id,
-            error: err instanceof Error ? err.message : String(err),
-          });
+        diagWarn('[AI] askQuestion: unexpected error', {
+          recordId: record.id,
+          error: err instanceof Error ? err.message : String(err),
+        });
         persistOutcome({
           isLoading: false,
           error: err instanceof Error ? err.message : 'Unknown error',
@@ -632,6 +652,7 @@ export const useAskAI = (
             answerKind: next.answerKind,
             items: next.items,
             evidence: next.evidence,
+            interpretations: next.interpretations,
             suggestedFollowUps: next.suggestedFollowUps,
             error: next.error,
             isLoading: false,
@@ -683,6 +704,7 @@ export const useAskAI = (
         answerKind: restored.answerKind,
         items: restored.items,
         evidence: restored.evidence,
+        interpretations: restored.interpretations,
         suggestedFollowUps: restored.suggestedFollowUps,
         error: restored.error,
         isLoading: isPending,
@@ -740,6 +762,7 @@ export const useAskAI = (
         answerKind: state.answerKind,
         items: state.items,
         evidence: state.evidence,
+        interpretations: state.interpretations,
         suggestedFollowUps: state.suggestedFollowUps,
         error: state.error,
         isLoading: state.isLoading,
@@ -755,6 +778,7 @@ export const useAskAI = (
     state.answerKind,
     state.items,
     state.evidence,
+    state.interpretations,
     state.suggestedFollowUps,
     state.error,
     state.isLoading,
@@ -781,6 +805,7 @@ export const useAskAI = (
                 ...(s.answerKind ? { answerKind: s.answerKind } : {}),
                 ...(s.items?.length ? { items: s.items } : {}),
                 ...(s.evidence?.length ? { evidence: s.evidence } : {}),
+                ...(s.interpretations?.length ? { interpretations: s.interpretations } : {}),
                 ...(s.suggestedFollowUps?.length
                   ? { suggestedFollowUps: s.suggestedFollowUps }
                   : {}),
@@ -794,6 +819,7 @@ export const useAskAI = (
         answerKind: undefined,
         items: undefined,
         evidence: undefined,
+        interpretations: undefined,
         suggestedFollowUps: undefined,
         history: newHistory,
       };

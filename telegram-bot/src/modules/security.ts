@@ -2,8 +2,8 @@ import { InlineKeyboard } from 'grammy';
 
 import type { HandlerCtx } from '../context.js';
 import { setListIds } from '../session/store.js';
-import { requirePerm } from '../ui/keyboards.js';
 import { escapeHtml } from '../ui/format.js';
+import { requirePerm } from '../ui/keyboards.js';
 import type { ScreenReply } from '../ui/reply.js';
 import { screenTitle } from '../ui/reply.js';
 
@@ -60,12 +60,17 @@ export async function securityUsersScreen(h: HandlerCtx): Promise<ScreenReply> {
   const res = await h.adminApi.get<{ ok: boolean; items: AdminUserItem[] }>('/api/admin/users');
   if (!res.ok) return { text: `${screenTitle('Admins')}\n❌ ${escapeHtml(res.error)}` };
   const items = res.data.items ?? [];
-  setListIds(h.telegramUserId, items.map((i) => i.id));
+  setListIds(
+    h.telegramUserId,
+    items.map((i) => i.id),
+  );
   const lines = [screenTitle('Admin accounts'), ''];
   items.forEach((u, i) => {
     lines.push(
       `${i + 1}. <b>${escapeHtml(u.login)}</b>${u.isSuperadmin ? ' · superadmin' : ''}${u.isCurrent ? ' (you)' : ''}`,
-      u.telegramUserId ? `   TG: <code>${escapeHtml(u.telegramUserId)}</code>` : '   TG: (not linked)',
+      u.telegramUserId
+        ? `   TG: <code>${escapeHtml(u.telegramUserId)}</code>`
+        : '   TG: (not linked)',
     );
   });
   const kb = new InlineKeyboard().text('◀️ Security', 'sc').row().text('◀️ Menu', 'm');

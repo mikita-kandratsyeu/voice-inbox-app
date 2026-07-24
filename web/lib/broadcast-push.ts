@@ -10,7 +10,8 @@ const VALID_TYPES: PushPayload['type'][] = [
   'limit_exceeded',
 ];
 
-const CONCURRENCY = 20;
+const BATCH_SIZE = 20;
+const MAX_PARALLEL_BATCHES = 5; // 100 concurrent sends total (20 * 5)
 
 export const MAX_BROADCAST_MESSAGE_CHARS = 3500;
 
@@ -144,6 +145,17 @@ export function validateBroadcastMessageLengths(input: BroadcastInput): string |
   return null;
 }
 
+/**
+ * Split array into chunks of specified size.
+ */
+function chunkArray<T>(array: T[], chunkSize: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += chunkSize) {
+    chunks.push(array.slice(i, i + chunkSize));
+  }
+  return chunks;
+}
+
 export async function runBroadcast(body: BroadcastInput): Promise<BroadcastResult> {
   const deviceIds = await getAllDeviceIdsWithPushTokens();
   const total = deviceIds.length;
@@ -156,17 +168,35 @@ export async function runBroadcast(body: BroadcastInput): Promise<BroadcastResul
     const data = await getPushTokenWithLocale(deviceId);
     if (!data) return false;
     const payload = buildPayloadForDevice(body, data.locale);
-    return sendPushNotification(data.token, payload, data.locale);
+    return sendPushNotification(data.token, payload, data.locale, undefined, deviceId);
   };
 
+  // Split devices into batches, then process multiple batches in parallel
+  const batches = chunkArray(deviceIds, BATCH_SIZE);
   const results: boolean[] = [];
-  for (let i = 0; i < deviceIds.length; i += CONCURRENCY) {
-    const batch = deviceIds.slice(i, i + CONCURRENCY);
-    const batchResults = await Promise.all(batch.map(sendOne));
-    results.push(...batchResults);
+
+  // Process batches in groups of MAX_PARALLEL_BATCHES
+  for (let i = 0; i < batches.length; i += MAX_PARALLEL_BATCHES) {
+    const batchGroup = batches.slice(i, i + MAX_PARALLEL_BATCHES);
+
+    // Process each batch in parallel, each batch processes its devices in parallel
+    const groupResults = await Promise.all(
+      batchGroup.map((batch) => Promise.all(batch.map(sendOne))),
+    );
+
+    // Flatten results from all batches in this group
+    results.push(...groupResults.flat());
   }
 
   const sent = results.filter(Boolean).length;
   const failed = total - sent;
+
+  console.log('[Broadcast] completed', {
+    total,
+    sent,
+    failed,
+    successRate: total > 0 ? ((sent / total) * 100).toFixed(1) + '%' : 'N/A',
+  });
+
   return { ok: true, sent, failed, total };
 }

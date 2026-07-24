@@ -1,6 +1,8 @@
 import { timingSafeEqual } from 'node:crypto';
 
+import { invalidateProEntitlementCache } from '@/lib/pro-entitlement';
 import { prisma } from '@/lib/prisma';
+import { isAiResetProductId } from '@/lib/revenuecat-reset-purchase';
 
 const LIFETIME_FAR = new Date('2100-01-01T00:00:00.000Z');
 
@@ -12,6 +14,7 @@ export type RevenueCatWebhookEvent = {
   cancel_reason?: string | null;
   entitlement_ids?: string[];
   entitlement_id?: string | null;
+  product_id?: string | null;
 };
 
 export type RevenueCatWebhookBody = {
@@ -32,14 +35,7 @@ function eventGrantsConfiguredEntitlement(event: RevenueCatWebhookEvent): boolea
   if (event.entitlement_id === id) {
     return true;
   }
-  const purchaseLike = new Set([
-    'INITIAL_PURCHASE',
-    'RENEWAL',
-    'UNCANCELLATION',
-    'NON_RENEWING_PURCHASE',
-    'PRODUCT_CHANGE',
-  ]);
-  return purchaseLike.has(String(event.type ?? ''));
+  return false;
 }
 
 function finiteMs(n: unknown): number | null {
@@ -114,9 +110,14 @@ export async function applyRevenueCatWebhookPayload(payload: unknown): Promise<v
 
   const type = String(event.type ?? '');
 
+  if (isAiResetProductId(event.product_id)) {
+    return;
+  }
+
   if (type === 'EXPIRATION') {
     try {
       await prisma.deviceProEntitlement.delete({ where: { deviceId } });
+      invalidateProEntitlementCache(deviceId);
     } catch {
       console.error('[revenuecat-webhook]', 'delete', 'not found', deviceId);
     }
@@ -137,6 +138,7 @@ export async function applyRevenueCatWebhookPayload(payload: unknown): Promise<v
         create: { deviceId, expiresAt },
         update: { expiresAt },
       });
+      invalidateProEntitlementCache(deviceId);
       return;
     }
 
@@ -145,6 +147,7 @@ export async function applyRevenueCatWebhookPayload(payload: unknown): Promise<v
     }
     try {
       await prisma.deviceProEntitlement.delete({ where: { deviceId } });
+      invalidateProEntitlementCache(deviceId);
     } catch {
       console.error('[revenuecat-webhook]', 'delete', 'not found', deviceId);
     }
@@ -158,5 +161,6 @@ export async function applyRevenueCatWebhookPayload(payload: unknown): Promise<v
       create: { deviceId, expiresAt: LIFETIME_FAR },
       update: { expiresAt: LIFETIME_FAR },
     });
+    invalidateProEntitlementCache(deviceId);
   }
 }

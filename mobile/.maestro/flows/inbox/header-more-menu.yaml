@@ -1,0 +1,11 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: inbox/header-more-menu.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- tapOn:
+    id: inbox.menu
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: inbox.screen
+    timeout: 20000

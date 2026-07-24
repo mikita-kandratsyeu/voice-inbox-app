@@ -6,6 +6,8 @@ import {
 import { isDeepSeekOpenRouterModel } from '@/lib/deepseek';
 import { withSequentialModelFallback } from '@/lib/ai-model-fallback';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
+import { aiModelResponseFields } from '@/lib/ai-model-display';
+import { updateAiUsageLedgerMetadata } from '@/lib/ai-usage-ledger';
 import { buildTranslatePrompt, buildTranslateUserMessage, type ValidLanguage } from '@/lib/prompts';
 import { sendLimitExceededPush } from '@/lib/push-tokens';
 import {
@@ -40,7 +42,7 @@ async function callTranslate(
     priorSourceTail?: string;
     priorTranslationTail?: string;
   },
-): Promise<string> {
+): Promise<{ translated: string }> {
   const systemPrompt = buildTranslatePrompt({
     targetLangCode: targetLanguage,
     sourceLangCode: options.sourceLanguage,
@@ -72,7 +74,7 @@ async function callTranslate(
     throw new Error('Invalid translation response');
   }
 
-  return content.trim();
+  return { translated: content.trim() };
 }
 
 function shouldRetryTranslation(err: unknown): boolean {
@@ -96,15 +98,16 @@ async function translateChunkWithFallback(
     priorSourceTail?: string;
     priorTranslationTail?: string;
   },
-): Promise<string> {
+): Promise<{ translated: string }> {
   return withSequentialModelFallback(
     models,
     async (m) => {
-      const translated = await callTranslate(chunk, targetLanguage, m, chunkOptions);
+      const result = await callTranslate(chunk, targetLanguage, m, chunkOptions);
+      const translated = result.translated;
       if (isSuspiciouslyShortTranslation(chunk, translated)) {
         throw new Error('Suspiciously short translation');
       }
-      return translated;
+      return result;
     },
     shouldRetryTranslation,
   );
@@ -117,7 +120,15 @@ export async function translateTranscript(
   clientUserAgent?: string | null,
   translateOptions?: TranslateTranscriptOptions,
 ): Promise<TranslateResult> {
-  const limitResult = await checkAndIncrement(deviceId);
+  const modelForHistory = TRANSLATE_MODEL_CHAIN[0];
+  const limitResult = await checkAndIncrement(deviceId, undefined, 1, {
+    operation: 'translate',
+    metadata: {
+      ...aiModelResponseFields(modelForHistory),
+      targetLanguage,
+      sourceLanguage: translateOptions?.sourceLanguage,
+    },
+  });
   if (!limitResult.allowed) {
     await sendLimitExceededPush(deviceId);
     return { ok: false, limitExceeded: true, usage: limitResult.usage };
@@ -152,18 +163,32 @@ export async function translateTranscript(
         priorTranslationTail: ctx?.priorTranslationTail,
       });
 
-      translatedParts.push(piece);
+      translatedParts.push(piece.translated);
       priorSource = `${priorSource}${i > 0 ? (separators[i - 1] ?? '') : ''}${chunks[i]}`;
-      priorTranslation = `${priorTranslation}${i > 0 ? (separators[i - 1] ?? '') : ''}${piece}`;
+      priorTranslation = `${priorTranslation}${i > 0 ? (separators[i - 1] ?? '') : ''}${piece.translated}`;
     }
 
     const translatedText = normalizeTranslatedTranscript(
       translatedParts.map((t, i) => `${t}${separators[i] ?? ''}`).join(''),
     );
 
+    await updateAiUsageLedgerMetadata({
+      deviceId,
+      operation: 'translate',
+      entryId: limitResult.ledgerEntryId,
+      metadata: {
+        ...aiModelResponseFields(modelForHistory),
+        targetLanguage,
+        sourceLanguage: translateOptions?.sourceLanguage,
+      },
+    });
+
     return { ok: true, translatedText };
   } catch (err) {
-    await decrement(deviceId);
+    await decrement(deviceId, {
+      operation: 'translate',
+      metadata: { targetLanguage, sourceLanguage: translateOptions?.sourceLanguage },
+    });
     return {
       ok: false,
       error: err instanceof Error ? err.message : 'Translation failed',

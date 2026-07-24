@@ -1,63 +1,235 @@
 import { MenuView } from '@react-native-menu/menu';
-import { ChevronLeft, MessageSquare, MoreVertical, Share } from 'lucide-react-native';
-import React from 'react';
+import { ChevronLeft, MessageSquare, MoreVertical, NotepadText } from 'lucide-react-native';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
+import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { HeaderIconButton, PrivateExecutionBadge } from '@/shared/ui';
+import { TestIds } from '@/shared/e2e';
+import { inlineNativeMenuSection, type NativeMenuAction } from '@/shared/lib';
+import {
+  FrostedHeaderButtonGroup,
+  FrostedHeaderIconButton,
+  HeaderIconButton,
+  PrivateExecutionBadge,
+} from '@/shared/ui';
 
 type RecordingDetailHeaderProps = {
   record: VoiceRecord;
   color: Colors;
   isPrivateMode?: boolean;
+  headerTitleOpacity: SharedValue<number>;
   onBack: () => void;
   onTogglePin: () => void;
   onShare: () => void;
+  onOpenDocument: () => void;
+  isOpeningDocument?: boolean;
   onAskAI: () => void;
   onRename: () => void;
   onMoveToFolder: () => void;
   onArchive: () => void;
   onUnarchive: () => void;
   onDelete: () => void;
+  onLinkNote?: () => void;
   onOpenAllTasksForNote?: () => void;
+  onOpenInGraph?: () => void;
 };
 
 export const RecordingDetailHeader = ({
   record,
   color,
   isPrivateMode = false,
+  headerTitleOpacity,
   onBack,
   onTogglePin,
   onShare,
+  onOpenDocument,
+  isOpeningDocument = false,
   onAskAI,
   onRename,
   onMoveToFolder,
   onArchive,
   onUnarchive,
   onDelete,
+  onLinkNote,
   onOpenAllTasksForNote,
+  onOpenInGraph,
 }: RecordingDetailHeaderProps) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const isDark = theme === 'dark';
-  const iconBtnBg = { backgroundColor: color.background.tertiary };
   const headerBackgroundColor = isPrivateMode
     ? color.background.primary
     : color.background.secondary;
   const isArchived = record.status === 'archived';
+  const headerTitleStyle = useAnimatedStyle(() => ({
+    opacity: headerTitleOpacity.value,
+  }));
+
+  const menuActions = useMemo(() => {
+    const titleColor = color.text.primary;
+    const showAllTasks = Boolean(onOpenAllTasksForNote && !isArchived);
+    const showLinkNote = Boolean(onLinkNote && !isArchived);
+    const showOpenInGraph = Boolean(onOpenInGraph);
+
+    const showPin = !isArchived;
+
+    const togglePinAction: NativeMenuAction = {
+      id: 'togglePin',
+      title: record.isPinned ? t('recordActions.unpin') : t('recordActions.pin'),
+      image: 'pin',
+      imageColor: record.isPinned ? color.accent.pin : titleColor,
+      titleColor,
+    };
+
+    const renameAction: NativeMenuAction = {
+      id: 'rename',
+      title: t('recordActions.rename'),
+      image: 'pencil',
+      imageColor: titleColor,
+      titleColor,
+    };
+
+    const moveToFolderAction: NativeMenuAction = {
+      id: 'moveToFolder',
+      title: t('folders.moveToFolderMenu'),
+      image: 'folder',
+      imageColor: titleColor,
+      titleColor,
+    };
+
+    const archiveAction: NativeMenuAction = isArchived
+      ? {
+          id: 'unarchive',
+          title: t('recordActions.unarchive'),
+          image: 'arrow.uturn.backward',
+          imageColor: titleColor,
+          titleColor,
+        }
+      : {
+          id: 'archive',
+          title: t('recordActions.archive'),
+          image: 'archivebox',
+          imageColor: titleColor,
+          titleColor,
+        };
+
+    const shareAction: NativeMenuAction = {
+      id: 'share',
+      title: t('share.share'),
+      image: 'square.and.arrow.up',
+      imageColor: titleColor,
+      titleColor,
+    };
+
+    const linkNoteAction: NativeMenuAction = {
+      id: 'linkNote',
+      title: t('noteLinks.linkNoteMenu'),
+      image: 'link',
+      imageColor: titleColor,
+      titleColor,
+    };
+
+    const openInGraphAction: NativeMenuAction = {
+      id: 'openInGraph',
+      title: t('notesGraph.openForNoteMenu'),
+      image: 'point.3.connected.trianglepath.dotted',
+      imageColor: titleColor,
+      titleColor,
+    };
+
+    const folderArchiveShareActions: NativeMenuAction[] = !isPrivateMode
+      ? [moveToFolderAction, archiveAction, shareAction]
+      : [archiveAction, shareAction];
+
+    const buildPinRenameSection = (): NativeMenuAction[] => {
+      const section: NativeMenuAction[] = [];
+      if (showPin) section.push(togglePinAction);
+      section.push(renameAction);
+      return section;
+    };
+
+    const buildNotesConnectionsSection = (): NativeMenuAction[] => {
+      const section: NativeMenuAction[] = [];
+      if (showLinkNote) section.push(linkNoteAction);
+      if (showOpenInGraph) section.push(openInGraphAction);
+      return section;
+    };
+
+    const appendInlineSection = (sectionId: string, subactions: NativeMenuAction[]) => {
+      if (subactions.length === 0) return;
+      if (subactions.length === 1) {
+        actions.push(subactions[0]!);
+        return;
+      }
+      actions.push(inlineNativeMenuSection(sectionId, titleColor, subactions));
+    };
+
+    const actions: NativeMenuAction[] = [];
+
+    if (showAllTasks) {
+      actions.push({
+        id: 'allTasksForNote',
+        title: t('recordingDetail.allTasksForNote'),
+        image: 'checklist',
+        imageColor: titleColor,
+        titleColor,
+      });
+      appendInlineSection('pinAndRenameSection', buildPinRenameSection());
+    } else {
+      appendInlineSection('pinAndRenameSection', buildPinRenameSection());
+    }
+
+    const notesConnections = buildNotesConnectionsSection();
+    if (notesConnections.length > 0) {
+      actions.push(
+        inlineNativeMenuSection('notesConnectionsSection', titleColor, notesConnections),
+      );
+    }
+
+    actions.push(
+      inlineNativeMenuSection('folderAndArchiveSection', titleColor, folderArchiveShareActions),
+    );
+    actions.push(
+      inlineNativeMenuSection('deleteSection', titleColor, [
+        {
+          id: 'delete',
+          title: t('recordActions.delete'),
+          image: 'trash',
+          imageColor: color.accent.delete,
+          titleColor: color.accent.delete,
+          attributes: { destructive: true },
+        },
+      ]),
+    );
+
+    return actions;
+  }, [
+    color.accent.delete,
+    color.accent.pin,
+    color.text.primary,
+    isArchived,
+    isPrivateMode,
+    onLinkNote,
+    onOpenAllTasksForNote,
+    onOpenInGraph,
+    record.isPinned,
+    t,
+  ]);
 
   return (
     <View
-      className="flex-row items-center justify-between px-4 pb-3"
+      className="flex-row items-center px-4 pb-3"
       style={{ backgroundColor: headerBackgroundColor, paddingTop: insets.top + 12 }}
     >
-      <View className="flex-row items-center gap-2">
-        <HeaderIconButton
+      <View className="shrink-0 flex-row items-center gap-3">
+        <FrostedHeaderIconButton
+          testID={TestIds.detail.back}
           iconOnly
           variant="icon"
           size="md"
@@ -70,20 +242,39 @@ export const RecordingDetailHeader = ({
         />
         {isPrivateMode ? <PrivateExecutionBadge color={color} compact /> : null}
       </View>
-      <View className="flex-row items-center gap-2">
+      <View className="min-w-0 flex-1 pl-3 pr-2" pointerEvents="none">
+        <Animated.Text
+          className="text-left text-[15px] font-semibold"
+          style={[headerTitleStyle, { color: color.text.primary }]}
+          numberOfLines={1}
+          accessibilityRole="header"
+        >
+          {record.title}
+        </Animated.Text>
+      </View>
+      <FrostedHeaderButtonGroup color={color}>
         <HeaderIconButton
+          inFrostedGroup
           iconOnly
           variant="icon"
           size="md"
-          icon={<Share size={18} color={color.text.primary} strokeWidth={2.2} />}
+          icon={
+            isOpeningDocument ? (
+              <ActivityIndicator size="small" color={color.text.primary} />
+            ) : (
+              <NotepadText size={18} color={color.text.primary} strokeWidth={2.2} />
+            )
+          }
           color={color}
-          onPress={onShare}
+          onPress={onOpenDocument}
+          disabled={isOpeningDocument}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          containerStyle={iconBtnBg}
-          accessibilityLabel={t('share.share')}
+          accessibilityLabel={t('recordingDetail.document.openA11y')}
+          accessibilityState={{ disabled: isOpeningDocument, busy: isOpeningDocument }}
         />
         <HeaderIconButton
+          inFrostedGroup
           iconOnly
           variant="icon"
           size="md"
@@ -105,72 +296,16 @@ export const RecordingDetailHeader = ({
             if (nativeEvent.event === 'moveToFolder') onMoveToFolder();
             if (nativeEvent.event === 'archive') onArchive();
             if (nativeEvent.event === 'unarchive') onUnarchive();
+            if (nativeEvent.event === 'share') onShare();
             if (nativeEvent.event === 'delete') onDelete();
+            if (nativeEvent.event === 'linkNote') onLinkNote?.();
+            if (nativeEvent.event === 'openInGraph') onOpenInGraph?.();
             if (nativeEvent.event === 'allTasksForNote') onOpenAllTasksForNote?.();
           }}
-          actions={[
-            ...(onOpenAllTasksForNote && !isArchived
-              ? [
-                  {
-                    id: 'allTasksForNote' as const,
-                    title: t('recordingDetail.allTasksForNote'),
-                    image: 'checklist' as const,
-                    imageColor: color.text.primary,
-                    titleColor: color.text.primary,
-                  },
-                ]
-              : []),
-            {
-              id: 'togglePin',
-              title: record.isPinned ? t('recordActions.unpin') : t('recordActions.pin'),
-              image: 'pin',
-              imageColor: record.isPinned ? color.accent.pin : color.text.primary,
-              titleColor: color.text.primary,
-            },
-            {
-              id: 'rename',
-              title: t('recordActions.rename'),
-              image: 'pencil',
-              imageColor: color.text.primary,
-              titleColor: color.text.primary,
-            },
-            ...(!isPrivateMode
-              ? [
-                  {
-                    id: 'moveToFolder' as const,
-                    title: t('folders.moveToFolderMenu'),
-                    image: 'folder' as const,
-                    imageColor: color.text.primary,
-                    titleColor: color.text.primary,
-                  },
-                ]
-              : []),
-            isArchived
-              ? {
-                  id: 'unarchive' as const,
-                  title: t('recordActions.unarchive'),
-                  image: 'arrow.uturn.backward' as const,
-                  imageColor: color.text.primary,
-                  titleColor: color.text.primary,
-                }
-              : {
-                  id: 'archive' as const,
-                  title: t('recordActions.archive'),
-                  image: 'archivebox' as const,
-                  imageColor: color.text.primary,
-                  titleColor: color.text.primary,
-                },
-            {
-              id: 'delete',
-              title: t('recordActions.delete'),
-              image: 'trash',
-              imageColor: color.accent.delete,
-              titleColor: color.accent.delete,
-              attributes: { destructive: true },
-            },
-          ]}
+          actions={menuActions}
         >
           <HeaderIconButton
+            inFrostedGroup
             iconOnly
             variant="icon"
             size="md"
@@ -182,7 +317,7 @@ export const RecordingDetailHeader = ({
             accessibilityLabel={t('common.moreActions')}
           />
         </MenuView>
-      </View>
+      </FrostedHeaderButtonGroup>
     </View>
   );
 };

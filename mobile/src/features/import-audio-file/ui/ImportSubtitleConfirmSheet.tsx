@@ -1,5 +1,5 @@
-import type { BottomSheetBackdropProps, BottomSheetModal } from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { UsersRound } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,12 +8,8 @@ import { Pressable, Switch, Text, View } from 'react-native';
 import { useProEntitlement } from '@/features/pro-license';
 import { useColors } from '@/shared/config';
 import { formatTime, hapticLight, hapticSuccess } from '@/shared/lib';
-import {
-  APP_BOTTOM_SHEET_BACKDROP_SNAP,
-  AppBottomSheetModal,
-  SheetFooterButtons,
-  useBottomSheetContentPadding,
-} from '@/shared/ui';
+import { formatGroupedInteger } from '@/shared/lib/formatGroupedInteger';
+import { AppBottomSheetContent, AppBottomSheetModal, SheetFooterButtons } from '@/shared/ui';
 
 export type ImportFileConfirmOptions = {
   title: string;
@@ -22,9 +18,10 @@ export type ImportFileConfirmOptions = {
 
 type ImportSubtitleConfirmSheetProps = {
   visible: boolean;
-  kind?: 'audio' | 'subtitles';
+  kind?: 'audio' | 'document' | 'subtitles';
   defaultTitle: string;
   durationMs: number;
+  documentCharCount?: number;
   onConfirm: (options: ImportFileConfirmOptions) => void | Promise<void>;
   onCancel: () => void;
 };
@@ -34,29 +31,17 @@ export function ImportSubtitleConfirmSheet({
   kind = 'subtitles',
   defaultTitle,
   durationMs,
+  documentCharCount = 0,
   onConfirm,
   onCancel,
 }: ImportSubtitleConfirmSheetProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const c = useColors();
   const { isProActive } = useProEntitlement();
-  const contentPadding = useBottomSheetContentPadding(24);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const skipNextDismissRef = useRef(false);
   const [title, setTitle] = useState(defaultTitle);
   const [isMeetingMode, setIsMeetingMode] = useState(false);
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        {...APP_BOTTOM_SHEET_BACKDROP_SNAP}
-        pressBehavior="close"
-        opacity={0.35}
-      />
-    ),
-    [],
-  );
 
   useEffect(() => {
     if (!visible) return;
@@ -92,6 +77,18 @@ export function ImportSubtitleConfirmSheet({
   }, []);
 
   const durationSec = Math.max(1, Math.floor(durationMs / 1000));
+  const titleKey =
+    kind === 'audio'
+      ? 'importAudio.audioImportTitle'
+      : kind === 'document'
+        ? 'importAudio.documentImportTitle'
+        : 'importAudio.subtitleImportTitle';
+  const metaKey =
+    kind === 'audio'
+      ? 'importAudio.audioImportDuration'
+      : kind === 'document'
+        ? 'importAudio.documentImportSize'
+        : 'importAudio.subtitleImportDuration';
 
   return (
     <AppBottomSheetModal
@@ -100,19 +97,12 @@ export function ImportSubtitleConfirmSheet({
       onClose={handleDismiss}
       surface="card"
       enablePanDownToClose
-      backdropComponent={renderBackdrop}
+      backdrop="subtle"
       handleIndicatorStyle={{ backgroundColor: c.text.muted }}
     >
-      <BottomSheetView
-        style={{
-          paddingHorizontal: 24,
-          paddingTop: 4,
-          ...contentPadding,
-          gap: 12,
-        }}
-      >
+      <AppBottomSheetContent useTabletPadding style={{ paddingTop: 4, gap: 12 }}>
         <Text className="text-lg font-bold" style={{ color: c.text.primary }}>
-          {t(kind === 'audio' ? 'importAudio.audioImportTitle' : 'importAudio.subtitleImportTitle')}
+          {t(titleKey)}
         </Text>
 
         <BottomSheetTextInput
@@ -134,10 +124,10 @@ export function ImportSubtitleConfirmSheet({
 
         <Text className="-mt-1 text-[13px]" style={{ color: c.text.secondary }}>
           {t(
-            kind === 'audio'
-              ? 'importAudio.audioImportDuration'
-              : 'importAudio.subtitleImportDuration',
-            { time: formatTime(durationSec) },
+            metaKey,
+            kind === 'document'
+              ? { count: formatGroupedInteger(documentCharCount, i18n.language) }
+              : { time: formatTime(durationSec) },
           )}
         </Text>
 
@@ -199,7 +189,7 @@ export function ImportSubtitleConfirmSheet({
           secondaryLabel={t('common.cancel')}
           onSecondaryPress={handleCancel}
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

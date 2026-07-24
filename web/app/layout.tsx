@@ -5,8 +5,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { Analytics } from '@vercel/analytics/next';
 
-import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
-import { YandexMetrika } from '@/components/analytics/YandexMetrika';
+import { CookieConsentProvider } from '@/components/analytics/CookieConsentProvider';
 
 import { BASE_URL_OR_FALLBACK } from '@/config/constants';
 
@@ -42,11 +41,11 @@ export default async function RootLayout({
         className={`${onest.className} min-h-screen bg-white text-black antialiased dark:bg-[#0a0a0a] dark:text-white`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+          <NextIntlClientProvider messages={messages}>
+            <CookieConsentProvider>{children}</CookieConsentProvider>
+          </NextIntlClientProvider>
         </ThemeProvider>
         <Analytics />
-        <GoogleAnalytics />
-        <YandexMetrika />
       </body>
     </html>
   );

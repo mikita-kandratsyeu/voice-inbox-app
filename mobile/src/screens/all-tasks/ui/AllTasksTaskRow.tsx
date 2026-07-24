@@ -7,6 +7,7 @@ import {
   FileText,
   Flag,
   MoreHorizontal,
+  Pin,
 } from 'lucide-react-native';
 import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,12 +16,12 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 
+import { TaskOutcomePreview } from '@/features/task-outcome';
 import { type Colors, useAppTheme } from '@/shared/config';
-import { hapticLight, hapticSuccess } from '@/shared/lib';
+import { hapticLight, hapticSelection, hapticSuccess, inlineNativeMenuSection } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import { parseTaskDeadline } from '@/shared/lib/parseTaskDeadline';
 import { formatTaskDeadlineTimeForDisplay } from '@/shared/lib/taskDeadlineTimeDisplay';
@@ -35,10 +36,15 @@ type AllTasksTaskRowProps = {
   compactHorizontalMargin?: boolean;
   openNoteLabel: string;
   onToggle: (recordId: string, taskId: string, currentlyDone: boolean) => void;
+  getFollowUpRecordTitle?: (recordId: string) => string | null;
+  onOpenFollowUp?: (recordId: string) => void;
   onOpenNote: (recordId: string) => void;
   onEditTask: (recordId: string, taskId: string, text: string) => void;
+  onEditTaskOutcome: (recordId: string, taskId: string, outcomeText: string) => void;
+  onQuickSchedule: (recordId: string, taskId: string, deadline: string) => void;
   onAddToCalendar: (item: TaskWithRecord) => void;
   onAddToReminder: (item: TaskWithRecord) => void;
+  onTogglePin: (recordId: string, taskId: string, currentlyPinned: boolean) => void;
   onDeleteTask: (recordId: string, taskId: string) => void;
 };
 
@@ -48,10 +54,15 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
   compactHorizontalMargin = false,
   openNoteLabel,
   onToggle,
+  getFollowUpRecordTitle,
+  onOpenFollowUp,
   onOpenNote,
   onEditTask,
+  onEditTaskOutcome,
+  onQuickSchedule,
   onAddToCalendar,
   onAddToReminder,
+  onTogglePin,
   onDeleteTask,
 }: AllTasksTaskRowProps) {
   const theme = useAppTheme();
@@ -59,7 +70,7 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
   const { t, i18n } = useTranslation();
 
   const { task, recordId, recordTitle } = item;
-  const pressScale = useSharedValue(1);
+  const checkboxScale = useSharedValue(1);
   const parsedDeadline = parseTaskDeadline(task.deadline);
   const deadlineText =
     parsedDeadline !== null
@@ -75,9 +86,10 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
       : task.priority === 'medium'
         ? color.accent.cache
         : color.text.secondary;
+  const showScheduleActions = parsedDeadline === null && !task.isDone;
 
-  const pressAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pressScale.value }],
+  const checkboxAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: checkboxScale.value }],
   }));
 
   const handleToggle = () => {
@@ -86,11 +98,16 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
     } else {
       hapticSuccess();
     }
-    pressScale.value = withSequence(
-      withTiming(0.97, { duration: 55 }),
-      withSpring(1, { damping: 16, stiffness: 280 }),
+    checkboxScale.value = withSequence(
+      withTiming(0.9, { duration: 40 }),
+      withTiming(1, { duration: 90 }),
     );
     onToggle(recordId, task.id, task.isDone);
+  };
+
+  const handleEdit = () => {
+    hapticSelection();
+    onEditTask(recordId, task.id, task.text);
   };
 
   const cardShadowStyle = {
@@ -101,44 +118,77 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
     elevation: 2,
   };
 
-  const menuActions = [
+  const titleColor = color.text.primary;
+  const taskActionsSection = [
     {
-      id: 'openNote',
-      title: openNoteLabel,
-      image: 'doc.text',
-      imageColor: color.text.primary,
-      titleColor: color.text.primary,
+      id: 'togglePin',
+      title: task.isPinned ? t('tasks.unpinTask') : t('tasks.pinTask'),
+      image: 'pin',
+      imageColor: task.isPinned ? color.accent.pin : titleColor,
+      titleColor,
     },
     {
       id: 'editTask',
       title: t('tasks.editTask'),
       image: 'pencil',
-      imageColor: color.text.primary,
-      titleColor: color.text.primary,
+      imageColor: titleColor,
+      titleColor,
     },
-    {
-      id: 'addToReminder',
-      title: t('tasks.addToReminder'),
-      image: 'bell',
-      imageColor: color.text.primary,
-      titleColor: color.text.primary,
-    },
-    {
-      id: 'addToCalendar',
-      title: t('tasks.addToCalendar'),
-      image: 'calendar',
-      imageColor: color.text.primary,
-      titleColor: color.text.primary,
-    },
-    {
-      id: 'deleteTask',
-      title: t('tasks.deleteTask'),
-      image: 'trash',
-      imageColor: color.accent.delete,
-      titleColor: color.accent.delete,
-      attributes: { destructive: true },
-    },
+    ...(task.isDone
+      ? [
+          {
+            id: 'editTaskOutcome',
+            title: t('tasks.editTaskOutcome'),
+            image: 'text.alignleft',
+            imageColor: titleColor,
+            titleColor,
+          },
+        ]
+      : []),
   ];
+  const menuActions = [
+    {
+      id: 'openNote',
+      title: openNoteLabel,
+      image: 'doc.text',
+      imageColor: titleColor,
+      titleColor,
+    },
+    inlineNativeMenuSection('taskActionsSection', titleColor, taskActionsSection),
+    inlineNativeMenuSection('integrationsSection', titleColor, [
+      {
+        id: 'addToReminder',
+        title: t('tasks.addToReminder'),
+        image: 'bell',
+        imageColor: titleColor,
+        titleColor,
+      },
+      {
+        id: 'addToCalendar',
+        title: t('tasks.addToCalendar'),
+        image: 'calendar',
+        imageColor: titleColor,
+        titleColor,
+      },
+    ]),
+    inlineNativeMenuSection('deleteSection', titleColor, [
+      {
+        id: 'deleteTask',
+        title: t('tasks.deleteTask'),
+        image: 'trash',
+        imageColor: color.accent.delete,
+        titleColor: color.accent.delete,
+        attributes: { destructive: true },
+      },
+    ]),
+  ];
+
+  const scheduleChipStyle = {
+    backgroundColor: color.background.secondary,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  };
 
   return (
     <View
@@ -149,40 +199,54 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
       ]}
     >
       <View style={{ overflow: 'hidden', borderRadius: CARD_RADIUS }}>
-        <Animated.View
-          style={[
-            pressAnimStyle,
-            { backgroundColor: color.background.card, borderRadius: CARD_RADIUS },
-          ]}
+        <View
+          style={{ backgroundColor: color.background.card, borderRadius: CARD_RADIUS }}
           className="flex-row items-stretch py-1"
         >
           <Pressable
-            className="flex-1 flex-row items-stretch"
+            className="px-4 py-3.5 items-center justify-center"
             onPress={handleToggle}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: task.isDone }}
-            accessibilityLabel={`Mark task as ${task.isDone ? 'undone' : 'done'}`}
+            accessibilityLabel={task.isDone ? t('tasks.markUndoneA11y') : t('tasks.markDoneA11y')}
+            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
           >
-            <View className="pl-4 pr-3 py-3.5 items-center justify-center pointer-events-none">
+            <Animated.View style={checkboxAnimStyle}>
               {task.isDone ? (
                 <CheckCircle2 size={24} color={color.accent.success} strokeWidth={2} />
               ) : (
                 <Circle size={24} color={color.icon.muted} strokeWidth={2} />
               )}
-            </View>
+            </Animated.View>
+          </Pressable>
 
-            <View className="min-w-0 flex-1 flex-col py-3 pr-1 pointer-events-none">
-              <Text
-                className="text-[15px] leading-5 mb-2.5"
-                style={{
-                  color: task.isDone ? color.text.secondary : color.text.primary,
-                  textDecorationLine: task.isDone ? 'line-through' : undefined,
-                }}
-                numberOfLines={3}
-              >
-                {task.text}
-              </Text>
-              <View className="mb-2 flex-row flex-wrap items-center gap-1.5">
+          <View className="min-w-0 flex-1 flex-col py-3 pr-1">
+            <Pressable
+              onPress={handleEdit}
+              accessibilityRole="button"
+              accessibilityLabel={t('tasks.editTaskA11y', { text: task.text })}
+            >
+              <View className="mb-2.5 flex-row items-start gap-1.5">
+                {task.isPinned ? (
+                  <Pin
+                    size={14}
+                    color={color.accent.pin}
+                    strokeWidth={2}
+                    style={{ marginTop: 3, flexShrink: 0 }}
+                  />
+                ) : null}
+                <Text
+                  className="min-w-0 flex-1 text-[15px] leading-5"
+                  style={{
+                    color: task.isDone ? color.text.secondary : color.text.primary,
+                    textDecorationLine: task.isDone ? 'line-through' : undefined,
+                  }}
+                  numberOfLines={3}
+                >
+                  {task.text}
+                </Text>
+              </View>
+              <View className="flex-row flex-wrap items-center gap-1.5">
                 {parsedDeadline !== null && (
                   <View
                     className="flex-row items-center rounded-md px-2 py-1"
@@ -225,27 +289,83 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
                     </Text>
                   </View>
                 )}
-              </View>
-              <View
-                className="max-w-full flex-row items-center self-start rounded-md px-2 py-1"
-                style={{ backgroundColor: color.background.secondary }}
-              >
-                <FileText
-                  size={12}
-                  color={color.icon.muted}
-                  strokeWidth={2}
-                  style={{ flexShrink: 0 }}
-                />
-                <Text
-                  className="ml-1.5 min-w-0 shrink text-xs font-medium"
-                  style={{ color: color.text.secondary }}
-                  numberOfLines={1}
+                <View
+                  className="max-w-full flex-row items-center rounded-md px-2 py-1"
+                  style={{ backgroundColor: color.background.secondary }}
                 >
-                  {recordTitle}
-                </Text>
+                  <FileText
+                    size={12}
+                    color={color.icon.muted}
+                    strokeWidth={2}
+                    style={{ flexShrink: 0 }}
+                  />
+                  <Text
+                    className="ml-1.5 min-w-0 shrink text-xs font-medium"
+                    style={{ color: color.text.secondary }}
+                    numberOfLines={1}
+                  >
+                    {recordTitle}
+                  </Text>
+                </View>
               </View>
-            </View>
-          </Pressable>
+            </Pressable>
+            {showScheduleActions ? (
+              <View className="mt-2 flex-row flex-wrap items-center gap-2">
+                <Pressable
+                  onPress={() => {
+                    hapticSelection();
+                    onQuickSchedule(recordId, task.id, dayjs().format('YYYY-MM-DD'));
+                  }}
+                  style={scheduleChipStyle}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('allTasks.scheduleTodayA11y')}
+                >
+                  <Text className="text-xs font-semibold" style={{ color: color.accent.primary }}>
+                    {t('allTasks.scheduleToday')}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    hapticSelection();
+                    onQuickSchedule(recordId, task.id, dayjs().add(1, 'day').format('YYYY-MM-DD'));
+                  }}
+                  style={scheduleChipStyle}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('allTasks.scheduleTomorrowA11y')}
+                >
+                  <Text className="text-xs font-semibold" style={{ color: color.accent.primary }}>
+                    {t('allTasks.scheduleTomorrow')}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={handleEdit}
+                  style={scheduleChipStyle}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('allTasks.scheduleCustomA11y')}
+                >
+                  <Text className="text-xs font-semibold" style={{ color: color.text.secondary }}>
+                    {t('allTasks.scheduleCustom')}
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null}
+            <TaskOutcomePreview
+              task={task}
+              color={color}
+              indent={false}
+              followUpTitle={
+                task.outcomeRecordId && getFollowUpRecordTitle
+                  ? getFollowUpRecordTitle(task.outcomeRecordId)
+                  : null
+              }
+              onOpenFollowUp={
+                task.outcomeRecordId && onOpenFollowUp
+                  ? () => onOpenFollowUp(task.outcomeRecordId!)
+                  : undefined
+              }
+            />
+          </View>
+
           <View className="justify-center px-1 pr-1.5" style={{ zIndex: 10 }}>
             <MenuView
               key={`task-menu-${task.id}-${theme}`}
@@ -256,10 +376,15 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
                   onOpenNote(recordId);
                 } else if (nativeEvent.event === 'editTask') {
                   onEditTask(recordId, task.id, task.text);
+                } else if (nativeEvent.event === 'editTaskOutcome') {
+                  onEditTaskOutcome(recordId, task.id, task.outcomeText ?? '');
                 } else if (nativeEvent.event === 'addToReminder') {
                   onAddToReminder(item);
                 } else if (nativeEvent.event === 'addToCalendar') {
                   onAddToCalendar(item);
+                } else if (nativeEvent.event === 'togglePin') {
+                  hapticSelection();
+                  onTogglePin(recordId, task.id, Boolean(task.isPinned));
                 } else if (nativeEvent.event === 'deleteTask') {
                   onDeleteTask(recordId, task.id);
                 }
@@ -276,7 +401,7 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
               </Pressable>
             </MenuView>
           </View>
-        </Animated.View>
+        </View>
       </View>
     </View>
   );

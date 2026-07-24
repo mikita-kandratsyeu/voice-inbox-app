@@ -37,12 +37,17 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
-import { getWhisperModelVariantId, useSettingsStore } from '@/entities/settings';
+import {
+  getWhisperModelVariantId,
+  useSettingsStore,
+  WHISPER_KIT_STORAGE_FORMAT,
+} from '@/entities/settings';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { useModelManager } from '@/features/model-manager';
 import {
   IMPORT_ERROR_WRONG_BACKUP_PASSWORD,
   importData,
+  importNotesGraphLayoutVersionsFromBackup,
   type ImportResult,
 } from '@/features/sync-data';
 import {
@@ -52,8 +57,10 @@ import {
 import { BackupPasswordSheet } from '@/screens/settings/ui/BackupPasswordSheet';
 import type { Colors } from '@/shared/config';
 import { getWebsiteUrl, useAppTheme, useColors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import { hapticSelection, IS_ANDROID, IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 import {
   checkMicPermission,
@@ -63,8 +70,8 @@ import {
 } from '@/shared/lib/permissions';
 import {
   checkPushPermission,
-  enableAiProcessingAlerts,
   type PushPermissionStatus,
+  requestPushPermissionAndRegister,
 } from '@/shared/lib/push';
 import { Button, BUTTON_BORDER_RADIUS } from '@/shared/ui';
 
@@ -172,6 +179,7 @@ const OnboardingTermsGateModal = ({
           </ScrollView>
           <View className="gap-3 px-5 pb-5 pt-2">
             <Button
+              testID={TestIds.onboarding.termsAgree}
               variant="primary"
               size="lg"
               fullWidth
@@ -183,6 +191,7 @@ const OnboardingTermsGateModal = ({
               color={c}
             />
             <Button
+              testID={TestIds.onboarding.termsNotNow}
               variant="secondary"
               size="lg"
               fullWidth
@@ -290,6 +299,7 @@ const AnimatedNextButton = ({
   iconOnAccent,
   disabled,
   loading,
+  testID,
 }: {
   label: string;
   onPress: () => void;
@@ -299,6 +309,7 @@ const AnimatedNextButton = ({
   iconOnAccent: string;
   disabled?: boolean;
   loading?: boolean;
+  testID?: string;
 }) => {
   const animatedStyle = useAnimatedStyle(() => {
     const inputRange = slideColors.map((_, i) => i * screenWidth.value);
@@ -324,6 +335,7 @@ const AnimatedNextButton = ({
       ]}
     >
       <TouchableOpacity
+        testID={testID}
         onPress={onPress}
         activeOpacity={0.85}
         disabled={disabled || loading}
@@ -545,7 +557,7 @@ const PermissionsSlide = ({
     }
 
     const granted = IS_IOS
-      ? await enableAiProcessingAlerts()
+      ? await requestPushPermissionAndRegister()
       : await enableTaskDeadlineNotifications();
 
     setNotificationStatus(granted ? 'granted' : 'denied');
@@ -953,7 +965,6 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
     screenWidth.value = windowWidth;
   }, [windowWidth, screenWidth]);
 
-  const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const { startDownload } = useModelManager();
 
@@ -967,9 +978,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         await NitroFS.unlink(zipPath);
       }
     } catch {
-      if (__DEV__) {
-        console.warn('[onboarding] releasePendingRestoreZip failed', zipPath);
-      }
+      diagWarn('[onboarding] releasePendingRestoreZip failed', { path: zipPath });
     }
   }, []);
 
@@ -1011,7 +1020,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         return false;
       }
 
-      return { toImport, totalInFile: result.records.length };
+      return { toImport, totalInFile: result.records.length, graphLayouts: result.graphLayouts };
     },
     [existingRecords, pendingRestoreZipPath, releasePendingRestoreZip, t],
   );
@@ -1037,6 +1046,9 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
               for (const record of toImport) {
                 await addRecord(record);
               }
+              if (prepared.graphLayouts.length > 0) {
+                await importNotesGraphLayoutVersionsFromBackup(prepared.graphLayouts);
+              }
               Alert.alert(
                 t('common.done'),
                 t('onboarding.restoreSuccess', { count: toImport.length }),
@@ -1048,9 +1060,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         },
       ]);
     } catch (err) {
-      if (__DEV__) {
-        console.warn('[onboarding] restore failed', err);
-      }
+      diagWarn('[onboarding] restore failed', err);
 
       Alert.alert(t('common.error'), t('importExport.importError'));
     } finally {
@@ -1087,6 +1097,9 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
                 for (const record of toImport) {
                   await addRecord(record);
                 }
+                if (prepared.graphLayouts.length > 0) {
+                  await importNotesGraphLayoutVersionsFromBackup(prepared.graphLayouts);
+                }
                 Alert.alert(
                   t('common.done'),
                   t('onboarding.restoreSuccess', { count: toImport.length }),
@@ -1098,9 +1111,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           },
         ]);
       } catch (err) {
-        if (__DEV__) {
-          console.warn('[onboarding] restore with password failed', err);
-        }
+        diagWarn('[onboarding] restore with password failed', err);
         Alert.alert(t('common.error'), t('importExport.importError'));
       } finally {
         if (!showedConfirm) setIsRestoring(false);
@@ -1152,7 +1163,11 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   }, []);
 
   const runLastSlideWhisperFlow = useCallback(() => {
-    const selectedVariantId = getWhisperModelVariantId(selectedWhisperModel, 'q5_1');
+    const { iosWhisperKitEngineEnabled, selectedWhisperModel } = useSettingsStore.getState();
+    const useIosWhisperKit = IS_IOS && iosWhisperKitEngineEnabled;
+    const selectedVariantId = useIosWhisperKit
+      ? getWhisperModelVariantId(selectedWhisperModel, WHISPER_KIT_STORAGE_FORMAT)
+      : getWhisperModelVariantId(selectedWhisperModel, 'q5_1');
     const whisperStatus = whisperModelStatuses[selectedVariantId] ?? 'not_downloaded';
     const anyWhisperDownloading = Object.values(whisperModelStatuses).some(
       (s) => s === 'downloading',
@@ -1172,12 +1187,16 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
       {
         text: t('common.download'),
         onPress: () => {
-          void startDownload(selectedWhisperModel, { format: 'q5_1' }).catch(() => {});
+          if (useIosWhisperKit) {
+            void startDownload(selectedWhisperModel).catch(() => {});
+          } else {
+            void startDownload(selectedWhisperModel, { format: 'q5_1' }).catch(() => {});
+          }
           setTimeout(finishOnboardingCore, 120);
         },
       },
     ]);
-  }, [selectedWhisperModel, whisperModelStatuses, t, startDownload, finishOnboardingCore]);
+  }, [whisperModelStatuses, t, startDownload, finishOnboardingCore]);
 
   const requestFinishOnboardingFromSkip = useCallback(() => {
     queueAfterTermsAccepted(() => finishOnboardingCore());
@@ -1245,6 +1264,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           pointerEvents={showSkipButton ? 'auto' : 'none'}
         >
           <TouchableOpacity
+            testID={TestIds.onboarding.skip}
             onPress={requestFinishOnboardingFromSkip}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             disabled={isFinishingOnboarding}
@@ -1302,6 +1322,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           t={t}
         />
         <AnimatedNextButton
+          testID={isLastSlide ? TestIds.onboarding.getStarted : TestIds.onboarding.next}
           label={isLastSlide ? t('common.start') : t('common.next')}
           onPress={handleNext}
           scrollX={scrollX}

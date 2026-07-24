@@ -1,12 +1,15 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Crown } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  AppBottomSheetContent,
+  AppBottomSheetModal,
+  SheetFooterButtons,
+  SheetHeader,
+} from '@/shared/ui';
 
 export type AutomationFeatureKind =
   | 'autoTranscribe'
@@ -16,7 +19,12 @@ export type AutomationFeatureKind =
   | 'folderColor'
   | 'batchExport'
   | 'premiumAiModel'
-  | 'privateCustomServer';
+  | 'privateCustomServer'
+  | 'notesGraph'
+  | 'githubSync'
+  | 'gitlabSync'
+  | 'icloudSync'
+  | 'cloudSync';
 
 type AutomationComingSoonSheetProps = {
   visible: boolean;
@@ -33,8 +41,6 @@ export function AutomationComingSoonSheet({
 }: AutomationComingSoonSheetProps) {
   const { t } = useTranslation();
   const c = useColors();
-  const contentPadding = useBottomSheetContentPadding(24);
-
   useEffect(() => {
     if (!visible) return;
     void logAnalyticsEvent('premium_hint_opened', {
@@ -53,7 +59,17 @@ export function AutomationComingSoonSheet({
                     ? 'premium_ai_model'
                     : feature === 'privateCustomServer'
                       ? 'private_custom_server'
-                      : 'accent_color',
+                      : feature === 'notesGraph'
+                        ? 'notes_graph'
+                        : feature === 'githubSync'
+                          ? 'github_sync'
+                          : feature === 'gitlabSync'
+                            ? 'gitlab_sync'
+                            : feature === 'icloudSync'
+                              ? 'icloud_sync'
+                              : feature === 'cloudSync'
+                                ? 'cloud_sync'
+                                : 'accent_color',
     });
     if (feature === 'autoTranscribe') {
       void logAnalyticsEvent('premium_feature_tapped_auto_whisper', {
@@ -81,6 +97,26 @@ export function AutomationComingSoonSheet({
       void logAnalyticsEvent('premium_feature_tapped_private_server', {
         surface: 'ai_settings',
       });
+    } else if (feature === 'notesGraph') {
+      void logAnalyticsEvent('premium_feature_tapped_notes_graph', {
+        surface: 'inbox_menu',
+      });
+    } else if (feature === 'githubSync') {
+      void logAnalyticsEvent('premium_feature_tapped_github_sync', {
+        surface: 'settings_cloud_sync',
+      });
+    } else if (feature === 'gitlabSync') {
+      void logAnalyticsEvent('premium_feature_tapped_gitlab_sync', {
+        surface: 'settings_cloud_sync',
+      });
+    } else if (feature === 'icloudSync') {
+      void logAnalyticsEvent('premium_feature_tapped_icloud_sync', {
+        surface: 'settings_cloud_sync',
+      });
+    } else if (feature === 'cloudSync') {
+      void logAnalyticsEvent('premium_feature_tapped_cloud_sync', {
+        surface: 'settings_cloud_sync',
+      });
     } else {
       void logAnalyticsEvent('premium_feature_tapped_accent_color', {
         surface: 'appearance_sheet',
@@ -103,7 +139,17 @@ export function AutomationComingSoonSheet({
                 ? t('aiModels.proModelTitle')
                 : feature === 'privateCustomServer'
                   ? t('aiSettings.privateProvider.proTitle')
-                  : t('appearance.accentColor.proTitle');
+                  : feature === 'notesGraph'
+                    ? t('notesGraph.proTitle')
+                    : feature === 'githubSync'
+                      ? t('settings.githubSync.proTitle')
+                      : feature === 'gitlabSync'
+                        ? t('settings.gitlabSync.proTitle')
+                        : feature === 'icloudSync'
+                          ? t('settings.icloudSync.proTitle')
+                          : feature === 'cloudSync'
+                            ? t('settings.cloudSync.proTitle')
+                            : t('appearance.accentColor.proTitle');
   const body =
     feature === 'autoTranscribe'
       ? t('settings.automationSoon.autoTranscribeBody')
@@ -119,38 +165,35 @@ export function AutomationComingSoonSheet({
                 ? t('aiModels.proModelBody')
                 : feature === 'privateCustomServer'
                   ? t('aiSettings.privateProvider.proBody')
-                  : t('appearance.accentColor.proBody');
+                  : feature === 'notesGraph'
+                    ? t('notesGraph.proBody')
+                    : feature === 'githubSync'
+                      ? t('settings.githubSync.proBody')
+                      : feature === 'gitlabSync'
+                        ? t('settings.gitlabSync.proBody')
+                        : feature === 'icloudSync'
+                          ? t('settings.icloudSync.proBody')
+                          : feature === 'cloudSync'
+                            ? t('settings.cloudSync.proBody')
+                            : t('appearance.accentColor.proBody');
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>
-      <BottomSheetView
-        style={{
-          paddingHorizontal: 24,
-          paddingTop: 8,
-          ...contentPadding,
-        }}
-      >
-        <View className="mb-1 items-center">
-          <View
-            className="mb-4 h-14 w-14 items-center justify-center rounded-2xl"
-            style={{ backgroundColor: c.background.tertiary }}
-          >
-            <Crown size={28} color={c.accent.primary} strokeWidth={1.75} />
-          </View>
-          <Text className="mb-2 text-center text-xl font-bold" style={{ color: c.text.primary }}>
-            {title}
-          </Text>
-          <Text className="mb-6 text-center text-sm leading-5" style={{ color: c.text.secondary }}>
-            {body}
-          </Text>
-        </View>
+      <AppBottomSheetContent useTabletPadding>
+        <SheetHeader
+          title={title}
+          subtitle={body}
+          icon={<Crown size={28} color={c.accent.primary} strokeWidth={1.75} />}
+          color={c}
+          marginBottom={24}
+        />
         <SheetFooterButtons
           color={c}
           primaryLabel={t('common.tryPro')}
           onPrimaryPress={onUpgradePress ?? onClose}
           primaryAccessibilityLabel={t('common.tryPro')}
         />
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 }

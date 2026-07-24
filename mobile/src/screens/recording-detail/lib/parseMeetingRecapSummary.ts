@@ -56,6 +56,16 @@ function normalizeHeading(raw: string): string {
     .toLowerCase();
 }
 
+function extractSectionTitle(raw: string): string {
+  return raw
+    .replace(/^#{1,4}\s*/, '')
+    .replace(/^\d+[.)]\s*/, '')
+    .replace(/^[-*]\s*/, '')
+    .replace(/\*\*/g, '')
+    .replace(/:$/, '')
+    .trim();
+}
+
 function parseSectionStart(
   line: string,
 ): { kind: MeetingRecapSectionKind; title: string; body: string } | null {
@@ -69,11 +79,13 @@ function parseSectionStart(
     return kind ? { kind, title, body: inlineMatch[2]?.trim() ?? '' } : null;
   }
 
-  const headingCandidate =
-    trimmed.match(/^#{1,4}\s+(.+)$/)?.[1] ?? trimmed.match(/^\*\*(.+?)\*\*:?\s*$/)?.[1];
-  if (!headingCandidate) return null;
-  const kind = LABEL_TO_KIND.get(normalizeHeading(headingCandidate));
-  return kind ? { kind, title: headingCandidate.trim(), body: '' } : null;
+  const normalized = normalizeHeading(trimmed);
+  const exactKind = LABEL_TO_KIND.get(normalized);
+  if (exactKind) {
+    return { kind: exactKind, title: extractSectionTitle(trimmed), body: '' };
+  }
+
+  return null;
 }
 
 function normalizeInlineSections(summary: string): string {
@@ -82,10 +94,57 @@ function normalizeInlineSections(summary: string): string {
   });
 }
 
+const MEETING_SUMMARY_HEADING_RE = /^#{2,4}\s+(.+?)\s*$/;
+
+/** Converts document markdown headings back to meeting-recap `Label:` sections. */
+export function restoreMeetingSummaryFromDocumentMarkdown(body: string): string {
+  if (!/^#{2,4}\s+/m.test(body)) {
+    return body;
+  }
+
+  const lines = body.replace(/\r\n?/g, '\n').split('\n');
+  const out: string[] = [];
+  let currentLabel: string | null = null;
+  let sectionLines: string[] = [];
+
+  const flush = () => {
+    if (!currentLabel) return;
+    const trimmed = sectionLines.join('\n').trimEnd();
+    out.push(trimmed ? `${currentLabel}:\n${trimmed}` : `${currentLabel}:`);
+    sectionLines = [];
+  };
+
+  for (const line of lines) {
+    const heading = line.match(MEETING_SUMMARY_HEADING_RE);
+    if (heading) {
+      flush();
+      currentLabel = heading[1]!.trim();
+      continue;
+    }
+
+    if (currentLabel !== null) {
+      sectionLines.push(line);
+    } else if (line.trim()) {
+      out.push(line);
+    }
+  }
+
+  flush();
+  return out.join('\n\n').trim();
+}
+
 export function parseMeetingRecapSummary(summary: string): MeetingRecapSection[] {
   const lines = normalizeInlineSections(summary).replace(/\r\n?/g, '\n').split('\n');
   const sections: MeetingRecapSection[] = [];
   let current: MeetingRecapSection | null = null;
+  let pendingLines: string[] = [];
+
+  const flushPendingAsBrief = () => {
+    const pending = pendingLines.join('\n').trim();
+    pendingLines = [];
+    if (!pending) return;
+    sections.push({ kind: 'brief', title: 'Brief', body: pending });
+  };
 
   for (const line of lines) {
     const sectionStart = parseSectionStart(line);
@@ -93,17 +152,32 @@ export function parseMeetingRecapSummary(summary: string): MeetingRecapSection[]
       if (current?.body.trim()) {
         sections.push({ ...current, body: current.body.trim() });
       }
+
+      if (pendingLines.length > 0) {
+        const pending = pendingLines.join('\n').trim();
+        pendingLines = [];
+        if (sectionStart.kind === 'brief') {
+          sectionStart.body = [pending, sectionStart.body].filter(Boolean).join('\n');
+        } else if (pending) {
+          sections.push({ kind: 'brief', title: 'Brief', body: pending });
+        }
+      }
+
       current = sectionStart;
       continue;
     }
 
     if (current) {
       current.body = [current.body, line].filter(Boolean).join('\n');
+    } else if (line.trim()) {
+      pendingLines.push(line);
     }
   }
 
   if (current?.body.trim()) {
     sections.push({ ...current, body: current.body.trim() });
+  } else if (pendingLines.length > 0) {
+    flushPendingAsBrief();
   }
 
   const seen = new Set<MeetingRecapSectionKind>();
@@ -113,5 +187,5 @@ export function parseMeetingRecapSummary(summary: string): MeetingRecapSection[]
     return true;
   });
 
-  return unique.length >= 2 ? unique : [];
+  return unique.length > 0 ? unique : [];
 }

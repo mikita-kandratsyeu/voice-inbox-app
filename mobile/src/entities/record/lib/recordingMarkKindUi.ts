@@ -3,7 +3,7 @@ import {
   Bookmark,
   GitBranch,
   HelpCircle,
-  ListChecks,
+  ListTodo,
   MessageSquareText,
   Quote,
   Star,
@@ -67,7 +67,7 @@ export const RECORDING_MARK_KIND_UI: Record<RecordingMarkKind, RecordingMarkKind
     sharePrefix: '⭐',
   },
   task: {
-    Icon: ListChecks,
+    Icon: ListTodo,
     accentColorId: 'emerald',
     recordA11yKey: 'record.markKind.task',
     descriptionKey: 'record.markKindDescription.task',

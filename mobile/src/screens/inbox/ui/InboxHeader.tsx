@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,26 +12,34 @@ type InboxHeaderProps = {
   rightSlot?: React.ReactNode;
   subtitleText: string;
   title: string;
+  /** Tablet shell: header sits on the content column without a separate chrome band. */
+  transparentBackground?: boolean;
 };
 
-export const InboxHeader = ({
+export const InboxHeader = memo(function InboxHeader({
   color,
   isLoaded,
   isPrivateMode = false,
   rightSlot,
   subtitleText,
   title,
-}: InboxHeaderProps) => {
+  transparentBackground = false,
+}: InboxHeaderProps) {
   const insets = useSafeAreaInsets();
 
-  const headerStyle = {
-    backgroundColor: color.background.primary,
-    borderBottomWidth: 1,
-    borderBottomColor: color.border.default,
-    paddingTop: insets.top + 16,
-  };
-  const titleStyle = { color: color.text.primary };
-  const subtitleStyle = { color: color.text.secondary };
+  const headerStyle = useMemo(
+    () => ({
+      backgroundColor: transparentBackground ? 'transparent' : color.background.primary,
+      borderBottomWidth: transparentBackground ? 0 : 1,
+      borderBottomColor: color.border.default,
+      paddingTop: insets.top + 16,
+    }),
+    [color.background.primary, color.border.default, insets.top, transparentBackground],
+  );
+
+  const titleStyle = useMemo(() => ({ color: color.text.primary }), [color.text.primary]);
+
+  const subtitleStyle = useMemo(() => ({ color: color.text.secondary }), [color.text.secondary]);
 
   return (
     <View className="px-4 pb-3" style={headerStyle}>
@@ -58,4 +66,4 @@ export const InboxHeader = ({
       </View>
     </View>
   );
-};
+});

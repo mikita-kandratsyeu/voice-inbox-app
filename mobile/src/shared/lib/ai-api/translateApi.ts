@@ -1,6 +1,8 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { i18n } from '@/shared/lib';
+import { requestAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 
 import { headersForAiOperation } from './aiOperation';
@@ -33,7 +35,7 @@ export async function postTranslate(
     });
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : 'Network error';
-    if (__DEV__) console.warn('[Translate] postTranslate: fetch failed', { error: errorMsg, url });
+    diagWarn('[Translate] postTranslate: fetch failed', { error: errorMsg, url });
     return { ok: false, error: errorMsg };
   }
 
@@ -41,20 +43,20 @@ export async function postTranslate(
     const json = (await response.json()) as {
       usage: { used: number; limit: number; resetAt: string };
     };
-    if (__DEV__) console.warn('[Translate] postTranslate: limit exceeded', json.usage);
+    diagWarn('[Translate] postTranslate: limit exceeded', json.usage);
     return { ok: false, limitExceeded: true, usage: json.usage };
   }
 
   if (!response.ok) {
     const text = await response.text();
-    if (__DEV__)
-      console.warn('[Translate] postTranslate: HTTP error', {
-        status: response.status,
-        body: text,
-      });
+    devWarn('[Translate] postTranslate: HTTP error', {
+      status: response.status,
+      body: text,
+    });
     return { ok: false, error: text || `HTTP ${response.status}` };
   }
 
   const data = (await response.json()) as { translatedText: string };
+  requestAiUsageRefresh();
   return { ok: true, translatedText: data.translatedText };
 }

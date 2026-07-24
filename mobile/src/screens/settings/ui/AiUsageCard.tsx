@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { ChevronRight, Gauge, PlayCircle, WifiOff } from 'lucide-react-native';
+import { ChevronRight, Gauge, PlayCircle, RefreshCw, WifiOff } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -7,6 +7,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import type { AiUsage } from '@/shared/lib/ai-api';
+import { isProResetEligible } from '@/shared/lib/aiUsageProReset';
 import { formatLocalizedLongDateWithTime } from '@/shared/lib/taskDeadlineTimeDisplay';
 import { SettingsRow, SkeletonPulse } from '@/shared/ui';
 
@@ -35,6 +36,25 @@ function resolveClaimBonusErrorMessage(claimError: string, t: TFunction): string
   }
 }
 
+function resolveResetProLimitErrorMessage(resetError: string, t: TFunction): string {
+  switch (resetError) {
+    case 'resetProLimitError':
+      return t('settings.aiUsage.resetProLimitError');
+    case 'resetProLimitUnavailable':
+      return t('settings.aiUsage.resetProLimitUnavailable');
+    case 'resetProLimitPurchaseNotVerified':
+      return t('settings.aiUsage.resetProLimitPurchaseNotVerified');
+    case 'resetProLimitNotExhausted':
+      return t('settings.aiUsage.resetProLimitNotExhausted');
+    case 'resetProLimitProRequired':
+      return t('settings.aiUsage.resetProLimitProRequired');
+    case 'resetProLimitTransactionUsed':
+      return t('settings.aiUsage.resetProLimitTransactionUsed');
+    default:
+      return resetError;
+  }
+}
+
 type ClaimBonusPressableBodyProps = {
   color: Colors;
   claimLoading: boolean;
@@ -52,9 +72,11 @@ function ClaimBonusPressableBody({
 }: ClaimBonusPressableBodyProps) {
   if (claimLoading) {
     return (
-      <View className="min-h-[52px] items-center justify-center py-3">
-        <ActivityIndicator size="small" color={color.accent.primary} />
-        <Text className="mt-2 text-center text-xs" style={{ color: color.text.secondary }}>
+      <View className="min-h-[72px] items-center justify-center gap-2 px-3.5 py-3.5">
+        <View className="h-5 items-center justify-center">
+          <ActivityIndicator size="small" color={color.accent.primary} />
+        </View>
+        <Text className="text-center text-xs leading-4" style={{ color: color.text.secondary }}>
           {t('settings.aiUsage.claimBonusLoading')}
         </Text>
       </View>
@@ -63,7 +85,7 @@ function ClaimBonusPressableBody({
 
   if (claimDisabled) {
     return (
-      <View className="min-h-[52px] items-center justify-center px-4 py-3.5">
+      <View className="min-h-[72px] items-center justify-center px-3.5 py-3.5">
         <Text
           className="text-center text-sm font-medium leading-5"
           style={{ color: color.text.muted }}
@@ -75,16 +97,127 @@ function ClaimBonusPressableBody({
   }
 
   return (
-    <View className="min-h-[52px] flex-row items-center gap-3 px-4 py-3.5">
-      <PlayCircle size={26} color={color.accent.primary} strokeWidth={1.75} />
-      <View className="min-w-0 flex-1">
-        <Text className="text-sm font-semibold leading-5" style={{ color: color.accent.primary }}>
+    <View className="min-h-[72px] flex-row items-center gap-3 px-3.5 py-3.5">
+      <View
+        className="h-10 w-10 shrink-0 items-center justify-center rounded-full"
+        style={{
+          backgroundColor: color.background.primary,
+          borderWidth: 1,
+          borderColor: color.border.default,
+        }}
+      >
+        <PlayCircle size={20} color={color.accent.primary} strokeWidth={1.85} />
+      </View>
+      <View className="min-w-0 flex-1 pr-1">
+        <Text
+          className="text-[15px] font-semibold leading-5"
+          numberOfLines={2}
+          style={{ color: color.accent.primary }}
+        >
           {t('settings.aiUsage.claimBonusTitle')}
         </Text>
-        <Text className="mt-0.5 text-xs leading-4" style={{ color: color.text.secondary }}>
-          {t('settings.aiUsage.claimBonusSubtitle', { count: bonusAmount })}
+        <Text
+          className="mt-1 text-[13px] leading-[18px]"
+          numberOfLines={2}
+          style={{ color: color.text.secondary }}
+        >
+          {t('settings.aiUsage.claimBonusSubtitleGeneric')}
         </Text>
       </View>
+      <View
+        className="max-w-[42%] shrink-0 items-center justify-center rounded-xl px-3 py-2.5"
+        accessibilityRole="button"
+        style={{
+          minWidth: 76,
+          backgroundColor: color.accent.primary,
+        }}
+      >
+        <Text
+          className="text-center text-[13px] font-bold leading-[17px]"
+          numberOfLines={2}
+          style={[styles.tabular, { color: color.icon.onAccent }]}
+        >
+          {t('settings.aiUsage.claimBonusAmountPill', { count: bonusAmount })}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+type ResetProLimitPressableBodyProps = {
+  color: Colors;
+  resetLoading: boolean;
+  resetPriceLabel: string | null;
+  t: TFunction;
+};
+
+function ResetProLimitPressableBody({
+  color,
+  resetLoading,
+  resetPriceLabel,
+  t,
+}: ResetProLimitPressableBodyProps) {
+  if (resetLoading) {
+    return (
+      <View className="min-h-[76px] items-center justify-center gap-2 px-4 py-4">
+        <View className="h-5 items-center justify-center">
+          <ActivityIndicator size="small" color={color.accent.primary} />
+        </View>
+        <Text className="text-center text-xs leading-4" style={{ color: color.text.secondary }}>
+          {t('settings.aiUsage.resetProLimitLoading')}
+        </Text>
+      </View>
+    );
+  }
+
+  const resetSubtitle = t('settings.aiUsage.resetProLimitSubtitleGeneric');
+
+  return (
+    <View className="min-h-[72px] flex-row items-center gap-3 px-3.5 py-3.5">
+      <View
+        className="h-10 w-10 shrink-0 items-center justify-center rounded-full"
+        style={{
+          backgroundColor: color.background.primary,
+          borderWidth: 1,
+          borderColor: color.border.default,
+        }}
+      >
+        <RefreshCw size={20} color={color.accent.primary} strokeWidth={1.85} />
+      </View>
+      <View className="min-w-0 flex-1 pr-1">
+        <Text
+          className="text-[15px] font-semibold leading-5"
+          numberOfLines={2}
+          style={{ color: color.accent.primary }}
+        >
+          {t('settings.aiUsage.resetProLimitTitle')}
+        </Text>
+        <Text
+          className="mt-1 text-[13px] leading-[18px]"
+          numberOfLines={2}
+          style={{ color: color.text.secondary }}
+        >
+          {resetSubtitle}
+        </Text>
+      </View>
+      {resetPriceLabel ? (
+        <View
+          className="shrink-0 items-center justify-center rounded-xl border-[1.5px] px-3.5 py-2"
+          style={{
+            minWidth: 76,
+            borderColor: color.accent.primary,
+            backgroundColor: `${color.accent.primary}12`,
+          }}
+        >
+          <Text
+            className="text-[15px] font-bold  leading-5 tracking-tight"
+            numberOfLines={1}
+            style={[styles.tabular, { color: color.accent.primary }]}
+          >
+            {resetPriceLabel}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -93,9 +226,13 @@ type AiUsageCardProps = {
   usage: AiUsage | null;
   loading: boolean;
   onClaimBonus?: () => void;
+  onResetProLimit?: () => void;
   onOpenDetails?: () => void;
   claimLoading?: boolean;
   claimError?: string | null;
+  resetLoading?: boolean;
+  resetError?: string | null;
+  resetPriceLabel?: string | null;
 };
 
 function AiUsageSkeleton({ color }: { color: Colors }) {
@@ -126,9 +263,13 @@ export const AiUsageCard = ({
   usage,
   loading,
   onClaimBonus,
+  onResetProLimit,
   onOpenDetails,
   claimLoading = false,
   claimError = null,
+  resetLoading = false,
+  resetError = null,
+  resetPriceLabel = null,
 }: AiUsageCardProps) => {
   const { t, i18n } = useTranslation();
   const color = useColors();
@@ -137,6 +278,10 @@ export const AiUsageCard = ({
   const bonusAmount = usage?.bonusAmount ?? 5;
   const canShowBonusButton = Boolean(usage && usage.used > 0);
   const showBonusNoUsageHint = Boolean(usage && usage.used === 0 && onClaimBonus);
+  const canShowResetButton = Boolean(usage && isProResetEligible(usage) && onResetProLimit);
+  const showActionArea = Boolean(
+    (onClaimBonus && (canShowBonusButton || showBonusNoUsageHint)) || canShowResetButton,
+  );
 
   const isExhausted = usage ? usage.remaining === 0 : false;
   const progressPercent =
@@ -154,7 +299,7 @@ export const AiUsageCard = ({
     ? t('settings.aiUsage.used', { used: usage.used, limit: usage.limit })
     : '—';
   const remainingText = usage
-    ? t('settings.aiUsage.remainingShort', { count: usage.remaining })
+    ? t('settings.aiUsage.remainingCredits', { count: usage.remaining })
     : null;
   const statusText = getAiUsageStatusText(usage, isExhausted, t);
   const resetDateText = usage ? formatLocalizedLongDateWithTime(usage.resetAt, i18n.language) : '—';
@@ -291,7 +436,7 @@ export const AiUsageCard = ({
             className="text-xs leading-4"
             style={{
               color: color.text.secondary,
-              marginBottom: onClaimBonus && (canShowBonusButton || showBonusNoUsageHint) ? 12 : 6,
+              marginBottom: showActionArea ? 12 : 6,
             }}
           >
             {t('settings.aiUsage.resetAt', { date: resetDateText })}
@@ -311,14 +456,13 @@ export const AiUsageCard = ({
                 accessibilityLabel={t('settings.aiUsage.claimBonus', { count: bonusAmount })}
                 className="overflow-hidden rounded-2xl"
                 style={{
-                  borderWidth: 1.5,
-                  borderColor:
-                    claimLoading || claimDisabled ? color.border.default : color.accent.primary,
+                  borderWidth: 1,
+                  borderColor: color.border.default,
                   backgroundColor:
                     claimLoading || claimDisabled
                       ? color.background.tertiary
-                      : color.background.primary,
-                  minHeight: 52,
+                      : color.background.secondary,
+                  minHeight: 72,
                 }}
               >
                 <ClaimBonusPressableBody
@@ -335,6 +479,40 @@ export const AiUsageCard = ({
                   style={{ color: color.accent.delete }}
                 >
                   {resolveClaimBonusErrorMessage(claimError, t)}
+                </Text>
+              )}
+            </View>
+          )}
+          {canShowResetButton && (
+            <View className="mt-2">
+              <Pressable
+                onPress={onResetProLimit}
+                disabled={resetLoading}
+                accessibilityRole="button"
+                accessibilityLabel={t('settings.aiUsage.resetProLimitA11y')}
+                className="overflow-hidden rounded-2xl"
+                style={{
+                  borderWidth: 1,
+                  borderColor: color.border.default,
+                  backgroundColor: resetLoading
+                    ? color.background.tertiary
+                    : color.background.secondary,
+                  minHeight: 72,
+                }}
+              >
+                <ResetProLimitPressableBody
+                  color={color}
+                  resetLoading={resetLoading}
+                  resetPriceLabel={resetPriceLabel}
+                  t={t}
+                />
+              </Pressable>
+              {resetError && resetError !== 'resetProLimitCancelled' && (
+                <Text
+                  className="mt-2 px-1 text-center text-xs leading-4"
+                  style={{ color: color.accent.delete }}
+                >
+                  {resolveResetProLimitErrorMessage(resetError, t)}
                 </Text>
               )}
             </View>

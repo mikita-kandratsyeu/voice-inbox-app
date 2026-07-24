@@ -19,13 +19,14 @@ import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { getTranscriptCharLimit } from '@/shared/lib/ai-core/localProvider';
+import { formatGroupedInteger } from '@/shared/lib/formatGroupedInteger';
 import { ScreenHeader } from '@/shared/ui';
 
 const AI_EXECUTION_MODES: AiExecutionMode[] = ['smart_hybrid', 'private_experimental'];
 
 export const PrivateAiModeScreen = () => {
   const handleBack = useSettingsStackBack();
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const color = useColors();
   const insets = useSafeAreaInsets();
   const contentMaxWidth = useTabletContentMaxWidth();
@@ -131,7 +132,7 @@ export const PrivateAiModeScreen = () => {
             >
               <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
                 {t('privateAiMode.limitedBeforeAiHint', {
-                  limit: limitedCharLimit.toLocaleString(),
+                  limit: formatGroupedInteger(limitedCharLimit, i18n.language),
                 })}
               </Text>
             </View>

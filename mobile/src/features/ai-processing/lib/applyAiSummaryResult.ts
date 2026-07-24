@@ -8,8 +8,27 @@ import {
   filterNextStepsByNormalizedTaskSet,
   normalizedManualTaskTextSet,
 } from '@/entities/record/model/taskTextDedupe';
+import type { AiModelRoutingMode } from '@/entities/settings';
 import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
-import type { AiProcessingResult } from '@/shared/lib/ai-api';
+import type { AiProcessingResult, AiTask } from '@/shared/lib/ai-api';
+import { normalizeTaskDeadlineFields } from '@/shared/lib/normalizeTaskDeadlineFields';
+
+function aiTaskToTaskItemFields(task: AiTask): Pick<TaskItem, 'deadline' | 'deadlineTime'> {
+  if (task.deadlineTime) {
+    return {
+      deadline: task.deadline ?? undefined,
+      deadlineTime: task.deadlineTime,
+    };
+  }
+
+  const normalized = normalizeTaskDeadlineFields(task.deadline);
+  if (!normalized) return {};
+
+  return {
+    deadline: normalized.deadline,
+    ...(normalized.deadlineTime ? { deadlineTime: normalized.deadlineTime } : {}),
+  };
+}
 
 export type ApplyAiSummaryResultParams = {
   record: VoiceRecord;
@@ -18,6 +37,7 @@ export type ApplyAiSummaryResultParams = {
   recordIsMeeting: boolean;
   includeMeetingSpeakerBreakdown: boolean;
   aiExecutionMode: 'smart_hybrid' | 'private_experimental';
+  aiModelRoutingMode?: AiModelRoutingMode;
   effectiveLocalAiModelId: string;
   /** Cloud phase-1: summary/tasks only; meeting dialogue arrives later. */
   skipMeetingDialogue?: boolean;
@@ -35,6 +55,7 @@ export type ApplyAiSummaryResultParams = {
       summaryReasoning?: string | null;
       summaryAiModel?: string | null;
       summaryAiModelLabel?: string | null;
+      summaryAiModelMode?: AiModelRoutingMode | null;
       summaryTokensPrompt?: number | null;
       summaryTokensCompletion?: number | null;
       summaryGenerationMs?: number | null;
@@ -53,6 +74,7 @@ export async function applyAiSummaryResult(params: ApplyAiSummaryResultParams): 
     recordIsMeeting,
     includeMeetingSpeakerBreakdown,
     aiExecutionMode,
+    aiModelRoutingMode,
     effectiveLocalAiModelId,
     skipMeetingDialogue = false,
     generationStartedAt,
@@ -83,7 +105,7 @@ export async function applyAiSummaryResult(params: ApplyAiSummaryResultParams): 
     id: `${record.id}-task-${index}`,
     text: t.title,
     isDone: false,
-    deadline: t.deadline ?? undefined,
+    ...aiTaskToTaskItemFields(t),
     priority: t.priority,
     source: 'ai',
   }));
@@ -140,12 +162,20 @@ export async function applyAiSummaryResult(params: ApplyAiSummaryResultParams): 
     summaryReasoningForStore != null ||
     aiExecutionMode === 'smart_hybrid';
 
-  const summaryModelForStore =
-    summaryModelRaw?.trim() ||
-    (aiExecutionMode === 'private_experimental' ? effectiveLocalAiModelId : '');
-  const summaryModelLabelForStore = summaryModelLabelRaw?.trim()
-    ? summaryModelLabelRaw.trim()
-    : null;
+  const summaryModelModeForStore =
+    aiExecutionMode === 'smart_hybrid' && aiModelRoutingMode ? aiModelRoutingMode : null;
+  const hideResolvedCloudModel =
+    aiExecutionMode === 'smart_hybrid' && aiModelRoutingMode === 'auto';
+
+  const summaryModelForStore = hideResolvedCloudModel
+    ? ''
+    : summaryModelRaw?.trim() ||
+      (aiExecutionMode === 'private_experimental' ? effectiveLocalAiModelId : '');
+  const summaryModelLabelForStore = hideResolvedCloudModel
+    ? null
+    : summaryModelLabelRaw?.trim()
+      ? summaryModelLabelRaw.trim()
+      : null;
 
   if (shouldUpdateAiExtras) {
     await updateAiExtras(record.id, {
@@ -178,12 +208,20 @@ export async function applyAiSummaryResult(params: ApplyAiSummaryResultParams): 
   if (
     summaryModelForStore ||
     summaryModelLabelForStore ||
+    summaryModelModeForStore ||
     summaryTokenUsageRaw ||
     summaryGenerationMs > 0
   ) {
     await updateAiExtras(record.id, {
-      ...(summaryModelForStore ? { summaryAiModel: summaryModelForStore } : {}),
-      ...(summaryModelLabelForStore ? { summaryAiModelLabel: summaryModelLabelForStore } : {}),
+      ...(hideResolvedCloudModel
+        ? { summaryAiModel: null, summaryAiModelLabel: null }
+        : {
+            ...(summaryModelForStore ? { summaryAiModel: summaryModelForStore } : {}),
+            ...(summaryModelLabelForStore
+              ? { summaryAiModelLabel: summaryModelLabelForStore }
+              : {}),
+          }),
+      ...(summaryModelModeForStore ? { summaryAiModelMode: summaryModelModeForStore } : {}),
       ...summaryTokensForStore,
       ...(summaryGenerationMs > 0 ? { summaryGenerationMs } : {}),
     });

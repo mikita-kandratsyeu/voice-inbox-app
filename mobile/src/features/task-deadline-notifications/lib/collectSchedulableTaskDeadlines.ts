@@ -1,6 +1,9 @@
 import type { TaskItem } from '@/entities/record';
 import { getTaskDeadlineTimestamp } from '@/shared/lib/taskDeadlineTimestamp';
 
+import { resolveTaskDeadlineTriggerAt } from './resolveTaskDeadlineTriggerAt';
+import type { TaskDeadlineSnoozeMap } from './taskDeadlineSnoozeStorage';
+
 export type SchedulableTaskDeadline = {
   recordId: string;
   recordTitle: string;
@@ -11,6 +14,7 @@ export type SchedulableTaskDeadline = {
 export function collectSchedulableTaskDeadlines(
   records: ReadonlyArray<{ id: string; title: string; tasks?: TaskItem[] | null }>,
   nowMs: number = Date.now(),
+  snoozeByTaskId: Readonly<TaskDeadlineSnoozeMap> = {},
 ): SchedulableTaskDeadline[] {
   const out: SchedulableTaskDeadline[] = [];
 
@@ -21,7 +25,8 @@ export function collectSchedulableTaskDeadlines(
     for (const task of tasks) {
       if (task.isDone || !task.deadline) continue;
 
-      const triggerAt = getTaskDeadlineTimestamp(task.deadline, task.deadlineTime, nowMs);
+      const deadlineAt = getTaskDeadlineTimestamp(task.deadline, task.deadlineTime, nowMs);
+      const triggerAt = resolveTaskDeadlineTriggerAt(deadlineAt, snoozeByTaskId[task.id], nowMs);
       if (triggerAt == null) continue;
 
       out.push({

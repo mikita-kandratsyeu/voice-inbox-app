@@ -5,6 +5,7 @@ import { writeAdminAudit } from '@/lib/admin-audit';
 import { getAdminSession } from '@/lib/admin-session';
 import { prisma } from '@/lib/prisma';
 import { formatSupportReference, parseSupportReferenceQuery } from '@/lib/support-reference';
+import { supportIssueListSelect } from '@/lib/support-issue-select';
 
 const STATUSES = ['open', 'closed'] as const;
 type IssueStatus = (typeof STATUSES)[number];
@@ -51,6 +52,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       where,
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: take + 1,
+      select: supportIssueListSelect,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     });
 
@@ -68,7 +70,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         subject: r.subject,
         message: r.message,
         diagnostics: r.diagnostics,
-        appLogs: r.appLogs,
+        appLogs: null,
         status: r.status,
         createdAt: r.createdAt.toISOString(),
         updatedAt: r.updatedAt.toISOString(),

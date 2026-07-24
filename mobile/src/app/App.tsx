@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { usePrivateAiTaskQueueBridge } from '@/features/ai-task-queue';
 import {
   AnimatedBootSplash,
   AppProcessingKeepAwake,
@@ -20,6 +21,9 @@ import {
 } from '@/features/app-lifecycle';
 import { AppLockGate, AppSwitcherPrivacyOverlay } from '@/features/app-lock';
 import { AppRatingPromptRoot } from '@/features/app-review';
+import { GithubSyncProgressOverlay } from '@/features/github-sync';
+import { GitlabSyncProgressOverlay } from '@/features/gitlab-sync';
+import { IcloudSyncProgressOverlay } from '@/features/icloud-sync';
 import { flushPendingSharedAudioImport } from '@/features/import-audio-file/lib/sharedAudioImportRegistry';
 import { OnboardingGate } from '@/features/onboarding';
 import { PlanPaywallProvider } from '@/features/plan-paywall';
@@ -29,18 +33,23 @@ import {
   useResetPrivateAiServerWhenNotPro,
   useResetProOnlyAiModelWhenNotPro,
 } from '@/features/pro-license';
+import { useShakeGestures } from '@/features/shake-to-record';
 import { useTaskDeadlineNotificationHandlers } from '@/features/task-deadline-notifications/model/useTaskDeadlineNotificationHandlers';
+import { TaskDeadlineActionSheet } from '@/features/task-deadline-notifications/ui/TaskDeadlineActionSheet';
 import { TranscriptionResumePrompt } from '@/features/transcription';
 import {
   BootSplashVisibleProvider,
+  initReduceMotionCheck,
   useAppTheme,
   useBootSplashVisible,
   useColors,
 } from '@/shared/config';
+import { E2EReadyMarker } from '@/shared/e2e';
 import { i18n, NetworkStatusProvider } from '@/shared/lib';
 import { logAnalyticsScreenView } from '@/shared/lib/analytics';
 import { logInfo, setupAppLogger } from '@/shared/lib/appLogger';
 import { CloudAiThirdPartyConsentModal } from '@/shared/lib/cloud-ai-consent';
+import { useCrashlyticsContextSync } from '@/shared/lib/crashlytics/useCrashlyticsContextSync';
 import {
   type PushNotificationData,
   PushNotificationSheet,
@@ -48,8 +57,10 @@ import {
 } from '@/shared/lib/push';
 import { WarmupBottomSheet } from '@/shared/ui';
 
-import { flushPendingRecordModalNavigation, useInitDeepLinking } from './deep-linking';
+import { useInitDeepLinking } from './deep-linking';
 import { handlePushNotification } from './model/pushNavigationHandler';
+import { openTaskDeadlineRecord } from './model/taskDeadlineNavigationHandler';
+import { flushDeferredNavigation } from './navigation/deferredNavigation';
 import { navigationRef } from './navigation/navigationRef';
 import { RootNavigator } from './navigation/RootNavigator';
 
@@ -77,6 +88,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
   const isDark = theme === 'dark';
 
   const [bootstrapReady, setBootstrapReady] = useState(false);
+  const [webApiReady, setWebApiReady] = useState(false);
   const routeNameRef = useRef<string | undefined>(undefined);
 
   const onPushData = useCallback((data: PushNotificationData) => {
@@ -85,6 +97,10 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
 
   const onBootstrapReady = useCallback(() => {
     setBootstrapReady(true);
+  }, []);
+
+  const onWebApiReady = useCallback(() => {
+    setWebApiReady(true);
   }, []);
 
   const onBootSplashAnimationEnd = useCallback(() => {
@@ -103,14 +119,19 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
   useTaskDeadlineNotificationHandlers();
   useAndroidLayoutAnimation();
   useYandexMobileAdsInit();
-  useAppBootstrap(onPushData, { onBootstrapReady, onCriticalError });
-  useAppForegroundLifecycle();
+  useAppBootstrap(onPushData, { onBootstrapReady, onWebApiReady, onCriticalError });
+  useCrashlyticsContextSync();
+  useAppForegroundLifecycle(webApiReady);
+  usePrivateAiTaskQueueBridge();
   useResetAccentWhenNotPro({ enabled: !bootSplashVisible });
   useResetProOnlyAiModelWhenNotPro({ enabled: !bootSplashVisible });
   useResetPrivateAiServerWhenNotPro({ enabled: !bootSplashVisible });
+  useShakeGestures({ enabled: bootstrapReady && !bootSplashVisible });
 
   useEffect(() => {
     setupAppLogger();
+    void initReduceMotionCheck();
+
     logInfo('App startup');
   }, []);
 
@@ -132,7 +153,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
                   ref={navigationRef}
                   onReady={() => {
                     routeNameRef.current = navigationRef.getCurrentRoute()?.name;
-                    flushPendingRecordModalNavigation();
+                    flushDeferredNavigation();
                     flushPendingSharedAudioImport();
                   }}
                   onStateChange={() => {
@@ -155,7 +176,12 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
                 <WarmupBottomSheet />
                 <CloudAiThirdPartyConsentModal />
                 <PushNotificationSheet />
+                <TaskDeadlineActionSheet onOpenNote={openTaskDeadlineRecord} />
                 <AppRatingPromptRoot />
+                <E2EReadyMarker />
+                <GithubSyncProgressOverlay />
+                <GitlabSyncProgressOverlay />
+                <IcloudSyncProgressOverlay />
               </BottomSheetModalProvider>
               <AppSwitcherPrivacyOverlay />
             </NetworkStatusProvider>

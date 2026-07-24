@@ -1,8 +1,10 @@
 import { DEFAULT_LOCAL_AI_MODEL_ID } from '@/entities/settings/model/constants';
 
+import { PRIVATE_REMOTE_HEALTH_CHECK_TIMEOUT_MS } from '../private-remote/privateRemoteConstants';
 import {
   listPrivateRemoteModels,
   resetPrivateRemoteFormatCapabilityCacheForTests,
+  runPrivateRemoteInboxAsk,
   runPrivateRemoteMeetingDialogue,
   testPrivateRemoteConnection,
 } from '../privateRemoteProvider';
@@ -45,6 +47,31 @@ function mockChatCompletion(payload: MockChatPayload): Response {
         {
           message: {
             content: payload.content,
+          },
+        },
+      ],
+    }),
+  } as Response;
+}
+
+function mockChatCompletionWithTools(payload: {
+  content?: string;
+  toolCalls?: unknown[];
+  model?: string;
+}): Response {
+  return {
+    ok: true,
+    json: async () => ({
+      model: payload.model ?? 'test/model',
+      usage: {
+        prompt_tokens: 100,
+        completion_tokens: 50,
+      },
+      choices: [
+        {
+          message: {
+            content: payload.content ?? null,
+            ...(payload.toolCalls ? { tool_calls: payload.toolCalls } : {}),
           },
         },
       ],
@@ -313,6 +340,38 @@ describe('testPrivateRemoteConnection', () => {
     expect(result.ok).toBe(true);
     expect(completionCalls).toBe(2);
   });
+
+  it('uses a short timeout for manual server checks', async () => {
+    mockNitroFetch.mockImplementation(async (url) => {
+      const urlText = String(url);
+      if (urlText.endsWith('/models')) {
+        return {
+          ok: true,
+          json: async () => ({ data: [{ id: 'gpt-test' }] }),
+        } as Response;
+      }
+      return mockChatCompletion({ content: 'pong' });
+    });
+
+    const result = await testPrivateRemoteConnection({
+      privateRemoteBaseUrl: 'http://127.0.0.1:1234',
+      privateRemoteApiKey: '',
+      privateRemoteModel: 'gpt-test',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(mockNitroFetch).toHaveBeenCalledTimes(2);
+    expect(mockNitroFetch).toHaveBeenNthCalledWith(
+      1,
+      'http://127.0.0.1:1234/v1/models',
+      expect.objectContaining({ timeoutMs: PRIVATE_REMOTE_HEALTH_CHECK_TIMEOUT_MS }),
+    );
+    expect(mockNitroFetch).toHaveBeenNthCalledWith(
+      2,
+      'http://127.0.0.1:1234/v1/chat/completions',
+      expect.objectContaining({ timeoutMs: PRIVATE_REMOTE_HEALTH_CHECK_TIMEOUT_MS }),
+    );
+  });
 });
 
 describe('listPrivateRemoteModels', () => {
@@ -369,5 +428,95 @@ describe('listPrivateRemoteModels', () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error).toBe('aiSettings.privateProvider.modelList.loadFailed');
+  });
+});
+
+describe('runPrivateRemoteInboxAsk', () => {
+  beforeEach(() => {
+    resetPrivateRemoteFormatCapabilityCacheForTests();
+    mockNitroFetch.mockReset();
+  });
+
+  it('executes one tool round then returns final answer', async () => {
+    let call = 0;
+    const toolExecutor = jest.fn(async () => ({
+      toolCallId: 'call_1',
+      toolName: 'search_notes' as const,
+      round: 1,
+      result: {
+        toolName: 'search_notes' as const,
+        query: 'budget',
+        notes: [],
+        totalCorpusCount: 0,
+        droppedCount: 0,
+        retrievalMode: 'lexical' as const,
+      },
+    }));
+
+    mockNitroFetch.mockImplementation(async (_url, init) => {
+      call += 1;
+      const body = JSON.parse(String(init?.body)) as { tools?: unknown[] };
+      if (call === 1) {
+        expect(body.tools).toBeDefined();
+        return mockChatCompletionWithTools({
+          toolCalls: [
+            {
+              id: 'call_1',
+              type: 'function',
+              function: { name: 'search_notes', arguments: '{"query":"budget"}' },
+            },
+          ],
+        });
+      }
+      return mockChatCompletion({
+        content: '{"answer":"Based on your notes, the budget is fine."}',
+      });
+    });
+
+    const result = await runPrivateRemoteInboxAsk(
+      {
+        id: 'req-1',
+        question: 'What about budget?',
+        corpusNotes: [{ recordId: 'r1', title: 'Note', summary: 'Budget note' }],
+        toolExecutor,
+      },
+      createCtx(),
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.result.answer).toContain('budget');
+    expect(toolExecutor).toHaveBeenCalledTimes(1);
+    expect(mockNitroFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('falls back to plain ask when server rejects tools', async () => {
+    let call = 0;
+    mockNitroFetch.mockImplementation(async () => {
+      call += 1;
+      if (call === 1) {
+        return {
+          ok: false,
+          text: async () => 'tools parameter is not supported',
+        } as Response;
+      }
+      return mockChatCompletion({
+        content: '{"answer":"Fallback answer"}',
+      });
+    });
+
+    const result = await runPrivateRemoteInboxAsk(
+      {
+        id: 'req-2',
+        question: 'Hello?',
+        corpusNotes: [],
+        toolExecutor: jest.fn(),
+      },
+      createCtx(),
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.result.answer).toBe('Fallback answer');
   });
 });

@@ -1,5 +1,6 @@
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
+import { diagWarn } from '@/shared/lib/appLogger';
 import { getDeviceModelLabel } from '@/shared/lib/device-model-for-api';
 import { getPlatformVersionString } from '@/shared/lib/platform';
 import { isNumber, isString } from '@/shared/lib/type-guards';
@@ -32,9 +33,7 @@ export function getPushRegistrationMetadata(): PushRegistrationMetadata {
       osVersion = getPlatformVersionString();
     }
   } catch {
-    if (__DEV__) {
-      console.warn('[getPushRegistrationMetadata] Failed to get push registration metadata');
-    }
+    diagWarn('[getPushRegistrationMetadata] Failed to get push registration metadata');
   }
 
   return { deviceModel, appVersion, buildNumber, osVersion };

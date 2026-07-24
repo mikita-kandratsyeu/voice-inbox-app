@@ -1,14 +1,28 @@
 import { i18n } from '@/shared/lib';
 import { AI_REQUEST_CANCELLED } from '@/shared/lib/ai-api/abort';
 
-import { runCloudAsk, runCloudSummaryTasks } from './cloudProvider';
+import {
+  runCloudAsk,
+  runCloudGeneralAsk,
+  runCloudInboxAsk,
+  runCloudSummaryTasks,
+} from './cloudProvider';
 import { runLocalMeetingDialogue } from './local-provider/localAiMeetingDialogue';
 import { runLocalAsk, runLocalSummaryTasks } from './localProvider';
-import { runPrivateRemoteAsk, runPrivateRemoteSummaryTasks } from './privateRemoteProvider';
+import {
+  runPrivateRemoteAsk,
+  runPrivateRemoteGeneralAsk,
+  runPrivateRemoteInboxAsk,
+  runPrivateRemoteSummaryTasks,
+} from './privateRemoteProvider';
 import type {
   AiExecutionContext,
   AskRequest,
   AskTaskResult,
+  GeneralAskRequest,
+  GeneralAskTaskResult,
+  InboxAskRequest,
+  InboxAskTaskResult,
   SummaryTaskRequest,
   SummaryTaskResult,
 } from './types';
@@ -171,5 +185,57 @@ export const AIOrchestrator = {
     }
 
     return runCloudAsk(request, ctx);
+  },
+
+  async runInboxAsk(
+    request: InboxAskRequest,
+    ctx: AiExecutionContext,
+  ): Promise<InboxAskTaskResult> {
+    if (
+      ctx.aiExecutionMode === 'private_experimental' &&
+      ctx.privateAiProvider !== 'custom_openai'
+    ) {
+      return {
+        ok: false,
+        provider: 'local',
+        mode: ctx.aiExecutionMode,
+        error: i18n.t('inboxAsk.privateDeviceUnavailable'),
+      };
+    }
+
+    if (
+      ctx.aiExecutionMode === 'private_experimental' &&
+      ctx.privateAiProvider === 'custom_openai'
+    ) {
+      return runPrivateRemoteInboxAsk(request, ctx);
+    }
+
+    return runCloudInboxAsk(request, ctx);
+  },
+
+  async runGeneralAsk(
+    request: GeneralAskRequest,
+    ctx: AiExecutionContext,
+  ): Promise<GeneralAskTaskResult> {
+    if (
+      ctx.aiExecutionMode === 'private_experimental' &&
+      ctx.privateAiProvider !== 'custom_openai'
+    ) {
+      return {
+        ok: false,
+        provider: 'local',
+        mode: ctx.aiExecutionMode,
+        error: i18n.t('inboxAsk.generalAskUnavailable'),
+      };
+    }
+
+    if (
+      ctx.aiExecutionMode === 'private_experimental' &&
+      ctx.privateAiProvider === 'custom_openai'
+    ) {
+      return runPrivateRemoteGeneralAsk(request, ctx);
+    }
+
+    return runCloudGeneralAsk(request, ctx);
   },
 };

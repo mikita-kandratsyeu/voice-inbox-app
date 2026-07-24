@@ -4,6 +4,7 @@ import {
   normalizeMeetingDialogueMarkdownParagraphs,
   parseMeetingDialogue,
 } from '@/screens/recording-detail/lib/parseMeetingDialogue';
+import { i18n } from '@/shared/lib';
 
 const TRANSCRIPT_TIMESTAMP_RE = /\[\d{1,2}:\d{2}(?::\d{2})?\]/;
 
@@ -57,6 +58,38 @@ export function formatTaskLineForShare(
   return `- [${task.isDone ? 'x' : ' '}] ${task.text}${suffix}`;
 }
 
+const TASK_OUTCOME_SUBLINE_INDENT = '  ';
+
+/** Main task checkbox line plus optional indented outcome / follow-up sub-lines. */
+export function formatTaskLinesForShare(
+  task: NonNullable<VoiceRecord['tasks']>[number],
+  suffix: string,
+  options?: { followUpTitle?: string | null; followUpRecordId?: string | null },
+): string[] {
+  const lines = [formatTaskLineForShare(task, suffix)];
+  const outcome = task.outcomeText?.trim();
+  if (outcome) {
+    lines.push(
+      `${TASK_OUTCOME_SUBLINE_INDENT}- **${i18n.t('taskOutcome.resultLabel')}:** ${outcome}`,
+    );
+  }
+
+  const followUpRecordId = options?.followUpRecordId?.trim();
+  const followUpTitle = options?.followUpTitle?.trim();
+  if (followUpRecordId) {
+    const linkLabel = followUpTitle || followUpRecordId;
+    lines.push(
+      `${TASK_OUTCOME_SUBLINE_INDENT}- **${i18n.t('taskOutcome.followUpSectionTitle')}:** [[${followUpRecordId}|${linkLabel}]]`,
+    );
+  } else if (followUpTitle) {
+    lines.push(
+      `${TASK_OUTCOME_SUBLINE_INDENT}- **${i18n.t('taskOutcome.followUpSectionTitle')}:** ${followUpTitle}`,
+    );
+  }
+
+  return lines;
+}
+
 export function formatMeetingDialogueForShareMarkdown(
   raw: string,
   forEmail = false,
@@ -88,13 +121,29 @@ export function formatMeetingDialogueForShareMarkdown(
 }
 
 /** Transcript for share / email / PDF — one block per timestamp or segment. */
-export function formatTranscriptBodyForShare(record: VoiceRecord, forEmail = false): string {
+export function formatTranscriptBodyForShare(
+  record: VoiceRecord,
+  forEmail = false,
+  forDocument = false,
+): string {
   const segments = record.transcriptSegments ?? [];
+  if (forDocument && segments.length > 0) {
+    return segments
+      .map((s) => s.text.replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+      .join('\n\n');
+  }
+
   if (segments.length > 0) {
     return segments
       .map((s) => formatTranscriptTurn(s.startTime, s.text, forEmail))
       .filter((block) => block.length > 0)
       .join(forEmail ? '\n' : '\n\n');
   }
+
+  if (forDocument) {
+    return (record.transcript ?? '').trim();
+  }
+
   return formatPlainTranscriptWithTimestamps(record.transcript ?? '', forEmail);
 }

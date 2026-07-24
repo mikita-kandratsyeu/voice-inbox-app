@@ -4,7 +4,7 @@ import type { FlashListRef } from '@shopify/flash-list';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { Alert, LayoutAnimation, ScrollView, useWindowDimensions } from 'react-native';
+import { Alert, ScrollView, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -25,9 +25,18 @@ import {
 import { useTabletInboxSidebarStore } from '@/app/navigation/tablet/tabletInboxSidebarStore';
 import type { BottomTabParamList } from '@/app/navigation/types';
 import { useFolderStore } from '@/entities/folder';
+import type {
+  AutoOrganizeMode,
+  AutoOrganizeRunResult,
+  AutoOrganizeTemplate,
+} from '@/entities/folder/lib/autoOrganizeTypes';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { areFoldersEnabledInAiMode, useSettingsStore } from '@/entities/settings';
+import {
+  areFoldersEnabledInAiMode,
+  isPrivateCustomServerMode,
+  useSettingsStore,
+} from '@/entities/settings';
 import { useAdsAllowed } from '@/features/app-storefront';
 import { useAutoArchiveReadNotes } from '@/features/auto-archive';
 import {
@@ -36,12 +45,25 @@ import {
   useBatchRecordActions,
   useBatchSelect,
 } from '@/features/batch-select';
+import { type InboxCardLayout, useInboxCardLayoutStore } from '@/features/inbox-card-layout';
 import { useInboxFiltersReset } from '@/features/inbox-filters';
 import { useAutoOrganizeFolders, useManageFolders } from '@/features/manage-folders';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useProEntitlement } from '@/features/pro-license';
+import {
+  getPublishedNoteMap,
+  notifyPublishedNoteInboxChanged,
+  usePublishedNoteInboxSyncStore,
+} from '@/features/publish-record';
+import { useRecordActions } from '@/features/record-actions';
 import { useSearchRecords } from '@/features/search-records';
-import { saveLastShareRecipientEmail, type ShareBriefTemplate } from '@/features/share-record';
+import {
+  saveLastShareRecipientEmail,
+  type ShareBriefTemplate,
+  type ShareRecordExportFormat,
+  useShareRecord,
+} from '@/features/share-record';
+import { TaskEditSheet } from '@/screens/recording-detail/ui/TaskEditSheet';
 import { useColors } from '@/shared/config';
 import {
   flashListJumpToTop,
@@ -56,6 +78,7 @@ import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacing
 import { getHasSeenSwipeHint, setHasSeenSwipeHint } from '@/shared/lib/hintsStorage';
 
 import { InboxScreenListItem } from '../ui/InboxScreenListItem';
+import { prepareInboxCardLayoutAnimation } from './inboxCardLayoutTransition';
 import {
   type FlattenedItem,
   INBOX_RECORD_PAGE_SIZE,
@@ -78,15 +101,17 @@ export function useInboxScreen() {
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const navigation = useNavigation<InboxNavigationProp>();
   const isInboxTabFocused = useIsFocused();
-  const { records, isLoaded, archiveRecord, unarchiveRecord, togglePin } = useRecordStore(
-    useShallow((s) => ({
-      records: s.records,
-      isLoaded: s.isLoaded,
-      archiveRecord: s.archiveRecord,
-      unarchiveRecord: s.unarchiveRecord,
-      togglePin: s.togglePin,
-    })),
-  );
+  const { records, isLoaded, archiveRecord, unarchiveRecord, togglePin, renameRecord } =
+    useRecordStore(
+      useShallow((s) => ({
+        records: s.records,
+        isLoaded: s.isLoaded,
+        archiveRecord: s.archiveRecord,
+        unarchiveRecord: s.unarchiveRecord,
+        togglePin: s.togglePin,
+        renameRecord: s.renameRecord,
+      })),
+    );
 
   const { folders, activeFolderId, setActiveFolder, reorderFolders } = useFolderStore(
     useShallow((s) => ({
@@ -114,17 +139,79 @@ export function useInboxScreen() {
     handleSave: handleFolderSave,
     handleDelete: handleFolderDelete,
   } = useManageFolders();
+  const [aiOrganizeSheetVisible, setAiOrganizeSheetVisible] = useState(false);
+  const [aiOrganizePresentKey, setAiOrganizePresentKey] = useState(0);
+  const [aiOrganizeTemplateSheetVisible, setAiOrganizeTemplateSheetVisible] = useState(false);
+  const [pendingAutoOrganizeTemplate, setPendingAutoOrganizeTemplate] =
+    useState<AutoOrganizeTemplate>('general');
+
+  const handleAutoOrganizeResult = useCallback(
+    (result: AutoOrganizeRunResult) => {
+      if (result.mode === 'consolidate_folders') {
+        navigation.navigate('AiOrganizeFoldersCleanupReview', { result: result.data });
+        return;
+      }
+      if (result.mode === 'suggest_archive') {
+        navigation.navigate('AiOrganizeArchiveReview', { result: result.data });
+        return;
+      }
+      navigation.navigate('AutoOrganizeReview', {
+        result: result.data,
+        mode: result.mode,
+        template: result.template,
+      });
+    },
+    [navigation],
+  );
+
   const {
     runAutoOrganize,
     cancelAutoOrganize,
     isRunning: isAutoOrganizing,
+    activeMode: autoOrganizeActiveMode,
     overlayVisible: autoOrganizeOverlayVisible,
     overlayMode: autoOrganizeOverlayMode,
+    eligibleCount: autoOrganizeEligibleCount,
+    minRequired: autoOrganizeMinRequired,
   } = useAutoOrganizeFolders(records, {
-    onResult: (result) => {
-      navigation.navigate('AutoOrganizeReview', { result });
-    },
+    onResult: handleAutoOrganizeResult,
   });
+
+  const openAiOrganizeSheet = useCallback(() => {
+    setAiOrganizePresentKey((key) => key + 1);
+    setAiOrganizeSheetVisible(true);
+  }, []);
+
+  const closeAiOrganizeSheet = useCallback(() => {
+    setAiOrganizeSheetVisible(false);
+  }, []);
+
+  const closeAiOrganizeTemplateSheet = useCallback(() => {
+    setAiOrganizeTemplateSheetVisible(false);
+  }, []);
+
+  const handleAiOrganizeActionSelect = useCallback(
+    (mode: AutoOrganizeMode) => {
+      setAiOrganizeSheetVisible(false);
+      if (mode === 'full') {
+        setAiOrganizeTemplateSheetVisible(true);
+        return;
+      }
+      void runAutoOrganize({ mode });
+    },
+    [runAutoOrganize],
+  );
+
+  const handleAiOrganizeTemplateBack = useCallback(() => {
+    setAiOrganizeTemplateSheetVisible(false);
+    setAiOrganizePresentKey((key) => key + 1);
+    setAiOrganizeSheetVisible(true);
+  }, []);
+
+  const handleAiOrganizeTemplateApply = useCallback(() => {
+    setAiOrganizeTemplateSheetVisible(false);
+    void runAutoOrganize({ mode: 'full', template: pendingAutoOrganizeTemplate });
+  }, [pendingAutoOrganizeTemplate, runAutoOrganize]);
 
   const effectiveActiveFolderId = foldersEnabled ? activeFolderId : null;
 
@@ -133,6 +220,11 @@ export function useInboxScreen() {
     return records.filter((r) => r.folderId === effectiveActiveFolderId);
   }, [records, effectiveActiveFolderId]);
 
+  const recordsById = useMemo(
+    () => new Map(records.map((record) => [record.id, record])),
+    [records],
+  );
+
   const folderColorById = useMemo(() => {
     const m = new Map<string, string>();
     for (const f of folders) {
@@ -140,6 +232,71 @@ export function useInboxScreen() {
     }
     return m;
   }, [folders]);
+
+  const folderNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const f of folders) {
+      m.set(f.id, f.name);
+    }
+    return m;
+  }, [folders]);
+
+  const folderIconById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const f of folders) {
+      m.set(f.id, f.icon);
+    }
+    return m;
+  }, [folders]);
+
+  const inboxCardLayout = useInboxCardLayoutStore((s) => s.layout);
+  const setInboxCardLayout = useInboxCardLayoutStore((s) => s.setLayout);
+
+  const [publishedByRecordId, setPublishedByRecordId] = useState<
+    Map<string, { expiresAt: string | null }>
+  >(new Map());
+  const publishedMapRevision = usePublishedNoteInboxSyncStore((s) => s.revision);
+  const publishedMapRequestIdRef = useRef(0);
+
+  const folderRecordIds = useMemo(
+    () => folderFilteredRecords.map((record) => record.id),
+    [folderFilteredRecords],
+  );
+
+  const publishedRecordIds = useMemo(
+    () => new Set(publishedByRecordId.keys()),
+    [publishedByRecordId],
+  );
+
+  const refreshPublishedMap = useCallback(() => {
+    const requestId = ++publishedMapRequestIdRef.current;
+    if (folderRecordIds.length === 0) {
+      setPublishedByRecordId(new Map());
+      return;
+    }
+
+    void getPublishedNoteMap(folderRecordIds).then((map) => {
+      if (requestId !== publishedMapRequestIdRef.current) return;
+      const next = new Map<string, { expiresAt: string | null }>();
+      for (const [recordId, value] of map.entries()) {
+        next.set(recordId, { expiresAt: value.expiresAt });
+      }
+      setPublishedByRecordId(next);
+    });
+  }, [folderRecordIds]);
+
+  useEffect(() => {
+    refreshPublishedMap();
+  }, [publishedMapRevision, refreshPublishedMap]);
+
+  const wasInboxTabFocusedRef = useRef(isInboxTabFocused);
+  useEffect(() => {
+    const wasFocused = wasInboxTabFocusedRef.current;
+    wasInboxTabFocusedRef.current = isInboxTabFocused;
+    if (!wasFocused && isInboxTabFocused) {
+      refreshPublishedMap();
+    }
+  }, [isInboxTabFocused, refreshPublishedMap]);
 
   const {
     query,
@@ -156,7 +313,7 @@ export function useInboxScreen() {
     sortOption,
     setSortOption,
     resetToDefault,
-  } = useSearchRecords(folderFilteredRecords);
+  } = useSearchRecords(folderFilteredRecords, { publishedRecordIds });
 
   const activeFolder = useMemo(
     () =>
@@ -213,6 +370,17 @@ export function useInboxScreen() {
   const folderChipScrollRef = useRef<ScrollView>(null);
   const listScrollOffsetYRef = useRef(0);
   const inboxFiltersReset = useInboxFiltersReset();
+
+  const handleInboxCardLayoutChange = useCallback(
+    (layout: InboxCardLayout) => {
+      if (layout === inboxCardLayout) return;
+      listRef.current?.prepareForLayoutAnimationRender();
+      prepareInboxCardLayoutAnimation();
+      setInboxCardLayout(layout);
+    },
+    [inboxCardLayout, setInboxCardLayout],
+  );
+
   const [showSwipeHint, setShowSwipeHint] = useState(() => !getHasSeenSwipeHint());
 
   const dismissSwipeHint = useCallback(() => {
@@ -253,6 +421,10 @@ export function useInboxScreen() {
     [flattenedDataWithOptionalBanner, visibleRecordCount],
   );
 
+  useEffect(() => {
+    listRef.current?.prepareForLayoutAnimationRender();
+  }, [visibleRecordCount, inboxCardLayout, pagedFlattenedData]);
+
   const canLoadMoreInbox = totalFlattenedRecords > visibleRecordCount;
 
   const [searchBarExplicitOpen, setSearchBarExplicitOpen] = useState(false);
@@ -275,20 +447,49 @@ export function useInboxScreen() {
     }
   }, [searchBarExplicitOpen, query]);
 
-  const handleCreateTextNote = useCallback(() => {
-    navigation.navigate('TextNoteModal');
-  }, [navigation]);
+  const handleOpenNotesGraph = useCallback(() => {
+    if (isProActive) {
+      navigation.navigate('NotesGraph');
+      return;
+    }
+    setNotesGraphProSheetVisible(true);
+  }, [isProActive, navigation]);
+
+  const handleOpenNotesGraphForRecord = useCallback(
+    (recordId: string) => {
+      if (isProActive) {
+        navigation.navigate('NotesGraph', { focusRecordId: recordId, localDepth: 2 });
+        return;
+      }
+      setNotesGraphProSheetVisible(true);
+    },
+    [isProActive, navigation],
+  );
+
+  const handleOpenAskAIForRecord = useCallback(
+    (record: VoiceRecord) => {
+      navigation.navigate('RecordingAskAI', { record });
+    },
+    [navigation],
+  );
+
+  const handleCloseNotesGraphProSheet = useCallback(() => {
+    setNotesGraphProSheetVisible(false);
+  }, []);
+
+  const handleNotesGraphProUpgrade = useCallback(() => {
+    setNotesGraphProSheetVisible(false);
+    openPlanPaywall();
+  }, []);
 
   const enterBatchMode = useCallback(
     (initialId?: string, options?: { haptic?: boolean }) => {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       batchSelect.enterSelectMode(initialId, options);
     },
     [batchSelect],
   );
 
   const exitBatchMode = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     batchSelect.exitSelectMode();
   }, [batchSelect]);
 
@@ -322,7 +523,18 @@ export function useInboxScreen() {
   const [folderReorderVisible, setFolderReorderVisible] = useState(false);
   const [batchExportSheetVisible, setBatchExportSheetVisible] = useState(false);
   const [batchExportProSheetVisible, setBatchExportProSheetVisible] = useState(false);
+  const [notesGraphProSheetVisible, setNotesGraphProSheetVisible] = useState(false);
   const [batchEmailSending, setBatchEmailSending] = useState(false);
+  const [shareSheetVisible, setShareSheetVisible] = useState(false);
+  const [shareTargetRecordId, setShareTargetRecordId] = useState<string | null>(null);
+  const [renameTarget, setRenameTarget] = useState<{ id: string; title: string } | null>(null);
+  const [shareEmailSending, setShareEmailSending] = useState(false);
+  const {
+    shareRecord,
+    shareAudio,
+    emailRecord,
+    isGeneratingSharePdf: isGeneratingSingleSharePdf,
+  } = useShareRecord();
 
   const handleOpenBatchFolderPicker = useCallback(() => {
     setFolderPickerVisible(true);
@@ -378,12 +590,16 @@ export function useInboxScreen() {
     openPlanPaywall();
   }, []);
 
+  const selectedRecords = useMemo(
+    () => filtered.filter((r) => batchSelect.selectedIds.has(r.id)),
+    [filtered, batchSelect.selectedIds],
+  );
+
   const handleBatchExportTemplate = useCallback(
     (template: ShareBriefTemplate, packaging: BatchExportPackaging) => {
-      const selectedRecords = filtered.filter((r) => batchSelect.selectedIds.has(r.id));
       return batchExport(selectedRecords, template, packaging);
     },
-    [batchExport, filtered, batchSelect.selectedIds],
+    [batchExport, selectedRecords],
   );
 
   const handleBatchEmail = useCallback(
@@ -624,33 +840,192 @@ export function useInboxScreen() {
     [batchSelect.isSelectMode, enterBatchMode],
   );
 
-  const renderItem = useCallback(
-    ({ item }: { item: FlattenedItem }) => (
-      <InboxScreenListItem
-        item={item}
-        color={color}
-        bannerMaxWidth={bannerMaxWidth}
-        batchSelect={batchSelect}
-        effectiveActiveFolderId={effectiveActiveFolderId}
-        foldersEnabled={foldersEnabled}
-        folderColorById={folderColorById}
-        isProActive={isProActive}
-        isArchivedView={isArchivedView}
-        dismissSwipeHint={dismissSwipeHint}
-        archiveRecord={archiveRecord}
-        unarchiveRecord={unarchiveRecord}
-        togglePin={togglePin}
-        listRef={listRef}
-        onRecordPress={handleRecordPress}
-        onStatusPress={handleStatusPress}
-        onRecordLongPress={handleRecordLongPress}
+  const shareTargetRecord = useMemo(
+    () =>
+      shareTargetRecordId ? (records.find((r) => r.id === shareTargetRecordId) ?? null) : null,
+    [records, shareTargetRecordId],
+  );
+
+  const handleCloseShareSheet = useCallback(() => {
+    setShareSheetVisible(false);
+    setShareTargetRecordId(null);
+  }, []);
+
+  const handlePublishStateChanged = useCallback(
+    (recordId: string, active: boolean, expiresAt: string | null) => {
+      setPublishedByRecordId((prev) => {
+        const next = new Map(prev);
+        if (active) {
+          next.set(recordId, { expiresAt });
+        } else {
+          next.delete(recordId);
+        }
+        return next;
+      });
+      notifyPublishedNoteInboxChanged();
+    },
+    [],
+  );
+
+  const handleRecordShare = useCallback(
+    (item: VoiceRecord) => {
+      if (isProActive) {
+        setShareTargetRecordId(item.id);
+        setShareSheetVisible(true);
+        return;
+      }
+      shareRecord(item, 'noteBrief', 'markdown').catch((err: unknown) => {
+        Alert.alert(
+          t('recordingDetail.shareFailed'),
+          err instanceof Error ? toUserFacingFetchErrorFromUnknown(err) : t('batch.exportFailed'),
+        );
+      });
+    },
+    [isProActive, shareRecord, t],
+  );
+
+  const handleRecordRename = useCallback((item: VoiceRecord) => {
+    setRenameTarget({ id: item.id, title: item.title });
+  }, []);
+
+  const { promptDelete } = useRecordActions();
+
+  const handleRecordDelete = useCallback(
+    (item: VoiceRecord) => {
+      promptDelete(item);
+    },
+    [promptDelete],
+  );
+
+  const renameRecordSheet = useMemo(
+    () => (
+      <TaskEditSheet
+        visible={renameTarget !== null}
+        initialText={renameTarget?.title ?? ''}
+        sheetTitleKey="recordActions.renameTitle"
+        placeholderKey="recordActions.renamePrompt"
+        onClose={() => setRenameTarget(null)}
+        onSave={({ text }) => {
+          const trimmed = text.trim();
+          if (!renameTarget) return false;
+          if (trimmed === renameTarget.title) return true;
+
+          void renameRecord(renameTarget.id, trimmed);
+
+          return true;
+        }}
       />
     ),
+    [renameRecord, renameTarget],
+  );
+
+  const handleShareRecordText = useCallback(
+    (template: ShareBriefTemplate, format: ShareRecordExportFormat) => {
+      if (!shareTargetRecord) return Promise.resolve();
+      return shareRecord(shareTargetRecord, template, format).catch((err: unknown) => {
+        Alert.alert(
+          t('recordingDetail.shareFailed'),
+          err instanceof Error ? toUserFacingFetchErrorFromUnknown(err) : t('batch.exportFailed'),
+        );
+      });
+    },
+    [shareRecord, shareTargetRecord, t],
+  );
+
+  const handleShareRecordAudio = useCallback(() => {
+    if (!shareTargetRecord) return;
+    shareAudio(shareTargetRecord).catch((err: unknown) => {
+      Alert.alert(
+        t('recordingDetail.shareFailed'),
+        err instanceof Error ? toUserFacingFetchErrorFromUnknown(err) : t('batch.exportFailed'),
+      );
+    });
+  }, [shareAudio, shareTargetRecord, t]);
+
+  const handleOpenAllTasksForNote = useCallback(
+    (recordId: string) => {
+      navigation.navigate('AllTasks', { recordId });
+    },
+    [navigation],
+  );
+
+  const handleEmailShareRecord = useCallback(
+    (email: string, template: ShareBriefTemplate, format: ShareRecordExportFormat) => {
+      if (!shareTargetRecord) return;
+      setShareEmailSending(true);
+      emailRecord(shareTargetRecord, email, template, format)
+        .then(() => {
+          saveLastShareRecipientEmail(email);
+          hapticSuccess();
+          handleCloseShareSheet();
+          Alert.alert(t('share.emailSentTitle'), t('share.emailSentMessage', { email }));
+        })
+        .catch((err: unknown) => {
+          hapticError();
+          Alert.alert(
+            t('share.emailFailedTitle'),
+            err instanceof Error ? toUserFacingFetchErrorFromUnknown(err) : t('batch.exportFailed'),
+          );
+        })
+        .finally(() => {
+          setShareEmailSending(false);
+        });
+    },
+    [emailRecord, handleCloseShareSheet, shareTargetRecord, t],
+  );
+
+  const renderItem = useCallback(
+    ({ item }: { item: FlattenedItem }) => {
+      const resolvedItem =
+        item.type === 'record'
+          ? {
+              ...item,
+              item: {
+                ...(recordsById.get(item.item.id) ?? item.item),
+                isPublicPublished: publishedByRecordId.has(item.item.id),
+                publicShareExpiresAt: publishedByRecordId.get(item.item.id)?.expiresAt ?? null,
+              },
+            }
+          : item;
+      return (
+        <InboxScreenListItem
+          item={resolvedItem}
+          color={color}
+          bannerMaxWidth={bannerMaxWidth}
+          batchSelect={batchSelect}
+          cardLayout={inboxCardLayout}
+          effectiveActiveFolderId={effectiveActiveFolderId}
+          foldersEnabled={foldersEnabled}
+          folderColorById={folderColorById}
+          folderIconById={folderIconById}
+          folderNameById={folderNameById}
+          isProActive={isProActive}
+          isArchivedView={isArchivedView}
+          dismissSwipeHint={dismissSwipeHint}
+          archiveRecord={archiveRecord}
+          unarchiveRecord={unarchiveRecord}
+          togglePin={togglePin}
+          listRef={listRef}
+          onRecordPress={handleRecordPress}
+          onStatusPress={handleStatusPress}
+          onRecordLongPress={handleRecordLongPress}
+          onRecordShare={handleRecordShare}
+          onRecordRename={handleRecordRename}
+          onRecordDelete={handleRecordDelete}
+          onOpenAllTasksForNote={handleOpenAllTasksForNote}
+          onOpenAskAIForRecord={handleOpenAskAIForRecord}
+          onOpenNotesGraphForRecord={handleOpenNotesGraphForRecord}
+        />
+      );
+    },
     [
       color,
       bannerMaxWidth,
+      inboxCardLayout,
       effectiveActiveFolderId,
       folderColorById,
+      folderIconById,
+      folderNameById,
       foldersEnabled,
       isProActive,
       isArchivedView,
@@ -661,21 +1036,50 @@ export function useInboxScreen() {
       handleRecordPress,
       handleStatusPress,
       handleRecordLongPress,
+      handleRecordShare,
+      handleRecordRename,
+      handleRecordDelete,
+      handleOpenAllTasksForNote,
+      handleOpenAskAIForRecord,
+      handleOpenNotesGraphForRecord,
       batchSelect,
+      publishedByRecordId,
+      recordsById,
     ],
   );
 
-  const getItemType = useCallback((item: FlattenedItem) => item.type, []);
+  const listExtraData = useMemo(
+    () => ({
+      cardLayout: inboxCardLayout,
+      records,
+      selectedIds: batchSelect.selectedIds,
+      visibleRecordCount,
+    }),
+    [batchSelect.selectedIds, inboxCardLayout, records, visibleRecordCount],
+  );
 
-  const keyExtractor = useCallback((item: FlattenedItem) => {
-    if (item.type === 'header') {
-      return `header-${item.title}`;
-    }
-    if (item.type === 'banner_card') {
-      return `inbox-inline-banner-${item.slotIndex}`;
-    }
-    return item.item.id;
-  }, []);
+  const getItemType = useCallback(
+    (item: FlattenedItem) => {
+      if (item.type === 'record') {
+        return inboxCardLayout === 'expanded' ? 'record-expanded' : 'record-compact';
+      }
+      return item.type;
+    },
+    [inboxCardLayout],
+  );
+
+  const keyExtractor = useCallback(
+    (item: FlattenedItem) => {
+      if (item.type === 'header') {
+        return `header-${item.title}`;
+      }
+      if (item.type === 'banner_card') {
+        return `inbox-inline-banner-${item.slotIndex}`;
+      }
+      return `${item.item.id}:${inboxCardLayout}`;
+    },
+    [inboxCardLayout],
+  );
 
   const onListEndReached = useCallback(() => {
     if (!canLoadMoreInbox) return;
@@ -717,8 +1121,11 @@ export function useInboxScreen() {
   }, [batchProgress, t]);
 
   const screenStyle = useMemo(
-    () => ({ flex: 1, backgroundColor: color.background.primary }),
-    [color.background.primary],
+    () => ({
+      flex: 1,
+      backgroundColor: useTabletShell ? color.background.secondary : color.background.primary,
+    }),
+    [color.background.primary, color.background.secondary, useTabletShell],
   );
 
   const listContentStyle = useMemo(
@@ -812,11 +1219,25 @@ export function useInboxScreen() {
     closeFolderModal,
     handleFolderSave,
     handleFolderDelete,
-    runAutoOrganize,
+    openAiOrganizeSheet,
+    closeAiOrganizeSheet,
+    aiOrganizeSheetVisible,
+    aiOrganizePresentKey,
+    aiOrganizeTemplateSheetVisible,
+    closeAiOrganizeTemplateSheet,
+    pendingAutoOrganizeTemplate,
+    setPendingAutoOrganizeTemplate,
+    handleAiOrganizeActionSelect,
+    handleAiOrganizeTemplateBack,
+    handleAiOrganizeTemplateApply,
     cancelAutoOrganize,
     isAutoOrganizing,
+    autoOrganizeActiveMode,
     autoOrganizeOverlayVisible,
     autoOrganizeOverlayMode,
+    autoOrganizeEligibleCount,
+    autoOrganizeMinRequired,
+    isPrivateCustomServerMode: isPrivateCustomServerMode(aiExecutionMode, privateAiProvider),
     query,
     setQuery,
     filtered,
@@ -834,7 +1255,10 @@ export function useInboxScreen() {
     allSelected,
     handleSelectAll,
     handleSearchHeaderPress,
-    handleCreateTextNote,
+    handleOpenNotesGraph,
+    handleCloseNotesGraphProSheet,
+    handleNotesGraphProUpgrade,
+    notesGraphProSheetVisible,
     searchBarExplicitOpen,
     showInboxSearchBar,
     emptyStatePlacement,
@@ -868,13 +1292,25 @@ export function useInboxScreen() {
     listContentStyle,
     listStyle,
     renderItem,
+    listExtraData,
     keyExtractor,
     getItemType,
     onListEndReached,
     showInboxScrollResetSkeleton,
     onInboxListScroll: handleInboxListScroll,
     batchProgressModal,
-    isGeneratingSharePdf,
+    isGeneratingSharePdf: isGeneratingSharePdf || isGeneratingSingleSharePdf,
     isProActive,
+    inboxCardLayout,
+    handleInboxCardLayoutChange,
+    shareSheetVisible,
+    shareTargetRecord,
+    shareEmailSending,
+    handleCloseShareSheet,
+    handleShareRecordText,
+    handleShareRecordAudio,
+    handleEmailShareRecord,
+    handlePublishStateChanged,
+    renameRecordSheet,
   };
 }

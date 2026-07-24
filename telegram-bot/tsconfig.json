@@ -5,9 +5,10 @@
     "moduleResolution": "NodeNext",
     "strict": true,
     "skipLibCheck": true,
+    "isolatedModules": true,
     "noEmit": true,
     "verbatimModuleSyntax": true,
-    "types": ["node"]
+    "types": ["jest", "node"]
   },
   "include": ["src/**/*.ts"]
 }

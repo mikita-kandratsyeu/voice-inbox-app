@@ -1,8 +1,8 @@
-import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
-import { ClipboardList, FileText, ListChecks, Mail, UsersRound } from 'lucide-react-native';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { ClipboardList, FileText, ListTodo, Mail, UsersRound } from 'lucide-react-native';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Keyboard, Text, TouchableOpacity, View } from 'react-native';
 
 import {
   getLastShareRecipientEmail,
@@ -10,9 +10,14 @@ import {
   type ShareBriefTemplate,
 } from '@/features/share-record';
 import { EmailBodyFormatPicker } from '@/features/share-record/ui/EmailBodyFormatPicker';
-import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  AppBottomSheetContent,
+  AppBottomSheetModal,
+  SheetFooterButtons,
+  SheetHeader,
+  SheetSelectionChip,
+} from '@/shared/ui';
 
 import type { BatchExportPackaging } from '../model/batchExportPackaging';
 
@@ -26,47 +31,6 @@ function exportEmailLimitReminderKey(packaging: BatchExportPackaging): string {
   if (packaging === 'pdf') return 'batch.emailPdfLimitReminder';
   if (packaging === 'zip') return 'batch.emailZipLimitReminder';
   return 'batch.emailLimitReminder';
-}
-
-function ExportPackagingChip({
-  packaging,
-  selectedPackaging,
-  label,
-  onSelect,
-  color,
-  disabled = false,
-}: {
-  packaging: BatchExportPackaging;
-  selectedPackaging: BatchExportPackaging;
-  label: string;
-  onSelect: (p: BatchExportPackaging) => void;
-  color: Colors;
-  disabled?: boolean;
-}) {
-  const selected = selectedPackaging === packaging;
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected, disabled }}
-      accessibilityLabel={label}
-      disabled={disabled}
-      onPress={() => onSelect(packaging)}
-      className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
-      style={{
-        borderColor: selected ? color.accent.primary : color.border.default,
-        backgroundColor: color.background.tertiary,
-        opacity: disabled ? 0.55 : 1,
-      }}
-    >
-      <Text
-        className="text-center text-[15px] font-semibold leading-5"
-        style={{ color: selected ? color.accent.primary : color.text.primary }}
-        numberOfLines={2}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
 }
 
 type BatchExportSheetProps = {
@@ -98,8 +62,6 @@ export const BatchExportSheet = ({
 }: BatchExportSheetProps) => {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(24);
-  const listContentPadding = useBottomSheetContentPadding(20);
   const [emailVisible, setEmailVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [emailBodyTemplate, setEmailBodyTemplate] = useState<ShareBriefTemplate | null>(null);
@@ -129,7 +91,7 @@ export const BatchExportSheet = ({
         emailBriefOption,
         {
           tpl: 'meetingBrief' as const,
-          Icon: ListChecks,
+          Icon: ListTodo,
           chipLabel: t('share.emailFormatChipMeeting'),
           accessibilityHint: t('share.meetingBriefDescription'),
         },
@@ -300,55 +262,37 @@ export const BatchExportSheet = ({
   return (
     <AppBottomSheetModal visible={visible} onClose={handleClose}>
       {emailVisible ? (
-        <BottomSheetScrollView
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingHorizontal: 20,
-            paddingTop: 4,
-            ...contentPadding,
-            gap: 12,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 17,
-              fontWeight: '600',
-              color: color.text.primary,
-              textAlign: 'center',
-              marginBottom: 8,
-            }}
-          >
-            {t('share.emailNote')}
-          </Text>
-          <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
-            {t('batch.emailBatchDescription')}
-          </Text>
+        <AppBottomSheetContent scrollable style={{ paddingTop: 4, gap: 12 }}>
+          <SheetHeader
+            title={t('share.emailNote')}
+            subtitle={t('batch.emailBatchDescription')}
+            color={color}
+            marginBottom={4}
+          />
 
           <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
             {t('batch.exportPackagingLabel')}
           </Text>
           <View className="flex-row flex-wrap gap-3">
-            <ExportPackagingChip
-              packaging="single"
-              selectedPackaging={exportPackaging}
+            <SheetSelectionChip
+              value="single"
+              selectedValue={exportPackaging}
               label={t('batch.exportPackagingSingle')}
               onSelect={handleSelectExportPackaging}
               color={color}
               disabled={isExporting}
             />
-            <ExportPackagingChip
-              packaging="zip"
-              selectedPackaging={exportPackaging}
+            <SheetSelectionChip
+              value="zip"
+              selectedValue={exportPackaging}
               label={t('batch.exportPackagingZip')}
               onSelect={handleSelectExportPackaging}
               color={color}
               disabled={isExporting}
             />
-            <ExportPackagingChip
-              packaging="pdf"
-              selectedPackaging={exportPackaging}
+            <SheetSelectionChip
+              value="pdf"
+              selectedValue={exportPackaging}
               label={t('batch.exportPackagingPdf')}
               onSelect={handleSelectExportPackaging}
               color={color}
@@ -416,55 +360,39 @@ export const BatchExportSheet = ({
             onSecondaryPressIn={handleCancelEmail}
             secondaryDisabled={isSendingEmail || isExporting}
           />
-        </BottomSheetScrollView>
+        </AppBottomSheetContent>
       ) : (
-        <BottomSheetView
-          style={{
-            paddingHorizontal: 20,
-            paddingTop: 4,
-            gap: 10,
-            ...listContentPadding,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 17,
-              fontWeight: '600',
-              color: color.text.primary,
-              textAlign: 'center',
-              marginBottom: 8,
-            }}
-          >
-            {t('batch.exportAsTitle', { count })}
-          </Text>
-
-          <Text style={{ fontSize: 13, color: color.text.muted, lineHeight: 18 }}>
-            {t('batch.sheetLimitsHint')}
-          </Text>
+        <AppBottomSheetContent bottomPadding={20} style={{ gap: 10 }}>
+          <SheetHeader
+            title={t('batch.exportAsTitle', { count })}
+            subtitle={t('batch.sheetLimitsHint')}
+            color={color}
+            marginBottom={2}
+          />
 
           <Text style={{ fontSize: 13, fontWeight: '600', color: color.text.secondary }}>
             {t('batch.exportPackagingLabel')}
           </Text>
           <View className="flex-row flex-wrap gap-3">
-            <ExportPackagingChip
-              packaging="single"
-              selectedPackaging={exportPackaging}
+            <SheetSelectionChip
+              value="single"
+              selectedValue={exportPackaging}
               label={t('batch.exportPackagingSingle')}
               onSelect={handleSelectExportPackaging}
               color={color}
               disabled={isExporting}
             />
-            <ExportPackagingChip
-              packaging="zip"
-              selectedPackaging={exportPackaging}
+            <SheetSelectionChip
+              value="zip"
+              selectedValue={exportPackaging}
               label={t('batch.exportPackagingZip')}
               onSelect={handleSelectExportPackaging}
               color={color}
               disabled={isExporting}
             />
-            <ExportPackagingChip
-              packaging="pdf"
-              selectedPackaging={exportPackaging}
+            <SheetSelectionChip
+              value="pdf"
+              selectedValue={exportPackaging}
               label={t('batch.exportPackagingPdf')}
               onSelect={handleSelectExportPackaging}
               color={color}
@@ -497,7 +425,7 @@ export const BatchExportSheet = ({
 
           {showSpeakerTurnsExport
             ? renderShareFormatRow({
-                icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
+                icon: <ListTodo size={20} color={color.text.primary} strokeWidth={2.1} />,
                 title: t('share.meetingBrief'),
                 description: t('share.meetingBriefDescription'),
                 accessibilityLabel: t('share.meetingBrief'),
@@ -527,7 +455,7 @@ export const BatchExportSheet = ({
             onPress: handleOpenEmail,
             disabled: isExporting,
           })}
-        </BottomSheetView>
+        </AppBottomSheetContent>
       )}
     </AppBottomSheetModal>
   );

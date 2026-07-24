@@ -2,7 +2,12 @@ import { create } from 'zustand';
 
 import { folderRepository } from '@/entities/folder/model/repository';
 import { loadAskAiInboxStatusesByRecordId } from '@/features/ask-ai/model/askAiSessionDb';
+import {
+  appendLinkedRecordId,
+  removeLinkedRecordId,
+} from '@/features/note-links/lib/normalizeLinkedRecordIds';
 import { waitForDb } from '@/shared/lib';
+import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 
 import { isRecordAiOperating } from '../lib/isRecordAiOperating';
@@ -26,7 +31,7 @@ const flushPersistAiState = (id: string, aiStatus: RecordingStatus, transcriptPr
   void waitForDb()
     .then(() => recordRepository.persistAiState(id, aiStatus, transcriptProgress))
     .catch((err) => {
-      if (__DEV__) console.warn('[recordStore] persistAiState failed', id, err);
+      diagWarn('[recordStore] persistAiState failed', id, err);
     });
 };
 
@@ -137,6 +142,9 @@ type RecordStore = {
   updateSummary: (id: string, summary: string) => Promise<void>;
   updateTasks: (id: string, tasks: TaskItem[]) => Promise<void>;
   updateTags: (id: string, tags: string[]) => Promise<void>;
+  linkRecord: (sourceId: string, targetId: string) => Promise<void>;
+  unlinkRecord: (sourceId: string, targetId: string) => Promise<void>;
+  setLinkedRecordIds: (sourceId: string, linkedRecordIds: string[]) => Promise<void>;
   updateRecordingMarks: (id: string, marks: RecordingMark[]) => Promise<void>;
   updateAiExtras: (
     id: string,
@@ -151,6 +159,7 @@ type RecordStore = {
       summaryReasoning?: string | null;
       summaryAiModel?: string | null;
       summaryAiModelLabel?: string | null;
+      summaryAiModelMode?: 'manual' | 'auto' | null;
       summaryTokensPrompt?: number | null;
       summaryTokensCompletion?: number | null;
       summaryGenerationMs?: number | null;
@@ -182,7 +191,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     }
     recordListLoadInFlight = (async () => {
       try {
-        if (__DEV__) console.warn('[recordStore] load: refetching records from DB');
+        devWarn('[recordStore] load: refetching records from DB');
 
         const all = await recordRepository.getAllList();
         const transcriptById = new Map(all.map((r) => [r.id, r.transcript]));
@@ -275,12 +284,22 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
           await NitroFS.unlink(audioPath);
         }
       } catch (err) {
-        if (__DEV__) console.warn('[store] Failed to delete audio file:', err);
+        diagWarn('[store] Failed to delete audio file:', err);
       }
     }
     await recordRepository.remove(id);
+    const prunedIds = await recordRepository.pruneLinkedRecordReferences(id);
+    const { removePrivateAiTasksForRecord } = await import('@/features/ai-task-queue');
+    await removePrivateAiTasksForRecord(id).catch(() => {});
     set((s) => {
-      const next = s.records.filter((r) => r.id !== id);
+      let next = s.records.filter((r) => r.id !== id);
+      if (prunedIds.length > 0) {
+        next = next.map((r) => {
+          if (!prunedIds.includes(r.id)) return r;
+          const linkedRecordIds = removeLinkedRecordId(r.linkedRecordIds, id);
+          return { ...r, linkedRecordIds };
+        });
+      }
       return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
     });
     scheduleTaskDeadlineNotificationSync();
@@ -387,7 +406,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
 
     const updated = get().records.find((r) => r.id === id);
     if (!updated) {
-      if (__DEV__) console.warn('[recordStore] updateAiStatus: record not in store', id);
+      devWarn('[recordStore] updateAiStatus: record not in store', id);
       return;
     }
 
@@ -486,10 +505,14 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   },
 
   updateTasks: async (id, tasks) => {
+    const prevTasks = get().records.find((record) => record.id === id)?.tasks;
     await recordRepository.updateTasks(id, tasks);
     set((s) => ({
       records: updateRecord(s.records, id, { tasks, tasksStatus: 'done', tasksError: undefined }),
     }));
+    const { syncTaskDeadlineSnoozeForTasks } =
+      await import('@/features/task-deadline-notifications/lib/syncTaskDeadlineSnoozeForTasks');
+    syncTaskDeadlineSnoozeForTasks(prevTasks, tasks);
     scheduleTaskDeadlineNotificationSync();
   },
 
@@ -497,6 +520,58 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     await recordRepository.updateTags(id, tags);
     set((s) => ({
       records: updateRecord(s.records, id, { tags }),
+    }));
+  },
+
+  linkRecord: async (sourceId, targetId) => {
+    const source = get().records.find((record) => record.id === sourceId);
+    if (!source) return;
+
+    const linkedRecordIds = appendLinkedRecordId(source.linkedRecordIds, targetId, sourceId);
+    if (linkedRecordIds === source.linkedRecordIds) return;
+
+    await recordRepository.updateLinkedRecordIds(sourceId, linkedRecordIds ?? []);
+    set((s) => ({
+      records: updateRecord(s.records, sourceId, { linkedRecordIds }),
+    }));
+  },
+
+  unlinkRecord: async (sourceId, targetId) => {
+    const source = get().records.find((record) => record.id === sourceId);
+    if (!source?.linkedRecordIds?.length) return;
+
+    const linkedRecordIds = removeLinkedRecordId(source.linkedRecordIds, targetId);
+    if (linkedRecordIds === source.linkedRecordIds) return;
+
+    await recordRepository.updateLinkedRecordIds(sourceId, linkedRecordIds ?? []);
+    set((s) => ({
+      records: updateRecord(s.records, sourceId, { linkedRecordIds }),
+    }));
+  },
+
+  setLinkedRecordIds: async (sourceId, linkedRecordIds) => {
+    const source = get().records.find((record) => record.id === sourceId);
+    if (!source) return;
+
+    const seen = new Set<string>();
+    const next: string[] = [];
+    for (const targetId of linkedRecordIds) {
+      const trimmed = targetId.trim();
+      if (!trimmed || trimmed === sourceId || seen.has(trimmed)) continue;
+      seen.add(trimmed);
+      next.push(trimmed);
+    }
+
+    const current = source.linkedRecordIds ?? [];
+    if (current.length === next.length && current.every((id, index) => id === next[index])) {
+      return;
+    }
+
+    await recordRepository.updateLinkedRecordIds(sourceId, next);
+    set((s) => ({
+      records: updateRecord(s.records, sourceId, {
+        linkedRecordIds: next.length > 0 ? next : undefined,
+      }),
     }));
   },
 
@@ -544,6 +619,12 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
         patch.summaryAiModelLabel = data.summaryAiModelLabel?.trim()
           ? data.summaryAiModelLabel.trim()
           : undefined;
+      }
+      if (data.summaryAiModelMode !== undefined) {
+        patch.summaryAiModelMode =
+          data.summaryAiModelMode === 'auto' || data.summaryAiModelMode === 'manual'
+            ? data.summaryAiModelMode
+            : undefined;
       }
       if (data.summaryTokensPrompt !== undefined) {
         patch.summaryTokensPrompt = data.summaryTokensPrompt ?? undefined;

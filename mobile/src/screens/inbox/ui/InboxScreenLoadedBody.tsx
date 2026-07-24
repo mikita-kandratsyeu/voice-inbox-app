@@ -5,27 +5,37 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from '
 import { useTranslation } from 'react-i18next';
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { TextInput, TouchableOpacity, View } from 'react-native';
-import { KeyboardStickyView } from 'react-native-keyboard-controller';
 
 import {
   getFloatingTabBarScrollPaddingBottom,
   getInboxBatchModeScrollPaddingBottom,
 } from '@/app/navigation/config';
+import type { VoiceRecord } from '@/entities/record';
 import type { BatchSelectState } from '@/features/batch-select';
+import type { InboxCardLayout } from '@/features/inbox-card-layout';
 import type {
   InboxFilterStatus,
   InboxMenuFilterStatus,
   InboxSortOption,
 } from '@/features/inbox-filters';
 import { INBOX_FILTER_BAR_FALLBACK_HEIGHT, InboxFilterBar } from '@/features/inbox-filters';
+import { MobileAdminBanner } from '@/features/mobile-admin-banner';
 import type { Colors } from '@/shared/config';
-import { IS_IOS } from '@/shared/lib';
 import { iosHitSlopForVisualSize } from '@/shared/lib/iosTouchTarget';
+import type { MobileBanner } from '@/shared/lib/mobile-banner';
 import {
-  Button,
   EmptyState,
-  FrostedBottomChrome,
+  FLOATING_FROSTED_INPUT_ICON_SIZE,
+  FLOATING_FROSTED_INPUT_ICON_STROKE,
+  FloatingFrostedChromeDivider,
+  FloatingFrostedChromeSection,
+  FloatingFrostedInputChrome,
+  FloatingFrostedStickyView,
+  getFloatingFrostedInputContainerStyle,
+  getFloatingFrostedInputFieldRowStyle,
+  getFloatingFrostedInputRowStyle,
   getInputFieldInputStyle,
+  HeaderIconButton,
   SwipeHintBanner,
 } from '@/shared/ui';
 
@@ -38,7 +48,6 @@ type StickySearchBarProps = {
   onChangeQuery: (text: string) => void;
   color: Colors;
   focusSignal: number;
-  insetsBottom: number;
   onClose: () => void;
   onFocus: () => void;
   onBlur: () => void;
@@ -50,7 +59,6 @@ function StickySearchBar({
   onChangeQuery,
   color,
   focusSignal,
-  insetsBottom,
   onClose,
   onFocus,
   onBlur,
@@ -71,85 +79,75 @@ function StickySearchBar({
     inputRef.current?.focus();
   };
 
-  return (
-    <FrostedBottomChrome
+  const closeButton = (
+    <HeaderIconButton
+      iconOnly
+      variant="icon"
+      size="md"
+      icon={<X size={22} color={color.text.secondary} strokeWidth={2.2} />}
       color={color}
-      insetsBottom={insetsBottom}
-      contentStyle={{
-        paddingHorizontal: 16,
-        paddingTop: 14,
-        paddingBottom: 14,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
+      onPress={() => {
+        onChangeQuery('');
+        onClose();
       }}
-    >
+      accessibilityLabel={t('search.a11yHide')}
+    />
+  );
+
+  return (
+    <FloatingFrostedInputChrome color={color}>
       <View
         style={{
-          flex: 1,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 8,
-          backgroundColor: color.background.tertiary,
-          borderRadius: 12,
-          paddingHorizontal: 12,
-          paddingVertical: IS_IOS ? 10 : 8,
-          borderWidth: 1,
-          borderColor: focused ? color.accent.primary : color.border.default,
+          ...getFloatingFrostedInputContainerStyle(),
+          ...getFloatingFrostedInputRowStyle(),
         }}
       >
-        <Search
-          size={16}
-          color={focused || query ? color.accent.primary : color.icon.muted}
-          strokeWidth={2}
-        />
-        <TextInput
-          ref={inputRef}
-          style={[getInputFieldInputStyle(color), { flex: 1 }]}
-          placeholder={t('search.placeholder')}
-          placeholderTextColor={color.text.secondary}
-          value={query}
-          onChangeText={onChangeQuery}
-          onFocus={onFocus}
-          onBlur={onBlur}
-          returnKeyType="search"
-          clearButtonMode="never"
-          autoCapitalize="none"
-        />
-        {query.length > 0 && (
-          <TouchableOpacity
-            onPress={handleClear}
-            hitSlop={iosHitSlopForVisualSize(16, 16)}
-            activeOpacity={0.7}
-          >
-            <View
-              style={{
-                width: 16,
-                height: 16,
-                borderRadius: 8,
-                backgroundColor: color.icon.muted,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+        <View style={getFloatingFrostedInputFieldRowStyle()}>
+          <Search
+            size={FLOATING_FROSTED_INPUT_ICON_SIZE}
+            color={focused || query ? color.accent.primary : color.icon.muted}
+            strokeWidth={FLOATING_FROSTED_INPUT_ICON_STROKE}
+          />
+          <TextInput
+            ref={inputRef}
+            style={[getInputFieldInputStyle(color), { flex: 1 }]}
+            placeholder={t('search.placeholder')}
+            placeholderTextColor={color.text.secondary}
+            value={query}
+            onChangeText={onChangeQuery}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            returnKeyType="search"
+            clearButtonMode="never"
+            autoCapitalize="none"
+          />
+          {query.length > 0 && (
+            <TouchableOpacity
+              onPress={handleClear}
+              hitSlop={iosHitSlopForVisualSize(16, 16)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.clear')}
             >
-              <X size={10} color={color.background.primary} strokeWidth={2.5} />
-            </View>
-          </TouchableOpacity>
-        )}
+              <View
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: 8,
+                  backgroundColor: color.icon.muted,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <X size={10} color={color.background.primary} strokeWidth={2.5} />
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+        <FloatingFrostedChromeDivider color={color} />
+        <FloatingFrostedChromeSection>{closeButton}</FloatingFrostedChromeSection>
       </View>
-      <Button
-        iconOnly
-        variant="icon"
-        size="md"
-        icon={<X size={22} color={color.text.secondary} strokeWidth={2.2} />}
-        color={color}
-        onPress={() => {
-          onChangeQuery('');
-          onClose();
-        }}
-        accessibilityLabel={t('search.a11yHide')}
-      />
-    </FrostedBottomChrome>
+    </FloatingFrostedInputChrome>
   );
 }
 
@@ -172,6 +170,8 @@ type InboxScreenLoadedBodyProps = {
   onFilterChange: (s: InboxFilterStatus) => void;
   onMenuFilterChange: (s: InboxMenuFilterStatus | null) => void;
   onSortChange: (o: InboxSortOption) => void;
+  cardLayout: InboxCardLayout;
+  onCardLayoutChange: (layout: InboxCardLayout) => void;
   showSwipeHint: boolean;
   onDismissSwipeHint: () => void;
   isSearching: boolean;
@@ -187,10 +187,18 @@ type InboxScreenLoadedBodyProps = {
   listStyle: object;
   onEndReached: () => void;
   renderListItem: (props: { item: FlattenedItem }) => React.ReactElement;
+  listExtraData: {
+    cardLayout: InboxCardLayout;
+    records: VoiceRecord[];
+    selectedIds: Set<string>;
+    visibleRecordCount: number;
+  };
   keyExtractor: (item: FlattenedItem) => string;
-  getItemType: (item: FlattenedItem) => FlattenedItem['type'];
+  getItemType: (item: FlattenedItem) => string;
   onInboxListScroll?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
   showInboxScrollResetSkeleton: boolean;
+  adminBanner?: MobileBanner | null;
+  onDismissAdminBanner?: () => void;
 };
 
 function InboxScreenLoadedBodyInner({
@@ -212,6 +220,8 @@ function InboxScreenLoadedBodyInner({
   onFilterChange,
   onMenuFilterChange,
   onSortChange,
+  cardLayout,
+  onCardLayoutChange,
   showSwipeHint,
   onDismissSwipeHint,
   isSearching,
@@ -227,13 +237,23 @@ function InboxScreenLoadedBodyInner({
   listStyle,
   onEndReached,
   renderListItem,
+  listExtraData,
   keyExtractor,
   getItemType,
   onInboxListScroll,
   showInboxScrollResetSkeleton,
+  adminBanner,
+  onDismissAdminBanner,
 }: InboxScreenLoadedBodyProps) {
   const [filterBarHeight, setFilterBarHeight] = useState(INBOX_FILTER_BAR_FALLBACK_HEIGHT);
+  const [bannerHeight, setBannerHeight] = useState(0);
   const [searchFocused, setSearchFocused] = useState(false);
+
+  useEffect(() => {
+    if (!adminBanner) {
+      setBannerHeight(0);
+    }
+  }, [adminBanner]);
 
   useEffect(() => {
     if (!showInboxSearchBar) setSearchFocused(false);
@@ -243,7 +263,11 @@ function InboxScreenLoadedBodyInner({
     setFilterBarHeight(e.nativeEvent.layout.height);
   }, []);
 
-  const filterScrollTopPad = batchSelect.isSelectMode ? 0 : filterBarHeight;
+  const handleBannerLayout = useCallback((e: LayoutChangeEvent) => {
+    setBannerHeight(e.nativeEvent.layout.height);
+  }, []);
+
+  const filterScrollTopPad = batchSelect.isSelectMode ? 0 : filterBarHeight + bannerHeight;
 
   const mergedListContentStyle = useMemo(() => {
     const base = listContentStyle as { paddingTop?: number };
@@ -254,8 +278,10 @@ function InboxScreenLoadedBodyInner({
     };
   }, [listContentStyle, filterScrollTopPad]);
 
+  const showSwipeHintForLayout = showSwipeHint && cardLayout !== 'expanded';
+
   const swipeListHeader = useMemo(() => {
-    if (!showSwipeHint || batchSelect.isSelectMode) {
+    if (!showSwipeHintForLayout || batchSelect.isSelectMode) {
       return undefined;
     }
     return (
@@ -263,9 +289,7 @@ function InboxScreenLoadedBodyInner({
         <SwipeHintBanner onDismiss={onDismissSwipeHint} />
       </View>
     );
-  }, [batchSelect.isSelectMode, onDismissSwipeHint, showInboxSearchBar, showSwipeHint]);
-
-  const stickyClosedOffset = insetsBottom;
+  }, [batchSelect.isSelectMode, onDismissSwipeHint, showInboxSearchBar, showSwipeHintForLayout]);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -296,6 +320,15 @@ function InboxScreenLoadedBodyInner({
                 elevation: 10,
               }}
             >
+              {adminBanner && onDismissAdminBanner ? (
+                <MobileAdminBanner
+                  banner={adminBanner}
+                  color={color}
+                  onDismiss={onDismissAdminBanner}
+                  placement="floating"
+                  onLayout={handleBannerLayout}
+                />
+              ) : null}
               <InboxFilterBar
                 filterStatus={filterStatus}
                 menuFilterStatus={menuFilterStatus}
@@ -303,6 +336,8 @@ function InboxScreenLoadedBodyInner({
                 onFilterChange={onFilterChange}
                 onMenuFilterChange={onMenuFilterChange}
                 onSortChange={onSortChange}
+                cardLayout={cardLayout}
+                onCardLayoutChange={onCardLayoutChange}
                 color={color}
                 hidePrimaryFilters={hidePrimaryFilters}
                 onLayout={handleFilterBarLayout}
@@ -319,7 +354,7 @@ function InboxScreenLoadedBodyInner({
             </View>
           ) : filteredLength === 0 ? (
             <View style={{ flex: 1, paddingTop: filterScrollTopPad }}>
-              {showSwipeHint && !batchSelect.isSelectMode && (
+              {showSwipeHintForLayout && !batchSelect.isSelectMode && (
                 <View style={{ marginTop: showInboxSearchBar ? 4 : 0 }}>
                   <SwipeHintBanner onDismiss={onDismissSwipeHint} />
                 </View>
@@ -358,7 +393,7 @@ function InboxScreenLoadedBodyInner({
                 style={[listStyle, { flex: 1 }]}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
-                extraData={batchSelect.selectedIds}
+                extraData={listExtraData}
                 ListHeaderComponent={swipeListHeader}
                 maintainVisibleContentPosition={{ disabled: true }}
               />
@@ -384,22 +419,18 @@ function InboxScreenLoadedBodyInner({
         </View>
       </View>
       {showInboxSearchBar && (
-        <KeyboardStickyView
-          offset={{ closed: -stickyClosedOffset, opened: 0 }}
-          style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}
-        >
+        <FloatingFrostedStickyView safeAreaBottom={insetsBottom}>
           <StickySearchBar
             query={query}
             onChangeQuery={onChangeQuery}
             color={color}
             focusSignal={searchFocusSignal}
-            insetsBottom={insetsBottom}
             onClose={onSearchCleared}
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setSearchFocused(false)}
             focused={searchFocused}
           />
-        </KeyboardStickyView>
+        </FloatingFrostedStickyView>
       )}
     </View>
   );

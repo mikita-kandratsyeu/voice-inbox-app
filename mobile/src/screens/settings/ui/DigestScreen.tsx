@@ -23,7 +23,6 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import Markdown from 'react-native-markdown-display';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -45,8 +44,20 @@ import {
   formatLocalTimeOfDay,
   formatTaskDeadlineTimeForDisplay,
 } from '@/shared/lib/taskDeadlineTimeDisplay';
-import { Button, HeaderIconButton, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
+import {
+  Button,
+  FrostedHeaderIconButton,
+  NoteMarkdown,
+  SCREEN_PADDING,
+  ScreenHeader,
+} from '@/shared/ui';
 
+import { getSettingsIconColor } from '../lib';
+import { buildAppStats, formatDigestDurationMs } from '../lib/appStats';
+import {
+  buildAnalyticsSharePayload,
+  formatAnalyticsTaskLine,
+} from '../lib/buildAnalyticsSharePayload';
 import { buildDigestAiExecutionContext } from '../lib/buildDigestAiExecutionContext';
 import {
   buildDeterministicDigest,
@@ -58,6 +69,7 @@ import {
   getDigestAiPayloadCoverage,
   getDigestCacheKey,
   getStoredDigestFormat,
+  isDigestAiPeriod,
   loadCachedDigest,
   saveStoredDigestFormat,
 } from '../lib/digest';
@@ -72,75 +84,10 @@ import {
   shareDigestExport,
   shareDigestPlainText,
 } from '../lib/shareDigest';
-import { DigestShareSheet } from './DigestShareSheet';
-
-type MetricCardProps = {
-  label: string;
-  value: string;
-  helper: string;
-  tone: string;
-};
-
-function MetricCard({ label, value, helper, tone }: MetricCardProps) {
-  const color = useColors();
-  return (
-    <View
-      className="flex-1 rounded-2xl p-4"
-      style={{
-        minWidth: '47%',
-        borderWidth: 1,
-        borderColor: color.border.default,
-        backgroundColor: color.background.card,
-      }}
-    >
-      <Text
-        className="text-xs font-semibold uppercase tracking-wider"
-        style={{ color: color.text.muted }}
-      >
-        {label}
-      </Text>
-      <Text className="mt-2 text-[22px] font-semibold leading-7" style={{ color: tone }}>
-        {value}
-      </Text>
-      <Text className="mt-1 text-[13px] leading-[18px]" style={{ color: color.text.secondary }}>
-        {helper}
-      </Text>
-    </View>
-  );
-}
-
-function SectionCard({
-  title,
-  children,
-  icon,
-}: {
-  title: string;
-  children: React.ReactNode;
-  icon?: React.ReactNode;
-}) {
-  const color = useColors();
-  return (
-    <View
-      className="mb-7 rounded-2xl p-4"
-      style={{
-        borderWidth: 1,
-        borderColor: color.border.default,
-        backgroundColor: color.background.card,
-      }}
-    >
-      <View className="mb-3 flex-row items-center gap-2">
-        {icon}
-        <Text
-          className="text-[16px] font-semibold leading-[21px]"
-          style={{ color: color.text.primary }}
-        >
-          {title}
-        </Text>
-      </View>
-      {children}
-    </View>
-  );
-}
+import { AppStatsContent } from './AppStatsContent';
+import { DigestPeriodFilter } from './DigestPeriodFilter';
+import { AnimatedMetricCard, DigestCollapsibleSectionCard } from './DigestScreenCards';
+import { type DigestShareKind, DigestShareSheet } from './DigestShareSheet';
 
 function DigestAiCoverageBanner({ coverage }: { coverage: DigestAiPayloadCoverage }) {
   const { t } = useTranslation();
@@ -246,49 +193,6 @@ function BulletList({ items, emptyText }: { items: string[]; emptyText: string }
           </Text>
         </View>
       ))}
-    </View>
-  );
-}
-
-function PeriodTabs({
-  period,
-  onChange,
-}: {
-  period: DigestPeriod;
-  onChange: (period: DigestPeriod) => void;
-}) {
-  const { t } = useTranslation();
-  const color = useColors();
-  const items: DigestPeriod[] = ['day', 'week', 'month'];
-
-  return (
-    <View
-      className="mb-5 flex-row rounded-full p-1"
-      style={{ backgroundColor: color.background.tertiary }}
-    >
-      {items.map((item) => {
-        const selected = item === period;
-        return (
-          <TouchableOpacity
-            key={item}
-            accessibilityRole="button"
-            accessibilityState={{ selected }}
-            accessibilityLabel={t(`settings.digest.period.${item}`)}
-            className="min-h-10 flex-1 items-center justify-center rounded-full px-2 py-2"
-            style={{ backgroundColor: selected ? color.background.card : 'transparent' }}
-            onPress={() => onChange(item)}
-            activeOpacity={0.75}
-          >
-            <Text
-              className="text-center text-[13px] font-semibold leading-[16px]"
-              numberOfLines={1}
-              style={{ color: selected ? color.text.primary : color.text.secondary }}
-            >
-              {t(`settings.digest.periodTab.${item}`)}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
     </View>
   );
 }
@@ -400,10 +304,10 @@ export const DigestScreen = () => {
   const mountedRef = useRef(true);
 
   useEffect(() => {
-    if (digestAiEnabled && !isLoaded) {
+    if (!isLoaded) {
       void loadRecords();
     }
-  }, [digestAiEnabled, isLoaded, loadRecords]);
+  }, [isLoaded, loadRecords]);
 
   const digest = useMemo(() => buildDeterministicDigest(period, records), [period, records]);
   const aiPayloadCoverage = useMemo(() => getDigestAiPayloadCoverage(digest), [digest]);
@@ -412,8 +316,15 @@ export const DigestScreen = () => {
     [digest, digestFormat],
   );
   const aiLoading = useDigestGenerating(digestCacheKey);
+  const lastSyncCachedDigestRef = useRef<number>(0);
+  const SYNC_CACHED_DIGEST_THROTTLE_MS = 1000;
 
   const syncCachedDigest = useCallback(() => {
+    const now = Date.now();
+    if (now - lastSyncCachedDigestRef.current < SYNC_CACHED_DIGEST_THROTTLE_MS) {
+      return;
+    }
+    lastSyncCachedDigestRef.current = now;
     const cached = loadCachedDigest(digestCacheKey);
     setAiResult(cached?.result ?? null);
     setAiCreatedAt(cached?.createdAt ?? null);
@@ -457,24 +368,21 @@ export const DigestScreen = () => {
   );
 
   const dayjsLocale = resolveDayjsLocale(i18n.language);
+  const digestAiPeriodActive = isDigestAiPeriod(period);
   const rangeText =
-    period === 'day'
-      ? dayjs(digest.fromIso).locale(dayjsLocale).format('D MMMM YYYY')
-      : `${dayjs(digest.fromIso).locale(dayjsLocale).format('D MMM')} - ${dayjs(digest.toIso)
-          .locale(dayjsLocale)
-          .format('D MMM YYYY')}`;
+    period === 'all'
+      ? t('settings.digest.period.all')
+      : period === 'day'
+        ? dayjs(digest.fromIso).locale(dayjsLocale).format('D MMMM YYYY')
+        : `${dayjs(digest.fromIso).locale(dayjsLocale).format('D MMM')} - ${dayjs(digest.toIso)
+            .locale(dayjsLocale)
+            .format('D MMM YYYY')}`;
+  const metricsHelperKey =
+    period === 'all'
+      ? 'settings.digest.metrics.allTimeHelper'
+      : 'settings.digest.metrics.recordsHelper';
 
-  const formatDuration = (durationMs: number): string => {
-    const minutes = Math.round(durationMs / 60_000);
-    if (minutes < 60) {
-      return t('settings.digest.durationMinutes', { count: minutes });
-    }
-    const hours = Math.floor(minutes / 60);
-    const rest = minutes % 60;
-    return rest > 0
-      ? t('settings.digest.durationHoursMinutes', { hours, minutes: rest })
-      : t('settings.digest.durationHours', { count: hours });
-  };
+  const formatDuration = (durationMs: number): string => formatDigestDurationMs(durationMs, t);
 
   const onRefresh = useCallback(async () => {
     if (!digestAiEnabled) return;
@@ -488,7 +396,11 @@ export const DigestScreen = () => {
   }, [digestAiEnabled, loadRecords]);
 
   const handleGenerate = useCallback(async () => {
-    if (!digestAiEnabled) {
+    if (!digestAiEnabled || !digestAiPeriodActive) {
+      if (!digestAiPeriodActive) {
+        Alert.alert(t('settings.digest.aiTitle'), t('settings.digest.aiUnavailableAllTime'));
+        return;
+      }
       Alert.alert(t('settings.digest.unavailableTitle'), t('settings.digest.unavailableDesc'));
       return;
     }
@@ -521,6 +433,7 @@ export const DigestScreen = () => {
     aiModelRoutingMode,
     digest,
     digestAiEnabled,
+    digestAiPeriodActive,
     digestCacheKey,
     digestFormat,
     i18n.language,
@@ -549,84 +462,6 @@ export const DigestScreen = () => {
         date: `${dayjs(aiCreatedAt).locale(dayjsLocale).format('D MMM')} ${formatLocalTimeOfDay(dayjs(aiCreatedAt).toDate())}`,
       })
     : t('settings.digest.aiManualHint');
-  const markdownStyles = useMemo(
-    () => ({
-      body: {
-        color: color.text.primary,
-        fontSize: 14,
-        lineHeight: 22,
-        marginBottom: 0,
-      },
-      text: {
-        color: color.text.primary,
-        fontSize: 14,
-        lineHeight: 22,
-      },
-      paragraph: {
-        color: color.text.primary,
-        fontSize: 14,
-        lineHeight: 22,
-        marginTop: 0,
-        marginBottom: 6,
-      },
-      heading1: {
-        color: color.text.primary,
-        fontSize: 16,
-        lineHeight: 22,
-        fontWeight: '600' as const,
-        marginTop: 0,
-        marginBottom: 6,
-      },
-      heading2: {
-        color: color.text.primary,
-        fontSize: 15,
-        lineHeight: 21,
-        fontWeight: '600' as const,
-        marginTop: 6,
-        marginBottom: 4,
-      },
-      strong: {
-        color: color.text.primary,
-        fontWeight: '600' as const,
-      },
-      bullet_list: {
-        marginTop: 4,
-        marginBottom: 0,
-      },
-      ordered_list: {
-        marginTop: 4,
-        marginBottom: 0,
-      },
-      list_item: {
-        color: color.text.primary,
-        fontSize: 14,
-        lineHeight: 22,
-        marginBottom: 2,
-      },
-      bullet_list_icon: {
-        color: color.accent.primary,
-        fontSize: 14,
-        lineHeight: 22,
-      },
-      bullet_list_content: {
-        color: color.text.primary,
-        fontSize: 14,
-        lineHeight: 22,
-      },
-      ordered_list_icon: {
-        color: color.accent.primary,
-        fontSize: 14,
-        lineHeight: 22,
-      },
-      ordered_list_content: {
-        color: color.text.primary,
-        fontSize: 14,
-        lineHeight: 22,
-      },
-    }),
-    [color],
-  );
-
   const aiDescriptionKey = usePrivateRemoteDigest
     ? 'settings.digest.aiDescriptionPrivateRemote'
     : useCloudDigest
@@ -660,30 +495,97 @@ export const DigestScreen = () => {
     };
   }, [aiCreatedAt, aiResult, dayjsLocale, digestFormat, period, rangeText, t]);
 
+  const analyticsSharePayload = useMemo(() => {
+    const stats = buildAppStats(period, records, i18n.language);
+    const exportedAt = new Date();
+    const exportedAtText = `${dayjs(exportedAt).locale(dayjsLocale).format('D MMM YYYY')} ${formatLocalTimeOfDay(exportedAt)}`;
+    const { message, title } = buildAnalyticsSharePayload({
+      periodLabel: t(`settings.digest.period.${period}`),
+      rangeText,
+      exportedAtText,
+      stats,
+      digest,
+      formatDuration: (durationMs) => formatDigestDurationMs(durationMs, t),
+      formatTaskLine: (task) =>
+        formatAnalyticsTaskLine(task, (hhmm) =>
+          hhmm?.trim() ? ` ${formatTaskDeadlineTimeForDisplay(hhmm)}` : '',
+        ),
+      labels: {
+        title: t('appStats.title'),
+        period: t('settings.digest.exportHeader.period'),
+        dates: t('settings.digest.exportHeader.dates'),
+        exported: t('settings.digest.exportHeader.exported'),
+        sourceNote: t('settings.digest.exportAnalyticsSourceNote'),
+        overview: t('settings.digest.exportAnalyticsOverview'),
+        totalRecords: t('appStats.totalRecords'),
+        totalDuration: t('appStats.totalDuration'),
+        aiProcessed: t('appStats.aiProcessed'),
+        tasksCompletion: t('appStats.tasksCompletion'),
+        activity: t(`appStats.activityTitle.${period}`),
+        activityColumnLabel: t('settings.digest.exportAnalyticsActivityLabel'),
+        activityColumnCount: t('settings.digest.exportAnalyticsActivityCount'),
+        classification: t('appStats.classification'),
+        classificationType: t('settings.digest.exportAnalyticsClassificationType'),
+        classificationCount: t('settings.digest.exportAnalyticsClassificationCount'),
+        classificationShare: t('settings.digest.exportAnalyticsClassificationShare'),
+        topTags: t('appStats.topTags'),
+        topicsTitle: t('settings.digest.topicsTitle'),
+        nextStepsTitle: t('settings.digest.nextStepsTitle'),
+        openTasksTitle: t('settings.digest.openTasksTitle'),
+        overdueTitle: t('settings.digest.overdueTitle'),
+        empty: t('settings.digest.exportAnalyticsEmpty'),
+        class: {
+          work: t('appStats.class.work'),
+          meeting: t('appStats.class.meeting'),
+          idea: t('appStats.class.idea'),
+          personal: t('appStats.class.personal'),
+          other: t('appStats.class.other'),
+        },
+      },
+    });
+
+    return {
+      message,
+      title,
+      fileBaseName: sanitizeDigestFileBaseName(title),
+    };
+  }, [dayjsLocale, digest, i18n.language, period, rangeText, records, t]);
+
+  const resolveSharePayload = useCallback(
+    (kind: DigestShareKind) => (kind === 'aiDigest' ? digestSharePayload : analyticsSharePayload),
+    [analyticsSharePayload, digestSharePayload],
+  );
+
   const handleShareDigestExport = useCallback(
-    async (format: ShareRecordExportFormat) => {
-      if (!digestSharePayload) return;
+    async (format: ShareRecordExportFormat, kind: DigestShareKind) => {
+      const payload = resolveSharePayload(kind);
+      if (!payload) return;
 
       try {
-        await shareDigestExport(digestSharePayload, format);
+        await shareDigestExport(payload, format);
       } catch (err) {
         Alert.alert(t('common.error'), toUserFacingFetchErrorFromUnknown(err));
       }
     },
-    [digestSharePayload, t],
+    [resolveSharePayload, t],
   );
 
   const handleEmailDigest = useCallback(
-    async (email: string, format: ShareRecordExportFormat) => {
-      if (!digestSharePayload) return;
+    async (email: string, format: ShareRecordExportFormat, kind: DigestShareKind) => {
+      const payload = resolveSharePayload(kind);
+      if (!payload) return;
 
       setEmailSending(true);
       try {
-        await emailDigestExport(email, digestSharePayload, format);
+        await emailDigestExport(email, payload, format);
         saveLastShareRecipientEmail(email);
         hapticSuccess();
         setShareSheetVisible(false);
-        Alert.alert(t('share.emailSentTitle'), t('settings.digest.emailSentMessage', { email }));
+        const sentMessageKey =
+          kind === 'analytics'
+            ? 'settings.digest.emailSentMessageAnalytics'
+            : 'settings.digest.emailSentMessage';
+        Alert.alert(t('share.emailSentTitle'), t(sentMessageKey, { email }));
       } catch (err) {
         hapticError();
         Alert.alert(t('share.emailFailedTitle'), toUserFacingFetchErrorFromUnknown(err));
@@ -691,28 +593,41 @@ export const DigestScreen = () => {
         setEmailSending(false);
       }
     },
-    [digestSharePayload, t],
+    [resolveSharePayload, t],
   );
 
+  const canShareAnalytics = analyticsSharePayload !== null;
+  const canShareAiDigest = digestSharePayload !== null;
+
   const onOpenShare = useCallback(() => {
-    if (!digestSharePayload) return;
+    if (!canShareAnalytics && !canShareAiDigest) return;
 
     if (isProActive) {
       setShareSheetVisible(true);
       return;
     }
 
-    void shareDigestPlainText(digestSharePayload).catch((err: unknown) => {
+    const fallbackPayload = digestSharePayload ?? analyticsSharePayload;
+    if (!fallbackPayload) return;
+
+    void shareDigestPlainText(fallbackPayload).catch((err: unknown) => {
       Alert.alert(t('common.error'), toUserFacingFetchErrorFromUnknown(err));
     });
-  }, [digestSharePayload, isProActive, t]);
+  }, [
+    analyticsSharePayload,
+    canShareAiDigest,
+    canShareAnalytics,
+    digestSharePayload,
+    isProActive,
+    t,
+  ]);
 
   const onCloseShareSheet = useCallback(() => setShareSheetVisible(false), []);
 
   const shareHeaderButton = useMemo(
     () =>
-      aiResult ? (
-        <HeaderIconButton
+      canShareAnalytics || canShareAiDigest ? (
+        <FrostedHeaderIconButton
           iconOnly
           variant="icon"
           size="md"
@@ -724,54 +639,41 @@ export const DigestScreen = () => {
           accessibilityLabel={t('share.share')}
         />
       ) : null,
-    [aiResult, color, onOpenShare, t],
+    [canShareAiDigest, canShareAnalytics, color, onOpenShare, t],
   );
 
   if (!digestAiEnabled) {
     return (
       <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-        <ScreenHeader title={t('settings.digest.title')} onBack={() => navigation.goBack()} />
-        <View
-          className="flex-1 items-center justify-center px-6"
-          style={{ alignSelf: 'center', width: '100%', maxWidth: contentMaxWidth }}
-        >
-          <View
-            className="w-full items-center rounded-3xl p-6"
-            style={{
-              borderWidth: 1,
-              borderColor: color.border.default,
-              backgroundColor: color.background.card,
+        <ScreenHeader
+          title={t('settings.digest.sectionTitle')}
+          onBack={() => navigation.goBack()}
+          rightSlot={shareHeaderButton}
+        />
+        <View style={{ flex: 1, alignSelf: 'center', width: '100%', maxWidth: contentMaxWidth }}>
+          <ScrollView
+            contentContainerStyle={{
+              paddingHorizontal: SCREEN_PADDING,
+              paddingTop: 16,
+              paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
             }}
+            showsVerticalScrollIndicator={false}
           >
-            <View
-              className="mb-4 h-14 w-14 items-center justify-center rounded-full"
-              style={{ backgroundColor: color.background.tertiary }}
-            >
-              <Newspaper size={24} color={color.accent.transcript} strokeWidth={1.8} />
-            </View>
-            <Text
-              className="text-center text-[20px] font-semibold leading-7"
-              style={{ color: color.text.primary }}
-            >
-              {t('settings.digest.unavailableTitle')}
-            </Text>
-            <Text
-              className="mt-2 text-center text-[14px] leading-5"
-              style={{ color: color.text.secondary }}
-            >
-              {t('settings.digest.unavailableDesc')}
-            </Text>
-            <View className="mt-6 w-full">
-              <Button
-                label={t('common.goBack')}
-                color={color}
-                variant="secondary"
-                onPress={() => navigation.goBack()}
-                fullWidth
-              />
-            </View>
-          </View>
+            <DigestPeriodFilter period={period} onChange={setPeriod} />
+            <AppStatsContent period={period} locale={i18n.language} />
+            <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
+          </ScrollView>
         </View>
+
+        <DigestShareSheet
+          visible={shareSheetVisible}
+          isSendingEmail={emailSending}
+          canShareAnalytics={canShareAnalytics}
+          canShareAiDigest={false}
+          onClose={onCloseShareSheet}
+          onShare={handleShareDigestExport}
+          onEmail={handleEmailDigest}
+        />
       </View>
     );
   }
@@ -801,8 +703,7 @@ export const DigestScreen = () => {
             />
           }
         >
-          <PeriodTabs period={period} onChange={setPeriod} />
-          <DigestFormatTabs format={digestFormat} onChange={handleDigestFormatChange} />
+          <DigestPeriodFilter period={period} onChange={setPeriod} />
 
           <View className="mb-5 px-1">
             <Text
@@ -812,103 +713,158 @@ export const DigestScreen = () => {
               {rangeText}
             </Text>
             <Text className="mt-1 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-              {t('settings.digest.subtitle')}
+              {period === 'all' ? t('settings.digest.subtitleAll') : t('settings.digest.subtitle')}
             </Text>
           </View>
 
           <View className="mb-7 flex-row flex-wrap gap-3">
-            <MetricCard
+            <AnimatedMetricCard
+              animationKey={`digest-${period}-records`}
               label={t('settings.digest.metrics.records')}
-              value={String(digest.recordCount)}
-              helper={t('settings.digest.metrics.recordsHelper')}
+              rawValue={digest.recordCount}
+              formatter={(n) => `${n}`}
+              helper={t(metricsHelperKey)}
               tone={color.text.primary}
             />
-            <MetricCard
+            <AnimatedMetricCard
+              animationKey={`digest-${period}-duration`}
               label={t('settings.digest.metrics.duration')}
-              value={formatDuration(digest.totalDurationMs)}
+              rawValue={Math.floor(digest.totalDurationMs / 60_000)}
+              formatter={(n) => formatDuration(n * 60_000)}
               helper={t('settings.digest.metrics.durationHelper')}
               tone={color.accent.transcript}
             />
-            <MetricCard
+            <AnimatedMetricCard
+              animationKey={`digest-${period}-open-tasks`}
               label={t('settings.digest.metrics.openTasks')}
-              value={String(digest.openTasks.length)}
-              helper={t('settings.digest.metrics.openTasksHelper')}
+              rawValue={digest.openTasks.length}
+              formatter={(n) => `${n}`}
+              helper={t(metricsHelperKey)}
               tone={color.accent.primary}
             />
-            <MetricCard
+            <AnimatedMetricCard
+              animationKey={`digest-${period}-overdue`}
               label={t('settings.digest.metrics.overdue')}
-              value={String(digest.overdueTasks.length)}
-              helper={t('settings.digest.metrics.overdueHelper')}
+              rawValue={digest.overdueTasks.length}
+              formatter={(n) => `${n}`}
+              helper={t(metricsHelperKey)}
               tone={digest.overdueTasks.length > 0 ? color.accent.delete : color.accent.success}
             />
           </View>
 
-          <SectionCard
+          {digestAiPeriodActive ? (
+            <DigestFormatTabs format={digestFormat} onChange={handleDigestFormatChange} />
+          ) : null}
+
+          <DigestCollapsibleSectionCard
+            key={`digest-ai-${period}`}
             title={t('settings.digest.aiTitle')}
-            icon={<Newspaper size={18} color={color.accent.transcript} strokeWidth={1.8} />}
+            icon={
+              <Newspaper
+                size={18}
+                color={getSettingsIconColor(color, 'newspaper')}
+                strokeWidth={1.8}
+              />
+            }
+            defaultExpanded={!aiResult && digestAiPeriodActive && digest.recordCount > 0}
+            persistentContent={
+              digestAiPeriodActive && aiCreatedAt ? (
+                <Text className="text-[13px] leading-[18px]" style={{ color: color.text.muted }}>
+                  {aiGeneratedText}
+                </Text>
+              ) : undefined
+            }
           >
-            <Text className="mb-3 text-[13px] leading-[18px]" style={{ color: color.text.muted }}>
-              {aiGeneratedText}
-            </Text>
-            {digest.recordCount > 0 ? (
-              <DigestAiCoverageBanner coverage={aiPayloadCoverage} />
-            ) : null}
-            {aiResult ? (
-              <View className="mb-4">
-                <Markdown style={markdownStyles}>{aiResult.markdown}</Markdown>
-              </View>
-            ) : aiLoading ? (
-              <DigestAiLoadingState viaPrivateRemote={usePrivateRemoteDigest} />
+            {digestAiPeriodActive ? (
+              <>
+                {!aiCreatedAt ? (
+                  <Text
+                    className="mb-3 text-[13px] leading-[18px]"
+                    style={{ color: color.text.muted }}
+                  >
+                    {aiGeneratedText}
+                  </Text>
+                ) : null}
+                {digest.recordCount > 0 ? (
+                  <DigestAiCoverageBanner coverage={aiPayloadCoverage} />
+                ) : null}
+                {aiResult ? (
+                  <View className="mb-4">
+                    <NoteMarkdown color={color} variant="digest">
+                      {aiResult.markdown}
+                    </NoteMarkdown>
+                  </View>
+                ) : aiLoading ? (
+                  <DigestAiLoadingState viaPrivateRemote={usePrivateRemoteDigest} />
+                ) : (
+                  <Text
+                    className="mb-4 text-[14px] leading-5"
+                    style={{ color: color.text.secondary }}
+                  >
+                    {digest.recordCount === 0 ? t('settings.digest.emptyAi') : t(aiDescriptionKey)}
+                  </Text>
+                )}
+                {aiLoading && aiResult ? (
+                  <DigestAiLoadingState viaPrivateRemote={usePrivateRemoteDigest} />
+                ) : null}
+                {!aiLoading ? (
+                  <Button
+                    label={
+                      aiResult ? t('settings.digest.regenerateAi') : t('settings.digest.generateAi')
+                    }
+                    color={color}
+                    disabled={digest.recordCount === 0}
+                    onPress={handleGenerate}
+                    fullWidth
+                  />
+                ) : null}
+              </>
             ) : (
-              <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-                {digest.recordCount === 0 ? t('settings.digest.emptyAi') : t(aiDescriptionKey)}
+              <Text className="text-[14px] leading-5" style={{ color: color.text.secondary }}>
+                {t('settings.digest.aiUnavailableAllTime')}
               </Text>
             )}
-            {aiLoading && aiResult ? (
-              <DigestAiLoadingState viaPrivateRemote={usePrivateRemoteDigest} />
-            ) : null}
-            {!aiLoading ? (
-              <Button
-                label={
-                  aiResult ? t('settings.digest.regenerateAi') : t('settings.digest.generateAi')
-                }
-                color={color}
-                disabled={digest.recordCount === 0}
-                onPress={handleGenerate}
-                fullWidth
-              />
-            ) : null}
-          </SectionCard>
+          </DigestCollapsibleSectionCard>
 
-          <SectionCard
+          <AppStatsContent period={period} locale={i18n.language} />
+
+          <DigestCollapsibleSectionCard
+            key={`digest-topics-${period}`}
             title={t('settings.digest.topicsTitle')}
             icon={<CalendarDays size={18} color={color.accent.cache} strokeWidth={1.8} />}
+            defaultExpanded={topPhraseItems.length > 0}
           >
             <BulletList items={topPhraseItems} emptyText={t('settings.digest.emptyTopics')} />
-          </SectionCard>
+          </DigestCollapsibleSectionCard>
 
-          <SectionCard
+          <DigestCollapsibleSectionCard
+            key={`digest-next-steps-${period}`}
             title={t('settings.digest.nextStepsTitle')}
             icon={<CheckCircle2 size={18} color={color.accent.success} strokeWidth={1.8} />}
+            defaultExpanded={digest.nextSteps.length > 0}
           >
             <BulletList items={digest.nextSteps} emptyText={t('settings.digest.emptyNextSteps')} />
-          </SectionCard>
+          </DigestCollapsibleSectionCard>
 
-          <SectionCard
+          <DigestCollapsibleSectionCard
+            key={`digest-open-tasks-${period}`}
             title={t('settings.digest.openTasksTitle')}
             icon={<Clock3 size={18} color={color.accent.primary} strokeWidth={1.8} />}
+            defaultExpanded={openTaskItems.length > 0}
           >
             <BulletList items={openTaskItems} emptyText={t('settings.digest.emptyOpenTasks')} />
-          </SectionCard>
+          </DigestCollapsibleSectionCard>
 
-          {digest.overdueTasks.length > 0 && (
-            <SectionCard
+          {digest.overdueTasks.length > 0 ? (
+            <DigestCollapsibleSectionCard
+              key={`digest-overdue-${period}`}
               title={t('settings.digest.overdueTitle')}
               icon={<AlertTriangle size={18} color={color.accent.delete} strokeWidth={1.8} />}
+              defaultExpanded
             >
               <BulletList items={overdueTaskItems} emptyText={t('settings.digest.emptyOverdue')} />
-            </SectionCard>
-          )}
+            </DigestCollapsibleSectionCard>
+          ) : null}
 
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
@@ -917,6 +873,8 @@ export const DigestScreen = () => {
       <DigestShareSheet
         visible={shareSheetVisible}
         isSendingEmail={emailSending}
+        canShareAnalytics={canShareAnalytics}
+        canShareAiDigest={canShareAiDigest}
         onClose={onCloseShareSheet}
         onShare={handleShareDigestExport}
         onEmail={handleEmailDigest}

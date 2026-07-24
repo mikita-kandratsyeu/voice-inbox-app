@@ -10,6 +10,7 @@ type AskTurn = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  interpretations?: string[];
   suggestedFollowUps?: string[];
 };
 
@@ -52,6 +53,7 @@ type PersistedPayloadV1 = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  interpretations?: string[];
   suggestedFollowUps?: string[];
   error: string | null;
   pendingAsk?: boolean;
@@ -132,6 +134,9 @@ function parseHistoryField(value: unknown): AskTurn[] | null {
       : {}),
     ...(parseStringArray(item.items) ? { items: parseStringArray(item.items) } : {}),
     ...(parseEvidence(item.evidence) ? { evidence: parseEvidence(item.evidence) } : {}),
+    ...(parseStringArray(item.interpretations)
+      ? { interpretations: parseStringArray(item.interpretations) }
+      : {}),
     ...(parseSuggestedFollowUps(item.suggestedFollowUps)
       ? { suggestedFollowUps: parseSuggestedFollowUps(item.suggestedFollowUps) }
       : {}),
@@ -184,6 +189,9 @@ function parsePayload(raw: string): PersistedPayloadV1 | null {
     ...(parseAskAnswerKind(o.answerKind) ? { answerKind: parseAskAnswerKind(o.answerKind) } : {}),
     ...(parseStringArray(o.items) ? { items: parseStringArray(o.items) } : {}),
     ...(parseEvidence(o.evidence) ? { evidence: parseEvidence(o.evidence) } : {}),
+    ...(parseStringArray(o.interpretations)
+      ? { interpretations: parseStringArray(o.interpretations) }
+      : {}),
     ...(parseSuggestedFollowUps(o.suggestedFollowUps)
       ? { suggestedFollowUps: parseSuggestedFollowUps(o.suggestedFollowUps) }
       : {}),
@@ -199,6 +207,7 @@ export type RestoredAskAiSession = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  interpretations?: string[];
   suggestedFollowUps?: string[];
   error: string | null;
   pendingAsk: boolean;
@@ -230,6 +239,7 @@ export async function loadAskAiSession(
     answerKind: parsed.answerKind,
     items: parsed.items,
     evidence: parsed.evidence,
+    interpretations: parsed.interpretations,
     suggestedFollowUps: parsed.suggestedFollowUps,
     error: parsed.error,
     pendingAsk: parsed.pendingAsk ?? false,
@@ -291,6 +301,7 @@ export type AskAiSessionPersistInput = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  interpretations?: string[];
   suggestedFollowUps?: string[];
   error: string | null;
   isLoading: boolean;
@@ -339,6 +350,7 @@ export function saveAskAiSession(
       ...(snapshot.answerKind ? { answerKind: snapshot.answerKind } : {}),
       ...(snapshot.items?.length ? { items: snapshot.items } : {}),
       ...(snapshot.evidence?.length ? { evidence: snapshot.evidence } : {}),
+      ...(snapshot.interpretations?.length ? { interpretations: snapshot.interpretations } : {}),
       ...(snapshot.suggestedFollowUps?.length
         ? { suggestedFollowUps: snapshot.suggestedFollowUps }
         : {}),

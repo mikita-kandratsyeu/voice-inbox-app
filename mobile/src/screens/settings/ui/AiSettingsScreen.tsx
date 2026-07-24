@@ -5,7 +5,6 @@ import { Check, Crown } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ActivityIndicator,
   Alert,
   ScrollView,
   Switch,
@@ -28,7 +27,7 @@ import type {
   TaskStrictness,
 } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
-import { type CloudAiKvTtlSeconds } from '@/entities/settings/lib/cloudAiKvTtl';
+import { isMeetingSpeakerSettingsAvailable } from '@/features/ai-processing/lib/meetingSpeakerBreakdown';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
@@ -170,7 +169,11 @@ export const AiSettingsScreen = () => {
   const { isProActive } = useProEntitlement();
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const customProviderLocked = !isProActive;
-  const showMeetingSpeakerSettings = isProActive && !isPrivateMode;
+  const showMeetingSpeakerSettings = isMeetingSpeakerSettingsAvailable(
+    aiExecutionMode,
+    privateAiProvider,
+    isProActive,
+  );
   const [privateServerProSheet, setPrivateServerProSheet] = React.useState(false);
   const [isAutoTestingProviderConnection, setIsAutoTestingProviderConnection] =
     React.useState(false);
@@ -186,8 +189,6 @@ export const AiSettingsScreen = () => {
     }
   }, [customProviderLocked, privateAiProvider, setPrivateAiProvider]);
 
-  const cloudRetentionLabel = (sec: CloudAiKvTtlSeconds) =>
-    t(`aiSettings.smartModeCloudRetention.m${sec}`);
   const hasSavedRemoteConfig =
     privateRemoteLastSuccessfulBaseUrl.trim().length > 0 &&
     privateRemoteLastSuccessfulModel.trim().length > 0;
@@ -209,8 +210,8 @@ export const AiSettingsScreen = () => {
               : t('aiSettings.privateProvider.connectionStatus.invalidResponse');
   const remoteConnectionStatusColor = connectionCheckInProgress
     ? color.text.muted
-    : lastConnectionCheckOk === true
-      ? color.accent.primary
+    : lastConnectionCheckOk === true || (lastConnectionCheckOk == null && hasSavedRemoteConfig)
+      ? color.accent.success
       : color.accent.delete;
   const openPrivateRemoteServerScreen = React.useCallback(() => {
     if (!isProActive) {
@@ -448,6 +449,9 @@ export const AiSettingsScreen = () => {
                   disabled={!customProviderLocked}
                   onPress={() => setPrivateServerProSheet(true)}
                   accessibilityRole={customProviderLocked ? 'button' : undefined}
+                  accessibilityLabel={
+                    customProviderLocked ? t('aiSettings.privateProvider.proOnlyA11y') : undefined
+                  }
                   accessibilityHint={
                     customProviderLocked ? t('aiSettings.privateProvider.proOnlyHint') : undefined
                   }
@@ -540,15 +544,8 @@ export const AiSettingsScreen = () => {
                           style={{ backgroundColor: remoteConnectionStatusColor }}
                         />
                       }
-                      rightSlot={
-                        connectionCheckInProgress ? (
-                          <View className="h-[26px] w-[26px] items-center justify-center">
-                            <ActivityIndicator size="small" color={color.text.muted} />
-                          </View>
-                        ) : undefined
-                      }
+                      loading={connectionCheckInProgress}
                       onPress={openPrivateRemoteServerScreen}
-                      showChevron={!connectionCheckInProgress}
                       isFirst
                       isLast
                     />
@@ -657,7 +654,6 @@ export const AiSettingsScreen = () => {
                 <CloudAiKvTtlSlider
                   valueSeconds={cloudAiKvTtlSeconds}
                   onChangeSeconds={setCloudAiKvTtlSeconds}
-                  fullLabel={cloudRetentionLabel}
                   tickLabel={(sec) => t(`aiSettings.smartModeCloudRetention.tick${sec}`)}
                   sliderAccessibilityLabel={t('aiSettings.smartModeCloudRetention.sliderA11yLabel')}
                   color={color}

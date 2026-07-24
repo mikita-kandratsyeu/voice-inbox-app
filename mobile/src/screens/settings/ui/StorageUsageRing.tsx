@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
   Easing,
-  FadeIn,
   type SharedValue,
   useAnimatedProps,
   useAnimatedStyle,
@@ -14,6 +13,7 @@ import Animated, {
 import Svg, { Circle, G } from 'react-native-svg';
 
 import type { Colors } from '@/shared/config';
+import { useFadeInEntering } from '@/shared/config';
 import { formatStorageSharePercent, withAlphaHex } from '@/shared/lib';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -137,6 +137,7 @@ export const StorageUsageRing = ({
   color,
   isLoading,
 }: Props) => {
+  const ringEntering = useFadeInEntering(320);
   const progress = useSharedValue(0);
 
   useEffect(() => {
@@ -241,7 +242,7 @@ export const StorageUsageRing = ({
   }
 
   return (
-    <Animated.View entering={FadeIn.duration(320)} style={{ width: '100%', alignItems: 'center' }}>
+    <Animated.View entering={ringEntering} style={{ width: '100%', alignItems: 'center' }}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={tapHint}

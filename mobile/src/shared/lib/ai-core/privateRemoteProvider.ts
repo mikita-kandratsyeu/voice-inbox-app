@@ -1,3 +1,15 @@
+import type {
+  AutoOrganizeMode,
+  AutoOrganizeRunResult,
+  AutoOrganizeTemplate,
+} from '@/entities/folder/lib/autoOrganizeTypes';
+import { normalizeAutoOrganizeTemplate } from '@/entities/folder/lib/autoOrganizeTypes';
+import {
+  extractFirstInboxAskToolCall,
+  INBOX_ASK_MAX_TOOL_ROUNDS,
+  INBOX_ASK_TOOL_DEFINITIONS,
+  isToolUnsupportedError,
+} from '@/features/inbox-ask-tools/lib/inboxAskToolDefinitions';
 import { i18n } from '@/shared/lib';
 import { nitroFetch } from '@/shared/lib/fetch';
 import { isRecord, isString } from '@/shared/lib/type-guards';
@@ -30,21 +42,24 @@ import {
   prepareTranscriptForLocalLlm,
 } from './local-provider/localAiTranscript';
 import {
-  AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT,
   buildAutoOrganizeRepairUserSuffix,
+  buildAutoOrganizeSystemPrompt,
 } from './private-remote/autoOrganizePrompt';
 import { DIGEST_SYSTEM_PROMPT } from './private-remote/digestPrompt';
 import {
+  assertAutoOrganizeArchiveComplete,
   assertAutoOrganizeComplete,
   type AutoOrganizeFoldersResult,
   isAutoOrganizeParseFailure,
-  parseAutoOrganizeResult,
+  parseAutoOrganizeResultForMode,
 } from './private-remote/parseAutoOrganizeResult';
 import { parseDigestResult } from './private-remote/parseDigestResult';
 import {
   PRIVATE_REMOTE_COMPLETION_TIMEOUT_MS,
+  PRIVATE_REMOTE_HEALTH_CHECK_TIMEOUT_MS,
   PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
   resolvePrivateRemoteAskMaxTokens,
+  resolvePrivateRemoteAutoOrganizeMaxTokens,
   resolvePrivateRemoteJsonRepairMaxTokens,
   resolvePrivateRemoteMeetingDialogueMaxTokens,
   resolvePrivateRemoteSummaryMaxTokens,
@@ -53,13 +68,28 @@ import { mapPrivateRemoteUserFacingError } from './private-remote/privateRemoteE
 import {
   buildPrivateRemoteJsonSchemaResponseFormat,
   type PrivateRemoteStructuredSchemaKind,
+  resolveAutoOrganizeSchemaKind,
 } from './private-remote/privateRemoteResponseFormat';
 import {
   buildWebParityAiProcessingPrompt,
   buildWebParityAskUserMessageContent,
+  buildWebParityGeneralAskUserMessageContent,
+  buildWebParityInboxAskUserMessageContent,
   WEB_PARITY_ASK_SYSTEM_PROMPT,
+  WEB_PARITY_GENERAL_ASK_SYSTEM_PROMPT,
+  WEB_PARITY_INBOX_ASK_SYSTEM_PROMPT,
 } from './private-remote/webPromptParity';
-import type { AskRequest, AskTaskResult, SummaryTaskRequest, SummaryTaskResult } from './types';
+import type {
+  AskRequest,
+  AskTaskResult,
+  GeneralAskRequest,
+  GeneralAskTaskResult,
+  InboxAskRequest,
+  InboxAskTaskResult,
+  InboxAskToolStep,
+  SummaryTaskRequest,
+  SummaryTaskResult,
+} from './types';
 import type { AiExecutionContext } from './types';
 
 type OpenAiChatResponse = {
@@ -70,10 +100,18 @@ type OpenAiChatResponse = {
   };
   choices?: Array<{
     message?: {
-      content?: string | Array<{ type?: string; text?: string }>;
+      content?: string | Array<{ type?: string; text?: string }> | null;
+      tool_calls?: unknown[];
+      reasoning_content?: unknown;
     };
+    text?: string;
   }>;
 };
+
+type RemoteChatMessage =
+  | { role: 'system' | 'user'; content: string }
+  | { role: 'assistant'; content: string | null; tool_calls?: unknown[] }
+  | { role: 'tool'; content: string; tool_call_id: string };
 
 type OpenAiModelsResponse = {
   data?: Array<{ id?: string }>;
@@ -107,6 +145,7 @@ type RemoteCompletionOutput = {
   reasoning?: string;
   model?: string;
   tokenUsage?: { prompt: number; completion: number };
+  toolCalls?: unknown[];
 };
 
 type RepairKind = 'summary' | 'meeting_dialogue';
@@ -195,6 +234,13 @@ function readMessageContent(response: OpenAiChatResponse): string {
     return ((firstChoice as { text: string }).text ?? '').trim();
   }
   return '';
+}
+
+function readMessageToolCalls(response: OpenAiChatResponse): unknown[] | undefined {
+  const firstChoice = response.choices?.[0];
+  if (!firstChoice?.message || !isRecord(firstChoice.message)) return undefined;
+  const toolCalls = (firstChoice.message as { tool_calls?: unknown }).tool_calls;
+  return Array.isArray(toolCalls) && toolCalls.length > 0 ? toolCalls : undefined;
 }
 
 function extractHttpErrorMessage(bodyText: string): string {
@@ -287,12 +333,34 @@ function mapPrivateRemoteListModelsError(err: unknown): string {
   return i18n.t('aiSettings.privateProvider.modelList.loadFailed');
 }
 
+function mapPrivateRemoteHttpStatusMessage(status: number): string | null {
+  if (isAuthFailureStatus(status)) {
+    return i18n.t('aiSettings.privateProvider.healthCheck.authFailed');
+  }
+  if (status >= 500) {
+    return i18n.t('aiSettings.privateProvider.healthCheck.serverUnavailable');
+  }
+  return null;
+}
+
 function mapPrivateRemoteError(err: unknown): string {
   if (isPrivateRemoteFetchTimeout(err)) {
     return i18n.t('ai.privateRemoteServerTimeout');
   }
+  if (isPrivateRemoteNoNetwork(err)) {
+    return i18n.t('aiSettings.privateProvider.modelList.noNetwork');
+  }
+  if (isPrivateRemoteConnectionFailed(err)) {
+    return i18n.t('aiSettings.privateProvider.healthCheck.serverUnavailable');
+  }
   const mapped = mapPrivateRemoteUserFacingError(err);
   if (mapped) return mapped;
+  const message = err instanceof Error ? err.message : String(err);
+  const httpStatus = /(?:HTTP|status)\s*[: ]?\s*(\d{3})/i.exec(message)?.[1];
+  if (httpStatus) {
+    const statusMessage = mapPrivateRemoteHttpStatusMessage(Number.parseInt(httpStatus, 10));
+    if (statusMessage) return statusMessage;
+  }
   return mapLocalError(err);
 }
 
@@ -365,11 +433,13 @@ type RemoteCompletionCallOptions = {
   /** When true and user setting allows, tries structured `response_format` (json_schema → json_object). */
   jsonObject?: boolean;
   schemaKind?: PrivateRemoteStructuredSchemaKind;
+  tools?: unknown[];
+  toolChoice?: 'auto' | 'none';
 };
 
 async function callRemoteCompletion(
   ctx: AiExecutionContext,
-  messages: Array<{ role: 'system' | 'user'; content: string }>,
+  messages: RemoteChatMessage[],
   maxTokens: number | null,
   temperature: number,
   abortSignal?: AbortSignal,
@@ -383,6 +453,7 @@ async function callRemoteCompletion(
   const wantStructured = Boolean(options?.jsonObject && ctx.privateRemotePreferJsonObject);
   const schemaKind = options?.schemaKind ?? 'generic';
   const baseUrlKey = remoteBaseUrlKey(ctx.privateRemoteBaseUrl);
+  const hasTools = Boolean(options?.tools?.length);
 
   const postOnce = async (
     formatMode: RemoteStructuredFormatMode,
@@ -400,7 +471,10 @@ async function callRemoteCompletion(
           stream: false,
         };
         applyOutputBudgetToPayload(payload, maxTokens, maxTokensParam);
-        if (formatMode === 'json_object') {
+        if (hasTools) {
+          payload.tools = options?.tools;
+          payload.tool_choice = options?.toolChoice ?? 'auto';
+        } else if (formatMode === 'json_object') {
           payload.response_format = { type: 'json_object' };
         } else if (formatMode === 'json_schema') {
           payload.response_format = buildPrivateRemoteJsonSchemaResponseFormat(schemaKind);
@@ -422,7 +496,8 @@ async function callRemoteCompletion(
         const json = (await response.json()) as OpenAiChatResponse;
         const content = readMessageContent(json);
         const messageReasoning = readMessageReasoning(json);
-        if (!content) {
+        const toolCalls = readMessageToolCalls(json);
+        if (!content && !toolCalls?.length) {
           throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
         }
         const promptTokens = Number(json.usage?.prompt_tokens);
@@ -436,7 +511,8 @@ async function callRemoteCompletion(
             : undefined;
         remoteMaxTokensParamByBaseUrl.set(baseUrlKey, maxTokensParam);
         return {
-          content,
+          content: content || '',
+          ...(toolCalls?.length ? { toolCalls } : {}),
           ...(messageReasoning ? { reasoning: messageReasoning } : {}),
           ...(isString(json.model) && json.model.trim().length > 0
             ? { model: json.model.trim() }
@@ -453,6 +529,10 @@ async function callRemoteCompletion(
     }
     throw lastErr;
   };
+
+  if (hasTools) {
+    return postOnce('plain', false);
+  }
 
   if (!wantStructured) {
     return postOnce('plain', false);
@@ -633,8 +713,13 @@ export type PrivateRemoteServerConfig = Pick<
   'privateRemoteBaseUrl' | 'privateRemoteApiKey'
 >;
 
+export type ListPrivateRemoteModelsOptions = {
+  timeoutMs?: number;
+};
+
 export async function listPrivateRemoteModels(
   config: PrivateRemoteServerConfig,
+  options?: ListPrivateRemoteModelsOptions,
 ): Promise<{ ok: true; models: string[] } | { ok: false; error: string }> {
   const modelsEndpoint = resolveRemoteModelsUrl(config.privateRemoteBaseUrl);
   if (!modelsEndpoint) {
@@ -645,7 +730,7 @@ export async function listPrivateRemoteModels(
     const modelsResponse = await nitroFetch(modelsEndpoint, {
       method: 'GET',
       headers: createRemoteHeaders(config.privateRemoteApiKey),
-      timeoutMs: PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
+      timeoutMs: options?.timeoutMs ?? PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
     });
     if (isAuthFailureStatus(modelsResponse.status)) {
       return { ok: false, error: i18n.t('aiSettings.privateProvider.healthCheck.authFailed') };
@@ -700,7 +785,7 @@ export async function testPrivateRemoteConnection(
       const modelsResponse = await nitroFetch(modelsEndpoint, {
         method: 'GET',
         headers,
-        timeoutMs: PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
+        timeoutMs: PRIVATE_REMOTE_HEALTH_CHECK_TIMEOUT_MS,
       });
       if (isAuthFailureStatus(modelsResponse.status)) {
         return { ok: false, reason: 'auth_failed' };
@@ -747,7 +832,7 @@ export async function testPrivateRemoteConnection(
         method: 'POST',
         headers,
         body: JSON.stringify(pingPayload),
-        timeoutMs: PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
+        timeoutMs: PRIVATE_REMOTE_HEALTH_CHECK_TIMEOUT_MS,
       });
       if (isAuthFailureStatus(attempt.status)) {
         return { ok: false, reason: 'auth_failed' };
@@ -1109,6 +1194,7 @@ export async function runPrivateRemoteAsk(
       request.tasks,
       request.priorTurns,
       request.recordingMarks,
+      request.linkedNotes,
     );
     const askSystemPrompt = WEB_PARITY_ASK_SYSTEM_PROMPT;
     const askMaxTokens = resolvePrivateRemoteAskMaxTokens(ctx.privateRemoteOutputBudget);
@@ -1158,22 +1244,321 @@ export async function runPrivateRemoteAsk(
   }
 }
 
+async function runPrivateRemoteInboxAskPlain(
+  request: InboxAskRequest,
+  ctx: AiExecutionContext,
+  userContent: string,
+  askMaxTokens: number | null,
+): Promise<InboxAskTaskResult> {
+  const runOnce = (user: string) =>
+    callRemoteCompletion(
+      ctx,
+      [
+        { role: 'system', content: WEB_PARITY_INBOX_ASK_SYSTEM_PROMPT },
+        { role: 'user', content: user },
+      ],
+      askMaxTokens,
+      LOCAL_GEN_ASK.temperature,
+      request.abortSignal,
+      { jsonObject: true, schemaKind: 'ask' },
+    );
+
+  let remote = await runOnce(userContent);
+  let result = parseLocalAskResponse(remote.content);
+  if (!result) {
+    remote = await runOnce(`${userContent}\n\n${STRICT_JSON_TAIL}`);
+    result = parseLocalAskResponse(remote.content);
+  }
+  if (!result) {
+    throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
+  }
+  return {
+    ok: true,
+    provider: 'private_remote',
+    mode: ctx.aiExecutionMode,
+    result: { ...result, ...(remote.model ? { model: remote.model } : {}) },
+  };
+}
+
+async function parsePrivateRemoteInboxAskAnswer(
+  ctx: AiExecutionContext,
+  messages: RemoteChatMessage[],
+  askMaxTokens: number | null,
+  abortSignal?: AbortSignal,
+): Promise<{ result: NonNullable<ReturnType<typeof parseLocalAskResponse>>; model?: string }> {
+  const runStructured = (msgs: RemoteChatMessage[]) =>
+    callRemoteCompletion(ctx, msgs, askMaxTokens, LOCAL_GEN_ASK.temperature, abortSignal, {
+      jsonObject: true,
+      schemaKind: 'ask',
+    });
+
+  let remote = await runStructured(messages);
+  let result = parseLocalAskResponse(remote.content);
+  if (!result) {
+    remote = await runStructured([...messages, { role: 'user', content: STRICT_JSON_TAIL }]);
+    result = parseLocalAskResponse(remote.content);
+  }
+  if (!result) {
+    throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
+  }
+  return { result, ...(remote.model ? { model: remote.model } : {}) };
+}
+
+async function runPrivateRemoteInboxAskWithTools(
+  request: InboxAskRequest,
+  ctx: AiExecutionContext,
+  userContent: string,
+  askMaxTokens: number | null,
+): Promise<InboxAskTaskResult> {
+  const messages: RemoteChatMessage[] = [
+    { role: 'system', content: WEB_PARITY_INBOX_ASK_SYSTEM_PROMPT },
+    { role: 'user', content: userContent },
+  ];
+  const toolSteps: InboxAskToolStep[] = [];
+  let lastModel: string | undefined;
+
+  for (let round = 1; round <= INBOX_ASK_MAX_TOOL_ROUNDS; round += 1) {
+    if (request.abortSignal?.aborted) {
+      return {
+        ok: false,
+        provider: 'private_remote',
+        mode: ctx.aiExecutionMode,
+        error: AI_REQUEST_CANCELLED,
+      };
+    }
+
+    let remote: RemoteCompletionOutput;
+    try {
+      remote = await callRemoteCompletion(
+        ctx,
+        messages,
+        askMaxTokens,
+        LOCAL_GEN_ASK.temperature,
+        request.abortSignal,
+        { tools: INBOX_ASK_TOOL_DEFINITIONS, toolChoice: 'auto' },
+      );
+    } catch (err) {
+      if (round === 1 && isToolUnsupportedError(err)) {
+        return runPrivateRemoteInboxAskPlain(request, ctx, userContent, askMaxTokens);
+      }
+      throw err;
+    }
+
+    lastModel = remote.model ?? lastModel;
+
+    if (remote.toolCalls?.length && request.toolExecutor) {
+      const toolCall = extractFirstInboxAskToolCall(remote.toolCalls, round);
+      if (!toolCall) break;
+
+      messages.push({
+        role: 'assistant',
+        content: remote.content || null,
+        tool_calls: remote.toolCalls,
+      });
+
+      request.onInboxAskToolCall?.(toolCall);
+      const toolResult = await request.toolExecutor(toolCall);
+      request.onInboxAskToolResult?.(toolResult);
+      toolSteps.push({
+        toolCallId: toolCall.toolCallId,
+        toolName: toolCall.toolName,
+        round,
+        status: 'completed',
+      });
+
+      messages.push({
+        role: 'tool',
+        content: JSON.stringify(toolResult.result),
+        tool_call_id: toolCall.toolCallId,
+      });
+      continue;
+    }
+
+    let result = parseLocalAskResponse(remote.content);
+    if (!result) {
+      const structured = await parsePrivateRemoteInboxAskAnswer(
+        ctx,
+        messages,
+        askMaxTokens,
+        request.abortSignal,
+      );
+      lastModel = structured.model ?? lastModel;
+      result = structured.result;
+    }
+
+    return {
+      ok: true,
+      provider: 'private_remote',
+      mode: ctx.aiExecutionMode,
+      result: {
+        ...result,
+        ...(lastModel ? { model: lastModel } : {}),
+        ...(toolSteps.length > 0 ? { toolSteps } : {}),
+      },
+    };
+  }
+
+  const final = await parsePrivateRemoteInboxAskAnswer(
+    ctx,
+    messages,
+    askMaxTokens,
+    request.abortSignal,
+  );
+
+  return {
+    ok: true,
+    provider: 'private_remote',
+    mode: ctx.aiExecutionMode,
+    result: {
+      ...final.result,
+      ...(final.model ? { model: final.model } : {}),
+      ...(toolSteps.length > 0 ? { toolSteps } : {}),
+    },
+  };
+}
+
+export async function runPrivateRemoteInboxAsk(
+  request: InboxAskRequest,
+  ctx: AiExecutionContext,
+): Promise<InboxAskTaskResult> {
+  try {
+    if (request.abortSignal?.aborted) {
+      return {
+        ok: false,
+        provider: 'private_remote',
+        mode: ctx.aiExecutionMode,
+        error: AI_REQUEST_CANCELLED,
+      };
+    }
+
+    const userContent = buildWebParityInboxAskUserMessageContent(
+      request.corpusNotes,
+      request.question,
+      request.priorTurns,
+    );
+    const askMaxTokens = resolvePrivateRemoteAskMaxTokens(ctx.privateRemoteOutputBudget);
+
+    if (request.toolExecutor) {
+      return await runPrivateRemoteInboxAskWithTools(request, ctx, userContent, askMaxTokens);
+    }
+
+    return await runPrivateRemoteInboxAskPlain(request, ctx, userContent, askMaxTokens);
+  } catch (err) {
+    if (request.abortSignal?.aborted) {
+      return {
+        ok: false,
+        provider: 'private_remote',
+        mode: ctx.aiExecutionMode,
+        error: AI_REQUEST_CANCELLED,
+      };
+    }
+    return {
+      ok: false,
+      provider: 'private_remote',
+      mode: ctx.aiExecutionMode,
+      error: mapPrivateRemoteError(err),
+    };
+  }
+}
+
+export async function runPrivateRemoteGeneralAsk(
+  request: GeneralAskRequest,
+  ctx: AiExecutionContext,
+): Promise<GeneralAskTaskResult> {
+  try {
+    if (request.abortSignal?.aborted) {
+      return {
+        ok: false,
+        provider: 'private_remote',
+        mode: ctx.aiExecutionMode,
+        error: AI_REQUEST_CANCELLED,
+      };
+    }
+
+    const userContent = buildWebParityGeneralAskUserMessageContent(
+      request.question,
+      request.priorTurns,
+    );
+    const askMaxTokens = resolvePrivateRemoteAskMaxTokens(ctx.privateRemoteOutputBudget);
+    const runOnce = (user: string) =>
+      callRemoteCompletion(
+        ctx,
+        [
+          { role: 'system', content: WEB_PARITY_GENERAL_ASK_SYSTEM_PROMPT },
+          { role: 'user', content: user },
+        ],
+        askMaxTokens,
+        LOCAL_GEN_ASK.temperature,
+        request.abortSignal,
+        { jsonObject: true, schemaKind: 'ask' },
+      );
+
+    let remote = await runOnce(userContent);
+    let result = parseLocalAskResponse(remote.content);
+    if (!result) {
+      remote = await runOnce(`${userContent}\n\n${STRICT_JSON_TAIL}`);
+      result = parseLocalAskResponse(remote.content);
+    }
+    if (!result) {
+      throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
+    }
+
+    return {
+      ok: true,
+      provider: 'private_remote',
+      mode: ctx.aiExecutionMode,
+      result: { ...result, ...(remote.model ? { model: remote.model } : {}) },
+    };
+  } catch (err) {
+    if (request.abortSignal?.aborted) {
+      return {
+        ok: false,
+        provider: 'private_remote',
+        mode: ctx.aiExecutionMode,
+        error: AI_REQUEST_CANCELLED,
+      };
+    }
+    return {
+      ok: false,
+      provider: 'private_remote',
+      mode: ctx.aiExecutionMode,
+      error: mapPrivateRemoteError(err),
+    };
+  }
+}
+
 export type { AutoOrganizeFoldersResult };
 
 export type PrivateRemoteAutoOrganizeInput = {
   appLanguage: string;
-  existingFolders: Array<{ name: string; icon: string; color: string }>;
+  mode: AutoOrganizeMode;
+  template?: AutoOrganizeTemplate;
+  existingFolders: Array<{
+    name: string;
+    icon: string;
+    color: string;
+    noteCount?: number;
+  }>;
   notes: Array<{
     id: string;
     title?: string;
     transcript?: string;
     summary?: string;
     classification?: string;
+    createdAt?: string;
+    ageDays?: number;
+    folderName?: string;
+    isPinned?: boolean;
+    isRead?: boolean;
+    taskCount?: number;
+    openTaskCount?: number;
+    openTasks?: string[];
+    allTasksDone?: boolean;
   }>;
 };
 
 export type PrivateRemoteAutoOrganizeResult =
-  | { ok: true; result: AutoOrganizeFoldersResult }
+  | { ok: true; result: AutoOrganizeRunResult }
   | { ok: false; error: string };
 
 export async function runPrivateRemoteAutoOrganizeFolders(
@@ -1181,8 +1566,10 @@ export async function runPrivateRemoteAutoOrganizeFolders(
   ctx: AiExecutionContext,
   options?: { abortSignal?: AbortSignal; isCancelled?: () => boolean },
 ): Promise<PrivateRemoteAutoOrganizeResult> {
+  const mode = input.mode;
+  const template = normalizeAutoOrganizeTemplate(input.template);
   const expectedIds = input.notes.map((n) => n.id).filter((id) => id.trim().length > 0);
-  if (expectedIds.length === 0) {
+  if (expectedIds.length === 0 && mode !== 'consolidate_folders') {
     return { ok: false, error: i18n.t('folders.autoOrganizeFailedDescription') };
   }
 
@@ -1190,47 +1577,78 @@ export async function runPrivateRemoteAutoOrganizeFolders(
     appLanguage: input.appLanguage.trim().slice(0, 2) || undefined,
     existingFolders: input.existingFolders,
     notes: input.notes,
+    mode,
+    template,
   });
 
-  const maxTokens = resolvePrivateRemoteSummaryMaxTokens(ctx.privateRemoteOutputBudget) ?? 8192;
+  const maxTokens =
+    resolvePrivateRemoteAutoOrganizeMaxTokens(ctx.privateRemoteOutputBudget, expectedIds.length) ??
+    8192;
+  const systemPrompt = buildAutoOrganizeSystemPrompt(mode, template);
 
-  const sendOrganize = async (userContent: string): Promise<AutoOrganizeFoldersResult> => {
+  const sendOrganize = async (userContent: string): Promise<AutoOrganizeRunResult> => {
     if (options?.isCancelled?.()) {
       throw new Error(AI_REQUEST_CANCELLED);
     }
     const remote = await callRemoteCompletion(
       ctx,
       [
-        { role: 'system', content: AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: userContent },
       ],
       maxTokens,
       0.12,
       options?.abortSignal,
-      { jsonObject: true, schemaKind: 'auto_organize' },
+      { jsonObject: true, schemaKind: resolveAutoOrganizeSchemaKind(mode) },
     );
-    const result = parseAutoOrganizeResult(remote.content);
-    assertAutoOrganizeComplete(result, expectedIds);
-    return result;
+    const parsed = parseAutoOrganizeResultForMode(remote.content, mode);
+    if (mode === 'suggest_archive') {
+      assertAutoOrganizeArchiveComplete(
+        parsed as import('@/entities/folder/lib/autoOrganizeTypes').AutoOrganizeArchiveResult,
+        expectedIds,
+      );
+      return {
+        mode,
+        data: parsed as import('@/entities/folder/lib/autoOrganizeTypes').AutoOrganizeArchiveResult,
+      };
+    }
+    if (mode === 'consolidate_folders') {
+      return {
+        mode,
+        data: parsed as import('@/entities/folder/lib/autoOrganizeTypes').AutoOrganizeConsolidateResult,
+      };
+    }
+    const foldersResult = parsed as AutoOrganizeFoldersResult;
+    assertAutoOrganizeComplete(foldersResult, expectedIds, mode);
+    return { mode, template, data: foldersResult };
   };
 
+  const repairSuffix = buildAutoOrganizeRepairUserSuffix(mode, expectedIds);
+  let userContent = userPayload;
+  let lastAttemptError: unknown;
+
   try {
-    try {
-      const result = await sendOrganize(userPayload);
-      return { ok: true, result };
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : '';
-      if (msg === AI_REQUEST_CANCELLED || options?.abortSignal?.aborted) {
-        return { ok: false, error: AI_REQUEST_CANCELLED };
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const result = await sendOrganize(userContent);
+        return { ok: true, result };
+      } catch (e) {
+        lastAttemptError = e;
+        const msg = e instanceof Error ? e.message : '';
+        if (msg === AI_REQUEST_CANCELLED || options?.abortSignal?.aborted) {
+          return { ok: false, error: AI_REQUEST_CANCELLED };
+        }
+        const canRepair = msg.startsWith('Invalid AI response') || isAutoOrganizeParseFailure(e);
+        if (!canRepair || attempt >= 2) {
+          throw e;
+        }
+        userContent =
+          userPayload +
+          repairSuffix +
+          `\n\nSpecific validation error from previous attempt:\n${msg}\n\nEvery assignments[].folderName MUST exactly match one folders[].name string from your output.`;
       }
-      if (!msg.startsWith('Invalid AI response') && !isAutoOrganizeParseFailure(e)) {
-        throw e;
-      }
-      const repaired = await sendOrganize(
-        userPayload + buildAutoOrganizeRepairUserSuffix(expectedIds),
-      );
-      return { ok: true, result: repaired };
     }
+    throw lastAttemptError;
   } catch (err) {
     if (
       options?.abortSignal?.aborted ||

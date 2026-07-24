@@ -1,15 +1,19 @@
-import { CheckCircle2, Clock, ListChecks, Pin } from 'lucide-react-native';
+import { CheckCircle2, Clock, ListTodo, Pin } from 'lucide-react-native';
 import React, { memo, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 
 import type { VoiceRecord } from '@/entities/record';
+import { getRecordCardChromeStyle } from '@/entities/record/lib/recordCardChrome';
 import type { Colors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import { formatRelativeTime } from '@/shared/lib';
-import { SwipeableCardContext, Tag } from '@/shared/ui';
+import { SwipeableCardContext } from '@/shared/ui';
 
 import { AiStatusPill } from './AiStatusPill';
+import { RecordCardPublicChip } from './RecordCardPublicChip';
+import { RecordCardTagsRow } from './RecordCardTagsRow';
 
 type RecordCardProps = {
   item: VoiceRecord;
@@ -20,6 +24,7 @@ type RecordCardProps = {
   onLongPress?: () => void;
   a11yHint?: string | null;
   hideAccessibilitySubtree?: boolean;
+  testID?: string;
 };
 
 export const RecordCard = memo(function RecordCard({
@@ -31,17 +36,11 @@ export const RecordCard = memo(function RecordCard({
   onLongPress,
   a11yHint,
   hideAccessibilitySubtree = false,
+  testID,
 }: RecordCardProps) {
   const { i18n, t } = useTranslation();
   const { isSwiping } = useContext(SwipeableCardContext);
-  const cardStyle = {
-    shadowColor: color.shadow.color,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: color.shadow.opacity,
-    shadowRadius: 4,
-    elevation: 2,
-    backgroundColor: color.background.card,
-  };
+  const cardStyle = getRecordCardChromeStyle(color);
   const pinIconStyle = { marginRight: 6 };
   const textPrimaryStyle = { color: color.text.primary };
   const textSecondaryStyle = { color: color.text.secondary };
@@ -77,7 +76,8 @@ export const RecordCard = memo(function RecordCard({
     aiProcessing ||
     aiError ||
     translationProcessing ||
-    translationError;
+    translationError ||
+    item.summaryStatus === 'queued';
   const showFolderStripe = Boolean(folderAccentColor);
   const isUnread = item.status === 'unread';
 
@@ -89,6 +89,7 @@ export const RecordCard = memo(function RecordCard({
   const baseContainerStyle = [
     cardStyle,
     {
+      alignSelf: 'stretch' as const,
       borderRadius: 16,
       padding: 0,
       overflow: 'hidden' as const,
@@ -147,6 +148,9 @@ export const RecordCard = memo(function RecordCard({
               {item.title}
             </Text>
           </View>
+          {!showStatusPill && item.isPublicPublished ? (
+            <RecordCardPublicChip color={color} />
+          ) : null}
           {showStatusPill && (
             <AiStatusPill
               aiStatus={item.aiStatus ?? 'done'}
@@ -190,7 +194,7 @@ export const RecordCard = memo(function RecordCard({
                 <CheckCircle2 size={14} color={color.accent.success} strokeWidth={2} />
               ) : (
                 <>
-                  <ListChecks size={14} color={color.icon.muted} strokeWidth={2} />
+                  <ListTodo size={14} color={color.icon.muted} strokeWidth={2} />
                   <Text style={[textSecondaryStyle, { fontSize: 12 }]}>
                     {doneCount}/{tasks.length}
                   </Text>
@@ -221,17 +225,10 @@ export const RecordCard = memo(function RecordCard({
             {item.summary || item.transcript}
           </Text>
         )}
-        {hasTags && (
-          <View className="flex-row flex-wrap gap-2">
-            {item.tags!.map((tag) => (
-              <Tag key={tag} label={tag} />
-            ))}
-          </View>
-        )}
+        {hasTags ? <RecordCardTagsRow tags={item.tags!} color={color} variant="compact" /> : null}
       </View>
     </>
   );
-
   if (hideAccessibilitySubtree) {
     return (
       <View
@@ -246,6 +243,7 @@ export const RecordCard = memo(function RecordCard({
 
   return (
     <Pressable
+      testID={testID ?? TestIds.inbox.recordCard(item.id)}
       accessibilityRole="button"
       accessibilityLabel={isUnread ? `${item.title}, ${t('inbox.recordUnreadA11y')}` : item.title}
       accessibilityHint={resolvedA11yHint}

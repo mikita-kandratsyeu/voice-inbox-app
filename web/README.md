@@ -8,22 +8,31 @@ Repository overview: [../README.md](../README.md).
 
 ## Getting started
 
+Install dependencies from the **repository root** (`yarn install` — see [../README.md](../README.md#monorepo-setup)).
+
 ```bash
-cd web
-yarn install
-cp .env.example .env
+cp web/.env.example web/.env
 ```
 
-1. Set **`DATABASE_URL`** (Neon Postgres recommended; see comment in `.env.example` for `uselibpqcompat`).
-2. Set **`JWT_SECRET`** and **`APP_SECRET`** (min 32 characters for JWT).
-3. Apply schema: `yarn db:push` (or `prisma migrate deploy` in production).
-4. Seed the first superadmin (empty `AdminUser` table only):
+1. Set **`DATABASE_URL`** and **`DIRECT_URL`** (Supabase Postgres; see `.env.example` for pooler URLs). Use the **`postgres`** pooler user — Prisma bypasses RLS; `anon` / `authenticated` do not.
+2. Set **`JWT_SECRET`** (min 32 characters) and **`FIREBASE_SERVICE_ACCOUNT`** (FCM + App Check on `POST /api/token`).
+3. Apply schema:
+   - **New empty DB:** `yarn db:push` (quick dev) or `yarn db:migrate` (tracked migrations).
+   - **Existing Supabase DB** that was created with `db:push` and shows **P3005** on `yarn db:migrate`: baseline once, then deploy pending SQL:
+     ```bash
+     cd web
+     yarn db:baseline-and-migrate   # marks older migrations as applied, runs the rest
+     yarn db:verify-rls
+     ```
+     Dry run: `yarn db:baseline -- --dry-run`. Mark only through a specific migration: `yarn db:baseline -- --through 20260610120000_in_app_event_page --then-deploy`.
+4. On Supabase, harden Data API once: `yarn db:rls`, then `yarn db:verify-rls` (RLS + revoke for `anon`/`authenticated` only; does not affect Prisma). Use **`DIRECT_URL`** (session pooler, port 5432) for migrate/baseline — not the transaction pooler (6543).
+5. Seed the first superadmin (empty `AdminUser` table only):
 
    ```bash
    ADMIN_SEED_LOGIN=admin ADMIN_SEED_PASSWORD='your-secure-password' yarn db:seed
    ```
 
-5. Run dev server: `yarn dev` → open `/admin` to sign in.
+6. Run dev server: `yarn dev:web` (from repo root) or `yarn workspace voice-inbox-web dev` → open `/admin` to sign in.
 
 Without Redis (`UPSTASH_*`), the API uses an in-memory job store — fine for local development.
 
@@ -60,20 +69,32 @@ Without Redis (`UPSTASH_*`), the API uses an in-memory job store — fine for lo
 
 ---
 
-## Scripts (from `web/`)
+## Scripts
+
+Run from repo root with `yarn workspace voice-inbox-web <script>`, or `cd web` and use `yarn <script>`.
 
 | Script | Description |
 | ------ | ----------- |
-| `yarn dev` | Next.js dev server |
-| `yarn build` | `prisma generate` + production build |
-| `yarn start` | Production server |
-| `yarn lint` / `yarn lint:fix` | ESLint |
-| `yarn type:check` | Prisma generate + `tsc` |
-| `yarn db:generate` | Prisma client only |
-| `yarn db:push` | Push schema to database (dev) |
-| `yarn db:seed` | Create first superadmin (`ADMIN_SEED_*`) |
-| `yarn db:backup` / `yarn db:restore` | `pg_dump` / restore helpers (requires `libpq`) |
-| `yarn release-post:draft` | Draft blog release post from git + `package.json` version |
+| `dev` | Next.js dev server (`yarn dev:web` from root) |
+| `build` | `prisma generate` + production build |
+| `start` | Production server |
+| `lint` / `lint:fix` | ESLint |
+| `type:check` | Prisma generate + `tsc` |
+| `db:generate` | Prisma client only |
+| `db:push` | Push schema to database (dev) |
+| `db:migrate` | Apply pending Prisma migrations (`migrate deploy`) |
+| `db:baseline` | Mark existing migrations as applied (fix P3005 after `db:push`) |
+| `db:baseline-and-migrate` | Baseline + `migrate deploy` (typical one-time Supabase fix) |
+| `db:check-local` | **Local only:** `migrate deploy` + Supabase RLS verify (`db:verify-rls`) |
+| `db:rls` | Re-apply RLS hardening SQL (Supabase; run after migrations) |
+| `db:verify-rls` | Assert RLS is on and Prisma (`postgres` role) can still read |
+| `db:seed` | Create first superadmin (`ADMIN_SEED_*`) |
+| `db:backup` / `db:restore` | `pg_dump` / restore helpers (requires `libpq`) |
+| `release-post:draft` | Draft blog release post from git + `package.json` version |
+
+Monorepo quality gates: `yarn turbo run lint type:check test --filter=voice-inbox-web`.
+
+**Vercel (monorepo):** Root Directory `web`, Install Command `cd .. && yarn install --immutable`, Build Command `yarn build` (or from repo root: `yarn turbo run build --filter=voice-inbox-web`).
 
 ---
 
@@ -84,7 +105,7 @@ See **`.env.example`** for the full list and comments. Core groups:
 | Group | Variables |
 | ----- | ----------- |
 | **Site** | `NEXT_PUBLIC_BASE_URL`, store URLs, waitlist, support email |
-| **Mobile API** | `APP_SECRET`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `MOBILE_USER_AGENT` |
+| **Mobile API** | `JWT_SECRET`, `JWT_EXPIRES_IN`, `MOBILE_USER_AGENT`, `FIREBASE_SERVICE_ACCOUNT` |
 | **AI** | `OPENROUTER_API_KEY`, optional `DEEPSEEK_*`, `AI_JOB_TRANSPORT`, QStash (`QSTASH_*`) |
 | **Cache / jobs** | `UPSTASH_REDIS_REST_*` (optional — in-memory fallback) |
 | **Database** | `DATABASE_URL`, `ADMIN_JWT_SECRET`, `ADMIN_SEED_*` |

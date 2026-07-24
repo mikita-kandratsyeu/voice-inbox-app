@@ -3,8 +3,9 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Switch, Text, View } from 'react-native';
 
-import type { RecordingStatus } from '@/entities/record';
+import type { RecordingStatus, TranscriptSegment } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import { hasNativeSpeakerSegments } from '@/features/transcription/lib/nativeMeetingSpeakers';
 import type { Colors } from '@/shared/config';
 import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
 import { AiTabErrorBanner, AiTabHintIcon, Button, TabEmptyState } from '@/shared/ui';
@@ -17,6 +18,7 @@ import {
   type MeetingSpeakerLabels,
   normalizeSpeakerLabelKey,
 } from '../lib/meetingSpeakerLabels';
+import { buildNativeMeetingUtterances } from '../lib/nativeMeetingDialogue';
 import { parseMeetingDialogue } from '../lib/parseMeetingDialogue';
 import { AiTabProcessing } from './AiTabProcessing';
 import { MeetingDialogueSpeakerRoster } from './MeetingDialogueSpeakerRoster';
@@ -33,6 +35,8 @@ type MeetingDialogueTabProps = {
   hasSummary?: boolean;
   /** Summary/tasks AI run in progress — block speaker breakdown actions. */
   summaryProcessing?: boolean;
+  /** Offline transcription in progress — block speaker breakdown actions. */
+  transcriptProcessing?: boolean;
   color: Colors;
   onGenerate: () => void;
   onRegenerateDialogueOnly?: () => void;
@@ -50,6 +54,8 @@ type MeetingDialogueTabProps = {
   privateAiBatchStartedAt?: number;
   transcriptCharCount?: number;
   cloudMeetingDialogueExtra?: boolean;
+  nativeVoiceDiarization?: boolean;
+  transcriptSegments?: TranscriptSegment[];
 };
 
 type SpeakerRenameTarget = {
@@ -63,6 +69,7 @@ export const MeetingDialogueTab = ({
   hasTranscript,
   hasSummary = false,
   summaryProcessing = false,
+  transcriptProcessing = false,
   meetingDialogue,
   speakerLabels,
   onRenameSpeaker,
@@ -77,6 +84,8 @@ export const MeetingDialogueTab = ({
   privateAiBatchStartedAt,
   transcriptCharCount,
   cloudMeetingDialogueExtra = false,
+  nativeVoiceDiarization = false,
+  transcriptSegments,
   showPrivateModeCta = false,
   status,
   isPrivateMode = false,
@@ -89,15 +98,21 @@ export const MeetingDialogueTab = ({
   const { isConnected } = useNetworkStatus();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
-  const blockDialogueActions = disableByNetwork || summaryProcessing;
+  const blockDialogueActions = disableByNetwork || summaryProcessing || transcriptProcessing;
 
   const [renameTarget, setRenameTarget] = useState<SpeakerRenameTarget | null>(null);
   const [speakerLabelsHidden, setSpeakerLabelsHidden] = useState(false);
 
-  const rawUtterances = useMemo(
-    () => parseMeetingDialogue(meetingDialogue ?? ''),
-    [meetingDialogue],
-  );
+  const rawUtterances = useMemo(() => {
+    if (
+      nativeVoiceDiarization &&
+      transcriptSegments &&
+      hasNativeSpeakerSegments(transcriptSegments)
+    ) {
+      return buildNativeMeetingUtterances(transcriptSegments);
+    }
+    return parseMeetingDialogue(meetingDialogue ?? '');
+  }, [meetingDialogue, nativeVoiceDiarization, transcriptSegments]);
 
   const utterances = useMemo(
     () => applySpeakerLabelsToUtterances(rawUtterances, speakerLabels),
@@ -117,6 +132,9 @@ export const MeetingDialogueTab = ({
   const showSpeakerRoster = Boolean(onRenameSpeaker && speakerRoster.length > 0);
 
   const dialogueCallout = useMemo(() => {
+    if (nativeVoiceDiarization) {
+      return null;
+    }
     if (heuristics.showNoSpeakerLabelsHint) {
       return {
         titleKey: 'recordingDetail.meetingDialogueNoLabelsTitle' as const,
@@ -134,7 +152,7 @@ export const MeetingDialogueTab = ({
       };
     }
     return null;
-  }, [color.accent.delete, color.accent.primary, heuristics]);
+  }, [color.accent.delete, color.accent.primary, heuristics, nativeVoiceDiarization]);
 
   const errMessage = useMemo(() => {
     return errorMessage ?? (showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : '');
@@ -251,6 +269,19 @@ export const MeetingDialogueTab = ({
   }
 
   if (utterances.length === 0) {
+    if (nativeVoiceDiarization) {
+      return (
+        <View className="gap-3 p-4">
+          <TabEmptyState
+            icon={<UsersRound size={28} color={color.icon.muted} strokeWidth={1.8} />}
+            title={t('recordingDetail.meetingDialogueNativeEmptyTitle')}
+            description={t('recordingDetail.meetingDialogueNativeEmptyDesc')}
+          />
+          {renameSheet}
+        </View>
+      );
+    }
+
     const dialogueOnlyAction = canRegenerateDialogueOnly && Boolean(onRegenerateDialogueOnly);
     const emptyDescriptionKey = dialogueOnlyAction
       ? 'recordingDetail.meetingDialogueTabEmptyDescReady'
@@ -360,7 +391,7 @@ export const MeetingDialogueTab = ({
           );
         })}
       </View>
-      {canRegenerateDialogueOnly && onRegenerateDialogueOnly ? (
+      {canRegenerateDialogueOnly && onRegenerateDialogueOnly && !nativeVoiceDiarization ? (
         <Button
           variant="secondary"
           size="lg"

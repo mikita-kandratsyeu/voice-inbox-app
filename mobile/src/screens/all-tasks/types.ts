@@ -7,4 +7,14 @@ export type TaskWithRecord = {
   task: TaskItem;
 };
 
-export type TaskDeadlineBucket = 'overdue' | 'today' | 'upcoming' | 'noDate' | 'done';
+export type TaskDeadlineBucket =
+  | 'pinned'
+  | 'overdue'
+  | 'today'
+  | 'tomorrow'
+  | 'thisWeek'
+  | 'later'
+  | 'noDate'
+  | 'done';
+
+export type AllTasksQuickFilter = 'all' | 'overdue' | 'today' | 'highPriority' | 'noDate' | 'done';

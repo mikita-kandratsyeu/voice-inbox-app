@@ -7,13 +7,14 @@ import {
   buildDevPreviewPageUrl,
   buildDevPreviewUrl,
   DEV_PREVIEW_CATALOG,
-  isDevPreviewCatalogEnabled,
+  isDevPreviewCatalogEnabledForAppEnv,
 } from '@/lib/dev-preview-catalog';
+import type { AppEnv } from '@/lib/app-env';
 
 import { AdminAlert, AdminCard, adminBtnSecondaryClass } from './admin-ui';
 
-export function AdminDevPreviewsPanel() {
-  const enabled = isDevPreviewCatalogEnabled();
+export function AdminDevPreviewsPanel({ appEnv }: { appEnv: AppEnv }) {
+  const enabled = isDevPreviewCatalogEnabledForAppEnv(appEnv);
 
   const origin = useMemo(() => {
     if (typeof window === 'undefined') return '';
@@ -25,7 +26,7 @@ export function AdminDevPreviewsPanel() {
       <AdminAlert tone="info">
         Dev preview endpoints are only available when the web app runs with{' '}
         <code className="rounded bg-zinc-100 px-1 py-0.5 font-mono text-xs dark:bg-zinc-800">
-          NODE_ENV=development
+          APP_ENV=development
         </code>{' '}
         (local <code className="font-mono text-xs">yarn dev</code>).
       </AdminAlert>
@@ -35,8 +36,8 @@ export function AdminDevPreviewsPanel() {
   return (
     <div className="space-y-6">
       <AdminAlert tone="warning">
-        Opens rendered HTML in a new tab. Endpoints return 404 in production builds — use only on
-        local dev.
+        Opens rendered HTML or PDF in a new tab. Endpoints return 404 in production builds — use
+        only on local dev. PDF previews require Puppeteer (installed with web dev dependencies).
       </AdminAlert>
 
       {DEV_PREVIEW_CATALOG.map((entry) => (
@@ -67,6 +68,8 @@ export function AdminDevPreviewsPanel() {
                 entry.pagePath != null
                   ? buildDevPreviewPageUrl(origin, entry.pagePath, ex.query)
                   : null;
+              const previewLabel =
+                entry.contentKind === 'pdf' ? 'Open PDF preview' : 'Open API preview';
 
               return (
                 <li
@@ -85,7 +88,7 @@ export function AdminDevPreviewsPanel() {
                       className={adminBtnSecondaryClass}
                     >
                       <ExternalLink className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
-                      Open API preview
+                      {previewLabel}
                     </a>
                     {pageHref != null ? (
                       <a

@@ -1,12 +1,17 @@
 import {
   APP_STORE_URL,
+  GITHUB_OAUTH_CLIENT_ID,
+  GITLAB_OAUTH_CLIENT_ID,
   GOOGLE_PLAY_URL,
+  PREVIEW_WEB_API_URL,
+  PREVIEW_WEBSITE_URL,
   PRO_LICENSE_KEY_ACTIVATION_ENABLED,
+  REVENUECAT_AI_RESET_PRODUCT_ID,
   REVENUECAT_API_KEY_ANDROID,
   REVENUECAT_API_KEY_IOS,
   REVENUECAT_ENTITLEMENT_ID,
   REVENUECAT_PACKAGE_TYPE_PREFERRED,
-  SUBSCRIPTIONS_PUBLICLY_AVAILABLE,
+  WEB_API_TARGET,
   WEB_API_URL,
   WEBSITE_URL,
   YANDEX_BANNER_AD_UNIT_ID,
@@ -23,12 +28,22 @@ import {
 } from '@react-native-firebase/remote-config';
 
 import { readTestflightWebApiUrlOverride } from './testflightWebApiOverride';
+import {
+  DEFAULT_WEB_API_TARGET,
+  parseWebApiTarget,
+  resolveUrlFromTarget,
+  resolveWebApiUrlFromTarget,
+  type WebApiTarget,
+} from './webApiTarget';
 
 type RemoteKey =
   | 'WEBSITE_URL'
+  | 'PREVIEW_WEBSITE_URL'
   | 'APP_STORE_URL'
   | 'GOOGLE_PLAY_URL'
   | 'WEB_API_URL'
+  | 'PREVIEW_WEB_API_URL'
+  | 'WEB_API_TARGET'
   | 'YANDEX_REWARDED_AD_UNIT_ID'
   | 'YANDEX_BANNER_AD_UNIT_ID'
   | 'YANDEX_INTERSTITIAL_AD_UNIT_ID'
@@ -36,16 +51,21 @@ type RemoteKey =
   | 'REVENUECAT_API_KEY_ANDROID'
   | 'REVENUECAT_ENTITLEMENT_ID'
   | 'REVENUECAT_PACKAGE_TYPE_PREFERRED'
-  | 'SUBSCRIPTIONS_PUBLICLY_AVAILABLE'
+  | 'REVENUECAT_AI_RESET_PRODUCT_ID'
+  | 'GITHUB_OAUTH_CLIENT_ID'
+  | 'GITLAB_OAUTH_CLIENT_ID'
   | 'PRO_LICENSE_KEY_ACTIVATION_ENABLED';
 
 type RemoteConfigModule = ReturnType<typeof getRemoteConfig>;
 
 export type RuntimeConfigSnapshot = {
   websiteUrl: string;
+  previewWebsiteUrl: string;
   appStoreUrl: string;
   googlePlayUrl: string;
   webApiUrl: string;
+  previewWebApiUrl: string;
+  webApiTarget: WebApiTarget;
   yandexRewardedAdUnitId: string;
   yandexBannerAdUnitId: string;
   yandexInterstitialAdUnitId: string;
@@ -53,7 +73,9 @@ export type RuntimeConfigSnapshot = {
   revenueCatApiKeyAndroid: string;
   revenueCatEntitlementId: string;
   revenueCatPackageTypePreferred: string;
-  subscriptionsPubliclyAvailable: boolean;
+  revenueCatAiResetProductId: string;
+  githubOAuthClientId: string;
+  gitlabOAuthClientId: string;
   proLicenseKeyActivationEnabled: boolean;
 };
 
@@ -66,9 +88,12 @@ function isTruthyEnvFlag(v: string | undefined): boolean {
 function buildEmbedded(): RuntimeConfigSnapshot {
   return {
     websiteUrl: WEBSITE_URL?.trim() ?? '',
+    previewWebsiteUrl: PREVIEW_WEBSITE_URL?.trim() ?? '',
     appStoreUrl: APP_STORE_URL?.trim() ?? '',
     googlePlayUrl: GOOGLE_PLAY_URL?.trim() ?? '',
     webApiUrl: WEB_API_URL?.trim() ?? '',
+    previewWebApiUrl: PREVIEW_WEB_API_URL?.trim() ?? '',
+    webApiTarget: parseWebApiTarget(WEB_API_TARGET),
     yandexRewardedAdUnitId: YANDEX_REWARDED_AD_UNIT_ID?.trim() ?? '',
     yandexBannerAdUnitId: YANDEX_BANNER_AD_UNIT_ID?.trim() ?? '',
     yandexInterstitialAdUnitId: YANDEX_INTERSTITIAL_AD_UNIT_ID?.trim() ?? '',
@@ -76,7 +101,9 @@ function buildEmbedded(): RuntimeConfigSnapshot {
     revenueCatApiKeyAndroid: REVENUECAT_API_KEY_ANDROID?.trim() ?? '',
     revenueCatEntitlementId: REVENUECAT_ENTITLEMENT_ID?.trim() ?? '',
     revenueCatPackageTypePreferred: REVENUECAT_PACKAGE_TYPE_PREFERRED?.trim() ?? '',
-    subscriptionsPubliclyAvailable: isTruthyEnvFlag(SUBSCRIPTIONS_PUBLICLY_AVAILABLE),
+    revenueCatAiResetProductId: REVENUECAT_AI_RESET_PRODUCT_ID?.trim() ?? '',
+    githubOAuthClientId: GITHUB_OAUTH_CLIENT_ID?.trim() ?? '',
+    gitlabOAuthClientId: GITLAB_OAUTH_CLIENT_ID?.trim() ?? '',
     proLicenseKeyActivationEnabled: isTruthyEnvFlag(PRO_LICENSE_KEY_ACTIVATION_ENABLED),
   };
 }
@@ -84,9 +111,12 @@ function buildEmbedded(): RuntimeConfigSnapshot {
 function toFirebaseDefaults(s: RuntimeConfigSnapshot): Record<string, string> {
   return {
     WEBSITE_URL: s.websiteUrl,
+    PREVIEW_WEBSITE_URL: s.previewWebsiteUrl,
     APP_STORE_URL: s.appStoreUrl,
     GOOGLE_PLAY_URL: s.googlePlayUrl,
     WEB_API_URL: s.webApiUrl,
+    PREVIEW_WEB_API_URL: s.previewWebApiUrl,
+    WEB_API_TARGET: s.webApiTarget,
     YANDEX_REWARDED_AD_UNIT_ID: s.yandexRewardedAdUnitId,
     YANDEX_BANNER_AD_UNIT_ID: s.yandexBannerAdUnitId,
     YANDEX_INTERSTITIAL_AD_UNIT_ID: s.yandexInterstitialAdUnitId,
@@ -94,7 +124,9 @@ function toFirebaseDefaults(s: RuntimeConfigSnapshot): Record<string, string> {
     REVENUECAT_API_KEY_ANDROID: s.revenueCatApiKeyAndroid,
     REVENUECAT_ENTITLEMENT_ID: s.revenueCatEntitlementId,
     REVENUECAT_PACKAGE_TYPE_PREFERRED: s.revenueCatPackageTypePreferred,
-    SUBSCRIPTIONS_PUBLICLY_AVAILABLE: s.subscriptionsPubliclyAvailable ? '1' : '0',
+    REVENUECAT_AI_RESET_PRODUCT_ID: s.revenueCatAiResetProductId,
+    GITHUB_OAUTH_CLIENT_ID: s.githubOAuthClientId,
+    GITLAB_OAUTH_CLIENT_ID: s.gitlabOAuthClientId,
     PRO_LICENSE_KEY_ACTIVATION_ENABLED: s.proLicenseKeyActivationEnabled ? '1' : '0',
   };
 }
@@ -109,8 +141,12 @@ function isValidAbsoluteHttpUrl(url: string): boolean {
   }
 }
 
-function readRemoteWebApiUrl(rc: RemoteConfigModule, embeddedFallback: string): string {
-  const raw = getValue(rc, 'WEB_API_URL').asString().trim();
+function readRemoteHttpUrl(
+  rc: RemoteConfigModule,
+  key: 'WEB_API_URL' | 'PREVIEW_WEB_API_URL' | 'WEBSITE_URL' | 'PREVIEW_WEBSITE_URL',
+  embeddedFallback: string,
+): string {
+  const raw = getValue(rc, key).asString().trim();
 
   if (raw.length === 0) {
     return embeddedFallback;
@@ -127,6 +163,16 @@ function readRemoteString(rc: RemoteConfigModule, key: RemoteKey, fallback: stri
   const v = getValue(rc, key).asString().trim();
 
   return v.length > 0 ? v : fallback;
+}
+
+function readRemoteWebApiTarget(rc: RemoteConfigModule, fallback: WebApiTarget): WebApiTarget {
+  const raw = getValue(rc, 'WEB_API_TARGET').asString().trim();
+
+  if (raw.length === 0) {
+    return fallback;
+  }
+
+  return parseWebApiTarget(raw);
 }
 
 function readRemoteBool(rc: RemoteConfigModule, key: RemoteKey, fallback: boolean): boolean {
@@ -166,10 +212,13 @@ function mergeRemote(
   embedded: RuntimeConfigSnapshot,
 ): RuntimeConfigSnapshot {
   return {
-    websiteUrl: readRemoteString(rc, 'WEBSITE_URL', embedded.websiteUrl),
+    websiteUrl: readRemoteHttpUrl(rc, 'WEBSITE_URL', embedded.websiteUrl),
+    previewWebsiteUrl: readRemoteHttpUrl(rc, 'PREVIEW_WEBSITE_URL', embedded.previewWebsiteUrl),
     appStoreUrl: readRemoteString(rc, 'APP_STORE_URL', embedded.appStoreUrl),
     googlePlayUrl: readRemoteString(rc, 'GOOGLE_PLAY_URL', embedded.googlePlayUrl),
-    webApiUrl: readRemoteWebApiUrl(rc, embedded.webApiUrl),
+    webApiUrl: readRemoteHttpUrl(rc, 'WEB_API_URL', embedded.webApiUrl),
+    previewWebApiUrl: readRemoteHttpUrl(rc, 'PREVIEW_WEB_API_URL', embedded.previewWebApiUrl),
+    webApiTarget: readRemoteWebApiTarget(rc, embedded.webApiTarget),
     yandexRewardedAdUnitId: readRemoteString(
       rc,
       'YANDEX_REWARDED_AD_UNIT_ID',
@@ -205,10 +254,20 @@ function mergeRemote(
       'REVENUECAT_PACKAGE_TYPE_PREFERRED',
       embedded.revenueCatPackageTypePreferred,
     ),
-    subscriptionsPubliclyAvailable: readRemoteBool(
+    revenueCatAiResetProductId: readRemoteString(
       rc,
-      'SUBSCRIPTIONS_PUBLICLY_AVAILABLE',
-      embedded.subscriptionsPubliclyAvailable,
+      'REVENUECAT_AI_RESET_PRODUCT_ID',
+      embedded.revenueCatAiResetProductId,
+    ),
+    githubOAuthClientId: readRemoteString(
+      rc,
+      'GITHUB_OAUTH_CLIENT_ID',
+      embedded.githubOAuthClientId,
+    ),
+    gitlabOAuthClientId: readRemoteString(
+      rc,
+      'GITLAB_OAUTH_CLIENT_ID',
+      embedded.gitlabOAuthClientId,
     ),
     proLicenseKeyActivationEnabled: readRemoteBool(
       rc,
@@ -248,7 +307,15 @@ export async function initRuntimeConfig(): Promise<void> {
 }
 
 export function getWebsiteUrl(): string {
-  return snapshot.websiteUrl;
+  return resolveUrlFromTarget({
+    target: snapshot.webApiTarget,
+    prodUrl: snapshot.websiteUrl,
+    previewUrl: snapshot.previewWebsiteUrl,
+  });
+}
+
+export function getPreviewWebsiteUrl(): string {
+  return snapshot.previewWebsiteUrl.trim();
 }
 
 export function getAppStoreUrl(): string {
@@ -259,6 +326,14 @@ export function getGooglePlayUrl(): string {
   return snapshot.googlePlayUrl;
 }
 
+function resolveWebApiUrlFromSnapshot(config: RuntimeConfigSnapshot): string {
+  return resolveWebApiUrlFromTarget({
+    webApiTarget: config.webApiTarget,
+    webApiUrl: config.webApiUrl,
+    previewWebApiUrl: config.previewWebApiUrl,
+  });
+}
+
 export function getWebApiUrl(): string {
   const override = readTestflightWebApiUrlOverride();
 
@@ -266,8 +341,18 @@ export function getWebApiUrl(): string {
     return override;
   }
 
-  return snapshot.webApiUrl;
+  return resolveWebApiUrlFromSnapshot(snapshot);
 }
+
+export function getPreviewWebApiUrl(): string {
+  return snapshot.previewWebApiUrl.trim();
+}
+
+export function getWebApiTarget(): WebApiTarget {
+  return snapshot.webApiTarget;
+}
+
+export { DEFAULT_WEB_API_TARGET, type WebApiTarget };
 
 export function getYandexRewardedAdUnitId(): string {
   return snapshot.yandexRewardedAdUnitId;
@@ -297,8 +382,16 @@ export function getRevenueCatPackageTypePreferred(): string {
   return snapshot.revenueCatPackageTypePreferred;
 }
 
-export function getSubscriptionsPubliclyAvailable(): boolean {
-  return snapshot.subscriptionsPubliclyAvailable;
+export function getRevenueCatAiResetProductId(): string {
+  return snapshot.revenueCatAiResetProductId;
+}
+
+export function getGithubOAuthClientId(): string {
+  return snapshot.githubOAuthClientId;
+}
+
+export function getGitlabOAuthClientId(): string {
+  return snapshot.gitlabOAuthClientId;
 }
 
 export function getProLicenseKeyActivationEnabled(): boolean {

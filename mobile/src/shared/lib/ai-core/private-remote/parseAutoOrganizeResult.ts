@@ -1,4 +1,10 @@
 import { normalizeAutoOrganizeFolderColor } from '@/entities/folder/lib/autoOrganizeFolderColors';
+import {
+  AUTO_ORGANIZE_INBOX_FOLDER_NAME,
+  type AutoOrganizeArchiveResult,
+  type AutoOrganizeConsolidateResult,
+  type AutoOrganizeMode,
+} from '@/entities/folder/lib/autoOrganizeTypes';
 
 export type AutoOrganizeFoldersResult = {
   folders: Array<{ name: string; icon: string; color: string }>;
@@ -22,7 +28,7 @@ const ALLOWED_FOLDER_ICONS = new Set([
 
 const DEFAULT_AUTO_FOLDER_ICON = 'briefcase';
 
-export function parseAutoOrganizeResult(rawContent: string): AutoOrganizeFoldersResult {
+function extractJsonObject(rawContent: string): unknown {
   const trimmed = rawContent.trim();
   const withoutFences = trimmed.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
   const objectSlice = (() => {
@@ -32,12 +38,28 @@ export function parseAutoOrganizeResult(rawContent: string): AutoOrganizeFolders
     return withoutFences.slice(start, end + 1);
   })();
 
-  let parsed: unknown;
   try {
-    parsed = JSON.parse(objectSlice);
+    return JSON.parse(objectSlice);
   } catch {
     throw new Error('Invalid AI response: malformed JSON');
   }
+}
+
+function normalizeFolderIcon(icon: unknown): string {
+  return typeof icon === 'string' && ALLOWED_FOLDER_ICONS.has(icon.trim())
+    ? icon.trim()
+    : DEFAULT_AUTO_FOLDER_ICON;
+}
+
+function normalizeFolderColor(color: unknown): string {
+  return normalizeAutoOrganizeFolderColor(typeof color === 'string' ? color : '').toLowerCase();
+}
+
+export function parseAutoOrganizeResult(
+  rawContent: string,
+  mode: AutoOrganizeMode = 'full',
+): AutoOrganizeFoldersResult {
+  const parsed = extractJsonObject(rawContent);
 
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('Invalid AI response: expected object');
@@ -48,24 +70,30 @@ export function parseAutoOrganizeResult(rawContent: string): AutoOrganizeFolders
     assignments?: Array<{ recordId?: unknown; folderName?: unknown }>;
   };
 
-  if (!Array.isArray(obj.folders) || !Array.isArray(obj.assignments)) {
-    throw new Error('Invalid AI response: missing folders or assignments');
+  if (!Array.isArray(obj.assignments)) {
+    throw new Error('Invalid AI response: missing assignments');
   }
 
-  const folderRows = obj.folders
-    .map((f) => ({
-      name: typeof f?.name === 'string' ? f.name.trim() : '',
-      icon:
-        typeof f?.icon === 'string' && ALLOWED_FOLDER_ICONS.has(f.icon.trim())
-          ? f.icon.trim()
-          : DEFAULT_AUTO_FOLDER_ICON,
-      color: normalizeAutoOrganizeFolderColor(
-        typeof f?.color === 'string' ? f.color : '',
-      ).toLowerCase(),
-    }))
-    .filter((f) => Boolean(f.name));
+  if (mode === 'assign_existing') {
+    if (!Array.isArray(obj.folders) || obj.folders.length > 0) {
+      throw new Error('Invalid AI response: assign_existing requires empty folders');
+    }
+  } else if (!Array.isArray(obj.folders)) {
+    throw new Error('Invalid AI response: missing folders');
+  }
 
-  if (folderRows.length === 0) {
+  const folderRows =
+    mode === 'assign_existing'
+      ? []
+      : (obj.folders ?? [])
+          .map((f) => ({
+            name: typeof f?.name === 'string' ? f.name.trim() : '',
+            icon: normalizeFolderIcon(f?.icon),
+            color: normalizeFolderColor(f?.color),
+          }))
+          .filter((f) => Boolean(f.name));
+
+  if (mode !== 'assign_existing' && folderRows.length === 0) {
     throw new Error('Invalid AI response: no valid folders');
   }
 
@@ -94,6 +122,16 @@ export function parseAutoOrganizeResult(rawContent: string): AutoOrganizeFolders
     if (!folderName) {
       throw new Error('Invalid AI response: assignment with empty folderName');
     }
+
+    if (mode === 'assign_existing') {
+      if (folderName === AUTO_ORGANIZE_INBOX_FOLDER_NAME) {
+        assignments.push({ recordId, folderName: AUTO_ORGANIZE_INBOX_FOLDER_NAME });
+        continue;
+      }
+      assignments.push({ recordId, folderName });
+      continue;
+    }
+
     const canon = canonicalByLower.get(folderName.toLowerCase());
     if (!canon) {
       throw new Error(`Invalid AI response: unknown folder in assignment: ${folderName}`);
@@ -108,9 +146,103 @@ export function parseAutoOrganizeResult(rawContent: string): AutoOrganizeFolders
   return { folders, assignments };
 }
 
+export function parseAutoOrganizeConsolidateResult(
+  rawContent: string,
+): AutoOrganizeConsolidateResult {
+  const parsed = extractJsonObject(rawContent);
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('Invalid AI response: expected object');
+  }
+
+  const obj = parsed as {
+    merges?: Array<{
+      sourceFolderNames?: unknown;
+      targetFolderName?: unknown;
+      targetIcon?: unknown;
+      targetColor?: unknown;
+    }>;
+    deleteEmptyFolderNames?: unknown;
+  };
+
+  if (!Array.isArray(obj.merges)) {
+    throw new Error('Invalid AI response: missing merges');
+  }
+
+  const merges = obj.merges
+    .map((m) => {
+      const sourceFolderNames = Array.isArray(m?.sourceFolderNames)
+        ? m.sourceFolderNames
+            .filter((n): n is string => typeof n === 'string' && n.trim().length > 0)
+            .map((n) => n.trim())
+        : [];
+      const targetFolderName =
+        typeof m?.targetFolderName === 'string' ? m.targetFolderName.trim() : '';
+      if (sourceFolderNames.length === 0 || !targetFolderName) return null;
+      return {
+        sourceFolderNames,
+        targetFolderName,
+        targetIcon: normalizeFolderIcon(m?.targetIcon),
+        targetColor: normalizeFolderColor(m?.targetColor),
+      };
+    })
+    .filter((m): m is NonNullable<typeof m> => m != null);
+
+  const deleteEmptyFolderNames = Array.isArray(obj.deleteEmptyFolderNames)
+    ? obj.deleteEmptyFolderNames
+        .filter((n): n is string => typeof n === 'string' && n.trim().length > 0)
+        .map((n) => n.trim())
+    : [];
+
+  return { merges, deleteEmptyFolderNames };
+}
+
+export function parseAutoOrganizeArchiveResult(rawContent: string): AutoOrganizeArchiveResult {
+  const parsed = extractJsonObject(rawContent);
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('Invalid AI response: expected object');
+  }
+
+  const obj = parsed as {
+    archiveSuggestions?: Array<{ recordId?: unknown; reason?: unknown }>;
+  };
+
+  if (!Array.isArray(obj.archiveSuggestions)) {
+    throw new Error('Invalid AI response: missing archiveSuggestions');
+  }
+
+  const seen = new Set<string>();
+  const archiveSuggestions = obj.archiveSuggestions
+    .map((s) => {
+      const recordId = typeof s?.recordId === 'string' ? s.recordId.trim() : '';
+      const reason = typeof s?.reason === 'string' ? s.reason.trim() : '';
+      if (!recordId || !reason || seen.has(recordId)) return null;
+      seen.add(recordId);
+      return { recordId, reason };
+    })
+    .filter((s): s is NonNullable<typeof s> => s != null);
+
+  return { archiveSuggestions };
+}
+
+export function parseAutoOrganizeResultForMode(
+  rawContent: string,
+  mode: AutoOrganizeMode,
+): AutoOrganizeFoldersResult | AutoOrganizeConsolidateResult | AutoOrganizeArchiveResult {
+  if (mode === 'consolidate_folders') {
+    return parseAutoOrganizeConsolidateResult(rawContent);
+  }
+  if (mode === 'suggest_archive') {
+    return parseAutoOrganizeArchiveResult(rawContent);
+  }
+  return parseAutoOrganizeResult(rawContent, mode);
+}
+
 export function assertAutoOrganizeComplete(
   result: AutoOrganizeFoldersResult,
   expectedIds: string[],
+  mode: AutoOrganizeMode = 'full',
 ): void {
   const expected = new Set(expectedIds);
   if (result.assignments.length !== expectedIds.length) {
@@ -119,6 +251,22 @@ export function assertAutoOrganizeComplete(
   for (const { recordId } of result.assignments) {
     if (!expected.has(recordId)) {
       throw new Error('Invalid AI response: unexpected recordId in assignments');
+    }
+  }
+
+  if (mode === 'full' && (result.folders.length < 3 || result.folders.length > 8)) {
+    throw new Error(`Invalid AI response: folders must be 3-8, got ${result.folders.length}`);
+  }
+}
+
+export function assertAutoOrganizeArchiveComplete(
+  result: AutoOrganizeArchiveResult,
+  expectedIds: string[],
+): void {
+  const expected = new Set(expectedIds);
+  for (const { recordId } of result.archiveSuggestions) {
+    if (!expected.has(recordId)) {
+      throw new Error('Invalid AI response: unexpected recordId in archiveSuggestions');
     }
   }
 }

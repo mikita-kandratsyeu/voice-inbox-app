@@ -17,6 +17,7 @@ import { registerSharedAudioImportHandler } from '@/features/import-audio-file/l
 import { useInboxFiltersReset } from '@/features/inbox-filters';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useColors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import { IS_ANDROID, useIsTablet } from '@/shared/lib';
 
 import {
@@ -28,6 +29,7 @@ import {
   TAB_LABELS,
 } from './config';
 import { InboxNavigator } from './InboxNavigator';
+import { FREEZE_ON_BLUR_OPTIONS } from './screenOptions';
 import { SettingsNavigator } from './SettingsNavigator';
 import { TabletShellLayout } from './tablet';
 import { TabletTabBarBridge } from './tablet/TabletTabBarBridge';
@@ -52,6 +54,7 @@ export const BottomTabNavigator = () => {
     importAudioFromExternalUri,
     isImporting,
     importPhase,
+    documentImportProgress,
     subtitleImportConfirm,
   } = useImportAudioFile();
 
@@ -124,6 +127,7 @@ export const BottomTabNavigator = () => {
     },
     tabBarButton: (props: BottomTabBarButtonProps) => <AnimatedTabButton {...props} />,
     lazy: true,
+    ...FREEZE_ON_BLUR_OPTIONS,
   };
 
   const bottomTouchShieldHeight = isTablet ? 0 : FLOAT_TAB_BOTTOM_GAP + insets.bottom;
@@ -157,6 +161,7 @@ export const BottomTabNavigator = () => {
             <TAB_ICONS.Inbox size={isTablet ? 28 : TAB_ICON_SIZE} color={c} strokeWidth={1.8} />
           ),
           tabBarAccessibilityLabel: TAB_LABELS.Inbox,
+          tabBarButtonTestID: TestIds.tab.inbox,
         }}
       />
       <Tab.Screen
@@ -176,7 +181,6 @@ export const BottomTabNavigator = () => {
               iconColor={color.icon.onAccent}
               accentColor={color.accent.primary}
               isTablet={isTablet}
-              onLongPress={importAudioFile}
             />
           ),
         }}
@@ -195,6 +199,7 @@ export const BottomTabNavigator = () => {
           tabBarIcon: ({ color: c }) => (
             <TAB_ICONS.Settings size={isTablet ? 28 : TAB_ICON_SIZE} color={c} strokeWidth={1.8} />
           ),
+          tabBarButtonTestID: TestIds.tab.settings,
         }}
       />
     </Tab.Navigator>
@@ -202,7 +207,11 @@ export const BottomTabNavigator = () => {
 
   return (
     <View className="flex-1">
-      <ImportAudioProgressOverlay visible={isImporting} phase={importPhase} />
+      <ImportAudioProgressOverlay
+        visible={isImporting}
+        phase={importPhase}
+        documentProgress={documentImportProgress}
+      />
       <ImportSubtitleConfirmSheet {...subtitleImportConfirm} />
       <ImportFileActionProvider importFile={importAudioFile}>
         {isTablet ? (

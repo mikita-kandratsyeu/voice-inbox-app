@@ -1,1 +1,1 @@
-export { flushPendingRecordModalNavigation, useInitDeepLinking } from './model/useInitDeepLinking';
+export { useInitDeepLinking } from './model/useInitDeepLinking';

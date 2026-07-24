@@ -1,0 +1,13 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: navigation/modal-record-dismiss.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- tapOn:
+    id: tab.record
+- tapOn:
+    id: record.close
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: inbox.screen
+    timeout: 20000

@@ -4,11 +4,10 @@ import { View } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import type { AiExecutionMode } from '@/entities/settings';
+import { AskAiSuggestedQuestions, buildSuggestedQuestions } from '@/features/ask-chat/ui';
 import type { Colors } from '@/shared/config';
 
 import { AskAiContextDisclosure } from './AskAiContextDisclosure';
-import { AskAiSuggestedQuestions } from './AskAiSuggestedQuestions';
-import { buildSuggestedQuestions } from './askAiSuggestions';
 
 type EmptyStateProps = {
   color: Colors;

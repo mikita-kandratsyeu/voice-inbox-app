@@ -1,23 +1,25 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { Minus } from 'lucide-react-native';
-import React, { useCallback } from 'react';
+import { GripVertical, Minus } from 'lucide-react-native';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DraggableFlatList, {
   type RenderItemParams,
   ScaleDecorator,
+  ShadowDecorator,
 } from 'react-native-draggable-flatlist';
 import { Pressable } from 'react-native-gesture-handler';
-import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 import { useProEntitlement } from '@/features/pro-license';
 import { useColors } from '@/shared/config';
-import { resolveDisplayFolderColor } from '@/shared/lib';
-import { AppBottomSheetModal, useBottomSheetContentPadding } from '@/shared/ui';
+import { hapticLight, hapticSelection, resolveDisplayFolderColor } from '@/shared/lib';
+import { AppBottomSheetContent, AppBottomSheetModal } from '@/shared/ui';
 
 import { FolderLucideIcon } from '../lib/folderLucideIcons';
 import { useFolderStore } from '../model/store';
 import type { Folder } from '../model/types';
+
+const ROW_HEIGHT = 54;
+const LIST_MAX_HEIGHT = 420;
 
 type FolderReorderSheetProps = {
   visible: boolean;
@@ -25,20 +27,6 @@ type FolderReorderSheetProps = {
   onClose: () => void;
   onReorder: (orderedIds: string[]) => void;
 };
-
-function ReorderDragHandle({ lineColor }: { lineColor: string }) {
-  return (
-    <View className="items-center gap-1 justify-center px-2.5 py-1.5">
-      {[0, 1, 2].map((i) => (
-        <View
-          key={i}
-          className="h-0.5 w-[18px] rounded-[1px]"
-          style={{ backgroundColor: lineColor }}
-        />
-      ))}
-    </View>
-  );
-}
 
 export const FolderReorderSheet = ({
   visible,
@@ -48,12 +36,17 @@ export const FolderReorderSheet = ({
 }: FolderReorderSheetProps) => {
   const { t } = useTranslation();
   const color = useColors();
-  const contentPadding = useBottomSheetContentPadding(20);
   const { isProActive } = useProEntitlement();
   const deleteFolder = useFolderStore((s) => s.deleteFolder);
 
+  const listHeight = useMemo(
+    () => Math.min(Math.max(folders.length, 1) * ROW_HEIGHT, LIST_MAX_HEIGHT),
+    [folders.length],
+  );
+
   const confirmDeleteFolder = useCallback(
     (folder: Folder) => {
+      hapticSelection();
       Alert.alert(t('folders.deleteTitle'), t('folders.deleteConfirm'), [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -68,78 +61,147 @@ export const FolderReorderSheet = ({
     [deleteFolder, t],
   );
 
+  const handleDragBegin = useCallback(() => {
+    hapticLight();
+  }, []);
+
   const handleDragEnd = useCallback(
     ({ data }: { data: Folder[] }) => {
-      ReactNativeHapticFeedback.trigger('impactLight');
+      hapticSelection();
       onReorder(data.map((f) => f.id));
     },
     [onReorder],
   );
 
   const renderItem = useCallback(
-    ({ item: folder, drag, isActive: isDragging }: RenderItemParams<Folder>) => {
+    ({ item: folder, drag, isActive: isDragging, getIndex }: RenderItemParams<Folder>) => {
       const folderHex = resolveDisplayFolderColor(folder.color, isProActive);
-      const handleColor = color.text.muted;
+      const rowIndex = getIndex();
+      const isLast = rowIndex == null || rowIndex === folders.length - 1;
 
       return (
-        <ScaleDecorator activeScale={1.01}>
-          <View
-            className="min-h-[52px] flex-row items-center gap-2.5 border-b py-2 pr-1"
-            style={{
-              backgroundColor: color.background.primary,
-              borderBottomColor: color.border.default,
-              borderBottomWidth: StyleSheet.hairlineWidth,
-              opacity: isDragging ? 0.92 : 1,
-            }}
-          >
-            <TouchableOpacity
-              onPress={() => confirmDeleteFolder(folder)}
-              accessibilityRole="button"
-              accessibilityLabel={t('folders.reorderDeleteA11y', { name: folder.name })}
-              hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
-              className="ml-3.5 h-[22px] w-[22px] items-center justify-center rounded-[11px]"
-              style={{ backgroundColor: color.accent.delete }}
-            >
-              <Minus size={16} color={color.icon.onAccent} strokeWidth={2.5} />
-            </TouchableOpacity>
+        <ShadowDecorator>
+          <ScaleDecorator activeScale={1.02}>
             <View
-              className="h-10 w-10 items-center justify-center rounded-full"
-              style={{ backgroundColor: color.background.tertiary }}
-              pointerEvents="none"
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                minHeight: ROW_HEIGHT,
+                backgroundColor: isDragging ? color.background.tertiary : color.background.card,
+                borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
+                borderBottomColor: color.border.default,
+                ...(isDragging
+                  ? Platform.select({
+                      ios: {
+                        shadowColor: color.shadow.color,
+                        shadowOpacity: color.shadow.opacity * 1.6,
+                        shadowRadius: 10,
+                        shadowOffset: { width: 0, height: 4 },
+                      },
+                      android: { elevation: 4 },
+                      default: {},
+                    })
+                  : null),
+              }}
             >
-              <FolderLucideIcon iconId={folder.icon} size={22} color={folderHex} strokeWidth={2} />
+              <TouchableOpacity
+                onPress={() => confirmDeleteFolder(folder)}
+                accessibilityRole="button"
+                accessibilityLabel={t('folders.reorderDeleteA11y', { name: folder.name })}
+                hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+                style={{
+                  marginLeft: 10,
+                  width: 30,
+                  height: 30,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 15,
+                  backgroundColor: `${color.accent.delete}1a`,
+                }}
+              >
+                <Minus size={15} color={color.accent.delete} strokeWidth={2.5} />
+              </TouchableOpacity>
+
+              <Pressable
+                onLongPress={drag}
+                delayLongPress={140}
+                accessibilityRole="button"
+                accessibilityLabel={folder.name}
+                accessibilityHint={t('folders.reorderRowA11y')}
+                style={({ pressed }) => ({
+                  flex: 1,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                  minHeight: ROW_HEIGHT,
+                  paddingRight: 8,
+                  paddingLeft: 8,
+                  opacity: pressed && !isDragging ? 0.72 : 1,
+                })}
+              >
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 18,
+                    backgroundColor: `${folderHex}1f`,
+                  }}
+                  pointerEvents="none"
+                >
+                  <FolderLucideIcon
+                    iconId={folder.icon}
+                    size={20}
+                    color={folderHex}
+                    strokeWidth={2}
+                  />
+                </View>
+                <Text
+                  style={{
+                    flex: 1,
+                    color: color.text.primary,
+                    fontSize: 17,
+                    fontWeight: isDragging ? '600' : '400',
+                  }}
+                  numberOfLines={1}
+                  pointerEvents="none"
+                >
+                  {folder.name}
+                </Text>
+                <View
+                  pointerEvents="none"
+                  style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 8,
+                    backgroundColor: isDragging
+                      ? color.background.secondary
+                      : color.background.tertiary,
+                    paddingHorizontal: 6,
+                    paddingVertical: 8,
+                  }}
+                >
+                  <GripVertical size={18} color={color.text.muted} strokeWidth={2.2} />
+                </View>
+              </Pressable>
             </View>
-            <Text
-              className="flex-1 text-[17px] font-normal"
-              style={{ color: color.text.primary }}
-              numberOfLines={1}
-              pointerEvents="none"
-            >
-              {folder.name}
-            </Text>
-            <Pressable
-              onLongPress={drag}
-              delayLongPress={200}
-              accessibilityRole="button"
-              accessibilityLabel={folder.name}
-              accessibilityHint={t('folders.reorderRowA11y')}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            >
-              <ReorderDragHandle lineColor={handleColor} />
-            </Pressable>
-          </View>
-        </ScaleDecorator>
+          </ScaleDecorator>
+        </ShadowDecorator>
       );
     },
     [
       color.accent.delete,
-      color.icon.onAccent,
-      color.background.primary,
+      color.background.card,
+      color.background.secondary,
       color.background.tertiary,
       color.border.default,
-      color.text.primary,
+      color.shadow.color,
+      color.shadow.opacity,
       color.text.muted,
+      color.text.primary,
       confirmDeleteFolder,
+      folders.length,
       isProActive,
       t,
     ],
@@ -149,11 +211,11 @@ export const FolderReorderSheet = ({
     <AppBottomSheetModal
       visible={visible}
       onClose={onClose}
-      snapPoints={['52%']}
+      enableDynamicSizing
       enableContentPanningGesture={false}
     >
-      <BottomSheetView className="px-5 pt-1" style={contentPadding}>
-        <View className="mb-3 justify-center">
+      <AppBottomSheetContent style={{ flexGrow: 0 }} bottomPadding={12}>
+        <View className="mb-2 justify-center">
           <Text
             className="px-14 text-center text-[17px] font-semibold"
             style={{ color: color.text.primary }}
@@ -172,26 +234,38 @@ export const FolderReorderSheet = ({
             </Text>
           </TouchableOpacity>
         </View>
+
         <Text
-          className="mb-3 px-2 text-center text-[13px] leading-[18px]"
+          className="mb-3 text-center text-[13px] leading-[18px]"
           style={{ color: color.text.secondary }}
         >
           {t('folders.reorderSheetHint')}
         </Text>
-        <View className="h-[360px]">
+
+        <View
+          style={{
+            height: listHeight,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: color.border.default,
+            backgroundColor: color.background.card,
+            overflow: 'hidden',
+          }}
+        >
           <DraggableFlatList
             data={folders}
             keyExtractor={(item) => item.id}
             renderItem={renderItem}
+            onDragBegin={handleDragBegin}
             onDragEnd={handleDragEnd}
             scrollEventThrottle={16}
-            activationDistance={12}
+            activationDistance={8}
             style={{ flex: 1 }}
             containerStyle={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 4 }}
+            contentContainerStyle={{ flexGrow: 1 }}
           />
         </View>
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 };

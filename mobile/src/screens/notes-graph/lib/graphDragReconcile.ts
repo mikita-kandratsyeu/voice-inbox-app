@@ -1,0 +1,1 @@
+export const GRAPH_DRAG_RECONCILE_MIN_MS = 220;

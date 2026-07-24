@@ -4,6 +4,7 @@ import { unzip } from 'react-native-zip-archive';
 import type { WhisperModelId } from '@/entities/settings';
 import { getWhisperCoreMlSizeMb } from '@/entities/settings/model/constants';
 import { IS_IOS } from '@/shared/lib';
+import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 import {
   resolveWhisperCoreMlDownload,
@@ -195,13 +196,11 @@ class WhisperModelDownloader {
     opts?: { sessionId?: number; force?: boolean },
   ): Promise<void> {
     if (!opts?.force && opts?.sessionId != null && this.activeSessionId !== opts.sessionId) {
-      if (__DEV__) {
-        console.warn('[whisper-download] skip cleanup from stale session', {
-          sessionId: opts.sessionId,
-          activeSessionId: this.activeSessionId,
-          modelId,
-        });
-      }
+      devWarn('[whisper-download] skip cleanup from stale session', {
+        sessionId: opts.sessionId,
+        activeSessionId: this.activeSessionId,
+        modelId,
+      });
       return;
     }
 
@@ -232,8 +231,8 @@ class WhisperModelDownloader {
 
     await Promise.race([this.activeDownloadSettlement.catch(() => {}), timeoutPromise]);
 
-    if (__DEV__ && didTimeout) {
-      console.warn('[whisper-download] native task did not settle in time, forcing JS cleanup');
+    if (didTimeout) {
+      devWarn('[whisper-download] native task did not settle in time, forcing JS cleanup');
     }
 
     this.activeTask = null;
@@ -248,8 +247,8 @@ class WhisperModelDownloader {
     const existsB = await NitroFS.exists(path);
     if (!existsB) return;
     const sizeB = (await NitroFS.stat(path)).size;
-    if (sizeB !== sizeA && __DEV__) {
-      console.warn('[whisper-download] file still growing after cancel, deleting again');
+    if (sizeB !== sizeA) {
+      devWarn('[whisper-download] file still growing after cancel, deleting again');
       await NitroFS.unlink(path).catch(() => {});
     }
   }
@@ -301,14 +300,12 @@ class WhisperModelDownloader {
     this.cancelRequested = false;
     this.lastLoggedProgressBucket = -1;
 
-    if (__DEV__) {
-      console.warn('[whisper-download] start', {
-        modelId,
-        format,
-        expectedBytes: weightsExpectedBytes,
-        sessionId,
-      });
-    }
+    devWarn('[whisper-download] start', {
+      modelId,
+      format,
+      expectedBytes: weightsExpectedBytes,
+      sessionId,
+    });
 
     this.setSnapshot({
       machineState: 'pending',
@@ -347,16 +344,14 @@ class WhisperModelDownloader {
           lastWeightsProgress = progress;
           onProgress(progress, latestWeights, totalDownloadBytes, 'weights');
         }
-        if (__DEV__) {
-          const bucket = Math.floor(progress / 10);
-          if (bucket > this.lastLoggedProgressBucket) {
-            this.lastLoggedProgressBucket = bucket;
-            console.warn('[whisper-download] weights progress', {
-              progress,
-              written: latestWeights,
-              totalDownloadBytes,
-            });
-          }
+        const bucket = Math.floor(progress / 10);
+        if (bucket > this.lastLoggedProgressBucket) {
+          this.lastLoggedProgressBucket = bucket;
+          devWarn('[whisper-download] weights progress', {
+            progress,
+            written: latestWeights,
+            totalDownloadBytes,
+          });
         }
       });
     } catch {
@@ -445,24 +440,20 @@ class WhisperModelDownloader {
           await NitroFS.unlink(pathForNativeUnzip(zipPath)).catch(() => {});
           await RNBlobUtil.fs.unlink(pathForNativeUnzip(storedZipAbsPath)).catch(() => {});
           await RNBlobUtil.fs.unlink(pathForNativeUnzip(zipPath)).catch(() => {});
-          if (__DEV__) {
-            console.warn(
-              `[whisper-download] Core ML encoder failed (${zipRes.info().status}), using CPU`,
-            );
-          }
+          devWarn(`[whisper-download] Core ML encoder failed (${zipRes.info().status}), using CPU`);
         }
       } catch (e) {
         await NitroFS.unlink(pathForNativeUnzip(zipPath)).catch(() => {});
         await RNBlobUtil.fs.unlink(pathForNativeUnzip(zipPath)).catch(() => {});
-        if (__DEV__) console.warn('[whisper-download] coreml setup failed, using CPU', e);
+        diagWarn('[whisper-download] coreml setup failed, using CPU', e);
       }
-    } else if (__DEV__ && IS_IOS) {
-      console.warn('[whisper-download] Core ML encoder already installed, skipping', { modelId });
+    } else if (IS_IOS) {
+      devWarn('[whisper-download] Core ML encoder already installed, skipping', { modelId });
     }
 
     if (this.cancelRequested) throw new Error('cancelled');
     onProgress(100, totalDownloadBytes, totalDownloadBytes, 'weights');
-    if (__DEV__) console.warn('[whisper-download] completed', { modelId, format, sessionId });
+    devWarn('[whisper-download] completed', { modelId, format, sessionId });
     this.setSnapshot({ machineState: 'completed', phase: null, jobId: null });
     this.resetSnapshot();
   }
@@ -498,7 +489,7 @@ class WhisperModelDownloader {
     const format = options.format ?? 'q5_1';
 
     if (this.cancelInFlight) {
-      if (__DEV__) console.warn('[whisper-download] waiting for in-flight cancel before restart');
+      devWarn('[whisper-download] waiting for in-flight cancel before restart');
       await this.cancelInFlight.catch(() => {});
     }
 
@@ -542,13 +533,11 @@ class WhisperModelDownloader {
 
       const cancelSessionId = this.activeSessionId;
       this.cancelRequested = true;
-      if (__DEV__) {
-        console.warn('[whisper-download] cancel requested', {
-          modelId,
-          jobId: this.snapshot.jobId,
-          sessionId: cancelSessionId,
-        });
-      }
+      devWarn('[whisper-download] cancel requested', {
+        modelId,
+        jobId: this.snapshot.jobId,
+        sessionId: cancelSessionId,
+      });
 
       const beforePath = getWhisperModelPath(modelId, this.snapshot.format ?? 'q5_1');
 

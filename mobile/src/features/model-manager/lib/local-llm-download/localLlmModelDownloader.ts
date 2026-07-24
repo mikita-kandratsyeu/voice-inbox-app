@@ -1,6 +1,7 @@
 import RNBlobUtil from 'react-native-blob-util';
 
 import { getLocalAiModelEntry } from '@/entities/settings/model/constants';
+import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath, getLocalLlmModelsDir } from '@/shared/lib/local-llm';
 import { resolveLocalLlmWeightsDownload } from '@/shared/lib/model-manifest';
@@ -115,9 +116,7 @@ class LocalLlmModelDownloader {
 
     this.cancelRequested = false;
 
-    if (__DEV__) {
-      console.warn('[local-llm-download] start', { modelId, expectedBytes: llmExpectedBytes });
-    }
+    devWarn('[local-llm-download] start', { modelId, expectedBytes: llmExpectedBytes });
 
     this.setSnapshot({
       machineState: 'pending',
@@ -167,7 +166,7 @@ class LocalLlmModelDownloader {
     if (this.cancelRequested) throw new Error('cancelled');
 
     onProgress(100, llmExpectedBytes, llmExpectedBytes);
-    if (__DEV__) console.warn('[local-llm-download] completed', { modelId });
+    devWarn('[local-llm-download] completed', { modelId });
     this.setSnapshot({ machineState: 'completed', jobId: null });
     this.resetSnapshot();
   }
@@ -214,7 +213,7 @@ class LocalLlmModelDownloader {
     try {
       this.activeTask?.cancel();
     } catch {
-      if (__DEV__) console.warn('[local-llm-download] cancel failed');
+      diagWarn('[local-llm-download] cancel failed');
     }
     await this.activeDownloadSettlement?.catch(() => {});
     this.activeTask = null;

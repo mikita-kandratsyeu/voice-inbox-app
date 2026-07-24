@@ -1,11 +1,10 @@
 import dayjs from 'dayjs';
 import { ChevronRight, Crown } from 'lucide-react-native';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
-  FadeIn,
   interpolateColor,
   useAnimatedStyle,
   useSharedValue,
@@ -13,15 +12,13 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { type MonetizationMode } from '@/features/app-storefront';
 import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
-import { logAnalyticsEvent } from '@/shared/lib/analytics';
+import { useFadeInEntering } from '@/shared/config';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 
 type SettingsPlanStatusCardProps = {
   color: Colors;
-  monetizationMode: MonetizationMode;
   storeProEntitlementActive?: boolean;
   onPress?: () => void;
   /** Compact card for the tablet sidebar footer. */
@@ -32,15 +29,14 @@ const CARD_RADIUS = 16;
 
 export function SettingsPlanStatusCard({
   color,
-  monetizationMode,
   storeProEntitlementActive,
   onPress,
   layout = 'default',
 }: SettingsPlanStatusCardProps) {
   const isSidebar = layout === 'sidebar';
   const { t, i18n } = useTranslation();
+  const cardEntering = useFadeInEntering(160, { delay: 24 });
   const { isProActive, expiresAtMs } = useProEntitlement();
-  const loggedSoonRef = useRef(false);
   const borderPulse = useSharedValue(0);
 
   useEffect(() => {
@@ -58,13 +54,6 @@ export function SettingsPlanStatusCard({
       true,
     );
   }, [isProActive, borderPulse]);
-
-  useEffect(() => {
-    if (monetizationMode === 'coming_soon' && !isProActive && !loggedSoonRef.current) {
-      loggedSoonRef.current = true;
-      void logAnalyticsEvent('pro_coming_soon_seen', { surface: 'settings_plan_card' });
-    }
-  }, [monetizationMode, isProActive]);
 
   const animatedBorderStyle = useAnimatedStyle(() => {
     if (isProActive) {
@@ -97,17 +86,11 @@ export function SettingsPlanStatusCard({
       proExpiresText != null
         ? t('settings.planStatus.proActiveUntil', { date: proExpiresText })
         : t('settings.planStatus.proValueSubtitle');
-  } else if (monetizationMode === 'coming_soon') {
-    subtitle = t('settings.planStatus.freeValueSubtitleSoon');
-  } else if (monetizationMode === 'iap_public') {
+  } else {
     subtitle = t('settings.planStatus.freeValueSubtitleAvailable');
   }
 
-  let statusBadge: string | null = null;
-
-  if (monetizationMode === 'coming_soon' && !isProActive) {
-    statusBadge = t('settings.planStatus.soonBadge');
-  }
+  const opensStoreSubscriptionManagement = isProActive && storeProEntitlementActive === true;
 
   const accessibilityLabel = isProActive
     ? t('settings.planStatus.a11yCurrentPlanPro', {
@@ -116,8 +99,6 @@ export function SettingsPlanStatusCard({
     : isSidebar
       ? t('settings.planStatus.a11yOpenPlansSidebar')
       : t('settings.planStatus.a11yOpenPlans');
-  const opensStoreSubscriptionManagement =
-    isProActive && monetizationMode === 'iap_public' && storeProEntitlementActive === true;
 
   const accessibilityHint = isProActive
     ? opensStoreSubscriptionManagement
@@ -139,7 +120,7 @@ export function SettingsPlanStatusCard({
       accessibilityState={{ disabled: onPress == null }}
     >
       <Animated.View
-        entering={FadeIn.duration(160).delay(24)}
+        entering={cardEntering}
         className={
           isSidebar ? 'overflow-hidden rounded-2xl p-3.5' : 'mb-4 overflow-hidden rounded-2xl p-5'
         }
@@ -203,19 +184,6 @@ export function SettingsPlanStatusCard({
               >
                 {title}
               </Text>
-              {statusBadge != null && (
-                <View
-                  className="ml-2 rounded-full px-2.5 py-1"
-                  style={{ backgroundColor: `${color.accent.primary}18` }}
-                >
-                  <Text
-                    className="text-[11px] font-semibold"
-                    style={{ color: color.accent.primary }}
-                  >
-                    {statusBadge}
-                  </Text>
-                </View>
-              )}
             </View>
             <Text
               className={isSidebar ? 'mt-0.5 text-xs leading-4' : 'mt-1 text-sm leading-5'}

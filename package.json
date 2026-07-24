@@ -1,0 +1,60 @@
+{
+  "name": "voice-inbox",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "yarn@4.17.0",
+  "workspaces": [
+    "web",
+    "mobile",
+    "telegram-bot",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=voice-inbox-web",
+    "dev:telegram-bot": "turbo run dev --filter=voice-inbox-telegram-bot",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "type:check": "turbo run type:check",
+    "test": "turbo run test",
+    "format:check": "turbo run format:check",
+    "ci": "node scripts/ci.mjs",
+    "ci:affected": "node scripts/ci.mjs --affected",
+    "validate": "turbo run lint type:check test",
+    "validate:affected": "turbo run lint type:check test --filter=...[origin/main]",
+    "db:check-local": "yarn workspace voice-inbox-web db:check-local"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.2"
+  },
+  "resolutions": {
+    "react": "19.2.7",
+    "react-test-renderer": "19.2.7",
+    "effect": "3.20.0",
+    "@tootallnate/once": "3.0.1",
+    "node-forge": "1.4.0",
+    "picomatch": "4.0.4",
+    "brace-expansion": "1.1.13",
+    "ip-address": "10.2.0",
+    "postcss": "8.5.14",
+    "uuid": "11.1.1",
+    "fast-xml-parser": "5.8.0",
+    "markdown-it": "14.2.0",
+    "esbuild": "0.28.1",
+    "@grpc/grpc-js": "1.14.4",
+    "form-data": "2.5.6",
+    "ws": "8.21.0",
+    "protobufjs": "7.6.4",
+    "hono": "4.12.25",
+    "@hono/node-server": "1.19.14",
+    "js-yaml": "4.2.0",
+    "tar": "7.5.16",
+    "@babel/core": "7.29.7",
+    "launch-editor": "2.14.1",
+    "jwks-rsa@npm:4.1.0/jose": "npm:5.10.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

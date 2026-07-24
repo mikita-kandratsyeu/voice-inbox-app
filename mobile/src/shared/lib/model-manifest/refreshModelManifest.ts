@@ -1,3 +1,5 @@
+import { diagWarn } from '@/shared/lib/appLogger';
+
 import { fetchRemoteModelManifest } from './fetchRemoteManifest';
 import {
   getCachedManifest,
@@ -23,7 +25,7 @@ async function runRefresh(): Promise<MobileModelManifest | null> {
   try {
     await fetchRemoteModelManifest();
   } catch (e) {
-    if (__DEV__) console.warn('[model-manifest] network error', e);
+    diagWarn('[model-manifest] network error', e);
   }
 
   return getCachedManifest();

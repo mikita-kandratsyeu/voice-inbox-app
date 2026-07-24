@@ -30,8 +30,19 @@ const DEFAULT_DEEPSEEK_BASE_URL = 'https://api.deepseek.com';
 const DEFAULT_DEEPSEEK_MAX_TOKENS = 32_768;
 
 export type DeepSeekChatMessage = {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
+  role: 'system' | 'user' | 'assistant' | 'tool';
+  content: string | null;
+  tool_call_id?: string;
+  tool_calls?: unknown[];
+};
+
+export type DeepSeekChatTool = {
+  type: 'function';
+  function: {
+    name: string;
+    description?: string;
+    parameters?: Record<string, unknown>;
+  };
 };
 
 export type DeepSeekChatCompletionParams = {
@@ -42,6 +53,8 @@ export type DeepSeekChatCompletionParams = {
   jsonObject?: boolean;
   /** Thinking mode: `reasoning_content` + `content` (docs: thinking defaults to enabled). */
   withReasoning?: boolean;
+  tools?: DeepSeekChatTool[];
+  toolChoice?: 'auto' | 'none';
   /** Per-device scheduling isolation (`user_id`, max 512, `[a-zA-Z0-9\-_]+`). */
   userId?: string | null;
 };
@@ -49,6 +62,7 @@ export type DeepSeekChatCompletionParams = {
 export type DeepSeekChatCompletionResult = {
   message: Record<string, unknown>;
   content: string;
+  toolCalls?: unknown[];
   raw: Record<string, unknown>;
 };
 
@@ -147,6 +161,7 @@ function mapOpenAiError(err: unknown): never {
 function readAssistantMessage(response: OpenAI.Chat.Completions.ChatCompletion): {
   message: Record<string, unknown>;
   content: string;
+  toolCalls?: unknown[];
   finishReason: string | null;
 } {
   const choice = response.choices[0];
@@ -158,14 +173,16 @@ function readAssistantMessage(response: OpenAI.Chat.Completions.ChatCompletion):
     reasoning_content?: string | null;
   };
 
-  const content = msg.content;
-  if (typeof content !== 'string' || !content.trim()) {
+  const content = typeof msg.content === 'string' ? msg.content.trim() : '';
+  const toolCalls = Array.isArray(msg.tool_calls) ? (msg.tool_calls as unknown[]) : undefined;
+  if (!content && !toolCalls?.length) {
     throw new DeepSeekApiError('DeepSeek API returned empty content');
   }
 
   return {
     message: msg as unknown as Record<string, unknown>,
     content,
+    ...(toolCalls?.length ? { toolCalls } : {}),
     finishReason: choice.finish_reason ?? null,
   };
 }
@@ -190,6 +207,8 @@ export async function deepSeekChatCompletion(
     max_tokens: readDeepSeekMaxTokens(),
     thinking: { type: thinkingType },
     ...(params.jsonObject ? { response_format: { type: 'json_object' as const } } : {}),
+    ...(params.tools?.length ? { tools: params.tools } : {}),
+    ...(params.toolChoice ? { tool_choice: params.toolChoice } : {}),
     ...(params.withReasoning ? { reasoning_effort: 'high' as const } : {}),
     ...(userId ? { user_id: userId } : {}),
   } as ChatCompletionCreateParamsNonStreaming;
@@ -201,7 +220,7 @@ export async function deepSeekChatCompletion(
     mapOpenAiError(err);
   }
 
-  const { message, content, finishReason } = readAssistantMessage(response);
+  const { message, content, toolCalls, finishReason } = readAssistantMessage(response);
 
   if (finishReason === 'length') {
     throw new DeepSeekApiError('DeepSeek API output truncated (finish_reason=length)');
@@ -210,6 +229,7 @@ export async function deepSeekChatCompletion(
   return {
     message,
     content,
+    ...(toolCalls?.length ? { toolCalls } : {}),
     raw: response as unknown as Record<string, unknown>,
   };
 }

@@ -1,5 +1,6 @@
-import { HEADER_DEVICE_ID } from '@/config/constants';
-import { apiError, HttpStatus, requireAppSecretForToken, validateDeviceId } from '@/lib/api';
+import { apiError, HttpStatus } from '@/lib/api';
+import { isDevelopmentAppEnv } from '@/lib/app-env';
+import { assertMobileTokenExchange } from '@/lib/mobile-api-guard';
 import { getExpiresInSeconds as getJwtExpiresInSeconds, signAppToken } from '@/lib/jwt';
 import { redis } from '@/lib/redis';
 import { NextResponse } from 'next/server';
@@ -10,15 +11,12 @@ const TOKEN_RATE_LIMIT_MAX_REQUESTS = 20;
 
 export async function POST(request: Request): Promise<NextResponse> {
   const path = new URL(request.url).pathname;
-  const authError = requireAppSecretForToken(request);
-  if (authError) return authError;
-
-  const deviceId = request.headers.get(HEADER_DEVICE_ID);
-  const deviceIdError = validateDeviceId(deviceId);
-  if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
+  const gate = await assertMobileTokenExchange(request);
+  if (!gate.ok) {
+    return gate.response;
   }
-  const deviceIdTrimmed = deviceId!.trim();
+
+  const deviceIdTrimmed = gate.deviceId;
 
   const rateLimitKey = `${TOKEN_RATE_LIMIT_KEY_PREFIX}${deviceIdTrimmed}`;
   const window = Math.floor(Date.now() / 1000 / TOKEN_RATE_LIMIT_WINDOW_SECONDS);
@@ -42,7 +40,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const expires_in = getJwtExpiresInSeconds();
     return NextResponse.json({ access_token, expires_in });
   } catch (err) {
-    if (process.env.NODE_ENV === 'development' && err instanceof Error) {
+    if (isDevelopmentAppEnv() && err instanceof Error) {
       console.error('[token] sign error', err.message);
     }
     return apiError('Server misconfiguration', 500, { pathname: path });

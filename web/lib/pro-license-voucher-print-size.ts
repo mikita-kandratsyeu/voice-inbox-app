@@ -26,9 +26,6 @@ export function getVoucherStripDimensions(size: VoucherPrintSize): {
 /** Minimum reserved height for fold + legal block when estimating layout (legacy). */
 export const VOUCHER_BELOW_STRIP_HEIGHT_PT = 108;
 
-/** @deprecated Use {@link VOUCHER_BELOW_STRIP_HEIGHT_PT}. */
-export const VOUCHER_FOLD_GUIDE_HEIGHT_PT = VOUCHER_BELOW_STRIP_HEIGHT_PT;
-
 /** Landscape A4 — voucher + footer on one sheet (matches home printer “album” orientation). */
 export const VOUCHER_SHEET_A4 = {
   width: Math.round(297 * MM_TO_PT),

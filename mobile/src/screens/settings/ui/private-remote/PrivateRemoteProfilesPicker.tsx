@@ -1,4 +1,4 @@
-import { Server, Trash2 } from 'lucide-react-native';
+import { Check, Server, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, Text, View } from 'react-native';
@@ -8,6 +8,7 @@ import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import { SettingsRow } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../../lib/settingsIconColor';
 import { PrivateRemotePickerSheetFrame } from './PrivateRemotePickerSheetFrame';
 import { PrivateRemoteSheetPickerRow } from './PrivateRemoteSheetPickerRow';
 
@@ -30,6 +31,7 @@ export function PrivateRemoteProfilesPicker({
 }: PrivateRemoteProfilesPickerProps) {
   const { t } = useTranslation();
   const [sheetVisible, setSheetVisible] = useState(false);
+  const [presentRequestKey, setPresentRequestKey] = useState(0);
 
   const activeProfile = useMemo(
     () => profiles.find((p) => p.id === activeProfileId) ?? null,
@@ -39,7 +41,12 @@ export function PrivateRemoteProfilesPicker({
   const openSheet = useCallback(() => {
     if (disabled) return;
     hapticSelection();
-    setSheetVisible(true);
+    setPresentRequestKey((key) => key + 1);
+    setSheetVisible((current) => {
+      if (!current) return true;
+      requestAnimationFrame(() => setSheetVisible(true));
+      return false;
+    });
   }, [disabled]);
 
   const closeSheet = useCallback(() => setSheetVisible(false), []);
@@ -93,7 +100,9 @@ export function PrivateRemoteProfilesPicker({
           label={triggerLabel}
           subtitle={triggerSubtitle}
           onPress={openSheet}
-          leftIcon={<Server size={20} color={color.accent.primary} strokeWidth={2} />}
+          leftIcon={
+            <Server size={20} color={getSettingsIconColor(color, 'server')} strokeWidth={2} />
+          }
           showChevron
           isFirst
           isLast
@@ -102,6 +111,7 @@ export function PrivateRemoteProfilesPicker({
 
       <PrivateRemotePickerSheetFrame
         visible={sheetVisible}
+        presentRequestKey={presentRequestKey}
         title={t('aiSettings.privateProvider.profilesList.sheetTitle')}
         subtitle={t('aiSettings.privateProvider.profilesList.sheetSubtitle')}
         color={color}
@@ -118,18 +128,24 @@ export function PrivateRemoteProfilesPicker({
               color={color}
               icon={Server}
               selected={isActive}
+              showSelectionCheck={false}
               isLast={isLast}
               onPress={() => pickProfile(profile.id)}
               trailing={
-                <Pressable
-                  onPress={() => confirmDelete(profile.id)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('aiSettings.privateProvider.deleteConnection')}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  className="rounded-lg p-1.5"
-                >
-                  <Trash2 size={18} color={color.accent.delete} strokeWidth={2} />
-                </Pressable>
+                <View className="flex-row items-center gap-2">
+                  {isActive ? (
+                    <Check size={20} color={color.accent.primary} strokeWidth={2.5} />
+                  ) : null}
+                  <Pressable
+                    onPress={() => confirmDelete(profile.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('aiSettings.privateProvider.deleteConnection')}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    className="rounded-lg p-1.5"
+                  >
+                    <Trash2 size={18} color={color.accent.delete} strokeWidth={2} />
+                  </Pressable>
+                </View>
               }
             />
           );

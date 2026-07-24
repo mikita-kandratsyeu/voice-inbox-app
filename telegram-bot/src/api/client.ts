@@ -39,6 +39,14 @@ export class AdminApiClient {
     });
   }
 
+  async put<T>(path: string, body?: unknown): Promise<ApiResult<T>> {
+    return this.request<T>(path, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  }
+
   async delete<T>(path: string): Promise<ApiResult<T>> {
     return this.request<T>(path, { method: 'DELETE' });
   }
@@ -61,7 +69,10 @@ export class AdminApiClient {
       }
       if (!res.ok) {
         const err =
-          json && typeof json === 'object' && 'error' in json && typeof (json as { error: unknown }).error === 'string'
+          json &&
+          typeof json === 'object' &&
+          'error' in json &&
+          typeof (json as { error: unknown }).error === 'string'
             ? (json as { error: string }).error
             : `HTTP ${res.status}`;
         return { ok: false, error: err, status: res.status };

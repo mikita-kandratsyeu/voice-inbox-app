@@ -4,13 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { LayoutAnimation, Pressable, ScrollView, Text, View } from 'react-native';
 import Animated, {
   Easing,
-  FadeIn,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 
+import { AskAiAnswerMarkdown } from '@/features/ask-chat/ui';
 import type { Colors } from '@/shared/config';
+import { FADE_IN_EASING_OUT_CUBIC, useFadeInEntering } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import {
   buildSummaryMetaLines,
@@ -18,7 +19,6 @@ import {
   type SummaryTokenUsage,
 } from '@/shared/lib/summaryMetaSubtitle';
 
-import { AskAiAnswerMarkdown } from './ask-ai/AskAiAnswerMarkdown';
 import { SummaryMetaLinesText } from './SummaryMetaLinesText';
 
 const REASONING_SCROLL_MAX_HEIGHT = 280;
@@ -41,6 +41,7 @@ export const SummaryReasoningDisclosure = ({
   generationDurationMs,
 }: SummaryReasoningDisclosureProps) => {
   const { t } = useTranslation();
+  const reasoningExpandEntering = useFadeInEntering(200, { easing: FADE_IN_EASING_OUT_CUBIC });
   const [expanded, setExpanded] = useState(false);
   const chevronRotation = useSharedValue(-90);
 
@@ -116,10 +117,7 @@ export const SummaryReasoningDisclosure = ({
         </Animated.View>
       </Pressable>
       {expanded ? (
-        <Animated.View
-          entering={FadeIn.duration(200).easing(Easing.out(Easing.cubic))}
-          className="gap-2"
-        >
+        <Animated.View entering={reasoningExpandEntering} className="gap-2">
           <ScrollView
             style={{ maxHeight: REASONING_SCROLL_MAX_HEIGHT }}
             nestedScrollEnabled

@@ -97,6 +97,7 @@ async function generateMeetingDialogueRaw(
   modelId: AiExecutionContext['selectedLocalAiModel'],
   systemPrompt: string,
   userContent: string,
+  transcriptLength: number,
   maxTokens: number,
   onLlmSessionProgress?: (event: LocalLlmSessionProgressEvent) => void,
 ): Promise<string> {
@@ -118,6 +119,8 @@ async function generateMeetingDialogueRaw(
       maxTokens,
       temperature: getLocalLlmSummaryTemperature(modelId, LOCAL_GEN_MEETING_DIALOGUE.temperature),
       intent: 'json' satisfies LocalLlmCompletionIntent,
+      taskType: 'meeting_dialogue',
+      transcriptLength,
       onLlmSessionProgress,
     },
   );
@@ -213,6 +216,7 @@ export async function runLocalMeetingDialogue(
         ctx.selectedLocalAiModel,
         systemPrompt,
         user,
+        transcript.length,
         maxTokens,
         onLlmProgress,
       );

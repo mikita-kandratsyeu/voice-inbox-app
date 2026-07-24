@@ -9,6 +9,8 @@ import type { Colors } from '@/shared/config';
 import { getWebsiteUrl } from '@/shared/config/runtimeConfig';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../../lib/settingsIconColor';
+
 type Props = {
   color: Colors;
   t: TFunction;
@@ -20,23 +22,27 @@ export const SettingsPrivacySection = ({ color, t, navigation, onRateApp }: Prop
   <SettingsSection title={t('settings.privacy')}>
     <SettingsRow
       label={t('settings.termsOfService')}
-      leftIcon={<FileText size={20} color={color.icon.muted} strokeWidth={1.8} />}
+      leftIcon={
+        <FileText size={20} color={getSettingsIconColor(color, 'fileText')} strokeWidth={1.8} />
+      }
       onPress={() => openInAppBrowser(`${getWebsiteUrl()}/terms`)}
       isFirst
     />
     <SettingsRow
       label={t('settings.privacyPolicy')}
-      leftIcon={<Shield size={20} color={color.icon.muted} strokeWidth={1.8} />}
+      leftIcon={
+        <Shield size={20} color={getSettingsIconColor(color, 'shield')} strokeWidth={1.8} />
+      }
       onPress={() => openInAppBrowser(`${getWebsiteUrl()}/privacy`)}
     />
     <SettingsRow
       label={t('settings.rateApp')}
-      leftIcon={<Star size={20} color={color.icon.muted} strokeWidth={1.8} />}
+      leftIcon={<Star size={20} color={getSettingsIconColor(color, 'star')} strokeWidth={1.8} />}
       onPress={onRateApp}
     />
     <SettingsRow
       label={t('settings.about')}
-      leftIcon={<Info size={20} color={color.icon.muted} strokeWidth={1.8} />}
+      leftIcon={<Info size={20} color={getSettingsIconColor(color, 'info')} strokeWidth={1.8} />}
       onPress={() => navigation.navigate('AboutApp')}
       isLast
     />

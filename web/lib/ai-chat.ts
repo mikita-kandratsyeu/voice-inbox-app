@@ -17,6 +17,15 @@ export type SendAiChatCompletionParams = {
   jsonObject?: boolean;
   /** Summary-style reasoning trace (DeepSeek: thinking enabled; OpenRouter: reasoning effort). */
   withReasoning?: boolean;
+  tools?: Array<{
+    type: 'function';
+    function: {
+      name: string;
+      description?: string;
+      parameters?: Record<string, unknown>;
+    };
+  }>;
+  toolChoice?: 'auto' | 'none';
   temperature?: number;
   clientUserAgent?: string | null;
   userId?: string | null;
@@ -25,6 +34,7 @@ export type SendAiChatCompletionParams = {
 export type AiChatCompletionResult = {
   content: string;
   message: unknown;
+  toolCalls?: unknown[];
   raw: unknown;
 };
 
@@ -50,15 +60,17 @@ export async function sendAiChatCompletion(
       throw new Error('DEEPSEEK_API_KEY is required for DeepSeek models');
     }
 
-    const { content, message, raw } = await deepSeekChatCompletion({
+    const { content, message, toolCalls, raw } = await deepSeekChatCompletion({
       model,
       messages: params.messages,
       jsonObject: params.jsonObject,
       withReasoning: params.withReasoning,
+      tools: params.tools,
+      toolChoice: params.toolChoice,
       userId: params.userId,
     });
 
-    return { content, message, raw };
+    return { content, message, ...(toolCalls?.length ? { toolCalls } : {}), raw };
   }
 
   return sendOpenRouterChatCompletion({
@@ -66,6 +78,8 @@ export async function sendAiChatCompletion(
     messages: params.messages,
     jsonObject: params.jsonObject,
     withReasoning: params.withReasoning,
+    tools: params.tools,
+    toolChoice: params.toolChoice,
     temperature: params.temperature,
     clientUserAgent: params.clientUserAgent,
     userId: params.userId,

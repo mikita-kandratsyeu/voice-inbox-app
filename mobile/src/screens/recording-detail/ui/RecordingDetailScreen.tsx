@@ -3,34 +3,60 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, LayoutAnimation, useWindowDimensions, View } from 'react-native';
+import {
+  Alert,
+  LayoutAnimation,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
+import { useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import { FolderPickerSheet, useFolderStore } from '@/entities/folder';
 import {
+  isTranscriptionOperating,
   type MeetingSummaryTemplate,
   type RecordingMark,
   type RecordingStatus,
+  type TaskItem,
   useRecordStore,
 } from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
 import {
   areFoldersEnabledInAiMode,
-  getWhisperModelVariantId,
+  getActiveWhisperModelVariantId,
   isPrivateCustomServerMode,
   useSettingsStore,
 } from '@/entities/settings';
 import { resumeCloudSummarizeForRecord, useAiProcessing } from '@/features/ai-processing';
+import { AskAiModelChipMenu } from '@/features/ask-chat/ui';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
+import { warmNoteDocumentMarkdown } from '@/features/note-document';
+import { LinkNotePickerSheet } from '@/features/note-links';
 import { useProEntitlement } from '@/features/pro-license';
+import { usePublishRecord } from '@/features/publish-record';
 import { useRecordActions } from '@/features/record-actions';
 import type { ShareBriefTemplate, ShareRecordExportFormat } from '@/features/share-record';
 import { saveLastShareRecipientEmail, useShareRecord } from '@/features/share-record';
+import {
+  normalizeOutcomeText,
+  TaskOutcomeSheet,
+  useTaskCompletionFlow,
+} from '@/features/task-outcome';
 import { useTranscription } from '@/features/transcription';
+import { shouldUseIosWhisperKitEngine } from '@/features/transcription/config/transcriptionEngine';
+import { canStartOfflineTranscription } from '@/features/transcription/lib/canStartOfflineTranscription';
+import { shouldUseNativeMeetingSpeakers } from '@/features/transcription/lib/nativeMeetingSpeakers';
+import { hasActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
+import { useOpenNotesGraphForRecord } from '@/screens/notes-graph';
+import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { useAppTheme, useColors } from '@/shared/config';
+import { TestIds } from '@/shared/e2e';
 import {
   hapticError,
   hapticLight,
@@ -39,31 +65,51 @@ import {
   resolveAudioPath,
   resolveFolderListTintHex,
   useIsTablet,
+  useNetworkStatus,
   useTabletContentMaxWidth,
+  useTabletFloatingDockMaxWidth,
 } from '@/shared/lib';
 import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
 import { NitroFS } from '@/shared/lib/fs';
-import { BlockingProgressModal } from '@/shared/ui';
-import { AudioPlayer, type AudioPlayerRef, usePlaybackPosition } from '@/widgets/audio-player';
+import {
+  taskDeadlineValidationErrorKey,
+  validateTaskDeadlineFields,
+} from '@/shared/lib/validateTaskDeadlineInput';
+import { BlockingProgressModal, estimateFloatingDetailDockBottomClearance } from '@/shared/ui';
+import {
+  type AudioPlaybackState,
+  AudioPlayer,
+  type AudioPlayerRef,
+  usePlaybackPosition,
+} from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
 import { renameSpeakerGroup } from '../lib/meetingSpeakerLabels';
 import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { MeetingDialogueTab } from './MeetingDialogueTab';
 import { RecordingDetailCard } from './RecordingDetailCard';
+import { RecordingDetailFloatingDock } from './RecordingDetailFloatingDock';
 import { RecordingDetailHeader } from './RecordingDetailHeader';
 import { RecordingDetailTabBar } from './RecordingDetailTabBar';
 import { RecordingMarksSection } from './RecordingMarksSection';
 import { RecordingMeetingModeSection } from './RecordingMeetingModeSection';
-import { RelatedNotesSection } from './RelatedNotesSection';
+import { RecordingSharedAccessSection } from './RecordingSharedAccessSection';
+import { RecordNeighborSections } from './RecordNeighborSections';
 import { ShareRecordSheet } from './ShareRecordSheet';
 import { SummaryTab } from './SummaryTab';
 import { TaskEditSheet } from './TaskEditSheet';
 import { TasksTab } from './TasksTab';
 import { TranscriptContent } from './TranscriptContent';
 
+type TaskEditValue = {
+  text: string;
+  deadline?: string | null;
+  deadlineTime?: string | null;
+  priority?: TaskItem['priority'];
+};
+
 export const RecordingDetailScreen = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'RecordingDetail'>>();
   const color = useColors();
@@ -77,7 +123,6 @@ export const RecordingDetailScreen = () => {
   const {
     liveRecord,
     togglePin,
-    toggleTask,
     updateTasks,
     promoteNextStepToTask,
     setSummaryStatus,
@@ -92,11 +137,12 @@ export const RecordingDetailScreen = () => {
     renameRecord,
     updateRecordingMarks,
     updateAiExtras,
+    linkRecord,
+    unlinkRecord,
   } = useRecordStore(
     useShallow((s) => ({
       liveRecord: s.records.find((r) => r.id === recordId) ?? routeRecord,
       togglePin: s.togglePin,
-      toggleTask: s.toggleTask,
       updateTasks: s.updateTasks,
       promoteNextStepToTask: s.promoteNextStepToTask,
       setSummaryStatus: s.setSummaryStatus,
@@ -111,11 +157,19 @@ export const RecordingDetailScreen = () => {
       renameRecord: s.renameRecord,
       updateRecordingMarks: s.updateRecordingMarks,
       updateAiExtras: s.updateAiExtras,
+      linkRecord: s.linkRecord,
+      unlinkRecord: s.unlinkRecord,
     })),
   );
 
   const folders = useFolderStore(useShallow((s) => s.folders));
   const { isProActive } = useProEntitlement();
+  const {
+    openNotesGraphForRecord,
+    notesGraphProSheetVisible,
+    closeNotesGraphProSheet,
+    upgradeNotesGraphFromProSheet,
+  } = useOpenNotesGraphForRecord();
   const scheme = useAppTheme();
 
   const folderPlacement = useMemo(() => {
@@ -134,35 +188,63 @@ export const RecordingDetailScreen = () => {
     whisperModelStatuses,
     selectedWhisperModel,
     selectedWhisperModelFormat,
-    globalTranscriptionLanguage,
+    transcriptionLanguage,
     aiExecutionMode,
     privateAiProvider,
+    setTranscriptionLanguage,
     setAiExecutionMode,
   } = useSettingsStore(
     useShallow((s) => ({
       whisperModelStatuses: s.whisperModelStatuses,
       selectedWhisperModel: s.selectedWhisperModel,
       selectedWhisperModelFormat: s.selectedWhisperModelFormat,
-      globalTranscriptionLanguage: s.transcriptionLanguage,
+      transcriptionLanguage: s.transcriptionLanguage,
       aiExecutionMode: s.aiExecutionMode,
       privateAiProvider: s.privateAiProvider,
+      setTranscriptionLanguage: s.setTranscriptionLanguage,
       setAiExecutionMode: s.setAiExecutionMode,
     })),
+  );
+
+  const handleSelectTranscriptionLanguage = useCallback(
+    (lang: TranscriptionLanguage) => {
+      setTranscriptionLanguage(lang);
+    },
+    [setTranscriptionLanguage],
   );
 
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
   const [mountedTabs, setMountedTabs] = useState<Set<Tab>>(new Set(['transcript']));
   const [folderPickerVisible, setFolderPickerVisible] = useState(false);
+  const [linkNotePickerVisible, setLinkNotePickerVisible] = useState(
+    () => route.params.openLinkPicker === true,
+  );
   const [shareSheetVisible, setShareSheetVisible] = useState(false);
+  const [shareSheetOpenToPublish, setShareSheetOpenToPublish] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
   const [renameTarget, setRenameTarget] = useState<{ id: string; title: string } | null>(null);
   const { currentPositionMs, onPositionUpdate } = usePlaybackPosition();
-  const [recordLanguage, setRecordLanguage] = useState<TranscriptionLanguage>(
-    globalTranscriptionLanguage,
-  );
+  const [playbackState, setPlaybackState] = useState<AudioPlaybackState>({
+    isPlaying: false,
+    elapsedSecs: 0,
+    totalSecs: 0,
+    playbackSpeed: 1,
+  });
+  const [floatingDockShowPlayer, setFloatingDockShowPlayer] = useState(false);
 
   const scrollRef = useRef<React.ElementRef<typeof KeyboardAwareScrollView>>(null);
   const audioPlayerRef = useRef<AudioPlayerRef>(null);
+  const audioPlayerAnchorRef = useRef<View>(null);
+  const floatingDockShowPlayerRef = useRef(false);
+  const cardOffsetYRef = useRef(0);
+  const titleInCardRef = useRef({ y: 0, height: 0 });
+  const headerTitleOpacity = useSharedValue(0);
+  const HEADER_TITLE_FADE_DISTANCE = 32;
+  const headerBottomInset = insets.top + 68;
+
+  const handlePlaybackStateChange = useCallback((state: AudioPlaybackState) => {
+    setPlaybackState(state);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -178,11 +260,9 @@ export const RecordingDetailScreen = () => {
   );
 
   useEffect(() => {
-    setRecordLanguage(globalTranscriptionLanguage);
     scrollRef.current?.scrollTo({ y: 0, animated: true });
     setActiveTab('transcript');
     setMountedTabs(new Set(['transcript']));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only reset when switching records
   }, [routeRecord.id]);
 
   useEffect(() => {
@@ -190,25 +270,73 @@ export const RecordingDetailScreen = () => {
   }, [hydrateRecordDetails, recordId]);
 
   useEffect(() => {
+    warmNoteDocumentMarkdown(liveRecord, i18n.language);
+  }, [i18n.language, liveRecord]);
+
+  useEffect(() => {
     resumeCloudSummarizeForRecord(recordId);
   }, [recordId]);
 
   const { startTranscription, cancelTranscription, discardPausedTranscription } =
     useTranscription();
+  const { isConnected } = useNetworkStatus();
   const { generateSummary, extractTasks, cancelAiGeneration, regenerateMeetingDialogue } =
     useAiProcessing();
   const handleCancelAiGeneration = useCallback(() => {
     cancelAiGeneration(liveRecord.id);
   }, [cancelAiGeneration, liveRecord.id]);
   const { shareRecord, shareAudio, emailRecord, isGeneratingSharePdf } = useShareRecord();
+  const {
+    published,
+    isStale,
+    publishLoading,
+    publish,
+    unpublish,
+    refreshPublishStatus,
+    shareLink,
+  } = usePublishRecord(liveRecord);
   const onDeleted = useCallback(() => navigation.goBack(), [navigation]);
   const { promptDelete } = useRecordActions({ onDeleted });
 
-  const handleToggleTask = useCallback(
-    (taskId: string) => {
-      toggleTask(liveRecord.id, taskId).catch(() => {});
+  const records = useRecordStore((s) => s.records);
+
+  const showTaskUpdateError = useCallback(() => {
+    Alert.alert(t('common.error'), t('allTasks.taskUpdateError'));
+  }, [t]);
+
+  const {
+    outcomeTarget,
+    linkedNoteContext,
+    requestTaskToggle,
+    closeOutcomeSheet,
+    completeWithOutcome,
+    completeAndSkip,
+    startVoiceFollowUp,
+    startTextFollowUp,
+  } = useTaskCompletionFlow({
+    navigation,
+    onUpdateError: showTaskUpdateError,
+  });
+
+  const getFollowUpRecordTitle = useCallback(
+    (recordId: string) => records.find((record) => record.id === recordId)?.title ?? null,
+    [records],
+  );
+
+  const handleOpenFollowUp = useCallback(
+    (recordId: string) => {
+      const record = records.find((item) => item.id === recordId);
+      if (!record) return;
+      navigation.push('RecordingDetail', { record });
     },
-    [liveRecord.id, toggleTask],
+    [navigation, records],
+  );
+
+  const handleTaskPress = useCallback(
+    (task: TaskItem) => {
+      requestTaskToggle(liveRecord.id, task);
+    },
+    [liveRecord.id, requestTaskToggle],
   );
 
   const handleAddManualTask = useCallback(
@@ -233,8 +361,8 @@ export const RecordingDetailScreen = () => {
   );
 
   const handleEditTask = useCallback(
-    (taskId: string, newText: string): boolean => {
-      const trimmed = newText.trim();
+    (taskId: string, nextValue: TaskEditValue): boolean => {
+      const trimmed = nextValue.text.trim();
 
       if (!trimmed) return false;
 
@@ -248,12 +376,44 @@ export const RecordingDetailScreen = () => {
         return false;
       }
 
-      const next = prev.map((x) => (x.id === taskId ? { ...x, text: trimmed } : x));
+      const nextDeadline = nextValue.deadline?.trim() ?? '';
+      const nextDeadlineTime = nextValue.deadlineTime?.trim() ?? '';
+      const deadlineError = validateTaskDeadlineFields(nextDeadline, nextDeadlineTime);
+      if (deadlineError) {
+        Alert.alert(t('common.error'), t(taskDeadlineValidationErrorKey(deadlineError)));
+        return false;
+      }
+
+      const next = prev.map((x) =>
+        x.id === taskId
+          ? {
+              ...x,
+              text: trimmed,
+              deadline: nextDeadline.length > 0 ? nextDeadline : null,
+              deadlineTime:
+                nextDeadline.length > 0 && nextDeadlineTime.length > 0 ? nextDeadlineTime : null,
+              priority: nextValue.priority ?? x.priority ?? 'medium',
+            }
+          : x,
+      );
       updateTasks(liveRecord.id, next).catch(() => {});
 
       return true;
     },
     [liveRecord.id, liveRecord.tasks, t, updateTasks],
+  );
+
+  const handleEditTaskOutcome = useCallback(
+    (taskId: string, outcomeText: string): boolean => {
+      const prev = liveRecord.tasks ?? [];
+      const next = prev.map((x) =>
+        x.id === taskId ? { ...x, outcomeText: normalizeOutcomeText(outcomeText) } : x,
+      );
+      updateTasks(liveRecord.id, next).catch(() => {});
+
+      return true;
+    },
+    [liveRecord.id, liveRecord.tasks, updateTasks],
   );
 
   const handlePromoteNextStepToTask = useCallback(
@@ -287,13 +447,25 @@ export const RecordingDetailScreen = () => {
   );
 
   const handleRetranscribe = useCallback(async () => {
-    const variantId = getWhisperModelVariantId(selectedWhisperModel, selectedWhisperModelFormat);
+    const useWhisperKit = shouldUseIosWhisperKitEngine();
+    const variantId = getActiveWhisperModelVariantId({
+      modelId: selectedWhisperModel,
+      weightsFormat: selectedWhisperModelFormat,
+      useWhisperKit,
+    });
     const modelStatus = whisperModelStatuses[variantId] ?? 'not_downloaded';
 
-    if (modelStatus !== 'downloaded') {
+    if (
+      isConnected === false &&
+      !(await canStartOfflineTranscription(selectedWhisperModel, modelStatus))
+    ) {
       Alert.alert(
         t('recordingDetail.modelNotDownloaded'),
-        t('recordingDetail.modelNotDownloadedHint'),
+        t(
+          useWhisperKit
+            ? 'recordingDetail.whisperKitModelOfflineHint'
+            : 'recordingDetail.modelNotDownloadedHint',
+        ),
         [
           { text: t('common.ok') },
           {
@@ -319,15 +491,15 @@ export const RecordingDetailScreen = () => {
       }
     }
 
-    startTranscription(liveRecord, recordLanguage);
+    startTranscription(liveRecord);
   }, [
     t,
+    isConnected,
     whisperModelStatuses,
     selectedWhisperModel,
     selectedWhisperModelFormat,
     navigation,
     liveRecord,
-    recordLanguage,
     clearAudioPath,
     startTranscription,
   ]);
@@ -403,15 +575,66 @@ export const RecordingDetailScreen = () => {
   );
   const onOpenShareMenu = useCallback(() => {
     if (isProActive) {
+      setShareSheetOpenToPublish(false);
       setShareSheetVisible(true);
       return;
     }
+
     handleShare('noteBrief', 'markdown');
   }, [isProActive, handleShare]);
+  const onOpenPublishSheet = useCallback(() => {
+    if (isProActive) {
+      setShareSheetOpenToPublish(true);
+      setShareSheetVisible(true);
+      return;
+    }
+
+    if (published && !publishLoading) {
+      unpublish()
+        .then(() => {
+          hapticSuccess();
+        })
+        .catch((err: unknown) => {
+          hapticError();
+          Alert.alert(t('share.publishFailedTitle'), toUserFacingFetchErrorFromUnknown(err));
+        });
+      return;
+    }
+
+    handleShare('noteBrief', 'markdown');
+  }, [isProActive, handleShare, publishLoading, published, t, unpublish]);
   const onCloseShareMenu = useCallback(() => setShareSheetVisible(false), []);
+  const handlePublishRecord = useCallback(
+    (template: ShareBriefTemplate, expiresIn: '1d' | '7d' | '30d' | 'never') => {
+      publish(template, expiresIn)
+        .then(() => {
+          hapticSuccess();
+        })
+        .catch((err: unknown) => {
+          hapticError();
+          Alert.alert(t('share.publishFailedTitle'), toUserFacingFetchErrorFromUnknown(err));
+        });
+    },
+    [publish, t],
+  );
+  const handleUnpublishRecord = useCallback(() => {
+    unpublish()
+      .then(() => {
+        hapticSuccess();
+      })
+      .catch((err: unknown) => {
+        hapticError();
+        Alert.alert(t('share.publishFailedTitle'), toUserFacingFetchErrorFromUnknown(err));
+      });
+  }, [t, unpublish]);
+  const handleSharePublishedLink = useCallback(
+    () => shareLink(liveRecord.title),
+    [liveRecord.title, shareLink],
+  );
 
   const scrollPadding = isTablet ? 24 : 16;
   const contentMaxWidth = useTabletContentMaxWidth('wide');
+  const floatingDockMaxWidth = useTabletFloatingDockMaxWidth();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const isPrivateCustomServer = isPrivateCustomServerMode(aiExecutionMode, privateAiProvider);
@@ -421,6 +644,20 @@ export const RecordingDetailScreen = () => {
     liveRecord.summaryStatus === 'processing' ||
     liveRecord.tasksStatus === 'processing' ||
     liveRecord.meetingDialogueStatus === 'processing';
+
+  const isTranscriptProcessing = useMemo(() => {
+    if (isTranscriptionOperating(liveRecord.aiStatus)) {
+      return true;
+    }
+
+    return (
+      hasActiveTranscriptionJob(liveRecord.id) &&
+      liveRecord.aiStatus !== 'done' &&
+      liveRecord.aiStatus !== 'error' &&
+      liveRecord.aiStatus !== 'paused' &&
+      liveRecord.aiStatus !== 'resumable'
+    );
+  }, [liveRecord.aiStatus, liveRecord.id]);
 
   const meetingDialogueTabStatus = useMemo((): RecordingStatus => {
     if (liveRecord.meetingDialogueStatus === 'processing') return 'processing';
@@ -432,6 +669,30 @@ export const RecordingDetailScreen = () => {
   const hasTranscript = Boolean(liveRecord.transcript?.trim());
   const hasAudio = Boolean(liveRecord.audioPath?.trim());
   const showMeetingModeToggle = isProActive && hasTranscript;
+  const showSharedAccessSection = Boolean(published);
+
+  const updateFloatingDockVisibility = useCallback(() => {
+    if (!hasAudio || activeTab !== 'transcript') {
+      if (floatingDockShowPlayerRef.current) {
+        floatingDockShowPlayerRef.current = false;
+        setFloatingDockShowPlayer(false);
+      }
+      return;
+    }
+
+    audioPlayerAnchorRef.current?.measureInWindow((_x, y, _width, height) => {
+      const inlinePlayerVisible = y + height > headerBottomInset + 8;
+      const shouldShowPlayer = !inlinePlayerVisible;
+      if (floatingDockShowPlayerRef.current !== shouldShowPlayer) {
+        floatingDockShowPlayerRef.current = shouldShowPlayer;
+        setFloatingDockShowPlayer(shouldShowPlayer);
+      }
+    });
+  }, [activeTab, hasAudio, headerBottomInset]);
+
+  useEffect(() => {
+    updateFloatingDockVisibility();
+  }, [updateFloatingDockVisibility]);
 
   const applyMeetingModeOff = useCallback(() => {
     void updateAiExtras(liveRecord.id, {
@@ -504,6 +765,10 @@ export const RecordingDetailScreen = () => {
   ]);
 
   const hasRecordingMarks = (liveRecord.recordingMarks?.length ?? 0) > 0;
+  const playbackMarkOffsetsMs = useMemo(
+    () => liveRecord.recordingMarks?.map((mark) => mark.offsetMs) ?? [],
+    [liveRecord.recordingMarks],
+  );
   const meetingPresetUiActive = useMemo(
     () => isProActive && liveRecord.classification === 'meeting',
     [isProActive, liveRecord.classification],
@@ -535,10 +800,16 @@ export const RecordingDetailScreen = () => {
   }, [liveRecord, regenerateMeetingDialogue]);
 
   const canRegenerateMeetingDialogueOnly = useMemo(() => {
+    if (shouldUseNativeMeetingSpeakers(liveRecord)) return false;
     if (!meetingPresetUiActive || !liveRecord.summary?.trim()) return false;
     if (isPrivateMode) return true;
     return Boolean(liveRecord.cloudAiJobId?.trim());
-  }, [meetingPresetUiActive, isPrivateMode, liveRecord.summary, liveRecord.cloudAiJobId]);
+  }, [meetingPresetUiActive, isPrivateMode, liveRecord]);
+
+  const usesNativeVoiceDiarization = useMemo(
+    () => shouldUseNativeMeetingSpeakers(liveRecord),
+    [liveRecord],
+  );
 
   const detailTabs = useMemo<Tab[]>(() => {
     const row: Tab[] = ['transcript', 'summary'];
@@ -559,6 +830,58 @@ export const RecordingDetailScreen = () => {
   const onAskAI = useCallback(() => {
     navigation.navigate('RecordingAskAI', { record: liveRecord });
   }, [navigation, liveRecord]);
+  const [isOpeningDocument, setIsOpeningDocument] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      setIsOpeningDocument(false);
+    }, []),
+  );
+
+  const onOpenDocument = useCallback(() => {
+    if (isOpeningDocument) return;
+    setIsOpeningDocument(true);
+    requestAnimationFrame(() => {
+      navigation.navigate('NoteDocument', { record: liveRecord });
+    });
+  }, [isOpeningDocument, navigation, liveRecord]);
+
+  const onOpenLinkNotePicker = useCallback(() => {
+    setLinkNotePickerVisible(true);
+  }, []);
+
+  const onOpenInGraph = useCallback(() => {
+    openNotesGraphForRecord(liveRecord.id);
+  }, [liveRecord.id, openNotesGraphForRecord]);
+
+  const onCloseLinkNotePicker = useCallback(() => {
+    setLinkNotePickerVisible(false);
+  }, []);
+
+  const onSelectLinkedNote = useCallback(
+    async (targetId: string) => {
+      setLinkNotePickerVisible(false);
+      await linkRecord(liveRecord.id, targetId);
+      hapticSuccess();
+    },
+    [linkRecord, liveRecord.id],
+  );
+
+  const onUnlinkNote = useCallback(
+    async (targetId: string) => {
+      await unlinkRecord(liveRecord.id, targetId);
+      hapticSelection();
+    },
+    [liveRecord.id, unlinkRecord],
+  );
+
+  const onLinkRelatedNote = useCallback(
+    async (targetId: string) => {
+      await linkRecord(liveRecord.id, targetId);
+      hapticSuccess();
+    },
+    [linkRecord, liveRecord.id],
+  );
   const onRename = useCallback(
     () => setRenameTarget({ id: liveRecord.id, title: liveRecord.title }),
     [liveRecord.id, liveRecord.title],
@@ -640,28 +963,88 @@ export const RecordingDetailScreen = () => {
     [activeTab],
   );
 
+  const updateHeaderTitleOpacity = useCallback(
+    (scrollY: number) => {
+      const titleTop = cardOffsetYRef.current + titleInCardRef.current.y;
+      const titleBottom = titleTop + titleInCardRef.current.height;
+      if (titleBottom <= 0) {
+        headerTitleOpacity.value = 0;
+        return;
+      }
+
+      // Header sits above the scroll view; fade in only after the card title scrolls out.
+      const fadeStart = Math.max(0, titleBottom - HEADER_TITLE_FADE_DISTANCE);
+      const fadeEnd = titleBottom;
+      const progress = (scrollY - fadeStart) / Math.max(1, fadeEnd - fadeStart);
+      headerTitleOpacity.value = Math.min(1, Math.max(0, progress));
+    },
+    [headerTitleOpacity],
+  );
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      updateHeaderTitleOpacity(event.nativeEvent.contentOffset.y);
+      updateFloatingDockVisibility();
+    },
+    [updateFloatingDockVisibility, updateHeaderTitleOpacity],
+  );
+
+  const handleCardLayout = useCallback((event: { nativeEvent: { layout: { y: number } } }) => {
+    cardOffsetYRef.current = event.nativeEvent.layout.y;
+  }, []);
+
+  const handleTitleLayout = useCallback((layout: { y: number; height: number }) => {
+    titleInCardRef.current = layout;
+  }, []);
+
+  useEffect(() => {
+    headerTitleOpacity.value = 0;
+    floatingDockShowPlayerRef.current = false;
+    setFloatingDockShowPlayer(false);
+  }, [headerTitleOpacity, liveRecord.id]);
+
   const shellBackgroundColor = isPrivateMode
     ? color.background.primary
     : color.background.secondary;
   const tabPanelBackgroundColor = isPrivateMode
     ? color.background.secondary
     : color.background.card;
+  const stickyTabIndex =
+    1 +
+    (hasAudio && hasRecordingMarks ? 1 : 0) +
+    (showSharedAccessSection ? 1 : 0) +
+    (showMeetingModeToggle ? 1 : 0);
+  const scrollBottomPadding =
+    insets.bottom +
+    40 +
+    (activeTab === 'transcript' && floatingDockShowPlayer
+      ? estimateFloatingDetailDockBottomClearance(0, true)
+      : 0);
 
   return (
-    <View className="flex-1" style={{ backgroundColor: shellBackgroundColor }}>
+    <View
+      testID={TestIds.detail.screen}
+      className="flex-1"
+      style={{ backgroundColor: shellBackgroundColor }}
+    >
       <RecordingDetailHeader
         record={liveRecord}
         color={color}
         isPrivateMode={isPrivateMode}
+        headerTitleOpacity={headerTitleOpacity}
         onBack={onBack}
         onTogglePin={onTogglePin}
         onShare={onOpenShareMenu}
+        onOpenDocument={onOpenDocument}
+        isOpeningDocument={isOpeningDocument}
         onAskAI={onAskAI}
         onRename={onRename}
         onMoveToFolder={onMoveToFolderMenu}
         onArchive={onArchive}
         onUnarchive={onUnarchive}
         onDelete={onDelete}
+        onLinkNote={liveRecord.status !== 'archived' ? onOpenLinkNotePicker : undefined}
+        onOpenInGraph={onOpenInGraph}
         onOpenAllTasksForNote={
           (liveRecord.tasks?.length ?? 0) > 0
             ? () => navigation.navigate('AllTasks', { recordId: liveRecord.id })
@@ -670,6 +1053,7 @@ export const RecordingDetailScreen = () => {
       />
       <ShareRecordSheet
         visible={shareSheetVisible}
+        openToPublish={shareSheetOpenToPublish}
         hasAudio={hasAudio}
         isMeeting={meetingPresetUiActive}
         showSpeakerTurnsExport={showSpeakerTurnsExport}
@@ -678,6 +1062,23 @@ export const RecordingDetailScreen = () => {
         onShareText={handleShare}
         onEmailRecord={handleEmailRecord}
         onShareAudio={handleShareAudio}
+        publishState={{
+          active: Boolean(published),
+          url: published?.shareUrl,
+          expiresAt: published?.expiresAt ?? null,
+          stale: isStale,
+        }}
+        isPublishing={publishLoading}
+        onPublishRecord={handlePublishRecord}
+        onUnpublishRecord={handleUnpublishRecord}
+        onRefreshPublishStatus={refreshPublishStatus}
+        onSharePublishedLink={handleSharePublishedLink}
+      />
+      <AutomationComingSoonSheet
+        visible={notesGraphProSheetVisible}
+        feature="notesGraph"
+        onClose={closeNotesGraphProSheet}
+        onUpgradePress={upgradeNotesGraphFromProSheet}
       />
       <BlockingProgressModal
         visible={isGeneratingSharePdf && !shareSheetVisible}
@@ -703,36 +1104,65 @@ export const RecordingDetailScreen = () => {
         contentContainerStyle={{
           padding: scrollPadding,
           gap: 12,
-          paddingBottom: insets.bottom + 40,
+          paddingBottom: scrollBottomPadding,
           alignItems: 'center',
         }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         bottomOffset={16}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        stickyHeaderIndices={[stickyTabIndex]}
       >
-        <View style={{ width: '100%', maxWidth: contentMaxWidth, gap: 12 }}>
+        <View style={{ width: '100%', maxWidth: contentMaxWidth }} onLayout={handleCardLayout}>
           <RecordingDetailCard
             record={liveRecord}
             color={color}
             folderPlacement={folderPlacement}
             hideFolderPlacement={!foldersEnabled}
             surfaceBackgroundColor={tabPanelBackgroundColor}
-          />
-
-          {hasAudio && (
-            <View className="overflow-hidden rounded-2xl">
-              <AudioPlayer
-                ref={audioPlayerRef}
-                duration={liveRecord.duration}
-                color={color}
-                audioPath={liveRecord.audioPath}
-                onPositionChange={onPositionUpdate}
-                surfaceBackgroundColor={tabPanelBackgroundColor}
-              />
+            onTitleLayout={handleTitleLayout}
+          >
+            <View className={hasAudio ? 'gap-4' : undefined}>
+              {hasAudio ? (
+                <View
+                  ref={audioPlayerAnchorRef}
+                  collapsable={false}
+                  onLayout={updateFloatingDockVisibility}
+                >
+                  <AudioPlayer
+                    ref={audioPlayerRef}
+                    duration={liveRecord.duration}
+                    color={color}
+                    audioPath={liveRecord.audioPath}
+                    playbackMarkOffsetsMs={playbackMarkOffsetsMs}
+                    onPositionChange={onPositionUpdate}
+                    onPlaybackStateChange={handlePlaybackStateChange}
+                    embedded
+                  />
+                </View>
+              ) : null}
+              <View className="flex-row flex-wrap gap-2">
+                {hasAudio ? (
+                  <AudioLanguageSelector
+                    value={transcriptionLanguage}
+                    color={color}
+                    onSelect={handleSelectTranscriptionLanguage}
+                    surfaceBackgroundColor={color.background.tertiary}
+                  />
+                ) : null}
+                <AskAiModelChipMenu
+                  color={color}
+                  menuPlacement="inline"
+                  surfaceBackgroundColor={color.background.tertiary}
+                />
+              </View>
             </View>
-          )}
+          </RecordingDetailCard>
+        </View>
 
-          {hasAudio && hasRecordingMarks && (
+        {hasAudio && hasRecordingMarks && (
+          <View style={{ width: '100%', maxWidth: contentMaxWidth }}>
             <RecordingMarksSection
               marks={liveRecord.recordingMarks ?? []}
               color={color}
@@ -741,20 +1171,25 @@ export const RecordingDetailScreen = () => {
               onUpdateMarks={handleUpdateRecordingMarks}
               canEditMarks={isProActive}
             />
-          )}
+          </View>
+        )}
 
-          {hasAudio && (
-            <View className="overflow-hidden rounded-2xl">
-              <AudioLanguageSelector
-                value={recordLanguage}
-                color={color}
-                onSelect={setRecordLanguage}
-                surfaceBackgroundColor={tabPanelBackgroundColor}
-              />
-            </View>
-          )}
+        {showSharedAccessSection ? (
+          <View style={{ width: '100%', maxWidth: contentMaxWidth }}>
+            <RecordingSharedAccessSection
+              expiresAt={published?.expiresAt ?? null}
+              stale={isStale}
+              disabled={publishLoading}
+              actionLabel={!isProActive ? t('share.publishUnpublish') : t('common.open')}
+              color={color}
+              surfaceBackgroundColor={tabPanelBackgroundColor}
+              onPressAction={onOpenPublishSheet}
+            />
+          </View>
+        ) : null}
 
-          {showMeetingModeToggle ? (
+        {showMeetingModeToggle ? (
+          <View style={{ width: '100%', maxWidth: contentMaxWidth }}>
             <RecordingMeetingModeSection
               isMeetingMode={isMeetingMode}
               selectedTemplate={liveRecord.meetingSummaryTemplate ?? 'general'}
@@ -764,11 +1199,23 @@ export const RecordingDetailScreen = () => {
               onToggleMeetingMode={handleToggleMeetingMode}
               onSelectTemplate={handleSelectMeetingSummaryTemplate}
             />
-          ) : null}
+          </View>
+        ) : null}
 
+        <View
+          style={{
+            width: '100%',
+            maxWidth: contentMaxWidth,
+            backgroundColor: shellBackgroundColor,
+          }}
+        >
           <View
-            className="overflow-hidden rounded-2xl"
-            style={{ backgroundColor: tabPanelBackgroundColor }}
+            style={{
+              overflow: 'hidden',
+              borderTopLeftRadius: 16,
+              borderTopRightRadius: 16,
+              backgroundColor: tabPanelBackgroundColor,
+            }}
           >
             <RecordingDetailTabBar
               active={activeTab}
@@ -777,132 +1224,192 @@ export const RecordingDetailScreen = () => {
               hasAudio={hasAudio}
               tabs={detailTabs}
             />
-            {mountedTabs.has('transcript') && (
-              <View style={activeTab !== 'transcript' ? { display: 'none' } : undefined}>
-                <TranscriptContent
-                  record={liveRecord}
-                  color={color}
-                  currentPositionMs={currentPositionMs}
-                  onTranscribe={handleRetranscribe}
-                  onDiscardResume={handleDiscardPausedTranscription}
-                  onCancelTranscription={handleCancelTranscription}
-                  isPrivateMode={isPrivateMode}
-                />
-              </View>
-            )}
-            {mountedTabs.has('summary') && (
-              <View style={activeTab !== 'summary' ? { display: 'none' } : undefined}>
-                <SummaryTab
-                  summary={liveRecord.summary ?? ''}
-                  keyPhrases={liveRecord.keyPhrases}
-                  status={liveRecord.summaryStatus ?? 'idle'}
-                  errorMessage={liveRecord.summaryError}
-                  hasTranscript={Boolean(liveRecord.transcript)}
-                  color={color}
-                  onGenerate={handleGenerateSummary}
-                  isMeeting={meetingPresetUiActive}
-                  onShareMeetingBrief={onOpenShareMenu}
-                  onDismissError={handleDismissSummaryError}
-                  showPrivateModeCta={aiExecutionMode === 'private_experimental'}
-                  onSwitchToSmartMode={handleSwitchToSmartMode}
-                  onCancelProcessing={handleCancelAiGeneration}
-                  speakerBreakdownProcessing={
-                    meetingPresetUiActive && liveRecord.meetingDialogueStatus === 'processing'
-                  }
-                  isPrivateMode={isPrivateMode}
-                  isPrivateCustomServer={isPrivateCustomServer}
-                  privateAiBatchProgress={liveRecord.privateAiBatchProgress}
-                  privateAiBatchPhase={liveRecord.privateAiBatchPhase}
-                  privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
-                  privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
-                  transcriptCharCount={liveRecord.transcript?.length ?? 0}
-                  cloudMeetingDialogueExtra={meetingPresetUiActive}
-                  summaryReasoning={liveRecord.summaryReasoning}
-                  summaryAiModel={liveRecord.summaryAiModel}
-                  summaryAiModelLabel={liveRecord.summaryAiModelLabel}
-                  summaryTokenUsage={
-                    liveRecord.summaryTokensPrompt != null &&
-                    liveRecord.summaryTokensCompletion != null
-                      ? {
-                          prompt: liveRecord.summaryTokensPrompt,
-                          completion: liveRecord.summaryTokensCompletion,
-                        }
-                      : undefined
-                  }
-                  summaryGenerationMs={liveRecord.summaryGenerationMs}
-                />
-              </View>
-            )}
-            {mountedTabs.has('dialogue') && meetingPresetUiActive && (
-              <View style={activeTab !== 'dialogue' ? { display: 'none' } : undefined}>
-                <MeetingDialogueTab
-                  meetingDialogue={liveRecord.meetingDialogue}
-                  speakerLabels={liveRecord.meetingSpeakerLabels}
-                  onRenameSpeaker={handleRenameSpeaker}
-                  hasTranscript={Boolean(liveRecord.transcript)}
-                  hasSummary={Boolean(liveRecord.summary?.trim())}
-                  summaryProcessing={
-                    liveRecord.summaryStatus === 'processing' ||
-                    liveRecord.tasksStatus === 'processing'
-                  }
-                  color={color}
-                  onGenerate={handleGenerateSummary}
-                  onRegenerateDialogueOnly={handleRegenerateMeetingDialogueOnly}
-                  canRegenerateDialogueOnly={canRegenerateMeetingDialogueOnly}
-                  status={meetingDialogueTabStatus}
-                  errorMessage={liveRecord.meetingDialogueError ?? liveRecord.summaryError}
-                  onDismissError={handleDismissMeetingDialogueError}
-                  showPrivateModeCta={aiExecutionMode === 'private_experimental'}
-                  onCancelProcessing={handleCancelAiGeneration}
-                  isPrivateMode={isPrivateMode}
-                  isPrivateCustomServer={isPrivateCustomServer}
-                  privateAiBatchProgress={liveRecord.privateAiBatchProgress}
-                  privateAiBatchPhase={liveRecord.privateAiBatchPhase}
-                  privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
-                  privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
-                  transcriptCharCount={liveRecord.transcript?.length ?? 0}
-                  cloudMeetingDialogueExtra={meetingPresetUiActive}
-                />
-              </View>
-            )}
-            {mountedTabs.has('tasks') && (
-              <View style={activeTab !== 'tasks' ? { display: 'none' } : undefined}>
-                <TasksTab
-                  tasks={liveRecord.tasks ?? []}
-                  nextSteps={liveRecord.nextSteps}
-                  status={liveRecord.tasksStatus ?? 'idle'}
-                  errorMessage={liveRecord.tasksError}
-                  hasTranscript={Boolean(liveRecord.transcript)}
-                  recordTitle={liveRecord.title}
-                  color={color}
-                  onToggle={handleToggleTask}
-                  onExtract={handleExtractTasks}
-                  onAddManualTask={handleAddManualTask}
-                  onPromoteNextStepToTask={handlePromoteNextStepToTask}
-                  onDeleteTask={handleDeleteTask}
-                  onEditTask={handleEditTask}
-                  onDismissError={handleDismissSummaryError}
-                  showPrivateModeCta={aiExecutionMode === 'private_experimental'}
-                  onSwitchToSmartMode={handleSwitchToSmartMode}
-                  onCancelProcessing={handleCancelAiGeneration}
-                  isPrivateMode={isPrivateMode}
-                  isPrivateCustomServer={isPrivateCustomServer}
-                  privateAiBatchProgress={liveRecord.privateAiBatchProgress}
-                  privateAiBatchPhase={liveRecord.privateAiBatchPhase}
-                  privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
-                  privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
-                  transcriptCharCount={liveRecord.transcript?.length ?? 0}
-                  cloudMeetingDialogueExtra={meetingPresetUiActive}
-                />
-              </View>
-            )}
           </View>
-
-          <RelatedNotesSection recordId={liveRecord.id} color={color} />
-
-          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </View>
+
+        <View
+          className="overflow-hidden"
+          style={{
+            width: '100%',
+            maxWidth: contentMaxWidth,
+            marginTop: -12,
+            backgroundColor: tabPanelBackgroundColor,
+            borderBottomLeftRadius: 16,
+            borderBottomRightRadius: 16,
+          }}
+        >
+          {mountedTabs.has('transcript') && (
+            <View style={activeTab !== 'transcript' ? { display: 'none' } : undefined}>
+              <TranscriptContent
+                record={liveRecord}
+                color={color}
+                currentPositionMs={currentPositionMs}
+                onTranscribe={handleRetranscribe}
+                onDiscardResume={handleDiscardPausedTranscription}
+                onCancelTranscription={handleCancelTranscription}
+                isPrivateMode={isPrivateMode}
+              />
+            </View>
+          )}
+          {mountedTabs.has('summary') && (
+            <View style={activeTab !== 'summary' ? { display: 'none' } : undefined}>
+              <SummaryTab
+                summary={liveRecord.summary ?? ''}
+                keyPhrases={liveRecord.keyPhrases}
+                status={liveRecord.summaryStatus ?? 'idle'}
+                errorMessage={liveRecord.summaryError}
+                hasTranscript={Boolean(liveRecord.transcript)}
+                color={color}
+                onGenerate={handleGenerateSummary}
+                isMeeting={meetingPresetUiActive}
+                onShareMeetingBrief={onOpenShareMenu}
+                onDismissError={handleDismissSummaryError}
+                showPrivateModeCta={aiExecutionMode === 'private_experimental'}
+                onSwitchToSmartMode={handleSwitchToSmartMode}
+                onCancelProcessing={handleCancelAiGeneration}
+                speakerBreakdownProcessing={
+                  meetingPresetUiActive && liveRecord.meetingDialogueStatus === 'processing'
+                }
+                isPrivateMode={isPrivateMode}
+                isPrivateCustomServer={isPrivateCustomServer}
+                privateAiBatchProgress={liveRecord.privateAiBatchProgress}
+                privateAiBatchPhase={liveRecord.privateAiBatchPhase}
+                privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
+                privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
+                transcriptCharCount={liveRecord.transcript?.length ?? 0}
+                cloudMeetingDialogueExtra={meetingPresetUiActive}
+                summaryReasoning={liveRecord.summaryReasoning}
+                summaryAiModel={liveRecord.summaryAiModel}
+                summaryAiModelLabel={liveRecord.summaryAiModelLabel}
+                summaryAiModelMode={liveRecord.summaryAiModelMode}
+                summaryTokenUsage={
+                  liveRecord.summaryTokensPrompt != null &&
+                  liveRecord.summaryTokensCompletion != null
+                    ? {
+                        prompt: liveRecord.summaryTokensPrompt,
+                        completion: liveRecord.summaryTokensCompletion,
+                      }
+                    : undefined
+                }
+                summaryGenerationMs={liveRecord.summaryGenerationMs}
+              />
+            </View>
+          )}
+          {mountedTabs.has('dialogue') && meetingPresetUiActive && (
+            <View style={activeTab !== 'dialogue' ? { display: 'none' } : undefined}>
+              <MeetingDialogueTab
+                meetingDialogue={liveRecord.meetingDialogue}
+                speakerLabels={liveRecord.meetingSpeakerLabels}
+                nativeVoiceDiarization={usesNativeVoiceDiarization}
+                transcriptSegments={liveRecord.transcriptSegments}
+                onRenameSpeaker={handleRenameSpeaker}
+                hasTranscript={Boolean(liveRecord.transcript)}
+                hasSummary={Boolean(liveRecord.summary?.trim())}
+                summaryProcessing={
+                  liveRecord.summaryStatus === 'processing' ||
+                  liveRecord.tasksStatus === 'processing'
+                }
+                transcriptProcessing={isTranscriptProcessing}
+                color={color}
+                onGenerate={handleGenerateSummary}
+                onRegenerateDialogueOnly={handleRegenerateMeetingDialogueOnly}
+                canRegenerateDialogueOnly={canRegenerateMeetingDialogueOnly}
+                status={meetingDialogueTabStatus}
+                errorMessage={liveRecord.meetingDialogueError ?? liveRecord.summaryError}
+                onDismissError={handleDismissMeetingDialogueError}
+                showPrivateModeCta={aiExecutionMode === 'private_experimental'}
+                onCancelProcessing={handleCancelAiGeneration}
+                isPrivateMode={isPrivateMode}
+                isPrivateCustomServer={isPrivateCustomServer}
+                privateAiBatchProgress={liveRecord.privateAiBatchProgress}
+                privateAiBatchPhase={liveRecord.privateAiBatchPhase}
+                privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
+                privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
+                transcriptCharCount={liveRecord.transcript?.length ?? 0}
+                cloudMeetingDialogueExtra={meetingPresetUiActive}
+              />
+            </View>
+          )}
+          {mountedTabs.has('tasks') && (
+            <View style={activeTab !== 'tasks' ? { display: 'none' } : undefined}>
+              <TasksTab
+                tasks={liveRecord.tasks ?? []}
+                nextSteps={liveRecord.nextSteps}
+                status={liveRecord.tasksStatus ?? 'idle'}
+                errorMessage={liveRecord.tasksError}
+                hasTranscript={Boolean(liveRecord.transcript)}
+                recordTitle={liveRecord.title}
+                isArchived={liveRecord.status === 'archived'}
+                color={color}
+                onTaskPress={handleTaskPress}
+                getFollowUpRecordTitle={getFollowUpRecordTitle}
+                onOpenFollowUp={handleOpenFollowUp}
+                onExtract={handleExtractTasks}
+                onAddManualTask={handleAddManualTask}
+                onPromoteNextStepToTask={handlePromoteNextStepToTask}
+                onDeleteTask={handleDeleteTask}
+                onEditTask={handleEditTask}
+                onEditTaskOutcome={handleEditTaskOutcome}
+                onDismissError={handleDismissSummaryError}
+                showPrivateModeCta={aiExecutionMode === 'private_experimental'}
+                onSwitchToSmartMode={handleSwitchToSmartMode}
+                onCancelProcessing={handleCancelAiGeneration}
+                isPrivateMode={isPrivateMode}
+                isPrivateCustomServer={isPrivateCustomServer}
+                privateAiBatchProgress={liveRecord.privateAiBatchProgress}
+                privateAiBatchPhase={liveRecord.privateAiBatchPhase}
+                privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
+                privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
+                transcriptCharCount={liveRecord.transcript?.length ?? 0}
+                cloudMeetingDialogueExtra={meetingPresetUiActive}
+              />
+            </View>
+          )}
+        </View>
+
+        <View style={{ width: '100%', maxWidth: contentMaxWidth }}>
+          <RecordNeighborSections
+            record={liveRecord}
+            color={color}
+            onLinkNote={onOpenLinkNotePicker}
+            onUnlinkNote={onUnlinkNote}
+            onLinkRelatedNote={onLinkRelatedNote}
+          />
+        </View>
+
+        <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
       </KeyboardAwareScrollView>
+      <RecordingDetailFloatingDock
+        visible={floatingDockShowPlayer}
+        color={color}
+        safeAreaBottom={insets.bottom}
+        contentMaxWidth={floatingDockMaxWidth}
+        duration={liveRecord.duration}
+        playbackState={playbackState}
+        audioPlayerRef={audioPlayerRef}
+        progressValue={audioPlayerRef.current?.progressValue}
+        trackWidthValue={audioPlayerRef.current?.trackWidthValue}
+        elapsedMsValue={audioPlayerRef.current?.elapsedMsValue}
+      />
+      <LinkNotePickerSheet
+        visible={linkNotePickerVisible}
+        records={records}
+        folders={folders}
+        sourceRecordId={liveRecord.id}
+        linkedRecordIds={liveRecord.linkedRecordIds ?? []}
+        onClose={onCloseLinkNotePicker}
+        onSelect={onSelectLinkedNote}
+      />
+      <TaskOutcomeSheet
+        visible={outcomeTarget !== null}
+        task={outcomeTarget?.task ?? null}
+        linkedNoteContext={linkedNoteContext}
+        onClose={closeOutcomeSheet}
+        onComplete={completeWithOutcome}
+        onSkip={completeAndSkip}
+        onVoiceFollowUp={startVoiceFollowUp}
+        onTextFollowUp={startTextFollowUp}
+      />
     </View>
   );
 };

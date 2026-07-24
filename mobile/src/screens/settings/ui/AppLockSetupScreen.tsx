@@ -1,17 +1,29 @@
 import { useNavigation } from '@react-navigation/native';
-import { Fingerprint, ScanFace } from 'lucide-react-native';
+import { Clock3, Fingerprint, ScanFace } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  ScrollView,
+  Switch,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { useAppLockStore } from '@/entities/app-lock';
 import { PIN_LENGTH_OPTIONS } from '@/entities/app-lock';
 import { PinInput } from '@/features/app-lock/ui/PinInput';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
+
+import { getSettingsIconColor } from '../lib/settingsIconColor';
+import { AppLockGracePeriodSheet } from './AppLockGracePeriodSheet';
 
 type SetupStep = 'confirm' | 'initial';
 
@@ -21,6 +33,8 @@ export const AppLockSetupScreen = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const contentMaxWidth = useTabletContentMaxWidth();
+  const { width: windowWidth } = useWindowDimensions();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const isTablet = useIsTablet();
 
   const [step, setStep] = useState<SetupStep>('initial');
@@ -28,14 +42,17 @@ export const AppLockSetupScreen = () => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [gracePeriodSheetVisible, setGracePeriodSheetVisible] = useState(false);
 
   const {
     isEnabled,
     useBiometrics,
     pinLength,
+    lockGracePeriodMs,
     setEnabled,
     setUseBiometrics,
     setPinLength,
+    setLockGracePeriodMs,
     setPin: savePin,
     checkBiometryAvailable,
     biometryType,
@@ -127,12 +144,29 @@ export const AppLockSetupScreen = () => {
     [biometryType, setUseBiometrics],
   );
 
+  const handleGracePeriodPress = useCallback(() => {
+    setGracePeriodSheetVisible(true);
+  }, []);
+
+  const handleGracePeriodSheetClose = useCallback(() => {
+    setGracePeriodSheetVisible(false);
+  }, []);
+
+  const handleGracePeriodSelect = useCallback(
+    (value: typeof lockGracePeriodMs) => {
+      setLockGracePeriodMs(value);
+      setGracePeriodSheetVisible(false);
+    },
+    [setLockGracePeriodMs],
+  );
+
   const bioLabel = biometryType
     ? t(`appLock.biometry.${biometryType}` as 'appLock.biometry.FaceID') || biometryType
     : t('common.biometrics');
   const isFaceBiometry =
     biometryType === 'FaceID' || biometryType === 'Face' || biometryType === 'OpticID';
   const BioIcon = isFaceBiometry ? ScanFace : Fingerprint;
+  const bioIconColor = getSettingsIconColor(color, 'scanFace');
 
   const pinLengthLocked = step !== 'initial';
 
@@ -171,7 +205,7 @@ export const AppLockSetupScreen = () => {
 
               <SettingsSection title={t('appLock.pinLengthTitle')}>
                 <View
-                  className="flex-row flex-wrap items-center justify-center gap-2 px-4 py-3.5"
+                  className="flex-row flex-wrap items-center gap-2 px-4 py-3.5"
                   style={{
                     backgroundColor: color.background.card,
                     opacity: pinLengthLocked ? 0.5 : 1,
@@ -218,7 +252,7 @@ export const AppLockSetupScreen = () => {
                 <SettingsSection title={t('common.biometrics')}>
                   <SettingsRow
                     label={bioLabel}
-                    leftIcon={<BioIcon size={20} color={color.accent.success} strokeWidth={1.8} />}
+                    leftIcon={<BioIcon size={20} color={bioIconColor} strokeWidth={1.8} />}
                     rightSlot={
                       <Switch
                         value={useBiometrics}
@@ -256,7 +290,13 @@ export const AppLockSetupScreen = () => {
             <SettingsSection title={t('appLock.settings')}>
               <SettingsRow
                 label={t('appLock.title')}
-                leftIcon={<Fingerprint size={20} color={color.accent.primary} strokeWidth={1.8} />}
+                leftIcon={
+                  <Fingerprint
+                    size={20}
+                    color={getSettingsIconColor(color, 'fingerprint')}
+                    strokeWidth={1.8}
+                  />
+                }
                 rightSlot={
                   <Switch
                     value={isEnabled}
@@ -272,13 +312,26 @@ export const AppLockSetupScreen = () => {
                 showChevron={false}
                 onPress={undefined}
                 isFirst
+              />
+              <SettingsRow
+                label={t('appLock.requireLockTitle')}
+                value={t(`appLock.requireLockOption.${lockGracePeriodMs}`)}
+                leftIcon={
+                  <Clock3
+                    size={20}
+                    color={getSettingsIconColor(color, 'calendarClock')}
+                    strokeWidth={1.8}
+                  />
+                }
+                onPress={handleGracePeriodPress}
+                showChevron
                 isLast={!biometryType}
               />
               {biometryType ? (
                 <SettingsRow
                   label={bioLabel}
                   value={useBiometrics ? t('settings.on') : t('settings.off')}
-                  leftIcon={<BioIcon size={20} color={color.accent.success} strokeWidth={1.8} />}
+                  leftIcon={<BioIcon size={20} color={bioIconColor} strokeWidth={1.8} />}
                   rightSlot={
                     <Switch
                       value={useBiometrics}
@@ -298,7 +351,14 @@ export const AppLockSetupScreen = () => {
               ) : null}
             </SettingsSection>
           )}
+          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
+        <AppLockGracePeriodSheet
+          visible={gracePeriodSheetVisible}
+          selectedMs={lockGracePeriodMs}
+          onSelect={handleGracePeriodSelect}
+          onClose={handleGracePeriodSheetClose}
+        />
       </View>
     </View>
   );

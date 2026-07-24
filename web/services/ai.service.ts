@@ -8,6 +8,7 @@ import { extractDeepSeekReasoning } from '@/lib/deepseek-reasoning';
 import { withSequentialModelFallback } from '@/lib/ai-model-fallback';
 import { extractOpenRouterReasoning } from '@/lib/openrouter-reasoning';
 import { extractOpenRouterTokenUsage } from '@/lib/openrouter-token-usage';
+import { withTimeout, TIMEOUTS } from '@/lib/timeout';
 import {
   AUTO_ORGANIZE_MAX_SUMMARY_CHARS,
   AUTO_ORGANIZE_MAX_TITLE_CHARS,
@@ -15,12 +16,43 @@ import {
   AUTO_ORGANIZE_TRANSCRIPT_HINT_MAX_CHARS,
   smartTranscriptExcerpt,
 } from '@/lib/auto-organize-input-limits';
-import { normalizeAutoOrganizeFolderColor } from '@/lib/folder-accent-colors';
+import {
+  assertAutoOrganizeArchiveComplete,
+  assertAutoOrganizeFoldersComplete,
+  isAutoOrganizeParseFailure,
+  parseAutoOrganizeResultForMode,
+  type AutoOrganizeParsedResult,
+} from '@/lib/auto-organize-parse';
+import {
+  buildAutoOrganizeRepairUserSuffix,
+  buildAutoOrganizeSystemPrompt,
+} from '@/lib/auto-organize-prompt';
+import type { AutoOrganizeMode, AutoOrganizeTemplate } from '@/lib/auto-organize-types';
+import { normalizeAutoOrganizeTemplate } from '@/lib/auto-organize-types';
 import { buildAskUserMessageContent } from '@/lib/ask-user-message';
+import { buildGeneralAskUserMessageContent } from '@/lib/general-ask-user-message';
+import { buildInboxAskUserMessageContent } from '@/lib/inbox-ask-user-message';
+import type { CorpusNoteForPrompt } from '@/lib/corpus-notes-prompt';
+import type { AskLinkedNoteForPrompt } from '@/lib/linked-notes-prompt';
+import { normalizeTaskDeadlineFields } from '@/lib/normalizeTaskDeadlineFields';
 import { parseOpenRouterJsonContent } from '@/lib/parse-openrouter-json';
 import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
-import { ASK_QUESTION_SYSTEM_PROMPT, AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT } from '@/lib/prompts';
+import {
+  ASK_QUESTION_SYSTEM_PROMPT,
+  GENERAL_ASK_SYSTEM_PROMPT,
+  INBOX_ASK_SYSTEM_PROMPT,
+} from '@/lib/prompts';
 import type { AiResult, AutoOrganizeResult, RecordClassification } from '@/types';
+import {
+  INBOX_ASK_MAX_TOOL_ROUNDS,
+  INBOX_ASK_TOOL_CALL_TTL_MS,
+  INBOX_ASK_TOOL_DEFINITIONS,
+  isInboxAskToolName,
+  safeParseToolArguments,
+  type InboxAskToolCallRequest,
+  type InboxAskToolStep,
+} from '@/lib/inbox-ask-tools';
+import type { AiChatToolMessage } from '@/types/ai-job';
 
 import {
   MEETING_DIALOGUE_MODEL_FALLBACK_CHAIN,
@@ -81,10 +113,14 @@ function buildSummaryAiResult(
       throw new Error('Invalid AI response: invalid task structure');
     }
     const task = t as { title: string; priority: string; deadline?: string | null };
+    const normalizedDeadline = normalizeTaskDeadlineFields(task.deadline);
     return {
       title: task.title,
       priority: task.priority as 'high' | 'medium' | 'low',
-      deadline: task.deadline ?? null,
+      deadline: normalizedDeadline?.deadline ?? null,
+      ...(normalizedDeadline?.deadlineTime
+        ? { deadlineTime: normalizedDeadline.deadlineTime }
+        : {}),
     };
   });
 
@@ -150,18 +186,22 @@ async function callSummaryModel(
   clientUserAgent?: string | null,
   deviceId?: string | null,
 ): Promise<AiResult> {
-  const { content, message, raw } = await sendAiChatCompletion({
-    model,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: transcript },
-    ],
-    jsonObject: true,
-    withReasoning: true,
-    temperature: isDeepSeekOpenRouterModel(model) ? undefined : 0.3,
-    clientUserAgent,
-    userId: deviceId,
-  });
+  const { content, message, raw } = await withTimeout(
+    sendAiChatCompletion({
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: transcript },
+      ],
+      jsonObject: true,
+      withReasoning: true,
+      temperature: isDeepSeekOpenRouterModel(model) ? undefined : 0.3,
+      clientUserAgent,
+      userId: deviceId,
+    }),
+    TIMEOUTS.AI_PROCESSING,
+    'AI summary processing timeout',
+  );
 
   const extractReasoningFn = isDeepSeekOpenRouterModel(model)
     ? extractDeepSeekReasoning
@@ -173,7 +213,13 @@ async function callSummaryModel(
 type AskAnswerKind = 'plain' | 'list' | 'tasks' | 'decisions';
 type AskEvidence = {
   quote: string;
-  source?: 'transcript' | 'summary' | 'tasks' | 'recording_mark' | 'prior_conversation';
+  source?:
+    | 'transcript'
+    | 'summary'
+    | 'tasks'
+    | 'recording_mark'
+    | 'prior_conversation'
+    | 'linked_note';
   offsetMs?: number | null;
   label?: string;
 };
@@ -182,7 +228,9 @@ type AskAnswerResult = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  interpretations?: string[];
   suggestedFollowUps?: string[];
+  toolSteps?: InboxAskToolStep[];
 };
 
 const ASK_ANSWER_KINDS = new Set<AskAnswerKind>(['plain', 'list', 'tasks', 'decisions']);
@@ -193,6 +241,8 @@ const ASK_EVIDENCE_QUOTE_MAX_CHARS = 500;
 const ASK_EVIDENCE_LABEL_MAX_CHARS = 120;
 const ASK_FOLLOW_UP_MAX = 3;
 const ASK_FOLLOW_UP_MAX_CHARS = 180;
+const ASK_INTERPRETATIONS_MAX = 3;
+const ASK_INTERPRETATION_MAX_CHARS = 400;
 
 function sanitizeAskAnswerKind(value: unknown): AskAnswerKind | undefined {
   return typeof value === 'string' && ASK_ANSWER_KINDS.has(value as AskAnswerKind)
@@ -217,6 +267,16 @@ function sanitizeAskFollowUps(value: unknown): string[] | undefined {
     .filter(Boolean)
     .slice(0, ASK_FOLLOW_UP_MAX)
     .map((item) => item.slice(0, ASK_FOLLOW_UP_MAX_CHARS));
+  return out.length ? out : undefined;
+}
+
+function sanitizeAskInterpretations(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const out = value
+    .map((item) => (typeof item === 'string' ? item.replace(/\s+/g, ' ').trim() : ''))
+    .filter(Boolean)
+    .slice(0, ASK_INTERPRETATIONS_MAX)
+    .map((item) => item.slice(0, ASK_INTERPRETATION_MAX_CHARS));
   return out.length ? out : undefined;
 }
 
@@ -267,12 +327,14 @@ function extractAnswerFromResponse(responseContent: string): AskAnswerResult {
             const answerKind = sanitizeAskAnswerKind(obj.answerKind);
             const items = sanitizeAskItems(obj.items);
             const evidence = sanitizeAskEvidence(obj.evidence);
+            const interpretations = sanitizeAskInterpretations(obj.interpretations);
             const suggestedFollowUps = sanitizeAskFollowUps(obj.suggestedFollowUps);
             return {
               answer: val,
               ...(answerKind ? { answerKind } : {}),
               ...(items ? { items } : {}),
               ...(evidence ? { evidence } : {}),
+              ...(interpretations ? { interpretations } : {}),
               ...(suggestedFollowUps ? { suggestedFollowUps } : {}),
             };
           }
@@ -343,30 +405,34 @@ export async function processMeetingDialogueMarkdown(
 ): Promise<Pick<AiResult, 'meetingDialogueMarkdown' | 'tokenUsage'>> {
   const models = filterModelsForAiChat([...MEETING_DIALOGUE_MODEL_FALLBACK_CHAIN]);
 
-  return withSequentialModelFallback(
-    models,
-    async (m) => {
-      const { content, raw } = await sendAiChatCompletion({
-        model: m,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userContent },
-        ],
-        jsonObject: true,
-        temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.3,
-        clientUserAgent,
-        userId: deviceId,
-      });
+  return withTimeout(
+    withSequentialModelFallback(
+      models,
+      async (m) => {
+        const { content, raw } = await sendAiChatCompletion({
+          model: m,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userContent },
+          ],
+          jsonObject: true,
+          temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.3,
+          clientUserAgent,
+          userId: deviceId,
+        });
 
-      const tokenUsage = extractOpenRouterTokenUsage(raw);
-      return {
-        ...parseMeetingDialogueOpenRouterContent(content),
-        ...(tokenUsage ? { tokenUsage } : {}),
-      };
-    },
-    (err) =>
-      isRetryableAiChatTransportError(err) ||
-      (err instanceof Error && err.message.startsWith('Invalid AI response')),
+        const tokenUsage = extractOpenRouterTokenUsage(raw);
+        return {
+          ...parseMeetingDialogueOpenRouterContent(content),
+          ...(tokenUsage ? { tokenUsage } : {}),
+        };
+      },
+      (err) =>
+        isRetryableAiChatTransportError(err) ||
+        (err instanceof Error && err.message.startsWith('Invalid AI response')),
+    ),
+    TIMEOUTS.AI_PROCESSING,
+    'Meeting dialogue processing timeout',
   );
 }
 
@@ -380,6 +446,7 @@ export async function processAskQuestion(
   clientUserAgent?: string | null,
   recordingMarks?: RecordingMarkForPrompt[],
   deviceId?: string | null,
+  linkedNotes?: AskLinkedNoteForPrompt[],
 ): Promise<AskAnswerResult> {
   const userContent = buildAskUserMessageContent(
     transcript,
@@ -388,20 +455,25 @@ export async function processAskQuestion(
     tasks,
     priorTurns,
     recordingMarks,
+    linkedNotes,
   );
 
   const callAsk = async (m: string): Promise<AskAnswerResult> => {
-    const { content } = await sendAiChatCompletion({
-      model: m,
-      messages: [
-        { role: 'system', content: ASK_QUESTION_SYSTEM_PROMPT },
-        { role: 'user', content: userContent },
-      ],
-      jsonObject: true,
-      temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.3,
-      clientUserAgent,
-      userId: deviceId,
-    });
+    const { content } = await withTimeout(
+      sendAiChatCompletion({
+        model: m,
+        messages: [
+          { role: 'system', content: ASK_QUESTION_SYSTEM_PROMPT },
+          { role: 'user', content: userContent },
+        ],
+        jsonObject: true,
+        temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.3,
+        clientUserAgent,
+        userId: deviceId,
+      }),
+      TIMEOUTS.AI_CHAT,
+      'AI ask processing timeout',
+    );
 
     return extractAnswerFromResponse(content);
   };
@@ -409,6 +481,220 @@ export async function processAskQuestion(
   const models = filterModelsForAiChat([model, ...USER_AI_MODEL_FALLBACK_CHAIN]);
 
   return withSequentialModelFallback(models, callAsk, isRetryableAiChatTransportError);
+}
+
+export async function processInboxAskQuestion(
+  corpusNotes: CorpusNoteForPrompt[],
+  question: string,
+  model: string,
+  priorTurns?: { question: string; answer: string }[],
+  clientUserAgent?: string | null,
+  deviceId?: string | null,
+): Promise<AskAnswerResult> {
+  const userContent = buildInboxAskUserMessageContent(corpusNotes, question, priorTurns);
+
+  const callAsk = async (m: string): Promise<AskAnswerResult> => {
+    const { content } = await withTimeout(
+      sendAiChatCompletion({
+        model: m,
+        messages: [
+          { role: 'system', content: INBOX_ASK_SYSTEM_PROMPT },
+          { role: 'user', content: userContent },
+        ],
+        jsonObject: true,
+        temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.3,
+        clientUserAgent,
+        userId: deviceId,
+      }),
+      TIMEOUTS.AI_CHAT,
+      'AI inbox ask processing timeout',
+    );
+
+    return extractAnswerFromResponse(content);
+  };
+
+  const models = filterModelsForAiChat([model, ...USER_AI_MODEL_FALLBACK_CHAIN]);
+
+  return withSequentialModelFallback(models, callAsk, isRetryableAiChatTransportError);
+}
+
+export async function processGeneralAskQuestion(
+  question: string,
+  model: string,
+  priorTurns?: { question: string; answer: string }[],
+  clientUserAgent?: string | null,
+  deviceId?: string | null,
+): Promise<AskAnswerResult> {
+  const userContent = buildGeneralAskUserMessageContent(question, priorTurns);
+
+  const callAsk = async (m: string): Promise<AskAnswerResult> => {
+    const { content } = await withTimeout(
+      sendAiChatCompletion({
+        model: m,
+        messages: [
+          { role: 'system', content: GENERAL_ASK_SYSTEM_PROMPT },
+          { role: 'user', content: userContent },
+        ],
+        jsonObject: true,
+        temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.3,
+        clientUserAgent,
+        userId: deviceId,
+      }),
+      TIMEOUTS.AI_CHAT,
+      'AI general ask processing timeout',
+    );
+
+    return extractAnswerFromResponse(content);
+  };
+
+  const models = filterModelsForAiChat([model, ...USER_AI_MODEL_FALLBACK_CHAIN]);
+
+  return withSequentialModelFallback(models, callAsk, isRetryableAiChatTransportError);
+}
+
+export type InboxAskToolLoopResult =
+  | {
+      status: 'done';
+      result: AskAnswerResult;
+      toolMessages?: AiChatToolMessage[];
+      toolSteps?: InboxAskToolStep[];
+    }
+  | {
+      status: 'needs_tool';
+      toolCall: InboxAskToolCallRequest;
+      toolMessages: AiChatToolMessage[];
+      toolSteps: InboxAskToolStep[];
+    };
+
+function extractFirstInboxAskToolCall(
+  toolCalls: unknown[] | undefined,
+  round: number,
+): InboxAskToolCallRequest | null {
+  if (!toolCalls?.length) return null;
+
+  for (const raw of toolCalls) {
+    if (!raw || typeof raw !== 'object') continue;
+    const obj = raw as Record<string, unknown>;
+    const id = typeof obj.id === 'string' && obj.id.trim() ? obj.id.trim() : '';
+    const fn = obj.function && typeof obj.function === 'object' ? obj.function : null;
+    const functionObj = fn as Record<string, unknown> | null;
+    const name = typeof functionObj?.name === 'string' ? functionObj.name.trim() : '';
+    if (!id || !isInboxAskToolName(name)) continue;
+
+    return {
+      toolCallId: id,
+      toolName: name,
+      arguments: safeParseToolArguments(functionObj?.arguments),
+      round,
+      expiresAt: new Date(Date.now() + INBOX_ASK_TOOL_CALL_TTL_MS).toISOString(),
+    };
+  }
+
+  return null;
+}
+
+function isToolUnsupportedError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return /tools?|tool_choice|tool_calls?|function calling|functions?/i.test(message);
+}
+
+export async function processInboxAskQuestionWithTools(params: {
+  corpusNotes: CorpusNoteForPrompt[];
+  question: string;
+  model: string;
+  priorTurns?: { question: string; answer: string }[];
+  clientUserAgent?: string | null;
+  deviceId?: string | null;
+  toolMessages?: AiChatToolMessage[];
+  toolSteps?: InboxAskToolStep[];
+  toolRound?: number;
+}): Promise<InboxAskToolLoopResult> {
+  const {
+    corpusNotes,
+    question,
+    model,
+    priorTurns,
+    clientUserAgent,
+    deviceId,
+    toolMessages,
+    toolSteps = [],
+    toolRound = 0,
+  } = params;
+  const initialMessages: AiChatToolMessage[] = [
+    { role: 'system', content: INBOX_ASK_SYSTEM_PROMPT },
+    { role: 'user', content: buildInboxAskUserMessageContent(corpusNotes, question, priorTurns) },
+  ];
+  const messages = toolMessages?.length ? toolMessages : initialMessages;
+  const nextRound = toolRound + 1;
+  const canUseTools = nextRound <= INBOX_ASK_MAX_TOOL_ROUNDS;
+
+  const callAsk = async (m: string): Promise<InboxAskToolLoopResult> => {
+    const { content, toolCalls } = await withTimeout(
+      sendAiChatCompletion({
+        model: m,
+        messages,
+        tools: canUseTools ? INBOX_ASK_TOOL_DEFINITIONS : undefined,
+        toolChoice: canUseTools ? 'auto' : 'none',
+        jsonObject: !canUseTools,
+        temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.3,
+        clientUserAgent,
+        userId: deviceId,
+      }),
+      TIMEOUTS.AI_CHAT,
+      'AI inbox ask processing timeout',
+    );
+
+    const toolCall = canUseTools ? extractFirstInboxAskToolCall(toolCalls, nextRound) : null;
+    if (toolCall) {
+      const assistantMessage: AiChatToolMessage = {
+        role: 'assistant',
+        content: typeof content === 'string' && content.trim() ? content : null,
+        tool_calls: toolCalls,
+      };
+      return {
+        status: 'needs_tool',
+        toolCall,
+        toolMessages: [...messages, assistantMessage],
+        toolSteps: [
+          ...toolSteps,
+          {
+            toolCallId: toolCall.toolCallId,
+            toolName: toolCall.toolName,
+            round: toolCall.round,
+            status: 'requested',
+          },
+        ],
+      };
+    }
+
+    return {
+      status: 'done',
+      result: extractAnswerFromResponse(content),
+      toolMessages: messages,
+      toolSteps,
+    };
+  };
+
+  const models = filterModelsForAiChat([model, ...USER_AI_MODEL_FALLBACK_CHAIN]);
+
+  try {
+    return await withSequentialModelFallback(models, callAsk, isRetryableAiChatTransportError);
+  } catch (err) {
+    if (!toolMessages?.length && isToolUnsupportedError(err)) {
+      return {
+        status: 'done',
+        result: await processInboxAskQuestion(
+          corpusNotes,
+          question,
+          model,
+          priorTurns,
+          clientUserAgent,
+          deviceId,
+        ),
+      };
+    }
+    throw err;
+  }
 }
 
 const DIGEST_SYSTEM_PROMPT = `You write a daily, weekly, or rolling 30-day digest for Voice Inbox AI from already-extracted note metadata.
@@ -506,109 +792,6 @@ export async function processDigest(
   );
 }
 
-const ALLOWED_FOLDER_ICONS = new Set([
-  'briefcase',
-  'home',
-  'lightbulb',
-  'music',
-  'star',
-  'heart',
-  'plane',
-  'rocket',
-  'palette',
-  'flame',
-  'globe',
-  'graduation',
-]);
-
-const DEFAULT_AUTO_FOLDER_ICON = 'briefcase';
-
-function parseAutoOrganizeResult(rawContent: string): AutoOrganizeResult {
-  const trimmed = rawContent.trim();
-  const withoutFences = trimmed.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-  const objectSlice = (() => {
-    const start = withoutFences.indexOf('{');
-    const end = withoutFences.lastIndexOf('}');
-    if (start === -1 || end === -1 || end <= start) return withoutFences;
-    return withoutFences.slice(start, end + 1);
-  })();
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(objectSlice);
-  } catch {
-    throw new Error('Invalid AI response: malformed JSON');
-  }
-
-  if (!parsed || typeof parsed !== 'object') {
-    throw new Error('Invalid AI response: expected object');
-  }
-
-  const obj = parsed as {
-    folders?: Array<{ name?: unknown; icon?: unknown; color?: unknown }>;
-    assignments?: Array<{ recordId?: unknown; folderName?: unknown }>;
-  };
-
-  if (!Array.isArray(obj.folders) || !Array.isArray(obj.assignments)) {
-    throw new Error('Invalid AI response: missing folders or assignments');
-  }
-
-  const folderRows = obj.folders
-    .map((f) => ({
-      name: typeof f?.name === 'string' ? f.name.trim() : '',
-      icon:
-        typeof f?.icon === 'string' && ALLOWED_FOLDER_ICONS.has(f.icon.trim())
-          ? f.icon.trim()
-          : DEFAULT_AUTO_FOLDER_ICON,
-      color: normalizeAutoOrganizeFolderColor(
-        typeof f?.color === 'string' ? f.color : '',
-      ).toLowerCase(),
-    }))
-    .filter((f) => Boolean(f.name));
-
-  if (folderRows.length === 0) {
-    throw new Error('Invalid AI response: no valid folders');
-  }
-
-  const canonicalByLower = new Map<string, (typeof folderRows)[0]>();
-  for (const f of folderRows) {
-    const k = f.name.toLowerCase();
-    if (!canonicalByLower.has(k)) {
-      canonicalByLower.set(k, f);
-    }
-  }
-  const folders = [...canonicalByLower.values()];
-
-  const seenRecordIds = new Set<string>();
-  const assignments: AutoOrganizeResult['assignments'] = [];
-
-  for (const raw of obj.assignments) {
-    const recordId = typeof raw?.recordId === 'string' ? raw.recordId.trim() : '';
-    const folderName = typeof raw?.folderName === 'string' ? raw.folderName.trim() : '';
-    if (!recordId) {
-      throw new Error('Invalid AI response: assignment with empty recordId');
-    }
-    if (seenRecordIds.has(recordId)) {
-      throw new Error('Invalid AI response: duplicate recordId in assignments');
-    }
-    seenRecordIds.add(recordId);
-    if (!folderName) {
-      throw new Error('Invalid AI response: assignment with empty folderName');
-    }
-    const canon = canonicalByLower.get(folderName.toLowerCase());
-    if (!canon) {
-      throw new Error(`Invalid AI response: unknown folder in assignment: ${folderName}`);
-    }
-    assignments.push({ recordId, folderName: canon.name });
-  }
-
-  if (assignments.length === 0) {
-    throw new Error('Invalid AI response: no valid assignments');
-  }
-
-  return { folders, assignments };
-}
-
 function extractExpectedNoteIdsFromCompactPayload(compactPayload: string): string[] {
   try {
     const p = JSON.parse(compactPayload) as { notes?: unknown };
@@ -623,58 +806,6 @@ function extractExpectedNoteIdsFromCompactPayload(compactPayload: string): strin
   } catch {
     return [];
   }
-}
-
-function assertAutoOrganizeComplete(result: AutoOrganizeResult, expectedIds: string[]): void {
-  if (expectedIds.length === 0) {
-    return;
-  }
-
-  if (result.folders.length < 3 || result.folders.length > 8) {
-    throw new Error(`Invalid AI response: folders must be 3-8, got ${result.folders.length}`);
-  }
-
-  const expected = new Set(expectedIds);
-  const got = new Set(result.assignments.map((a) => a.recordId));
-
-  if (got.size !== result.assignments.length) {
-    throw new Error('Invalid AI response: duplicate recordId in assignments');
-  }
-
-  if (got.size !== expected.size) {
-    throw new Error(`Invalid AI response: expected ${expected.size} assignments, got ${got.size}`);
-  }
-
-  for (const id of expected) {
-    if (!got.has(id)) {
-      throw new Error(`Invalid AI response: missing assignment for note id`);
-    }
-  }
-
-  for (const id of got) {
-    if (!expected.has(id)) {
-      throw new Error('Invalid AI response: unexpected recordId in assignments');
-    }
-  }
-}
-
-function buildAutoOrganizeRepairUserSuffix(expectedIds: string[]): string {
-  return `\n\n---\nYour previous JSON failed validation. Output one new valid JSON object only.
-
-Fix all issues:
-- "folders": 3 to 8 items; each "name" unique; icons and colors must be allowed values.
-- "assignments": exactly ${expectedIds.length} objects — one per input note, no duplicates.
-- Every "recordId" must be exactly one of these strings (copy verbatim, including case and punctuation):
-${JSON.stringify(expectedIds)}
-- Every "folderName" in assignments must exactly match a "name" in "folders" (same spelling and casing as in "folders").
-- Re-read classifications, summaries, titles, and transcripts; fix any inconsistent or missing assignments.`;
-}
-
-function isAutoOrganizeParseFailure(err: unknown): boolean {
-  return (
-    err instanceof Error &&
-    (err.message.includes('Invalid AI response') || err.message.includes('malformed JSON'))
-  );
 }
 
 function compactAutoOrganizeInput(notesJsonPayload: string): string {
@@ -727,6 +858,51 @@ function compactAutoOrganizeInput(notesJsonPayload: string): string {
           next.classification = n.classification.trim();
         }
 
+        if (typeof n.createdAt === 'string' && n.createdAt.trim()) {
+          next.createdAt = n.createdAt.trim().slice(0, 10);
+        }
+
+        if (typeof n.ageDays === 'number' && Number.isFinite(n.ageDays) && n.ageDays >= 0) {
+          next.ageDays = Math.floor(n.ageDays);
+        }
+
+        if (typeof n.folderName === 'string' && n.folderName.trim()) {
+          next.folderName = n.folderName.trim();
+        }
+
+        if (n.isPinned === true) {
+          next.isPinned = true;
+        }
+
+        if (n.isRead === true) {
+          next.isRead = true;
+        }
+
+        if (typeof n.taskCount === 'number' && Number.isFinite(n.taskCount) && n.taskCount > 0) {
+          next.taskCount = Math.floor(n.taskCount);
+        }
+
+        if (
+          typeof n.openTaskCount === 'number' &&
+          Number.isFinite(n.openTaskCount) &&
+          n.openTaskCount > 0
+        ) {
+          next.openTaskCount = Math.floor(n.openTaskCount);
+        }
+
+        if (Array.isArray(n.openTasks)) {
+          const openTasks = n.openTasks
+            .filter((task): task is string => typeof task === 'string' && task.trim().length > 0)
+            .map((task) => task.trim().slice(0, 72));
+          if (openTasks.length > 0) {
+            next.openTasks = openTasks.slice(0, 5);
+          }
+        }
+
+        if (n.allTasksDone === true) {
+          next.allTasksDone = true;
+        }
+
         return next;
       })
       .filter(Boolean);
@@ -742,28 +918,69 @@ function compactAutoOrganizeInput(notesJsonPayload: string): string {
       out.existingFolders = src.existingFolders;
     }
 
+    if (typeof src.mode === 'string' && src.mode.trim()) {
+      out.mode = src.mode.trim();
+    }
+
+    if (typeof src.template === 'string' && src.template.trim()) {
+      out.template = src.template.trim();
+    }
+
     return JSON.stringify(out);
   } catch {
     return notesJsonPayload;
   }
 }
 
+function assertAutoOrganizeParsedComplete(
+  result: AutoOrganizeParsedResult,
+  mode: AutoOrganizeMode,
+  expectedIds: string[],
+): void {
+  if (mode === 'suggest_archive') {
+    assertAutoOrganizeArchiveComplete(
+      result as import('@/lib/auto-organize-types').AutoOrganizeArchiveResult,
+      expectedIds,
+    );
+    return;
+  }
+
+  if (mode === 'consolidate_folders') {
+    return;
+  }
+
+  assertAutoOrganizeFoldersComplete(
+    result as import('@/lib/auto-organize-types').AutoOrganizeFoldersResult,
+    expectedIds,
+    mode,
+  );
+}
+
 export async function processAutoOrganizeFolders(
   notesJsonPayload: string,
   model: string,
-  clientUserAgent?: string | null,
+  options?: {
+    clientUserAgent?: string | null;
+    mode?: AutoOrganizeMode;
+    template?: AutoOrganizeTemplate;
+  },
 ): Promise<AutoOrganizeResult> {
+  const mode = options?.mode ?? 'full';
+  const template = normalizeAutoOrganizeTemplate(options?.template);
+  const clientUserAgent = options?.clientUserAgent;
   const compactPayload = compactAutoOrganizeInput(notesJsonPayload);
   let expectedIds = extractExpectedNoteIdsFromCompactPayload(compactPayload);
   if (expectedIds.length === 0) {
     expectedIds = extractExpectedNoteIdsFromCompactPayload(notesJsonPayload);
   }
 
+  const systemPrompt = buildAutoOrganizeSystemPrompt(mode, template);
+
   const sendOrganize = async (m: string, userContent: string): Promise<AutoOrganizeResult> => {
     const { content } = await sendAiChatCompletion({
       model: m,
       messages: [
-        { role: 'system', content: AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: userContent },
       ],
       jsonObject: true,
@@ -771,8 +988,8 @@ export async function processAutoOrganizeFolders(
       clientUserAgent,
     });
 
-    const result = parseAutoOrganizeResult(content);
-    assertAutoOrganizeComplete(result, expectedIds);
+    const result = parseAutoOrganizeResultForMode(content, mode);
+    assertAutoOrganizeParsedComplete(result, mode, expectedIds);
     return result;
   };
 
@@ -784,7 +1001,10 @@ export async function processAutoOrganizeFolders(
       if (!msg.startsWith('Invalid AI response')) {
         throw e;
       }
-      return await sendOrganize(m, compactPayload + buildAutoOrganizeRepairUserSuffix(expectedIds));
+      return await sendOrganize(
+        m,
+        compactPayload + buildAutoOrganizeRepairUserSuffix(mode, expectedIds),
+      );
     }
   };
 

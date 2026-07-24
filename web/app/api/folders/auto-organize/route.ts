@@ -1,17 +1,9 @@
-import { HEADER_DEVICE_ID, HEADER_SYNC_TOKEN } from '@/config/constants';
-import {
-  apiError,
-  checkDeviceRateLimit,
-  HttpStatus,
-  parseJsonBody,
-  requireAppAuth,
-  requireMobileUserAgent,
-  validateDeviceId,
-  validateRequiredStrings,
-} from '@/lib/api';
-import { logAiRequest, resolveAiOperation } from '@/lib/ai-operation';
-import { ApiErrorCode } from '@/lib/api-error-codes';
+import { HEADER_SYNC_TOKEN } from '@/config/constants';
+import { apiError, HttpStatus, parseJsonBody, validateRequiredStrings } from '@/lib/api';
+import { logAiRequest } from '@/lib/ai-operation';
+import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
+import { isAutoOrganizeMode, isAutoOrganizeTemplate } from '@/lib/auto-organize-types';
 import { createAutoOrganizeRequest } from '@/services/folder-organize.service';
 import { NextResponse } from 'next/server';
 
@@ -35,34 +27,17 @@ type RequestBody = {
   existingFolders?: unknown;
   notes?: unknown;
   messageTtlSeconds?: unknown;
+  mode?: unknown;
+  template?: unknown;
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
-  const path = new URL(request.url).pathname;
-  const authError = await requireAppAuth();
-  if (authError) return authError;
-
-  const uaError = await requireMobileUserAgent();
-  if (uaError) return uaError;
-
-  const deviceId = request.headers.get(HEADER_DEVICE_ID);
-  const deviceIdError = validateDeviceId(deviceId);
-  if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
+  const guard = await assertMobileAiRouteContext(request);
+  if (!guard.ok) {
+    return guard.response;
   }
-  const deviceIdTrimmed = deviceId!.trim();
 
-  const rateLimitError = await checkDeviceRateLimit(deviceIdTrimmed);
-  if (rateLimitError) return rateLimitError;
-
-  const opResolved = resolveAiOperation(request, path);
-  if (!opResolved.ok) {
-    return apiError(opResolved.error, HttpStatus.BAD_REQUEST, {
-      pathname: path,
-      code: ApiErrorCode.ValidationError,
-    });
-  }
-  const aiOperation = opResolved.operation;
+  const { deviceId: deviceIdTrimmed, pathname: path, aiOperation } = guard.ctx;
 
   const body = await parseJsonBody<RequestBody>(request);
   if (!body) return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, { pathname: path });
@@ -128,20 +103,33 @@ export const POST = async (request: Request): Promise<NextResponse> => {
           const obj = f as Record<string, unknown>;
           const name = typeof obj.name === 'string' ? obj.name.trim() : '';
           if (!name) return null;
+          const noteCount =
+            typeof obj.noteCount === 'number' && Number.isFinite(obj.noteCount)
+              ? Math.max(0, Math.floor(obj.noteCount))
+              : undefined;
           return {
             name,
             ...(typeof obj.icon === 'string' && obj.icon.trim() ? { icon: obj.icon.trim() } : {}),
             ...(typeof obj.color === 'string' && obj.color.trim()
               ? { color: obj.color.trim() }
               : {}),
+            ...(noteCount !== undefined ? { noteCount } : {}),
           };
         })
         .filter(Boolean)
     : [];
+
+  const modeRaw = typeof body.mode === 'string' ? body.mode.trim() : 'full';
+  const mode = isAutoOrganizeMode(modeRaw) ? modeRaw : 'full';
+  const templateRaw = typeof body.template === 'string' ? body.template.trim() : 'general';
+  const template = isAutoOrganizeTemplate(templateRaw) ? templateRaw : 'general';
+
   const payload = JSON.stringify({
     ...(appLanguage ? { appLanguage } : {}),
     ...(existingFolders.length > 0 ? { existingFolders } : {}),
     notes: sanitizedNotes,
+    mode,
+    template,
   });
 
   const messageTtlSeconds = clampMessageTtlSeconds(body.messageTtlSeconds);
@@ -154,6 +142,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     deviceIdTrimmed,
     request.headers.get('user-agent'),
     messageTtlSeconds,
+    mode,
+    template,
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
@@ -183,6 +173,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const response = NextResponse.json({
     id: String(body.id),
     status: 'processing',
+    pollExpiresAt: result.pollExpiresAt,
     ...(result.syncToken && { syncToken: result.syncToken }),
   });
   if (result.syncToken) response.headers.set(HEADER_SYNC_TOKEN, result.syncToken);

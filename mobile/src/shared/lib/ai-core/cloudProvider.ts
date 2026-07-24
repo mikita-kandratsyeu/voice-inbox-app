@@ -5,12 +5,18 @@ import {
   type AskApiResult,
   pollAiMessage,
   pollAskResult,
+  pollGeneralAskResult,
+  pollInboxAskResult,
   postAiMessage,
   postAskQuestion,
+  postGeneralAskQuestion,
+  postInboxAskQuestion,
+  postInboxAskToolResult,
   recordIdFromSummarizeJobId,
   saveCloudSummarizePending,
 } from '@/shared/lib/ai-api';
 import { AI_REQUEST_CANCELLED, isAiGenerationCancelledError } from '@/shared/lib/ai-api/abort';
+import { parsePollExpiresAtMs } from '@/shared/lib/ai-api/pollDeadline';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 import { isNonNegativeFiniteNumber } from '@/shared/lib/type-guards';
 
@@ -18,6 +24,10 @@ import type {
   AiExecutionContext,
   AskRequest,
   AskTaskResult,
+  GeneralAskRequest,
+  GeneralAskTaskResult,
+  InboxAskRequest,
+  InboxAskTaskResult,
   SummaryTaskRequest,
   SummaryTaskResult,
 } from './types';
@@ -143,18 +153,21 @@ export async function runCloudSummaryTasks(
   const recordId = recordIdFromSummarizeJobId(request.id);
   if (recordId) {
     const ttlSec = ctx.cloudMessageTtlSeconds;
+    const pollExpiresAtMs = parsePollExpiresAtMs(postResult.data.pollExpiresAt);
     await saveCloudSummarizePending({
       recordId,
       jobId: request.id,
       syncToken: postResult.data.syncToken,
       expectAsyncMeetingDialogue: request.expectAsyncMeetingDialogue === true,
       expiresAtMs: Date.now() + ttlSec * 1000,
+      pollExpiresAtMs,
     });
     void useRecordStore.getState().updateAiExtras(recordId, { cloudAiJobId: request.id });
   }
 
   const pollResult = await pollAiMessage(request.id, postResult.data.syncToken, {
     ...fetchOptions,
+    pollExpiresAt: postResult.data.pollExpiresAt,
     expectAsyncMeetingDialogue: request.expectAsyncMeetingDialogue,
     onSummaryReady: request.onCloudSummaryReady,
   });
@@ -216,6 +229,7 @@ export async function runCloudAsk(
       tasks: request.tasks,
       ...(request.priorTurns?.length ? { priorTurns: request.priorTurns } : {}),
       ...(request.recordingMarks?.length ? { recordingMarks: request.recordingMarks } : {}),
+      ...(request.linkedNotes?.length ? { linkedNotes: request.linkedNotes } : {}),
     },
     fetchOptions,
   );
@@ -227,7 +241,194 @@ export async function runCloudAsk(
     return mapPostError(postResult, ctx.aiExecutionMode, 'AI weekly limit exceeded');
   }
 
-  const pollResult = await pollAskResult(request.id, postResult.data.syncToken, fetchOptions);
+  const pollResult = await pollAskResult(request.id, postResult.data.syncToken, {
+    ...fetchOptions,
+    pollExpiresAt: postResult.data.pollExpiresAt,
+  });
+  if (!pollResult.ok) {
+    if (pollResult.error === AI_REQUEST_CANCELLED) {
+      return cloudAskCancelledFailure(ctx.aiExecutionMode);
+    }
+    return {
+      ok: false,
+      provider: 'cloud',
+      mode: ctx.aiExecutionMode,
+      error: pollResult.error,
+    };
+  }
+
+  return {
+    ok: true,
+    provider: 'cloud',
+    mode: ctx.aiExecutionMode,
+    result: pollResult.result,
+  };
+}
+
+export async function runCloudInboxAsk(
+  request: InboxAskRequest,
+  ctx: AiExecutionContext,
+): Promise<InboxAskTaskResult> {
+  const consentOk = await ensureCloudAiThirdPartyConsent();
+
+  if (!consentOk) {
+    return {
+      ok: false,
+      provider: 'cloud',
+      mode: ctx.aiExecutionMode,
+      error: i18n.t('cloudAiConsent.declinedHint'),
+    };
+  }
+
+  const fetchOptions = { signal: request.abortSignal };
+
+  if (request.abortSignal?.aborted) {
+    return cloudAskCancelledFailure(ctx.aiExecutionMode);
+  }
+
+  const routingChars = request.corpusNotes.reduce(
+    (sum, note) => sum + JSON.stringify(note).length,
+    request.question.length,
+  );
+
+  const postResult = await postInboxAskQuestion(
+    {
+      id: request.id,
+      corpusNotes: request.corpusNotes,
+      question: request.question,
+      model: ctx.selectedAIModel,
+      modelMode: ctx.aiModelRoutingMode,
+      routingContext: {
+        taskType: 'ask',
+        routingChars,
+      },
+      messageTtlSeconds: ctx.cloudMessageTtlSeconds,
+      ...(request.priorTurns?.length ? { priorTurns: request.priorTurns } : {}),
+    },
+    fetchOptions,
+  );
+
+  if (!postResult.ok) {
+    if (isPostCancelled(postResult)) {
+      return cloudAskCancelledFailure(ctx.aiExecutionMode);
+    }
+    return mapPostError(postResult, ctx.aiExecutionMode, 'AI weekly limit exceeded');
+  }
+
+  let syncToken = postResult.data.syncToken;
+  let pollExpiresAt = postResult.data.pollExpiresAt;
+  for (let round = 0; round < 4; round += 1) {
+    const pollResult = await pollInboxAskResult(request.id, syncToken, {
+      ...fetchOptions,
+      pollExpiresAt,
+    });
+    if (!pollResult.ok) {
+      if (pollResult.error === AI_REQUEST_CANCELLED) {
+        return cloudAskCancelledFailure(ctx.aiExecutionMode);
+      }
+      return {
+        ok: false,
+        provider: 'cloud',
+        mode: ctx.aiExecutionMode,
+        error: pollResult.error,
+      };
+    }
+
+    if (pollResult.status === 'done') {
+      return {
+        ok: true,
+        provider: 'cloud',
+        mode: ctx.aiExecutionMode,
+        result: pollResult.result,
+      };
+    }
+
+    if (!request.toolExecutor) {
+      return {
+        ok: false,
+        provider: 'cloud',
+        mode: ctx.aiExecutionMode,
+        error: i18n.t('inboxAsk.toolUnavailable'),
+      };
+    }
+
+    request.onInboxAskToolCall?.(pollResult.toolCall);
+    const toolResult = await request.toolExecutor(pollResult.toolCall);
+    request.onInboxAskToolResult?.(toolResult);
+    const postToolResult = await postInboxAskToolResult(request.id, toolResult, fetchOptions);
+    if (!postToolResult.ok) {
+      if ('error' in postToolResult && postToolResult.error === AI_REQUEST_CANCELLED) {
+        return cloudAskCancelledFailure(ctx.aiExecutionMode);
+      }
+      return mapPostError(postToolResult, ctx.aiExecutionMode, 'AI weekly limit exceeded');
+    }
+    syncToken = postToolResult.data.syncToken ?? syncToken;
+    pollExpiresAt = postToolResult.data.pollExpiresAt ?? pollExpiresAt;
+  }
+
+  return {
+    ok: false,
+    provider: 'cloud',
+    mode: ctx.aiExecutionMode,
+    error: i18n.t('inboxAsk.toolLimitExceeded'),
+  };
+}
+
+export async function runCloudGeneralAsk(
+  request: GeneralAskRequest,
+  ctx: AiExecutionContext,
+): Promise<GeneralAskTaskResult> {
+  const consentOk = await ensureCloudAiThirdPartyConsent();
+
+  if (!consentOk) {
+    return {
+      ok: false,
+      provider: 'cloud',
+      mode: ctx.aiExecutionMode,
+      error: i18n.t('cloudAiConsent.declinedHint'),
+    };
+  }
+
+  const fetchOptions = { signal: request.abortSignal };
+
+  if (request.abortSignal?.aborted) {
+    return cloudAskCancelledFailure(ctx.aiExecutionMode);
+  }
+
+  const routingChars =
+    request.question.length +
+    (request.priorTurns?.reduce(
+      (sum, turn) => sum + turn.question.length + turn.answer.length,
+      0,
+    ) ?? 0);
+
+  const postResult = await postGeneralAskQuestion(
+    {
+      id: request.id,
+      question: request.question,
+      model: ctx.selectedAIModel,
+      modelMode: ctx.aiModelRoutingMode,
+      routingContext: {
+        taskType: 'ask',
+        routingChars,
+      },
+      messageTtlSeconds: ctx.cloudMessageTtlSeconds,
+      ...(request.priorTurns?.length ? { priorTurns: request.priorTurns } : {}),
+    },
+    fetchOptions,
+  );
+
+  if (!postResult.ok) {
+    if (isPostCancelled(postResult)) {
+      return cloudAskCancelledFailure(ctx.aiExecutionMode);
+    }
+    return mapPostError(postResult, ctx.aiExecutionMode, 'AI weekly limit exceeded');
+  }
+
+  const pollResult = await pollGeneralAskResult(request.id, postResult.data.syncToken, {
+    ...fetchOptions,
+    pollExpiresAt: postResult.data.pollExpiresAt,
+  });
   if (!pollResult.ok) {
     if (pollResult.error === AI_REQUEST_CANCELLED) {
       return cloudAskCancelledFailure(ctx.aiExecutionMode);

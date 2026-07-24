@@ -1,0 +1,8 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: modals/push-notification-sheet.yaml
+- runFlow: ../../subflows/skip-onboarding-ui.yaml
+- extendedWaitUntil:
+    visible:
+      id: inbox.screen
+    timeout: 20000

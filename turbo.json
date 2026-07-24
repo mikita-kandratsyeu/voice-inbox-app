@@ -1,0 +1,44 @@
+{
+  "$schema": "https://v2-10-2.turborepo.dev/schema.json",
+  "ui": "stream",
+  "globalDependencies": ["yarn.lock", ".yarnrc.yml"],
+  "globalPassThroughEnv": [
+    "DATABASE_URL",
+    "DIRECT_URL",
+    "APP_ENV",
+    "NODE_OPTIONS",
+    "CI"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env", ".env.*"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**", "generated/**"],
+      "env": ["NEXT_PUBLIC_*"]
+    },
+    "lint": {},
+    "lint:fix": {
+      "cache": false
+    },
+    "type:check": {
+      "dependsOn": ["^build"],
+      "env": ["DATABASE_URL", "DIRECT_URL"]
+    },
+    "test": {
+      "dependsOn": ["type:check"],
+      "outputs": ["coverage/**", "test-results.json"]
+    },
+    "format": {
+      "cache": false
+    },
+    "format:check": {},
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

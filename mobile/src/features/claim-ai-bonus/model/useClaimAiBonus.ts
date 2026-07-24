@@ -2,11 +2,13 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
 import { AppState } from 'react-native';
 import { RewardedAdLoader } from 'yandex-mobile-ads';
 
+import { setAdPresentationActive } from '@/features/app-storefront/lib/adPresentationLock';
 import { useProEntitlement } from '@/features/pro-license';
 import { useBootSplashVisible } from '@/shared/config';
 import { getYandexRewardedAdUnitId } from '@/shared/config/runtimeConfig';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { claimAiBonus } from '@/shared/lib/ai-api';
+import { devWarn } from '@/shared/lib/appLogger';
 import { storage } from '@/shared/lib/async-storage';
 import {
   getInternalDebugDisableAdsSnapshot,
@@ -92,8 +94,8 @@ function normalizeAdError(err: unknown): string {
   }
 
   if (raw.trim().startsWith('{')) {
-    if (fromJson == null && __DEV__) {
-      console.error('normalizeAdError: invalid JSON', raw);
+    if (fromJson == null) {
+      devWarn('normalizeAdError: invalid JSON', raw);
     }
     return 'claimAdFailed';
   }
@@ -120,8 +122,7 @@ function serializeAdErrorForLog(err: unknown): unknown {
 }
 
 function logRewardedAdDebug(phase: 'loadAd' | 'showAd', err: unknown): void {
-  if (!__DEV__) return;
-  console.warn('[rewardedAd]', phase, {
+  devWarn('[rewardedAd]', phase, {
     adUnitId: getAdUnitId(),
     description: getErrorText(err),
     raw: serializeAdErrorForLog(err),
@@ -185,10 +186,11 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
       };
 
       ad.onAdFailedToShow = (adError?: { description?: string }) => {
+        setAdPresentationActive(false);
         if (adError != null) {
           logRewardedAdDebug('showAd', adError);
-        } else if (__DEV__) {
-          console.warn('[rewardedAd]', 'showAd', {
+        } else {
+          devWarn('[rewardedAd]', 'showAd', {
             adUnitId: getAdUnitId(),
             note: 'onAdFailedToShow without error payload',
           });
@@ -198,6 +200,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
       };
 
       ad.onAdDismissed = () => {
+        setAdPresentationActive(false);
         setLoading(false);
       };
     },
@@ -222,9 +225,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
         preloadedAdRef.current = ad;
         return ad;
       } catch (err) {
-        if (__DEV__) {
-          logRewardedAdDebug('loadAd', err);
-        }
+        logRewardedAdDebug('loadAd', err);
         return null;
       } finally {
         preloadPromiseRef.current = null;
@@ -266,6 +267,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
 
       if (ad) {
         preloadedAdRef.current = null;
+        setAdPresentationActive(true);
         await ad.show();
         return;
       }
@@ -275,8 +277,10 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
         adUnitId: getAdUnitId(),
       });
       setupAdHandlers(ad);
+      setAdPresentationActive(true);
       await ad.show();
     } catch (err) {
+      setAdPresentationActive(false);
       logRewardedAdDebug('loadAd', err);
       setError(normalizeAdError(err));
       setLoading(false);

@@ -1,7 +1,9 @@
 import dayjs from 'dayjs';
 import { InterstitialAdLoader } from 'yandex-mobile-ads';
 
+import { setAdPresentationActive } from '@/features/app-storefront/lib/adPresentationLock';
 import { getYandexInterstitialAdUnitId } from '@/shared/config/runtimeConfig';
+import { devWarn } from '@/shared/lib/appLogger';
 import { storage } from '@/shared/lib/async-storage';
 import { isString } from '@/shared/lib/type-guards';
 
@@ -118,6 +120,7 @@ export async function tryShowYandexInterstitial(params: {
           return;
         }
         settled = true;
+        setAdPresentationActive(false);
         resolve();
       };
 
@@ -136,17 +139,16 @@ export async function tryShowYandexInterstitial(params: {
         done();
       };
 
+      setAdPresentationActive(true);
       void ad.show().catch(() => {
         done();
       });
     });
   } catch {
-    if (__DEV__) {
-      console.warn('[yandexInterstitial]', 'showAd', {
-        adUnitId: getAdUnitId(),
-        note: 'failed to show ad',
-      });
-    }
+    devWarn('[yandexInterstitial]', 'showAd', {
+      adUnitId: getAdUnitId(),
+      note: 'failed to show ad',
+    });
   } finally {
     interstitialLoadInFlight = false;
   }

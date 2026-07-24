@@ -10,7 +10,7 @@ export function parseVoucherLocale(raw: unknown): VoucherLocale {
   return s === 'ru' ? 'ru' : 'en';
 }
 
-export type VoucherSidebarPerkIcon = 'zap' | 'brain' | 'shield';
+export type VoucherSidebarPerkIcon = 'zap' | 'brain' | 'cloud';
 
 export type VoucherPdfCopy = {
   titleLine: string;
@@ -31,7 +31,7 @@ export type VoucherPdfCopy = {
 };
 
 /** Bump when below-strip, envelope, or voucher legal copy changes (printed on every PDF). */
-export const VOUCHER_TEMPLATE_VERSION = 'v17';
+export const VOUCHER_TEMPLATE_VERSION = 'v23';
 
 export type VoucherEnvelopeCopy = {
   pageTitle: string;
@@ -208,8 +208,8 @@ const COPY_EN: VoucherPdfCopy = {
   thankYouSidebar: 'Thank you for choosing Voice Inbox AI',
   thanksLead: 'Thank you for choosing',
   sidebarTagline: 'From thought to clarity.',
-  sidebarPerks: ['All PRO Features', 'AI summaries & tasks', 'Private mode on your device'],
-  sidebarPerkIcons: ['zap', 'brain', 'shield'],
+  sidebarPerks: ['AI without extra taps', 'Your AI server & customization', 'Cloud backup & sync'],
+  sidebarPerkIcons: ['zap', 'brain', 'cloud'],
   cutAlongOuterLine: 'CUT ALONG SOLID LINE',
   premiumHeadline: '',
   stepTitles: ['OPEN THE APP', 'OPEN CODE ENTRY', 'REDEEM YOUR CODE'],
@@ -234,8 +234,12 @@ const COPY_RU: VoucherPdfCopy = {
   thankYouSidebar: 'Спасибо, что выбрали Voice Inbox AI',
   thanksLead: 'Спасибо, что выбрали',
   sidebarTagline: 'От мысли — к ясности.',
-  sidebarPerks: ['Все PRO-возможности', 'ИИ сводки и задачи', 'Приватный режим на устройстве'],
-  sidebarPerkIcons: ['zap', 'brain', 'shield'],
+  sidebarPerks: [
+    'ИИ без лишних нажатий',
+    'Свой ИИ-сервер и кастомизация',
+    'Облачная синхронизация',
+  ],
+  sidebarPerkIcons: ['zap', 'brain', 'cloud'],
   cutAlongOuterLine: 'РЕЖЬТЕ ПО СПЛОШНОЙ ЛИНИИ',
   premiumHeadline: '',
   stepTitles: ['ОТКРОЙТЕ ПРИЛОЖЕНИЕ', 'ОТКРОЙТЕ ВВОД КОДА', 'АКТИВИРУЙТЕ КОД'],

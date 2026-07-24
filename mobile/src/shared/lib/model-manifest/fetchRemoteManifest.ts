@@ -1,4 +1,6 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
+import { WEB_API_FETCH_TIMEOUT_MS } from '@/shared/lib/api-auth/constants';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { nitroFetch } from '@/shared/lib/fetch';
 
 import { applyFetchedOk, applyNotModified304, getStoredEtag } from './manifestCache';
@@ -21,7 +23,11 @@ export async function fetchRemoteModelManifest(): Promise<void> {
     headers['If-None-Match'] = etag;
   }
 
-  const response = await nitroFetch(url, { method: 'GET', headers });
+  const response = await nitroFetch(url, {
+    method: 'GET',
+    headers,
+    timeoutMs: WEB_API_FETCH_TIMEOUT_MS,
+  });
   const now = Date.now();
 
   if (response.status === 304) {
@@ -30,7 +36,7 @@ export async function fetchRemoteModelManifest(): Promise<void> {
   }
 
   if (!response.ok) {
-    if (__DEV__) console.warn('[model-manifest] fetch failed', response.status, url);
+    diagWarn('[model-manifest] fetch failed', response.status, url);
 
     return;
   }
@@ -39,7 +45,7 @@ export async function fetchRemoteModelManifest(): Promise<void> {
   const parsed = parseMobileModelManifestString(text);
 
   if (!parsed.ok) {
-    if (__DEV__) console.warn('[model-manifest] parse failed', parsed.error);
+    diagWarn('[model-manifest] parse failed', parsed.error);
     return;
   }
 

@@ -57,6 +57,8 @@
 	<string>Adding tasks from notes to Calendar</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Use Face ID to quickly unlock the app.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Voice Inbox AI searches your local network for a compatible AI server (for example Ollama or LM Studio) when you choose Find on network in AI server settings.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Voice Inbox AI uses the microphone to record voice notes—for example when you tap record to capture a meeting reminder or a quick idea. Audio is saved as a note on your device so you can transcribe and organize it.</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
@@ -127,6 +129,16 @@
 	</array>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
+	<key>NSUbiquitousContainers</key>
+	<dict>
+		<key>iCloud.com.mkandratsyeu.voiceinboxai</key>
+		<dict>
+			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
+			<true/>
+			<key>NSUbiquitousContainerName</key>
+			<string>Voice Inbox AI</string>
+		</dict>
+	</dict>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -139,6 +151,33 @@
 				<string>public.audio</string>
 				<string>public.mp3</string>
 				<string>public.mpeg-4-audio</string>
+				<string>public.wav</string>
+				<string>com.microsoft.waveform-audio</string>
+				<string>public.aac-audio</string>
+				<string>org.xiph.flac</string>
+				<string>org.xiph.ogg-audio</string>
+				<string>public.opus</string>
+				<string>org.webmproject.webm</string>
+				<string>public.amr</string>
+				<string>public.3gpp</string>
+				<string>public.aiff-audio</string>
+				<string>com.apple.coreaudio-format</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Documents</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.plain-text</string>
+				<string>public.utf8-plain-text</string>
+				<string>public.text</string>
+				<string>net.daringfireball.markdown</string>
+				<string>public.markdown</string>
+				<string>com.adobe.pdf</string>
+				<string>public.pdf</string>
 			</array>
 		</dict>
 		<dict>

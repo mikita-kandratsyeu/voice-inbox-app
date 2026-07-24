@@ -1,4 +1,5 @@
-import { decrement } from '@/lib/ai-rate-limit';
+import { AUTO_ORGANIZE_CHARGED_USAGE_UNITS } from '@/lib/auto-organize-types';
+import { decrementBy, getAutoOrganizeWeeklyKey } from '@/lib/ai-rate-limit';
 import { isRetryableAiJobError } from '@/lib/ai-job-retry';
 import { saveMessage } from '@/lib/redis';
 import { redis } from '@/lib/redis';
@@ -8,22 +9,10 @@ import { SYSTEM_MICRO_TASK_MODEL } from '@/config/constants';
 import type { AutoOrganizeJobPayload } from '@/types/ai-job';
 import type { AutoOrganizeMessage, Message } from '@/types';
 
-const AUTO_ORGANIZE_WEEKLY_KEY_PREFIX = 'ai_auto_organize_weekly:';
-
-function getAutoOrganizeWeekKey(deviceId: string): string {
-  const now = new Date();
-  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-
-  return `${AUTO_ORGANIZE_WEEKLY_KEY_PREFIX}${deviceId}:${d.getUTCFullYear()}:${weekNo}`;
-}
-
 export async function decrementAutoOrganizeWeekly(deviceId: string): Promise<void> {
   const pro = await isProDevice(deviceId);
   if (pro) return;
-  const key = getAutoOrganizeWeekKey(deviceId);
+  const key = getAutoOrganizeWeeklyKey(deviceId);
   await redis.decr(key);
 }
 
@@ -34,19 +23,25 @@ export async function runAutoOrganizeJob(payload: AutoOrganizeJobPayload): Promi
     saveMessage(msgId, data as unknown as Message, ttl);
 
   try {
-    const result = await processAutoOrganizeFolders(
-      notesPayload,
-      SYSTEM_MICRO_TASK_MODEL,
+    const result = await processAutoOrganizeFolders(notesPayload, SYSTEM_MICRO_TASK_MODEL, {
       clientUserAgent,
-    );
+      mode: payload.mode ?? 'full',
+      template: payload.template ?? 'general',
+    });
     await saveAutoOrganizeMessage(id, {
       id,
       status: 'done',
       result,
+      mode: payload.mode ?? 'full',
     });
   } catch (err) {
     if (!isRetryableAiJobError(err)) {
-      await decrement(deviceId);
+      const chargedUsageUnits = payload.chargedUsageUnits ?? AUTO_ORGANIZE_CHARGED_USAGE_UNITS;
+      await decrementBy(deviceId, chargedUsageUnits, {
+        operation: 'auto_organize',
+        jobId: id,
+        metadata: { chargedUsageUnits },
+      });
       await decrementAutoOrganizeWeekly(deviceId);
       await saveAutoOrganizeMessage(id, {
         id,

@@ -18,4 +18,8 @@ export {
 } from './TabletShellContext';
 export { TabletShellLayout } from './TabletShellLayout';
 export { TabletSidebar } from './TabletSidebar';
-export { getTabletSidebarWidth, TABLET_SIDEBAR_WIDTH } from './tabletSidebarMetrics';
+export {
+  getTabletSidebarSlotWidth,
+  getTabletSidebarWidth,
+  TABLET_SIDEBAR_WIDTH,
+} from './tabletSidebarMetrics';

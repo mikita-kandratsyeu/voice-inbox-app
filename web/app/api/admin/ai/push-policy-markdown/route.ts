@@ -48,7 +48,7 @@ async function callDraft(
 ): Promise<string> {
   const client = createOpenRouterClient(clientUserAgent);
   const response = await client.chat.send({
-    chatGenerationParams: {
+    chatRequest: {
       model,
       messages: [
         { role: 'system', content: PUSH_POLICY_MARKDOWN_SYSTEM_PROMPT },

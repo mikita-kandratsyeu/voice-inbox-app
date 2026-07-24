@@ -1,7 +1,7 @@
 /** KV TTL for cloud AI job payloads (`msg:*` on the API). Keep min/max in sync with `web/config/constants.ts`. */
 export const CLOUD_AI_KV_TTL_MIN_SECONDS = 300;
 export const CLOUD_AI_KV_TTL_MAX_SECONDS = 3600;
-export const CLOUD_AI_KV_TTL_DEFAULT_SECONDS = 3600;
+export const CLOUD_AI_KV_TTL_DEFAULT_SECONDS = 1800;
 
 /** Presets shown in Settings (Smart mode). */
 export const CLOUD_AI_KV_TTL_CHOICES = [300, 600, 900, 1800, 3600] as const;

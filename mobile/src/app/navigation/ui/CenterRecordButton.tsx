@@ -14,7 +14,8 @@ import Animated, {
 
 import { useRecordStore } from '@/entities/record';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
-import { hapticLight } from '@/shared/lib';
+import { TestIds } from '@/shared/e2e';
+import { hapticRecordTabPress } from '@/shared/lib';
 import { RecordVoiceIcon } from '@/shared/ui';
 
 import type { RootStackParamList } from '../types';
@@ -23,14 +24,12 @@ type CenterRecordButtonProps = {
   iconColor: string;
   accentColor: string;
   isTablet?: boolean;
-  onLongPress?: () => void;
 };
 
 export const CenterRecordButton = ({
   iconColor,
   accentColor,
   isTablet,
-  onLongPress,
 }: CenterRecordButtonProps) => {
   const { t } = useTranslation();
   const scale = useSharedValue(1);
@@ -88,8 +87,13 @@ export const CenterRecordButton = ({
       return;
     }
 
-    hapticLight();
+    hapticRecordTabPress();
     navigation.navigate('RecordModal');
+  };
+
+  const handleLongPress = () => {
+    hapticRecordTabPress();
+    navigation.navigate('TextNoteModal');
   };
 
   return (
@@ -111,12 +115,13 @@ export const CenterRecordButton = ({
         ]}
       >
         <TouchableOpacity
+          testID={TestIds.tab.record}
           accessibilityRole="button"
           accessibilityLabel={t('tabs.record')}
-          accessibilityHint={onLongPress ? t('inbox.emptyImportHint') : undefined}
+          accessibilityHint={t('textNote.openCreate')}
           activeOpacity={1}
           onPress={handlePress}
-          onLongPress={onLongPress}
+          onLongPress={handleLongPress}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           style={{

@@ -1,4 +1,18 @@
+import {
+  type AiExecutionMode,
+  isPrivateCustomServerMode,
+  type PrivateAiProvider,
+} from '@/entities/settings';
+
 export function shouldApplyAutoTranscribeOnSave(
+  persistedToggle: boolean,
+  isProActive: boolean,
+  _aiExecutionMode?: AiExecutionMode,
+): boolean {
+  return persistedToggle && isProActive;
+}
+
+export function shouldApplyPrivateServerAutoAi(
   persistedToggle: boolean,
   isProActive: boolean,
 ): boolean {
@@ -8,6 +22,17 @@ export function shouldApplyAutoTranscribeOnSave(
 export function shouldApplyAutoAiAfterTranscription(
   persistedToggle: boolean,
   isProActive: boolean,
+  aiExecutionMode?: AiExecutionMode,
+  privateAiProvider?: PrivateAiProvider,
 ): boolean {
-  return shouldApplyAutoTranscribeOnSave(persistedToggle, isProActive);
+  if (aiExecutionMode === 'private_experimental') {
+    if (
+      privateAiProvider != null &&
+      isPrivateCustomServerMode(aiExecutionMode, privateAiProvider, isProActive)
+    ) {
+      return shouldApplyPrivateServerAutoAi(persistedToggle, isProActive);
+    }
+    return false;
+  }
+  return shouldApplyAutoTranscribeOnSave(persistedToggle, isProActive, aiExecutionMode);
 }

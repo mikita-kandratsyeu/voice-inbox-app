@@ -1,18 +1,29 @@
-import { checkAndIncrement, decrement, getResetAt } from '@/lib/ai-rate-limit';
+import { AUTO_ORGANIZE_CHARGED_USAGE_UNITS } from '@/lib/auto-organize-types';
+import {
+  checkAndIncrement,
+  decrementBy,
+  getAutoOrganizeWeeklyKey,
+  resolveDeviceUsagePeriod,
+} from '@/lib/ai-rate-limit';
+import { aiModelResponseFields } from '@/lib/ai-model-display';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
+import { scheduleAsyncJobPoll } from '@/lib/ai-job-poll-schedule';
+import { getJobMetadata } from '@/lib/job-metadata';
+import { enrichWithPollingHints } from '@/lib/polling-hints';
 import { isProDevice } from '@/lib/pro-entitlement';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import { redis } from '@/lib/redis';
+import type { AutoOrganizeMode, AutoOrganizeTemplate } from '@/lib/auto-organize-types';
+import { normalizeAutoOrganizeTemplate } from '@/lib/auto-organize-types';
 import type { AutoOrganizeJobPayload } from '@/types/ai-job';
 import type { AutoOrganizeMessage, AutoOrganizeResult, Message } from '@/types';
-import { MESSAGE_TTL_SECONDS, WEEK_TTL_SECONDS } from '@/config/constants';
+import { MESSAGE_TTL_SECONDS, SYSTEM_MICRO_TASK_MODEL, WEEK_TTL_SECONDS } from '@/config/constants';
 
 const AUTO_ORGANIZE_FREE_WEEKLY_LIMIT = 2;
-const AUTO_ORGANIZE_WEEKLY_KEY_PREFIX = 'ai_auto_organize_weekly:';
 
 type CreateAutoOrganizeResult =
-  | { created: true; syncToken?: string }
+  | { created: true; syncToken?: string; pollExpiresAt: string }
   | {
       created: false;
       limitExceeded: true;
@@ -20,16 +31,6 @@ type CreateAutoOrganizeResult =
       usage: import('@/lib/ai-rate-limit').AiUsage;
     }
   | { created: false };
-
-function getAutoOrganizeWeekKey(deviceId: string): string {
-  const now = new Date();
-  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-
-  return `${AUTO_ORGANIZE_WEEKLY_KEY_PREFIX}${deviceId}:${d.getUTCFullYear()}:${weekNo}`;
-}
 
 async function checkAndIncrementAutoOrganize(
   deviceId: string,
@@ -39,13 +40,13 @@ async function checkAndIncrementAutoOrganize(
     return { allowed: true };
   }
 
-  const key = getAutoOrganizeWeekKey(deviceId);
+  const period = await resolveDeviceUsagePeriod(deviceId);
+  const key = getAutoOrganizeWeeklyKey(deviceId);
   const count = await redis.incr(key);
   if (count === 1) {
     await redis.expire(key, WEEK_TTL_SECONDS);
   }
 
-  const resetAt = getResetAt();
   if (count > AUTO_ORGANIZE_FREE_WEEKLY_LIMIT) {
     await redis.decr(key);
     return {
@@ -54,8 +55,8 @@ async function checkAndIncrementAutoOrganize(
         used: AUTO_ORGANIZE_FREE_WEEKLY_LIMIT,
         limit: AUTO_ORGANIZE_FREE_WEEKLY_LIMIT,
         remaining: 0,
-        resetAt: resetAt.toISOString(),
-        resetAtUtc: resetAt.toISOString().replace('T', ' ').replace('.000Z', ' UTC'),
+        resetAt: period.resetAt.toISOString(),
+        resetAtUtc: period.resetAt.toISOString().replace('T', ' ').replace('.000Z', ' UTC'),
       },
     };
   }
@@ -69,6 +70,8 @@ export const createAutoOrganizeRequest = async (
   deviceId: string,
   clientUserAgent?: string | null,
   messageTtlSeconds: number = MESSAGE_TTL_SECONDS,
+  mode: AutoOrganizeMode = 'full',
+  template: AutoOrganizeTemplate = 'general',
 ): Promise<CreateAutoOrganizeResult> => {
   const ttl = messageTtlSeconds;
   const saveAutoOrganizeMessage = (msgId: string, data: AutoOrganizeMessage) =>
@@ -84,7 +87,19 @@ export const createAutoOrganizeRequest = async (
   );
   if (!created) return { created: false };
 
-  const generationLimitResult = await checkAndIncrement(deviceId);
+  const generationLimitResult = await checkAndIncrement(
+    deviceId,
+    undefined,
+    AUTO_ORGANIZE_CHARGED_USAGE_UNITS,
+    {
+      operation: 'auto_organize',
+      jobId: id,
+      metadata: {
+        ...aiModelResponseFields(SYSTEM_MICRO_TASK_MODEL),
+        chargedUsageUnits: AUTO_ORGANIZE_CHARGED_USAGE_UNITS,
+      },
+    },
+  );
   if (!generationLimitResult.allowed) {
     await saveAutoOrganizeMessage(id, {
       id,
@@ -101,7 +116,12 @@ export const createAutoOrganizeRequest = async (
 
   const limitResult = await checkAndIncrementAutoOrganize(deviceId);
   if (!limitResult.allowed) {
-    await decrement(deviceId);
+    await decrementBy(deviceId, AUTO_ORGANIZE_CHARGED_USAGE_UNITS, {
+      operation: 'auto_organize',
+      jobId: id,
+      description: 'Auto-organize free weekly limit reached',
+      metadata: { chargedUsageUnits: AUTO_ORGANIZE_CHARGED_USAGE_UNITS },
+    });
     await saveAutoOrganizeMessage(id, {
       id,
       status: 'error',
@@ -124,12 +144,21 @@ export const createAutoOrganizeRequest = async (
     messageTtlSeconds: ttl,
     notesPayload,
     clientUserAgent,
+    mode,
+    template: normalizeAutoOrganizeTemplate(template),
+    chargedUsageUnits: AUTO_ORGANIZE_CHARGED_USAGE_UNITS,
   };
 
   await saveJobPayload(jobPayload);
+  const pollSchedule = await scheduleAsyncJobPoll({
+    jobId: id,
+    jobType: 'auto_organize',
+    deviceId,
+    ttlSeconds: ttl,
+  });
   await dispatchAiJob(jobPayload);
 
-  return { created: true, syncToken };
+  return { created: true, syncToken, pollExpiresAt: pollSchedule.pollExpiresAt };
 };
 
 export const getAutoOrganizeById = async (
@@ -144,15 +173,32 @@ export const getAutoOrganizeById = async (
     status?: string;
     result?: AutoOrganizeResult;
     error?: string;
+    mode?: AutoOrganizeMode;
   };
 
   if (!msg?.id || !msg?.status) return null;
-  if (msg.status === 'processing') return { id: msg.id, status: 'processing' };
+  if (msg.status === 'processing') {
+    const metadata = await getJobMetadata(msg.id);
+    if (metadata) {
+      return enrichWithPollingHints(
+        { id: msg.id, status: 'processing' },
+        metadata.jobType,
+        metadata.startedAt,
+        metadata.pollExpiresAtMs,
+      );
+    }
+    return { id: msg.id, status: 'processing' };
+  }
   if (msg.status === 'error' && typeof msg.error === 'string') {
     return { id: msg.id, status: 'error', error: msg.error };
   }
   if (msg.status === 'done' && msg.result && typeof msg.result === 'object') {
-    return { id: msg.id, status: 'done', result: msg.result };
+    return {
+      id: msg.id,
+      status: 'done',
+      result: msg.result,
+      mode: msg.mode ?? 'full',
+    };
   }
 
   return null;

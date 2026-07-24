@@ -1,6 +1,7 @@
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { recordRepository } from '@/entities/record/model/repository';
+import { diagWarn } from '@/shared/lib/appLogger';
 import {
   generateEmbedding,
   getEmbeddingLanguage,
@@ -26,6 +27,6 @@ export async function generateAndSaveEmbeddingForRecord(record: VoiceRecord): Pr
       useRecordStore.getState().setEmbedding(record.id, embedding);
     }
   } catch (err) {
-    if (__DEV__) console.warn('[embedding-generation] Failed:', err);
+    diagWarn('[embedding-generation] Failed:', err);
   }
 }

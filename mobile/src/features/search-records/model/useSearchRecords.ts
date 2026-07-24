@@ -80,9 +80,7 @@ function getQueryWords(query: string): string[] {
 
 function matchesQueryWords(text: string, words: string[]): boolean {
   if (words.length === 0) return false;
-  return words.every(
-    (word) => text.includes(word) || (word.length >= 4 && text.includes(word.slice(0, 4))),
-  );
+  return words.every((word) => text.includes(word));
 }
 
 function getRelevanceScore(record: VoiceRecord, query: string, searchText: string): number {
@@ -100,7 +98,6 @@ function getRelevanceScore(record: VoiceRecord, query: string, searchText: strin
   const words = getQueryWords(query);
   for (const word of words) {
     if (searchText.includes(word)) score += 2;
-    else if (word.length >= 4 && searchText.includes(word.slice(0, 4))) score += 1;
   }
   return score;
 }
@@ -118,7 +115,10 @@ function matchesQuery(record: VoiceRecord, query: string, searchText: string): b
   );
 }
 
-export const useSearchRecords = (records: VoiceRecord[]) => {
+export const useSearchRecords = (
+  records: VoiceRecord[],
+  options?: { publishedRecordIds?: ReadonlySet<string> },
+) => {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -133,7 +133,7 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
     sortOption,
     setSortOption,
     filterRecords,
-  } = useInboxFilters();
+  } = useInboxFilters({ publishedRecordIds: options?.publishedRecordIds });
 
   const searchTextById = useMemo(() => {
     const map = new Map<string, string>();

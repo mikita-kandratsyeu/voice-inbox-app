@@ -1,4 +1,4 @@
-import { type MutableRefObject, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AppState, type AppStateStatus } from 'react-native';
 import type { AudioSet, RecordBackType } from 'react-native-nitro-sound';
@@ -7,19 +7,9 @@ import AudioRecorderPlayer, {
   AudioSourceAndroidType,
   OutputFormatAndroidType,
 } from 'react-native-nitro-sound';
+import { useSharedValue } from 'react-native-reanimated';
 
 import { useAppLockStore } from '@/entities/app-lock';
-import { NitroFS } from '@/shared/lib/fs';
-
-type AudioRecorderPlayerInstance = {
-  addRecordBackListener: (cb: (e: RecordBackType) => void) => void;
-  removeRecordBackListener: () => void;
-  startRecorder: (uri?: string, audioSets?: AudioSet, meteringEnabled?: boolean) => Promise<string>;
-  stopRecorder: () => Promise<string>;
-  setSubscriptionDuration: (sec: number) => void;
-  pauseRecorder: () => Promise<string>;
-  resumeRecorder: () => Promise<string>;
-};
 import {
   FREE_MAX_RECORDING_MS,
   RECORDING_FINAL_WARNING_REMAINING_MS,
@@ -32,44 +22,83 @@ import {
 } from '@/features/live-activity-recording';
 import {
   ensureRecordingsDir,
-  hapticLight,
-  hapticMedium,
+  hapticRecordingLimitWarning,
+  hapticRecordingPause,
+  hapticRecordingResume,
+  hapticRecordingStart,
   IS_IOS,
   RECORDINGS_DIR,
 } from '@/shared/lib';
+import { diagWarn } from '@/shared/lib/appLogger';
+import { NitroFS } from '@/shared/lib/fs';
 import { checkMicPermission, requestMicPermission } from '@/shared/lib/permissions';
 
 import type { RecordingState } from '../config';
 
+type AudioRecorderPlayerInstance = {
+  addRecordBackListener: (cb: (e: RecordBackType) => void) => void;
+  removeRecordBackListener: () => void;
+  startRecorder: (uri?: string, audioSets?: AudioSet, meteringEnabled?: boolean) => Promise<string>;
+  stopRecorder: () => Promise<string>;
+  setSubscriptionDuration: (sec: number) => void;
+  pauseRecorder: () => Promise<string>;
+  resumeRecorder: () => Promise<string>;
+};
+
 const audioRecorderPlayer = AudioRecorderPlayer as unknown as AudioRecorderPlayerInstance;
 
-const SUBSCRIPTION_DURATION_MS = 200;
+const SUBSCRIPTION_DURATION_MS = 50;
 const MAX_JUMP_FORWARD_MS = 400;
 const MAX_JUMP_BACKWARD_MS = 500;
-const IOS_ROUTE_CHANGE_SUPPRESS_MS = 2800;
+const IOS_START_POSITION_SUPPRESS_MS = 2800;
+const METERING_DB_MIN = -52;
+const METERING_DB_MAX = -12;
 
-type SanitizeResult = { ms: number; routeChanged: boolean };
+/** Map voice metering dB to 0–1 with more usable dynamic range than full -60…0 scale. */
+function normalizeMeteringDb(db: number): number {
+  const clamped = Math.max(METERING_DB_MIN, Math.min(METERING_DB_MAX, db));
+  const linear = (clamped - METERING_DB_MIN) / (METERING_DB_MAX - METERING_DB_MIN);
+  return Math.min(1, Math.max(0, linear ** 0.58));
+}
+
+/**
+ * iOS may report erratic recorder positions when the audio route changes.
+ * Clamp jumps so the on-screen timer stays stable; recording itself continues.
+ */
+function sanitizePosition(rawMs: number, lastValidMs: number, capMs: number): number {
+  if (rawMs < 0) {
+    return lastValidMs;
+  }
+
+  const capped = Math.min(rawMs, capMs);
+
+  if (capped < lastValidMs - MAX_JUMP_BACKWARD_MS) {
+    return lastValidMs;
+  }
+
+  if (capped > lastValidMs + MAX_JUMP_FORWARD_MS) {
+    return lastValidMs + SUBSCRIPTION_DURATION_MS;
+  }
+
+  return capped;
+}
 
 type UseRecordingOptions = {
   maxRecordingMs?: number;
   onLimitReached?: () => void;
   onRecordingStoppedByAppLock?: (path: string, elapsed: number, elapsedMs: number) => void;
-  onAudioRouteChange?: () => void;
-  /** When true, iOS position glitches (e.g. mark-sheet scroll) do not pause recording. */
-  routeChangeSuppressedRef?: MutableRefObject<boolean>;
 };
 
 export const useRecording = ({
   maxRecordingMs = FREE_MAX_RECORDING_MS,
   onLimitReached,
   onRecordingStoppedByAppLock,
-  onAudioRouteChange,
-  routeChangeSuppressedRef,
 }: UseRecordingOptions = {}) => {
   const { t } = useTranslation();
   const [state, setState] = useState<RecordingState>('idle');
   const [elapsed, setElapsed] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
+  const audioLevelShared = useSharedValue(0);
 
   const audioPathRef = useRef<string | null>(null);
   const elapsedRef = useRef(0);
@@ -79,8 +108,9 @@ export const useRecording = ({
   const softLimitWarningFiredRef = useRef(false);
   const finalLimitWarningFiredRef = useRef(false);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
-  const lastLiveActivityUpdateRef = useRef(0);
-  const routeChangeSuppressedUntilRef = useRef(0);
+  const lastLiveActivityDriftSyncRef = useRef(0);
+  const LIVE_ACTIVITY_DRIFT_SYNC_MS = 60_000;
+  const startPositionSuppressedUntilRef = useRef(0);
   const maxRecordingMsRef = useRef(maxRecordingMs);
   maxRecordingMsRef.current = maxRecordingMs;
 
@@ -88,63 +118,18 @@ export const useRecording = ({
   onLimitReachedRef.current = onLimitReached;
   const onRecordingStoppedByAppLockRef = useRef(onRecordingStoppedByAppLock);
   onRecordingStoppedByAppLockRef.current = onRecordingStoppedByAppLock;
-  const onAudioRouteChangeRef = useRef(onAudioRouteChange);
-  onAudioRouteChangeRef.current = onAudioRouteChange;
-  const routeChangeSuppressedRefRef = useRef(routeChangeSuppressedRef);
-  routeChangeSuppressedRefRef.current = routeChangeSuppressedRef;
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  const sanitizePosition = useCallback((rawMs: number, lastValidMs: number): SanitizeResult => {
-    const cap = maxRecordingMsRef.current;
-    if (rawMs < 0) {
-      return { ms: lastValidMs, routeChanged: false };
-    }
-
-    const capped = Math.min(rawMs, cap);
-
-    if (capped < lastValidMs - MAX_JUMP_BACKWARD_MS) {
-      return { ms: lastValidMs, routeChanged: true };
-    }
-
-    if (capped > lastValidMs + MAX_JUMP_FORWARD_MS) {
-      return { ms: lastValidMs + SUBSCRIPTION_DURATION_MS, routeChanged: true };
-    }
-
-    return { ms: capped, routeChanged: false };
-  }, []);
-
   const addRecordBackListener = useCallback(() => {
     audioRecorderPlayer.addRecordBackListener((e: RecordBackType) => {
-      const { ms, routeChanged } = sanitizePosition(e.currentPosition, lastValidMsRef.current);
+      const cap = maxRecordingMsRef.current;
+      const rawMs =
+        IS_IOS && Date.now() < startPositionSuppressedUntilRef.current
+          ? lastValidMsRef.current + SUBSCRIPTION_DURATION_MS
+          : e.currentPosition;
+      const ms = sanitizePosition(rawMs, lastValidMsRef.current, cap);
       lastValidMsRef.current = ms;
-
-      if (
-        routeChanged &&
-        IS_IOS &&
-        Date.now() >= routeChangeSuppressedUntilRef.current &&
-        !routeChangeSuppressedRefRef.current?.current
-      ) {
-        const secs = Math.floor(ms / 1000);
-        elapsedRef.current = secs;
-        elapsedMsRef.current = ms;
-        setElapsed(secs);
-        setElapsedMs(ms);
-
-        audioRecorderPlayer.removeRecordBackListener();
-        audioRecorderPlayer
-          .pauseRecorder()
-          .then((result: string) => {
-            if (audioPathRef.current === null) {
-              audioPathRef.current = result;
-            }
-
-            setState('paused');
-            onAudioRouteChangeRef.current?.();
-          })
-          .catch(() => {});
-        return;
-      }
 
       const secs = Math.floor(ms / 1000);
       elapsedRef.current = secs;
@@ -153,9 +138,17 @@ export const useRecording = ({
       setElapsed(secs);
       setElapsedMs(ms);
 
+      // Update audio level from metering data
+      // currentMetering is typically in dB range (e.g., -160 to 0), normalize to 0-1
+      if (e.currentMetering !== undefined) {
+        audioLevelShared.value = normalizeMeteringDb(e.currentMetering);
+      } else {
+        audioLevelShared.value = 0;
+      }
+
       const now = Date.now();
-      if (IS_IOS && now - lastLiveActivityUpdateRef.current >= 1000) {
-        lastLiveActivityUpdateRef.current = now;
+      if (IS_IOS && now - lastLiveActivityDriftSyncRef.current >= LIVE_ACTIVITY_DRIFT_SYNC_MS) {
+        lastLiveActivityDriftSyncRef.current = now;
         updateRecordingLiveActivity(secs).catch(() => {});
       }
 
@@ -165,12 +158,12 @@ export const useRecording = ({
       if (remainingMs <= RECORDING_FINAL_WARNING_REMAINING_MS) {
         if (!finalLimitWarningFiredRef.current) {
           finalLimitWarningFiredRef.current = true;
-          hapticMedium();
+          hapticRecordingLimitWarning(true);
         }
       } else if (remainingMs <= RECORDING_SOFT_WARNING_REMAINING_MS) {
         if (!softLimitWarningFiredRef.current) {
           softLimitWarningFiredRef.current = true;
-          hapticLight();
+          hapticRecordingLimitWarning(false);
         }
       }
 
@@ -197,7 +190,7 @@ export const useRecording = ({
           .catch(() => {});
       }
     });
-  }, [sanitizePosition, t]);
+  }, [audioLevelShared, t]);
 
   const startRecording = useCallback(async () => {
     const status = await checkMicPermission();
@@ -233,16 +226,18 @@ export const useRecording = ({
       }
       audioPathRef.current = path;
 
-      routeChangeSuppressedUntilRef.current = Date.now() + IOS_ROUTE_CHANGE_SUPPRESS_MS;
+      startPositionSuppressedUntilRef.current = Date.now() + IOS_START_POSITION_SUPPRESS_MS;
       addRecordBackListener();
+      audioLevelShared.value = 0;
       setState('recording');
-      hapticLight();
+      hapticRecordingStart();
 
+      lastLiveActivityDriftSyncRef.current = Date.now();
       startRecordingLiveActivity().catch(() => {});
     } catch (err) {
-      if (__DEV__) console.warn('[useRecording] startRecorder failed:', err);
+      diagWarn('[useRecording] startRecorder failed:', err);
     }
-  }, [addRecordBackListener, t]);
+  }, [addRecordBackListener, audioLevelShared, t]);
 
   const pauseRecording = useCallback(async () => {
     try {
@@ -251,27 +246,32 @@ export const useRecording = ({
 
       const secs = elapsedRef.current;
       setState('paused');
+      audioLevelShared.value = 0;
+      hapticRecordingPause();
 
       updateRecordingLiveActivity(secs, undefined, false).catch(() => {});
     } catch (err) {
-      if (__DEV__) console.warn('[useRecording] pauseRecorder failed:', err);
+      diagWarn('[useRecording] pauseRecorder failed:', err);
     }
-  }, []);
+  }, [audioLevelShared]);
 
   const resumeRecording = useCallback(async () => {
     try {
       audioRecorderPlayer.setSubscriptionDuration(SUBSCRIPTION_DURATION_MS / 1000);
       await audioRecorderPlayer.resumeRecorder();
 
-      routeChangeSuppressedUntilRef.current = Date.now() + IOS_ROUTE_CHANGE_SUPPRESS_MS;
+      startPositionSuppressedUntilRef.current = Date.now() + IOS_START_POSITION_SUPPRESS_MS;
       addRecordBackListener();
+      audioLevelShared.value = 0;
       setState('recording');
+      hapticRecordingResume();
 
+      lastLiveActivityDriftSyncRef.current = Date.now();
       updateRecordingLiveActivity(elapsedRef.current, undefined, true).catch(() => {});
     } catch (err) {
-      if (__DEV__) console.warn('[useRecording] resumeRecorder failed:', err);
+      diagWarn('[useRecording] resumeRecorder failed:', err);
     }
-  }, [addRecordBackListener]);
+  }, [addRecordBackListener, audioLevelShared]);
 
   const stopRecording = useCallback(async (): Promise<string | null> => {
     try {
@@ -286,7 +286,7 @@ export const useRecording = ({
       }
       return audioPathRef.current;
     } catch (err) {
-      if (__DEV__) console.warn('[useRecording] stopRecorder failed:', err);
+      diagWarn('[useRecording] stopRecorder failed:', err);
       return null;
     }
   }, []);
@@ -311,7 +311,7 @@ export const useRecording = ({
           await NitroFS.unlink(clean);
         }
       } catch {
-        if (__DEV__) console.warn('[useRecording] unlink failed:', clean);
+        diagWarn('[useRecording] unlink failed:', clean);
       }
     }
 
@@ -324,8 +324,9 @@ export const useRecording = ({
     elapsedMsRef.current = 0;
     setElapsed(0);
     setElapsedMs(0);
+    audioLevelShared.value = 0;
     setState('idle');
-  }, []);
+  }, [audioLevelShared]);
 
   const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
 
@@ -373,6 +374,7 @@ export const useRecording = ({
     state,
     elapsed,
     elapsedMs,
+    audioLevelShared,
     audioPathRef,
     startRecording,
     pauseRecording,

@@ -53,6 +53,7 @@ export default async function BlogIndexPage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'releases' });
   const posts = await listPublishedReleases(locale);
+  const feedUrl = `${BASE_URL_OR_FALLBACK}/${locale}/blog/feed.xml`;
 
   return (
     <MarketingPageShell>
@@ -73,7 +74,9 @@ export default async function BlogIndexPage({ params }: Props) {
               </p>
               <p className="mt-4">
                 <a
-                  href={`${locale === 'en' ? '' : `/${locale}`}/blog/feed.xml`}
+                  href={feedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm font-medium text-blue-600 underline underline-offset-2 hover:text-blue-500 dark:text-blue-400"
                 >
                   {t('rssFeed')}

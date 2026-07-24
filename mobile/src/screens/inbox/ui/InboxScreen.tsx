@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View } from 'react-native';
 
+import { openPlanPaywall } from '@/app/navigation/openPlanPaywall';
 import {
   FolderChipBar,
   FolderFormModal,
@@ -9,8 +10,14 @@ import {
 } from '@/entities/folder';
 import { BatchActionBar, BatchExportSheet } from '@/features/batch-select';
 import { useImportFileAction } from '@/features/import-audio-file';
-import { AutoOrganizeProgressOverlay } from '@/features/manage-folders';
+import {
+  AiOrganizeActionSheet,
+  AiOrganizeTemplateSheet,
+  AutoOrganizeProgressOverlay,
+} from '@/features/manage-folders';
+import { MobileAdminBanner, useMobileAdminBanner } from '@/features/mobile-admin-banner';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
+import { TestIds } from '@/shared/e2e';
 import { BlockingProgressModal } from '@/shared/ui';
 
 import { useInboxScreen } from '../lib/useInboxScreen';
@@ -18,11 +25,13 @@ import { InboxHeader } from './InboxHeader';
 import { InboxScreenEmptyLibrary } from './InboxScreenEmptyLibrary';
 import { InboxScreenHeaderRight } from './InboxScreenHeaderRight';
 import { InboxScreenLoadedBody } from './InboxScreenLoadedBody';
+import { InboxShareRecordSheet } from './InboxShareRecordSheet';
 import { InboxSkeleton } from './InboxSkeleton';
 
 export const InboxScreen = () => {
   const inbox = useInboxScreen();
   const importFile = useImportFileAction();
+  const { banner: adminBanner, dismiss: dismissAdminBanner } = useMobileAdminBanner();
   const {
     t,
     color,
@@ -51,11 +60,23 @@ export const InboxScreen = () => {
     closeFolderModal,
     handleFolderSave,
     handleFolderDelete,
-    runAutoOrganize,
+    openAiOrganizeSheet,
+    closeAiOrganizeSheet,
+    aiOrganizeSheetVisible,
+    aiOrganizePresentKey,
+    aiOrganizeTemplateSheetVisible,
+    closeAiOrganizeTemplateSheet,
+    pendingAutoOrganizeTemplate,
+    setPendingAutoOrganizeTemplate,
+    handleAiOrganizeActionSelect,
+    handleAiOrganizeTemplateBack,
+    handleAiOrganizeTemplateApply,
     cancelAutoOrganize,
     isAutoOrganizing,
+    autoOrganizeActiveMode,
     autoOrganizeOverlayVisible,
     autoOrganizeOverlayMode,
+    autoOrganizeEligibleCount,
     query,
     setQuery,
     filtered,
@@ -73,7 +94,10 @@ export const InboxScreen = () => {
     allSelected,
     handleSelectAll,
     handleSearchHeaderPress,
-    handleCreateTextNote,
+    handleOpenNotesGraph,
+    handleCloseNotesGraphProSheet,
+    handleNotesGraphProUpgrade,
+    notesGraphProSheetVisible,
     searchBarExplicitOpen,
     showInboxSearchBar,
     emptyStatePlacement,
@@ -107,6 +131,7 @@ export const InboxScreen = () => {
     listContentStyle,
     listStyle,
     renderItem,
+    listExtraData,
     keyExtractor,
     getItemType,
     onListEndReached,
@@ -114,14 +139,39 @@ export const InboxScreen = () => {
     onInboxListScroll,
     batchProgressModal,
     isGeneratingSharePdf,
+    inboxCardLayout,
+    handleInboxCardLayoutChange,
+    shareSheetVisible,
+    shareTargetRecord,
+    shareEmailSending,
+    handleCloseShareSheet,
+    handleShareRecordText,
+    handleShareRecordAudio,
+    handleEmailShareRecord,
+    handlePublishStateChanged,
+    renameRecordSheet,
+    isProActive,
   } = inbox;
 
+  const handleEnterBatchModeNoHaptic = useCallback(
+    () => enterBatchMode(undefined, { haptic: false }),
+    [enterBatchMode],
+  );
+
+  const handleImportFile = useCallback(() => void importFile(), [importFile]);
+
+  const handleSearchClear = useCallback(
+    () => setSearchBarExplicitOpen(false),
+    [setSearchBarExplicitOpen],
+  );
+
   return (
-    <View style={[screenStyle, { flex: 1 }]}>
+    <View testID={TestIds.inbox.screen} style={[screenStyle, { flex: 1 }]}>
       <InboxHeader
         color={color}
         isLoaded={isLoaded}
         isPrivateMode={isPrivateMode}
+        transparentBackground={useTabletShell}
         subtitleText={
           batchSelect.isSelectMode
             ? t('batch.selectedCount', { count: batchSelect.selectedIds.size })
@@ -142,17 +192,17 @@ export const InboxScreen = () => {
             isAutoOrganizing={isAutoOrganizing}
             onSearchHeaderPress={handleSearchHeaderPress}
             onSelectAll={handleSelectAll}
-            onAutoOrganize={() => {
-              void runAutoOrganize();
-            }}
-            onEnterBatchMode={() => enterBatchMode(undefined, { haptic: false })}
+            onOpenAiOrganizeSheet={openAiOrganizeSheet}
+            onEnterBatchMode={handleEnterBatchModeNoHaptic}
             onOpenAllTasks={() => navigation.navigate('AllTasks')}
-            onCreateTextNote={handleCreateTextNote}
-            onImportFile={() => {
-              void importFile();
-            }}
+            onOpenNotesGraph={handleOpenNotesGraph}
+            onOpenInboxAsk={() =>
+              navigation.navigate('InboxAskAI', {
+                folderId: effectiveActiveFolderId ?? undefined,
+              })
+            }
+            onImportFile={handleImportFile}
             useTabletShell={useTabletShell}
-            hideCreateTextNote={useTabletShell}
             t={t}
           />
         }
@@ -169,6 +219,9 @@ export const InboxScreen = () => {
           scrollRef={folderChipScrollRef}
         />
       )}
+      {adminBanner && !batchSelect.isSelectMode && (records.length === 0 || !isLoaded) ? (
+        <MobileAdminBanner banner={adminBanner} color={color} onDismiss={dismissAdminBanner} />
+      ) : null}
       {!isLoaded ? (
         <InboxSkeleton color={color} />
       ) : records.length === 0 ? (
@@ -179,7 +232,7 @@ export const InboxScreen = () => {
           bannerMaxWidth={bannerMaxWidth}
           title={t('inbox.emptyTitle')}
           description={t('inbox.emptyDescription')}
-          hint={t('inbox.emptyImportHint')}
+          hint={t(useTabletShell ? 'inbox.emptyImportHintTablet' : 'inbox.emptyImportHint')}
         />
       ) : (
         <InboxScreenLoadedBody
@@ -193,7 +246,7 @@ export const InboxScreen = () => {
           query={query}
           onChangeQuery={setQuery}
           searchFocusSignal={searchFocusSignal}
-          onSearchCleared={() => setSearchBarExplicitOpen(false)}
+          onSearchCleared={handleSearchClear}
           batchSelect={batchSelect}
           filterStatus={filterStatus}
           menuFilterStatus={menuFilterStatus}
@@ -201,6 +254,8 @@ export const InboxScreen = () => {
           onFilterChange={setFilterStatus}
           onMenuFilterChange={setMenuFilterStatus}
           onSortChange={setSortOption}
+          cardLayout={inboxCardLayout}
+          onCardLayoutChange={handleInboxCardLayoutChange}
           showSwipeHint={showSwipeHint}
           onDismissSwipeHint={dismissSwipeHint}
           isSearching={isSearching}
@@ -210,16 +265,19 @@ export const InboxScreen = () => {
           emptyFolderHint={effectiveActiveFolderId ? t('inbox.emptyFolderHint') : undefined}
           effectiveActiveFolderId={effectiveActiveFolderId}
           listRef={listRef}
-          filterStatusKey={`${filterStatus}:${menuFilterStatus ?? 'none'}`}
+          filterStatusKey={`${filterStatus}:${menuFilterStatus ?? 'none'}:${inboxCardLayout}`}
           pagedFlattenedData={pagedFlattenedData}
           listContentStyle={listContentStyle}
           listStyle={listStyle}
           onEndReached={onListEndReached}
           renderListItem={renderItem}
+          listExtraData={listExtraData}
           keyExtractor={keyExtractor}
           getItemType={getItemType}
           onInboxListScroll={onInboxListScroll}
           showInboxScrollResetSkeleton={showInboxScrollResetSkeleton}
+          adminBanner={adminBanner && !batchSelect.isSelectMode ? adminBanner : null}
+          onDismissAdminBanner={dismissAdminBanner}
         />
       )}
       {batchSelect.isSelectMode && (
@@ -263,6 +321,12 @@ export const InboxScreen = () => {
         onClose={handleCloseBatchExportProSheet}
         onUpgradePress={handleBatchExportProUpgrade}
       />
+      <AutomationComingSoonSheet
+        visible={notesGraphProSheetVisible}
+        feature="notesGraph"
+        onClose={handleCloseNotesGraphProSheet}
+        onUpgradePress={handleNotesGraphProUpgrade}
+      />
       {foldersEnabled && (
         <FolderReorderSheet
           visible={folderReorderVisible}
@@ -280,9 +344,39 @@ export const InboxScreen = () => {
           onClose={closeFolderModal}
         />
       )}
+      {foldersEnabled ? (
+        <>
+          <AiOrganizeActionSheet
+            visible={aiOrganizeSheetVisible}
+            presentRequestKey={aiOrganizePresentKey}
+            eligibleCount={autoOrganizeEligibleCount}
+            isProActive={isProActive}
+            onClose={closeAiOrganizeSheet}
+            onSelect={handleAiOrganizeActionSelect}
+            onProRequired={() => {
+              closeAiOrganizeSheet();
+              openPlanPaywall();
+            }}
+          />
+          <AiOrganizeTemplateSheet
+            visible={aiOrganizeTemplateSheetVisible}
+            selectedTemplate={pendingAutoOrganizeTemplate}
+            isProActive={isProActive}
+            onClose={closeAiOrganizeTemplateSheet}
+            onBack={handleAiOrganizeTemplateBack}
+            onSelect={setPendingAutoOrganizeTemplate}
+            onApply={handleAiOrganizeTemplateApply}
+            onProRequired={() => {
+              closeAiOrganizeTemplateSheet();
+              openPlanPaywall();
+            }}
+          />
+        </>
+      ) : null}
       <AutoOrganizeProgressOverlay
         visible={autoOrganizeOverlayVisible}
         mode={autoOrganizeOverlayMode}
+        organizeMode={autoOrganizeActiveMode}
         onCancel={cancelAutoOrganize}
       />
       <BlockingProgressModal
@@ -293,11 +387,29 @@ export const InboxScreen = () => {
         progressLabel={batchProgressModal?.progressLabel}
       />
       <BlockingProgressModal
-        visible={isGeneratingSharePdf && !batchExportSheetVisible}
+        visible={isGeneratingSharePdf && !batchExportSheetVisible && !shareSheetVisible}
         title={t('share.generatingPdfTitle')}
         description={t('share.generatingPdfDescription')}
         total={0}
       />
+      <InboxShareRecordSheet
+        visible={shareSheetVisible}
+        record={shareTargetRecord}
+        hasAudio={Boolean(shareTargetRecord?.audioPath?.trim())}
+        isMeeting={shareTargetRecord?.classification === 'meeting'}
+        showSpeakerTurnsExport={
+          isProActive &&
+          shareTargetRecord?.classification === 'meeting' &&
+          Boolean(shareTargetRecord.meetingDialogue?.trim())
+        }
+        isSendingEmail={shareEmailSending}
+        onClose={handleCloseShareSheet}
+        onShareText={handleShareRecordText}
+        onEmailRecord={handleEmailShareRecord}
+        onShareAudio={handleShareRecordAudio}
+        onPublishStateChanged={handlePublishStateChanged}
+      />
+      {renameRecordSheet}
     </View>
   );
 };

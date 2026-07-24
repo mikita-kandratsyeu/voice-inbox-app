@@ -1,6 +1,9 @@
-import * as admin from 'firebase-admin';
+import { getMessaging, type Message } from 'firebase-admin/messaging';
+
+import { initFirebaseAdmin } from '@/lib/firebase-admin';
 
 import { getPushMessages } from './push-messages';
+import { cleanupInvalidPushToken } from './push-tokens';
 
 export type PushPayload = {
   type: 'ai_complete' | 'policy_update' | 'limit_warning' | 'limit_exceeded';
@@ -10,28 +13,37 @@ export type PushPayload = {
   message?: string;
 };
 
-const FIREBASE_SERVICE_ACCOUNT = process.env.FIREBASE_SERVICE_ACCOUNT;
+type FcmSendError = {
+  code?: string;
+  errorInfo?: { code?: string };
+};
 
-let initialized = false;
+function getFcmErrorCode(err: unknown): string {
+  if (!err || typeof err !== 'object') return 'unknown';
+  const record = err as FcmSendError;
+  return record.code || record.errorInfo?.code || 'unknown';
+}
 
-function initFirebase(): boolean {
-  if (initialized) return admin.apps.length > 0;
-  initialized = true;
+/**
+ * Check if FCM error indicates invalid/expired token.
+ * These tokens should be removed from our database.
+ */
+function isTokenInvalidError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
 
-  if (admin.apps.length > 0) return true;
-  if (!FIREBASE_SERVICE_ACCOUNT?.trim()) return false;
+  const errorCode = getFcmErrorCode(err);
 
-  try {
-    const raw = process.env.FIREBASE_SERVICE_ACCOUNT!;
-    const serviceAccount = JSON.parse(raw) as admin.ServiceAccount;
+  // FCM error codes for invalid tokens that should be cleaned up:
+  // - messaging/invalid-registration-token: malformed token
+  // - messaging/registration-token-not-registered: token was unregistered (app reinstall, etc)
+  // - messaging/invalid-argument: often means token format is wrong
+  const invalidTokenCodes = [
+    'messaging/invalid-registration-token',
+    'messaging/registration-token-not-registered',
+    'messaging/invalid-argument',
+  ];
 
-    admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-    console.log('[FCM] initialized');
-    return true;
-  } catch (err) {
-    console.error('[FCM] init failed:', err);
-    return false;
-  }
+  return invalidTokenCodes.includes(errorCode);
 }
 
 export async function sendPushViaFirebase(
@@ -39,15 +51,16 @@ export async function sendPushViaFirebase(
   payload: PushPayload,
   locale?: string | null,
   completedCount?: number,
+  deviceId?: string | null,
 ): Promise<boolean> {
-  if (!initFirebase()) {
+  if (!initFirebaseAdmin()) {
     console.warn('[FCM] not available (no FIREBASE_SERVICE_ACCOUNT)');
     return false;
   }
 
   const defaults = getPushMessages(payload.type, locale, completedCount);
 
-  const message: admin.messaging.Message = {
+  const message: Message = {
     token: fcmToken,
     notification: {
       title: payload.title ?? defaults.title,
@@ -69,14 +82,31 @@ export async function sendPushViaFirebase(
   };
 
   try {
-    const response = await admin.messaging().send(message);
+    const response = await getMessaging().send(message);
     console.log('[FCM] send ok', { type: payload.type, responseId: response });
     return true;
-  } catch (err) {
-    console.error('[FCM] send failed:', err, {
-      type: payload.type,
-      tokenLen: fcmToken.length,
-    });
+  } catch (err: unknown) {
+    const errorCode = getFcmErrorCode(err);
+
+    console.error(
+      '[FCM] send failed:',
+      {
+        type: payload.type,
+        errorCode,
+        tokenLen: fcmToken.length,
+        deviceId,
+      },
+      err,
+    );
+
+    // Cleanup invalid tokens to prevent repeated failures
+    if (isTokenInvalidError(err) && deviceId) {
+      console.warn('[FCM] invalid token detected, cleaning up', { deviceId, errorCode });
+      await cleanupInvalidPushToken(deviceId).catch((cleanupErr) => {
+        console.error('[FCM] token cleanup failed', { deviceId }, cleanupErr);
+      });
+    }
+
     return false;
   }
 }

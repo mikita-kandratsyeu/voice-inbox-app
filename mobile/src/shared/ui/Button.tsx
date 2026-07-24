@@ -220,7 +220,11 @@ export const Button = ({
       disabled={disabled || loading}
       {...rest}
     >
-      {resolvedIcon}
+      {isIconOnly && loading ? (
+        <ActivityIndicator size="small" color={activityIndicatorColor} />
+      ) : (
+        resolvedIcon
+      )}
       {!isIconOnly && label && (
         <View
           className={[
@@ -278,7 +282,7 @@ export const Button = ({
               <View
                 pointerEvents="none"
                 style={[
-                  StyleSheet.absoluteFillObject,
+                  StyleSheet.absoluteFill,
                   { alignItems: 'center', justifyContent: 'center' },
                 ]}
               >

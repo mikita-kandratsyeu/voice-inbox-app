@@ -27,7 +27,10 @@ export function sanitizePickerImportFileName(raw: string): string {
   const trimmed = raw.trim().replace(/\0/g, '');
   if (!trimmed) return 'imported-file';
 
-  const safe = trimmed.replace(/[/\\]/g, '_');
+  const safe = trimmed
+    .replace(/[/\\]/g, '_')
+    .replace(/[[\]]/g, '')
+    .replace(/[<>:"|?*]/g, '_');
   if (safe.length <= MAX_IMPORT_FILE_NAME_LENGTH) return safe;
 
   const extMatch = safe.match(/(\.[^./\\]+)$/);

@@ -1,5 +1,6 @@
 import { ApiErrorCode } from '@/lib/api-error-codes';
 import { apiError, HttpStatus } from '@/lib/api';
+import { isProductionLikeAppEnv } from '@/lib/app-env';
 import {
   buildProLicenseKeyEmail,
   type ProLicenseEmailDuration,
@@ -28,7 +29,7 @@ function parseDuration(req: NextRequest): ProLicenseEmailDuration {
  * Example: http://localhost:3000/api/dev/pro-license-email-preview?months=12&email=demo@example.com
  */
 export function GET(req: NextRequest): NextResponse {
-  if (process.env.NODE_ENV === 'production') {
+  if (isProductionLikeAppEnv()) {
     return apiError('Not found', HttpStatus.NOT_FOUND, {
       pathname: PATH,
       code: ApiErrorCode.NotFound,

@@ -1,16 +1,8 @@
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Keyboard,
-  LayoutAnimation,
-  Platform,
-  Pressable,
-  Text,
-  UIManager,
-  View,
-} from 'react-native';
+import { Keyboard, LayoutAnimation, Pressable, Text, UIManager, View } from 'react-native';
 import { TextInput } from 'react-native-gesture-handler';
 
 import {
@@ -28,11 +20,12 @@ import {
   hapticLight,
   hapticSelection,
   hapticSuccess,
+  IS_ANDROID,
   IS_IOS,
   isDarkSurfaceColor,
 } from '@/shared/lib';
 import runAfterInteractions from '@/shared/lib/runAfterInteractions';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import { AppBottomSheetContent, AppBottomSheetModal, SheetFooterButtons } from '@/shared/ui';
 
 const MARK_LABEL_MAX_CHARS = 280;
 const MARK_SHEET_KEYBOARD_BOTTOM_PADDING = 24;
@@ -42,7 +35,7 @@ const MARK_PICKER_ROWS: RecordingMarkKind[][] = [
   RECORDING_MARK_PICKER_KINDS.slice(3, 6),
 ];
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+if (IS_ANDROID && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
@@ -66,7 +59,6 @@ export const AddRecordingMarkSheet = ({
   const c = useColors();
   const theme = useAppTheme();
   const surfaceDark = isDarkSurfaceColor(c);
-  const contentPadding = useBottomSheetContentPadding(24);
   const [step, setStep] = useState<SheetStep>('pick');
   const [pendingKind, setPendingKind] = useState<RecordingMarkKind>(DEFAULT_RECORDING_MARK_KIND);
   const [label, setLabel] = useState('');
@@ -156,11 +148,6 @@ export const AddRecordingMarkSheet = ({
 
   const timeSec = Math.max(0, Math.floor(snapshotOffsetMs / 1000));
 
-  const bottomPadding =
-    step === 'label' && keyboardVisible
-      ? { paddingBottom: MARK_SHEET_KEYBOARD_BOTTOM_PADDING }
-      : contentPadding;
-
   return (
     <AppBottomSheetModal
       ref={bottomSheetRef}
@@ -169,11 +156,11 @@ export const AddRecordingMarkSheet = ({
       surface="card"
       backdrop="subtle"
     >
-      <BottomSheetView
+      <AppBottomSheetContent
         style={{
-          paddingHorizontal: 20,
           paddingTop: 4,
-          ...bottomPadding,
+          paddingBottom:
+            step === 'label' && keyboardVisible ? MARK_SHEET_KEYBOARD_BOTTOM_PADDING : 20,
           gap: step === 'pick' ? 20 : 16,
         }}
       >
@@ -190,9 +177,9 @@ export const AddRecordingMarkSheet = ({
 
             <View className="gap-2">
               {MARK_PICKER_ROWS.map((row, rowIndex) => (
-                <View key={rowIndex} className="flex-row items-stretch gap-2">
+                <View key={rowIndex} className="flex-row gap-2">
                   {row.map((kind) => (
-                    <View key={kind} className="min-w-0 flex-1">
+                    <View key={kind} className="min-w-0 flex-1 basis-0">
                       <RecordingMarkKindCard
                         kind={kind}
                         color={c}
@@ -290,7 +277,7 @@ export const AddRecordingMarkSheet = ({
             />
           </>
         )}
-      </BottomSheetView>
+      </AppBottomSheetContent>
     </AppBottomSheetModal>
   );
 };

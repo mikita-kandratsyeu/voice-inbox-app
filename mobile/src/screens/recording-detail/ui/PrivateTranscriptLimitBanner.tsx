@@ -5,6 +5,7 @@ import { Text, View } from 'react-native';
 import type { PrivateCapabilityTier } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { getTranscriptCharLimit } from '@/shared/lib/ai-core/localProvider';
+import { formatGroupedInteger } from '@/shared/lib/formatGroupedInteger';
 
 type PrivateTranscriptLimitBannerProps = {
   color: Colors;
@@ -17,7 +18,7 @@ export function PrivateTranscriptLimitBanner({
   privateCapabilityTier,
   transcriptCharCount,
 }: PrivateTranscriptLimitBannerProps) {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
 
   const charLimit = getTranscriptCharLimit(privateCapabilityTier);
 
@@ -27,15 +28,15 @@ export function PrivateTranscriptLimitBanner({
     if (!visible) return '';
     if (privateCapabilityTier === 'limited') {
       return t('recordingDetail.privateLimitedTranscriptHint', {
-        limit: charLimit.toLocaleString(),
-        count: transcriptCharCount.toLocaleString(),
+        limit: formatGroupedInteger(charLimit, i18n.language),
+        count: formatGroupedInteger(transcriptCharCount, i18n.language),
       });
     }
     return t('recordingDetail.privateTranscriptTruncationHint', {
-      limit: charLimit.toLocaleString(),
-      count: transcriptCharCount.toLocaleString(),
+      limit: formatGroupedInteger(charLimit, i18n.language),
+      count: formatGroupedInteger(transcriptCharCount, i18n.language),
     });
-  }, [charLimit, privateCapabilityTier, t, transcriptCharCount, visible]);
+  }, [charLimit, i18n.language, privateCapabilityTier, t, transcriptCharCount, visible]);
 
   if (!visible) {
     return null;

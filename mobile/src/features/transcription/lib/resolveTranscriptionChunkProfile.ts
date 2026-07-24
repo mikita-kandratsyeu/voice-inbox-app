@@ -1,26 +1,20 @@
-import { DeviceInfoModule } from 'react-native-nitro-device-info';
+import type { TranscriptionQualityMode } from '@/entities/settings/model/types';
 
+import { getDevicePerformanceProfile } from './devicePerformanceProfile';
 import type { TranscriptionChunkProfile } from './transcribeAudio';
+import { applyQualityModeToChunkProfile } from './transcriptionQualityMode';
 
-const NORMAL_PROFILE: TranscriptionChunkProfile = {
-  chunkDurationSec: 24,
-  chunkOverlapSec: 3,
-};
+/**
+ * Resolves optimal chunk profile based on device performance, power state, and quality mode.
+ */
+export function resolveTranscriptionChunkProfile(
+  qualityMode: TranscriptionQualityMode,
+): TranscriptionChunkProfile {
+  const profile = getDevicePerformanceProfile({ respectPowerMode: true });
+  const base = {
+    chunkDurationSec: profile.optimalChunkDurationSec,
+    chunkOverlapSec: profile.optimalChunkOverlapSec,
+  };
 
-const CONSERVATIVE_PROFILE: TranscriptionChunkProfile = {
-  chunkDurationSec: 18,
-  chunkOverlapSec: 3,
-};
-
-export function resolveTranscriptionChunkProfile(): TranscriptionChunkProfile {
-  try {
-    const powerState = DeviceInfoModule.getPowerState();
-    if (powerState.lowPowerMode || DeviceInfoModule.isLowBatteryLevel(0.2)) {
-      return CONSERVATIVE_PROFILE;
-    }
-  } catch {
-    // Device info is best-effort; fall back to the normal profile.
-  }
-
-  return NORMAL_PROFILE;
+  return applyQualityModeToChunkProfile(qualityMode, base, profile.tier);
 }

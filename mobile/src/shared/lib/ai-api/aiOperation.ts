@@ -7,6 +7,8 @@ export const HEADER_AI_OPERATION = 'x-voice-inbox-ai-operation';
 export const AI_OPERATIONS = [
   'transcript_summarize',
   'transcript_ask',
+  'inbox_ask',
+  'general_ask',
   'digest',
   'translate',
   'folder_auto_organize',

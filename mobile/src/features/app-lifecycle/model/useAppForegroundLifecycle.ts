@@ -4,8 +4,15 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { useRecordStore } from '@/entities/record';
 import { syncPrivateCapabilityTier } from '@/entities/settings';
 import { scheduleResumeAllPendingCloudSummarize } from '@/features/ai-processing';
+import { scheduleDrainPrivateAiTaskQueue } from '@/features/ai-task-queue';
+import { syncAllBackupReminderNotifications } from '@/features/backup-reminder-notifications';
+import { maybeRunScheduledGithubSync } from '@/features/github-sync';
+import { maybeRunScheduledGitlabSync } from '@/features/gitlab-sync';
+import { maybeRunScheduledIcloudSync } from '@/features/icloud-sync';
 import { localLlmModelDownloader } from '@/features/model-manager/lib/local-llm-download';
 import { whisperModelDownloader } from '@/features/model-manager/lib/whisper-download';
+import { whisperKitModelDownloader } from '@/features/model-manager/lib/whisper-kit-download';
+import { reconcileWhisperKitDownloadStatuses } from '@/features/model-manager/lib/whisperKitModelStorage';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import {
   abortTranscriptionForAppBackground,
@@ -22,29 +29,33 @@ const FOREGROUND_ON_ACTIVE_THROTTLE_MS = 15_000;
 
 const isModelDownloading = (): boolean => {
   const whisperState = whisperModelDownloader.getSnapshot().machineState;
+  const whisperKitState = whisperKitModelDownloader.getSnapshot().machineState;
   const llmState = localLlmModelDownloader.getSnapshot().machineState;
 
   return (
     whisperState === 'downloading' ||
     whisperState === 'pending' ||
+    whisperKitState === 'downloading' ||
+    whisperKitState === 'pending' ||
     llmState === 'downloading' ||
     llmState === 'pending'
   );
 };
 
-export function useAppForegroundLifecycle(): void {
+export function useAppForegroundLifecycle(webApiReady = false): void {
   useEffect(() => {
     let foregroundInterval: ReturnType<typeof setInterval> | null = null;
     let lastHeartbeatAt = 0;
     let lastForegroundAt = 0;
 
     const sendForegroundHeartbeat = () => {
-      if (!getHasSeenOnboarding()) return;
+      if (!webApiReady || !getHasSeenOnboarding()) return;
       lastHeartbeatAt = Date.now();
       notifyAppForeground();
     };
 
     const maybeNotifyForeground = () => {
+      if (!webApiReady) return;
       const isAiProcessing = useRecordStore.getState().hasActiveAiJobs;
       if (!isAiProcessing) return;
 
@@ -79,17 +90,24 @@ export function useAppForegroundLifecycle(): void {
 
       if (state === 'active') {
         syncPrivateCapabilityTier();
-        if (getHasSeenOnboarding()) {
+        if (webApiReady && getHasSeenOnboarding()) {
           ensurePushRegistered().catch(() => {});
         }
         const now = Date.now();
         const shouldSendForeground =
-          now - lastForegroundAt >= FOREGROUND_ON_ACTIVE_THROTTLE_MS || lastForegroundAt === 0;
+          webApiReady &&
+          (now - lastForegroundAt >= FOREGROUND_ON_ACTIVE_THROTTLE_MS || lastForegroundAt === 0);
         if (shouldSendForeground) {
           lastHeartbeatAt = 0;
           sendForegroundHeartbeat();
           lastForegroundAt = now;
+          void reconcileWhisperKitDownloadStatuses();
           scheduleResumeAllPendingCloudSummarize();
+          scheduleDrainPrivateAiTaskQueue();
+          void syncAllBackupReminderNotifications();
+          void maybeRunScheduledGithubSync();
+          void maybeRunScheduledGitlabSync();
+          void maybeRunScheduledIcloudSync();
         }
         foregroundInterval = setInterval(maybeNotifyForeground, HEARTBEAT_INTERVAL_MS);
       } else {
@@ -98,7 +116,7 @@ export function useAppForegroundLifecycle(): void {
           foregroundInterval = null;
         }
         if (state === 'background' || state === 'inactive') {
-          if (getHasSeenOnboarding()) {
+          if (webApiReady && getHasSeenOnboarding()) {
             notifyAppBackground();
           }
           lastForegroundAt = 0;
@@ -117,5 +135,5 @@ export function useAppForegroundLifecycle(): void {
       releaseWhisperContext().catch(() => {});
       releaseLocalLlmSession().catch(() => {});
     };
-  }, []);
+  }, [webApiReady]);
 }

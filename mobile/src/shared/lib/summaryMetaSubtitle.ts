@@ -2,6 +2,7 @@ import type { TFunction } from 'i18next';
 
 import { formatSummaryGenerationDuration } from './formatSummaryGenerationDuration';
 import { formatTokenCount } from './formatTokenCount';
+import { i18n } from './i18n';
 
 export type SummaryTokenUsage = {
   prompt: number;
@@ -27,9 +28,10 @@ export function buildSummaryMetaLines(
     lines.modelLine = model;
   }
   if (tokenUsage) {
+    const locale = i18n.language;
     lines.tokensLine = t('recordingDetail.summaryMetaTokens', {
-      input: formatTokenCount(tokenUsage.prompt),
-      output: formatTokenCount(tokenUsage.completion),
+      input: formatTokenCount(tokenUsage.prompt, locale),
+      output: formatTokenCount(tokenUsage.completion, locale),
     });
   }
   if (generationDurationMs != null && generationDurationMs > 0) {

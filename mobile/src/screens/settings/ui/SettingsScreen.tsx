@@ -1,33 +1,39 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { Bug } from 'lucide-react-native';
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { RefreshControl, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
+import { ProLimitResetSuccessSheet } from '@/features/ai-limit-reset';
+import { cancelGithubConnectSession } from '@/features/github-sync';
+import { cancelGitlabConnectSession } from '@/features/gitlab-sync';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { openPlanPaywall } from '@/features/plan-paywall';
 import { isInternalDebugBuild } from '@/shared/config/buildEnv';
+import { TestIds } from '@/shared/e2e';
 import {
   IS_ANDROID,
   useIsTablet,
   useScrollToTopOnTabPress,
   useTabletContentMaxWidth,
+  useTabletShellLayout,
 } from '@/shared/lib';
+import { runAfterInteractions } from '@/shared/lib/runAfterInteractions';
 import { PrivateExecutionBadge, SCREEN_PADDING, SettingsRow, SettingsSection } from '@/shared/ui';
 
+import { getSettingsIconColor } from '../lib/settingsIconColor';
 import { useSettingsScreen } from '../lib/useSettingsScreen';
 import { AiUsageCard } from './AiUsageCard';
 import { AutoArchiveDelaySheet } from './AutoArchiveDelaySheet';
 import { AutomationComingSoonSheet } from './AutomationComingSoonSheet';
-import { BackupEncryptionNoticeSheet } from './BackupEncryptionNoticeSheet';
-import { BackupPasswordSheet } from './BackupPasswordSheet';
 import {
   SettingsAiProcessingSection,
   SettingsAppearanceSection,
   SettingsAutomationSection,
   SettingsBackupSection,
+  SettingsCloudSyncSection,
   SettingsDeviceSection,
   SettingsDigestSection,
   SettingsPermissionsSection,
@@ -35,42 +41,86 @@ import {
 } from './sections';
 import { SettingsPlanStatusCard } from './SettingsPlanStatusCard';
 
+/** Survives stack pushes that unmount Settings or reset ScrollView offset while blurred. */
+let persistedSettingsScrollY = 0;
+
 export const SettingsScreen = () => {
   const settings = useSettingsScreen();
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
-  const scrollOffsetRef = useRef(0);
+  const trackScrollRef = useRef(true);
+  const latestScrollYRef = useRef(0);
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
+  const useTabletShell = useTabletShellLayout();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
-  useScrollToTopOnTabPress(scrollRef);
+  useScrollToTopOnTabPress(scrollRef, () => {
+    latestScrollYRef.current = 0;
+    persistedSettingsScrollY = 0;
+  });
 
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+    const y = event.nativeEvent.contentOffset.y;
+    latestScrollYRef.current = y;
+    if (!trackScrollRef.current) {
+      return;
+    }
+    persistedSettingsScrollY = y;
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      const y = scrollOffsetRef.current;
-      if (y <= 0) {
-        return;
-      }
-      const frame = requestAnimationFrame(() => {
-        scrollRef.current?.scrollTo({ y, animated: false });
+      trackScrollRef.current = true;
+      const y = persistedSettingsScrollY;
+
+      const restoreTask = runAfterInteractions(() => {
+        if (y <= 0) {
+          return;
+        }
+        requestAnimationFrame(() => {
+          scrollRef.current?.scrollTo({ y, animated: false });
+          latestScrollYRef.current = y;
+        });
       });
-      return () => cancelAnimationFrame(frame);
+
+      return () => {
+        // Save before blur: stack push can zero-out ScrollView and emit a spurious onScroll.
+        persistedSettingsScrollY = latestScrollYRef.current;
+        trackScrollRef.current = false;
+        restoreTask.cancel();
+      };
     }, []),
   );
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        cancelGithubConnectSession();
+        cancelGitlabConnectSession();
+      };
+    }, []),
+  );
+
+  useEffect(() => {
+    const unsubscribe = settings.navigation.addListener('blur', () => {
+      cancelGithubConnectSession();
+      cancelGitlabConnectSession();
+    });
+    return unsubscribe;
+  }, [settings.navigation]);
 
   const showDebugEntry = isInternalDebugBuild();
 
   return (
-    <View style={{ flex: 1, backgroundColor: settings.color.background.secondary }}>
+    <View
+      testID={TestIds.settings.screen}
+      style={{ flex: 1, backgroundColor: settings.color.background.secondary }}
+    >
       <View
         style={{
-          backgroundColor: settings.color.background.primary,
-          borderBottomWidth: 1,
+          backgroundColor: useTabletShell ? 'transparent' : settings.color.background.primary,
+          borderBottomWidth: useTabletShell ? 0 : 1,
           borderBottomColor: settings.color.border.default,
           paddingTop: insets.top + 16,
           paddingHorizontal: SCREEN_PADDING,
@@ -97,6 +147,7 @@ export const SettingsScreen = () => {
           ref={scrollRef}
           onScroll={handleScroll}
           scrollEventThrottle={16}
+          scrollsToTop={false}
           contentContainerStyle={{
             paddingHorizontal: SCREEN_PADDING,
             paddingTop: 16,
@@ -116,9 +167,8 @@ export const SettingsScreen = () => {
         >
           <SettingsPlanStatusCard
             color={settings.color}
-            monetizationMode={settings.monetizationMode}
             storeProEntitlementActive={
-              settings.proEntitlementActive && settings.monetizationMode === 'iap_public'
+              settings.proEntitlementActive
                 ? (settings.planCardStoreProActive ?? undefined)
                 : undefined
             }
@@ -129,35 +179,43 @@ export const SettingsScreen = () => {
               usage={settings.aiUsage}
               loading={settings.aiUsageLoading}
               onClaimBonus={settings.adsAllowed ? settings.claim : undefined}
+              onResetProLimit={settings.canResetProLimit ? settings.resetProLimit : undefined}
               onOpenDetails={() => settings.navigation.navigate('AiUsageDashboard')}
               claimLoading={settings.claimLoading}
               claimError={settings.claimError}
+              resetLoading={settings.resetProLimitLoading}
+              resetError={settings.resetProLimitError}
+              resetPriceLabel={settings.resetProLimitPriceLabel}
             />
           )}
-          {settings.digestAiEnabled ? (
-            <SettingsDigestSection
-              color={settings.color}
-              onOpenDigest={() => settings.navigation.navigate('Digest')}
-              onOpenSiriShortcuts={() => settings.navigation.navigate('SiriShortcuts')}
-              t={settings.t}
-            />
-          ) : null}
-          {!settings.isPrivateMode && (
-            <SettingsAutomationSection
-              color={settings.color}
-              t={settings.t}
-              automationLocked={settings.automationLocked}
-              autoTranscribeOnSave={settings.autoTranscribeOnSave}
-              setAutoTranscribeOnSave={settings.setAutoTranscribeOnSave}
-              autoAiAfterTranscription={settings.autoAiAfterTranscription}
-              setAutoAiAfterTranscription={settings.setAutoAiAfterTranscription}
-              autoArchiveEnabled={settings.autoArchiveEnabled}
-              setAutoArchiveEnabled={settings.setAutoArchiveEnabled}
-              autoArchiveAfterDays={settings.autoArchiveAfterDays}
-              onAutoArchiveDelayPress={settings.handleAutoArchiveDelayPress}
-              onLockedPress={settings.setAutomationSheet}
-            />
-          )}
+          <SettingsDigestSection
+            color={settings.color}
+            onOpenDigest={() => settings.navigation.navigate('Digest')}
+            onOpenSiriShortcuts={() => settings.navigation.navigate('SiriShortcuts')}
+            t={settings.t}
+          />
+          <SettingsAutomationSection
+            color={settings.color}
+            t={settings.t}
+            automationLocked={settings.automationLocked}
+            autoAiLocked={
+              settings.privateCustomServerModeActive ? settings.automationLocked : undefined
+            }
+            autoTranscribeOnSave={settings.autoTranscribeOnSave}
+            setAutoTranscribeOnSave={settings.setAutoTranscribeOnSave}
+            autoAiAfterTranscription={settings.autoAiAfterTranscription}
+            setAutoAiAfterTranscription={settings.setAutoAiAfterTranscription}
+            autoArchiveEnabled={settings.autoArchiveEnabled}
+            setAutoArchiveEnabled={settings.setAutoArchiveEnabled}
+            autoArchiveAfterDays={settings.autoArchiveAfterDays}
+            onAutoArchiveDelayPress={settings.handleAutoArchiveDelayPress}
+            onLockedPress={settings.setAutomationSheet}
+            showAutoAiRow={!settings.isPrivateMode || settings.privateCustomServerModeActive}
+            showAutoArchiveRow={!settings.isPrivateMode}
+            navigation={settings.navigation}
+            showPrivateAiQueueRow={settings.privateCustomServerModeActive}
+            privateAiQueueCount={settings.privateAiQueueCount}
+          />
           <SettingsAiProcessingSection
             color={settings.color}
             t={settings.t}
@@ -174,12 +232,13 @@ export const SettingsScreen = () => {
             color={settings.color}
             t={settings.t}
             recordsCount={settings.recordsCount}
-            encryptBackup={settings.backupEncryptEnabled}
-            onEncryptBackupChange={settings.handleEncryptBackupChange}
-            isExporting={settings.isExporting}
-            isImporting={settings.isImporting}
-            onExport={settings.handleExport}
-            onImport={settings.handleImport}
+            navigation={settings.navigation}
+          />
+          <SettingsCloudSyncSection
+            color={settings.color}
+            t={settings.t}
+            cloudSyncLocked={settings.cloudSyncLocked}
+            onLockedPress={() => settings.setCloudSyncSheetVisible(true)}
           />
           <SettingsAppearanceSection
             color={settings.color}
@@ -211,8 +270,15 @@ export const SettingsScreen = () => {
           {showDebugEntry && (
             <SettingsSection title={settings.t('settings.debugScreen.title')}>
               <SettingsRow
+                testID={TestIds.settings.debug}
                 label={settings.t('settings.debugScreen.entryRow')}
-                leftIcon={<Bug size={20} color={settings.color.icon.muted} strokeWidth={1.8} />}
+                leftIcon={
+                  <Bug
+                    size={20}
+                    color={getSettingsIconColor(settings.color, 'bug')}
+                    strokeWidth={1.8}
+                  />
+                }
                 onPress={settings.openDebugScreen}
                 isFirst
                 isLast
@@ -221,37 +287,39 @@ export const SettingsScreen = () => {
           )}
           <DeferredInboxBannerAd color={settings.color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
-        <BackupEncryptionNoticeSheet
-          visible={settings.backupNoticeSheetVisible}
-          onClose={settings.handleBackupNoticeClose}
-          onAcknowledge={settings.handleBackupNoticeAcknowledge}
+        <ProLimitResetSuccessSheet
+          visible={settings.resetProLimitSuccessSheet != null}
+          onClose={settings.dismissResetProLimitSuccessSheet}
+          restoredAmount={settings.resetProLimitSuccessSheet?.reset.restoredAmount ?? 0}
+          limit={settings.resetProLimitSuccessSheet?.reset.limit ?? 0}
+          alreadyApplied={settings.resetProLimitSuccessSheet?.alreadyApplied ?? false}
         />
-        <BackupPasswordSheet
-          visible={settings.backupPasswordSheetVisible}
-          mode={settings.backupPasswordSheetMode}
-          busy={settings.isExporting || settings.isImporting}
-          onClose={settings.handleBackupPasswordSheetClose}
-          onSubmit={(password) => void settings.handleBackupPasswordSubmit(password)}
+        <AutomationComingSoonSheet
+          visible={settings.cloudSyncSheetVisible}
+          feature="cloudSync"
+          onUpgradePress={() => {
+            settings.setCloudSyncSheetVisible(false);
+            openPlanPaywall();
+          }}
+          onClose={() => settings.setCloudSyncSheetVisible(false)}
         />
-        {!settings.isPrivateMode && (
-          <>
-            <AutomationComingSoonSheet
-              visible={settings.automationSheet !== null}
-              feature={settings.automationSheet ?? 'autoTranscribe'}
-              onUpgradePress={() => {
-                settings.setAutomationSheet(null);
-                openPlanPaywall();
-              }}
-              onClose={() => settings.setAutomationSheet(null)}
-            />
-            <AutoArchiveDelaySheet
-              visible={settings.autoArchiveDelaySheetVisible}
-              selectedDays={settings.autoArchiveAfterDays}
-              onSelect={settings.handleAutoArchiveDelaySelect}
-              onClose={settings.handleAutoArchiveDelaySheetClose}
-            />
-          </>
-        )}
+        <AutomationComingSoonSheet
+          visible={settings.automationSheet !== null}
+          feature={settings.automationSheet ?? 'autoTranscribe'}
+          onUpgradePress={() => {
+            settings.setAutomationSheet(null);
+            openPlanPaywall();
+          }}
+          onClose={() => settings.setAutomationSheet(null)}
+        />
+        {!settings.isPrivateMode ? (
+          <AutoArchiveDelaySheet
+            visible={settings.autoArchiveDelaySheetVisible}
+            selectedDays={settings.autoArchiveAfterDays}
+            onSelect={settings.handleAutoArchiveDelaySelect}
+            onClose={settings.handleAutoArchiveDelaySheetClose}
+          />
+        ) : null}
       </View>
     </View>
   );

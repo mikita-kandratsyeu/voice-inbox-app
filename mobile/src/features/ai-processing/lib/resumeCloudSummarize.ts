@@ -79,6 +79,7 @@ async function applyPollSuccess(
       recordIsMeeting,
       includeMeetingSpeakerBreakdown,
       aiExecutionMode: settings.aiExecutionMode,
+      aiModelRoutingMode: settings.aiModelRoutingMode,
       effectiveLocalAiModelId: settings.selectedLocalAiModel ?? 'default',
       generationStartedAt: Date.now(),
       updateSummary,
@@ -216,6 +217,7 @@ export async function resumeCloudSummarizeJob(pending: CloudSummarizePendingJob)
             recordIsMeeting,
             includeMeetingSpeakerBreakdown: true,
             aiExecutionMode: useSettingsStore.getState().aiExecutionMode,
+            aiModelRoutingMode: useSettingsStore.getState().aiModelRoutingMode,
             effectiveLocalAiModelId: useSettingsStore.getState().selectedLocalAiModel ?? 'default',
             generationStartedAt: Date.now(),
             updateSummary,
@@ -244,6 +246,7 @@ export async function resumeCloudSummarizeJob(pending: CloudSummarizePendingJob)
     pollResult = await resumePollAiMessage(pending.jobId, pending.syncToken, {
       expectAsyncMeetingDialogue: pending.expectAsyncMeetingDialogue,
       expiresAtMs: pending.expiresAtMs,
+      pollExpiresAtMs: pending.pollExpiresAtMs,
       onSummaryReady,
     });
   }

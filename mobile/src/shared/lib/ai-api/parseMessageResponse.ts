@@ -1,11 +1,20 @@
-import { isString } from '@/shared/lib/type-guards';
+import { isNonNegativeFiniteNumber, isRecord, isString } from '@/shared/lib/type-guards';
 
 import type { AiProcessingResult, AiTask, RecordClassification } from './aiApi';
+import { parseServerPollHints } from './serverPollHints';
 
 export type ServerMeetingDialogueStatus = 'processing' | 'done' | 'failed' | 'skipped';
 
 export type ParsedMessagePollState =
-  | { kind: 'processing' }
+  | {
+      kind: 'processing';
+      /** Optional server hint: recommended retry interval (ms) */
+      retryAfterMs?: number;
+      /** Optional server hint: estimated completion time (ms from now) */
+      estimatedCompletionMs?: number;
+      /** Optional server hint: progress percentage (0-100) */
+      progress?: number;
+    }
   | { kind: 'error'; error: string }
   | {
       kind: 'done';
@@ -14,14 +23,11 @@ export type ParsedMessagePollState =
     };
 
 function parseTokenUsage(raw: unknown): { prompt: number; completion: number } | undefined {
-  if (!raw || typeof raw !== 'object') return undefined;
-  const row = raw as Record<string, unknown>;
-  const prompt =
-    typeof row.prompt === 'number' && row.prompt >= 0 ? Math.floor(row.prompt) : undefined;
-  const completion =
-    typeof row.completion === 'number' && row.completion >= 0
-      ? Math.floor(row.completion)
-      : undefined;
+  if (!isRecord(raw)) return undefined;
+  const prompt = isNonNegativeFiniteNumber(raw.prompt) ? Math.floor(raw.prompt) : undefined;
+  const completion = isNonNegativeFiniteNumber(raw.completion)
+    ? Math.floor(raw.completion)
+    : undefined;
   if (prompt == null || completion == null) return undefined;
   return { prompt, completion };
 }
@@ -35,15 +41,26 @@ function readMeetingDialogueStatus(raw: unknown): ServerMeetingDialogueStatus | 
 
 /** Maps GET /api/messages/:id JSON to poll loop state. */
 export function parseMessagePollState(json: unknown): ParsedMessagePollState {
-  const msg = json as Record<string, unknown>;
-  const status = msg.status;
-
-  if (status === 'processing') {
+  if (!isRecord(json)) {
     return { kind: 'processing' };
   }
 
+  const msg = json;
+  const status = msg.status;
+
+  if (status === 'processing') {
+    const hints = parseServerPollHints(msg);
+
+    return {
+      kind: 'processing',
+      retryAfterMs: hints?.retryAfterMs,
+      estimatedCompletionMs: hints?.estimatedCompletionMs,
+      progress: hints?.progress,
+    };
+  }
+
   if (status === 'error') {
-    const error = typeof msg.error === 'string' ? msg.error : 'Unknown error';
+    const error = isString(msg.error) ? msg.error : 'Unknown error';
     return { kind: 'error', error };
   }
 
@@ -69,7 +86,7 @@ export function parseMessagePollState(json: unknown): ParsedMessagePollState {
   const tokenUsage = parseTokenUsage(msg.tokenUsage);
   const tokenUsageField = tokenUsage ? { tokenUsage } : {};
 
-  const summary = typeof msg.summary === 'string' ? msg.summary : '';
+  const summary = isString(msg.summary) ? msg.summary : '';
   const tasks = Array.isArray(msg.tasks) ? (msg.tasks as AiTask[]) : [];
   const tags = Array.isArray(msg.tags) ? (msg.tags as string[]) : [];
 
@@ -83,7 +100,7 @@ export function parseMessagePollState(json: unknown): ParsedMessagePollState {
       ...suggested,
       ...modelField,
       ...modelLabelField,
-      ...(typeof msg.classification === 'string'
+      ...(isString(msg.classification)
         ? { classification: msg.classification as RecordClassification }
         : {}),
       ...(Array.isArray(msg.keyPhrases) ? { keyPhrases: msg.keyPhrases as string[] } : {}),

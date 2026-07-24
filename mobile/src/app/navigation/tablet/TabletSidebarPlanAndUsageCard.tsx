@@ -1,10 +1,9 @@
 import { ChevronRight, Crown } from 'lucide-react-native';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
-  FadeIn,
   interpolateColor,
   useAnimatedStyle,
   useSharedValue,
@@ -12,16 +11,15 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { type MonetizationMode } from '@/features/app-storefront';
 import type { Colors } from '@/shared/config';
+import { useFadeInEntering } from '@/shared/config';
 import { withAlphaHex } from '@/shared/lib';
-import { logAnalyticsEvent } from '@/shared/lib/analytics';
+
 const CARD_RADIUS = 14;
 const ICON_SIZE = 34;
 
 type Props = {
   color: Colors;
-  monetizationMode: MonetizationMode;
   onOpenPlanPaywall: () => void;
 };
 
@@ -62,14 +60,10 @@ function PlanCardGradient({ color }: { color: Colors }) {
   );
 }
 
-export function TabletSidebarPlanAndUsageCard({
-  color,
-  monetizationMode,
-  onOpenPlanPaywall,
-}: Props) {
+export function TabletSidebarPlanAndUsageCard({ color, onOpenPlanPaywall }: Props) {
   const { t } = useTranslation();
+  const cardEntering = useFadeInEntering(180);
   const accent = color.accent.primary;
-  const loggedSoonRef = useRef(false);
   const borderPulse = useSharedValue(0);
 
   useEffect(() => {
@@ -80,32 +74,16 @@ export function TabletSidebarPlanAndUsageCard({
     );
   }, [borderPulse]);
 
-  useEffect(() => {
-    if (monetizationMode === 'coming_soon' && !loggedSoonRef.current) {
-      loggedSoonRef.current = true;
-      void logAnalyticsEvent('pro_coming_soon_seen', { surface: 'tablet_sidebar_plan_card' });
-    }
-  }, [monetizationMode]);
-
   const animatedBorderStyle = useAnimatedStyle(() => ({
     borderColor: interpolateColor(borderPulse.value, [0, 1], [`${accent}28`, `${accent}5A`]),
   }));
 
   const planTitle = t('settings.planStatus.freeSidebarTitle');
-
-  let planSubtitle = t('settings.planStatus.freeValueSubtitle');
-  if (monetizationMode === 'coming_soon') {
-    planSubtitle = t('settings.planStatus.freeValueSubtitleSoon');
-  } else if (monetizationMode === 'iap_public') {
-    planSubtitle = t('settings.planStatus.freeValueSubtitleAvailable');
-  }
-
-  const statusBadge =
-    monetizationMode === 'coming_soon' ? t('settings.planStatus.soonBadge') : null;
+  const planSubtitle = t('settings.planStatus.freeValueSubtitleAvailable');
 
   return (
     <Animated.View
-      entering={FadeIn.duration(180)}
+      entering={cardEntering}
       style={[
         styles.card,
         {
@@ -141,11 +119,6 @@ export function TabletSidebarPlanAndUsageCard({
               <Text numberOfLines={1} style={[styles.planTitle, { color: color.text.primary }]}>
                 {planTitle}
               </Text>
-              {statusBadge != null ? (
-                <View style={[styles.badge, { backgroundColor: withAlphaHex(accent, 0.14) }]}>
-                  <Text style={[styles.badgeText, { color: accent }]}>{statusBadge}</Text>
-                </View>
-              ) : null}
             </View>
             <Text numberOfLines={2} style={[styles.planSubtitle, { color: color.text.secondary }]}>
               {planSubtitle}
@@ -207,15 +180,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginTop: 2,
-  },
-  badge: {
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '600',
   },
   chevron: {
     flexShrink: 0,

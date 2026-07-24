@@ -1,0 +1,29 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Wait until React Native UI is mounted (deep links are dropped if sent too early).
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: onboarding.next
+    timeout: 120000
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: inbox.screen
+    timeout: 10000
+    optional: true
+- repeat:
+    times: 3
+    commands:
+      - openLink: voiceinbox://e2e/reset?skipOnboarding=1&skipAppLock=1&disableAds=1
+      - extendedWaitUntil:
+          visible:
+            id: inbox.screen
+          timeout: 20000
+          optional: true
+- extendedWaitUntil:
+    visible:
+      id: inbox.screen
+    timeout: 45000
+- runFlow: dismiss-system-alerts.yaml

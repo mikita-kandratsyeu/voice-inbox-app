@@ -96,6 +96,62 @@ const migration0018 = `ALTER TABLE \`records\` ADD \`summaryAiModelLabel\` text;
 
 const migration0019 = `ALTER TABLE \`records\` ADD \`meetingSummaryTemplate\` text;`;
 
+const migration0020 = `CREATE TABLE IF NOT EXISTS \`notes_graph_layout_version\` (
+	\`id\` text PRIMARY KEY NOT NULL,
+	\`layoutKey\` text NOT NULL,
+	\`versionNumber\` integer NOT NULL,
+	\`payload\` text NOT NULL,
+	\`createdAt\` text NOT NULL
+);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS \`idx_notes_graph_layout_key\` ON \`notes_graph_layout_version\` (\`layoutKey\`);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS \`idx_notes_graph_layout_created\` ON \`notes_graph_layout_version\` (\`createdAt\`);`;
+
+const migration0021 = `ALTER TABLE \`notes_graph_layout_version\` ADD \`name\` text;`;
+
+const migration0022 = `CREATE TABLE IF NOT EXISTS \`private_ai_task_queue\` (
+	\`id\` text PRIMARY KEY NOT NULL,
+	\`recordId\` text NOT NULL,
+	\`taskType\` text NOT NULL,
+	\`source\` text NOT NULL,
+	\`attemptCount\` integer DEFAULT 0 NOT NULL,
+	\`lastError\` text,
+	\`createdAt\` text NOT NULL,
+	\`updatedAt\` text NOT NULL
+);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS \`idx_private_ai_task_queue_recordId\` ON \`private_ai_task_queue\` (\`recordId\`);
+--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS \`idx_private_ai_task_queue_record_task\` ON \`private_ai_task_queue\` (\`recordId\`,\`taskType\`);`;
+
+const migration0023 = `ALTER TABLE \`records\` ADD \`linkedRecordIds\` text DEFAULT '[]';`;
+
+const migration0024 = `CREATE TABLE IF NOT EXISTS \`record_published_share\` (
+	\`recordId\` text PRIMARY KEY NOT NULL,
+	\`shareToken\` text NOT NULL,
+	\`shareUrl\` text NOT NULL,
+	\`template\` text NOT NULL,
+	\`contentHash\` text NOT NULL,
+	\`publishedAt\` text NOT NULL,
+	\`expiresAt\` text,
+	\`updatedAt\` text NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS \`idx_record_published_share_token\` ON \`record_published_share\` (\`shareToken\`);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS \`idx_record_published_share_expires\` ON \`record_published_share\` (\`expiresAt\`);`;
+
+const migration0025 = `ALTER TABLE \`records\` ADD \`summaryAiModelMode\` text;`;
+
+const migration0026 = `CREATE TABLE IF NOT EXISTS \`inbox_ask_ai\` (
+	\`sessionKey\` text PRIMARY KEY NOT NULL,
+	\`payload\` text NOT NULL,
+	\`updatedAt\` text NOT NULL
+);`;
+
+const migration0027 = `ALTER TABLE \`cloud_ai_pending\` ADD \`pollExpiresAtMs\` integer;`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -126,5 +182,13 @@ export const migrationsConfig = {
     m0017: migration0017,
     m0018: migration0018,
     m0019: migration0019,
+    m0020: migration0020,
+    m0021: migration0021,
+    m0022: migration0022,
+    m0023: migration0023,
+    m0024: migration0024,
+    m0025: migration0025,
+    m0026: migration0026,
+    m0027: migration0027,
   } as Record<string, string>,
 };

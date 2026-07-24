@@ -2,7 +2,7 @@ import {
   MEETING_DIALOGUE_OMIT_FULL_TRANSCRIPT_CHARS,
   SUMMARIZE_MEETING_DIALOGUE_INLINE_MAX_TRANSCRIPT_CHARS,
 } from '@/config/constants';
-import { decrement } from '@/lib/ai-rate-limit';
+import { decrementBy } from '@/lib/ai-rate-limit';
 import { isRetryableAiJobError } from '@/lib/ai-job-retry';
 import { notifyAiJobComplete } from '@/lib/ai-job-push';
 import { dispatchMeetingDialogueJob } from '@/lib/meeting-dialogue-dispatch';
@@ -12,6 +12,10 @@ import {
 } from '@/lib/meeting-dialogue-user-prompt';
 import { mergeOpenRouterTokenUsage } from '@/lib/openrouter-token-usage';
 import { aiModelResponseFields } from '@/lib/ai-model-display';
+import {
+  resolveTranscriptSummarizeLedgerOperation,
+  updateAiUsageLedgerMetadata,
+} from '@/lib/ai-usage-ledger';
 import { saveMessage } from '@/lib/redis';
 import { processMeetingDialogueMarkdown, processTranscript } from '@/services/ai.service';
 import type { MeetingDialogueJobPayload, SummarizeJobPayload } from '@/types/ai-job';
@@ -85,6 +89,9 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
     systemPrompt,
     clientUserAgent,
   } = payload;
+  const summarizeLedgerOperation = resolveTranscriptSummarizeLedgerOperation(
+    payload.chargedUsageUnits,
+  );
 
   try {
     const mainResult = await processTranscript(
@@ -120,6 +127,7 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
         id,
         status: 'done',
         ...aiModelResponseFields(model),
+        ...(payload.modelMode ? { modelMode: payload.modelMode } : {}),
         summary: result.summary,
         suggestedTitle: result.suggestedTitle,
         tasks: result.tasks,
@@ -146,6 +154,16 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
       logLabel: 'AI complete',
     });
 
+    await updateAiUsageLedgerMetadata({
+      deviceId,
+      operation: summarizeLedgerOperation,
+      jobId: id,
+      metadata: {
+        ...aiModelResponseFields(model),
+        chargedUsageUnits: payload.chargedUsageUnits ?? 1,
+      },
+    });
+
     if (useAsyncMeetingDialogue) {
       const meetingPayload: MeetingDialogueJobPayload = {
         operation: 'meeting_dialogue',
@@ -167,7 +185,11 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
     }
   } catch (err) {
     if (!isRetryableAiJobError(err)) {
-      await decrement(deviceId);
+      await decrementBy(deviceId, payload.chargedUsageUnits ?? 1, {
+        operation: summarizeLedgerOperation,
+        jobId: id,
+        metadata: { model, chargedUsageUnits: payload.chargedUsageUnits ?? 1 },
+      });
       await saveMessage(
         id,
         {
@@ -175,6 +197,7 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
           status: 'error',
           error: err instanceof Error ? err.message : 'Unknown error',
           ...aiModelResponseFields(model),
+          ...(payload.modelMode ? { modelMode: payload.modelMode } : {}),
         },
         ttl,
       );

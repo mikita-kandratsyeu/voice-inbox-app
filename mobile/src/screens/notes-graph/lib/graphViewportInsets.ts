@@ -1,0 +1,77 @@
+import {
+  FLOATING_FROSTED_CHROME_TOP_INSET,
+  FLOATING_FROSTED_INPUT_ROW_MIN_HEIGHT,
+  FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD,
+  FLOATING_SEARCH_BAR_KEYBOARD_OPEN_GAP,
+} from '@/shared/ui/floatingSearchBarMetrics';
+
+/** Minimum height of the search controls row inside the floating pill. */
+export const GRAPH_STICKY_SEARCH_BAR_ROW_HEIGHT = FLOATING_FROSTED_INPUT_ROW_MIN_HEIGHT;
+
+/** Inner vertical padding when the match / status line is hidden (top + bottom). */
+export const GRAPH_STICKY_SEARCH_COMPACT_VERTICAL_PADDING =
+  FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD * 2;
+
+/** Inner vertical padding when the match / status line is shown (top + bottom). */
+export const GRAPH_STICKY_SEARCH_EXPANDED_VERTICAL_PADDING =
+  FLOATING_SEARCH_BAR_INNER_VERTICAL_PAD * 2;
+
+/** Gap between the search row and the match label inside the pill. */
+export const GRAPH_STICKY_SEARCH_CONTENT_GAP = 8;
+
+/** Outer top inset for the floating search pill. */
+export const GRAPH_STICKY_SEARCH_FLOAT_OUTER_TOP_PAD = FLOATING_FROSTED_CHROME_TOP_INSET;
+
+/** Match counter line below the search row. */
+export const GRAPH_STICKY_SEARCH_MATCH_LABEL_HEIGHT = 22;
+
+/** Default clearance for floating zoom controls when search is hidden. */
+export const GRAPH_FLOATING_CONTROLS_BOTTOM_CLEARANCE = 24;
+
+export type GraphViewportInsets = {
+  top?: number;
+  bottom?: number;
+  left?: number;
+  right?: number;
+};
+
+export function shouldShowGraphSearchMatchLabel(options: {
+  query: string;
+  debouncedQuery: string;
+  matchCount: number;
+  matchIndex: number | null;
+}): boolean {
+  const hasMatches = options.matchCount > 0 && options.matchIndex != null;
+  if (hasMatches) {
+    return true;
+  }
+  if (options.query !== options.debouncedQuery) {
+    return false;
+  }
+  return options.debouncedQuery.trim().length > 0;
+}
+
+export function estimateGraphSearchFocusBottomInset(options: {
+  searchBarVisible: boolean;
+  safeAreaBottom: number;
+  showMatchLabel?: boolean;
+}): number {
+  if (!options.searchBarVisible) {
+    return GRAPH_FLOATING_CONTROLS_BOTTOM_CLEARANCE;
+  }
+
+  const innerVerticalPadding = options.showMatchLabel
+    ? GRAPH_STICKY_SEARCH_EXPANDED_VERTICAL_PADDING
+    : GRAPH_STICKY_SEARCH_COMPACT_VERTICAL_PADDING;
+  const labelBlock = options.showMatchLabel
+    ? GRAPH_STICKY_SEARCH_CONTENT_GAP + GRAPH_STICKY_SEARCH_MATCH_LABEL_HEIGHT
+    : 0;
+
+  const height =
+    GRAPH_STICKY_SEARCH_FLOAT_OUTER_TOP_PAD +
+    innerVerticalPadding +
+    GRAPH_STICKY_SEARCH_BAR_ROW_HEIGHT +
+    labelBlock;
+
+  return height + FLOATING_SEARCH_BAR_KEYBOARD_OPEN_GAP;
+}

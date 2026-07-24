@@ -1,9 +1,22 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Check, LayoutTemplate, X } from 'lucide-react-native';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { Check, X } from 'lucide-react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import {
+  EnrichedMarkdownTextInput,
+  type EnrichedMarkdownTextInputInstance,
+  type StyleState,
+} from 'react-native-enriched-markdown';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,20 +24,39 @@ import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
-import { useAiProcessing } from '@/features/ai-processing';
-import {
-  computeAdsAllowedForInterstitial,
-  shouldApplyAutoAiAfterTranscription,
-} from '@/features/app-storefront';
+import { dispatchAutoAiAfterTranscription } from '@/features/ai-task-queue';
+import { computeAdsAllowedForInterstitial } from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
+import { buildNoteDocumentEnrichedInputStyle } from '@/features/note-document/lib/enrichedMarkdownTheme';
+import {
+  type EnrichedMarkdownToolbarAction,
+  NoteDocumentMarkdownToolbar,
+} from '@/features/note-document/ui/NoteDocumentMarkdownToolbar';
 import { useProEntitlement } from '@/features/pro-license';
+import {
+  completePendingTaskFollowUp,
+  peekPendingTaskFollowUp,
+  prepareRecordForTaskFollowUp,
+  usePendingTaskFollowUpStore,
+} from '@/features/task-outcome';
 import {
   runAfterNavigationTransition,
   tryShowYandexInterstitial,
 } from '@/features/yandex-interstitial';
 import { useColors } from '@/shared/config';
-import { hapticSelection, useNetworkStatus } from '@/shared/lib';
-import { getInputFieldInputStyle, HeaderIconButton, InputField } from '@/shared/ui';
+import { TestIds } from '@/shared/e2e';
+import {
+  hapticSelection,
+  IS_IOS,
+  useIsTablet,
+  useNetworkStatus,
+  useTabletContentMaxWidth,
+} from '@/shared/lib';
+import { FrostedHeaderIconButton, SCREEN_PADDING } from '@/shared/ui';
+import {
+  NOTE_DOCUMENT_BODY_FONT_SIZE,
+  NOTE_DOCUMENT_BODY_LINE_HEIGHT,
+} from '@/shared/ui/documentMarkdownTheme';
 
 import { generateRecordId } from '../lib/generateRecordId';
 import { getAutoTitle } from '../lib/getAutoTitle';
@@ -32,33 +64,84 @@ import { getAutoTitle } from '../lib/getAutoTitle';
 const TEXT_NOTE_TEMPLATE_IDS = ['dayPlan', 'gratitude', 'tasks', 'idea'] as const;
 type TextNoteTemplateId = (typeof TEXT_NOTE_TEMPLATE_IDS)[number];
 
+const TITLE_FONT_SIZE = 26;
+const TITLE_LINE_HEIGHT = 32;
+const HEADER_ROW_HEIGHT = 48;
+const TITLE_BLOCK_HEIGHT = 56;
+const TOOLBAR_BLOCK_HEIGHT = 48;
+const TEMPLATES_FOOTER_HEIGHT = 96;
+const EDITOR_PADDING_TOP = 12;
+const EDITOR_PADDING_BOTTOM = 36;
+
 export const TextNoteScreen = () => {
   const { t } = useTranslation();
   const { height: windowHeight } = useWindowDimensions();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const color = useColors();
+  const contentMaxWidth = useTabletContentMaxWidth();
   const addRecord = useRecordStore((s) => s.addRecord);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const { isProActive } = useProEntitlement();
   const { isConnected } = useNetworkStatus();
-  const { processRecord } = useAiProcessing();
-  const noteInputRef = useRef<TextInput>(null);
+  const isTablet = useIsTablet();
+  const noteInputRef = useRef<EnrichedMarkdownTextInputInstance>(null);
   const saveInFlightRef = useRef(false);
+  const hasNoteContentRef = useRef(false);
+  const styleStateFrameRef = useRef<number | null>(null);
+  const clearPendingFollowUp = usePendingTaskFollowUpStore((s) => s.clearPending);
   const [title, setTitle] = useState('');
-  const [noteText, setNoteText] = useState('');
+  const [initialEditorMarkdown, setInitialEditorMarkdown] = useState('');
+  const [hasNoteContent, setHasNoteContent] = useState(false);
+  const [noteEditorKey, setNoteEditorKey] = useState(0);
+  const [markdownStyleState, setMarkdownStyleState] = useState<StyleState | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const hasUnsavedChanges = title.trim().length > 0 || noteText.trim().length > 0;
+  const hasUnsavedChanges = title.trim().length > 0 || hasNoteContent;
+  const inputMarkdownStyle = useMemo(() => buildNoteDocumentEnrichedInputStyle(color), [color]);
+  const showTemplates = !hasNoteContent;
 
-  const canSave = noteText.trim().length > 0 && !isSaving;
+  useEffect(() => {
+    const pending = peekPendingTaskFollowUp();
+    if (!pending || pending.mode !== 'text') return;
+    const seed = pending.draft.seedTranscript;
+    setTitle(pending.draft.suggestedTitle);
+    setInitialEditorMarkdown(seed);
+    const hasContent = seed.trim().length > 0;
+    hasNoteContentRef.current = hasContent;
+    setHasNoteContent(hasContent);
+    setNoteEditorKey((key) => key + 1);
+  }, []);
 
-  /** Cap note field height so long templates scroll inside the input; templates card stays reachable. */
-  const noteBodyMaxHeight = useMemo(
-    () => Math.round(Math.min(300, Math.max(200, windowHeight * 0.34))),
-    [windowHeight],
+  useEffect(() => {
+    return () => {
+      if (styleStateFrameRef.current !== null) {
+        cancelAnimationFrame(styleStateFrameRef.current);
+      }
+    };
+  }, []);
+
+  const canSave = hasNoteContent && !isSaving;
+
+  const editorMinHeight = useMemo(() => {
+    const chrome =
+      insets.top +
+      HEADER_ROW_HEIGHT +
+      TITLE_BLOCK_HEIGHT +
+      TOOLBAR_BLOCK_HEIGHT +
+      EDITOR_PADDING_TOP +
+      EDITOR_PADDING_BOTTOM +
+      (showTemplates ? TEMPLATES_FOOTER_HEIGHT : 0) +
+      insets.bottom +
+      16;
+    return Math.max(220, Math.round(windowHeight - chrome));
+  }, [insets.bottom, insets.top, showTemplates, windowHeight]);
+
+  const editorScrollPaddingBottom = useMemo(
+    () => (showTemplates ? 8 : insets.bottom + 20),
+    [insets.bottom, showTemplates],
   );
-  const noteFieldVerticalPadding = 14 * 2;
-  const noteInputContainerMaxHeight = noteBodyMaxHeight + noteFieldVerticalPadding;
 
   const resolvedTitle = useMemo(() => {
     const trimmed = title.trim();
@@ -69,6 +152,16 @@ export const TextNoteScreen = () => {
 
     return getAutoTitle();
   }, [title]);
+
+  const handleChangeText = useCallback((text: string) => {
+    const hasContent = text.trim().length > 0;
+    if (hasContent === hasNoteContentRef.current) {
+      return;
+    }
+
+    hasNoteContentRef.current = hasContent;
+    setHasNoteContent(hasContent);
+  }, []);
 
   const handleBack = useCallback(() => {
     const close = () => {
@@ -86,35 +179,70 @@ export const TextNoteScreen = () => {
       {
         text: t('textNote.discardConfirm'),
         style: 'destructive',
-        onPress: close,
+        onPress: () => {
+          clearPendingFollowUp();
+          close();
+        },
       },
     ]);
-  }, [hasUnsavedChanges, navigation, t]);
-
-  const templateHints = useMemo(
-    () => [t('textNote.templatesHint1'), t('textNote.templatesHint2')],
-    [t],
-  );
+  }, [clearPendingFollowUp, hasUnsavedChanges, navigation, t]);
 
   const handleApplyTemplate = useCallback(
-    (id: TextNoteTemplateId) => {
+    async (id: TextNoteTemplateId) => {
       hapticSelection();
       const block = t(`textNote.templateBody.${id}`);
-      setNoteText((prev) => {
-        const trimmed = prev.trim();
-        if (!trimmed) return block;
-        return `${trimmed}\n\n${block}`;
-      });
-      requestAnimationFrame(() => noteInputRef.current?.focus());
+      const editor = noteInputRef.current;
+      if (!editor) return;
+
+      const current = (await editor.getMarkdown()).trim();
+      const next = current ? `${current}\n\n${block}` : block;
+      editor.setValue(next);
+      if (!hasNoteContentRef.current) {
+        hasNoteContentRef.current = true;
+        setHasNoteContent(true);
+      }
+      editor.focus();
     },
     [t],
   );
+
+  const handleMarkdownStyleStateChange = useCallback((newState: StyleState) => {
+    if (styleStateFrameRef.current !== null) {
+      cancelAnimationFrame(styleStateFrameRef.current);
+    }
+
+    styleStateFrameRef.current = requestAnimationFrame(() => {
+      setMarkdownStyleState(newState);
+      styleStateFrameRef.current = null;
+    });
+  }, []);
+
+  const handleToolbarAction = useCallback((action: EnrichedMarkdownToolbarAction) => {
+    const editor = noteInputRef.current;
+    if (!editor) return;
+
+    switch (action) {
+      case 'bold':
+        editor.toggleBold();
+        return;
+      case 'italic':
+        editor.toggleItalic();
+        return;
+      case 'strikethrough':
+        editor.toggleStrikethrough();
+        return;
+      case 'underline':
+        editor.toggleUnderline();
+        return;
+    }
+  }, []);
 
   const handleSave = useCallback(async () => {
     if (saveInFlightRef.current) {
       return;
     }
-    const transcript = noteText.trim();
+    const markdown = await noteInputRef.current?.getMarkdown();
+    const transcript = markdown?.trim() ?? '';
     if (!transcript) {
       return;
     }
@@ -123,26 +251,34 @@ export const TextNoteScreen = () => {
     setIsSaving(true);
     KeyboardController.dismiss({ animated: false });
 
-    const record: VoiceRecord = {
-      id: generateRecordId(),
-      title: resolvedTitle,
-      transcript,
-      transcriptSegments: [],
-      summary: '',
-      tasks: [],
-      duration: '00:00',
-      durationMs: 0,
-      createdAt: new Date().toISOString(),
-      status: 'unread',
-      aiStatus: 'idle',
-      transcriptProgress: 0,
-      isPinned: false,
-      tags: [],
-      audioPath: '',
-    };
+    const pendingFollowUp = peekPendingTaskFollowUp();
+    const record: VoiceRecord = prepareRecordForTaskFollowUp(
+      {
+        id: generateRecordId(),
+        title: resolvedTitle,
+        transcript,
+        transcriptSegments: [],
+        summary: '',
+        tasks: [],
+        duration: '00:00',
+        durationMs: 0,
+        createdAt: new Date().toISOString(),
+        status: 'unread',
+        aiStatus: 'idle',
+        transcriptProgress: 0,
+        isPinned: false,
+        tags: [],
+        audioPath: '',
+      },
+      pendingFollowUp?.mode === 'text' ? pendingFollowUp : null,
+    );
 
     try {
       await addRecord(record);
+      await completePendingTaskFollowUp(
+        record.id,
+        pendingFollowUp?.mode === 'text' ? pendingFollowUp : null,
+      );
     } catch {
       saveInFlightRef.current = false;
       setIsSaving(false);
@@ -151,9 +287,14 @@ export const TextNoteScreen = () => {
 
     generateAndSaveEmbeddingForRecord(record).catch(() => {});
 
-    if (shouldApplyAutoAiAfterTranscription(autoAiAfterTranscription, isProActive) && isConnected) {
-      void processRecord(record).catch(() => {});
-    }
+    void dispatchAutoAiAfterTranscription({
+      record,
+      autoAiAfterTranscription,
+      isProActive,
+      isConnected: isConnected === true,
+      aiExecutionMode,
+      privateAiProvider,
+    }).catch(() => {});
 
     navigation.goBack();
     const adsAllowed = computeAdsAllowedForInterstitial(isProActive);
@@ -162,27 +303,31 @@ export const TextNoteScreen = () => {
     });
   }, [
     addRecord,
+    aiExecutionMode,
     autoAiAfterTranscription,
     isConnected,
     isProActive,
     navigation,
-    noteText,
-    processRecord,
+    privateAiProvider,
     resolvedTitle,
   ]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: color.background.primary }}>
+    <View
+      testID={TestIds.textNote.screen}
+      style={{ flex: 1, backgroundColor: color.background.primary }}
+    >
       <View
-        className="flex-row items-center justify-between px-4 pb-3"
+        className="flex-row items-center justify-between"
         style={{
-          backgroundColor: color.background.primary,
-          borderBottomWidth: 1,
-          borderBottomColor: color.border.default,
-          paddingTop: insets.top + 12,
+          paddingTop: insets.top + 10,
+          paddingBottom: 6,
+          paddingHorizontal: SCREEN_PADDING - 4,
+          minHeight: insets.top + HEADER_ROW_HEIGHT,
         }}
       >
-        <HeaderIconButton
+        <FrostedHeaderIconButton
+          testID={TestIds.textNote.close}
           iconOnly
           variant="icon"
           size="md"
@@ -192,13 +337,8 @@ export const TextNoteScreen = () => {
           disabled={isSaving}
           accessibilityLabel={t('common.close')}
         />
-        <Text
-          className="flex-1 px-2 text-center text-[18px] font-semibold"
-          style={{ color: color.text.primary }}
-        >
-          {getAutoTitle(false)}
-        </Text>
-        <HeaderIconButton
+        <FrostedHeaderIconButton
+          testID={TestIds.textNote.save}
           iconOnly
           variant="icon"
           size="md"
@@ -209,114 +349,134 @@ export const TextNoteScreen = () => {
           accessibilityLabel={t('common.save')}
         />
       </View>
-      <KeyboardAwareScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          paddingHorizontal: 12,
-          paddingTop: 16,
-          paddingBottom: insets.bottom + 24,
-          gap: 12,
-        }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        bottomOffset={16}
-      >
-        <InputField color={color} hasValue={title.trim().length > 0}>
-          <TextInput
-            value={title}
-            onChangeText={setTitle}
-            placeholder={t('textNote.titlePlaceholder')}
-            placeholderTextColor={color.text.secondary}
-            style={getInputFieldInputStyle(color)}
-            returnKeyType="next"
-            onSubmitEditing={() => noteInputRef.current?.focus()}
-            accessibilityLabel={t('textNote.titlePlaceholder')}
-          />
-        </InputField>
-        <InputField
-          color={color}
-          hasValue={noteText.trim().length > 0}
-          containerStyle={{
-            alignItems: 'flex-start',
-            minHeight: 148,
-            maxHeight: noteInputContainerMaxHeight,
-          }}
-        >
-          <TextInput
-            ref={noteInputRef}
-            value={noteText}
-            onChangeText={setNoteText}
-            placeholder={t('textNote.textPlaceholder')}
-            placeholderTextColor={color.text.secondary}
-            style={[
-              getInputFieldInputStyle(color, true),
-              {
-                alignSelf: 'stretch',
-                minHeight: 120,
-                maxHeight: noteBodyMaxHeight,
-              },
-            ]}
-            multiline
-            scrollEnabled
-            textAlignVertical="top"
-            accessibilityLabel={t('textNote.textPlaceholder')}
-          />
-        </InputField>
 
-        <View
-          className="rounded-2xl p-4"
+      <View
+        style={{
+          flex: 1,
+          width: '100%',
+          maxWidth: contentMaxWidth,
+          alignSelf: 'center',
+          paddingHorizontal: SCREEN_PADDING,
+        }}
+      >
+        <TextInput
+          testID={TestIds.textNote.titleInput}
+          value={title}
+          onChangeText={setTitle}
+          placeholder={t('textNote.titlePlaceholder')}
+          placeholderTextColor={color.text.muted}
           style={{
-            borderWidth: 1,
-            borderColor: color.border.default,
-            backgroundColor: color.background.card,
+            paddingTop: 6,
+            paddingBottom: 14,
+            fontSize: TITLE_FONT_SIZE,
+            lineHeight: TITLE_LINE_HEIGHT,
+            fontWeight: '700',
+            color: color.text.primary,
+            letterSpacing: -0.35,
           }}
+          returnKeyType="next"
+          onSubmitEditing={() => noteInputRef.current?.focus()}
+          accessibilityLabel={t('textNote.titlePlaceholder')}
+        />
+
+        <View style={{ marginHorizontal: -SCREEN_PADDING }}>
+          <NoteDocumentMarkdownToolbar
+            color={color}
+            isTablet={isTablet}
+            horizontalPadding={SCREEN_PADDING}
+            styleState={markdownStyleState}
+            onAction={handleToolbarAction}
+            disabled={isSaving}
+          />
+        </View>
+
+        <KeyboardAwareScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingTop: EDITOR_PADDING_TOP,
+            paddingBottom: editorScrollPaddingBottom,
+          }}
+          keyboardDismissMode={IS_IOS ? 'interactive' : 'on-drag'}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          bottomOffset={showTemplates ? TEMPLATES_FOOTER_HEIGHT + 12 : 20}
         >
-          <View className="mb-3 flex-row items-center gap-2">
-            <LayoutTemplate size={18} color={color.accent.primary} strokeWidth={1.8} />
-            <Text
-              className="text-[16px] font-semibold leading-[21px]"
-              style={{ color: color.text.primary }}
-            >
-              {t('textNote.templatesTitle')}
-            </Text>
+          <View testID={TestIds.textNote.body} style={{ flex: 1, minHeight: editorMinHeight }}>
+            <EnrichedMarkdownTextInput
+              key={`text-note-editor-${noteEditorKey}`}
+              ref={noteInputRef}
+              defaultValue={initialEditorMarkdown}
+              editable={!isSaving}
+              scrollEnabled
+              multiline
+              autoCapitalize="sentences"
+              placeholder={t('textNote.textPlaceholder')}
+              placeholderTextColor={color.text.muted}
+              selectionColor={color.accent.primary}
+              cursorColor={color.accent.primary}
+              markdownStyle={inputMarkdownStyle}
+              onChangeText={handleChangeText}
+              onChangeState={handleMarkdownStyleStateChange}
+              style={{
+                flex: 1,
+                width: '100%',
+                minHeight: editorMinHeight,
+                paddingTop: 4,
+                paddingBottom: EDITOR_PADDING_BOTTOM,
+                color: color.text.primary,
+                fontSize: NOTE_DOCUMENT_BODY_FONT_SIZE,
+                lineHeight: NOTE_DOCUMENT_BODY_LINE_HEIGHT,
+                textAlignVertical: 'top',
+                backgroundColor: 'transparent',
+              }}
+            />
           </View>
-          {templateHints.map((hint) => (
-            <View key={hint} className="mb-2 flex-row gap-2">
-              <Text className="text-[14px] leading-5" style={{ color: color.accent.primary }}>
-                •
-              </Text>
-              <Text
-                className="flex-1 text-[14px] leading-5"
-                style={{ color: color.text.secondary }}
-              >
-                {hint}
-              </Text>
-            </View>
-          ))}
-          <View className="mt-3 flex-row flex-wrap gap-2">
+        </KeyboardAwareScrollView>
+      </View>
+
+      {showTemplates ? (
+        <View
+          style={{
+            borderTopWidth: 1,
+            borderTopColor: color.border.default,
+            backgroundColor: color.background.secondary,
+            paddingTop: 14,
+            paddingBottom: insets.bottom + 14,
+            paddingHorizontal: SCREEN_PADDING,
+            gap: 12,
+          }}
+          accessibilityLabel={t('textNote.templatesTitle')}
+          accessibilityHint={t('textNote.templatesHint1')}
+        >
+          <Text className="text-[12px] font-semibold" style={{ color: color.text.secondary }}>
+            {t('textNote.templatesTitle')}
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ gap: 8, paddingRight: 4 }}
+          >
             {TEXT_NOTE_TEMPLATE_IDS.map((id) => (
               <Pressable
                 key={id}
+                testID={TestIds.textNote.template(id)}
                 accessibilityRole="button"
                 accessibilityLabel={t(`textNote.templateChip.${id}`)}
-                hitSlop={{ top: 4, bottom: 4, left: 2, right: 2 }}
                 disabled={isSaving}
                 onPress={() => handleApplyTemplate(id)}
-                className="rounded-full px-3 py-2 active:opacity-70"
-                style={{
-                  backgroundColor: color.background.tertiary,
-                  borderWidth: 1,
-                  borderColor: color.border.default,
-                }}
+                className="rounded-full px-3.5 py-2 active:opacity-75"
+                style={{ backgroundColor: color.background.tertiary }}
               >
-                <Text className="text-[14px] leading-5" style={{ color: color.text.secondary }}>
+                <Text className="text-[14px] font-medium" style={{ color: color.text.primary }}>
                   {t(`textNote.templateChip.${id}`)}
                 </Text>
               </Pressable>
             ))}
-          </View>
+          </ScrollView>
         </View>
-      </KeyboardAwareScrollView>
+      ) : null}
     </View>
   );
 };

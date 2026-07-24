@@ -4,9 +4,11 @@
  * For email HTML only: split entries and render as a GFM table (reliable in mail clients).
  */
 import { replaceMarkdownSection, twoColumnMarkdownTable } from '@/lib/shareNoteEmailMarkdownTables';
+import { stripInlineShareNoteSectionMarkers } from '@/lib/shareNoteSectionMarkers';
 
 const TIMESTAMP_TOKEN = /\[\d{1,2}:\d{2}(?::\d{2})?\]/;
 const TIMESTAMP_LINE = /^\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*(.*)$/;
+const SECTION_MARKER_LINE = /^\s*<!--\s*vi:section:[a-z0-9-]+\s*-->\s*$/i;
 
 /** Mobile share/PDF export uses `**[00:42]**` blocks instead of `[00:42] …` lines. */
 const BOLD_TIMESTAMP_HEADING = /^\s*\*\*(\[\d{1,2}:\d{2}(?::\d{2})?\])\*\*\s*$/;
@@ -91,21 +93,31 @@ export function splitTranscriptTimestampEntries(text: string): TranscriptTimesta
 
   for (const rawLine of normalized.split(/\r?\n/)) {
     const line = rawLine.trim();
-    if (!line) continue;
+    if (!line || SECTION_MARKER_LINE.test(line)) continue;
 
     const match = line.match(TIMESTAMP_LINE);
     if (match) {
-      entries.push({ time: match[1], text: match[2].trim() });
+      entries.push({
+        time: match[1],
+        text: stripInlineShareNoteSectionMarkers(match[2] ?? ''),
+      });
       continue;
     }
 
     if (entries.length > 0) {
       const last = entries[entries.length - 1];
-      last.text = last.text ? `${last.text} ${line}` : line;
+      const continuation = stripInlineShareNoteSectionMarkers(line);
+      if (!continuation) continue;
+      last.text = last.text ? `${last.text} ${continuation}` : continuation;
     }
   }
 
-  return entries.filter((entry) => entry.text.length > 0 || entry.time.length > 0);
+  return entries
+    .map((entry) => ({
+      time: entry.time,
+      text: stripInlineShareNoteSectionMarkers(entry.text),
+    }))
+    .filter((entry) => entry.text.length > 0 || entry.time.length > 0);
 }
 
 function replaceTranscriptSection(body: string): string {

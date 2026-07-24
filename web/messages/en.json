@@ -1,116 +1,120 @@
 {
   "hero": {
     "eyebrow": "Available on iPhone & iPad",
-    "headline": "Turn your thoughts into structured notes",
-    "subtitle": "Record anything. Get transcription, summaries, and action items powered by AI.",
-    "howItWorks": "How it works",
-    "recordingNow": "Recording now",
-    "liveTranscript": "Live transcript",
-    "summaryTitle": "AI Summary",
-    "taskTitle": "Action items",
-    "bullet1": "AI that understands your thoughts",
-    "bullet2": "Optional Private mode - runs fully on-device",
-    "bullet3": "No typing, no manual work",
+    "headline": "Think out loud. Leave with a plan.",
+    "subtitle": "Record your voice — the app transcribes, structures, and helps you find what matters later.",
+    "howItWorks": "See how it works",
+    "footnoteBadge": "Private",
+    "footnote": "an optional mode where summaries and tasks stay on your device.",
     "appStoreLabel": "Download on the",
     "appStore": "App Store",
     "googlePlayLabel": "Android",
     "googlePlay": "Google Play",
-    "downloadApp": "Download App"
+    "downloadApp": "Download App",
+    "socialProof": {
+      "appStoreAria": "{rating} out of 5 on the App Store"
+    }
   },
   "features": {
-    "title": "Outcomes you feel every day",
-    "subtitle": "Less re-listening, less forgotten context, more execution.",
+    "title": "What's in the app",
+    "subtitle": "Capture, structure, and search — in one inbox.",
     "record": {
-      "title": "Turn long recordings into short insights",
-      "description": "AI compresses rambling thoughts into a focused recap you can act on."
+      "title": "On-device transcription",
+      "description": "Whisper recognizes speech locally — record and transcribe without an internet connection."
     },
     "transcribe": {
-      "title": "Never forget important ideas",
-      "description": "Every thought becomes searchable text, so nothing gets lost after a busy day."
+      "title": "Summaries and tasks",
+      "description": "Smart uses cloud AI. Private runs generation on-device. Summary style and task strictness are configurable."
     },
     "ai": {
-      "title": "Extract tasks automatically",
-      "description": "Action items are pulled from your voice and ready when you are."
+      "title": "Meeting mode",
+      "description": "Import call audio, get a meeting brief, and speaker turns — each in its own tab on the note."
     },
     "ready": {
-      "title": "Ask AI instead of re-listening",
-      "description": "Get answers from your recordings without replaying long audio."
+      "title": "Search and AI digest",
+      "description": "Find notes by meaning. The digest builds a day, 7-day, or 30-day overview with an optional AI recap."
     }
   },
   "differentiation": {
-    "title": "Not just a voice recorder",
+    "title": "Not a recorder. Not a notepad.",
     "othersTitle": "Typical voice notes apps",
-    "others1": "Only record audio",
-    "others2": "Manual note-taking",
-    "others3": "Cloud-only processing",
-    "others4": "No structure after recording",
+    "others1": "Audio only — no structure",
+    "others2": "Transcription only in the cloud",
+    "others3": "No summaries or tasks from voice",
+    "others4": "Can't ask AI about your notes",
     "oursTitle": "Voice Inbox AI",
-    "ours1": "Understands your thoughts",
-    "ours2": "AI summaries",
-    "ours3": "Optional Private mode on-device",
-    "ours4": "Tasks and insights extracted"
+    "ours1": "Offline Whisper on your device",
+    "ours2": "Smart and Private — your choice",
+    "ours3": "Meetings, folders, tags, and pins",
+    "ours4": "Note Q&A and AI digest"
   },
   "privateMode": {
-    "title": "In Private mode, your data stays on your device",
-    "subtitle": "Available on supported devices with a downloaded local model.",
-    "item1": "On-device AI processing",
-    "item2": "No cloud for summaries and tasks in this mode",
-    "item3": "No tracking",
-    "item4": "Can work offline after model download"
+    "title": "Private mode — when you don't need the cloud",
+    "subtitle": "Summaries, tasks, and note Q&A on your device. On supported iPhones and iPads — after downloading a local model.",
+    "item1": "On-device generation",
+    "item2": "Cloud AI credits aren't spent",
+    "item3": "Recordings and transcripts stay with you",
+    "item4": "Works offline after the model is downloaded"
   },
   "howItWorks": {
     "title": "How it works",
-    "subtitle": "From thought to clarity in three steps.",
-    "step1": { "title": "Record your thought", "description": "Capture ideas naturally while walking, driving, or between meetings." },
-    "step2": { "title": "AI processes it", "description": "Voice turns into transcript, summary, and intent." },
-    "step3": { "title": "Get summary + tasks", "description": "Leave with clear notes and action items for your next step." }
+    "subtitle": "Three steps from voice to a ready note.",
+    "step1": { "title": "Record or import", "description": "Voice from the recorder or meeting audio from a file — the note lands in your inbox." },
+    "step2": { "title": "Transcribe and generate", "description": "Whisper on-device turns speech into text. Then — summary, tasks, and meeting breakdown when needed." },
+    "step3": { "title": "Act and come back", "description": "Check off tasks, search by meaning, build a digest — without replaying long audio." }
+  },
+  "testimonials": {
+    "title": "What users are saying",
+    "subtitle": "From App Store reviews"
   },
   "useCases": {
-    "title": "Built for real life",
-    "subtitle": "Different workflows, same path from capture to clarity.",
+    "title": "Built for different workflows",
+    "subtitle": "One inbox — from a quick thought to a meeting brief.",
     "founders": {
-      "title": "Founders",
-      "description": "Capture product ideas and strategic thoughts the moment they appear."
+      "title": "Ideas and strategy",
+      "description": "Capture product hypotheses by voice — summary and tasks appear on their own."
     },
     "students": {
-      "title": "Students",
-      "description": "Summarize lectures and keep key points easy to review."
+      "title": "Lectures and study",
+      "description": "Record a lecture, get text and a short recap for review."
     },
     "busy": {
-      "title": "Busy people",
-      "description": "Turn mental clutter into clear tasks before it slips away."
+      "title": "Meetings and follow-ups",
+      "description": "Import call audio, get a brief and open tasks in one note."
     }
   },
   "cta": {
-    "title": "Start capturing ideas today",
-    "subtitle": "Try for free - no account needed",
+    "title": "Install and record your first thought",
+    "subtitle": "No account. On-device transcription — right after install.",
     "primary": "Download App",
     "androidWaitlistAria": "Join Android waitlist",
     "androidSoonLabel": "Coming soon",
-    "androidWaitlistLink": "Join Android waitlist"
+    "androidWaitlistLink": "Join Android waitlist",
+    "qrCaption": "Scan to install",
+    "qrAria": "QR code to download the app"
   },
   "faq": {
     "title": "Questions people ask before installing",
-    "subtitle": "Fast answers for privacy, workflow, and pricing.",
+    "subtitle": "Smart vs Private, offline, meetings, and pricing — in brief.",
     "offline": {
       "question": "Does it work offline?",
-      "answer": "Yes. Recording and transcription run on-device, so you can capture ideas even with no connection."
+      "answer": "Yes. Recording and Whisper transcription run on-device. In Private mode, summaries and tasks can run offline too — after downloading a local model."
     },
     "privacy": {
       "question": "Where is my data stored?",
-      "answer": "By default your voice notes and transcripts stay on your device. You control if and when AI cloud features are used."
+      "answer": "Audio and transcripts stay on your device. In Smart mode, text is sent for processing to generate summaries, tasks, and note Q&A. In Private, generation stays local — no requests to our servers."
     },
     "privateMode": {
-      "question": "Is Private mode always on?",
-      "answer": "No. Private mode is optional in Settings. It is available on supported devices after downloading a local model."
+      "question": "How is Smart different from Private?",
+      "answer": "Smart is cloud AI with model choice, meeting mode, digest, and auto-organize folders. Private gives summaries, tasks, and note Q&A on-device without spending cloud AI credits. Switch modes in AI settings."
     },
     "languages": {
       "question": "Which languages are supported?",
-      "answer": "Voice Inbox AI supports multi-language speech recognition and keeps improving model quality over time."
+      "answer": "Whisper recognizes speech in many languages. You can set a fixed output language for summaries and tasks in AI settings — separate from the recording language."
     },
     "pricing": {
       "question": "Do I need a subscription to start?",
-      "answer": "No. You can install and start using core voice capture immediately, then upgrade only if advanced AI workflows are needed."
+      "answer": "No. Recording and transcription are available immediately, no account required. Cloud AI in Smart uses weekly credits. Pro unlocks additional models, meeting mode, and more."
     },
     "backupViewer": {
       "question": "Can I open my backup on a computer?",
@@ -118,13 +122,27 @@
     }
   },
   "footer": {
+    "tagline": "AI voice notes on iPhone and iPad — on-device capture, Smart or Private when you choose.",
+    "features": "Features",
+    "howItWorks": "How it works",
+    "blog": "Blog",
+    "download": "Get the app",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
     "support": "Support",
     "backupViewer": "Backup viewer",
     "releases": "Blog",
     "verifiedMetrics": "Verified Metrics",
-    "copyright": "© {year} Voice Inbox AI. All rights reserved."
+    "navAria": "Footer navigation",
+    "copyright": "© {year} Voice Inbox AI. All rights reserved.",
+    "disclaimer": "Recordings and transcripts stay on your device. Cloud AI is optional in settings."
+  },
+  "cookieConsent": {
+    "bannerAria": "Cookie consent",
+    "message": "We use cookies to remember your settings and, if you agree, understand how the site is used. <privacy>Privacy Policy</privacy>",
+    "accept": "Accept",
+    "reject": "Decline",
+    "settingsLink": "Cookies"
   },
   "header": {
     "appName": "Voice Inbox AI",
@@ -134,7 +152,8 @@
     "preferencesAria": "Language and theme",
     "installApp": "Download App",
     "installAppShort": "Download",
-    "tryFree": "Try for free - no account needed"
+    "tryFree": "Try for free - no account needed",
+    "stickySubtitle": "{rating} · free"
   },
   "releases": {
     "pageTitle": "Blog",
@@ -150,8 +169,8 @@
     "version": "Version"
   },
   "metadata": {
-    "title": "Voice Inbox AI | AI-Powered Voice Notes",
-    "description": "Record, transcribe, and structure your ideas with AI. Offline transcription on your device. Optional cloud or on-device AI when you choose it. Your notes stay local. Available on iOS.",
+    "title": "Voice Inbox AI – AI Voice Notes & Tasks",
+    "description": "Voice inbox with on-device Whisper, summaries, tasks, meeting mode, and AI digest. Smart or Private — your choice. No account. iPhone and iPad.",
     "privacyTitle": "Privacy Policy — Voice Inbox AI",
     "privacyDescription": "How Voice Inbox AI handles your data: local storage, optional AI processing, and our commitment to privacy.",
     "termsTitle": "Terms of Service — Voice Inbox AI",
@@ -167,7 +186,21 @@
     "supportTitle": "Support — Voice Inbox AI",
     "supportDescription": "How to get help with Voice Inbox AI: contact options, privacy, and terms.",
     "viewerTitle": "Backup viewer — Voice Inbox AI",
-    "viewerDescription": "Open a backup ZIP exported from the Voice Inbox AI app in your browser. Nothing is uploaded to our servers."
+    "viewerDescription": "Open a backup ZIP exported from the Voice Inbox AI app in your browser. Nothing is uploaded to our servers.",
+    "sharedNoteTitle": "{title} — Shared note",
+    "sharedNoteDescription": "A note shared from Voice Inbox AI.",
+    "sharedNoteMissingTitle": "Shared note unavailable — Voice Inbox AI",
+    "sharedNoteMissingDescription": "This shared note link is invalid, expired, or has been unpublished."
+  },
+  "sharedNote": {
+    "publishedOn": "Published {date}",
+    "expiresOn": "Expires {date}",
+    "justNow": "just now",
+    "todayAt": "today at '{time}'",
+    "yesterdayAt": "yesterday at '{time}'",
+    "tomorrowAt": "tomorrow at '{time}'",
+    "expired": "expired",
+    "backHome": "← Back to home"
   },
   "supportPage": {
     "heading": "Support",

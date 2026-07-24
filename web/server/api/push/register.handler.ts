@@ -1,4 +1,5 @@
-import { apiError, assertMobileAuthenticatedDevice, HttpStatus } from '@/lib/api';
+import { apiError, HttpStatus } from '@/lib/api';
+import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import { ApiErrorCode } from '@/lib/api-error-codes';
 import { sanitizeDeviceModel } from '@/lib/device-model';
 import {

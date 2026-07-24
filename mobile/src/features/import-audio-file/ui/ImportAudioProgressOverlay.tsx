@@ -6,25 +6,46 @@ import { useColors } from '@/shared/config';
 
 import type { ImportAudioPhase } from '../model/types';
 
+type DocumentImportProgress = {
+  current: number;
+  total: number;
+};
+
 type ImportAudioProgressOverlayProps = {
   visible: boolean;
   phase: ImportAudioPhase | null;
+  documentProgress?: DocumentImportProgress | null;
 };
 
-export const ImportAudioProgressOverlay = ({ visible, phase }: ImportAudioProgressOverlayProps) => {
+export const ImportAudioProgressOverlay = ({
+  visible,
+  phase,
+  documentProgress,
+}: ImportAudioProgressOverlayProps) => {
   const { t } = useTranslation();
   const color = useColors();
 
-  const messageKey =
-    phase === 'copying'
-      ? 'importAudio.phaseCopying'
-      : phase === 'converting'
-        ? 'importAudio.phaseConverting'
-        : phase === 'analyzing'
-          ? 'importAudio.phaseAnalyzing'
-          : phase === 'parsing_subtitles'
-            ? 'importAudio.phaseParsingSubtitles'
-            : 'importAudio.phasePreparing';
+  const message =
+    phase === 'parsing_document' && documentProgress && documentProgress.total > 0
+      ? t('importAudio.phaseParsingDocumentPage', {
+          current: documentProgress.current,
+          total: documentProgress.total,
+        })
+      : t(
+          phase === 'preparing'
+            ? 'importAudio.phasePreparing'
+            : phase === 'copying'
+              ? 'importAudio.phaseCopying'
+              : phase === 'converting'
+                ? 'importAudio.phaseConverting'
+                : phase === 'analyzing'
+                  ? 'importAudio.phaseAnalyzing'
+                  : phase === 'parsing_subtitles'
+                    ? 'importAudio.phaseParsingSubtitles'
+                    : phase === 'parsing_document'
+                      ? 'importAudio.phaseParsingDocument'
+                      : 'importAudio.phasePreparing',
+        );
 
   return (
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
@@ -47,7 +68,7 @@ export const ImportAudioProgressOverlay = ({ visible, phase }: ImportAudioProgre
             className="mt-2 text-center text-[14px] leading-5"
             style={{ color: color.text.secondary }}
           >
-            {t(messageKey)}
+            {message}
           </Text>
         </View>
       </View>

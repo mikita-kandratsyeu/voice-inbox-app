@@ -8,8 +8,9 @@ function normalizeApiPath(pathname: string): string {
 
 const DAY_TTL_SECONDS = 3 * 24 * 3600;
 
-export async function recordApiError(pathname: string, status: number): Promise<void> {
-  if (status < 400) return;
+export type AppCheckFailureReason = 'missing' | 'invalid' | 'misconfigured';
+
+async function incrementTelemetryField(field: string): Promise<void> {
   const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
   const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
 
@@ -19,15 +20,32 @@ export async function recordApiError(pathname: string, status: number): Promise<
 
   const day = new Date().toISOString().slice(0, 10);
   const key = `admin:api_err:${day}`;
-  const field = `${status} ${normalizeApiPath(pathname)}`;
 
   try {
     const client = new Redis({ url, token });
     await client.hincrby(key, field, 1);
     await client.expire(key, DAY_TTL_SECONDS);
   } catch (err) {
-    console.error('[recordApiError] error', err);
+    console.error('[api-telemetry] increment failed', field, err);
   }
+}
+
+export async function recordAppCheckFailure(reason: AppCheckFailureReason): Promise<void> {
+  await incrementTelemetryField(`app_check_${reason}`);
+}
+
+export async function recordApiError(pathname: string, status: number): Promise<void> {
+  if (status < 400) return;
+  const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+
+  if (!url || !token) {
+    return;
+  }
+
+  const field = `${status} ${normalizeApiPath(pathname)}`;
+
+  await incrementTelemetryField(field);
 }
 
 export async function getTodayApiErrorStats(): Promise<{

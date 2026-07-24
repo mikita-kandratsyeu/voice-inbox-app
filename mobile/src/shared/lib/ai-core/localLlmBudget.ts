@@ -1,9 +1,6 @@
 import type { LocalAiModelId } from '@/entities/settings';
 
-import { DEFAULT_LOCAL_LLM_N_CTX, getLocalLlmNCtx } from './localLlmModelProfiles';
-
-/** @deprecated Use getLocalLlmNCtx(modelId) — context may differ per model. */
-export const LOCAL_LLM_N_CTX = DEFAULT_LOCAL_LLM_N_CTX;
+import { getLocalLlmNCtx } from './localLlmModelProfiles';
 
 /** Chat template, special tokens, and safety margin vs tokenizer mismatch. */
 export const LOCAL_LLM_PROMPT_OVERHEAD_TOKENS = 1024;

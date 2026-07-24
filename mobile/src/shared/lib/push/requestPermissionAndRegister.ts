@@ -6,9 +6,9 @@ import {
   requestPermission,
 } from '@react-native-firebase/messaging';
 
-import { useSettingsStore } from '@/entities/settings';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { diagWarn } from '@/shared/lib/appLogger';
 import { i18n } from '@/shared/lib/i18n';
 import { IS_IOS, PLATFORM_OS } from '@/shared/lib/platform';
 import { getPushRegistrationMetadata } from '@/shared/lib/push-register-metadata';
@@ -38,7 +38,6 @@ export type PushPermissionStatus = 'granted' | 'denied' | 'not-determined';
 
 export async function ensurePushRegistered(): Promise<void> {
   if (!IS_IOS) return;
-  if (!useSettingsStore.getState().aiProcessingAlertsEnabled) return;
 
   const status = await checkPushPermission();
   if (status !== 'granted') return;
@@ -126,38 +125,27 @@ export async function sendTokenToBackend(token: string): Promise<boolean> {
     });
 
     if (!response.ok) {
-      if (__DEV__) {
-        console.warn('[Push] register token failed', response.status);
-      }
+      diagWarn('[Push] register token failed', response.status);
       return false;
     }
 
     markPushRegistered(token);
     return true;
   } catch (err) {
-    if (__DEV__) {
-      console.warn('[Push] register token error', err);
-    }
+    diagWarn('[Push] register token error', err);
     return false;
   }
 }
 
-export async function enableAiProcessingAlerts(): Promise<boolean> {
+/** Request system push permission and register the device token when granted. */
+export async function requestPushPermissionAndRegister(): Promise<boolean> {
   if (!IS_IOS) return false;
 
   const current = await checkPushPermission();
   const granted = current === 'granted' || (await requestPushPermission()) === 'granted';
   if (!granted) return false;
 
-  useSettingsStore.getState().setAiProcessingAlertsEnabled(true);
   lastRegisteredToken = null;
   await ensurePushRegistered();
   return true;
-}
-
-export async function disableAiProcessingAlerts(): Promise<void> {
-  useSettingsStore.getState().setAiProcessingAlertsEnabled(false);
-  lastRegisteredToken = null;
-  lastRegisteredLocale = null;
-  lastRegisterTime = 0;
 }

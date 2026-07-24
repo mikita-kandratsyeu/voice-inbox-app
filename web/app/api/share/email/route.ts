@@ -1,15 +1,17 @@
-import {
-  apiError,
-  checkSupportRateLimit,
-  HttpStatus,
-  parseJsonBody,
-  requireAppAuth,
-  requireMobileUserAgent,
-  validateDeviceId,
-} from '@/lib/api';
-import { HEADER_DEVICE_ID } from '@/config/constants';
+import { apiError, checkShareEmailRateLimit, HttpStatus, parseJsonBody } from '@/lib/api';
+import { assertMobileAuthenticatedDevice } from '@/lib/mobile-api-guard';
 import { isSmtpConfigured, sendTransactionalMail } from '@/lib/mailer';
-import { buildShareNoteEmailHtml } from '@/lib/shareNoteMarkdownEmailHtml';
+import {
+  buildShareNoteEmailPlainText,
+  buildShareNoteEmailShellStrings,
+  defaultExportBody,
+  normalizeShareNoteEmailLocale,
+} from '@/lib/share-note-email-copy';
+import {
+  buildShareNoteEmailHtml,
+  buildShareNoteEmailShellHtml,
+} from '@/lib/shareNoteMarkdownEmailHtml';
+import { stripShareNoteSectionMarkers } from '@/lib/shareNoteSectionMarkers';
 import { NextResponse } from 'next/server';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -24,6 +26,8 @@ type ShareEmailBody = {
   subject?: unknown;
   title?: unknown;
   markdown?: unknown;
+  attachMarkdown?: unknown;
+  locale?: unknown;
 };
 
 function escapeHtml(value: string): string {
@@ -67,22 +71,24 @@ function safeMarkdownAttachmentFilename(title: string): string {
   return base.toLowerCase().endsWith('.md') ? base : `${base}.md`;
 }
 
+function htmlParagraphFromText(text: string, fallback: string): string {
+  const lines = escapeHtml(text)
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const body = lines.length > 0 ? lines.join('<br>') : escapeHtml(fallback);
+  return `<p style="margin:0;font-size:15px;line-height:1.6;color:#374151;">${body}</p>`;
+}
+
 export async function POST(request: Request): Promise<NextResponse> {
   const path = new URL(request.url).pathname;
 
-  const authError = await requireAppAuth();
-  if (authError) return authError;
-
-  const uaError = await requireMobileUserAgent();
-  if (uaError) return uaError;
-
-  const deviceId = request.headers.get(HEADER_DEVICE_ID);
-  const deviceIdError = validateDeviceId(deviceId);
-  if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
+  const gate = await assertMobileAuthenticatedDevice(request, path);
+  if (!gate.ok) {
+    return gate.response;
   }
 
-  const rate = await checkSupportRateLimit(deviceId!.trim());
+  const rate = await checkShareEmailRateLimit(gate.deviceId);
   if (rate) return rate;
 
   if (!isSmtpConfigured()) {
@@ -115,11 +121,13 @@ export async function POST(request: Request): Promise<NextResponse> {
       normalizeBoundedString(formData.get('subject'), SUBJECT_MAX) ??
       `Voice Inbox AI: ${title}`.slice(0, SUBJECT_MAX);
 
+    const locale = normalizeShareNoteEmailLocale(formData.get('locale'));
+
     const bodyTextRaw = formData.get('bodyText');
     const bodyText =
       typeof bodyTextRaw === 'string' && bodyTextRaw.trim().length > 0
         ? bodyTextRaw.trim().slice(0, BODY_TEXT_MAX)
-        : 'Your Voice Inbox export is attached.';
+        : defaultExportBody(locale);
 
     const file = formData.get('file');
     if (!(file instanceof File)) {
@@ -176,23 +184,37 @@ export async function POST(request: Request): Promise<NextResponse> {
             : 'voice-inbox-export.zip';
         })();
 
-    const escapedTitle = escapeHtml(title);
-    const escapedBody = escapeHtml(bodyText);
-
     try {
+      const shell = buildShareNoteEmailShellStrings({
+        locale,
+        title,
+        kind: 'export',
+        attachmentKind,
+        attachmentFilename: attachmentFilename,
+      });
+      const text = buildShareNoteEmailPlainText({
+        locale,
+        title,
+        body: bodyText,
+        kind: 'export',
+        attachmentKind,
+        attachmentFilename: attachmentFilename,
+      });
+      const html = buildShareNoteEmailShellHtml({
+        title,
+        bodyInnerHtml: htmlParagraphFromText(bodyText, defaultExportBody(locale)),
+        preheader: shell.preheader,
+        intro: shell.intro,
+        attachmentLabel: shell.attachmentLabel,
+        attachmentPrefix: shell.attachmentPrefix,
+        footerLine: shell.footerLine,
+      });
+
       await sendTransactionalMail({
         to,
         subject,
-        text: bodyText,
-        html: `<!doctype html>
-<html>
-  <body style="margin:0;padding:24px;background:#f6f7fb;color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-    <main style="max-width:720px;margin:0 auto;background:#ffffff;border-radius:16px;padding:24px;border:1px solid #e5e7eb;">
-      <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;">${escapedTitle}</h1>
-      <p style="margin:0;font-size:15px;line-height:1.55;color:#374151;">${escapedBody}</p>
-    </main>
-  </body>
-</html>`,
+        text,
+        html,
         attachments: [
           {
             filename: attachmentFilename,
@@ -234,21 +256,47 @@ export async function POST(request: Request): Promise<NextResponse> {
   const subject =
     normalizeBoundedString(body.subject, SUBJECT_MAX) ??
     `Voice Inbox AI note: ${title}`.slice(0, SUBJECT_MAX);
+  const attachMarkdown = body.attachMarkdown !== false;
+  const locale = normalizeShareNoteEmailLocale(body.locale);
 
   try {
-    const html = await buildShareNoteEmailHtml(markdown, title);
+    const markdownForDelivery = stripShareNoteSectionMarkers(markdown);
+    const shell = buildShareNoteEmailShellStrings({
+      locale,
+      title,
+      kind: 'note',
+      attachmentKind: attachMarkdown ? 'markdown' : undefined,
+      attachmentFilename: attachMarkdown ? safeMarkdownAttachmentFilename(title) : undefined,
+    });
+    const html = await buildShareNoteEmailHtml(markdown, title, {
+      preheader: shell.preheader,
+      intro: shell.intro,
+      attachmentLabel: shell.attachmentLabel,
+      attachmentPrefix: shell.attachmentPrefix,
+      footerLine: shell.footerLine,
+    });
+    const text = buildShareNoteEmailPlainText({
+      locale,
+      title,
+      body: markdownForDelivery,
+      kind: 'note',
+      attachmentKind: attachMarkdown ? 'markdown' : undefined,
+      attachmentFilename: attachMarkdown ? safeMarkdownAttachmentFilename(title) : undefined,
+    });
     await sendTransactionalMail({
       to,
       subject,
-      text: markdown,
+      text,
       html,
-      attachments: [
-        {
-          filename: safeMarkdownAttachmentFilename(title),
-          content: Buffer.from(markdown, 'utf8'),
-          contentType: 'text/markdown; charset=utf-8',
-        },
-      ],
+      attachments: attachMarkdown
+        ? [
+            {
+              filename: safeMarkdownAttachmentFilename(title),
+              content: Buffer.from(markdownForDelivery, 'utf8'),
+              contentType: 'text/markdown; charset=utf-8',
+            },
+          ]
+        : undefined,
     });
   } catch (e) {
     console.error('[share/email POST]', e);

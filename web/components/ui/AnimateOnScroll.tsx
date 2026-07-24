@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 type Props = {
   children: React.ReactNode;
@@ -8,33 +8,66 @@ type Props = {
   delay?: number;
 };
 
+function subscribeReducedMotion(onStoreChange: () => void): () => void {
+  const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+  media.addEventListener('change', onStoreChange);
+  return () => media.removeEventListener('change', onStoreChange);
+}
+
+function getReducedMotionSnapshot(): boolean {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function getReducedMotionServerSnapshot(): boolean {
+  return false;
+}
+
 export function AnimateOnScroll({
   children,
   className = '',
   delay = 0,
 }: Props): React.ReactElement {
-  const [isVisible, setIsVisible] = useState(false);
+  const prefersReducedMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot,
+  );
+  const [hasRevealed, setHasRevealed] = useState(false);
+  const [isDone, setIsDone] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    const el = ref.current;
+  const isVisible = prefersReducedMotion || hasRevealed;
+  const animationDone = prefersReducedMotion || isDone;
 
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      return;
+    }
+
+    const el = ref.current;
     if (!el) {
       return;
     }
 
+    const reveal = (): void => {
+      setHasRevealed(true);
+      observer.unobserve(el);
+    };
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          if (delay > 0) {
-            timerRef.current = setTimeout(() => setIsVisible(true), delay);
-          } else {
-            setIsVisible(true);
-          }
+        if (!entry.isIntersecting) {
+          return;
+        }
+
+        if (delay > 0) {
+          timerRef.current = setTimeout(reveal, delay);
+        } else {
+          reveal();
         }
       },
-      { threshold: 0.1, rootMargin: '0px 0px -30px 0px' },
+      { threshold: 0.08, rootMargin: '0px 0px -48px 0px' },
     );
 
     observer.observe(el);
@@ -45,12 +78,19 @@ export function AnimateOnScroll({
         clearTimeout(timerRef.current);
       }
     };
-  }, [delay]);
+  }, [delay, prefersReducedMotion]);
+
+  const handleTransitionEnd = (event: React.TransitionEvent<HTMLDivElement>): void => {
+    if (event.propertyName === 'transform') {
+      setIsDone(true);
+    }
+  };
 
   return (
     <div
       ref={ref}
-      className={`animate-on-scroll ${isVisible ? 'animate-on-scroll-visible' : ''} ${className}`}
+      onTransitionEnd={prefersReducedMotion ? undefined : handleTransitionEnd}
+      className={`animate-on-scroll ${isVisible ? 'animate-on-scroll-visible' : ''} ${animationDone ? 'animate-on-scroll-done' : ''} ${className}`}
     >
       {children}
     </div>

@@ -1,12 +1,11 @@
 import {
   ANALYTICS_DEBUG,
-  APP_ENV,
   CRASHLYTICS_DEBUG,
   DATABASE_URL,
   DB_LOG,
   MOBILE_USER_AGENT,
+  SKIP_FIREBASE_APP_CHECK,
   TESTFLIGHT_INTERNAL_BUILD,
-  WEB_API_SECRET,
 } from '@env';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
@@ -54,8 +53,15 @@ function isTruthyBuildEnvFlag(v: string | undefined): boolean {
   return raw === '1' || raw === 'true' || raw === 'yes';
 }
 
-export function getAppEnv(): string {
-  return trimBuildEnv(APP_ENV);
+export type NodeEnv = 'production' | 'development';
+
+/** Embedded at bundle time from `NODE_ENV` / `__DEV__` (production | development only). */
+export function getNodeEnv(): NodeEnv {
+  if (__DEV__) {
+    return 'development';
+  }
+
+  return 'production';
 }
 
 export function getDatabaseUrl(): string {
@@ -78,13 +84,14 @@ export function isTestflightInternalBuild(): boolean {
   return isTruthyBuildEnvFlag(TESTFLIGHT_INTERNAL_BUILD);
 }
 
+/** Matches web `isFirebaseAppCheckSkipped`: `__DEV__` + `SKIP_FIREBASE_APP_CHECK=1`. */
+export function isSkipFirebaseAppCheckEnabled(): boolean {
+  return __DEV__ && isTruthyBuildEnvFlag(SKIP_FIREBASE_APP_CHECK);
+}
+
 /** Dev or internal TestFlight — same gate as Settings → Debug entry. */
 export function isInternalDebugBuild(): boolean {
   return __DEV__ || isTestflightInternalBuild();
-}
-
-export function getWebApiSecret(): string {
-  return trimBuildEnv(WEB_API_SECRET);
 }
 
 export function getMobileUserAgent(): string {

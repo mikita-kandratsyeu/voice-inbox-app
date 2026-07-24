@@ -1,6 +1,6 @@
 import { InlineKeyboard } from 'grammy';
 
-import { hasPermission, MENU_SECTIONS, type AdminPermission } from '../auth/permissions.js';
+import { type AdminPermission, hasPermission, MENU_SECTIONS } from '../auth/permissions.js';
 import type { AdminProfile } from '../types.js';
 
 export function navRow(backCb: string, refreshCb?: string): InlineKeyboard {
@@ -24,9 +24,7 @@ export function homeKeyboard(profile: AdminProfile): InlineKeyboard {
 }
 
 export function confirmKeyboard(confirmCb: string, cancelCb: string): InlineKeyboard {
-  return new InlineKeyboard()
-    .text('✅ Confirm', confirmCb)
-    .text('❌ Cancel', cancelCb);
+  return new InlineKeyboard().text('✅ Confirm', confirmCb).text('❌ Cancel', cancelCb);
 }
 
 export function paginateRow(
@@ -40,10 +38,7 @@ export function paginateRow(
   return kb;
 }
 
-export function requirePerm(
-  profile: AdminProfile,
-  permission: AdminPermission,
-): string | null {
+export function requirePerm(profile: AdminProfile, permission: AdminPermission): string | null {
   if (hasPermission(profile, permission)) return null;
   return `You need the <b>${permission}</b> permission.`;
 }

@@ -20,7 +20,15 @@ export const DebugScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const color = useColors();
-  const { handleHardReset, isHardResetting, showCrashlyticsButton } = useDebugScreen();
+  const {
+    handleClearMmkv,
+    handleResetMobileBanner,
+    handleHardReset,
+    isClearingMmkv,
+    isResettingMobileBanner,
+    isHardResetting,
+    showCrashlyticsButton,
+  } = useDebugScreen();
   const isTf = isTestflightInternalBuild();
 
   return (
@@ -37,6 +45,10 @@ export const DebugScreen = () => {
         <DebugInternalOverridesSection color={color} />
         <SettingsDebugSection
           color={color}
+          onClearMmkv={handleClearMmkv}
+          isClearingMmkv={isClearingMmkv}
+          onResetMobileBanner={handleResetMobileBanner}
+          isResettingMobileBanner={isResettingMobileBanner}
           onHardReset={handleHardReset}
           isHardResetting={isHardResetting}
           showCrashlyticsButton={showCrashlyticsButton}

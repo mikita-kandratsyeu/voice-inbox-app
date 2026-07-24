@@ -3,6 +3,7 @@ import { initWhisper, releaseAllWhisper, type WhisperContext } from 'whisper.rn'
 
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
 import { IS_IOS } from '@/shared/lib';
+import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import {
   getWhisperModelPath,
   isWhisperCoreMlSupportedForModel,
@@ -60,7 +61,7 @@ const releaseWhisperContextNow = async (): Promise<void> => {
   try {
     await releaseAllWhisper();
   } catch (e) {
-    if (__DEV__) console.warn('[whisper] release failed:', e);
+    diagWarn('[whisper] release failed:', e);
   } finally {
     endWhisperNativeWork();
   }
@@ -129,7 +130,7 @@ const loadWhisperContext = async (
     try {
       await releaseAllWhisper();
     } catch (e) {
-      if (__DEV__) console.warn('[whisper] release failed:', e);
+      diagWarn('[whisper] release failed:', e);
     } finally {
       endWhisperNativeWork();
     }
@@ -144,8 +145,8 @@ const loadWhisperContext = async (
       filePath,
       ...whisperInitOptions,
     });
-    if (__DEV__ && IS_IOS) {
-      console.warn(
+    if (IS_IOS) {
+      devWarn(
         `[whisper] context id=${context.id} gpu=${context.gpu} coreML=${whisperInitOptions.useCoreMLIos === true} encoder=${coreMlActive}`,
       );
     }
@@ -227,7 +228,7 @@ export const resetWhisperContext = (): Promise<boolean> =>
     try {
       await releaseAllWhisper();
     } catch (e) {
-      if (__DEV__) console.warn('[whisper] reset failed:', e);
+      diagWarn('[whisper] reset failed:', e);
     } finally {
       endWhisperNativeWork();
     }

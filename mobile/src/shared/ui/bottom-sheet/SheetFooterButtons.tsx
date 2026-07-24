@@ -44,12 +44,14 @@ export type SheetFooterButtonsProps = {
   primaryLoading?: boolean;
   labelSuffix?: string;
   primaryAccessibilityLabel?: string;
+  primaryTestID?: string;
   onPrimaryPressIn?: () => void;
   secondaryLabel?: string;
   onSecondaryPress?: () => void;
   onSecondaryPressIn?: () => void;
   secondaryDisabled?: boolean;
   secondaryAccessibilityLabel?: string;
+  secondaryTestID?: string;
   /** When there is no secondary action: `primary` (default) or `secondary` (e.g. Cancel-only). */
   singleVariant?: 'primary' | 'secondary';
   /** Full-width action below the main row or single button (e.g. delete folder). */
@@ -58,6 +60,8 @@ export type SheetFooterButtonsProps = {
     onPress: () => void;
     disabled?: boolean;
   };
+  /** Side-by-side (default) or stacked full-width buttons when both actions are shown. */
+  buttonLayout?: 'row' | 'stack';
   className?: string;
   /** Primary button background when enabled (default: `color.accent.primary`). */
   primaryBackgroundColor?: string;
@@ -75,14 +79,17 @@ export function SheetFooterButtons({
   primaryLoading = false,
   labelSuffix,
   primaryAccessibilityLabel,
+  primaryTestID,
   onPrimaryPressIn,
   secondaryLabel,
   onSecondaryPress,
   onSecondaryPressIn,
   secondaryDisabled = false,
   secondaryAccessibilityLabel,
+  secondaryTestID,
   singleVariant = 'primary',
   bottomAction,
+  buttonLayout = 'row',
   className = 'mt-4 w-full',
   primaryBackgroundColor,
   primaryDisabledBackgroundColor,
@@ -98,36 +105,73 @@ export function SheetFooterButtons({
   return (
     <View className={className}>
       {hasSecondary ? (
-        <View className="flex-row gap-3">
-          <Button
-            variant="secondary"
-            label={secondaryLabel}
-            onPress={onSecondaryPress}
-            onPressIn={onSecondaryPressIn}
-            activeOpacity={0.8}
-            className={ROW_BUTTON_CLASS}
-            color={color}
-            disabled={secondaryDisabled}
-            containerStyle={sheetFooterButtonContainerStyle(color, 'secondary')}
-            accessibilityLabel={secondaryAccessibilityLabel ?? secondaryLabel}
-          />
-          <Button
-            variant="primary"
-            label={primaryLabel}
-            labelSuffix={labelSuffix}
-            onPress={onPrimaryPress}
-            onPressIn={onPrimaryPressIn}
-            activeOpacity={0.85}
-            className={ROW_BUTTON_CLASS}
-            color={color}
-            disabled={primaryDisabled}
-            loading={primaryLoading}
-            containerStyle={primaryContainerStyle}
-            labelStyle={primaryLabelStyle}
-            accessibilityLabel={primaryAccessibilityLabel ?? primaryLabel}
-            accessibilityState={{ disabled: primaryDisabled }}
-          />
-        </View>
+        buttonLayout === 'stack' ? (
+          <View className="gap-3">
+            <Button
+              testID={primaryTestID}
+              variant="primary"
+              fullWidth
+              label={primaryLabel}
+              labelSuffix={labelSuffix}
+              onPress={onPrimaryPress}
+              onPressIn={onPrimaryPressIn}
+              activeOpacity={0.85}
+              color={color}
+              disabled={primaryDisabled}
+              loading={primaryLoading}
+              containerStyle={primaryContainerStyle}
+              labelStyle={primaryLabelStyle}
+              accessibilityLabel={primaryAccessibilityLabel ?? primaryLabel}
+              accessibilityState={{ disabled: primaryDisabled }}
+            />
+            <Button
+              testID={secondaryTestID}
+              variant="secondary"
+              fullWidth
+              label={secondaryLabel}
+              onPress={onSecondaryPress}
+              onPressIn={onSecondaryPressIn}
+              activeOpacity={0.8}
+              color={color}
+              disabled={secondaryDisabled}
+              containerStyle={sheetFooterButtonContainerStyle(color, 'secondary')}
+              accessibilityLabel={secondaryAccessibilityLabel ?? secondaryLabel}
+            />
+          </View>
+        ) : (
+          <View className="flex-row gap-3">
+            <Button
+              testID={secondaryTestID}
+              variant="secondary"
+              label={secondaryLabel}
+              onPress={onSecondaryPress}
+              onPressIn={onSecondaryPressIn}
+              activeOpacity={0.8}
+              className={ROW_BUTTON_CLASS}
+              color={color}
+              disabled={secondaryDisabled}
+              containerStyle={sheetFooterButtonContainerStyle(color, 'secondary')}
+              accessibilityLabel={secondaryAccessibilityLabel ?? secondaryLabel}
+            />
+            <Button
+              testID={primaryTestID}
+              variant="primary"
+              label={primaryLabel}
+              labelSuffix={labelSuffix}
+              onPress={onPrimaryPress}
+              onPressIn={onPrimaryPressIn}
+              activeOpacity={0.85}
+              className={ROW_BUTTON_CLASS}
+              color={color}
+              disabled={primaryDisabled}
+              loading={primaryLoading}
+              containerStyle={primaryContainerStyle}
+              labelStyle={primaryLabelStyle}
+              accessibilityLabel={primaryAccessibilityLabel ?? primaryLabel}
+              accessibilityState={{ disabled: primaryDisabled }}
+            />
+          </View>
+        )
       ) : singleVariant === 'secondary' ? (
         <Button
           variant="secondary"
@@ -144,6 +188,7 @@ export function SheetFooterButtons({
         />
       ) : (
         <Button
+          testID={primaryTestID}
           variant="primary"
           fullWidth
           label={primaryLabel}

@@ -1,0 +1,7 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+- openLink: voiceinbox://e2e/seed-text-note?title=E2E%20Note&body=Maestro%20seeded%20note&id=e2e-seed-note
+- extendedWaitUntil:
+    visible:
+      id: inbox.recordCard.e2e-seed-note
+    timeout: 15000

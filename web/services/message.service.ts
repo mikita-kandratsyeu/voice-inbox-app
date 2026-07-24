@@ -1,13 +1,24 @@
 import { sendLimitExceededPush } from '@/lib/push-tokens';
 import { MESSAGE_TTL_SECONDS } from '@/config/constants';
 import { checkAndIncrement, type AiLimitContext } from '@/lib/ai-rate-limit';
+import { resolveTranscriptSummarizeLedgerOperation } from '@/lib/ai-usage-ledger';
 import { clearAiJobCancelled } from '@/lib/ai-job-cancel';
+import type { AiModelMode } from '@/lib/ai-model-router';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
 import { releaseJobLock } from '@/lib/ai-job-lock';
 import { dispatchMeetingDialogueJob } from '@/lib/meeting-dialogue-dispatch';
-import { aiModelResponseFields, enrichMessageWithModelLabel } from '@/lib/ai-model-display';
+import {
+  aiModelLedgerMetadata,
+  aiModelResponseFields,
+  enrichMessageWithModelLabel,
+  sanitizeAiModelFieldsForClient,
+} from '@/lib/ai-model-display';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
+import { getJobMetadata } from '@/lib/job-metadata';
+import { scheduleAsyncJobPoll } from '@/lib/ai-job-poll-schedule';
+import { expectsAsyncMeetingDialoguePass } from '@/lib/ai-poll-deadline';
+import { enrichWithPollingHints, operationToJobType } from '@/lib/polling-hints';
 import type {
   MeetingDialogueAuxPayload,
   MeetingDialogueJobPayload,
@@ -18,7 +29,7 @@ import type { Message } from '@/types';
 export type { MeetingDialogueAuxPayload } from '@/types/ai-job';
 
 type CreateMessageResult =
-  | { created: true; syncToken?: string }
+  | { created: true; syncToken?: string; pollExpiresAt: string }
   | { created: false; limitExceeded: true; usage: import('@/lib/ai-rate-limit').AiUsage }
   | { created: false };
 
@@ -34,18 +45,31 @@ export const createMessage = async (
   meetingDialogueSystemPrompt?: string,
   meetingDialogueAux?: MeetingDialogueAuxPayload,
   aiLimitContext?: AiLimitContext,
+  modelMode?: AiModelMode,
 ): Promise<CreateMessageResult> => {
   const ttl = messageTtlSeconds;
+  const chargedUsageUnits =
+    pseudoDiarizationEligible && meetingDialogueSystemPrompt?.trim() ? 2 : 1;
+  const summarizeLedgerOperation = resolveTranscriptSummarizeLedgerOperation(chargedUsageUnits);
   const created = await saveMessageIfNotExists(
     id,
-    { id, status: 'processing', ...aiModelResponseFields(model) },
+    {
+      id,
+      status: 'processing',
+      ...aiModelResponseFields(model),
+      ...(modelMode ? { modelMode } : {}),
+    },
     ttl,
   );
   if (!created) {
     return { created: false };
   }
 
-  const limitResult = await checkAndIncrement(deviceId, aiLimitContext);
+  const limitResult = await checkAndIncrement(deviceId, aiLimitContext, chargedUsageUnits, {
+    operation: summarizeLedgerOperation,
+    jobId: id,
+    metadata: { ...aiModelLedgerMetadata(model, modelMode), chargedUsageUnits },
+  });
   if (!limitResult.allowed) {
     await saveMessage(
       id,
@@ -76,21 +100,73 @@ export const createMessage = async (
     pseudoDiarizationEligible,
     meetingDialogueSystemPrompt,
     meetingDialogueAux,
+    chargedUsageUnits,
+    ...(modelMode ? { modelMode } : {}),
   };
 
   await saveJobPayload(jobPayload);
+
+  // Save job metadata for polling hints calculation
+  const operation = jobPayload.operation; // 'transcript_summarize'
+  const jobType = operationToJobType(operation);
+  const expectAsyncMeetingDialogue = expectsAsyncMeetingDialoguePass({
+    pseudoDiarizationEligible,
+    transcriptChars: transcript.length,
+  });
+  const pollSchedule = await scheduleAsyncJobPoll({
+    jobId: id,
+    jobType,
+    deviceId,
+    ttlSeconds: ttl,
+    expectAsyncMeetingDialogue,
+  });
+
   await dispatchAiJob(jobPayload);
 
-  return { created: true, syncToken };
+  return { created: true, syncToken, pollExpiresAt: pollSchedule.pollExpiresAt };
 };
 
 export const getMessageById = async (id: string, syncToken?: string): Promise<Message | null> => {
   const message = await getMessage(id, syncToken);
-  return message ? enrichMessageWithModelLabel(message) : null;
+
+  if (!message) {
+    return null;
+  }
+
+  // Enrich with model label
+  const enriched = enrichMessageWithModelLabel(message);
+
+  // Add adaptive polling hints for processing messages
+  if (enriched.status === 'processing') {
+    const metadata = await getJobMetadata(id);
+
+    if (metadata) {
+      return sanitizeAiModelFieldsForClient(
+        enrichWithPollingHints(
+          enriched,
+          metadata.jobType,
+          metadata.startedAt,
+          metadata.pollExpiresAtMs,
+        ),
+      );
+    }
+  }
+
+  if (enriched.status === 'done' && enriched.meetingDialogueStatus === 'processing') {
+    const metadata = await getJobMetadata(id);
+    if (metadata?.pollExpiresAtMs != null) {
+      return sanitizeAiModelFieldsForClient({
+        ...enriched,
+        pollExpiresAt: new Date(metadata.pollExpiresAtMs).toISOString(),
+      });
+    }
+  }
+
+  return sanitizeAiModelFieldsForClient(enriched);
 };
 
 type RetryMeetingDialogueResult =
-  | { ok: true; syncToken?: string }
+  | { ok: true; syncToken?: string; pollExpiresAt: string }
   | { ok: false; limitExceeded: true; usage: import('@/lib/ai-rate-limit').AiUsage }
   | { ok: false; error: string };
 
@@ -141,7 +217,11 @@ export const retryMeetingDialogue = async (params: {
     return { ok: false, error: 'Meeting dialogue already processing' };
   }
 
-  const limitResult = await checkAndIncrement(params.deviceId);
+  const limitResult = await checkAndIncrement(params.deviceId, undefined, 1, {
+    operation: 'meeting_dialogue',
+    jobId: params.jobId,
+    metadata: aiModelResponseFields(params.model),
+  });
   if (!limitResult.allowed) {
     await sendLimitExceededPush(params.deviceId);
     return { ok: false, limitExceeded: true, usage: limitResult.usage };
@@ -174,5 +254,13 @@ export const retryMeetingDialogue = async (params: {
 
   await dispatchMeetingDialogueJob(meetingPayload);
 
-  return { ok: true, syncToken: getSyncToken() };
+  const pollSchedule = await scheduleAsyncJobPoll({
+    jobId: params.jobId,
+    jobType: 'meeting_dialogue',
+    deviceId: params.deviceId,
+    ttlSeconds: ttl,
+    workerPasses: 1,
+  });
+
+  return { ok: true, syncToken: getSyncToken(), pollExpiresAt: pollSchedule.pollExpiresAt };
 };

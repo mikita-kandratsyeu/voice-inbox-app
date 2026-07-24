@@ -12,6 +12,8 @@ export const BASE_URL_OR_FALLBACK = BASE_URL || 'http://localhost:3000';
 export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? '';
 export const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL ?? '#';
 export const GOOGLE_PLAY_URL = process.env.NEXT_PUBLIC_GOOGLE_PLAY_URL ?? '#';
+/** OS-aware store redirect (same handler as voucher QR: `/go`). */
+export const GO_STORE_REDIRECT_PATH = '/go';
 /** Shown on the landing page when `GOOGLE_PLAY_URL` is not a published store link. */
 export const ANDROID_WAITLIST_URL = process.env.NEXT_PUBLIC_ANDROID_WAITLIST_URL?.trim() ?? '';
 
@@ -26,11 +28,17 @@ export const APP_STORE_APP_ID: string | undefined =
   process.env.NEXT_PUBLIC_APP_STORE_APP_ID?.trim() ||
   extractAppleAppStoreId(process.env.NEXT_PUBLIC_APP_STORE_URL ?? '') ||
   undefined;
+
+/** App Store Connect listing stats — update manually when ratings change. */
+export const APP_STORE_LISTING_RATING = 5;
+export const APP_STORE_LISTING_RATINGS_COUNT = 3;
 export const VERIFIED_METRICS_URL = process.env.NEXT_PUBLIC_VERIFIED_METRICS_URL?.trim() ?? '';
 
 // HTTP headers
 export const HEADER_SYNC_TOKEN = 'x-upstash-sync-token';
 export const HEADER_DEVICE_ID = 'x-device-id';
+/** Mobile app: Firebase App Check token for POST /api/token. */
+export const HEADER_FIREBASE_APP_CHECK = 'x-firebase-appcheck';
 /** Mobile AI routes: which logical AI job this request is (see `web/lib/ai-operation.ts`). */
 export const HEADER_AI_OPERATION = 'x-voice-inbox-ai-operation';
 
@@ -49,6 +57,16 @@ export const SUPPORT_RATE_LIMIT_KEY_PREFIX = 'rl_support:';
 export const SUPPORT_RATE_LIMIT_WINDOW_SECONDS = 3600;
 export const SUPPORT_RATE_LIMIT_MAX_REQUESTS = 5;
 
+// Public note publish (mobile) — per device, rolling window
+export const PUBLISH_RATE_LIMIT_KEY_PREFIX = 'rl_publish:';
+export const PUBLISH_RATE_LIMIT_WINDOW_SECONDS = 3600;
+export const PUBLISH_RATE_LIMIT_MAX_REQUESTS = 30;
+
+// Share note by email (mobile) — per device, rolling window
+export const SHARE_EMAIL_RATE_LIMIT_KEY_PREFIX = 'rl_share_email:';
+export const SHARE_EMAIL_RATE_LIMIT_WINDOW_SECONDS = 3600;
+export const SHARE_EMAIL_RATE_LIMIT_MAX_REQUESTS = 30;
+
 // Admin login rate limit (per IP)
 export const ADMIN_LOGIN_RATE_LIMIT_KEY_PREFIX = 'rl_admin_login:';
 export const ADMIN_LOGIN_RATE_LIMIT_WINDOW_SECONDS = 60;
@@ -58,10 +76,25 @@ export const ADMIN_LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5;
 export const FREE_WEEKLY_LIMIT = 10;
 export const PRO_WEEKLY_LIMIT = 75;
 export const AI_WEEKLY_KEY_PREFIX = 'ai_weekly:';
+/** Rolling usage period anchor per device (`ai_period_start:{deviceId}` → epoch ms). */
+export const AI_PERIOD_START_KEY_PREFIX = 'ai_period_start:';
+/** Free-tier auto-organize run counter within the same rolling period as AI credits. */
+export const AI_AUTO_ORGANIZE_WEEKLY_KEY_PREFIX = 'ai_auto_organize_weekly:';
+/** Length of a personal AI usage period (7 days). */
+export const AI_USAGE_PERIOD_MS = 7 * 24 * 3600 * 1000;
 export const WEEK_TTL_SECONDS = 8 * 24 * 3600;
+/** Idempotency keys for AI credit debits (`ai_debit:*`). */
+export const AI_DEBIT_IDEMPOTENCY_TTL_SECONDS = 24 * 3600;
 export const AI_BONUS_AMOUNT = 5;
 export const AI_BONUS_COOLDOWN_KEY_PREFIX = 'ai_bonus_cooldown:';
 export const AI_BONUS_COOLDOWN_SECONDS = 900; // 15 min
+
+/** Pro may purchase a weekly limit reset once usage reaches this fraction of the limit. */
+export const PRO_RESET_USAGE_THRESHOLD = 0.9;
+
+/** RevenueCat / App Store consumable product id for Pro weekly AI limit reset. */
+export const REVENUECAT_AI_RESET_PRODUCT_ID =
+  process.env.REVENUECAT_AI_RESET_PRODUCT_ID?.trim() ?? '';
 
 // Redis / KV — AI job payload keys (`msg:*`). Clients may request a shorter TTL (see MESSAGE_TTL_MIN_SECONDS).
 export const MESSAGE_TTL_MIN_SECONDS = 300; // 5 minutes
@@ -73,6 +106,11 @@ export const JOB_PAYLOAD_KEY_PREFIX = 'job-payload:';
 export const MEETING_JOB_PAYLOAD_KEY_PREFIX = 'job-payload:meeting:';
 /** QStash delivery retries when publishing async AI jobs. */
 export const AI_JOB_QSTASH_RETRIES = 3;
+/**
+ * Max execution time per async AI worker (App Router `maxDuration`, QStash `timeout`).
+ * Mobile clients receive `pollExpiresAt` derived from this value.
+ */
+export const AI_WORKER_MAX_DURATION_SEC = 300;
 /** Worker exclusive lock (`job-lock:*`). Slightly above App Router `maxDuration` (300s). */
 export const JOB_LOCK_KEY_PREFIX = 'job-lock:';
 export const JOB_LOCK_TTL_SECONDS = 330;

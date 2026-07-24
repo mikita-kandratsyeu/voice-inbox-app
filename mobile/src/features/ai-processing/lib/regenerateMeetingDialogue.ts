@@ -15,6 +15,7 @@ import {
 } from '@/shared/lib/ai-api';
 import { createAiAbortHandle, isAiGenerationCancelledError } from '@/shared/lib/ai-api/abort';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
+import { parsePollExpiresAtMs } from '@/shared/lib/ai-api/pollDeadline';
 import { runLocalMeetingDialogue } from '@/shared/lib/ai-core/local-provider/localAiMeetingDialogue';
 import { runPrivateRemoteMeetingDialogue } from '@/shared/lib/ai-core/privateRemoteProvider';
 import type { AiExecutionContext } from '@/shared/lib/ai-core/types';
@@ -341,6 +342,8 @@ export async function regenerateMeetingDialogue(
     }
 
     const syncToken = postResult.ok ? postResult.data.syncToken : undefined;
+    const pollExpiresAt = postResult.ok ? postResult.data.pollExpiresAt : undefined;
+    const pollExpiresAtMs = parsePollExpiresAtMs(pollExpiresAt);
 
     await saveCloudSummarizePending({
       recordId: record.id,
@@ -348,10 +351,12 @@ export async function regenerateMeetingDialogue(
       syncToken,
       expectAsyncMeetingDialogue: true,
       expiresAtMs: Date.now() + deps.cloudAiKvTtlSeconds * 1000,
+      pollExpiresAtMs,
     });
 
     const pollResult = await pollAiMessage(jobId, syncToken, {
       signal: abortHandle.signal,
+      pollExpiresAt,
       expectAsyncMeetingDialogue: true,
     });
 

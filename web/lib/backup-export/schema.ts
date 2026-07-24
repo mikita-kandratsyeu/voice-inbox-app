@@ -35,6 +35,9 @@ const RecordingMarkSchema = z
   .object({
     id: str.max(200),
     offsetMs: z.number().finite(),
+    kind: z
+      .enum(['moment', 'important', 'task', 'quote', 'decision', 'question', 'topic'])
+      .optional(),
     label: str.max(300).optional(),
   })
   .passthrough();

@@ -14,25 +14,31 @@ import { useTranslation } from 'react-i18next';
 import { LayoutAnimation, Pressable, ScrollView, Text, View } from 'react-native';
 import Animated, {
   Easing,
-  FadeIn,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 
-import type { TranscriptSegment } from '@/entities/record';
 import {
-  getWhisperModelVariantId,
+  shouldUseTranscriptSegmentView,
+  stripDocumentTranscriptMarkup,
+  type TranscriptSegment,
+} from '@/entities/record';
+import {
+  getActiveWhisperModelVariantId,
+  getWhisperModelDisplayName,
   TRANSLATE_LANGUAGES,
   useSettingsStore,
 } from '@/entities/settings';
-import { getWhisperModelDisplayName } from '@/entities/settings/model/constants';
 import { TranscriptHighlight } from '@/features/transcript-highlight';
 import { useTranscriptionBlockedForRecord } from '@/features/transcription';
+import { shouldUseIosWhisperKitEngine } from '@/features/transcription/config/transcriptionEngine';
 import type { Colors } from '@/shared/config';
-import { useAppTheme } from '@/shared/config';
+import { FADE_IN_EASING_OUT_CUBIC, useAppTheme, useFadeInEntering } from '@/shared/config';
+import { inlineNativeMenuSection } from '@/shared/lib';
 import { hapticSelection } from '@/shared/lib';
-import { Button, RecordVoiceIcon, TabEmptyState } from '@/shared/ui';
+import { getWhisperModelShortLabelKey } from '@/shared/lib/whisper';
+import { Button, NoteMarkdown, RecordVoiceIcon, TabEmptyState } from '@/shared/ui';
 
 type TranscriptTabProps = {
   recordId: string;
@@ -125,6 +131,7 @@ export const TranscriptTab = ({
 }: TranscriptTabProps) => {
   const { t } = useTranslation();
   const theme = useAppTheme();
+  const transcriptExpandEntering = useFadeInEntering(200, { easing: FADE_IN_EASING_OUT_CUBIC });
   const isDark = theme === 'dark';
   const [viewMode, setViewMode] = useState<'original' | 'translated'>('original');
   const [transcriptExpanded, setTranscriptExpanded] = useState(true);
@@ -155,26 +162,32 @@ export const TranscriptTab = ({
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
-  const whisperVariantId = getWhisperModelVariantId(
-    selectedWhisperModel,
-    selectedWhisperModelFormat,
-  );
+  const useIosWhisperKit = shouldUseIosWhisperKitEngine();
+  const whisperVariantId = getActiveWhisperModelVariantId({
+    modelId: selectedWhisperModel,
+    weightsFormat: selectedWhisperModelFormat,
+    useWhisperKit: useIosWhisperKit,
+  });
   const whisperStatus = whisperModelStatuses[whisperVariantId] ?? 'not_downloaded';
   const transcriptionBlocked = useTranscriptionBlockedForRecord(recordId);
   const transcribeDisabled = isAiProcessing || transcriptionBlocked || isDiscardingResume;
 
   const showTranslation = hasTranslation && viewMode === 'translated';
+  const useSegmentView = shouldUseTranscriptSegmentView(segments, hasAudio);
   const translatedParagraphs = buildReadableParagraphs(translatedTranscript ?? '');
   const hint =
     whisperStatus === 'not_downloaded'
       ? undefined
-      : getWhisperModelDisplayName(selectedWhisperModel, selectedWhisperModelFormat);
-  const originalTextParagraphs = buildReadableParagraphs(
+      : useIosWhisperKit
+        ? t(getWhisperModelShortLabelKey(selectedWhisperModel))
+        : getWhisperModelDisplayName(selectedWhisperModel, selectedWhisperModelFormat);
+  const originalTextBody = stripDocumentTranscriptMarkup(
     segments
       .map((segment) => segment.text.trim())
       .filter(Boolean)
       .join('\n\n'),
   );
+  const originalTextParagraphs = buildReadableParagraphs(originalTextBody);
 
   if (segments.length === 0) {
     return (
@@ -274,14 +287,16 @@ export const TranscriptTab = ({
                   : []),
                 ...(hasTranslation && onDeleteTranslation
                   ? [
-                      {
-                        id: 'deleteTranslation',
-                        title: t('recordingDetail.deleteTranslation'),
-                        image: 'trash' as const,
-                        imageColor: color.accent.delete,
-                        titleColor: color.accent.delete,
-                        attributes: { destructive: true },
-                      },
+                      inlineNativeMenuSection('deleteTranslationSection', color.text.primary, [
+                        {
+                          id: 'deleteTranslation',
+                          title: t('recordingDetail.deleteTranslation'),
+                          image: 'trash',
+                          imageColor: color.accent.delete,
+                          titleColor: color.accent.delete,
+                          attributes: { destructive: true },
+                        },
+                      ]),
                     ]
                   : []),
               ]}
@@ -320,7 +335,7 @@ export const TranscriptTab = ({
           variant="secondary"
           size="lg"
           icon={<Pencil size={15} color={color.text.primary} strokeWidth={2} />}
-          label={hasAudio ? t('recordingDetail.editTranscript') : t('recordingDetail.editText')}
+          label={t('recordingDetail.editTranscript')}
           color={color}
           onPress={onEditTranscript}
           disabled={isAiProcessing}
@@ -362,7 +377,7 @@ export const TranscriptTab = ({
             <AlignLeft size={18} color={color.icon.muted} strokeWidth={2} />
             <View className="min-w-0 flex-1 gap-0.5">
               <Text className="text-sm font-medium" style={{ color: color.text.primary }}>
-                {hasAudio ? t('recordingDetail.transcript') : t('recordingDetail.text')}
+                {useSegmentView ? t('recordingDetail.transcript') : t('recordingDetail.text')}
               </Text>
               <Text className="text-xs" style={{ color: color.text.secondary }}>
                 {t('recordingDetail.transcriptSegmentCount', { count: segments.length })}
@@ -385,10 +400,7 @@ export const TranscriptTab = ({
           </Animated.View>
         </Pressable>
         {transcriptExpanded ? (
-          <Animated.View
-            entering={FadeIn.duration(200).easing(Easing.out(Easing.cubic))}
-            className="pt-1"
-          >
+          <Animated.View entering={transcriptExpandEntering} className="pt-1">
             {showTranslation ? (
               <View
                 className="rounded-2xl p-4"
@@ -412,7 +424,7 @@ export const TranscriptTab = ({
                   </Text>
                 ))}
               </View>
-            ) : hasAudio ? (
+            ) : useSegmentView ? (
               <TranscriptHighlight
                 segments={segments}
                 currentPositionMs={currentPositionMs}
@@ -427,19 +439,25 @@ export const TranscriptTab = ({
                   borderColor: color.border.default,
                 }}
               >
-                {originalTextParagraphs.map((paragraph, idx) => (
-                  <Text
-                    key={`${idx}-${paragraph.slice(0, 18)}`}
-                    className="text-[15px] leading-7"
-                    style={{
-                      color: color.text.primary,
-                      marginBottom: idx === originalTextParagraphs.length - 1 ? 0 : 14,
-                    }}
-                    selectable
-                  >
-                    {paragraph}
-                  </Text>
-                ))}
+                {!hasAudio ? (
+                  <NoteMarkdown color={color} variant="document">
+                    {originalTextBody}
+                  </NoteMarkdown>
+                ) : (
+                  originalTextParagraphs.map((paragraph, idx) => (
+                    <Text
+                      key={`${idx}-${paragraph.slice(0, 18)}`}
+                      className="text-[15px] leading-7"
+                      style={{
+                        color: color.text.primary,
+                        marginBottom: idx === originalTextParagraphs.length - 1 ? 0 : 14,
+                      }}
+                      selectable
+                    >
+                      {paragraph}
+                    </Text>
+                  ))
+                )}
               </View>
             )}
           </Animated.View>

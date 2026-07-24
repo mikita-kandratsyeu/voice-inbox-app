@@ -5,6 +5,10 @@ describe('sanitizePickerImportFileName', () => {
     expect(sanitizePickerImportFileName('a/b\\c.srt')).toBe('a_b_c.srt');
   });
 
+  it('removes square brackets from cache file names', () => {
+    expect(sanitizePickerImportFileName('[Russian] test.srt')).toBe('Russian test.srt');
+  });
+
   it('falls back when empty', () => {
     expect(sanitizePickerImportFileName('   ')).toBe('imported-file');
   });
@@ -24,7 +28,7 @@ describe('resolvePickerImportFileName', () => {
         name: '[Russian] test.srt',
         uri: 'file:///tmp/other.vtt',
       }),
-    ).toBe('[Russian] test.srt');
+    ).toBe('Russian test.srt');
   });
 
   it('falls back to uri basename', () => {
@@ -33,6 +37,6 @@ describe('resolvePickerImportFileName', () => {
         name: null,
         uri: 'file:///private/var/mobile/imports/%5BDemo%5D.srt',
       }),
-    ).toBe('[Demo].srt');
+    ).toBe('Demo.srt');
   });
 });

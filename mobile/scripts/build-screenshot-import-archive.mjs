@@ -1,12 +1,31 @@
 #!/usr/bin/env node
 /**
- * Builds voice-inbox-screenshots-demo.zip — import via Settings → Import (same format as app export v3).
+ * Builds a Voice Inbox import ZIP for App Store / Play Store screenshots.
+ *
+ * Import in the app: Settings → Backup & restore → Import → pick the .zip file.
+ * Format matches app export v3/v4 (metadata.json + optional audio/*.wav).
+ *
+ * Usage:
+ *   yarn build:screenshot-import-archive
+ *   yarn build:screenshot-import-archive -- --locale ru
+ *   node scripts/build-screenshot-import-archive.mjs --locale en --output ~/Desktop/demo.zip
  */
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const ASSETS_DIR = join(__dirname, '../assets');
+
+const LOCALE_FILES = {
+  en: 'voice-inbox-screenshots-demo.json',
+  ru: 'voice-inbox-screenshots-demo.ru.json',
+};
+
+const DEFAULT_ZIP_NAMES = {
+  en: 'voice-inbox-screenshots-demo.zip',
+  ru: 'voice-inbox-screenshots-demo.ru.zip',
+};
 
 /** ZIP store (no compression); compatible with react-native-zip-archive. */
 function crc32(buf) {
@@ -111,52 +130,115 @@ function writeSilentWav(filePath, durationSec, sampleRate = 16000) {
   writeFileSync(filePath, buf);
 }
 
-const demoJsonPath = join(__dirname, '../assets/voice-inbox-screenshots-demo.json');
-const basePayload = JSON.parse(readFileSync(demoJsonPath, 'utf8'));
-if (basePayload.version !== 3 || !Array.isArray(basePayload.records)) {
-  throw new Error('Invalid voice-inbox-screenshots-demo.json');
+function parseArgs(argv) {
+  let locale = 'en';
+  let output;
+
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === '--locale' || arg === '-l') {
+      locale = argv[i + 1] ?? locale;
+      i += 1;
+    } else if (arg === '--output' || arg === '-o') {
+      output = argv[i + 1];
+      i += 1;
+    } else if (arg === '--help' || arg === '-h') {
+      return { help: true };
+    }
+  }
+
+  if (!LOCALE_FILES[locale]) {
+    throw new Error(`Unknown locale "${locale}". Use: ${Object.keys(LOCALE_FILES).join(', ')}`);
+  }
+
+  return {
+    locale,
+    output: output ? resolve(output) : join(ASSETS_DIR, DEFAULT_ZIP_NAMES[locale]),
+  };
 }
 
-const exportedAt = new Date().toISOString();
-const records = basePayload.records.map((r) => ({
-  ...r,
-  audioPath: `audio/${r.id}.wav`,
-}));
-
-const payload = {
-  ...basePayload,
-  exportedAt,
-  records,
-};
-
-const buildRoot = join(__dirname, '../assets/screenshot-demo-build');
-const zipOut = join(__dirname, '../assets/voice-inbox-screenshots-demo.zip');
-
-rmSync(buildRoot, { recursive: true, force: true });
-mkdirSync(join(buildRoot, 'audio'), { recursive: true });
-
-const wavDurationSec = 0.35;
-
-for (const r of records) {
-  const rel = r.audioPath;
-  writeSilentWav(join(buildRoot, rel), wavDurationSec);
+function loadDemoPayload(locale) {
+  const demoJsonPath = join(ASSETS_DIR, LOCALE_FILES[locale]);
+  const basePayload = JSON.parse(readFileSync(demoJsonPath, 'utf8'));
+  if (
+    (basePayload.version !== 3 && basePayload.version !== 4) ||
+    !Array.isArray(basePayload.records)
+  ) {
+    throw new Error(`Invalid demo JSON: ${demoJsonPath}`);
+  }
+  return basePayload;
 }
 
-const metadataBody = Buffer.from(`${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-writeFileSync(join(buildRoot, 'metadata.json'), metadataBody);
+function buildArchive({ locale, output }) {
+  const basePayload = loadDemoPayload(locale);
+  const exportedAt = new Date().toISOString();
+  const records = basePayload.records.map((r) => ({
+    ...r,
+    audioPath: `audio/${r.id}.wav`,
+  }));
 
-const zipEntries = [{ name: 'metadata.json', data: metadataBody }];
-for (const r of records) {
-  zipEntries.push({
-    name: r.audioPath,
-    data: readFileSync(join(buildRoot, r.audioPath)),
-  });
+  const payload = {
+    ...basePayload,
+    exportedAt,
+    records,
+  };
+
+  const buildRoot = join(ASSETS_DIR, `screenshot-demo-build-${locale}`);
+  const wavDurationSec = 0.35;
+
+  rmSync(buildRoot, { recursive: true, force: true });
+  mkdirSync(join(buildRoot, 'audio'), { recursive: true });
+
+  for (const r of records) {
+    writeSilentWav(join(buildRoot, r.audioPath), wavDurationSec);
+  }
+
+  const metadataBody = Buffer.from(`${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+  writeFileSync(join(buildRoot, 'metadata.json'), metadataBody);
+
+  const zipEntries = [{ name: 'metadata.json', data: metadataBody }];
+  for (const r of records) {
+    zipEntries.push({
+      name: r.audioPath,
+      data: readFileSync(join(buildRoot, r.audioPath)),
+    });
+  }
+
+  mkdirSync(dirname(output), { recursive: true });
+  writeFileSync(output, zipStore(zipEntries));
+  rmSync(buildRoot, { recursive: true, force: true });
+
+  return {
+    output,
+    locale,
+    recordCount: records.length,
+    folderCount: Array.isArray(payload.folders) ? payload.folders.length : 0,
+    version: payload.version,
+  };
 }
 
-mkdirSync(dirname(zipOut), { recursive: true });
-writeFileSync(zipOut, zipStore(zipEntries));
+function printHelp() {
+  // eslint-disable-next-line no-console
+  console.log(`Usage: node scripts/build-screenshot-import-archive.mjs [options]
 
-rmSync(buildRoot, { recursive: true, force: true });
+Options:
+  --locale, -l   Demo locale: en (default) | ru
+  --output, -o   Output .zip path (default: mobile/assets/voice-inbox-screenshots-demo*.zip)
+  --help, -h     Show this help
 
+Import: Settings → Backup & restore → Import`);
+}
+
+const args = parseArgs(process.argv.slice(2));
+if (args.help) {
+  printHelp();
+  process.exit(0);
+}
+
+const result = buildArchive(args);
 // eslint-disable-next-line no-console
-console.log('Wrote', zipOut);
+console.log(
+  `Wrote ${result.output}\n` +
+    `  locale=${result.locale} version=${result.version} ` +
+    `records=${result.recordCount} folders=${result.folderCount}`,
+);

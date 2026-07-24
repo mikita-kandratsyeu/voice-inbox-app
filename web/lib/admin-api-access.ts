@@ -39,6 +39,12 @@ export function resolveAdminApiAccess(pathname: string, method: string): AdminAc
   if (pathname.startsWith('/api/admin/mobile-model-manifest')) {
     return { type: 'permission', permission: 'config' };
   }
+  if (pathname.startsWith('/api/admin/mobile-banner')) {
+    return { type: 'permission', permission: 'config' };
+  }
+  if (pathname.startsWith('/api/admin/landing-social-proof')) {
+    return { type: 'permission', permission: 'config' };
+  }
   if (pathname.startsWith('/api/admin/support/key-requests')) {
     return { type: 'permission', permission: 'config' };
   }
@@ -55,6 +61,9 @@ export function resolveAdminApiAccess(pathname: string, method: string): AdminAc
 
   if (pathname.startsWith('/api/admin/releases')) {
     return { type: 'permission', permission: 'releases' };
+  }
+  if (pathname.startsWith('/api/admin/in-app-events')) {
+    return { type: 'permission', permission: 'in_app_events' };
   }
 
   if (pathname.startsWith('/api/admin/broadcast') || pathname.startsWith('/api/admin/push')) {

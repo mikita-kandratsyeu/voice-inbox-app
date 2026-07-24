@@ -1,0 +1,9 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: deeplinks/text-note.yaml
+- runFlow: ../../subflows/launch-e2e.yaml
+- openLink: voiceinbox://note/text
+- extendedWaitUntil:
+    visible:
+      id: textNote.screen
+    timeout: 20000

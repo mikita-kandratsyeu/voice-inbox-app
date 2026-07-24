@@ -33,7 +33,7 @@ import { useColors } from '@/shared/config';
 import { DEFAULT_FOLDER_BRAND_HEX, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import {
   AppBottomSheetModal,
-  HeaderIconButton,
+  FrostedHeaderIconButton,
   ScreenHeader,
   useBottomSheetContentPadding,
 } from '@/shared/ui';
@@ -52,7 +52,8 @@ export const AutoOrganizeReviewScreen = () => {
   const color = useColors();
   const isTablet = useIsTablet();
 
-  const result = route.params.result;
+  const { result, mode, template } = route.params;
+  const isAssignExisting = mode === 'assign_existing';
 
   const { isProActive } = useProEntitlement();
   const folders = useFolderStore((s) => s.folders);
@@ -109,6 +110,7 @@ export const AutoOrganizeReviewScreen = () => {
     setAssignmentDestination,
   } = useAutoOrganizeReview({
     result,
+    mode,
     folders,
     isProActive,
     createFolder,
@@ -235,17 +237,22 @@ export const AutoOrganizeReviewScreen = () => {
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader
-        title={t('folders.autoOrganizeReviewTitle')}
+        title={
+          isAssignExisting
+            ? t('folders.aiOrganizeReview.assignTitle')
+            : t('folders.autoOrganizeReviewTitle')
+        }
         onBack={() => {
           if (applyOverlayVisible) return;
           goBackOrInboxHome();
         }}
         titleAlign="center"
         rightSlot={
-          <HeaderIconButton
+          <FrostedHeaderIconButton
             iconOnly
             variant="icon"
             size="md"
+            accessibilityLabel={t('folders.autoOrganizeApplyA11y')}
             accessibilityState={{ disabled: isApplying || applyOverlayVisible }}
             icon={<Check size={22} color={color.accent.primary} strokeWidth={2.5} />}
             color={color}
@@ -274,30 +281,36 @@ export const AutoOrganizeReviewScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           <Text style={{ fontSize: 13, color: color.text.secondary, marginBottom: 8 }}>
-            {t('folders.autoOrganizeReviewSubtitle')}
+            {isAssignExisting
+              ? t('folders.aiOrganizeReview.assignSubtitle')
+              : t('folders.aiOrganizeReview.subtitleWithTemplate', {
+                  template: t(`folders.aiOrganizeTemplates.items.${template}`),
+                })}
           </Text>
-          <AutoOrganizeReviewFoldersSection
-            color={color}
-            isProActive={isProActive}
-            reviewFolders={reviewFolders}
-            proposedFolderNoteCountByTempId={proposedFolderNoteCountByTempId}
-            existingFolderNoteCountById={existingFolderNoteCountById}
-            onPressFolder={(item: ReviewFolderItem) => {
-              if (item.kind === 'proposed') {
-                setEditingFolderTarget({ kind: 'proposed', tempId: item.folder.tempId });
-                return;
+          {!isAssignExisting ? (
+            <AutoOrganizeReviewFoldersSection
+              color={color}
+              isProActive={isProActive}
+              reviewFolders={reviewFolders}
+              proposedFolderNoteCountByTempId={proposedFolderNoteCountByTempId}
+              existingFolderNoteCountById={existingFolderNoteCountById}
+              onPressFolder={(item: ReviewFolderItem) => {
+                if (item.kind === 'proposed') {
+                  setEditingFolderTarget({ kind: 'proposed', tempId: item.folder.tempId });
+                  return;
+                }
+                setEditingFolderTarget({ kind: 'existing', id: item.folder.id });
+              }}
+              noFoldersLabel={t('folders.autoOrganizeReviewNoFolders')}
+              unnamedFolderLabel={t('folders.autoOrganizeReviewUnnamedFolder')}
+              folderSectionLabel={t('folders.autoOrganizeReviewFoldersSection')}
+              getFolderNoteCountLabel={(count) =>
+                t('folders.autoOrganizeReviewFolderNoteCount', {
+                  count,
+                })
               }
-              setEditingFolderTarget({ kind: 'existing', id: item.folder.id });
-            }}
-            noFoldersLabel={t('folders.autoOrganizeReviewNoFolders')}
-            unnamedFolderLabel={t('folders.autoOrganizeReviewUnnamedFolder')}
-            folderSectionLabel={t('folders.autoOrganizeReviewFoldersSection')}
-            getFolderNoteCountLabel={(count) =>
-              t('folders.autoOrganizeReviewFolderNoteCount', {
-                count,
-              })
-            }
-          />
+            />
+          ) : null}
           <AutoOrganizeReviewAssignmentsSection
             color={color}
             assignments={assignments}

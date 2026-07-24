@@ -2,8 +2,10 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-html {
-  scroll-behavior: smooth;
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
@@ -92,13 +94,20 @@ body {
 
 .animate-on-scroll {
   opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+  transform: translate3d(0, 1.125rem, 0) scale(0.985);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
 }
 
 .animate-on-scroll.animate-on-scroll-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.animate-on-scroll.animate-on-scroll-done {
+  will-change: auto;
 }
 
 @keyframes rec-pulse {
@@ -176,12 +185,214 @@ body {
   animation: ambient-drift-x 17s ease-in-out infinite;
 }
 
+/* Matches landing accents: blue-500 → indigo-500 (badges, cards, icons). */
+.hero-headline-gradient {
+  background-image: linear-gradient(105deg, #2563eb 0%, #3b82f6 42%, #6366f1 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  /* bg-clip:text trims Cyrillic descenders unless line box has extra room */
+  line-height: 1.18;
+  padding-block: 0.02em 0.14em;
+}
+
+.dark .hero-headline-gradient {
+  background-image: linear-gradient(105deg, #60a5fa 0%, #818cf8 50%, #a5b4fc 100%);
+}
+
+/* Shared note tables — transcript (email HTML) and markdown GFM. */
+.share-note-table-wrap {
+  margin-block: 1.5rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgb(226 232 240 / 0.95);
+  background: rgb(255 255 255);
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 4px 16px rgb(15 23 42 / 0.04);
+}
+
+.dark .share-note-table-wrap {
+  border-color: rgb(255 255 255 / 0.12);
+  background: rgb(255 255 255 / 0.04);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.2),
+    0 8px 24px rgb(0 0 0 / 0.22);
+}
+
+.share-note-table-wrap table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+/* Transcript: timestamp / speaker + text */
+.share-note-transcript-table table {
+  margin: 0 !important;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.share-note-transcript-table td {
+  padding: 0.8rem 1rem !important;
+  border: none !important;
+  border-bottom: 1px solid rgb(226 232 240 / 0.85) !important;
+  vertical-align: top !important;
+}
+
+.share-note-transcript-table tr:last-child td {
+  border-bottom: none !important;
+}
+
+.share-note-transcript-table tr:last-child td:first-child {
+  border-bottom-left-radius: 0.875rem;
+}
+
+.share-note-transcript-table tr:last-child td:last-child {
+  border-bottom-right-radius: 0.875rem;
+}
+
+.share-note-transcript-table tr:hover td {
+  background-color: rgb(248 250 252) !important;
+}
+
+.share-note-transcript-table td:first-child {
+  width: 120px;
+  padding-right: 0.75rem !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  color: rgb(71 85 105) !important;
+  background-color: rgb(248 250 252 / 0.95) !important;
+  border-right: 1px solid rgb(226 232 240 / 0.85) !important;
+}
+
+.share-note-transcript-table td:last-child {
+  color: rgb(30 41 59) !important;
+}
+
+.dark .share-note-transcript-table td {
+  border-bottom-color: rgb(255 255 255 / 0.08) !important;
+  color: rgb(241 245 249) !important;
+}
+
+.dark .share-note-transcript-table tr:hover td {
+  background-color: rgb(255 255 255 / 0.04) !important;
+}
+
+.dark .share-note-transcript-table td:first-child {
+  color: rgb(203 213 225) !important;
+  background-color: rgb(255 255 255 / 0.06) !important;
+  border-right-color: rgb(255 255 255 / 0.08) !important;
+}
+
+.dark .share-note-transcript-table td:last-child {
+  color: rgb(248 250 252) !important;
+}
+
+/* Markdown GFM tables */
+.share-note-markdown-table {
+  overflow-x: auto;
+}
+
+.share-note-markdown-table table {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.share-note-markdown-table thead th {
+  padding: 0.7rem 1rem;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgb(71 85 105);
+  background: rgb(248 250 252);
+  border-bottom: 1px solid rgb(226 232 240 / 0.95);
+  white-space: nowrap;
+}
+
+.share-note-markdown-table tbody td {
+  padding: 0.75rem 1rem;
+  vertical-align: top;
+  color: rgb(51 65 85);
+  border-bottom: 1px solid rgb(241 245 249);
+  word-break: break-word;
+}
+
+.share-note-markdown-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.share-note-markdown-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 0.875rem;
+}
+
+.share-note-markdown-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 0.875rem;
+}
+
+.share-note-markdown-table tbody tr:hover td {
+  background: rgb(248 250 252 / 0.7);
+}
+
+.dark .share-note-markdown-table thead th {
+  color: rgb(203 213 225);
+  background: rgb(255 255 255 / 0.08);
+  border-bottom-color: rgb(255 255 255 / 0.1);
+}
+
+.dark .share-note-markdown-table tbody td {
+  color: rgb(241 245 249);
+  border-bottom-color: rgb(255 255 255 / 0.06);
+}
+
+.dark .share-note-markdown-table tbody tr:hover td {
+  background: rgb(255 255 255 / 0.04);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-rec-dot,
   .animate-wave-bar,
   .animate-card-float,
   .animate-ambient-drift-slow,
-  .animate-ambient-drift-x {
+  .animate-ambient-drift-x,
+  .animate-bg-drift,
+  .animate-gradient-pulse,
+  .animate-fade-in,
+  .animate-fade-in-delay-1,
+  .animate-fade-in-delay-2,
+  .animate-fade-in-delay-3,
+  .animate-fade-in-delay-4,
+  .animate-fade-in-delay-5,
+  .animate-fade-in-delay-6,
+  .animate-fade-in-delay-7 {
     animation: none !important;
   }
+
+  .animate-fade-in,
+  .animate-fade-in-delay-1,
+  .animate-fade-in-delay-2,
+  .animate-fade-in-delay-3,
+  .animate-fade-in-delay-4,
+  .animate-fade-in-delay-5,
+  .animate-fade-in-delay-6,
+  .animate-fade-in-delay-7 {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .animate-on-scroll {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    will-change: auto !important;
+  }
+
 }

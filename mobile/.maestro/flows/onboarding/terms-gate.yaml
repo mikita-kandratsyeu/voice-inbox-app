@@ -1,0 +1,11 @@
+appId: com.mkandratsyeu.voiceinboxai
+---
+# Catalog flow: onboarding/terms-gate.yaml
+- runFlow: ../../subflows/launch-fresh.yaml
+- tapOn:
+    id: onboarding.skip
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: onboarding.terms.agree
+    timeout: 20000

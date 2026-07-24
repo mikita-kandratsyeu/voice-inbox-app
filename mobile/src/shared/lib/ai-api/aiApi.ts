@@ -1,15 +1,18 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
+import { requestAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
 import { type AiFetchOptions, aiRequestCancelledFailure, isAbortLikeError } from './abort';
 import { headersForAiOperation } from './aiOperation';
-import { aiPollTimeoutMs, aiResumePollTimeoutMs } from './constants';
+import { aiPollTimeoutMs } from './constants';
 import {
   type ParsedMessagePollState,
   parseMessagePollState,
   type ServerMeetingDialogueStatus,
 } from './parseMessageResponse';
+import { resolvePollDeadlineMs, resolveResumePollDeadlineMs } from './pollDeadline';
 import { pollGetLoop } from './pollGetLoop';
 import { readResponseJson } from './responseJson';
 
@@ -51,6 +54,7 @@ type AiApiSuccessResponse = {
   status: 'processing';
   model?: string;
   syncToken?: string;
+  pollExpiresAt?: string;
 };
 
 type AiApiLimitResponse = {
@@ -71,6 +75,7 @@ export type AiTask = {
   title: string;
   priority: 'high' | 'medium' | 'low';
   deadline: string | null;
+  deadlineTime?: string | null;
 };
 
 export type RecordClassification = 'personal' | 'work' | 'meeting' | 'idea' | 'other';
@@ -92,10 +97,14 @@ export type AiProcessingResult = {
 };
 
 export type PollAiMessageOptions = AiFetchOptions & {
-  /** Second QStash pass for long meetings; extends poll deadline. */
+  /** Second QStash pass for long meetings; used only when server omits `pollExpiresAt`. */
   expectAsyncMeetingDialogue?: boolean;
+  /** Server-provided absolute poll deadline (ISO-8601 or epoch ms). */
+  pollExpiresAt?: string | number;
   /** Fired when summary/tasks are ready but speaker breakdown is still processing. */
   onSummaryReady?: (result: AiProcessingResult) => void | Promise<void>;
+  /** Optional callback for progress updates (0-100). */
+  onProgress?: (progress: number) => void;
 };
 
 export type AiMessageResult =
@@ -132,7 +141,7 @@ export async function postAiMessage(
       return aiRequestCancelledFailure();
     }
     const errorMsg = err instanceof Error ? err.message : 'Network error';
-    if (__DEV__) console.warn('[AI] postAiMessage: fetch failed', { error: errorMsg, url });
+    diagWarn('[AI] postAiMessage: fetch failed', { error: errorMsg, url });
     return { ok: false, error: errorMsg };
   }
 
@@ -142,14 +151,13 @@ export async function postAiMessage(
       return { ok: false, error: limitBody.error };
     }
     const json = limitBody.data as AiApiLimitResponse;
-    if (__DEV__) console.warn('[AI] postAiMessage: limit exceeded', json.usage);
+    diagWarn('[AI] postAiMessage: limit exceeded', json.usage);
     return { ok: false, limitExceeded: true, usage: json.usage };
   }
 
   if (!response.ok) {
     const text = await response.text();
-    if (__DEV__)
-      console.warn('[AI] postAiMessage: HTTP error', { status: response.status, body: text });
+    devWarn('[AI] postAiMessage: HTTP error', { status: response.status, body: text });
     return { ok: false, error: text || `HTTP ${response.status}` };
   }
 
@@ -159,6 +167,7 @@ export async function postAiMessage(
   }
 
   const data = successBody.data as AiApiSuccessResponse;
+  requestAiUsageRefresh();
 
   return { ok: true, data };
 }
@@ -204,7 +213,7 @@ export async function postMeetingDialogueRetry(
       return aiRequestCancelledFailure();
     }
     const errorMsg = err instanceof Error ? err.message : 'Network error';
-    if (__DEV__) console.warn('[AI] postMeetingDialogueRetry: fetch failed', { error: errorMsg });
+    diagWarn('[AI] postMeetingDialogueRetry: fetch failed', { error: errorMsg });
     return { ok: false, error: errorMsg };
   }
 
@@ -227,6 +236,8 @@ export async function postMeetingDialogueRetry(
     return { ok: false, error: successBody.error };
   }
 
+  requestAiUsageRefresh();
+
   return { ok: true, data: successBody.data as AiApiSuccessResponse };
 }
 
@@ -237,6 +248,52 @@ export type AiUsage = {
   resetAt: string;
   resetAtUtc: string;
   bonusAmount?: number;
+};
+
+export type ProLimitResetSummary = {
+  restoredAmount: number;
+  usedBefore: number;
+  limit: number;
+  remainingBefore: number;
+  remainingAfter: number;
+  ledgerEntryId: string | null;
+};
+
+export type AiUsageHistoryKind = 'debit' | 'credit' | 'refund';
+
+export type AiUsageHistoryOperation =
+  | 'transcript_summarize'
+  | 'transcript_summarize_meeting'
+  | 'transcript_ask'
+  | 'translate'
+  | 'digest'
+  | 'auto_organize'
+  | 'meeting_dialogue'
+  | 'bonus'
+  | 'pro_limit_reset'
+  | 'unknown';
+
+export type AiUsageHistoryEntry = {
+  id: string;
+  createdAt: string;
+  kind: AiUsageHistoryKind;
+  operation: AiUsageHistoryOperation;
+  amount: number;
+  jobId?: string;
+  description?: string;
+  model?: string;
+  modelLabel?: string;
+  modelMode?: 'manual' | 'auto';
+};
+
+export type AiUsageHistoryPage = {
+  items: AiUsageHistoryEntry[];
+  nextCursor: string | null;
+};
+
+export type AiUsageHistoryExport = {
+  items: AiUsageHistoryEntry[];
+  truncated: boolean;
 };
 
 function parseAiUsagePayload(raw: Record<string, unknown>): AiUsage {
@@ -258,6 +315,49 @@ function parseAiUsagePayload(raw: Record<string, unknown>): AiUsage {
   };
 }
 
+function parseAiUsageHistoryEntry(raw: Record<string, unknown>): AiUsageHistoryEntry {
+  return {
+    id: String(raw.id ?? ''),
+    createdAt: String(raw.createdAt ?? ''),
+    kind: String(raw.kind ?? 'debit') as AiUsageHistoryKind,
+    operation: String(raw.operation ?? 'unknown') as AiUsageHistoryOperation,
+    amount: Number(raw.amount) || 0,
+    ...(isString(raw.jobId) ? { jobId: raw.jobId } : {}),
+    ...(isString(raw.description) ? { description: raw.description } : {}),
+    ...(isString(raw.model) ? { model: raw.model } : {}),
+    ...(isString(raw.modelLabel) ? { modelLabel: raw.modelLabel } : {}),
+    ...(raw.modelMode === 'auto' || raw.modelMode === 'manual' ? { modelMode: raw.modelMode } : {}),
+  };
+}
+
+function parseAiUsageHistoryPayload(raw: Record<string, unknown>): AiUsageHistoryPage {
+  const items = Array.isArray(raw.items)
+    ? raw.items
+        .filter((item): item is Record<string, unknown> => item != null && typeof item === 'object')
+        .map(parseAiUsageHistoryEntry)
+        .filter((item) => item.id && item.createdAt)
+    : [];
+
+  return {
+    items,
+    nextCursor: isString(raw.nextCursor) && raw.nextCursor.length > 0 ? raw.nextCursor : null,
+  };
+}
+
+function parseAiUsageHistoryExportPayload(raw: Record<string, unknown>): AiUsageHistoryExport {
+  const items = Array.isArray(raw.items)
+    ? raw.items
+        .filter((item): item is Record<string, unknown> => item != null && typeof item === 'object')
+        .map(parseAiUsageHistoryEntry)
+        .filter((item) => item.id && item.createdAt)
+    : [];
+
+  return {
+    items,
+    truncated: raw.truncated === true,
+  };
+}
+
 export async function getAiUsage(): Promise<AiUsage | null> {
   try {
     const response = await fetchWithAuth(`${getWebApiUrl()}/api/ai-usage`, { method: 'GET' });
@@ -269,6 +369,50 @@ export async function getAiUsage(): Promise<AiUsage | null> {
     const data = (await response.json()) as Record<string, unknown>;
 
     return parseAiUsagePayload(data);
+  } catch {
+    return null;
+  }
+}
+
+export async function getAiUsageHistory(params?: {
+  cursor?: string | null;
+  limit?: number;
+}): Promise<AiUsageHistoryPage | null> {
+  try {
+    const queryParts: string[] = [];
+    if (params?.cursor) queryParts.push(`cursor=${encodeURIComponent(params.cursor)}`);
+    if (params?.limit != null) queryParts.push(`limit=${encodeURIComponent(String(params.limit))}`);
+    const query = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
+
+    const response = await fetchWithAuth(`${getWebApiUrl()}/api/ai-usage/history${query}`, {
+      method: 'GET',
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = (await response.json()) as Record<string, unknown>;
+
+    return parseAiUsageHistoryPayload(data);
+  } catch {
+    return null;
+  }
+}
+
+export async function getAiUsageHistoryForExport(): Promise<AiUsageHistoryExport | null> {
+  try {
+    const response = await fetchWithAuth(`${getWebApiUrl()}/api/ai-usage/history/export`, {
+      method: 'GET',
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = (await response.json()) as Record<string, unknown>;
+
+    return parseAiUsageHistoryExportPayload(data);
   } catch {
     return null;
   }
@@ -304,7 +448,7 @@ export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
           return { ok: false, error: parsed.error };
         }
       } catch {
-        if (__DEV__) console.warn('[AI] claimAiBonus: JSON parse error', { text });
+        devWarn('[AI] claimAiBonus: JSON parse error', { text });
       }
       return { ok: false, error: text || `HTTP ${response.status}` };
     }
@@ -316,6 +460,87 @@ export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
         ? raw.bonusCooldownSeconds
         : 900;
     return { ok: true, usage, cooldownSeconds };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Network error';
+    return { ok: false, error: message };
+  }
+}
+
+function readNonNegativeInt(value: unknown): number | null {
+  return isNumber(value) && value >= 0 ? Math.floor(value) : null;
+}
+
+function parseProLimitResetSummary(raw: Record<string, unknown>): ProLimitResetSummary | null {
+  const nested = raw.reset;
+  const source = nested && typeof nested === 'object' && !Array.isArray(nested) ? nested : raw;
+
+  const restoredAmount = readNonNegativeInt(
+    (source as Record<string, unknown>).restoredAmount ?? raw.creditedAmount,
+  );
+  const usedBefore = readNonNegativeInt((source as Record<string, unknown>).usedBefore);
+  const limit = readNonNegativeInt((source as Record<string, unknown>).limit);
+  const remainingBefore = readNonNegativeInt((source as Record<string, unknown>).remainingBefore);
+  const remainingAfter = readNonNegativeInt((source as Record<string, unknown>).remainingAfter);
+  const ledgerEntryIdRaw = (source as Record<string, unknown>).ledgerEntryId;
+  const ledgerEntryId =
+    isString(ledgerEntryIdRaw) && ledgerEntryIdRaw.trim() ? ledgerEntryIdRaw.trim() : null;
+
+  if (
+    restoredAmount == null ||
+    usedBefore == null ||
+    limit == null ||
+    remainingBefore == null ||
+    remainingAfter == null
+  ) {
+    return null;
+  }
+
+  return {
+    restoredAmount,
+    usedBefore,
+    limit,
+    remainingBefore,
+    remainingAfter,
+    ledgerEntryId,
+  };
+}
+
+export type ResetProAiUsageLimitResult =
+  | { ok: true; usage: AiUsage; alreadyApplied: boolean; reset: ProLimitResetSummary }
+  | { ok: false; error: string };
+
+export async function resetProAiUsageLimit(params: {
+  productIdentifier: string;
+  transactionId: string;
+}): Promise<ResetProAiUsageLimitResult> {
+  try {
+    const response = await fetchWithAuth(`${getWebApiUrl()}/api/ai-usage/pro-reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      try {
+        const parsed = JSON.parse(text) as { error?: string };
+        if (isString(parsed.error) && parsed.error) {
+          return { ok: false, error: parsed.error };
+        }
+      } catch {
+        devWarn('[AI] resetProAiUsageLimit: JSON parse error', { text });
+      }
+      return { ok: false, error: text || `HTTP ${response.status}` };
+    }
+
+    const raw = (await response.json()) as Record<string, unknown>;
+    const usage = parseAiUsagePayload(raw);
+    const reset = parseProLimitResetSummary(raw);
+    if (!reset) {
+      return { ok: false, error: 'invalid_reset_response' };
+    }
+    const alreadyApplied = raw.alreadyApplied === true;
+    return { ok: true, usage, alreadyApplied, reset };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Network error';
     return { ok: false, error: message };
@@ -361,6 +586,7 @@ export async function fetchAiMessageOnce(
 
 export type ResumePollAiMessageOptions = Omit<PollAiMessageOptions, 'signal'> & {
   expiresAtMs: number;
+  pollExpiresAtMs?: number | null;
 };
 
 /** Poll with a shorter deadline for jobs resumed after app restart. */
@@ -375,6 +601,7 @@ export async function resumePollAiMessage(
       if (once.state.meetingDialogueStatus === 'processing') {
         // fall through to limited poll for speakers
       } else {
+        requestAiUsageRefresh();
         return {
           ok: true,
           result: once.state.result,
@@ -382,6 +609,7 @@ export async function resumePollAiMessage(
         };
       }
     } else if (once.state.kind === 'error') {
+      requestAiUsageRefresh();
       return { ok: false, error: once.state.error };
     }
   } else if ('notFound' in once && once.notFound) {
@@ -391,23 +619,32 @@ export async function resumePollAiMessage(
   return pollAiMessage(id, syncToken, {
     ...options,
     expectAsyncMeetingDialogue: options.expectAsyncMeetingDialogue,
-    timeoutMs: aiResumePollTimeoutMs(
-      options.expectAsyncMeetingDialogue === true,
-      options.expiresAtMs,
-    ),
+    pollExpiresAt: options.pollExpiresAtMs ?? options.pollExpiresAt,
+    deadlineMs: resolveResumePollDeadlineMs({
+      pollExpiresAtMs: options.pollExpiresAtMs,
+      kvExpiresAtMs: options.expiresAtMs,
+      expectAsyncMeetingDialogue: options.expectAsyncMeetingDialogue === true,
+    }),
   });
 }
 
 export async function pollAiMessage(
   id: string,
   syncToken?: string,
-  options?: PollAiMessageOptions & { timeoutMs?: number },
+  options?: PollAiMessageOptions & { deadlineMs?: number; timeoutMs?: number },
 ): Promise<AiMessageResult> {
   const headers = aiMessagePollHeaders(syncToken);
 
   const url = `${getWebApiUrl()}/api/messages/${id}`;
   const expectAsyncMeetingDialogue = options?.expectAsyncMeetingDialogue === true;
   let summaryReadyDelivered = false;
+  const fallbackTimeoutMs = aiPollTimeoutMs(expectAsyncMeetingDialogue);
+  const deadlineMs =
+    options?.deadlineMs ??
+    resolvePollDeadlineMs({
+      pollExpiresAt: options?.pollExpiresAt,
+      fallbackTimeoutMs: options?.timeoutMs ?? fallbackTimeoutMs,
+    });
 
   const result = await pollGetLoop<{
     result: AiProcessingResult;
@@ -417,10 +654,14 @@ export async function pollAiMessage(
     (json) => {
       const state = parseMessagePollState(json);
       if (state.kind === 'processing') {
+        // Report progress if callback provided
+        if (state.progress !== undefined && options?.onProgress) {
+          options.onProgress(state.progress);
+        }
         return 'processing';
       }
       if (state.kind === 'error') {
-        if (__DEV__) console.warn('[AI] pollAiMessage: server error', { id, error: state.error });
+        diagWarn('[AI] pollAiMessage: server error', { id, error: state.error });
         return { ok: false, error: state.error };
       }
 
@@ -445,17 +686,22 @@ export async function pollAiMessage(
     {
       signal: options?.signal,
       headers,
-      timeoutMs: options?.timeoutMs ?? aiPollTimeoutMs(expectAsyncMeetingDialogue),
+      deadlineMs,
+      jobType: expectAsyncMeetingDialogue ? 'meeting_dialogue' : 'summary',
+      onProgress: options?.onProgress,
     },
   );
 
-  if (!result.ok && result.error === 'Timeout waiting for AI result' && __DEV__) {
-    console.warn('[AI] pollAiMessage: timeout', { id, expectAsyncMeetingDialogue });
+  if (!result.ok && result.error === 'Timeout waiting for AI result') {
+    diagWarn('[AI] pollAiMessage: timeout', { id, expectAsyncMeetingDialogue });
   }
 
   if (!result.ok) {
+    requestAiUsageRefresh();
     return result;
   }
+
+  requestAiUsageRefresh();
 
   return {
     ok: true,

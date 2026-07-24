@@ -40,6 +40,7 @@ export const AskAiContextDisclosure = ({
 
   const hasSummary = Boolean(record.summary?.trim());
   const hasTasks = Boolean(record.tasks?.some((task) => task.text?.trim()));
+  const hasLinkedNotes = Boolean(record.linkedRecordIds?.length);
   const hasPrior = priorDepth > 0;
   const isPrivate = aiExecutionMode === 'private_experimental';
 
@@ -47,9 +48,10 @@ export const AskAiContextDisclosure = ({
     const labels = [t('recordingDetail.askContextSourceTranscript')];
     if (hasSummary) labels.push(t('recordingDetail.askContextSourceSummary'));
     if (hasTasks) labels.push(t('recordingDetail.askContextSourceTasks'));
+    if (hasLinkedNotes) labels.push(t('recordingDetail.askContextSourceLinkedNotes'));
     if (hasPrior) labels.push(t('recordingDetail.askContextSourceChat'));
     return labels;
-  }, [hasPrior, hasSummary, hasTasks, t]);
+  }, [hasLinkedNotes, hasPrior, hasSummary, hasTasks, t]);
 
   const sourcesLine = useMemo(() => sourceLabels.join(' · '), [sourceLabels]);
   const processingLine = isPrivate
@@ -74,10 +76,13 @@ export const AskAiContextDisclosure = ({
     ];
     if (hasSummary) items.push({ key: 'sum', text: t('recordingDetail.askContextBulletSummary') });
     if (hasTasks) items.push({ key: 'tasks', text: t('recordingDetail.askContextBulletTasks') });
+    if (hasLinkedNotes) {
+      items.push({ key: 'linked', text: t('recordingDetail.askContextBulletLinkedNotes') });
+    }
     if (hasPrior) items.push({ key: 'prior', text: t('recordingDetail.askContextBulletPrior') });
     items.push({ key: 'q', text: t('recordingDetail.askContextBulletQuestion') });
     return items;
-  }, [hasPrior, hasSummary, hasTasks, t]);
+  }, [hasLinkedNotes, hasPrior, hasSummary, hasTasks, t]);
 
   const footerText = isPrivate
     ? t('recordingDetail.askContextFooterPrivate')
@@ -136,19 +141,31 @@ export const AskAiContextDisclosure = ({
       <BottomSheetView
         style={{
           paddingHorizontal: 20,
-          paddingTop: 12,
           ...contentPadding,
         }}
       >
         <Text
           className="text-[17px] font-semibold leading-6"
-          style={{ color: color.text.primary, marginBottom: 8 }}
+          style={{
+            color: color.text.primary,
+            fontSize: 20,
+            fontWeight: '700',
+            lineHeight: 28,
+            marginTop: 4,
+            textAlign: 'center',
+          }}
         >
           {t('recordingDetail.askContextSheetTitle')}
         </Text>
         <Text
-          className="text-[14px] leading-5"
-          style={{ color: color.text.secondary, marginBottom: 12 }}
+          style={{
+            color: color.text.secondary,
+            fontSize: 15,
+            lineHeight: 22,
+            marginBottom: 18,
+            marginTop: 6,
+            textAlign: 'center',
+          }}
         >
           {t('recordingDetail.askContextSheetIntro')}
         </Text>

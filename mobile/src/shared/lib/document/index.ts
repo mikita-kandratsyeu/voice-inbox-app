@@ -1,0 +1,1 @@
+export { extractPdfText } from './extractPdfText';

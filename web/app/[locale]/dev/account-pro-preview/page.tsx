@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 
 import { AccountProDevPreview } from '@/lib/account-pro-preview-document';
+import { isProductionLikeAppEnv } from '@/lib/app-env';
 import { parseAccountProPreviewOptions } from '@/lib/account-pro-preview-fixtures';
 import { routing } from '@/lib/i18n';
 
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
  * - http://localhost:3000/dev/account-pro-preview?state=success&kind=license&lifetime=1
  */
 export default async function DevAccountProPreviewPage({ params, searchParams }: Props) {
-  if (process.env.NODE_ENV === 'production') {
+  if (isProductionLikeAppEnv()) {
     notFound();
   }
 

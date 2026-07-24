@@ -1,0 +1,39 @@
+import type { VoiceRecord } from '@/entities/record';
+
+import { countFilteredGraphRecords } from './buildGraphModel';
+import type { GraphFilters } from './graphTypes';
+import {
+  buildNotesGraphHistoryScopePrefix,
+  type NotesGraphHistoryScope,
+} from './notesGraphHistoryScope';
+import { buildNotesGraphRecordsRevision } from './notesGraphRecordsRevision';
+
+/** Stable DB key for saved layouts (filters + library revision, no viewport). */
+export function buildNotesGraphPersistKey(
+  records: VoiceRecord[],
+  filters: GraphFilters,
+  simplifyOverride: boolean | null,
+  scope: NotesGraphHistoryScope = { kind: 'global' },
+): string {
+  const filteredCount = countFilteredGraphRecords(records, filters);
+  const folderKey = filters.folderIds.slice().sort().join('|');
+  const tagKey = filters.tags.slice().sort().join('|');
+  const edgeKey = Object.entries(filters.edgeVisibility)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([kind, visible]) => `${kind}:${visible ? 1 : 0}`)
+    .join(',');
+  const bodyKey = [
+    buildNotesGraphRecordsRevision(records),
+    folderKey,
+    tagKey,
+    filters.showTasks ? 1 : 0,
+    filters.showCompletedTasks ? 1 : 0,
+    filters.showArchived ? 1 : 0,
+    edgeKey,
+    filters.layoutMode,
+    simplifyOverride === null ? 'auto' : simplifyOverride ? 1 : 0,
+    filteredCount,
+  ].join(';');
+
+  return `${buildNotesGraphHistoryScopePrefix(scope)};${bodyKey}`;
+}

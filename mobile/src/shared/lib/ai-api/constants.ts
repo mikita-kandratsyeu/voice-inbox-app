@@ -1,7 +1,6 @@
 /**
- * Cloud AI job polling budget on mobile. Keep in sync with web App Router
- * `export const maxDuration = 300` on `/api/messages`, `/api/ask`, `/api/digest`,
- * `/api/folders/auto-organize`, etc. (seconds).
+ * Cloud AI job polling fallback on mobile when the server omits `pollExpiresAt`.
+ * Keep in sync with web `AI_WORKER_MAX_DURATION_SEC` and App Router `maxDuration`.
  */
 export const WEB_API_MAX_DURATION_SEC = 300;
 
