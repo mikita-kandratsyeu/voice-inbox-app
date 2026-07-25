@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 const webRoot = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.join(webRoot, '..');
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ['192.168.1.67', 'http://192.168.1.67:3000'],
@@ -27,8 +28,14 @@ const nextConfig: NextConfig = {
     'sharp',
     'firebase-admin',
   ],
+  outputFileTracingRoot: repoRoot,
   outputFileTracingIncludes: {
-    '/api/admin/pro-licenses/**': ['./public/app-icon.svg'],
+    '/api/admin/pro-licenses/**': [
+      './public/app-icon.svg',
+      './node_modules/sharp/**',
+      '../node_modules/@img/**',
+      '../node_modules/sharp/**',
+    ],
   },
   images: {
     remotePatterns: [
