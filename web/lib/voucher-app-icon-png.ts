@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import sharp from 'sharp';
+import { getServerSharp } from '@/lib/server-sharp';
 
 const iconCache = new Map<number, Buffer>();
 
@@ -29,6 +29,7 @@ export async function loadVoucherAppIconPng(sizePx: number): Promise<Buffer> {
   }
   if (!svgPath) throw new Error('app-icon.svg not found');
   const svg = await fs.readFile(svgPath);
+  const sharp = await getServerSharp();
   const png = await sharp(svg, { density: 150 })
     .resize(sizePx, sizePx, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()

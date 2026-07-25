@@ -1,6 +1,5 @@
-import sharp from 'sharp';
-
 import type { VoucherSidebarPerkIcon } from '@/lib/pro-license-voucher-copy';
+import { getServerSharp } from '@/lib/server-sharp';
 
 /** Brand-aligned strokes for color printing (matches web blue / indigo). */
 export const VOUCHER_ICON_STROKE = {
@@ -35,6 +34,7 @@ async function rasterLucideIcon(cacheKey: string, svg: string, displayPx: number
   if (cached) return cached;
 
   const rasterPx = Math.max(Math.round(displayPx * ICON_RASTER_SCALE), 96);
+  const sharp = await getServerSharp();
   const png = await sharp(Buffer.from(svg), { density: 300 })
     .resize(rasterPx, rasterPx, {
       fit: 'contain',

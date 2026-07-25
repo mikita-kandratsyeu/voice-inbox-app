@@ -33,8 +33,11 @@ const nextConfig: NextConfig = {
     '/api/admin/pro-licenses/**': [
       './public/app-icon.svg',
       './node_modules/sharp/**',
-      '../node_modules/@img/**',
-      '../node_modules/sharp/**',
+      './node_modules/@img/sharp-wasm32/**',
+      './node_modules/@img/sharp-libvips-linux-x64/**',
+      '../node_modules/@img/sharp-wasm32/**',
+      '../node_modules/@img/sharp-libvips-linux-x64/**',
+      '../node_modules/@img/sharp-linux-x64/lib/**',
     ],
   },
   images: {
@@ -46,7 +49,7 @@ const nextConfig: NextConfig = {
     ],
   },
   turbopack: {
-    root: webRoot,
+    root: repoRoot,
   },
 };
 
