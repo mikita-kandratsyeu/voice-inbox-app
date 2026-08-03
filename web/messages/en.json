@@ -59,9 +59,18 @@
   "howItWorks": {
     "title": "How it works",
     "subtitle": "Three steps from voice to a ready note.",
-    "step1": { "title": "Record or import", "description": "Voice from the recorder or meeting audio from a file — the note lands in your inbox." },
-    "step2": { "title": "Transcribe and generate", "description": "Whisper on-device turns speech into text. Then — summary, tasks, and meeting breakdown when needed." },
-    "step3": { "title": "Act and come back", "description": "Check off tasks, search by meaning, build a digest — without replaying long audio." }
+    "step1": {
+      "title": "Record or import",
+      "description": "Voice from the recorder or meeting audio from a file — the note lands in your inbox."
+    },
+    "step2": {
+      "title": "Transcribe and generate",
+      "description": "Whisper on-device turns speech into text. Then — summary, tasks, and meeting breakdown when needed."
+    },
+    "step3": {
+      "title": "Act and come back",
+      "description": "Check off tasks, search by meaning, build a digest — without replaying long audio."
+    }
   },
   "testimonials": {
     "title": "What users are saying",
@@ -311,9 +320,24 @@
       "no_metadata": "This ZIP does not contain metadata.json. Use a backup exported from the Voice Inbox AI app.",
       "invalid_json": "metadata.json is damaged or not valid JSON.",
       "invalid_schema": "This backup format is not recognized. Export again from the latest version of the app.",
-      "unsupported_version": "This export version is not supported in the web viewer yet. Re-export from the app (backup format v3).",
+      "unsupported_version": "This export version is not supported in the web viewer. Re-export from the app (backup format v3 or v4).",
       "unknown": "Something went wrong while reading the backup."
-    }
+    },
+    "tabSegments": "Segments",
+    "segmentsIntro": "Time-coded transcript segments with speaker IDs (from v4 backups).",
+    "emptySegments": "No transcript segments in this backup.",
+    "copySegments": "Copy segments",
+    "graphLayoutsCount": "{count, plural, one {# graph layout} other {# graph layouts}}",
+    "linkedRecordsBadge": "{count, plural, one {# linked note} other {# linked notes}}",
+    "languageBadge": "Language: {lang}",
+    "meetingSummaryTemplateLabel": "Template:",
+    "templateGeneral": "General",
+    "templateStandup": "Standup",
+    "templateSalesCall": "Sales call",
+    "templateOneOnOne": "1-on-1",
+    "templateInterview": "Interview",
+    "templateProductMeeting": "Product meeting",
+    "templateLecture": "Lecture"
   },
   "accountPro": {
     "planLabel": "Current plan",

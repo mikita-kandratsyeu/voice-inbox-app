@@ -12,13 +12,19 @@ export {
   EXPORT_MAX_RECORD_TEXT_CHARS,
   ExportPayloadV3EnvelopeSchema,
   ExportPayloadV3Schema,
+  ExportPayloadV4EnvelopeSchema,
+  ExportPayloadV4Schema,
+  TranscriptSegmentSchema,
   VoiceRecordSchema,
 } from './schema';
-export type { ExportPayloadV3 } from './schema';
+export type { ExportPayloadV3, ExportPayloadV4 } from './schema';
 export type {
+  MeetingSummaryTemplate,
   ParsedBackup,
   ParsedFolder,
+  ParsedGraphLayout,
   ParsedRecord,
   ParsedRecordingMark,
   ParsedTask,
+  ParsedTranscriptSegment,
 } from './types';

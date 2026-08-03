@@ -13,6 +13,10 @@ import {
   FileAudio,
   Flag,
   Folder,
+  GitBranch,
+  Languages,
+  Layers,
+  Link2,
   Loader2,
   MessagesSquare,
   PanelLeftClose,
@@ -129,6 +133,25 @@ const VIEWER_CLASSIFICATION_LABEL: Record<
   other: 'classificationOther',
 };
 
+const MEETING_TEMPLATE_LABEL_KEY = {
+  general: 'templateGeneral',
+  standup: 'templateStandup',
+  sales_call: 'templateSalesCall',
+  one_on_one: 'templateOneOnOne',
+  interview: 'templateInterview',
+  product_meeting: 'templateProductMeeting',
+  lecture: 'templateLecture',
+} as const;
+
+function meetingSummaryTemplateKey(
+  template: string | null | undefined,
+): (typeof MEETING_TEMPLATE_LABEL_KEY)[keyof typeof MEETING_TEMPLATE_LABEL_KEY] | null {
+  if (template && template in MEETING_TEMPLATE_LABEL_KEY) {
+    return MEETING_TEMPLATE_LABEL_KEY[template as keyof typeof MEETING_TEMPLATE_LABEL_KEY];
+  }
+  return null;
+}
+
 function viewerClassificationLabelKey(
   c: string | null | undefined,
 ):
@@ -149,9 +172,15 @@ const NOTE_BAR_BTN =
 
 const NOTE_COPY_BTN = `${NOTE_BAR_BTN} relative min-w-[10.5rem] overflow-hidden transition-[border-color,box-shadow] duration-200`;
 
-type TabId = 'transcript' | 'summary' | 'tasks' | 'translation' | 'speakers' | 'marks';
+type TabId = 'transcript' | 'summary' | 'tasks' | 'translation' | 'speakers' | 'marks' | 'segments';
 
-type CopyFeedbackField = 'transcript' | 'summary' | 'translation' | 'speakers' | 'marks';
+type CopyFeedbackField =
+  | 'transcript'
+  | 'summary'
+  | 'translation'
+  | 'speakers'
+  | 'marks'
+  | 'segments';
 
 type CopyFeedbackState = { field: CopyFeedbackField; result: 'ok' | 'err' };
 
@@ -380,6 +409,13 @@ export function BackupZipViewer(): React.ReactElement {
       return;
     }
     if (tab === 'marks' && !(selected.recordingMarks && selected.recordingMarks.length > 0)) {
+      setTab('transcript');
+      return;
+    }
+    if (
+      tab === 'segments' &&
+      !(selected.transcriptSegments && selected.transcriptSegments.length > 0)
+    ) {
       setTab('transcript');
     }
   }, [selected, tab]);
@@ -825,6 +861,12 @@ export function BackupZipViewer(): React.ReactElement {
                 <span className="shrink-0">
                   {t('backupInfoFormat', { version: backup.backupFormatVersion })}
                 </span>
+                {backup.graphLayouts && backup.graphLayouts.length > 0 ? (
+                  <span className="inline-flex shrink-0 items-center gap-1 text-slate-500 dark:text-slate-400">
+                    <GitBranch className="h-3 w-3 shrink-0" aria-hidden />
+                    {t('graphLayoutsCount', { count: backup.graphLayouts.length })}
+                  </span>
+                ) : null}
                 {loadedFileName ? (
                   <span className="min-w-0 break-all">
                     <span className="text-slate-500 dark:text-slate-400">
@@ -1069,13 +1111,44 @@ export function BackupZipViewer(): React.ReactElement {
                       ) : null}
                       {(() => {
                         const classKey = viewerClassificationLabelKey(selected.classification);
-                        return classKey ? (
-                          <p className="mt-2">
-                            <span className="inline-flex items-center rounded-full border border-black/10 bg-white/90 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:border-white/12 dark:bg-white/10 dark:text-slate-300">
-                              {t(classKey)}
-                            </span>
-                          </p>
-                        ) : null;
+                        const templateKey = meetingSummaryTemplateKey(
+                          selected.meetingSummaryTemplate,
+                        );
+                        const hasLinked =
+                          selected.linkedRecordIds && selected.linkedRecordIds.length > 0;
+                        const hasLang =
+                          typeof selected.language === 'string' &&
+                          selected.language.trim().length > 0;
+                        if (!classKey && !templateKey && !hasLinked && !hasLang) return null;
+                        return (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {classKey ? (
+                              <span className="inline-flex items-center rounded-full border border-black/10 bg-white/90 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:border-white/12 dark:bg-white/10 dark:text-slate-300">
+                                {t(classKey)}
+                              </span>
+                            ) : null}
+                            {templateKey ? (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-indigo-200/80 bg-indigo-50/80 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:border-indigo-500/25 dark:bg-indigo-950/40 dark:text-indigo-300">
+                                <Layers className="h-3 w-3 shrink-0" aria-hidden />
+                                {t('meetingSummaryTemplateLabel')} {t(templateKey)}
+                              </span>
+                            ) : null}
+                            {hasLinked ? (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-teal-200/80 bg-teal-50/80 px-2.5 py-0.5 text-xs font-medium text-teal-700 dark:border-teal-500/25 dark:bg-teal-950/40 dark:text-teal-300">
+                                <Link2 className="h-3 w-3 shrink-0" aria-hidden />
+                                {t('linkedRecordsBadge', {
+                                  count: selected.linkedRecordIds!.length,
+                                })}
+                              </span>
+                            ) : null}
+                            {hasLang ? (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white/80 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:border-white/12 dark:bg-white/10 dark:text-slate-300">
+                                <Languages className="h-3 w-3 shrink-0" aria-hidden />
+                                {t('languageBadge', { lang: selected.language!.trim() })}
+                              </span>
+                            ) : null}
+                          </div>
+                        );
                       })()}
                     </div>
                   </div>
@@ -1113,6 +1186,9 @@ export function BackupZipViewer(): React.ReactElement {
                             : []),
                           ...(selected.recordingMarks && selected.recordingMarks.length > 0
                             ? ([['marks', t('tabRecordingMarks'), Bookmark]] as const)
+                            : []),
+                          ...(selected.transcriptSegments && selected.transcriptSegments.length > 0
+                            ? ([['segments', t('tabSegments'), Layers]] as const)
                             : []),
                         ] as const
                       ).map(([id, label, Icon]) => (
@@ -1623,6 +1699,97 @@ export function BackupZipViewer(): React.ReactElement {
                               ) : (
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
                                   {t('emptyRecordingMarks')}
+                                </p>
+                              )}
+                            </>
+                          );
+                        })()
+                      : null}
+                    {tab === 'segments'
+                      ? (() => {
+                          const segs = selected.transcriptSegments ?? [];
+                          const has = segs.length > 0;
+                          const segmentsPlain = segs
+                            .map((s) => {
+                              const time =
+                                s.startTime ??
+                                (s.startMs != null ? formatRecordingMarkTime(s.startMs) : '');
+                              const speaker = s.speakerId ? `[${s.speakerId}] ` : '';
+                              return `${time}\t${speaker}${s.text ?? ''}`;
+                            })
+                            .join('\n');
+                          return (
+                            <>
+                              <p className="mb-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                {t('segmentsIntro')}
+                              </p>
+                              <div className="mb-4 flex flex-wrap items-center gap-2">
+                                <CopyNoteTextButton
+                                  field="segments"
+                                  copyFeedback={copyFeedback}
+                                  disabled={!has}
+                                  label={t('copySegments')}
+                                  copiedLabel={t('copied')}
+                                  failedLabel={t('copyFailed')}
+                                  onCopy={() => void handleCopyText(segmentsPlain, 'segments')}
+                                />
+                                <button
+                                  type="button"
+                                  className={NOTE_BAR_BTN}
+                                  disabled={!has}
+                                  onClick={() =>
+                                    triggerTextFileDownload(
+                                      segmentsPlain,
+                                      `${buildNoteDownloadBasename(selected.title, selected.id)}-segments.txt`,
+                                      'text/plain;charset=utf-8',
+                                    )
+                                  }
+                                >
+                                  <Download className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                  {t('downloadTxt')}
+                                </button>
+                              </div>
+                              {has ? (
+                                <ul className="space-y-1.5">
+                                  {segs.map((seg, idx) => {
+                                    const timeStr =
+                                      seg.startTime ??
+                                      (seg.startMs != null
+                                        ? formatRecordingMarkTime(seg.startMs)
+                                        : null);
+                                    return (
+                                      <li
+                                        key={seg.id ?? idx}
+                                        className="flex gap-3 rounded-xl border border-black/8 bg-black/[0.02] px-3 py-2 dark:border-white/10 dark:bg-white/[0.04]"
+                                      >
+                                        <div className="flex shrink-0 flex-col items-end gap-0.5">
+                                          {timeStr ? (
+                                            <span className="font-mono text-xs font-semibold tabular-nums text-slate-500 dark:text-slate-400">
+                                              {timeStr}
+                                            </span>
+                                          ) : null}
+                                          {seg.speakerId ? (
+                                            <span className="rounded bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300">
+                                              {seg.speakerId}
+                                            </span>
+                                          ) : null}
+                                        </div>
+                                        <span className="min-w-0 flex-1 text-sm leading-relaxed text-slate-800 dark:text-slate-100">
+                                          {seg.text?.trim() ? (
+                                            seg.text
+                                          ) : (
+                                            <span className="italic text-slate-400 dark:text-slate-500">
+                                              —
+                                            </span>
+                                          )}
+                                        </span>
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
+                              ) : (
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                  {t('emptySegments')}
                                 </p>
                               )}
                             </>
