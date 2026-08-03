@@ -4,9 +4,18 @@ import { MAX_BACKUP_ZIP_BYTES } from './constants';
 import {
   EXPORT_MAX_RECORD_TEXT_CHARS,
   ExportPayloadV3EnvelopeSchema,
+  ExportPayloadV4EnvelopeSchema,
   VoiceRecordSchema,
 } from './schema';
-import type { ParsedBackup, ParsedFolder, ParsedRecord, ParsedTask } from './types';
+import type {
+  MeetingSummaryTemplate,
+  ParsedBackup,
+  ParsedFolder,
+  ParsedGraphLayout,
+  ParsedRecord,
+  ParsedTask,
+  ParsedTranscriptSegment,
+} from './types';
 
 export type BackupZipParseErrorCode =
   | 'too_large'
@@ -113,6 +122,61 @@ function parseDurationMsField(raw: unknown): number | undefined {
   return Math.max(0, Math.round(raw));
 }
 
+function parseTranscriptSegmentsField(raw: unknown): ParsedTranscriptSegment[] | undefined {
+  if (!Array.isArray(raw) || raw.length === 0) return undefined;
+  const out: ParsedTranscriptSegment[] = [];
+  for (const item of raw) {
+    if (item === null || typeof item !== 'object') continue;
+    const o = item as Record<string, unknown>;
+    const id = typeof o.id === 'string' ? o.id.trim() : '';
+    if (!id) continue;
+    const seg: ParsedTranscriptSegment = { id };
+    if (typeof o.startTime === 'string') seg.startTime = o.startTime;
+    if (typeof o.startMs === 'number' && Number.isFinite(o.startMs)) seg.startMs = o.startMs;
+    if (typeof o.endMs === 'number' && Number.isFinite(o.endMs)) seg.endMs = o.endMs;
+    if (typeof o.text === 'string') seg.text = o.text;
+    if (typeof o.speakerId === 'string') seg.speakerId = o.speakerId;
+    if (typeof o.language === 'string') seg.language = o.language;
+    out.push(seg);
+    if (out.length >= 50_000) break;
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+function parseMeetingSpeakerLabels(raw: unknown): Record<string, string> | null {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const result: Record<string, string> = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof k === 'string' && typeof v === 'string') {
+      result[k] = v;
+    }
+  }
+  return Object.keys(result).length > 0 ? result : null;
+}
+
+const VALID_SUMMARY_TEMPLATES: MeetingSummaryTemplate[] = [
+  'general',
+  'standup',
+  'sales_call',
+  'one_on_one',
+  'interview',
+  'product_meeting',
+  'lecture',
+];
+
+function parseMeetingSummaryTemplate(raw: unknown): MeetingSummaryTemplate | null {
+  if (typeof raw === 'string' && VALID_SUMMARY_TEMPLATES.includes(raw as MeetingSummaryTemplate)) {
+    return raw as MeetingSummaryTemplate;
+  }
+  return null;
+}
+
+function parseLinkedRecordIds(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw) || raw.length === 0) return undefined;
+  const out = raw.filter((x): x is string => typeof x === 'string' && x.trim().length > 0);
+  return out.length > 0 ? out : undefined;
+}
+
 function toParsedRecord(raw: Record<string, unknown>): ParsedRecord {
   const r = stripEmbedding(raw);
   const tasksRaw = Array.isArray(r.tasks) ? r.tasks : [];
@@ -144,6 +208,7 @@ function toParsedRecord(raw: Record<string, unknown>): ParsedRecord {
     createdAt: String(r.createdAt ?? ''),
     title: r.title != null ? String(r.title) : '',
     transcript: r.transcript != null ? String(r.transcript) : '',
+    transcriptSegments: parseTranscriptSegmentsField(r.transcriptSegments),
     translatedTranscript:
       r.translatedTranscript != null ? String(r.translatedTranscript) : undefined,
     translationLanguage: r.translationLanguage != null ? String(r.translationLanguage) : undefined,
@@ -160,8 +225,12 @@ function toParsedRecord(raw: Record<string, unknown>): ParsedRecord {
     isPinned: typeof r.isPinned === 'boolean' ? r.isPinned : undefined,
     status: r.status != null ? String(r.status) : undefined,
     meetingDialogue: parseMeetingDialogueField(r.meetingDialogue),
+    meetingSpeakerLabels: parseMeetingSpeakerLabels(r.meetingSpeakerLabels),
+    meetingSummaryTemplate: parseMeetingSummaryTemplate(r.meetingSummaryTemplate),
     recordingMarks: parseRecordingMarksField(r.recordingMarks),
     durationMs: parseDurationMsField(r.durationMs),
+    language: typeof r.language === 'string' ? r.language : undefined,
+    linkedRecordIds: parseLinkedRecordIds(r.linkedRecordIds),
   };
 }
 
@@ -173,6 +242,23 @@ function toParsedFolder(raw: Record<string, unknown>): ParsedFolder {
     icon: raw.icon != null ? String(raw.icon) : undefined,
     sortOrder: typeof raw.sortOrder === 'number' ? raw.sortOrder : undefined,
     createdAt: raw.createdAt != null ? String(raw.createdAt) : undefined,
+  };
+}
+
+function toParsedGraphLayout(raw: Record<string, unknown>): ParsedGraphLayout | null {
+  const id = typeof raw.id === 'string' ? raw.id.trim() : '';
+  const layoutKey = typeof raw.layoutKey === 'string' ? raw.layoutKey.trim() : '';
+  const versionNumber = typeof raw.versionNumber === 'number' ? raw.versionNumber : 0;
+  const createdAt = typeof raw.createdAt === 'string' ? raw.createdAt.trim() : '';
+  const payload = typeof raw.payload === 'string' ? raw.payload.trim() : '';
+  if (!id || !layoutKey || !createdAt || !payload || versionNumber < 1) return null;
+  return {
+    id,
+    layoutKey,
+    versionNumber,
+    createdAt,
+    payload,
+    name: typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : undefined,
   };
 }
 
@@ -225,6 +311,7 @@ function isEncryptedZipError(err: unknown): boolean {
 /**
  * Reads a Voice Inbox mobile backup `.zip` in the browser without loading
  * all uncompressed files at once (metadata only up front; audio on demand).
+ * Supports backup format v3 and v4.
  */
 export async function parseBackupZip(
   file: File,
@@ -315,28 +402,49 @@ export async function parseBackupZip(
   }
 
   const version = (parsedJson as { version?: unknown })?.version;
-  if (version !== 3) {
+  if (version !== 3 && version !== 4) {
     await zipReader.close().catch(() => {});
     throw new BackupZipParseError(
       version === 1 || version === 2
-        ? 'This export version is not supported in the web viewer yet. Re-export from the app (backup v3).'
+        ? 'This export version is not supported in the web viewer. Re-export from the app (backup v3 or v4).'
         : 'Unrecognized backup format.',
       'unsupported_version',
     );
   }
 
-  const payloadResult = ExportPayloadV3EnvelopeSchema.safeParse(parsedJson);
-  if (!payloadResult.success) {
-    await zipReader.close().catch(() => {});
-    throw new BackupZipParseError('Backup metadata failed validation.', 'invalid_schema');
+  const isV4 = version === 4;
+
+  let rawRecords: unknown[];
+  let rawFolders: unknown[] | undefined;
+  let rawGraphLayouts: unknown[] | undefined;
+  let exportedAt: string;
+
+  if (isV4) {
+    const payloadResult = ExportPayloadV4EnvelopeSchema.safeParse(parsedJson);
+    if (!payloadResult.success) {
+      await zipReader.close().catch(() => {});
+      throw new BackupZipParseError('Backup metadata failed validation.', 'invalid_schema');
+    }
+    rawRecords = payloadResult.data.records;
+    rawFolders = payloadResult.data.folders;
+    rawGraphLayouts = payloadResult.data.graphLayouts;
+    exportedAt = payloadResult.data.exportedAt;
+  } else {
+    const payloadResult = ExportPayloadV3EnvelopeSchema.safeParse(parsedJson);
+    if (!payloadResult.success) {
+      await zipReader.close().catch(() => {});
+      throw new BackupZipParseError('Backup metadata failed validation.', 'invalid_schema');
+    }
+    rawRecords = payloadResult.data.records;
+    rawFolders = payloadResult.data.folders;
+    exportedAt = payloadResult.data.exportedAt;
   }
 
-  const payload = payloadResult.data;
   const zipRootPrefix = zipRootPrefixFromMetadataPath(metaNorm);
 
   let droppedFolderCount = 0;
   const folders: ParsedFolder[] = [];
-  for (const f of payload.folders ?? []) {
+  for (const f of rawFolders ?? []) {
     if (f == null || typeof f !== 'object') {
       droppedFolderCount++;
       continue;
@@ -352,7 +460,7 @@ export async function parseBackupZip(
 
   let droppedRecordCount = 0;
   const records: ParsedRecord[] = [];
-  for (const raw of payload.records) {
+  for (const raw of rawRecords) {
     if (raw == null || typeof raw !== 'object') {
       droppedRecordCount++;
       continue;
@@ -388,6 +496,13 @@ export async function parseBackupZip(
     records.push(toParsedRecord(obj));
   }
 
+  const graphLayouts: ParsedGraphLayout[] = [];
+  for (const raw of rawGraphLayouts ?? []) {
+    if (raw == null || typeof raw !== 'object') continue;
+    const layout = toParsedGraphLayout(raw as Record<string, unknown>);
+    if (layout) graphLayouts.push(layout);
+  }
+
   const parseWarnings =
     droppedFolderCount > 0 || droppedRecordCount > 0
       ? { droppedFolderCount, droppedRecordCount }
@@ -414,10 +529,11 @@ export async function parseBackupZip(
   report('done');
 
   return {
-    backupFormatVersion: 3,
-    exportedAt: payload.exportedAt,
+    backupFormatVersion: isV4 ? 4 : 3,
+    exportedAt,
     folders,
     records,
+    graphLayouts: isV4 ? graphLayouts : undefined,
     parseWarnings,
     zipRootPrefix,
     readFile,

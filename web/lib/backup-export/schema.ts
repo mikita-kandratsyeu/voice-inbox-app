@@ -42,6 +42,19 @@ const RecordingMarkSchema = z
   })
   .passthrough();
 
+export const TranscriptSegmentSchema = z
+  .object({
+    id: str,
+    startTime: str.nullish(),
+    startMs: z.number().optional(),
+    endMs: z.number().optional(),
+    text: longStr.nullish(),
+    speakerId: str.nullish(),
+    language: str.nullish(),
+    isOverlapping: z.boolean().optional(),
+  })
+  .passthrough();
+
 export const VoiceRecordSchema = z
   .object({
     id: str,
@@ -49,6 +62,7 @@ export const VoiceRecordSchema = z
     updatedAt: str.nullish(),
     title: str.nullish(),
     transcript: longStr.nullish(),
+    transcriptSegments: z.array(TranscriptSegmentSchema).max(50_000).nullish(),
     translatedTranscript: longStr.nullish(),
     translationLanguage: str.nullish(),
     summary: longStr.nullish(),
@@ -56,6 +70,18 @@ export const VoiceRecordSchema = z
     keyPhrases: z.array(str).nullish(),
     nextSteps: z.array(str).nullish(),
     meetingDialogue: longStr.nullish(),
+    meetingSpeakerLabels: z.record(z.string(), z.string()).nullish(),
+    meetingSummaryTemplate: z
+      .enum([
+        'general',
+        'standup',
+        'sales_call',
+        'one_on_one',
+        'interview',
+        'product_meeting',
+        'lecture',
+      ])
+      .nullish(),
     recordingMarks: z.array(RecordingMarkSchema).max(500).nullish(),
     durationMs: z.number().finite().nullish(),
     folderId: str.nullish(),
@@ -65,6 +91,19 @@ export const VoiceRecordSchema = z
     tasks: z.array(TaskItemSchema).nullish(),
     isPinned: z.boolean().nullish(),
     status: z.enum(['unread', 'read', 'archived']).nullish(),
+    language: str.nullish(),
+    linkedRecordIds: z.array(str).max(1_000).nullish(),
+  })
+  .passthrough();
+
+const NotesGraphLayoutVersionSchema = z
+  .object({
+    id: str,
+    layoutKey: str,
+    versionNumber: z.number().int().min(1),
+    createdAt: str,
+    payload: str,
+    name: str.optional(),
   })
   .passthrough();
 
@@ -83,4 +122,22 @@ export const ExportPayloadV3EnvelopeSchema = z.object({
   records: z.array(z.unknown()).max(50_000),
 });
 
+export const ExportPayloadV4Schema = z.object({
+  version: z.literal(4),
+  exportedAt: str,
+  folders: z.array(FolderSchema).max(10_000).optional(),
+  records: z.array(VoiceRecordSchema).max(50_000),
+  graphLayouts: z.array(NotesGraphLayoutVersionSchema).max(5_000).optional(),
+});
+
+export const ExportPayloadV4EnvelopeSchema = z.object({
+  version: z.literal(4),
+  exportedAt: str,
+  folders: z.array(z.unknown()).max(10_000).optional(),
+  records: z.array(z.unknown()).max(50_000),
+  graphLayouts: z.array(z.unknown()).max(5_000).optional(),
+});
+
 export type ExportPayloadV3 = z.infer<typeof ExportPayloadV3Schema>;
+export type ExportPayloadV4 = z.infer<typeof ExportPayloadV4Schema>;
+export type ParsedGraphLayoutRaw = z.infer<typeof NotesGraphLayoutVersionSchema>;
