@@ -8,6 +8,8 @@ import { isString } from '@/shared/lib/type-guards';
 
 type AppCheckInstance = Awaited<ReturnType<typeof initializeAppCheck>>;
 
+const APP_CHECK_INIT_TIMEOUT_MS = 5_000;
+
 let appCheckInstance: AppCheckInstance | null = null;
 let initPromise: Promise<AppCheckInstance> | null = null;
 
@@ -38,12 +40,20 @@ export function initFirebaseAppCheck(): Promise<AppCheckInstance> {
   }
 
   if (!initPromise) {
-    initPromise = initializeAppCheck(getApp(), {
-      provider: buildAppCheckProvider(),
-      isTokenAutoRefreshEnabled: true,
-    }).then((instance) => {
-      appCheckInstance = instance;
-      return instance;
+    initPromise = Promise.race([
+      initializeAppCheck(getApp(), {
+        provider: buildAppCheckProvider(),
+        isTokenAutoRefreshEnabled: true,
+      }).then((instance) => {
+        appCheckInstance = instance;
+        return instance;
+      }),
+      new Promise<AppCheckInstance>((_, reject) => {
+        setTimeout(() => reject(new Error('app_check_init_timeout')), APP_CHECK_INIT_TIMEOUT_MS);
+      }),
+    ]).catch((err) => {
+      initPromise = null;
+      throw err;
     });
   }
 

@@ -22,6 +22,7 @@ import { syncCrashlyticsContext, syncCrashlyticsUserId } from '@/shared/lib/cras
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { prefetchMobileBannerManifest } from '@/shared/lib/mobile-banner';
 import { prefetchModelManifest } from '@/shared/lib/model-manifest';
+import { fetchIsDeviceOnline } from '@/shared/lib/networkStatus';
 import { ensurePushRegistered, type PushNotificationData } from '@/shared/lib/push';
 
 type OnInitialPushData = (data: PushNotificationData) => void;
@@ -34,6 +35,41 @@ type UseAppBootstrapOptions = {
   onCriticalError?: (kind: BootstrapCriticalError) => void;
 };
 
+async function runDeferredLocalMaintenance(cancelled: () => boolean): Promise<void> {
+  try {
+    const purged = await useRecordStore.getState().purgeExpiredTrashRecords();
+    if (!cancelled() && purged > 0) {
+      await useRecordStore.getState().load();
+    }
+  } catch {
+    diagWarn('[bootstrap] trash purge failed');
+  }
+
+  try {
+    const archived = await runAutoArchiveReadNotesIfEligible(undefined, {
+      skipCooldown: true,
+    });
+
+    if (!cancelled() && archived > 0) {
+      await useRecordStore.getState().load();
+    }
+  } catch {
+    diagWarn('[bootstrap] auto-archive failed');
+  }
+
+  try {
+    await syncAllTaskDeadlineNotifications();
+  } catch {
+    diagWarn('[bootstrap] task deadline notification sync failed');
+  }
+
+  try {
+    await syncAllBackupReminderNotifications();
+  } catch {
+    diagWarn('[bootstrap] backup reminder notification sync failed');
+  }
+}
+
 export function useAppBootstrap(
   onInitialPushData: OnInitialPushData,
   options?: UseAppBootstrapOptions,
@@ -42,6 +78,7 @@ export function useAppBootstrap(
 
   useEffect(() => {
     let cancelled = false;
+    const isCancelled = () => cancelled;
 
     const notifyReady = () => {
       if (!cancelled) {
@@ -55,64 +92,34 @@ export function useAppBootstrap(
       }
     };
 
-    const dbInit = initDB();
-
-    Promise.all([
-      initRuntimeConfig().catch(() => {
-        diagWarn('[bootstrap] failed to initialize remote config');
-      }),
-      initFirebaseAppCheck().catch((err) => {
-        diagWarn('[bootstrap] App Check init failed', err);
-      }),
-    ])
-      .then(() => {
-        diagInfo('[bootstrap] web API', {
-          environment: getWebApiEnvironmentStatus(),
-        });
-        return dbInit;
-      })
+    initDB()
       .then(async () => {
         syncPrivateCapabilityTier();
         await Promise.all([useRecordStore.getState().load(), useFolderStore.getState().load()]);
-
-        try {
-          const purged = await useRecordStore.getState().purgeExpiredTrashRecords();
-          if (!cancelled && purged > 0) {
-            await useRecordStore.getState().load();
-          }
-        } catch {
-          diagWarn('[bootstrap] trash purge failed');
-        }
-
-        try {
-          const archived = await runAutoArchiveReadNotesIfEligible(undefined, {
-            skipCooldown: true,
-          });
-
-          if (!cancelled && archived > 0) {
-            await useRecordStore.getState().load();
-          }
-        } catch {
-          diagWarn('[bootstrap] auto-archive failed');
-        }
-
-        try {
-          await syncAllTaskDeadlineNotifications();
-        } catch {
-          diagWarn('[bootstrap] task deadline notification sync failed');
-        }
-
-        try {
-          await syncAllBackupReminderNotifications();
-        } catch {
-          diagWarn('[bootstrap] backup reminder notification sync failed');
-        }
-
         void cleanupOrphanTranscriptionTempWavs(useRecordStore.getState().records);
-
         notifyReady();
 
         void (async () => {
+          void runDeferredLocalMaintenance(isCancelled);
+          void checkAndFlagLegacyPinHash();
+
+          await Promise.all([
+            initRuntimeConfig().catch(() => {
+              diagWarn('[bootstrap] failed to initialize remote config');
+            }),
+            initFirebaseAppCheck().catch((err) => {
+              diagWarn('[bootstrap] App Check init failed', err);
+            }),
+          ]);
+
+          if (cancelled) {
+            return;
+          }
+
+          diagInfo('[bootstrap] web API', {
+            environment: getWebApiEnvironmentStatus(),
+          });
+
           const revenueCatInit = (async () => {
             try {
               const deviceId = await getOrCreateDeviceId();
@@ -130,9 +137,12 @@ export function useAppBootstrap(
             }
           })();
 
-          const warmed = await warmWebApiAuth();
-          if (!warmed) {
-            diagWarn('[bootstrap] Web API auth warm-up failed');
+          const online = await fetchIsDeviceOnline();
+          if (online) {
+            const warmed = await warmWebApiAuth();
+            if (!warmed) {
+              diagWarn('[bootstrap] Web API auth warm-up failed');
+            }
           }
 
           if (cancelled) {
@@ -140,8 +150,11 @@ export function useAppBootstrap(
           }
 
           notifyWebApiReady();
-          prefetchModelManifest();
-          prefetchMobileBannerManifest();
+
+          if (online) {
+            prefetchModelManifest();
+            prefetchMobileBannerManifest();
+          }
 
           await revenueCatInit;
 
@@ -154,12 +167,10 @@ export function useAppBootstrap(
             diagWarn('[bootstrap] failed to read initial push notification');
           }
 
-          if (!cancelled && getHasSeenOnboarding()) {
+          if (!cancelled && getHasSeenOnboarding() && online) {
             ensurePushRegistered().catch(() => {});
           }
         })();
-
-        void checkAndFlagLegacyPinHash();
       })
       .catch((err) => {
         diagWarn('[bootstrap] critical failure', err);

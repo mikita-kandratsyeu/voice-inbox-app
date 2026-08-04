@@ -21,6 +21,7 @@ import {
 import { isWhisperNativeWorkActive } from '@/features/transcription/lib/whisperNativeLifecycle';
 import { isTranscriptionSessionActive } from '@/features/transcription/model/transcriptionRuntimeRegistry';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
+import { fetchIsDeviceOnline } from '@/shared/lib/networkStatus';
 import { ensurePushRegistered, notifyAppBackground, notifyAppForeground } from '@/shared/lib/push';
 
 const HEARTBEAT_INTERVAL_MS = 40_000;
@@ -83,6 +84,19 @@ export function useAppForegroundLifecycle(webApiReady = false): void {
       }
     };
 
+    const runNetworkForegroundTasks = async () => {
+      if (!(await fetchIsDeviceOnline())) {
+        return;
+      }
+      void reconcileWhisperKitDownloadStatuses();
+      scheduleResumeAllPendingCloudSummarize();
+      scheduleDrainPrivateAiTaskQueue();
+      void syncAllBackupReminderNotifications();
+      void maybeRunScheduledGithubSync();
+      void maybeRunScheduledGitlabSync();
+      void maybeRunScheduledIcloudSync();
+    };
+
     const handleAppStateChange = (state: AppStateStatus) => {
       if (state === 'inactive') {
         void abortTranscriptionForAppBackground();
@@ -91,7 +105,11 @@ export function useAppForegroundLifecycle(webApiReady = false): void {
       if (state === 'active') {
         syncPrivateCapabilityTier();
         if (webApiReady && getHasSeenOnboarding()) {
-          ensurePushRegistered().catch(() => {});
+          void fetchIsDeviceOnline().then((online) => {
+            if (online) {
+              ensurePushRegistered().catch(() => {});
+            }
+          });
         }
         const now = Date.now();
         const shouldSendForeground =
@@ -101,13 +119,7 @@ export function useAppForegroundLifecycle(webApiReady = false): void {
           lastHeartbeatAt = 0;
           sendForegroundHeartbeat();
           lastForegroundAt = now;
-          void reconcileWhisperKitDownloadStatuses();
-          scheduleResumeAllPendingCloudSummarize();
-          scheduleDrainPrivateAiTaskQueue();
-          void syncAllBackupReminderNotifications();
-          void maybeRunScheduledGithubSync();
-          void maybeRunScheduledGitlabSync();
-          void maybeRunScheduledIcloudSync();
+          void runNetworkForegroundTasks();
         }
         foregroundInterval = setInterval(maybeNotifyForeground, HEARTBEAT_INTERVAL_MS);
       } else {

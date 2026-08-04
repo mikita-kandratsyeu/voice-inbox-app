@@ -89,6 +89,7 @@ export {
   useMultilineInputAutoHeight,
 } from './multilineInputAutoHeight';
 export { inlineNativeMenuSection, type NativeMenuAction } from './nativeMenuActions';
+export { fetchIsDeviceOnline, resolveNetworkConnected } from './networkStatus';
 export { NetworkStatusProvider, useNetworkStatus } from './NetworkStatusContext';
 export { parseTaskDeadline } from './parseTaskDeadline';
 export {

@@ -1,6 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
+import { fetchIsDeviceOnline } from '@/shared/lib/networkStatus';
+
 import { PRO_LICENSE_MIN_FOREGROUND_REFRESH_MS } from '../lib/syncIntervals';
 import { syncProLicenseFromServer } from '../lib/syncProLicenseFromServer';
 import { useProActiveFromStorage } from './useProActiveFromStorage';
@@ -39,7 +41,13 @@ export function ProEntitlementProvider({ children }: { children: React.ReactNode
   }, []);
 
   useEffect(() => {
-    void refresh();
+    void (async () => {
+      if (await fetchIsDeviceOnline()) {
+        await refresh();
+        return;
+      }
+      setHydrated(true);
+    })();
   }, [refresh]);
 
   useEffect(() => {
@@ -57,7 +65,11 @@ export function ProEntitlementProvider({ children }: { children: React.ReactNode
           return;
         }
         lastForegroundRefreshAtRef.current = now;
-        void refresh();
+        void (async () => {
+          if (await fetchIsDeviceOnline()) {
+            await refresh();
+          }
+        })();
         return;
       }
       if (s === 'background' || s === 'inactive') {

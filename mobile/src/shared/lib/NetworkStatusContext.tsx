@@ -1,6 +1,8 @@
 import NetInfo from '@react-native-community/netinfo';
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 
+import { resolveNetworkConnected } from './resolveNetworkConnected';
+
 const DELAY_MS = 100;
 
 type NetworkStatusContextValue = {
@@ -18,11 +20,11 @@ export const NetworkStatusProvider = ({ children }: { children: React.ReactNode 
 
     void NetInfo.fetch().then((state) => {
       if (cancelled) return;
-      setIsConnected(Boolean(state.isConnected && state.isInternetReachable));
+      setIsConnected(resolveNetworkConnected(state));
     });
 
     const unsubscribe = NetInfo.addEventListener((state) => {
-      const connected = Boolean(state.isConnected && state.isInternetReachable);
+      const connected = resolveNetworkConnected(state);
 
       if (timerRef.current) {
         clearTimeout(timerRef.current);
