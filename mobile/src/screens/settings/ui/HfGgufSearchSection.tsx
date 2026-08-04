@@ -115,10 +115,9 @@ export const HfGgufSearchSection = ({
     ],
   );
 
-  const showSuggestions =
-    focused &&
-    query.trim().length >= 2 &&
-    (isSearching || isSearchPending || results.length > 0 || searchError);
+  const hasActiveSearch = query.trim().length >= 2;
+  const showSearchResults =
+    hasActiveSearch && (isSearching || isSearchPending || results.length > 0 || !!searchError);
   const showSearchingHint = isSearching || isSearchPending;
 
   return (
@@ -144,7 +143,7 @@ export const HfGgufSearchSection = ({
           paddingVertical: IS_IOS ? 10 : 8,
           borderWidth: 1,
           borderColor: focused ? color.accent.primary : color.border.default,
-          marginBottom: showSuggestions ? 8 : 10,
+          marginBottom: showSearchResults ? 8 : 10,
         }}
       >
         <Search
@@ -180,7 +179,7 @@ export const HfGgufSearchSection = ({
         ) : null}
       </View>
 
-      {showSuggestions ? (
+      {showSearchResults ? (
         <>
           {showSearchingHint ? (
             <Text className="mb-2 px-1 text-[13px]" style={{ color: color.text.secondary }}>
