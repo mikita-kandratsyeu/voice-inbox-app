@@ -21,6 +21,8 @@ import { getInputFieldInputStyle } from '@/shared/ui';
 
 import { LocalAiModelCard } from './LocalAiModelCard';
 
+const HF_SEARCH_STATUS_MIN_HEIGHT = 56;
+
 function formatApproxSizeMb(sizeMb: number): string {
   if (sizeMb <= 0) return '';
   if (sizeMb >= 1000) {
@@ -116,9 +118,9 @@ export const HfGgufSearchSection = ({
   );
 
   const hasActiveSearch = query.trim().length >= 2;
-  const showSearchResults =
-    hasActiveSearch && (isSearching || isSearchPending || results.length > 0 || !!searchError);
-  const showSearchingHint = isSearching || isSearchPending;
+  const isLoading = isSearching || isSearchPending;
+  const hasResults = results.length > 0;
+  const showResultsPanel = hasActiveSearch && (hasResults || isLoading || !!searchError);
 
   return (
     <View className="mb-5">
@@ -143,7 +145,7 @@ export const HfGgufSearchSection = ({
           paddingVertical: IS_IOS ? 10 : 8,
           borderWidth: 1,
           borderColor: focused ? color.accent.primary : color.border.default,
-          marginBottom: showSearchResults ? 8 : 10,
+          marginBottom: 8,
         }}
       >
         <Search
@@ -165,68 +167,85 @@ export const HfGgufSearchSection = ({
           style={[getInputFieldInputStyle(color), { flex: 1 }]}
           accessibilityLabel={t('aiModels.hfSearchPlaceholder')}
         />
-        {showSearchingHint ? (
-          <ActivityIndicator size="small" color={color.accent.primary} />
-        ) : query.length > 0 ? (
-          <Pressable
-            onPress={clear}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.clear')}
+        {query.length > 0 ? (
+          <View
+            style={{
+              width: 16,
+              height: 16,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            <X size={16} color={color.text.secondary} strokeWidth={2.2} />
-          </Pressable>
+            {isLoading ? (
+              <ActivityIndicator size="small" color={color.accent.primary} />
+            ) : (
+              <Pressable
+                onPress={clear}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.clear')}
+              >
+                <X size={16} color={color.text.secondary} strokeWidth={2.2} />
+              </Pressable>
+            )}
+          </View>
         ) : null}
       </View>
 
-      {showSearchResults ? (
-        <>
-          {showSearchingHint ? (
-            <Text className="mb-2 px-1 text-[13px]" style={{ color: color.text.secondary }}>
-              {t('aiModels.hfSearchSearching')}
-            </Text>
-          ) : null}
+      {showResultsPanel ? (
+        hasResults ? (
+          <View
+            className="overflow-hidden rounded-2xl"
+            style={{ opacity: isLoading ? 0.55 : 1 }}
+            pointerEvents={isLoading ? 'none' : 'auto'}
+          >
+            {results.map((result, index) => {
+              const catalogEntry = customEntryToCatalogEntry(
+                buildCustomEntryFromSearchResult(result),
+              );
+              const modelId = catalogEntry.id;
+              const status = localLlmModelStatuses[modelId] ?? 'not_downloaded';
+              const approxSizeLabel = formatApproxSizeMb(catalogEntry.sizeMb);
 
-          {!showSearchingHint && searchError ? (
-            <Text className="mb-2 px-1 text-[13px] leading-5" style={{ color: color.text.muted }}>
-              {searchError}
-            </Text>
-          ) : null}
-
-          {!showSearchingHint && results.length > 0 ? (
-            <View className="overflow-hidden rounded-2xl">
-              {results.map((result, index) => {
-                const catalogEntry = customEntryToCatalogEntry(
-                  buildCustomEntryFromSearchResult(result),
-                );
-                const modelId = catalogEntry.id;
-                const status = localLlmModelStatuses[modelId] ?? 'not_downloaded';
-                const isSelected = false;
-                const approxSizeLabel = formatApproxSizeMb(catalogEntry.sizeMb);
-
-                return (
-                  <LocalAiModelCard
-                    key={`${result.repoId}/${result.fileName}`}
-                    model={catalogEntry}
-                    index={index}
-                    total={results.length}
-                    status={status}
-                    isSelected={isSelected}
-                    displaySize={approxSizeLabel || t('aiModels.hfSearchUnknownSize')}
-                    approxSizeLabel={approxSizeLabel || t('aiModels.hfSearchUnknownSize')}
-                    recommendedModelId={DEFAULT_LOCAL_AI_MODEL_ID}
-                    color={color}
-                    onPress={handlePressModelId}
-                    onDelete={onDelete}
-                    onCancelDownload={onCancelDownload}
-                    downloadPercent={localLlmDownloadProgress[modelId]}
-                    downloadBytes={localLlmDownloadBytes[modelId]}
-                  />
-                );
-              })}
-            </View>
-          ) : null}
-        </>
+              return (
+                <LocalAiModelCard
+                  key={`${result.repoId}/${result.fileName}`}
+                  model={catalogEntry}
+                  index={index}
+                  total={results.length}
+                  status={status}
+                  isSelected={false}
+                  displaySize={approxSizeLabel || t('aiModels.hfSearchUnknownSize')}
+                  approxSizeLabel={approxSizeLabel || t('aiModels.hfSearchUnknownSize')}
+                  recommendedModelId={DEFAULT_LOCAL_AI_MODEL_ID}
+                  color={color}
+                  onPress={handlePressModelId}
+                  onDelete={onDelete}
+                  onCancelDownload={onCancelDownload}
+                  downloadPercent={localLlmDownloadProgress[modelId]}
+                  downloadBytes={localLlmDownloadBytes[modelId]}
+                />
+              );
+            })}
+          </View>
+        ) : (
+          <View
+            style={{
+              minHeight: HF_SEARCH_STATUS_MIN_HEIGHT,
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: 4,
+            }}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color={color.accent.primary} />
+            ) : searchError ? (
+              <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
+                {searchError}
+              </Text>
+            ) : null}
+          </View>
+        )
       ) : null}
     </View>
   );

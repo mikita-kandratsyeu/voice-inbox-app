@@ -58,7 +58,6 @@ export function useHfGgufSearch(debounceMs = HF_GGUF_SEARCH_DEBOUNCE_MS) {
       })
       .catch(() => {
         if (requestId !== requestIdRef.current) return;
-        setResults([]);
         setSearchError(t('aiModels.hfSearchFailed'));
       })
       .finally(() => {

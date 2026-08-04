@@ -127,7 +127,7 @@ async function fetchHfModelTree(
 }
 
 /** Debounce delay aligned with in-app search bars (e.g. notes graph). */
-export const HF_GGUF_SEARCH_DEBOUNCE_MS = 1000;
+export const HF_GGUF_SEARCH_DEBOUNCE_MS = 300;
 
 export function tokenizeHfSearchQuery(query: string): string[] {
   return query
