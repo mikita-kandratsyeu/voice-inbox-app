@@ -3,7 +3,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Check, Crown } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Alert, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -141,9 +142,10 @@ export const AIModelPickerScreen = () => {
   };
 
   const handleDownloadLocal = (id: LocalAiModelId, sizeMb: number) => {
+    const sizeLabel = sizeMb > 0 ? String(sizeMb) : t('aiModels.hfSearchUnknownSize').toLowerCase();
     Alert.alert(
       t('aiModels.downloadLocalTitle'),
-      t('aiModels.downloadLocalMessage', { size: sizeMb }),
+      t('aiModels.downloadLocalMessage', { size: sizeLabel }),
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -253,13 +255,16 @@ export const AIModelPickerScreen = () => {
           maxWidth: contentMaxWidth,
         }}
       >
-        <ScrollView
+        <KeyboardAwareScrollView
+          style={{ flex: 1 }}
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 12,
             paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
           }}
+          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          bottomOffset={16}
         >
           {isPrivateMode ? (
             <View className="mb-3">
@@ -268,6 +273,32 @@ export const AIModelPickerScreen = () => {
               </Text>
               <Text className="mt-1.5 text-[13px] leading-5" style={{ color: color.text.muted }}>
                 {t('aiModels.privateBudgetHint')}
+              </Text>
+            </View>
+          ) : null}
+          {isPrivateMode ? (
+            <HfGgufSearchSection
+              color={color}
+              hasActiveDownload={hasActiveLocalLlmDownload}
+              localLlmModelStatuses={localLlmModelStatuses}
+              localLlmDownloadProgress={localLlmDownloadProgress}
+              localLlmDownloadBytes={localLlmDownloadBytes}
+              onInstall={handleDownloadLocal}
+              onSelect={(id) => {
+                setLocalAiModel(id);
+                navigation.goBack();
+              }}
+              onDelete={handleDeleteLocal}
+              onCancelDownload={cancelLocalLlmDownload}
+            />
+          ) : null}
+          {isPrivateMode ? (
+            <View className="mb-1 px-1">
+              <Text
+                className="text-xs font-semibold uppercase tracking-widest"
+                style={{ color: color.text.secondary }}
+              >
+                {t('aiModels.localModelsSectionTitle')}
               </Text>
             </View>
           ) : null}
@@ -303,18 +334,6 @@ export const AIModelPickerScreen = () => {
                 );
               })}
             </View>
-          ) : null}
-          {isPrivateMode ? (
-            <HfGgufSearchSection
-              color={color}
-              hasActiveDownload={hasActiveLocalLlmDownload}
-              localLlmModelStatuses={localLlmModelStatuses}
-              onInstall={handleDownloadLocal}
-              onSelect={(id) => {
-                setLocalAiModel(id);
-                navigation.goBack();
-              }}
-            />
           ) : null}
           {!isPrivateMode ? (
             <>
@@ -460,7 +479,7 @@ export const AIModelPickerScreen = () => {
             </>
           ) : null}
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
-        </ScrollView>
+        </KeyboardAwareScrollView>
       </View>
       {premiumModelSheet ? (
         <AutomationComingSoonSheet

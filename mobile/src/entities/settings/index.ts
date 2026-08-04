@@ -56,6 +56,7 @@ export { useWhisperModelCompatibility } from './lib/useWhisperModelCompatibility
 export type { LocalAiDeviceLoad, LocalAiModelCatalogEntry } from './model/constants';
 export {
   AI_MODELS,
+  customEntryToCatalogEntry,
   DEFAULT_LOCAL_AI_MODEL_ID,
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,

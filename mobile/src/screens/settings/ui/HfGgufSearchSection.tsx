@@ -1,70 +1,88 @@
-import { Download, Search } from 'lucide-react-native';
-import React, { useCallback, useState } from 'react';
+import { Search, X } from 'lucide-react-native';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from 'react-native';
 
-import type { LocalAiModelId, WhisperModelStatus } from '@/entities/settings';
-import { useSettingsStore } from '@/entities/settings';
+import type { DownloadBytes, LocalAiModelId, WhisperModelStatus } from '@/entities/settings';
+import {
+  customEntryToCatalogEntry,
+  DEFAULT_LOCAL_AI_MODEL_ID,
+  useSettingsStore,
+} from '@/entities/settings';
 import {
   buildCustomEntryFromSearchResult,
   buildCustomLocalAiModelId,
-  type HfGgufSearchResult,
-  searchHfGgufModels,
+  useHfGgufSearch,
 } from '@/features/hf-model-search';
 import type { Colors } from '@/shared/config';
-import { formatFileSize } from '@/shared/lib/whisper';
+import { IS_IOS } from '@/shared/lib';
+import { getInputFieldInputStyle } from '@/shared/ui';
+
+import { LocalAiModelCard } from './LocalAiModelCard';
+
+function formatApproxSizeMb(sizeMb: number): string {
+  if (sizeMb <= 0) return '';
+  if (sizeMb >= 1000) {
+    return `~${(sizeMb / 1000).toFixed(1)} GB`;
+  }
+  return `~${sizeMb} MB`;
+}
 
 type HfGgufSearchSectionProps = {
   color: Colors;
   hasActiveDownload: boolean;
   localLlmModelStatuses: Partial<Record<LocalAiModelId, WhisperModelStatus>>;
+  localLlmDownloadProgress: Partial<Record<LocalAiModelId, number>>;
+  localLlmDownloadBytes: Partial<Record<LocalAiModelId, DownloadBytes>>;
   onInstall: (modelId: LocalAiModelId, sizeMb: number) => void;
   onSelect: (modelId: LocalAiModelId) => void;
+  onDelete: (modelId: LocalAiModelId) => void;
+  onCancelDownload: (modelId: LocalAiModelId) => void;
 };
 
 export const HfGgufSearchSection = ({
   color,
   hasActiveDownload,
   localLlmModelStatuses,
+  localLlmDownloadProgress,
+  localLlmDownloadBytes,
   onInstall,
   onSelect,
+  onDelete,
+  onCancelDownload,
 }: HfGgufSearchSectionProps) => {
   const { t } = useTranslation();
   const addCustomLocalAiModel = useSettingsStore((s) => s.addCustomLocalAiModel);
-  const customLocalAiModels = useSettingsStore((s) => s.customLocalAiModels);
 
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<HfGgufSearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
+  const {
+    query,
+    setQuery,
+    results,
+    isSearching,
+    isSearchPending,
+    searchError,
+    clear,
+    flushSearch,
+  } = useHfGgufSearch();
 
-  const handleSearch = useCallback(async () => {
-    const trimmed = query.trim();
-    if (trimmed.length < 2) {
-      setSearchError(t('aiModels.hfSearchMinChars'));
-      setResults([]);
-      return;
-    }
+  const [focused, setFocused] = React.useState(false);
 
-    setIsSearching(true);
-    setSearchError(null);
+  const handlePressModelId = useCallback(
+    (modelId: LocalAiModelId) => {
+      const result = results.find(
+        (item) => buildCustomLocalAiModelId(item.repoId, item.fileName) === modelId,
+      );
+      if (!result) return;
 
-    try {
-      const found = await searchHfGgufModels(trimmed, { limit: 12 });
-      setResults(found);
-      if (found.length === 0) {
-        setSearchError(t('aiModels.hfSearchEmpty'));
+      const status = localLlmModelStatuses[modelId] ?? 'not_downloaded';
+
+      if (status === 'downloading') return;
+
+      if (status === 'downloaded') {
+        onSelect(modelId);
+        return;
       }
-    } catch {
-      setResults([]);
-      setSearchError(t('aiModels.hfSearchFailed'));
-    } finally {
-      setIsSearching(false);
-    }
-  }, [query, t]);
 
-  const handleInstall = useCallback(
-    (result: HfGgufSearchResult) => {
       if (hasActiveDownload) {
         Alert.alert(
           t('aiModels.localDownloadBlockedTitle'),
@@ -73,27 +91,29 @@ export const HfGgufSearchSection = ({
         return;
       }
 
-      const modelId = buildCustomLocalAiModelId(result.repoId, result.fileName);
-      const status = localLlmModelStatuses[modelId];
-      if (status === 'downloaded') {
-        onSelect(modelId);
-        return;
-      }
-      if (status === 'downloading') {
-        return;
-      }
-
       const entry = buildCustomEntryFromSearchResult(result);
       addCustomLocalAiModel(entry);
       onInstall(modelId, entry.sizeMb);
     },
-    [addCustomLocalAiModel, hasActiveDownload, localLlmModelStatuses, onInstall, onSelect, t],
+    [
+      addCustomLocalAiModel,
+      hasActiveDownload,
+      localLlmModelStatuses,
+      onInstall,
+      onSelect,
+      results,
+      t,
+    ],
   );
 
-  const installedIds = new Set(customLocalAiModels.map((m) => m.id));
+  const showSuggestions =
+    focused &&
+    query.trim().length >= 2 &&
+    (isSearching || isSearchPending || results.length > 0 || searchError);
+  const showSearchingHint = isSearching || isSearchPending;
 
   return (
-    <View className="mt-6">
+    <View className="mb-5">
       <Text
         className="mb-1 px-1 text-xs font-semibold uppercase tracking-widest"
         style={{ color: color.text.secondary }}
@@ -105,126 +125,100 @@ export const HfGgufSearchSection = ({
       </Text>
 
       <View
-        className="mb-3 flex-row items-center gap-2 rounded-2xl px-3 py-2"
         style={{
-          backgroundColor: color.background.card,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          backgroundColor: color.background.tertiary,
+          borderRadius: 12,
+          paddingHorizontal: 12,
+          paddingVertical: IS_IOS ? 10 : 8,
           borderWidth: 1,
-          borderColor: color.border.default,
+          borderColor: focused ? color.accent.primary : color.border.default,
+          marginBottom: showSuggestions ? 8 : 10,
         }}
       >
-        <Search size={18} color={color.text.muted} strokeWidth={2} />
+        <Search
+          size={16}
+          color={focused || query ? color.accent.primary : color.icon.muted}
+          strokeWidth={2}
+        />
         <TextInput
           value={query}
           onChangeText={setQuery}
           placeholder={t('aiModels.hfSearchPlaceholder')}
-          placeholderTextColor={color.text.muted}
+          placeholderTextColor={color.text.secondary}
           returnKeyType="search"
-          onSubmitEditing={() => void handleSearch()}
+          onSubmitEditing={flushSearch}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           autoCapitalize="none"
           autoCorrect={false}
-          className="flex-1 py-1 text-[15px]"
-          style={{ color: color.text.primary }}
+          style={[getInputFieldInputStyle(color), { flex: 1 }]}
           accessibilityLabel={t('aiModels.hfSearchPlaceholder')}
         />
-        <TouchableOpacity
-          onPress={() => void handleSearch()}
-          disabled={isSearching}
-          className="rounded-xl px-3 py-2"
-          style={{ backgroundColor: color.accent.primary, opacity: isSearching ? 0.6 : 1 }}
-          accessibilityRole="button"
-          accessibilityLabel={t('aiModels.hfSearchAction')}
-        >
-          {isSearching ? (
-            <ActivityIndicator size="small" color={color.icon.onAccent} />
-          ) : (
-            <Text className="text-[14px] font-semibold" style={{ color: color.icon.onAccent }}>
-              {t('aiModels.hfSearchAction')}
-            </Text>
-          )}
-        </TouchableOpacity>
+        {showSearchingHint ? (
+          <ActivityIndicator size="small" color={color.accent.primary} />
+        ) : query.length > 0 ? (
+          <Pressable
+            onPress={clear}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.clear')}
+          >
+            <X size={16} color={color.text.secondary} strokeWidth={2.2} />
+          </Pressable>
+        ) : null}
       </View>
 
-      {searchError ? (
-        <Text className="mb-2 px-1 text-[13px] leading-5" style={{ color: color.text.muted }}>
-          {searchError}
-        </Text>
-      ) : null}
+      {showSuggestions ? (
+        <>
+          {showSearchingHint ? (
+            <Text className="mb-2 px-1 text-[13px]" style={{ color: color.text.secondary }}>
+              {t('aiModels.hfSearchSearching')}
+            </Text>
+          ) : null}
 
-      {results.length > 0 ? (
-        <View
-          className="overflow-hidden rounded-2xl"
-          style={{ borderWidth: 1, borderColor: color.border.default }}
-        >
-          {results.map((result, index) => {
-            const modelId = buildCustomLocalAiModelId(result.repoId, result.fileName);
-            const status = localLlmModelStatuses[modelId];
-            const isInstalled = installedIds.has(modelId) && status === 'downloaded';
-            const isDownloading = status === 'downloading';
-            const isLast = index === results.length - 1;
-            const borderStyle = !isLast
-              ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
-              : {};
+          {!showSearchingHint && searchError ? (
+            <Text className="mb-2 px-1 text-[13px] leading-5" style={{ color: color.text.muted }}>
+              {searchError}
+            </Text>
+          ) : null}
 
-            return (
-              <View
-                key={`${result.repoId}/${result.fileName}`}
-                className="px-4 py-3"
-                style={[{ backgroundColor: color.background.card }, borderStyle]}
-              >
-                <View className="flex-row items-start justify-between gap-3">
-                  <View className="flex-1">
-                    <Text
-                      className="text-[15px] font-semibold"
-                      style={{ color: color.text.primary }}
-                    >
-                      {result.displayName}
-                    </Text>
-                    <Text className="mt-0.5 text-[13px]" style={{ color: color.text.muted }}>
-                      {result.repoId}
-                    </Text>
-                    <Text className="mt-1 text-[13px]" style={{ color: color.text.secondary }}>
-                      {formatFileSize(result.sizeBytes)}
-                      {result.quantLabel ? ` · ${result.quantLabel}` : ''}
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => handleInstall(result)}
-                    disabled={isDownloading || isInstalled}
-                    className="flex-row items-center gap-1 rounded-full px-3 py-2"
-                    style={{
-                      backgroundColor: isInstalled
-                        ? color.background.tertiary
-                        : color.status.processing.bg,
-                      opacity: isDownloading ? 0.6 : 1,
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      isInstalled ? t('aiModels.hfSearchInstalled') : t('aiModels.hfSearchInstall')
-                    }
-                  >
-                    <Download
-                      size={14}
-                      color={isInstalled ? color.text.muted : color.status.processing.text}
-                      strokeWidth={2}
-                    />
-                    <Text
-                      className="text-[13px] font-medium"
-                      style={{
-                        color: isInstalled ? color.text.muted : color.status.processing.text,
-                      }}
-                    >
-                      {isInstalled
-                        ? t('aiModels.hfSearchInstalled')
-                        : isDownloading
-                          ? t('aiModels.hfSearchDownloading')
-                          : t('aiModels.hfSearchInstall')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            );
-          })}
-        </View>
+          {!showSearchingHint && results.length > 0 ? (
+            <View className="overflow-hidden rounded-2xl">
+              {results.map((result, index) => {
+                const catalogEntry = customEntryToCatalogEntry(
+                  buildCustomEntryFromSearchResult(result),
+                );
+                const modelId = catalogEntry.id;
+                const status = localLlmModelStatuses[modelId] ?? 'not_downloaded';
+                const isSelected = false;
+                const approxSizeLabel = formatApproxSizeMb(catalogEntry.sizeMb);
+
+                return (
+                  <LocalAiModelCard
+                    key={`${result.repoId}/${result.fileName}`}
+                    model={catalogEntry}
+                    index={index}
+                    total={results.length}
+                    status={status}
+                    isSelected={isSelected}
+                    displaySize={approxSizeLabel || t('aiModels.hfSearchUnknownSize')}
+                    approxSizeLabel={approxSizeLabel || t('aiModels.hfSearchUnknownSize')}
+                    recommendedModelId={DEFAULT_LOCAL_AI_MODEL_ID}
+                    color={color}
+                    onPress={handlePressModelId}
+                    onDelete={onDelete}
+                    onCancelDownload={onCancelDownload}
+                    downloadPercent={localLlmDownloadProgress[modelId]}
+                    downloadBytes={localLlmDownloadBytes[modelId]}
+                  />
+                );
+              })}
+            </View>
+          ) : null}
+        </>
       ) : null}
     </View>
   );
