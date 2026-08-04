@@ -2611,7 +2611,17 @@
     "autoRoutingChip": "Умный подбор",
     "zdrChip": "ZDR",
     "proModelTitle": "Продвинутые модели",
-    "proModelBody": "С Pro можно выбрать модели для важных заметок — глубокие сводки, длинные записи и развёрнутые ответы."
+    "proModelBody": "С Pro можно выбрать модели для важных заметок — глубокие сводки, длинные записи и развёрнутые ответы.",
+    "hfSearchSectionTitle": "Hugging Face",
+    "hfSearchSectionDescription": "Поиск GGUF-моделей (до ~3 ГБ). Для устройства предпочтительны квантизации Q4_K_M.",
+    "hfSearchPlaceholder": "Поиск, например qwen gguf",
+    "hfSearchAction": "Найти",
+    "hfSearchMinChars": "Введите минимум 2 символа.",
+    "hfSearchEmpty": "GGUF-модели не найдены. Попробуйте другой запрос.",
+    "hfSearchFailed": "Поиск не удался. Проверьте подключение и повторите.",
+    "hfSearchInstall": "Установить",
+    "hfSearchInstalled": "Установлена",
+    "hfSearchDownloading": "Скачивание"
   },
   "onboarding": {
     "downloadBeforeStart": "Скачать модель Whisper для транскрипции?",

@@ -41,6 +41,10 @@ export { RECOMMENDED_AI_MODEL_ID } from './lib/recommendAiModel';
 export { getRecommendedWhisperModelId } from './lib/recommendWhisperModel';
 export { resolveEffectivePrivateAiProvider } from './lib/resolveEffectivePrivateAiProvider';
 export {
+  getAllLocalAiModelEntries,
+  resolveLocalAiModelEntry,
+} from './lib/resolveLocalAiModelEntry';
+export {
   hydratePrivateRemoteWorkingConfig,
   type PrivateRemoteConnectionConfig,
   resolvePrivateRemoteConnectionConfig,
@@ -67,6 +71,8 @@ export {
   getWhisperModelDisplayName,
   getWhisperModelSizeMb,
   getWhisperModelVariantId,
+  isCustomLocalAiModelId,
+  isValidLocalAiModelId,
   isWhisperKitOnlyModelId,
   LOCAL_AI_MODELS,
   USER_FACING_AI_MODELS,
@@ -88,6 +94,8 @@ export type {
   AppTheme,
   AutoArchiveAfterDays,
   BackupReminderPeriodDays,
+  CuratedLocalAiModelId,
+  CustomLocalAiModelEntry,
   DownloadBytes,
   LocalAiModelId,
   PrivateAiProvider,

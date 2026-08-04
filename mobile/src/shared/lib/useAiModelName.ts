@@ -1,7 +1,7 @@
 import {
   findCloudAiModelCatalogEntry,
   isPrivateCustomServerMode,
-  LOCAL_AI_MODELS,
+  resolveLocalAiModelEntry,
   useSettingsStore,
 } from '@/entities/settings';
 
@@ -21,7 +21,7 @@ export function useAiModelName(): string {
     if (selectedLocalAiModel == null) {
       return i18n.t('settings.whisperModelNotSet');
     }
-    const localModel = LOCAL_AI_MODELS.find((m) => m.id === selectedLocalAiModel);
+    const localModel = resolveLocalAiModelEntry(selectedLocalAiModel);
     return localModel?.name ?? selectedLocalAiModel;
   }
 

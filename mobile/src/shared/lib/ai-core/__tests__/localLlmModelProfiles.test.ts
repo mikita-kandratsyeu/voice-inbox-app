@@ -77,4 +77,11 @@ describe('localLlmModelProfiles', () => {
     expect(getLocalLlmAskTemperature('local/gemma-2-2b-it-q4_k_m', 0.25)).toBe(0.22);
     expect(getLocalLlmSummaryTemperature('local/llama-3.2-1b-q4_k_m', 0.2)).toBe(0.2);
   });
+
+  it('applies default profile for custom Hugging Face models', () => {
+    const customId = 'local/hf/test_model.gguf' as const;
+    const json = mergeLocalLlmCompletionParams(customId, 'json');
+    expect(json.enable_thinking).toBe(false);
+    expect(getLocalLlmNCtx(customId)).toBe(10_240);
+  });
 });

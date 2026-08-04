@@ -1,6 +1,6 @@
 import RNBlobUtil from 'react-native-blob-util';
 
-import { getLocalAiModelEntry } from '@/entities/settings/model/constants';
+import { resolveLocalAiModelEntry } from '@/entities/settings/lib/resolveLocalAiModelEntry';
 import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath, getLocalLlmModelsDir } from '@/shared/lib/local-llm';
@@ -97,7 +97,7 @@ class LocalLlmModelDownloader {
 
   private async runDownloadPipeline(options: StartLocalLlmDownloadOptions): Promise<void> {
     const { modelId, expectedBytes, onProgress } = options;
-    const entry = getLocalAiModelEntry(modelId);
+    const entry = resolveLocalAiModelEntry(modelId);
     if (!entry) {
       throw new Error('Unknown local LLM model');
     }

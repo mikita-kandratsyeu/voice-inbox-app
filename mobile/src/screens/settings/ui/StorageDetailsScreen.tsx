@@ -24,9 +24,9 @@ import { useRecordStore } from '@/entities/record';
 import { recordRepository } from '@/entities/record/model/repository';
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
 import {
+  getAllLocalAiModelEntries,
   getOfflineWhisperStorageLabel,
   getRecommendedWhisperModelId,
-  LOCAL_AI_MODELS,
   useSettingsStore,
   WHISPER_KIT_STORAGE_FORMAT,
   WHISPER_MODELS,
@@ -202,7 +202,7 @@ export const StorageDetailsScreen = () => {
     }
 
     const localEntries = await Promise.all(
-      LOCAL_AI_MODELS.map(async (m) => {
+      getAllLocalAiModelEntries().map(async (m) => {
         const path = getLocalLlmModelPath(m.id);
         const exists = await NitroFS.exists(path);
         if (!exists) return null;
@@ -505,11 +505,12 @@ export const StorageDetailsScreen = () => {
           await cancelLocalLlmModelDownload().catch(() => {});
           await stopLocalAiDownloadLiveActivity().catch(() => {});
 
-          for (const m of LOCAL_AI_MODELS) {
+          for (const m of getAllLocalAiModelEntries()) {
             const p = getLocalLlmModelPath(m.id);
             if (await NitroFS.exists(p)) {
               await deleteLocalLlmModel(m.id);
               useSettingsStore.getState().removeLocalLlmModelStatus(m.id);
+              useSettingsStore.getState().removeCustomLocalAiModel(m.id);
             }
           }
 

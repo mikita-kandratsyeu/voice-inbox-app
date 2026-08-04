@@ -2564,7 +2564,17 @@
     "autoRoutingChip": "Smart routing",
     "zdrChip": "ZDR",
     "proModelTitle": "Advanced models",
-    "proModelBody": "Upgrade to Pro to choose models for your most important notes—deep summaries, long recordings, and thoughtful answers."
+    "proModelBody": "Upgrade to Pro to choose models for your most important notes—deep summaries, long recordings, and thoughtful answers.",
+    "hfSearchSectionTitle": "Hugging Face",
+    "hfSearchSectionDescription": "Search GGUF models (up to ~3 GB). Q4_K_M quantizations are preferred for on-device use.",
+    "hfSearchPlaceholder": "Search models, e.g. qwen gguf",
+    "hfSearchAction": "Search",
+    "hfSearchMinChars": "Enter at least 2 characters.",
+    "hfSearchEmpty": "No GGUF models found. Try another query.",
+    "hfSearchFailed": "Search failed. Check your connection and try again.",
+    "hfSearchInstall": "Install",
+    "hfSearchInstalled": "Installed",
+    "hfSearchDownloading": "Downloading"
   },
   "onboarding": {
     "downloadBeforeStart": "Download the Whisper model for transcription?",

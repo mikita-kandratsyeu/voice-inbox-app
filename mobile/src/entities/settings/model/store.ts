@@ -25,6 +25,7 @@ import {
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
   getWhisperModelVariantId,
+  isCustomLocalAiModelId,
   isWhisperKitOnlyModelId,
   LOCAL_AI_MODELS,
 } from './constants';
@@ -36,6 +37,7 @@ import type {
   AppTheme,
   AutoArchiveAfterDays,
   BackupReminderPeriodDays,
+  CustomLocalAiModelEntry,
   LocalAiModelId,
   PrivateCapabilityTier,
   PrivateLocalLlmBudget,
@@ -115,6 +117,7 @@ const KEYS = {
   PRIVATE_PREVIOUS_AUTO_ARCHIVE: 'settings.private.previousAutoArchiveEnabled',
   PRIVATE_AUTO_AI_AFTER_TRANSCRIPTION: 'settings.private.autoAiAfterTranscription',
   LOCAL_LLM_STATUSES: 'settings.localLlmStatuses',
+  CUSTOM_LOCAL_AI_MODELS: 'settings.customLocalAiModels',
 } as const;
 
 const getStoredAppTheme = (): AppTheme => {
@@ -171,15 +174,43 @@ const getStoredAiModelRoutingMode = (): AiModelRoutingMode => {
 const LOCAL_AI_MODEL_SET = new Set<string>(LOCAL_AI_MODELS.map((m) => m.id));
 const GEMMA_LOCAL_AI_MODEL_ID: LocalAiModelId = 'local/gemma-2-2b-it-q4_k_m';
 
+const getStoredCustomLocalAiModels = (): CustomLocalAiModelEntry[] => {
+  try {
+    const raw = storage.getString(KEYS.CUSTOM_LOCAL_AI_MODELS);
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.filter((item): item is CustomLocalAiModelEntry => {
+      if (!isRecord(item)) return false;
+      return (
+        isString(item.id) &&
+        isCustomLocalAiModelId(item.id) &&
+        isString(item.name) &&
+        isString(item.fileName) &&
+        isString(item.downloadUrl) &&
+        isNumber(item.sizeMb)
+      );
+    });
+  } catch {
+    return [];
+  }
+};
+
+const isKnownLocalAiModelId = (id: string, customModels: CustomLocalAiModelEntry[]): boolean =>
+  LOCAL_AI_MODEL_SET.has(id) || customModels.some((m) => m.id === id);
+
 const getStoredLocalAiModel = (): LocalAiModelId | null => {
   const val = storage.getString(KEYS.LOCAL_AI_MODEL);
+  const customModels = getStoredCustomLocalAiModels();
 
   if (val === LEGACY_APPLE_LOCAL_AI_MODEL) {
     storage.set(KEYS.LOCAL_AI_MODEL, GEMMA_LOCAL_AI_MODEL_ID);
     return GEMMA_LOCAL_AI_MODEL_ID;
   }
 
-  if (val && LOCAL_AI_MODEL_SET.has(val)) {
+  if (val && isKnownLocalAiModelId(val, customModels)) {
     return val as LocalAiModelId;
   }
 
@@ -193,6 +224,7 @@ const getStoredLocalAiModel = (): LocalAiModelId | null => {
 const getStoredLocalLlmStatuses = (): Partial<Record<LocalAiModelId, WhisperModelStatus>> => {
   try {
     const raw = storage.getString(KEYS.LOCAL_LLM_STATUSES);
+    const customModels = getStoredCustomLocalAiModels();
 
     if (!raw) return {};
 
@@ -215,7 +247,7 @@ const getStoredLocalLlmStatuses = (): Partial<Record<LocalAiModelId, WhisperMode
 
     let prunedUnknownIds = false;
     for (const key of Object.keys(parsed)) {
-      if (!LOCAL_AI_MODEL_SET.has(key)) {
+      if (!isKnownLocalAiModelId(key, customModels)) {
         delete parsed[key];
         prunedUnknownIds = true;
       }
@@ -637,6 +669,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   localLlmModelStatuses: getStoredLocalLlmStatuses(),
   localLlmDownloadProgress: {},
   localLlmDownloadBytes: {},
+  customLocalAiModels: getStoredCustomLocalAiModels(),
   setAppTheme: (value: AppTheme) => {
     storage.set(KEYS.APP_THEME, value);
     set({ appTheme: value });
@@ -1211,6 +1244,20 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       localLlmDownloadProgress: updatedProgress,
       localLlmDownloadBytes: updatedBytes,
     });
+  },
+
+  addCustomLocalAiModel: (entry: CustomLocalAiModelEntry) => {
+    const current = get().customLocalAiModels;
+    const withoutDuplicate = current.filter((m) => m.id !== entry.id);
+    const updated = [...withoutDuplicate, entry];
+    storage.set(KEYS.CUSTOM_LOCAL_AI_MODELS, JSON.stringify(updated));
+    set({ customLocalAiModels: updated });
+  },
+
+  removeCustomLocalAiModel: (id: LocalAiModelId) => {
+    const updated = get().customLocalAiModels.filter((m) => m.id !== id);
+    storage.set(KEYS.CUSTOM_LOCAL_AI_MODELS, JSON.stringify(updated));
+    set({ customLocalAiModels: updated });
   },
 }));
 

@@ -5,7 +5,7 @@ import type {
   WhisperModelId,
   WhisperModelWeightsFormat,
 } from '@/entities/settings';
-import { getLocalAiModelEntry } from '@/entities/settings/model/constants';
+import { resolveLocalAiModelEntry } from '@/entities/settings/lib/resolveLocalAiModelEntry';
 import { IS_IOS } from '@/shared/lib/platform';
 import { isNumber } from '@/shared/lib/type-guards';
 import { getWhisperCoreMlDownloadUrl, getWhisperModelDownloadUrl } from '@/shared/lib/whisper';
@@ -112,7 +112,7 @@ export async function resolveWhisperCoreMlDownload(
 export async function resolveLocalLlmWeightsDownload(
   modelId: LocalAiModelId,
 ): Promise<ResolvedDownload> {
-  const entry = getLocalAiModelEntry(modelId);
+  const entry = resolveLocalAiModelEntry(modelId);
   const fallbackUrl = entry?.downloadUrl ?? '';
   const manifest = await refreshModelManifest();
   const hit = pickArtifact(manifest, localLlmWeightsArtifactId(modelId));

@@ -2,6 +2,7 @@ import { IS_IOS } from '@/shared/lib/platform';
 
 import type {
   AIModel,
+  CustomLocalAiModelEntry,
   LocalAiModelId,
   UserFacingAIModel,
   UserSelectableAIModelId,
@@ -164,12 +165,17 @@ export type LocalAiModelCatalogEntry = {
   id: LocalAiModelId;
   name: string;
   provider: string;
-  descriptionKey: string;
+  /** i18n key for curated models. */
+  descriptionKey?: string;
+  /** Plain-text description for user-installed Hugging Face models. */
+  description?: string;
   speed: 'fast' | 'medium' | 'slow';
   deviceLoad: LocalAiDeviceLoad;
   fileName: string;
   sizeMb: number;
   downloadUrl: string;
+  isCustom?: boolean;
+  hfRepo?: string;
 };
 
 export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
@@ -213,8 +219,32 @@ export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
 
 export const DEFAULT_LOCAL_AI_MODEL_ID: LocalAiModelId = 'local/llama-3.2-1b-q4_k_m';
 
+export const isCustomLocalAiModelId = (id: string): id is `local/hf/${string}` =>
+  id.startsWith('local/hf/');
+
+const CURATED_LOCAL_AI_MODEL_SET = new Set<string>(LOCAL_AI_MODELS.map((m) => m.id));
+
+export const isValidLocalAiModelId = (id: string): id is LocalAiModelId =>
+  CURATED_LOCAL_AI_MODEL_SET.has(id) || isCustomLocalAiModelId(id);
+
 export const getLocalAiModelEntry = (id: LocalAiModelId): LocalAiModelCatalogEntry | undefined =>
   LOCAL_AI_MODELS.find((m) => m.id === id);
+
+export const customEntryToCatalogEntry = (
+  entry: CustomLocalAiModelEntry,
+): LocalAiModelCatalogEntry => ({
+  id: entry.id,
+  name: entry.name,
+  provider: entry.provider,
+  description: entry.description,
+  speed: entry.speed,
+  deviceLoad: entry.deviceLoad,
+  fileName: entry.fileName,
+  sizeMb: entry.sizeMb,
+  downloadUrl: entry.downloadUrl,
+  isCustom: true,
+  hfRepo: entry.hfRepo,
+});
 
 export const WHISPER_MODELS: WhisperModel[] = [
   {

@@ -3,7 +3,7 @@ import type { ColorValue } from 'react-native';
 
 import {
   findCloudAiModelCatalogEntry,
-  LOCAL_AI_MODELS,
+  getAllLocalAiModelEntries,
   type LocalAiModelId,
   partitionCloudModelsForPicker,
   type UserFacingAIModel,
@@ -103,7 +103,7 @@ export function buildAskAiModelMenuActions(params: {
   }
 
   if (isPrivateDevice) {
-    const downloadedModels = LOCAL_AI_MODELS.filter(
+    const downloadedModels = getAllLocalAiModelEntries().filter(
       (model) => (localLlmModelStatuses[model.id] ?? 'not_downloaded') === 'downloaded',
     );
     const orderedLocalModels = reverseRows ? [...downloadedModels].reverse() : downloadedModels;

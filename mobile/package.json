@@ -67,7 +67,7 @@
     "graphology-layout": "^0.6.1",
     "graphology-layout-forceatlas2": "^0.10.1",
     "i18next": "^26.2.0",
-    "llama.rn": "^0.12.4",
+    "llama.rn": "^0.12.9",
     "lucide-react-native": "^1.16.0",
     "markdown-it": "^14.2.0",
     "markdown-it-task-lists": "^2.1.1",

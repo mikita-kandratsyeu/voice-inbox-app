@@ -118,7 +118,8 @@ export const LocalAiModelCard = ({
             ) : null}
           </View>
           <Text className="mb-2 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-            {t(model.descriptionKey as 'aiModels.localQwen3Desc')}
+            {model.description ??
+              (model.descriptionKey ? t(model.descriptionKey as 'aiModels.localQwen3Desc') : '')}
           </Text>
           <ModelMetaChips color={color} chips={metaChips} className="mb-1.5" />
 

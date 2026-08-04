@@ -15,7 +15,7 @@ import {
   getActiveWhisperModelVariantId,
   isDigestAiEnabled,
   isPrivateCustomServerMode,
-  LOCAL_AI_MODELS,
+  resolveLocalAiModelEntry,
   syncPrivateCapabilityTier,
   useSettingsStore,
 } from '@/entities/settings';
@@ -276,9 +276,7 @@ export function useSettingsScreen() {
 
   const userFacing = findCloudAiModelCatalogEntry(selectedAIModel);
   const localModel =
-    selectedLocalAiModel != null
-      ? LOCAL_AI_MODELS.find((m) => m.id === selectedLocalAiModel)
-      : undefined;
+    selectedLocalAiModel != null ? resolveLocalAiModelEntry(selectedLocalAiModel) : undefined;
   const localLlmDownloaded =
     selectedLocalAiModel != null &&
     (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';

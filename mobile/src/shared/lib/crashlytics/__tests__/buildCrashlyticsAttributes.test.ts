@@ -125,6 +125,7 @@ function makeSettings(overrides: Partial<SettingsState> = {}): SettingsState {
     localLlmModelStatuses: {},
     localLlmDownloadProgress: {},
     localLlmDownloadBytes: {},
+    customLocalAiModels: [],
     setAppTheme: jest.fn(),
     setAccentColorId: jest.fn(),
     setAppLanguage: jest.fn(),
@@ -181,6 +182,8 @@ function makeSettings(overrides: Partial<SettingsState> = {}): SettingsState {
     setLocalLlmModelStatuses: jest.fn(),
     setLocalLlmDownloadProgress: jest.fn(),
     removeLocalLlmModelStatus: jest.fn(),
+    addCustomLocalAiModel: jest.fn(),
+    removeCustomLocalAiModel: jest.fn(),
     ...overrides,
   };
 }

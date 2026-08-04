@@ -18,9 +18,10 @@ import {
   buildAutoModelMetaChips,
   buildCloudModelMetaChips,
   DEFAULT_LOCAL_AI_MODEL_ID,
+  getAllLocalAiModelEntries,
   getCloudModelsForPicker,
   isProOnlyAiModel,
-  LOCAL_AI_MODELS,
+  resolveLocalAiModelEntry,
   useSettingsStore,
 } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
@@ -32,6 +33,7 @@ import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader } from '@/shared/ui';
 
 import { AutomationComingSoonSheet } from './AutomationComingSoonSheet';
+import { HfGgufSearchSection } from './HfGgufSearchSection';
 import { LocalAiModelCard } from './LocalAiModelCard';
 import { ModelMetaChips } from './ModelMetaChips';
 
@@ -98,7 +100,7 @@ export const AIModelPickerScreen = () => {
   const refreshRealLocalSizes = useCallback(async () => {
     const requestId = ++refreshLocalSizesRequestIdRef.current;
     const entries = await Promise.all(
-      LOCAL_AI_MODELS.map(async (m) => {
+      getAllLocalAiModelEntries().map(async (m) => {
         const status = localLlmModelStatuses[m.id] ?? 'not_downloaded';
         if (status !== 'downloaded') return [m.id, null] as const;
         const bytes = await getLocalLlmModelFileSizeBytes(m.id);
@@ -153,7 +155,7 @@ export const AIModelPickerScreen = () => {
   };
 
   const handleDeleteLocal = (id: LocalAiModelId) => {
-    const entry = LOCAL_AI_MODELS.find((m) => m.id === id);
+    const entry = resolveLocalAiModelEntry(id);
     const name = entry?.name ?? '';
     Alert.alert(t('aiModels.deleteLocalTitle'), t('aiModels.deleteLocalMessage', { name }), [
       { text: t('common.cancel'), style: 'cancel' },
@@ -168,7 +170,7 @@ export const AIModelPickerScreen = () => {
   };
 
   const handlePressLocalModel = (id: LocalAiModelId) => {
-    const lm = LOCAL_AI_MODELS.find((m) => m.id === id);
+    const lm = resolveLocalAiModelEntry(id);
     if (!lm) return;
     const status = localLlmModelStatuses[id] ?? 'not_downloaded';
     if (status === 'downloading') return;
@@ -207,7 +209,7 @@ export const AIModelPickerScreen = () => {
       metaChips: buildCloudModelMetaChips(model, t),
     })),
   ];
-  const models = isPrivateMode ? LOCAL_AI_MODELS : cloudOptions;
+  const models = isPrivateMode ? getAllLocalAiModelEntries() : cloudOptions;
   const autoOption = cloudOptions[0];
   const manualCloudOptions = cloudOptions.slice(1);
   const standardCloudOptions = manualCloudOptions.filter(
@@ -301,7 +303,20 @@ export const AIModelPickerScreen = () => {
                 );
               })}
             </View>
-          ) : (
+          ) : null}
+          {isPrivateMode ? (
+            <HfGgufSearchSection
+              color={color}
+              hasActiveDownload={hasActiveLocalLlmDownload}
+              localLlmModelStatuses={localLlmModelStatuses}
+              onInstall={handleDownloadLocal}
+              onSelect={(id) => {
+                setLocalAiModel(id);
+                navigation.goBack();
+              }}
+            />
+          ) : null}
+          {!isPrivateMode ? (
             <>
               {smartModelSections.map((section) => (
                 <View key={section.key} className="mb-7">
@@ -443,7 +458,7 @@ export const AIModelPickerScreen = () => {
                 </View>
               ))}
             </>
-          )}
+          ) : null}
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>

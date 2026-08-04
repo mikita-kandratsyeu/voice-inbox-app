@@ -1,10 +1,8 @@
 import { useCallback } from 'react';
 
 import {
-  getLocalAiModelEntry,
   getRecommendedWhisperModelId,
   getWhisperModelVariantId,
-  LOCAL_AI_MODELS,
   type LocalAiModelId,
   useSettingsStore,
   WHISPER_KIT_STORAGE_FORMAT,
@@ -13,6 +11,10 @@ import {
   type WhisperModelStatus,
   type WhisperModelWeightsFormat,
 } from '@/entities/settings';
+import {
+  getAllLocalAiModelEntries,
+  resolveLocalAiModelEntry,
+} from '@/entities/settings/lib/resolveLocalAiModelEntry';
 import {
   cancelLocalLlmModelDownload,
   localLlmModelDownloader,
@@ -64,6 +66,7 @@ export const useModelManager = () => {
   const setLocalLlmModelStatuses = useSettingsStore((s) => s.setLocalLlmModelStatuses);
   const setLocalLlmDownloadProgress = useSettingsStore((s) => s.setLocalLlmDownloadProgress);
   const removeLocalLlmModelStatus = useSettingsStore((s) => s.removeLocalLlmModelStatus);
+  const removeCustomLocalAiModel = useSettingsStore((s) => s.removeCustomLocalAiModel);
   const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
 
   const startWhisperKitDownload = useCallback(
@@ -234,7 +237,7 @@ export const useModelManager = () => {
 
   const startLocalLlmDownload = useCallback(
     async (modelId: LocalAiModelId): Promise<void> => {
-      const entry = getLocalAiModelEntry(modelId);
+      const entry = resolveLocalAiModelEntry(modelId);
       if (!entry) return;
 
       setLocalLlmModelStatus(modelId, 'downloading');
@@ -285,16 +288,18 @@ export const useModelManager = () => {
     async (modelId: LocalAiModelId): Promise<void> => {
       await deleteLocalLlmModel(modelId);
       removeLocalLlmModelStatus(modelId);
+      removeCustomLocalAiModel(modelId);
       if (selectedLocalAiModel === modelId) {
         void releaseLocalLlmSession();
       }
     },
-    [removeLocalLlmModelStatus, selectedLocalAiModel],
+    [removeCustomLocalAiModel, removeLocalLlmModelStatus, selectedLocalAiModel],
   );
 
   const syncLocalLlmDownloadedStatuses = useCallback(async (): Promise<void> => {
+    const allModels = getAllLocalAiModelEntries();
     const checks = await Promise.all(
-      LOCAL_AI_MODELS.map(async (m) => ({
+      allModels.map(async (m) => ({
         id: m.id,
         exists: await NitroFS.exists(getLocalLlmModelPath(m.id)),
       })),

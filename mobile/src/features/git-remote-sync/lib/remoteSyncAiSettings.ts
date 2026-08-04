@@ -4,7 +4,7 @@ import { useSettingsStore } from '@/entities/settings';
 import { clampPrivateRemoteQueueConcurrency } from '@/entities/settings/lib/privateRemoteQueueConcurrency';
 import {
   ALL_SELECTABLE_CLOUD_AI_MODEL_IDS,
-  LOCAL_AI_MODELS,
+  isValidLocalAiModelId,
 } from '@/entities/settings/model/constants';
 import type {
   AiExecutionMode,
@@ -106,7 +106,12 @@ const PRIVATE_PROVIDERS = new Set<PrivateAiProvider>(['local', 'custom_openai'])
 const ARCHIVE_DAYS = new Set<AutoArchiveAfterDays>([1, 7, 14, 30]);
 const BACKUP_REMINDER_DAYS = new Set<BackupReminderPeriodDays>([7, 14, 30]);
 const CLOUD_AI_MODELS = new Set<UserSelectableAIModelId>(ALL_SELECTABLE_CLOUD_AI_MODEL_IDS);
-const LOCAL_AI_MODEL_IDS = new Set<LocalAiModelId>(LOCAL_AI_MODELS.map((model) => model.id));
+
+function readOptionalLocalAiModelId(value: unknown): LocalAiModelId | null | undefined {
+  if (value === null) return null;
+  if (!isString(value)) return undefined;
+  return isValidLocalAiModelId(value) ? value : undefined;
+}
 
 function readBool(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
@@ -114,11 +119,6 @@ function readBool(value: unknown, fallback: boolean): boolean {
 
 function readEnum<T extends string>(value: unknown, allowed: Set<T>, fallback: T): T {
   return isString(value) && allowed.has(value as T) ? (value as T) : fallback;
-}
-
-function readOptionalEnum<T extends string>(value: unknown, allowed: Set<T>): T | null | undefined {
-  if (value === null) return null;
-  return isString(value) && allowed.has(value as T) ? (value as T) : undefined;
 }
 
 function readArchiveDays(value: unknown, fallback: AutoArchiveAfterDays): AutoArchiveAfterDays {
@@ -241,10 +241,7 @@ export function parseRemoteSyncAiSettings(raw: unknown): RemoteSyncAiSettingsPay
   }
 
   const current = useSettingsStore.getState();
-  const selectedLocalAiModel = readOptionalEnum<LocalAiModelId>(
-    raw.selectedLocalAiModel,
-    LOCAL_AI_MODEL_IDS,
-  );
+  const selectedLocalAiModel = readOptionalLocalAiModelId(raw.selectedLocalAiModel);
 
   return {
     version: REMOTE_SYNC_AI_SETTINGS_VERSION,

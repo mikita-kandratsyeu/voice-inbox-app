@@ -13276,15 +13276,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"llama.rn@npm:^0.12.4":
-  version: 0.12.4
-  resolution: "llama.rn@npm:0.12.4"
+"llama.rn@npm:^0.12.9":
+  version: 0.12.9
+  resolution: "llama.rn@npm:0.12.9"
   peerDependencies:
     react: "*"
     react-native: "*"
   bin:
     llama-rn-download-artifacts: install/download-native-artifacts.js
-  checksum: 10c0/d0de07bf4be87a3afb40f6b57017ef8ca8bf8417163ce00abd002fdd31f53ca44e7944cdab5716147a48e9c360c19a1a2611cf53cf5ea12625fccfd5eb79f962
+  checksum: 10c0/25041be1eef54714dd00130785c866150b5f2ca9ffcc8afb64168815ee6d2b36ab5a64d89b0694a1a747128d7181fb3534327d0e475bc5cff155dabf15fc6932
   languageName: node
   linkType: hard
 
@@ -19693,7 +19693,7 @@ __metadata:
     i18next: "npm:^26.2.0"
     jest: "npm:^29.7.0"
     lint-staged: "npm:^17.0.7"
-    llama.rn: "npm:^0.12.4"
+    llama.rn: "npm:^0.12.9"
     lucide-react-native: "npm:^1.16.0"
     markdown-it: "npm:^14.2.0"
     markdown-it-task-lists: "npm:^2.1.1"

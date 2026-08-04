@@ -1,4 +1,8 @@
-import { isPrivateCustomServerMode, LOCAL_AI_MODELS, useSettingsStore } from '@/entities/settings';
+import {
+  isPrivateCustomServerMode,
+  resolveLocalAiModelEntry,
+  useSettingsStore,
+} from '@/entities/settings';
 import { useProEntitlement } from '@/features/pro-license';
 import { useAiModelName } from '@/shared/lib';
 import { i18n } from '@/shared/lib/i18n';
@@ -18,7 +22,7 @@ export function useAskAiModelLabel(): string {
 
   if (aiExecutionMode === 'private_experimental') {
     if (selectedLocalAiModel != null) {
-      const local = LOCAL_AI_MODELS.find((m) => m.id === selectedLocalAiModel);
+      const local = resolveLocalAiModelEntry(selectedLocalAiModel);
       if (local) return local.name;
     }
     return i18n.t('recordingDetail.askModelChipEmpty');

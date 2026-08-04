@@ -13,10 +13,27 @@ export type UserSelectableAIModelId =
   | 'nvidia/nemotron-3-super-120b-a12b'
   | 'xiaomi/mimo-v2.5'
   | 'xiaomi/mimo-v2.5-pro';
-export type LocalAiModelId =
+export type CuratedLocalAiModelId =
   | 'local/qwen3-1.7b-q4_k_m'
   | 'local/gemma-2-2b-it-q4_k_m'
   | 'local/llama-3.2-1b-q4_k_m';
+
+/** Curated catalog ids or user-installed Hugging Face GGUF models (`local/hf/...`). */
+export type LocalAiModelId = CuratedLocalAiModelId | `local/hf/${string}`;
+
+export type CustomLocalAiModelEntry = {
+  id: LocalAiModelId;
+  name: string;
+  provider: string;
+  description: string;
+  speed: 'fast' | 'medium' | 'slow';
+  deviceLoad: 'light' | 'moderate' | 'heavy';
+  fileName: string;
+  sizeMb: number;
+  downloadUrl: string;
+  hfRepo: string;
+  hfRevision: string;
+};
 
 export type AIModelId = UserSelectableAIModelId;
 
@@ -181,6 +198,8 @@ export type SettingsState = {
   localLlmModelStatuses: Partial<Record<LocalAiModelId, WhisperModelStatus>>;
   localLlmDownloadProgress: Partial<Record<LocalAiModelId, number>>;
   localLlmDownloadBytes: Partial<Record<LocalAiModelId, DownloadBytes>>;
+  /** User-installed Hugging Face GGUF models. */
+  customLocalAiModels: CustomLocalAiModelEntry[];
   setAppTheme: (value: AppTheme) => void;
   setAccentColorId: (value: AccentColorId) => void;
   setAppLanguage: (value: AppLanguage) => void;
@@ -255,4 +274,6 @@ export type SettingsState = {
     contentLength?: number,
   ) => void;
   removeLocalLlmModelStatus: (id: LocalAiModelId) => void;
+  addCustomLocalAiModel: (entry: CustomLocalAiModelEntry) => void;
+  removeCustomLocalAiModel: (id: LocalAiModelId) => void;
 };

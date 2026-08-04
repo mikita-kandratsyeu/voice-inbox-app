@@ -1,6 +1,6 @@
 import type { CompletionParams, ContextParams } from 'llama.rn';
 
-import type { LocalAiModelId } from '@/entities/settings';
+import type { CuratedLocalAiModelId, LocalAiModelId } from '@/entities/settings';
 import type { DeviceCapabilities } from '@/shared/lib/deviceCapabilities';
 
 export type LocalLlmCompletionIntent = 'json' | 'chat';
@@ -29,7 +29,7 @@ type LocalLlmModelProfile = {
   chat?: Partial<CompletionParams>;
 };
 
-const PROFILES: Record<LocalAiModelId, LocalLlmModelProfile> = {
+const PROFILES: Record<CuratedLocalAiModelId, LocalLlmModelProfile> = {
   'local/qwen3-1.7b-q4_k_m': {
     nCtx: LOCAL_LLM_N_CTX_COMPACT,
     base: {
@@ -96,17 +96,40 @@ const PROFILES: Record<LocalAiModelId, LocalLlmModelProfile> = {
   },
 };
 
+/** Fallback for user-installed Hugging Face GGUF models without a curated profile. */
+const DEFAULT_CUSTOM_PROFILE: LocalLlmModelProfile = {
+  nCtx: LOCAL_LLM_N_CTX_COMPACT,
+  base: {
+    enable_thinking: false,
+    min_p: 0.05,
+    top_p: 0.9,
+    penalty_repeat: 1.08,
+  },
+  json: {
+    top_k: 40,
+    min_p: 0.06,
+    penalty_repeat: 1.12,
+  },
+  chat: {
+    top_k: 50,
+  },
+};
+
+function getProfile(modelId: LocalAiModelId): LocalLlmModelProfile {
+  return PROFILES[modelId as CuratedLocalAiModelId] ?? DEFAULT_CUSTOM_PROFILE;
+}
+
 export function getLocalLlmNCtx(modelId: LocalAiModelId): number {
-  return PROFILES[modelId].nCtx ?? DEFAULT_LOCAL_LLM_N_CTX;
+  return getProfile(modelId).nCtx ?? DEFAULT_LOCAL_LLM_N_CTX;
 }
 
 export function getLocalLlmSummaryTemperature(modelId: LocalAiModelId, fallback: number): number {
-  const v = PROFILES[modelId].summaryTemperature;
+  const v = getProfile(modelId).summaryTemperature;
   return v ?? fallback;
 }
 
 export function getLocalLlmAskTemperature(modelId: LocalAiModelId, fallback: number): number {
-  const v = PROFILES[modelId].askTemperature;
+  const v = getProfile(modelId).askTemperature;
   return v ?? fallback;
 }
 
@@ -126,7 +149,7 @@ export function mergeLocalLlmCompletionParams(
   modelId: LocalAiModelId,
   intent: LocalLlmCompletionIntent,
 ): Partial<CompletionParams> {
-  const p = PROFILES[modelId];
+  const p = getProfile(modelId);
 
   return {
     ...p.base,

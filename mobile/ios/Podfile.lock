@@ -311,7 +311,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - llama-rn (0.12.4):
+  - llama-rn (0.12.9):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3780,7 +3780,7 @@ SPEC CHECKSUMS:
   InappbrowserNitro: e4e4ba49eb5e0cb1b6ed7ffe0224bfcaf5bd8d28
   iosMath: f7a6cbadf9d836d2149c2a84c435b1effc244cba
   LiquidGlass: 5466190fb4b1f0468386cdf51b1a7652ab3d0ea9
-  llama-rn: e4c793546113ee1247f32d2e0ae8b321be7bff60
+  llama-rn: 838fd356ef6be28e398e39d34a0bb10f644d1318
   MMKVCore: 3d16ce9f7d411e135020915fde98a056859a1efa
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   NitroDeviceInfo: 87c71a4fc33faf71bf616789dda68d9bc60d1e4d
