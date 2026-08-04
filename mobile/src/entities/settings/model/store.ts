@@ -4,6 +4,7 @@ import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitl
 import { parseAccentColorId } from '@/shared/config';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { storage } from '@/shared/lib/async-storage';
+import { isInstallableGgufFilename } from '@/shared/lib/local-llm/isInstallableGgufFile';
 import { IS_IOS } from '@/shared/lib/platform';
 import { isNumber, isRecord, isString } from '@/shared/lib/type-guards';
 
@@ -189,6 +190,7 @@ const getStoredCustomLocalAiModels = (): CustomLocalAiModelEntry[] => {
         isCustomLocalAiModelId(item.id) &&
         isString(item.name) &&
         isString(item.fileName) &&
+        isInstallableGgufFilename(item.fileName) &&
         isString(item.downloadUrl) &&
         isNumber(item.sizeMb)
       );

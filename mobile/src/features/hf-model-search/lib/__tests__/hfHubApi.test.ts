@@ -51,9 +51,11 @@ describe('hfHubApi', () => {
     expect(quantPreferenceRank('a.Q4_K_M.gguf')).toBeLessThan(quantPreferenceRank('b.Q8_0.gguf'));
   });
 
-  it('excludes mmproj and split shards from installable GGUF files', () => {
+  it('excludes mmproj, MTP, and split shards from installable GGUF files', () => {
     expect(isInstallableGgufFilename('Qwen3-1.7B-Q4_K_M.gguf')).toBe(true);
     expect(isInstallableGgufFilename('mmproj-Qwen3VL-30B-A3B-Instruct-F16.gguf')).toBe(false);
+    expect(isInstallableGgufFilename('mtp-gemma-4-31B-it.gguf')).toBe(false);
+    expect(isInstallableGgufFilename('Qwen_Qwen3.6-35B-A3B-imatrix.gguf')).toBe(false);
     expect(isInstallableGgufFilename('Qwen3-VL-8B-Instruct-abliterated.mmproj-Q8_0.gguf')).toBe(
       false,
     );

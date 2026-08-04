@@ -12,6 +12,7 @@ import {
 import {
   buildCustomEntryFromSearchResult,
   buildCustomLocalAiModelId,
+  isInstallableGgufFilename,
   useHfGgufSearch,
 } from '@/features/hf-model-search';
 import type { Colors } from '@/shared/config';
@@ -73,6 +74,14 @@ export const HfGgufSearchSection = ({
         (item) => buildCustomLocalAiModelId(item.repoId, item.fileName) === modelId,
       );
       if (!result) return;
+
+      if (!isInstallableGgufFilename(result.fileName)) {
+        Alert.alert(
+          t('aiModels.hfSearchAuxiliaryBlockedTitle'),
+          t('aiModels.hfSearchAuxiliaryBlockedBody'),
+        );
+        return;
+      }
 
       const status = localLlmModelStatuses[modelId] ?? 'not_downloaded';
 

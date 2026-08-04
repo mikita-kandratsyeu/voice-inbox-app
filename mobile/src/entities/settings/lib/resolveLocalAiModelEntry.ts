@@ -1,3 +1,5 @@
+import { isInstallableGgufFilename } from '@/shared/lib/local-llm/isInstallableGgufFile';
+
 import {
   customEntryToCatalogEntry,
   getLocalAiModelEntry,
@@ -16,12 +18,14 @@ export function resolveLocalAiModelEntry(
 
   const customs = customModels ?? useSettingsStore.getState().customLocalAiModels;
   const custom = customs.find((m) => m.id === id);
-  return custom ? customEntryToCatalogEntry(custom) : undefined;
+  if (!custom || !isInstallableGgufFilename(custom.fileName)) return undefined;
+  return customEntryToCatalogEntry(custom);
 }
 
 export function getAllLocalAiModelEntries(
   customModels?: CustomLocalAiModelEntry[],
 ): LocalAiModelCatalogEntry[] {
   const customs = customModels ?? useSettingsStore.getState().customLocalAiModels;
-  return [...LOCAL_AI_MODELS, ...customs.map(customEntryToCatalogEntry)];
+  const installableCustoms = customs.filter((m) => isInstallableGgufFilename(m.fileName));
+  return [...LOCAL_AI_MODELS, ...installableCustoms.map(customEntryToCatalogEntry)];
 }

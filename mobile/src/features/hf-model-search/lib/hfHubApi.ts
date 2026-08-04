@@ -1,5 +1,8 @@
 import type { LocalAiDeviceLoad } from '@/entities/settings/model/constants';
 import type { CustomLocalAiModelEntry, LocalAiModelId } from '@/entities/settings/model/types';
+import { isInstallableGgufFilename } from '@/shared/lib/local-llm/isInstallableGgufFile';
+
+export { isInstallableGgufFilename };
 
 /** Max GGUF size shown in search results (~3 GB). */
 export const HF_GGUF_MAX_SIZE_BYTES = 3 * 1024 * 1024 * 1024;
@@ -73,17 +76,6 @@ export function buildHfModelTreeUrl(repoId: string, revision = 'main'): string {
 /** HF tree entries store LFS payload size separately from the pointer `size`. */
 export function resolveHfFileSizeBytes(entry: { size?: number; lfs?: { size?: number } }): number {
   return entry.lfs?.size ?? entry.size ?? 0;
-}
-
-/** Main LLM weights only — excludes vision mmproj and multi-part split shards. */
-export function isInstallableGgufFilename(fileName: string): boolean {
-  const baseName = fileName.split('/').pop() ?? fileName;
-  const lower = baseName.toLowerCase();
-  if (!lower.endsWith('.gguf')) return false;
-  if (lower.startsWith('mmproj') || lower.includes('.mmproj-')) return false;
-  if (/split-\d+-of-\d+/i.test(lower)) return false;
-  if (/-\d+-of-\d+\.gguf$/i.test(lower)) return false;
-  return true;
 }
 
 function buildSizeMapFromTree(tree: HfTreeEntry[]): Map<string, number> {

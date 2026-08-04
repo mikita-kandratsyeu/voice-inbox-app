@@ -533,7 +533,7 @@
     "privateModeEmptyAnswer": "The local model returned no text. Try a shorter question or note, or pick another model in settings.",
     "privateModeUnsupportedLocale": "This model struggles with the current language. Set English in AI settings or choose another model.",
     "privateModeTooLongForLocal": "This text exceeds the local model's context window. Shorten the transcript or use Smart / your AI server (Pro).",
-    "privateModeGenericError": "The on-device request failed. Make sure the model is downloaded and try again; if it keeps failing, change the model or mode.",
+    "privateModeGenericError": "The on-device request failed. Make sure the model is downloaded and try again. If it keeps failing, change the model or mode.",
     "privateModeRemoteConfigMissing": "Your AI server isn't set up. Enter URL and model under Settings → AI server (Pro).",
     "privateRemoteServerTimeout": "Your server took too long to respond (over 10 minutes). Try a shorter note, a faster model, or check if the server is not overloaded.",
     "privateRemoteContextTooLong": "Your AI server can't accept this much text in one request. Shorten the note or use a model with a larger context window on the server.",
@@ -2577,7 +2577,9 @@
     "hfSearchUnknownSize": "Size unknown",
     "hfSearchInstall": "Install",
     "hfSearchInstalled": "Installed",
-    "hfSearchDownloading": "Downloading"
+    "hfSearchDownloading": "Downloading",
+    "hfSearchAuxiliaryBlockedTitle": "Not a runnable model",
+    "hfSearchAuxiliaryBlockedBody": "This file is an auxiliary weight (MTP, imatrix, mmproj, or split shard) and cannot run on-device. Pick a main GGUF quant such as Q4_K_M under ~3 GB.",
   },
   "onboarding": {
     "downloadBeforeStart": "Download the Whisper model for transcription?",
