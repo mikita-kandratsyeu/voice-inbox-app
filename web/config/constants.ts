@@ -23,6 +23,10 @@ export function isPublicHttpUrl(value: string | undefined | null): boolean {
   return t.startsWith('https://') || t.startsWith('http://');
 }
 
+/** Public GitHub (or other git) URL for the landing source-available banner. Empty → banner hidden. */
+const githubUrlRaw = process.env.NEXT_PUBLIC_GITHUB_URL?.trim() ?? '';
+export const GITHUB_URL = isPublicHttpUrl(githubUrlRaw) ? githubUrlRaw : '';
+
 /** For Smart App Banner (`apple-itunes-app`). Override via env if the store URL has no `/id…` segment. */
 export const APP_STORE_APP_ID: string | undefined =
   process.env.NEXT_PUBLIC_APP_STORE_APP_ID?.trim() ||

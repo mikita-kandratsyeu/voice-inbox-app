@@ -1,6 +1,7 @@
 {
   "name": "voice-inbox",
-  "version": "0.0.0",
+  "version": "2.0.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "private": true,
   "packageManager": "yarn@4.17.0",
   "workspaces": [

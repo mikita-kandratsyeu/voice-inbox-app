@@ -153,6 +153,12 @@
     "reject": "Decline",
     "settingsLink": "Cookies"
   },
+  "openSourceBanner": {
+    "aria": "Voice Inbox AI source is available on GitHub",
+    "badge": "Source available",
+    "message": "Noncommercial license. See how the app works.",
+    "cta": "GitHub"
+  },
   "header": {
     "appName": "Voice Inbox AI",
     "releases": "Blog",

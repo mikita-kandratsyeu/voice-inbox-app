@@ -14,8 +14,8 @@ Install dependencies from the **repository root** (`yarn install` — see [../RE
 cp mobile/.env.example mobile/.env
 ```
 
-- **iOS:** Xcode, CocoaPods (`pod install` in `ios/` when needed). `GoogleService-Info.plist` is in the project.
-- **Android:** Add `android/app/google-services.json` from Firebase (required for Google Services / Crashlytics Gradle plugins).
+- **iOS:** Xcode, CocoaPods (`pod install` in `ios/` when needed). Copy `ios/VoiceInboxApp/GoogleService-Info.plist.example` → `GoogleService-Info.plist` and fill in your Firebase iOS app (the committed plist is a placeholder).
+- **Android:** Copy `android/app/google-services.json.example` → `android/app/google-services.json` (gitignored) from Firebase.
 - **Env:** `WEB_API_URL` for cloud AI; Firebase App Check for API auth (`FIREBASE_APP_CHECK_DEBUG_TOKEN` in debug); Yandex ad unit IDs optional; RevenueCat keys when subscriptions are enabled; `GITHUB_OAUTH_CLIENT_ID` optional embedded default for Pro GitHub sync (release: override via Firebase Remote Config — see below).
 
 ```bash
@@ -176,3 +176,7 @@ Monorepo quality gates: `yarn turbo run lint type:check test --filter=voice-inbo
 
 - Legal / cloud behavior alignment: [../web/content/README.md](../web/content/README.md)
 - Release version bump (repo root): `node ../scripts/release.mjs`
+
+---
+
+License: [PolyForm Noncommercial 1.0.0](../LICENSE) (repository root).

@@ -12,6 +12,8 @@ This repository is a **Yarn 4 workspaces** monorepo with **Turborepo** task orch
 
 Detailed setup and feature lists: **[mobile/README.md](mobile/README.md)** · **[web/README.md](web/README.md)** · **[telegram-bot/README.md](telegram-bot/README.md)** · shared packages: **[packages/README.md](packages/README.md)**.
 
+This repository is **source-available** under the [PolyForm Noncommercial License 1.0.0](LICENSE): personal and noncommercial use only. Commercial licensing: hello@voice-inbox.online. Contributions: [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: [SECURITY.md](SECURITY.md).
+
 Cursor/agent conventions: [`.cursor/rules/repo-layout.mdc`](.cursor/rules/repo-layout.mdc).
 
 
@@ -124,6 +126,13 @@ Bumps semver + integer build in `mobile/package.json`, `web/package.json`, iOS `
 See [SECURITY.md](SECURITY.md) for supported versions and how to report vulnerabilities.
 
 
+## Contributing
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) — setup, quality gates, pull requests
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- [NOTICE](NOTICE) — third-party licenses and trademarks
+
+
 ## License
 
-**Proprietary** — UNLICENSED / all rights reserved. See [LICENSE](LICENSE). Third-party dependencies retain their own licenses.
+[PolyForm Noncommercial 1.0.0](LICENSE) — Copyright (c) 2026 Mikita Kandratsyeu. You may not use this software for commercial purposes without a separate license. Third-party dependencies keep their own licenses. The Voice Inbox name and logos are not licensed as trademarks.

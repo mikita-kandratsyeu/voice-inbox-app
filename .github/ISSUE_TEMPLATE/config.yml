@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security report
+    url: https://github.com/mikita-kandratsyeu/voice-inbox-app/security/advisories/new
+    about: Privately report a vulnerability (see SECURITY.md). Do not file a public issue.
+  - name: Support email
+    url: mailto:hello@voice-inbox.online
+    about: Product / account questions that are not bugs or feature requests.

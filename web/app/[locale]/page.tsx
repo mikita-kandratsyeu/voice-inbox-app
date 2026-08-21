@@ -7,7 +7,7 @@ import { DifferentiationSection } from '@/components/landing/DifferentiationSect
 import { FAQSection } from '@/components/landing/FAQSection';
 import { Features } from '@/components/landing/Features';
 import { Footer } from '@/components/landing/Footer';
-import { Header } from '@/components/landing/Header';
+import { LandingTopBar } from '@/components/landing/OpenSourceBanner';
 import { Hero } from '@/components/landing/Hero';
 import { MarketingPageShell } from '@/components/landing/MarketingPageShell';
 import { MobileStickyCTA } from '@/components/landing/MobileStickyCTA';
@@ -60,7 +60,7 @@ export default async function LandingPage({ params }: Props) {
 
   return (
     <MarketingPageShell>
-      <Header hideOnMobile />
+      <LandingTopBar hideHeaderOnMobile />
       <main className="flex-1">
         <Hero socialProof={socialProof} />
         <DifferentiationSection />

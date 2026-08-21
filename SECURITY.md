@@ -21,7 +21,7 @@ Exact version numbers are defined per app in each app’s `package.json`. When i
 
 ### How to report
 
-1. **Preferred (GitHub):** Use [GitHub Security Advisories](https://docs.github.com/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability) to **privately report** a vulnerability for this repository, if that feature is enabled for the repo.
+1. **Preferred (GitHub):** Use [GitHub Security Advisories](https://github.com/mikita-kandratsyeu/voice-inbox-app/security/advisories/new) to **privately report** a vulnerability for this repository.
 2. **Email:** If private reporting is not available, email **Support** at [hello@voice-inbox.online](mailto:hello@voice-inbox.online) with a subject line such as `[Security] Voice Inbox AI`.
 
 Include as much as you can:
@@ -50,3 +50,7 @@ We will not pursue legal action against researchers who act in **good faith**: a
 ---
 
 Thank you for helping keep Voice Inbox AI and its users safe.
+
+## Published git history
+
+Client Firebase identifiers previously lived in `GoogleService-Info.plist`. Treat old commits as public. In Google Cloud, restrict the iOS/Android API keys (bundle ID, package name, App Check). Rotate any key that was not meant to be a public client token. Never commit `.env`, `FIREBASE_SERVICE_ACCOUNT`, APNs `.p8`, or `google-services.json`.

@@ -13,14 +13,16 @@ import { GO_STORE_REDIRECT_PATH } from '@/config/constants';
 
 type HeaderProps = {
   hideOnMobile?: boolean;
+  /** When false, the bar is in normal flow (used under a sticky landing banner). */
+  sticky?: boolean;
 };
 
-export function Header({ hideOnMobile = false }: HeaderProps): React.ReactElement {
+export function Header({ hideOnMobile = false, sticky = true }: HeaderProps): React.ReactElement {
   const t = useTranslations('header');
 
   return (
     <header
-      className={`sticky top-3 z-50 ${marketingGutterClass} ${hideOnMobile ? 'hidden sm:block' : ''}`}
+      className={`${sticky ? 'sticky top-3 z-50' : 'pt-2 sm:pt-3'} ${marketingGutterClass} ${hideOnMobile ? 'hidden sm:block' : ''}`}
     >
       <div
         className={`${marketingContainerClass} flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white/75 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:gap-4 sm:py-2.5 dark:border-white/12 dark:bg-black/55 dark:shadow-[0_14px_36px_rgba(0,0,0,0.35)] ${marketingInsetClass}`}

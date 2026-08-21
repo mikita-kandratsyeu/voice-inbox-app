@@ -1,6 +1,6 @@
 ## Summary
 
-<!-- What changed and why (1–3 bullets). Link Trello/issue if applicable. -->
+<!-- What changed and why (1–3 bullets). Link the related issue if there is one. -->
 
 ## Type of change
 
@@ -21,3 +21,8 @@
 - [ ] `web/`
 - [ ] `telegram-bot/`
 - [ ] Root / docs / CI only
+
+## Checklist
+
+- [ ] No secrets, production Firebase configs, or `.env` files in this PR
+- [ ] New code follows existing layout (`web/`, `mobile/`, `telegram-bot/`, `packages/`)

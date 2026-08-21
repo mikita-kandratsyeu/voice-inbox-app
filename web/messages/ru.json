@@ -153,6 +153,12 @@
     "reject": "Отклонить",
     "settingsLink": "Cookies"
   },
+  "openSourceBanner": {
+    "aria": "Исходный код Voice Inbox AI на GitHub",
+    "badge": "Исходный код",
+    "message": "Некоммерческая лицензия. Посмотрите, как устроено приложение.",
+    "cta": "GitHub"
+  },
   "header": {
     "appName": "Voice Inbox AI",
     "releases": "Блог",

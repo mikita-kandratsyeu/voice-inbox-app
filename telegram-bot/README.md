@@ -111,3 +111,8 @@ src/
   router.ts      Commands & callback routing
   index.ts       Entrypoint
 ```
+
+---
+
+License: [PolyForm Noncommercial 1.0.0](../LICENSE) (repository root).
+

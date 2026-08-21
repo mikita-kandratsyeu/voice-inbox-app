@@ -17,3 +17,6 @@ node_modules/
 # APNs keys — never commit
 **/*.p8
 .vercel
+
+# Firebase Android client config (use google-services.json.example)
+mobile/android/app/google-services.json

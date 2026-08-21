@@ -75,6 +75,9 @@ yarn-error.log
 .env.*
 !.env.example
 
+# Firebase Android client config (download from Firebase Console)
+android/app/google-services.json
+
 # Android offline PDF OCR models (downloaded at build time)
 android/app/src/main/assets/tessdata/*.traineddata
 

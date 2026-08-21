@@ -1,7 +1,7 @@
 {
   "name": "voice-inbox-app",
   "version": "2.0.0",
-  "license": "UNLICENSED",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "author": "Mikita Kandratsyeu <nickondr.production@gmail.com>",
   "description": "Voice Inbox AI Mobile",
   "private": true,

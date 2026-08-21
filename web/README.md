@@ -104,7 +104,7 @@ See **`.env.example`** for the full list and comments. Core groups:
 
 | Group | Variables |
 | ----- | ----------- |
-| **Site** | `NEXT_PUBLIC_BASE_URL`, store URLs, waitlist, support email |
+| **Site** | `NEXT_PUBLIC_BASE_URL`, store URLs, waitlist, support email, optional `NEXT_PUBLIC_GITHUB_URL` (landing open-source banner) |
 | **Mobile API** | `JWT_SECRET`, `JWT_EXPIRES_IN`, `MOBILE_USER_AGENT`, `FIREBASE_SERVICE_ACCOUNT` |
 | **AI** | `OPENROUTER_API_KEY`, optional `DEEPSEEK_*`, `AI_JOB_TRANSPORT`, QStash (`QSTASH_*`) |
 | **Cache / jobs** | `UPSTASH_REDIS_REST_*` (optional — in-memory fallback) |
@@ -160,3 +160,8 @@ server/        Route handlers (some API logic)
 services/      AI, translate, ask, etc.
 generated/     Prisma client (generated, gitignored)
 ```
+
+---
+
+License: [PolyForm Noncommercial 1.0.0](../LICENSE) (repository root).
+
