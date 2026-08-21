@@ -114,7 +114,7 @@ jobs:
 
       - name: Upload PR metrics
         if: always() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4.6.0
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: ci-metrics-mobile
           path: ci-metrics/mobile.json
@@ -194,7 +194,7 @@ jobs:
 
       - name: Upload PR metrics
         if: always() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4.6.0
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: ci-metrics-web
           path: ci-metrics/web.json
@@ -282,7 +282,7 @@ jobs:
 
       - name: Upload PR metrics
         if: always() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4.6.0
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: ci-metrics-telegram-bot
           path: ci-metrics/telegram-bot.json
