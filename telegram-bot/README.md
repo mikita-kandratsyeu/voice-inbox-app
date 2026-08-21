@@ -115,4 +115,3 @@ src/
 ---
 
 License: [PolyForm Noncommercial 1.0.0](../LICENSE) (repository root).
-
