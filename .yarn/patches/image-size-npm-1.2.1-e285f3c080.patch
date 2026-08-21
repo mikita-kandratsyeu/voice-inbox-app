@@ -1,0 +1,111 @@
+diff --git a/dist/types/icns.js b/dist/types/icns.js
+index f2bfafef3723cb423b110304815e56e3f97f81e0..33b3287e28564b418b9dae90de55ce5b5f94ac68 100644
+--- a/dist/types/icns.js
++++ b/dist/types/icns.js
+@@ -21,6 +21,7 @@ const FILE_LENGTH_OFFSET = 4; // MSB => BIG ENDIAN
+  * | 8      | n    | Icon data                                                        |
+  */
+ const ENTRY_LENGTH_OFFSET = 4; // MSB => BIG ENDIAN
++const MIN_ENTRY_LENGTH = 8;
+ const ICON_TYPE_SIZE = {
+     ICON: 32,
+     'ICN#': 32,
+@@ -80,22 +81,30 @@ exports.ICNS = {
+         const inputLength = input.length;
+         const fileLength = (0, utils_1.readUInt32BE)(input, FILE_LENGTH_OFFSET);
+         let imageOffset = SIZE_HEADER;
+-        let imageHeader = readImageHeader(input, imageOffset);
+-        let imageSize = getImageSize(imageHeader[0]);
+-        imageOffset += imageHeader[1];
+-        if (imageOffset === fileLength)
+-            return imageSize;
+-        const result = {
+-            height: imageSize.height,
+-            images: [imageSize],
+-            width: imageSize.width,
+-        };
++        const images = [];
+         while (imageOffset < fileLength && imageOffset < inputLength) {
+-            imageHeader = readImageHeader(input, imageOffset);
+-            imageSize = getImageSize(imageHeader[0]);
+-            imageOffset += imageHeader[1];
+-            result.images.push(imageSize);
++            if (inputLength - imageOffset < MIN_ENTRY_LENGTH)
++                break;
++            const imageHeader = readImageHeader(input, imageOffset);
++            const entryLength = imageHeader[1];
++            if (entryLength < MIN_ENTRY_LENGTH)
++                break;
++            const imageSize = getImageSize(imageHeader[0]);
++            if (imageSize.width && imageSize.height) {
++                images.push(imageSize);
++            }
++            const nextOffset = imageOffset + entryLength;
++            if (nextOffset <= imageOffset)
++                break;
++            imageOffset = nextOffset;
++        }
++        if (images.length === 0) {
++            throw new TypeError('Invalid ICNS, no sizes found');
+         }
+-        return result;
++        return {
++            width: images[0].width,
++            height: images[0].height,
++            ...(images.length > 1 ? { images } : {}),
++        };
+     },
+ };
+diff --git a/dist/types/utils.js b/dist/types/utils.js
+index 5224bbafe87551ac415cb3de234820ccc0ff6e2c..979dd4784f493a4d05509279dd5f10651f6ade96 100644
+--- a/dist/types/utils.js
++++ b/dist/types/utils.js
+@@ -48,10 +48,22 @@ function readUInt(input, bits, offset, isBigEndian) {
+     return methods[methodName](input, offset);
+ }
+ exports.readUInt = readUInt;
++const MIN_BOX_HEADER = 8;
+ function readBox(input, offset) {
+-    if (input.length - offset < 4)
++    if (input.length - offset < MIN_BOX_HEADER)
+         return;
+     const boxSize = (0, exports.readUInt32BE)(input, offset);
++    if (boxSize === 0) {
++        return {
++            name: (0, exports.toUTF8String)(input, 4 + offset, 8 + offset),
++            offset,
++            size: input.length - offset,
++        };
++    }
++    if (boxSize === 1)
++        return;
++    if (boxSize < MIN_BOX_HEADER)
++        return;
+     if (input.length - offset < boxSize)
+         return;
+     return {
+@@ -60,16 +72,20 @@ function readBox(input, offset) {
+         size: boxSize,
+     };
+ }
+-function findBox(input, boxName, offset) {
++function findBox(input, boxName, startOffset) {
++    let offset = startOffset;
+     while (offset < input.length) {
+         const box = readBox(input, offset);
+         if (!box)
+             break;
+         if (box.name === boxName)
+             return box;
+-        // Fix the infinite loop by ensuring offset always increases
+-        // If box.size is 0, advance by at least 8 bytes (the size of the box header)
+-        offset += box.size > 0 ? box.size : 8;
++        if (box.size < MIN_BOX_HEADER)
++            break;
++        const nextOffset = offset + box.size;
++        if (nextOffset <= offset)
++            break;
++        offset = nextOffset;
+     }
+ }
+ exports.findBox = findBox;
