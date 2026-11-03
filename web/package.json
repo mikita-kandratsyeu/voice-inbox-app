@@ -61,7 +61,7 @@
     "remark-gfm": "^4.0.1",
     "sharp": "^0.35.3",
     "unified": "^11.0.5",
-    "zod": "^3.25.76"
+    "zod": "^4.6.6"
   },
   "optionalDependencies": {
     "@img/sharp-libvips-linux-x64": "1.3.2",
