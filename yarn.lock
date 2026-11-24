@@ -11477,15 +11477,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"i18next@npm:^26.2.0":
-  version: 26.3.1
-  resolution: "i18next@npm:26.3.1"
+"i18next@npm:^26.3.4":
+  version: 26.3.4
+  resolution: "i18next@npm:26.3.4"
   peerDependencies:
     typescript: ^5 || ^6
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10c0/8f26cb9a09b648edde395a58c2fe890dd996cb81a969d0a05da178b9cb4ce3dee009f9c677a480bb58b5a9d8bbf762fd226111626b015e9bbd66b96132dbba39
+  checksum: 10c0/09b2e578660b1cdcb284ed00e1f1c8559871fa66cbf85e58f9b78bf782e3b575341f0668ca7230fc80d30104bec42f8ac3ac221096d0f6e6bfbf18255dcccc94
   languageName: node
   linkType: hard
 
@@ -19717,7 +19717,7 @@ __metadata:
     graphology-layout-forceatlas2: "npm:^0.10.1"
     graphology-types: "npm:^0.24.8"
     husky: "npm:^9.1.7"
-    i18next: "npm:^26.2.0"
+    i18next: "npm:^26.3.4"
     jest: "npm:^29.7.0"
     lint-staged: "npm:^17.0.7"
     llama.rn: "npm:^0.12.4"
